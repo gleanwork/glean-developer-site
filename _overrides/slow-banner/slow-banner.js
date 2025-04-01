@@ -11,7 +11,7 @@ document.addEventListener('click', (event) => {
     const href = target.getAttribute('href');
     if (!href) return;
 
-    if (href.startsWith('/client/api')) {
+    if (href.startsWith('/api-reference/client')) {
         document.body.classList.add('slow');
     } else {
         document.body.classList.remove('slow');
