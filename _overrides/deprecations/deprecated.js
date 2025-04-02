@@ -7,15 +7,15 @@
 
 const deprecatedWarningText = "This endpoint is deprecated and may be removed at anytime.";
 const deprecatedPaths = [
-    "/actions/api/setup",
-    "/indexing/api/troubleshooting/get-user-count",
-    "/indexing/api/troubleshooting/get-document-count",
-    "/indexing/api/troubleshooting/get-document-upload-and-indexing-status",
-    "/indexing/api/people/bulk-index-employees-1",
-    "/client/api/answers/create-answer-board",
-    "/client/api/answers/delete-answer-board",
-    "/client/api/answers/update-answer-board",
-    "/client/api/answers/read-answer-board"
+    "/api-reference/actions/setup",
+    "/api-reference/indexing/troubleshooting/get-user-count",
+    "/api-reference/indexing/troubleshooting/get-document-count",
+    "/api-reference/indexing/troubleshooting/get-document-upload-and-indexing-status",
+    "/api-reference/indexing/people/bulk-index-employees-1",
+    "/api-reference/client/answers/create-answer-board",
+    "/api-reference/client/answers/delete-answer-board",
+    "/api-reference/client/answers/update-answer-board",
+    "/api-reference/client/answers/read-answer-board"
 ];
 
 // Add deprecated warning
