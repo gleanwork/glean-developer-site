@@ -59,12 +59,12 @@ As seen in the screenshot below, the email provided was identical to that of the
 <Step title="Making the request">
 
 - Use the following cURL command to create a collection
-- Replace `<User email>` in the `X-Scio-Actas` header with a valid email address of a user on whose behalf the request is intended to be made.
+- Replace `<User email>` in the `X-Glean-ActAs` header with a valid email address of a user on whose behalf the request is intended to be made.
 
 ```bash cURL
 curl -X POST https://customer-be.glean.com/rest/api/v1/createcollection \
 -H 'Authorization: Bearer <token>' \
--H 'X-Scio-Actas: <User email>' \
+-H 'X-Glean-ActAs: <User email>' \
 -d '{
      "name": "Sample Collection - '$(date +"%Y-%m-%d %H:%M:%S")'",
      "description": "A brief summary of the collection\'s contents."
@@ -74,9 +74,9 @@ curl -X POST https://customer-be.glean.com/rest/api/v1/createcollection \
 <Warning>
 If you get a response with a status code other that `200`, use the error response to figure out what might have gone wrong. For example, the token may have expired, causing the request to fail.
 
-If the `X-Scio-Actas` header is not specified or blank, the request will fail with a `400: Required header missing: X-Scio-ActAs` error.
+If the `X-Glean-ActAs` header is not specified or blank, the request will fail with a `400: Required header missing: X-Glean-ActAs` error.
 
-If the `X-Scio-Actas` header is specified with an invalid email, the request will fail with a `401: Invalid identity` error.
+If the `X-Glean-ActAs` header is specified with an invalid email, the request will fail with a `401: Invalid identity` error.
 </Warning>
 </Step>
 
