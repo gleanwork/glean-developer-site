@@ -73,6 +73,13 @@ curl 'https://<your-domain>-be.glean.com/rest/api/v1/chat' \
 
 _Note: The following example streams the output as it becomes available, whenever possible. To turn off streaming outputs, please set the `stream` field in the request body to `False`_
 
+<Warning>
+As of 04/24/2025, the /chat API response has been changed. The previous way of processing the response message stream has been deprecated.
+As in-line citations (citations inside the fragments) do not contain `startIndex` or `endIndex`, you might still find this deprecated function useful
+as a way to get the `endIndex` of each citation (`startIndex` is no longer populated). Please also note that this function may return the same
+citation multiple times, although each duplicated citation should have a different `endIndex`.
+</Warning>
+
 <CodeGroup>
 ```python Single Conversation
 import requests
@@ -82,25 +89,30 @@ import json
 def process_message_fragment(message):
     message_type = message['messageType']
     fragments = message.get('fragments', [])
-    citations = message.get('citations', [])
 
     message_fragment_str = ''
     if message_type == 'CONTENT':
-        if fragments:
-            for fragment in fragments:
+        for fragment in fragments:
+            # Fragments may contain text or citations. This is because citations are outputted
+            # inline, along with the response. There will only be one citation per fragment.
+            if 'text' in fragment:
                 text = fragment.get('text', '')
                 print(text, end='', flush=True)
-        if citations:
-            print('\nSources:')
-            for idx, citation in enumerate(citations):
+            elif 'citation' in fragment:
+                citation = fragment.get('citation', {})
                 sourceDocument = citation.get('sourceDocument', {})
                 if sourceDocument:
-                  source = citation['sourceDocument']
-                  print(f'Source {idx + 1}: Document title - {source["title"]}, url: {source["url"]}')
+                    source = citation['sourceDocument']
+                    print(f'(Source: Document title - {source["title"]}, url: {source["url"]})')
                 sourcePerson = citation.get('sourcePerson', {})
                 if sourcePerson:
-                  source = citation['sourcePerson']
-                  print(f'Source {idx + 1}: Person name - {source["name"]}')
+                    source = citation['sourcePerson']
+                    print(f'(Source: Person name - {source["name"]})')
+                # For citations from Web Search, Databricks Genie, JIRA JQL, Salesforce SOQL.
+                sourceFile = citation.get('sourceFile', {})
+                if sourceFile:
+                    source = citation['sourceFile']
+                    print(f'(Source: File name - {source["name"]})')
 
 
 
@@ -148,6 +160,129 @@ import json
 from typing import List, Dict
 
 
+# This function will return citations and message fragment string separately, although the API response
+# will still contain the citations inline and the print statements will still include citations inline.
+# This is meant to show how you can process the message fragment and citations separately if needed.
+def process_message_fragment(message):
+    message_fragment_str = ''
+    message_fragment_citations = []
+
+    message_type = message['messageType']
+    fragments = message.get('fragments', [])
+
+    if message_type == 'CONTENT':
+        for fragment in fragments:
+            # Fragments may contain text or citations. This is because citations are outputted
+            # inline, along with the response. There will only be one citation per fragment.
+            if 'text' in fragment:
+                text = fragment.get('text', '')
+                print(text, end='', flush=True)
+                message_fragment_str += text
+            elif 'citation' in fragment:
+                citation = fragment.get('citation', {})
+                sourceDocument = citation.get('sourceDocument', {})
+                if sourceDocument:
+                    source = citation['sourceDocument']
+                    print(f'(Source: Document title - {source["title"]}, url: {source["url"]})')
+                sourcePerson = citation.get('sourcePerson', {})
+                if sourcePerson:
+                    source = citation['sourcePerson']
+                    print(f'(Source: Person name - {source["name"]})')
+                # For citations from Web Search, Databricks Genie, JIRA JQL, Salesforce SOQL.
+                sourceFile = citation.get('sourceFile', {})
+                if sourceFile:
+                    source = citation['sourceFile']
+                    print(f'(Source: File name - {source["name"]})')
+                message_fragment_citations.append(citation)
+    return message_fragment_str, message_fragment_citations
+
+
+def make_content_message(author: str = 'USER', text: str = None, citations: List[Dict] = None):
+    # Create a content message JSON object
+    message_json = {
+        'author': author,
+        'messageType': 'CONTENT'
+    }
+    if text:
+        message_json['fragments'] = [{'text': text}]
+    if citations:
+        message_json['citations'] = citations
+    return message_json
+
+
+def process_response_message_stream(response):
+    response_message_text = ''
+    response_message_citations = []
+    chat_session_tracking_token = None
+
+    for line in response.iter_lines():
+        if line:
+            line_json = json.loads(line)
+            messages = line_json.get('messages', [])
+            chat_session_tracking_token = line_json.get('chatSessionTrackingToken', None)
+            for message_fragment in messages:
+                message_fragment_text, message_fragment_citations = process_message_fragment(message_fragment)
+                response_message_text += message_fragment_text
+                response_message_citations += message_fragment_citations
+
+    return make_content_message(author='GLEAN_AI', text=response_message_text, citations=response_message_citations), chat_session_tracking_token
+
+
+def send_conversation_message(url, headers, payload):
+    next_payload = payload
+    try:
+        with requests.post(url, headers=headers, json=payload, stream=True) as response:
+            if response.status_code == 200:
+                response_message, chat_session_tracking_token = process_response_message_stream(response)
+                # Add the response message to the next payload, most recent message first
+                next_payload['messages'].insert(0, response_message)
+                next_payload['chatSessionTrackingToken'] = chat_session_tracking_token
+            else:
+                print(f'Status code: {response.status_code}, error: {response.text}')
+                exit(1)
+    except requests.exceptions.RequestException as e:
+        print(f'Request Exception: {str(e)}')
+        exit(1)
+    return next_payload
+
+
+def main():
+    url = 'https://<your-domain>-be.glean.com/rest/api/v1/chat'
+    headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer <TOKEN>'
+    }
+
+    # Initialize the payload
+    payload = {
+        'stream': True,  # Set to False to toggle off streaming mode
+        'messages': []
+    }
+
+    first_user_message = make_content_message(text='What are the holidays this year?')
+    second_user_message = make_content_message(text='What about this month?')
+
+    user_messages_list = [first_user_message, second_user_message]
+
+    for user_message in user_messages_list:
+        print(f'User message: {user_message["fragments"][0]["text"]}', flush=True)
+        print('Response: ', flush=True)
+        payload['messages'].insert(0, user_message) # Add the user message to the payload, most recent message first
+        payload = send_conversation_message(url, headers, payload)  # Send conversation message and get next payload
+
+
+if __name__ == '__main__':
+    main()
+```
+
+```python DEPRECATED
+import requests
+import json
+from typing import List, Dict
+
+# DEPRECATED: This older version of process_message_fragment relies on the old API response format.
+# You may continue to use this, but it is recommended to switch to the new format. We do not guarantee
+# that this will continue to work in future versions.
 def process_message_fragment(message):
     message_fragment_str = ''
     message_fragment_citations = []
