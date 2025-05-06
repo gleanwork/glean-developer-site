@@ -1,0 +1,290 @@
+---
+title: "Glean API Clients"
+icon: "code"
+---
+
+Glean offers official API clients for several popular programming languages to help developers integrate Glean's powerful search and knowledge capabilities into their applications. These clients provide language-specific interfaces to Glean's APIs, making it easier to build custom solutions without having to handle the low-level HTTP requests.
+
+This page provides information about our official API clients and instructions for installing and using them in your preferred programming language.
+
+## Official API Clients
+
+Glean provides official API clients for the following languages:
+
+<CardGroup cols={2}>
+  <Card title="Python" icon="python" href="https://github.com/gleanwork/api-client-python">
+    Python API client for Glean
+  </Card>
+  <Card title="TypeScript" icon="js" href="https://github.com/gleanwork/api-client-typescript">
+    TypeScript/JavaScript API client for Glean
+  </Card>
+  <Card title="Go" icon="golang" href="https://github.com/gleanwork/api-client-go">
+    Go API client for Glean
+  </Card>
+  <Card title="Java" icon="java" href="https://github.com/gleanwork/api-client-java">
+    Java API client for Glean
+  </Card>
+</CardGroup>
+
+## Installing the API Clients
+
+<Tabs>
+  <Tab title="Python">
+    <Steps>
+      <Step title="Install the Python client">
+        ```bash
+        pip install glean-api-client
+        ```
+        
+        Or using Poetry:
+        
+        ```bash
+        poetry add glean-api-client
+        ```
+      </Step>
+      
+      <Step title="Initialize the client">
+        ```python
+        from glean import Glean
+        import os
+
+        # Initialize with API token
+        with Glean(
+            api_token=os.getenv("GLEAN_API_TOKEN", ""),
+        ) as client:
+            # Use the client...
+            pass
+        ```
+      </Step>
+      
+      <Step title="Example usage">
+        ```python
+        from glean import Glean, models
+        import os
+
+        with Glean(
+            api_token=os.getenv("GLEAN_API_TOKEN", ""),
+        ) as client:
+            # Send a chat message to Glean
+            res = client.client.chat.create(messages=[
+                {
+                    "fragments": [
+                        models.ChatMessageFragment(
+                            text="What are the company holidays this year?",
+                        ),
+                    ],
+                },
+            ], timeout_millis=30000)
+
+            # Handle response
+            print(res)
+        ```
+      </Step>
+    </Steps>
+  </Tab>
+  
+  <Tab title="TypeScript">
+    <Steps>
+      <Step title="Install the TypeScript client">
+        ```bash
+        npm install @gleanwork/api-client
+        ```
+        
+        Or using Yarn:
+        
+        ```bash
+        yarn add @gleanwork/api-client
+        ```
+      </Step>
+      
+      <Step title="Initialize the client">
+        ```typescript
+        import { Glean } from "@gleanwork/api-client";
+
+        // Initialize with API token
+        const client = new Glean({
+          apiToken: process.env.GLEAN_API_TOKEN,
+        });
+        ```
+      </Step>
+      
+      <Step title="Example usage">
+        ```typescript
+        import { Glean } from "@gleanwork/api-client";
+
+        async function run() {
+          const glean = new Glean({
+            apiToken: process.env.GLEAN_API_TOKEN,
+          });
+
+          const result = await glean.client.chat.create({
+            messages: [
+              {
+                fragments: [
+                  {
+                    text: "What are the company holidays this year?",
+                  },
+                ],
+              },
+            ],
+          });
+
+          // Handle the result
+          console.log(result);
+        }
+
+        run();
+        ```
+      </Step>
+    </Steps>
+  </Tab>
+  
+  <Tab title="Go">
+    <Steps>
+      <Step title="Install the Go client">
+        ```bash
+        go get github.com/gleanwork/api-client-go
+        ```
+      </Step>
+      
+      <Step title="Initialize the client">
+        ```go
+        import (
+          "context"
+          glean "github.com/gleanwork/api-client-go"
+          "os"
+        )
+
+        func main() {
+          ctx := context.Background()
+
+          // Initialize with API token
+          client := glean.New(
+            glean.WithAPIToken(os.Getenv("GLEAN_API_TOKEN")),
+          )
+        }
+        ```
+      </Step>
+      
+      <Step title="Example usage">
+        ```go
+        import (
+          "context"
+          "fmt"
+          glean "github.com/gleanwork/api-client-go"
+          "os"
+        )
+
+        func main() {
+          ctx := context.Background()
+          
+          client := glean.New(
+            glean.WithAPIToken(os.Getenv("GLEAN_API_TOKEN")),
+          )
+          
+          // Send a chat message to Glean
+          message := glean.ChatMessageFragment{
+            Text: "What are the company holidays this year?",
+          }
+          
+          chatMessage := glean.ChatMessage{
+            Fragments: []glean.ChatMessageFragment{message},
+          }
+          
+          res, err := client.Client.Chat.Create(ctx, &glean.ChatRequest{
+            Messages: []glean.ChatMessage{chatMessage},
+            TimeoutMillis: glean.Int64(30000),
+          })
+          
+          if err != nil {
+            fmt.Printf("Error: %v\n", err)
+            return
+          }
+          
+          // Handle response
+          fmt.Println(res)
+        }
+        ```
+      </Step>
+    </Steps>
+  </Tab>
+  
+  <Tab title="Java">
+    <Steps>
+      <Step title="Add dependency to your project">
+        Maven:
+        ```xml
+        <dependency>
+          <groupId>com.glean.api-client</groupId>
+          <artifactId>glean-api-client</artifactId>
+          <version>0.x.x</version> <!-- Use latest version -->
+        </dependency>
+        ```
+        
+        Gradle:
+        ```groovy
+        implementation 'com.glean.api-client:glean-api-client:0.x.x' // Use latest version
+        ```
+      </Step>
+      
+      <Step title="Initialize the client">
+        ```java
+        import com.glean.api_client.glean_api_client.Glean;
+        import java.time.OffsetDateTime;
+
+        public class Main {
+          public static void main(String[] args) {
+            // Initialize with API token
+            Glean client = Glean.builder()
+                .apiToken(System.getenv("GLEAN_API_TOKEN"))
+                .build();
+          }
+        }
+        ```
+      </Step>
+      
+      <Step title="Example usage">
+        ```java
+        import com.glean.api_client.glean_api_client.Glean;
+        import com.glean.api_client.glean_api_client.models.components.*;
+        import com.glean.api_client.glean_api_client.models.operations.ChatResponse;
+        import java.util.List;
+
+        public class Application {
+            public static void main(String[] args) {
+                Glean apiClient = Glean.builder()
+                    .apiToken(System.getenv("GLEAN_API_TOKEN"))
+                    .build();
+
+                ChatResponse res = apiClient.client().chat().create()
+                    .chatRequest(ChatRequest.builder()
+                        .messages(List.of(
+                            ChatMessage.builder()
+                                .fragments(List.of(
+                                    ChatMessageFragment.builder()
+                                        .text("What are the company holidays this year?")
+                                        .build()))
+                                .build()))
+                        .build())
+                    .call();
+
+                if (res.chatResponse().isPresent()) {
+                    // Handle response
+                    System.out.println(res.chatResponse().get());
+                }
+            }
+        }
+        ```
+      </Step>
+    </Steps>
+  </Tab>
+</Tabs>
+
+## Additional Resources
+
+For more detailed information about using these API clients, please refer to the documentation in their respective GitHub repositories:
+
+- [Python Client Repository](https://github.com/gleanwork/api-client-python)
+- [TypeScript Client Repository](https://github.com/gleanwork/api-client-typescript)
+- [Go Client Repository](https://github.com/gleanwork/api-client-go)
+- [Java Client Repository](https://github.com/gleanwork/api-client-java)
