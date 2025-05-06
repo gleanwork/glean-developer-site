@@ -61,41 +61,32 @@ curl -X POST   https://customer-be.glean.com/api/index/v1/indexdocument \
 ```
 
 ```python Python
-import glean_indexing_api_client as indexing_api
-from glean_indexing_api_client.api import documents_api
-from glean_indexing_api_client.model.index_document_request import IndexDocumentRequest
-from glean_indexing_api_client.model.document_definition import DocumentDefinition
-from glean_indexing_api_client.model.content_definition import ContentDefinition
-from glean_indexing_api_client.model.user_reference_definition import (
-    UserReferenceDefinition,
-)
-from glean_indexing_api_client.model.document_permissions_definition import (
-    DocumentPermissionsDefinition,
-)
+from glean import Glean, models
+import os
 
-request = IndexDocumentRequest(
-    # DocumentDefinition has many fields, we show the usage of a few basic ones.
-    document=DocumentDefinition(
-        datasource="gleantest",
-        object_type="EngineeringDoc",
-        title="This doc will help you get familiar with Blue Sky API",
-        id="blueskytest-1",
-        view_url="https://bluesky.test/blueskytest-1",
-        body=ContentDefinition(
-          mime_type="text/plain",
-          text_content="This doc will help you get familiar with Blue Sky API"
-        ),
-        permissions=DocumentPermissionsDefinition(
-          allow_anonymous_access=True
-        ),
-    )
-)
-# Please refer to the Using the Python SDK section for more details on how to setup api_client
-documents_api = documents_api.DocumentsApi(api_client)
-try:
-    documents_api.indexdocument_post(request)
-except indexing_api.ApiException as e:
-    print("Exception when calling DocumentsApi->indexdocument_post: %s\n" % e)
+with Glean(
+    api_token=os.getenv("GLEAN_API_TOKEN", ""),
+) as client:
+    # Index a document
+    try:
+        client.indexing.documents.index(request={
+            "document": {
+                "datasource": "gleantest",
+                "objectType": "EngineeringDoc",
+                "id": "blueskytest-1",
+                "title": "This doc will help you get familiar with Blue Sky API",
+                "viewURL": "https://bluesky.test/blueskytest-1",
+                "body": {
+                    "mimeType": "text/plain",
+                    "textContent": "This doc will help you get familiar with Blue Sky API"
+                },
+                "permissions": {
+                    "allowAnonymousAccess": True
+                }
+            }
+        })
+    except Exception as e:
+        print(f"Exception when indexing document: {e}")
 ```
 </CodeGroup>
 

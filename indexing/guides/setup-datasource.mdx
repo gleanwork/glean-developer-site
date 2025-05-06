@@ -58,37 +58,29 @@ curl -X POST https://customer-be.glean.com/api/index/v1/adddatasource \
 ```
 
 ```python Python
-import glean_indexing_api_client as indexing_api
-from glean_indexing_api_client.api import datasources_api
-from glean_indexing_api_client.model.custom_datasource_config import CustomDatasourceConfig
-from glean_indexing_api_client.model.object_definition import ObjectDefinition
+from glean import Glean, models
+import os
 
-# Please refer to the Using the Python SDK section for more details on how to setup api_client
-datasource_api = datasources_api.DatasourcesApi(api_client)
-
-# Datasource config supports many fields for customization, but a bare minimum
-# config should be ok to get started.
-datasource_config = CustomDatasourceConfig(
-  name='gleantest',
-  display_name='Glean Test',
-  datasource_category='PUBLISHED_CONTENT',
-  url_regex='^http://bluesky.test.*',
-  object_definitions=[
-    ObjectDefinition(
-        doc_category='PUBLISHED_CONTENT',
-        name='EngineeringDoc'
-      )
-  ],
-
-  # Permissions will be specified by email addresses instead of a
-  # datasource-specific ID.
-  is_user_referenced_by_email=True,
-)
-
-try:
-  datasource_api.adddatasource_post(datasource_config)
-except indexing_api.ApiException as e:
-  print('Exception when calling DatasourcesApi->adddatasource_post: %s\\n' % e)
+with Glean(
+    api_token=os.getenv("GLEAN_INDEXING_API_TOKEN", ""),
+) as client:
+    # Create a datasource
+    try:
+        client.indexing.datasources.add(request={
+            "name": "gleantest",
+            "displayName": "Glean Test",
+            "datasourceCategory": "PUBLISHED_CONTENT",
+            "urlRegex": "^http://bluesky.test.*",
+            "objectDefinitions": [
+                {
+                    "name": "EngineeringDoc",
+                    "docCategory": "PUBLISHED_CONTENT"
+                }
+            ],
+            "isUserReferencedByEmail": True
+        })
+    except Exception as e:
+        print(f"Exception when creating datasource: {e}")
 ```
 
 </CodeGroup>
