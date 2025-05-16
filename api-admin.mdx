@@ -5,40 +5,34 @@ icon: "shield"
 
 ## Context
 
-Governance APIs will primarily revolve around sensitive content policies and reports. These are configurations you could create and set under the Admin -> Governance section of Glean. Once set, they will scan all the documents indexed by Glean based on the configuration provided in the policies/reports. Finally all the violations or sensitive content will be found and will be available to review.
+Governance APIs focus on sensitive-content **policies** and **reports**. Configure them in the Glean UI under **Admin → Governance**. Each policy or report scans every indexed document according to its settings and surfaces any violations for review.
 
-Document hiding and unhiding is also possible through the **Sensitive Findings** and **Content Hiding** dashboards. We also provide a couple of APIs to cover these actions.
+You can also hide or unhide documents through the **Sensitive Findings** and **Content Hiding** dashboards or the corresponding APIs.
 
 
 ## Difference between policies and reports.
 
-Policies are the newer and more refined version of reports. Reports used to be the older way to do sensitive content scans. They would provide the option to download all the violations as a CSV once the scan completes. 
+Policies are the modern replacement for reports. A report runs a one-off scan and lets you download violations as a CSV when it finishes. A policy adds an interactive dashboard where you can review findings, archive items, and optionally hide flagged documents.
 
-Policies provide an enhanced UI dashboard to view all the findings and take certain actions on them. You will have the ability to archive findings, hide documents which have sensitive information etc.
+Policies support two schedules—`WEEKLY` and `CONTINUOUS`. Reports still offer the `ONCE` schedule, so this API remains available until policies add one-time scans.
 
-Ideally policies would completely replace reports. However, policies have only 2 frequencies supported: WEEKLY and CONTINUOUS.
-
-Reports also support one-time runs where a sensitive content scan is done immediately and never again. In the APIs explained below, we will support only this feature of Reports as it is the only thing it has that policies do not.
-
-NOTE: The policy and report APIs use many common internal structures so there could be some redundancy in fields. Make sure to keep them consistent throughout the payload.
+Note: Policy and report APIs share many request fields. Ensure any shared fields use consistent values within the same payload.
 
 
-# Authorization Token
+# Authorization
 
-In order to use the policy and report endpoints, you would need to create a Client API Token with the DATA\_GOVERNANCE scope. While creating the token, the user email-id embedded in the token must be of someone in the org who has access to the Sensitive Content Pages under admin section. This could be a Super Admin or a Sensitive Content Moderator.
+To call the policy and report endpoints, create a **Client API token** with scope `DATA_GOVERNANCE`. The token must belong to a user who can access the Sensitive Content pages (for example, a Super Admin or Sensitive Content Moderator).
 
-Once the token is created, it can be passed in the header of the requests to authenticate them.
+For content-hiding endpoints, generate a token with scope `CONTENT_HIDING`. The associated user must be able to edit document exclusions—typically a Super Admin.
 
-For the content hiding APIs, you would need to do the same as above but use the CONTENT\_HIDING scope. The user has to be one with access to editing document exclusions which could be a super-admin.
-
-The process of creating these tokens cane be found here : [Managing API Tokens](https://developers.glean.com/docs/indexing_api_tokens/).
+See [Authentication](https://developers.glean.com/client/authentication) for detailed steps.
 
 
-# The APIs
+# APIs
 
-The APIs will be broadly divided into 3 sections. Policy, Report and Content Hiding endpoints. 
+Governance APIs fall into three groups: **policy**, **report**, and **content-hiding** endpoints.
 
-Both Reports and Policies have a common "config" with the following important fields.
+Both policies and reports share a common configuration object with the following fields.
 
 **Config -**
 
