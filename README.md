@@ -15,7 +15,7 @@ Clone the repository and install dependencies:
 
 ```bash
 git clone https://github.com/gleanwork/glean-developer-site.git
-cd dev-docs
+cd glean-developer-site
 pnpm install
 ```
 
