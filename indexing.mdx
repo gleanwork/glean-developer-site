@@ -111,6 +111,7 @@ Glean provides official API clients for the Indexing API in multiple languages:
         // Initialize with API token
         const client = new Glean({
           apiToken: process.env.GLEAN_INDEXING_API_TOKEN,
+          instance: process.env.GLEAN_INSTANCE,
         });
         ```
       </Step>
@@ -122,6 +123,7 @@ Glean provides official API clients for the Indexing API in multiple languages:
         async function run() {
           const glean = new Glean({
             apiToken: process.env.GLEAN_INDEXING_API_TOKEN,
+            instance: process.env.GLEAN_INSTANCE,
           });
 
           // Index a document
@@ -129,13 +131,17 @@ Glean provides official API clients for the Indexing API in multiple languages:
             datasource: "my-datasource",
             documents: [
               {
+                datasource: "my-datasource",
                 id: "doc-123",
                 title: "Sample Document",
-                content: "This is a sample document to index in Glean.",
-                url: "https://example.com/documents/123",
+                viewURL: "https://example.com/documents/123",
+                body: { 
+                  mimeType: "text/plain",
+                  textContent: "This is a sample document to index in Glean.",
+                },
                 permissions: {
-                  users: ["user@example.com"],
-                  groups: ["everyone@example.com"]
+                  allowedUsers: [{ email: "user@example.com" }],
+                  allowedGroups: ["everyone@example.com"]
                 }
               }
             ]
