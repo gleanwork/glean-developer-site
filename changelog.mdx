@@ -3,6 +3,36 @@ title: Change Log
 icon: list-timeline
 ---
 
+<Update label="May 16, 2025" tags={["Governance API", "Agent API"]}>
+- New Features:
+  - Governance Admin API surface (10 endpoints)
+    - Policies: retrieve, update, list, create, download
+    - Reports: createReport, downloadReport, status
+    - Visibility Overrides: listVisibilityOverrides, createVisibilityOverride
+  - Agent API brought up to the LangChain Agent-Protocol (Agents & Runs stages)
+    - retrieveAgent `GET /agents/{agent_id}`
+    - retrieveAgentSchemas `GET /agents/{agent_id}/schemas`
+    - listAgents `POST /agents/search`
+    - runAgent `POST /agents/runs/wait`
+    - runAgentStream `POST /agents/runs/stream`
+  - Two helper aliases remain (`runAgent`, `runAgentStream`) for parity with previous β release.
+- Changes & Enhancements:
+  - Replaced legacy alpha Run-Workflow endpoints with the standard Agent-Protocol equivalents (see above).
+  - Request/Response schemas for `runAgent`, `retrieveAgentSchemas`, `listAgents` now follow LangChain-AP spec (JSON-Schema alignment, streaming enums, stricter validation).
+  - Overlays now enforce consistent lower-camel method names (`status`, `downloadReport`, …).
+- Breaking Changes:
+  - Agent payloads – old models are incompatible; regenerate code and update type usages.
+  - Deprecated internal `/runworkflow*` paths have been removed.
+  - Governance endpoints introduce new permission scopes (`governance.read`, `governance.write`).
+- Bug Fixes:
+  - Python: resolved "unclosed async coroutine" warning in async transport.
+- Language-Specific Notes:
+  - Python 0.4.1 uploaded to PyPI, requires 3.8+.
+  - TypeScript 0.4.1 published, ESM, bundled types.
+  - Go module path `github.com/gleaninc/glean-sdk-go/v4.1.0`.
+  - Java 0.4.1 available on Maven Central (`com.glean:glean-sdk:0.4.1`).
+</Update>
+
 <Update label="May 10, 2025" tags={["API Clients"]}>
 - Released official API clients for Glean in multiple languages, replacing the previous OpenAPI Generator-based SDK approach
 - New API clients are now available for:
