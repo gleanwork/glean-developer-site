@@ -1,8 +1,8 @@
 /*************************************************************************
- * Mintlify Alpha Endpoint Callout
+ * Mintlify Beta Endpoint Callout
  *
- * Mintlify doesn't have any support for marking an endpoint as "alpha".
- * This script adds a callout to alpha endpoints.
+ * Mintlify doesn't have any support for marking an endpoint as "beta".
+ * This script adds a callout to beta endpoints.
  *************************************************************************/
 
 const betaWarningText = "This endpoint is in Beta. Expect changes and instability.";
@@ -14,7 +14,7 @@ const betaPaths = [
   "/api-reference/client/agents/create-run-wait-for-output",
 ];
 
-// Add callout warning for alpha endpoints.
+// Add callout warning for beta endpoints.
 function addBetaWarning() {
   const canonicalLink = document.querySelector('head link[rel="canonical"]');
 
