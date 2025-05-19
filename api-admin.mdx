@@ -5,9 +5,19 @@ icon: "shield"
 
 ## Context
 
-Governance APIs focus on sensitive-content **policies** and **reports**. Configure them in the Glean UI under **Admin → Governance**. Each policy or report scans every indexed document according to its settings and surfaces any violations for review.
+Governance APIs focus on sensitive-content **policies** and **reports**. 
+Configure them in the Glean UI under **Admin → Governance**. You can also configure the same using the APIs provided.
+Each policy or report scans every indexed document according to its settings and surfaces any violations for review. 
 
-You can also hide or unhide documents through the **Sensitive Findings** and **Content Hiding** dashboards or the corresponding APIs.
+You can also hide or unhide documents through the **Sensitive Findings** and **Content Hiding** dashboards or the corresponding APIs. 
+
+# Authorization
+
+To call the policy and report endpoints, create a **Client API token** with scope `DATA_GOVERNANCE`. The token must belong to a user who can access the Sensitive Content pages (for example, a Super Admin or Sensitive Content Moderator).
+
+For content-hiding endpoints, generate a token with scope `CONTENT_HIDING`. The associated user must be able to edit document exclusions—typically a Super Admin.
+
+See [Authentication](https://developers.glean.com/client/authentication) for detailed steps.
 
 
 ## Difference between policies and reports.
@@ -19,128 +29,52 @@ Policies support two schedules—`WEEKLY` and `CONTINUOUS`. Reports still offer 
 Note: Policy and report APIs share many request fields. Ensure any shared fields use consistent values within the same payload.
 
 
-# Authorization
-
-To call the policy and report endpoints, create a **Client API token** with scope `DATA_GOVERNANCE`. The token must belong to a user who can access the Sensitive Content pages (for example, a Super Admin or Sensitive Content Moderator).
-
-For content-hiding endpoints, generate a token with scope `CONTENT_HIDING`. The associated user must be able to edit document exclusions—typically a Super Admin.
-
-See [Authentication](https://developers.glean.com/client/authentication) for detailed steps.
-
 
 # APIs
 
 Governance APIs fall into three groups: **policy**, **report**, and **content-hiding** endpoints.
 
-Both policies and reports share a common configuration object with the following fields.
-
-**Config -**
-
-| Field Name | Description |
-|-----|-----|
-| `Version` | This is a unique identifier for the config. It will be synonymous with the report or policy id. It is NOT the same as the policy-version. |
-| `InputOptions` | This will control all the data sources and time range of documents to be considered for the scan.<br/>• _datasourcesType_ can be set to ALL to consider all datasources. Or it can be set to CUSTOM in which case, the specific _datasourceInstances_ need to be populated.<br/>• _timePeriodType_ can be set to ALL_TIME, PAST_YEAR, or CUSTOM. If it is set to CUSTOM, the _customTimeRange_ field must be set with the start and end time following ISO date-time format.<br/><br/>Note: The last edited time of the document would be considered for this filter. |
-| `BroadSharingOptions` | This controls how widely shared the document must be to be picked up by the scan.<br/>• _anyoneInternalEnabled_ will pick up documents that are accessible to the entire org.<br/>• _anonymousAccessEnabled_ will pick up documents accessible to the entire internet.<br/>• _thresholdEnabled_ will allow filtering based on the number of people who have access to a document and the _threshold_ field would have to be set to control the same.<br/>• _userAccessEnabled_ will filter in documents which are accessible to any of the users present in _userIds_. |
-| `sensitiveContentOptions` | This is when you will actually define the sensitive content you would like to scan for. It can be specified in 3 ways:<br/>• _sensitiveInfoTypes_ are predefined categories that we will use Google's DLP API to determine if the content in a doc falls into these categories or not.<br/>• _sensitiveTerms_ are plain text terms that would flag any documents with the term.<br/>• _sensitiveRegexes_ are regular expressions that must follow the RE2 syntax which will flag any doc with content matching one of the regexes. |
-| `reportName` | Synonymous with policy or report name. |
-| `Frequency`                  | Interval between scans. |
-| `CreatedBy`                  | Person who created the policy/report. |
-| `CreatedAt`                  | Timestamp when the config was created. |
-| `redatedQuote`               | Whether the sensitive quote should be redacted in the final violation report. |
-| `autoHideDocs`               | Whether documents must be auto-hidden if flagged. |
-| `allowlistOptions`           | List of terms that will NOT flag a document even if it is picked up by a sensitive content option. |
+Both policies and reports share a common configuration object, **config**. 
+This has certain fields that need not be populated while submitting a report or policy to be created as they are only meant to be populated on return.
+Namely, the config **version**, **createdAt** and **createdBy** will automatically be set without needing to be passed.
 
 ## Policy APIs
 
-With these endpoints, you can perform CRUD operations on policies. This will be synonymous to using the policy dashboard in the Sensitive Findings section under the Admin > Governance section in the Glean UI.
-
-**Important fields in a policy:**
-
-| Field Name| Description |
-|---------|------------|
-| `Name` | This would be the name of the policy which would be displayed in the UI. |
-| `Id` | Unique numeric identifier for a policy. |
-| `Version` | This is the version of the policy which keeps incrementing every time the policy is edited. |
-| `Frequency` | This is the frequency at which the policy will run. Same as the config frequency. |
-| `AutoHideDocs` | This would control whether any documents flagged by this policy would get auto-hidden. |
-| `Status` | This is the active state of the policy. It will run scans if it is "ACTIVE" based on its frequency. "INACTIVE" implies it will not execute scans but shows as "archived" in UI. "CANCELLED" policies will not show up. |
-| `createdBy` | Same as config _createdBy_. |
-| `createdAt` | Same as config _createdAt_. |
-| `lastUpdatedAt` | Timestamp at which the policy was last updated. |
-| `Config` | See common config for policies and reports. |
-
+With these endpoints, you can perform CRUD operations on policies. 
+Policies created/edited through these would reflect in the Sensitive Findings section under the Admin > Governance section in the Glean UI.
 
 ### Creating a policy.
 
-This will create a new policy with all the specified configurations. The payload will need the name of the new policy, its configuration, frequency and autoHideDocs. 
-
-In the config, the **createdAt** and **version** field need not be set. **CreatedBy** is optional.
+This will create a new policy with all the specified configurations. 
+The payload will need the name of the new policy, its configuration, frequency and autoHideDocs. 
+Note, only WEEKLY and CONTINUOUS frequencies are supported for policies.
 
 Once created, the entire policy will be returned back along with its unique **id**.
 
-Endpoint : POST https://{domain}.glean.com/rest/api/v1/governance/data/policies
-
-Example :
-```bash
-curl -X POST 'https://{domain}.glean.com/rest/api/v1/governance/data/policies' \
--H 'Authorization: Bearer ABCTOKEN=' \
--H 'Content-Type: application/json' \
---data-raw '{"autoHideDocs":false,"config":{"inputOptions":{"datasourcesType":"CUSTOM","timePeriodType":"PAST_YEAR","datasourceInstances":["gdrive"]},"broadSharingOptions":{"threshold":5,"thresholdEnabled":true,"anyoneInternalEnabled":false,"anonymousAccessEnabled":false,"userAccessEnabled":false,"userIds":[]},"sensitiveContentOptions":{"sensitiveInfoTypes":[{"infoType":"PASSWORD"}],"sensitiveTerms":[{"expression":"oxygen"}],"sensitiveRegexes":[{"expression":"sampleregex"}]},"reportName":"example-name","frequency":"CONTINUOUS","redactQuote":false,"autoHideDocs":false,"allowlistOptions":{"terms":["allowed"]}},"frequency":"CONTINUOUS","name":"example-name"}'
-```
+See [Creating a Policy](https://developers.glean.com/api-reference/client/governance/creates-new-policy) for detailed specs.
 
 ### Updating a policy.
 
-This will update an existing policy. Specifically the policy with the same is as the one passed in the path. Any one of the fields _config, frequency, status, autoHideDocs, name_ must be passed for the update call to pass. The unset fields will remain the same. Whether the update was successful or not would be returned.
+This will update an existing policy. Specifically the policy with the same is as the one passed in the path. 
+Any one of the fields **config, frequency, status, autoHideDocs, name** must be passed for the update call to pass. 
+The unset fields will remain the same. Whether the update was successful or not would be returned.
 
-In the config, the **createdAt** field need not be set. **CreatedBy** is optional.
-
-Endpoint : POST https://{domain}.glean.com/rest/api/v1/governance/data/policies/{id}
-
-Example :
-```bash
-# Update all fields at once.
-curl -X POST 'https://{domain}.glean.com/rest/api/v1/governance/data/policies/1234567890' \
--H 'Authorization: Bearer ABCTOKEN=' \
--H 'Content-Type: application/json' \
---data-raw '{"autoHideDocs":false,"config":{"inputOptions":{"datasourcesType":"ALL","timePeriodType":"CUSTOM","customTimeRange":{"startTime": "2020-03-08T18:30:00Z","endTime": "2024-08-23T18:29:59Z"}},"broadSharingOptions":{"threshold":5,"thresholdEnabled":true,"anyoneInternalEnabled":false,"anonymousAccessEnabled":false,"userAccessEnabled":false,"userIds":[]},"sensitiveContentOptions":{"sensitiveInfoTypes":[{"infoType":"PASSWORD"}],"sensitiveTerms":[{"expression":"oxygen"}],"sensitiveRegexes":[{"expression":"sampleregex"}]},"reportName":"example-name","frequency":"CONTINUOUS","redactQuote":false,"autoHideDocs":false,"allowlistOptions":{"terms":["allowed"]}},"frequency":"CONTINUOUS","repotName":"example-name", "status":"INACTIVE"}'
-
-# Update only one field (others will remain same as before).
-curl -X POST 'https://{domain}.glean.com/rest/api/v1/governance/data/policies/1234567890' \
--H 'Authorization: Bearer ABCTOKEN=' \
--H 'Content-Type: application/json' \
---data-raw '{"status":"ACTIVE"}'
-```
+See [Updating a Policy](https://developers.glean.com/api-reference/client/governance/updates-an-existing-policy) for detailed specs.
 
 ### Getting a policy.
 
-This will fetch an existing policy matching the id provided. The policy version can also be optionally provided to get an older version of the policy if it has been edited.
-
+This will fetch an existing policy matching the id provided. 
+The policy version can also be optionally provided to get an older version of the policy if it has been edited.
 The entire policy will be returned.
 
-Endpoint : GET https://{domain}.glean.com/rest/api/v1/governance/data/policies/{id}
-
-Example :
-```bash
-# Not specifying version will get the latest policy.
-curl -X GET 'https://{domain}.glean.com/rest/api/v1/governance/data/policies/1234567890' \
--H 'Authorization: Bearer ABCTOKEN='
-
-# Specifying version will get a specific edit version of the policy.
-curl -X GET 'https://{domain}.glean.com/rest/api/v1/governance/data/policies/1234567890?version=0' \
--H 'Authorization: Bearer ABCTOKEN='
-```
+See [Get a Policy](https://developers.glean.com/api-reference/client/governance/gets-specified-policy) for detailed specs.
 
 ### Listing multiple policies.
 
-This will fetch all the existing policies with some filtering. You can provide the **autoHide** and **frequency** parameters to filter on.
+This will fetch all the existing policies with some filtering. 
+You can provide the **autoHide** and **frequency** parameters to filter on.
 
-Endpoint : GET https://{domain}.glean.com/rest/api/v1/governance/data/policies
-
-Example :
-```bash
-curl -X GET 'https://{domain}.glean.com/rest/api/v1/governance/data/policies?frequency=WEEKLY&autoHide=true' \
--H 'Authorization: Bearer ABCTOKEN='
-```
+See [Listing Policies](https://developers.glean.com/api-reference/client/governance/lists-policies) for detailed specs.
 
 ### Downloading policy violations.
 
@@ -148,17 +82,13 @@ This will download a CSV file of all the violations of a specific policy's lates
 
 Note: this is only supported for weekly policies. Continuous policies will have their findings continuously dumped into your cloud storage from where you can consume them directly.
 
-Endpoint : GET https://{domain}.glean.com/rest/api/v1/governance/data/policies/{id}/download
-
-Example :
-```bash
-curl -X GET 'https://{domain}.glean.com/rest/api/v1/governance/data/policies/1234567890/download' \
--H 'Authorization: Bearer wu21k2dSwONsioXa5MBkYj0FDc0xDtEuMbeGbIdkkGI=' > output.csv
-```
+See [Download Policy Violations](hhttps://developers.glean.com/api-reference/client/governance/downloads-violations-csv-for-policy) for detailed specs.
 
 ## Report APIs
 
-Only creating a one-time report is supported via API for reports. You can get the report's scan status to check if it has completed and download its violation CSV. For any of the other features such as updating, other frequencies, etc., please use policies.
+Only creating a one-time report is supported via API for reports. 
+You can get the report's scan status to check if it has completed and download its violation CSV. 
+For any of the other features such as updating, other frequencies, etc., please use policies.
 
 Reports created using this endpoint will appear in the "Sensitive Content Reporting" section under Admin > Governance in the UI.
 
@@ -169,15 +99,7 @@ This will create a report and immediately trigger its sensitive content scan. Th
 
 In the config, the **createdAt** and **version** field need not be set. **CreatedBy** is optional.
 
-Endpoint : POST https://{domain}.glean.com/rest/api/v1/governance/data/reports
-
-Example :
-```bash
-curl -X POST 'https://{domain}.glean.com/rest/api/v1/governance/data/reports' \
--H 'Authorization: Bearer ABCTOKEN=' \
--H 'Content-Type: application/json' \
---data-raw '{"config":{"inputOptions":{"datasourcesType":"ALL","timePeriodType":"ALL_TIME"},"broadSharingOptions":{"enabled":true,"threshold":5,"thresholdEnabled":true,"anyoneWithLinkEnabled":true,"anyoneInternalEnabled":true,"anonymousAccessEnabled":true,"userAccessEnabled":false,"userIds":[]},"sensitiveContentOptions":{"sensitiveInfoTypes":[],"sensitiveTerms":[{"expression":"oxygen"}],"sensitiveRegexes":[]},"reportName":"example-name","redactQuote":false},"frequency":"ONCE"}'
-```
+See [Creating a Report](https://developers.glean.com/api-reference/client/governance/creates-new-one-time-report) for detailed specs.
 
 ### Getting Report Scan Status.
 
@@ -191,25 +113,13 @@ This will get the current status of the Report's scan.
 
 It also returns the timestamp at which the scan started.
 
-Endpoint : GET https://{domain}.glean.com/rest/api/v1/governance/data/reports/{id}/status
-
-Example :
-```bash
-curl -X GET 'https://{domain}.glean.com/rest/api/v1/governance/data/reports/1234567890/status' \
--H 'Authorization: Bearer ABCTOKEN='
-```
+See [Get Report Status](https://developers.glean.com/api-reference/client/governance/fetches-report-run-status) for detailed specs.
 
 ### Downloading Report violations.
 
 This will download a CSV file of all the violations of a specific report.
 
-Endpoint : GET https://{domain}.glean.com/rest/api/v1/governance/data/reports/{id}/download
-
-Example :
-```bash
-curl -X GET 'https://{domain}.glean.com/rest/api/v1/governance/data/reports/1234567890/download' \
--H 'Authorization: Bearer ABCTOKEN='
-```
+See [Download Report Violations](https://developers.glean.com/api-reference/client/governance/downloads-violations-csv-for-report) for detailed specs.
 
 ## Content Hiding Apis
 
@@ -226,15 +136,10 @@ Each of these overrides is distinct and if any one of them hide a document, it w
 
 ### Visibility overrides
 
-Visibility overrides refer to the visiblity of a document that is being enforced from a particular source. For example, policy A might want the document to be visible, while policy B might want it to be hidden. All these sources are considered together and the source with the highest visiblity override is considered. A user can also be a source of visibility override which is what the below API provides.
-
-**Important fields in a Visibility overrides:**
-
-| Field Name| Description |
-|---------|------------|
-| `docId` | The id of the document whose visiblity override is considered. |
-| `override` | The visibility override status of the document. |
-
+Visibility overrides refer to the visiblity of a document that is being enforced from a particular source. 
+For example, policy A might want the document to be visible, while policy B might want it to be hidden. 
+All these sources are considered together and the source with the highest visiblity override is considered. 
+A user can also be a source of visibility override which is what the below API provides.
 
 There are three types of visibility overrides status.
 
@@ -249,25 +154,13 @@ There are three types of visibility overrides status.
 
 You can submit a list of document ids along with the desired visibility override for each one. This will set the "user" level visibility override for the document. 
 
-The returned value contains the documents along with their visibility override values and whether the action was successful for them. This endpoint could have a partial failure which can be deduced from the **success** field in the return parameter.
+The returned value contains the documents along with their visibility override values and whether the action was successful for them. 
+This endpoint could have a partial failure which can be deduced from the **success** field in the return parameter.
 
-Endpoint : POST https://{domain}.glean.com/rest/api/v1/governance/documents/visibilityoverrides
-
-Example :
-```bash
-curl -X POST 'https://{domain}.glean.com/rest/api/v1/governance/documents/visibilityoverrides' \
--H 'Authorization: Bearer ABCTOKEN=' \
---data-raw '{"visibilityOverrides": [{"docId":"doc1","override":"NONE"}, {"docId":"doc2","override":"HIDE_FROM_GROUPS"}]}'
-```
+See [Hide/Unhide Documents](https://developers.glean.com/api-reference/client/governance/hideun-hide-docs) for detailed specs.
 
 ### Getting visibility overrides for documents
 
 You can submit a list of document ids and get the current final visibility override for the documents passed.
 
-Endpoint : GET https://{domain}.glean.com/rest/api/v1/governance/documents/visibilityoverrides
-
-Example :
-```bash
-curl -X GET 'https://{domain}.glean.com:7962/rest/api/v1/governance/documents/visibilityoverrides?docIds=doc1&docIds=doc2&docIds=doc3' \
--H 'Authorization: Bearer ABCTOKEN='
-```
+See [Get Document Visibility](https://developers.glean.com/api-reference/client/governance/fetches-documents-visibility) for detailed specs.
