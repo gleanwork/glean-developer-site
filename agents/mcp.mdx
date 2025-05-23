@@ -232,6 +232,146 @@ Currently, our MCP implementation uses API tokens for authentication. While the 
 </Tabs>
 </Accordion>
 
+<Accordion title="VS Code">
+### Configure VS Code
+
+<Tabs>
+  <Tab title="Configure using the CLI">
+    <Steps>
+      <Step title="Get Credentials">
+        Ensure you have your Glean API credentials ready from the [Configuration](#configuration) section above. You'll need:
+        - Your Glean subdomain
+        - A [user-scoped API token](/client/authentication#user)
+      </Step>
+
+      <Step title="Configure VS Code">
+        Run the following command to configure VS Code to use Glean's MCP server. This will add a new MCP server to VS Code's global settings.
+
+        Using explicit `domain` and `token` flags:
+        ```bash
+        npx @gleanwork/mcp-server configure --client vscode --domain <your-glean-subdomain> --token <your-glean-api-token>
+        ```
+
+        Using a `.env` file:
+        ```bash
+        npx @gleanwork/mcp-server configure --client vscode --env <path-to-env-file>
+        ```
+      </Step>
+
+      <Step title="Test the Integration">
+        <Note>
+          VS Code has native MCP support with agent mode. You can access MCP tools through the Chat view in agent mode. Look for the **Tools** button to manage available MCP servers and tools.
+        </Note>
+
+        1. Open the Chat view in VS Code (⌃⌘I / Ctrl+Alt+I)
+        2. Select **Agent** mode from the dropdown
+        3. Click the **Tools** button to view available MCP tools
+        4. Try a query like "Using Glean, what's our company's policy on remote work?"
+        5. Verify that VS Code can access and search your Glean content
+      </Step>
+    </Steps>
+  </Tab>
+
+  <Tab title="Configure manually">
+    <Steps>
+      <Step title="Get Credentials">
+        Ensure you have your Glean API credentials ready from the [Configuration](#configuration) section above. You'll need:
+        - Your Glean subdomain
+        - A [user-scoped API token](/client/authentication#user)
+      </Step>
+
+      <Step title="Choose Configuration Mode">
+        VS Code supports two modes for configuring MCP servers:
+        
+        - **Workspace Configuration**: Stores configuration in `.vscode/mcp.json` and shares it with your team
+        - **Global Configuration**: Stores configuration in your personal VS Code settings for all workspaces
+
+        Choose the approach that best fits your needs below.
+      </Step>
+
+      <Step title="Configure VS Code">
+        **Workspace Configuration (Recommended for teams)**
+        
+        1. Create a `.vscode/mcp.json` file in your workspace root
+        2. Add the following configuration:
+
+        ```json
+        {
+          "inputs": [
+            {
+              "type": "promptString",
+              "id": "glean-subdomain",
+              "description": "Glean Subdomain"
+            },
+            {
+              "type": "promptString",
+              "id": "glean-api-token",
+              "description": "Glean API Token",
+              "password": true
+            }
+          ],
+          "servers": {
+            "glean": {
+              "type": "stdio",
+              "command": "npx",
+              "args": ["-y", "@gleanwork/mcp-server"],
+              "env": {
+                "GLEAN_SUBDOMAIN": "${input:glean-subdomain}",
+                "GLEAN_API_TOKEN": "${input:glean-api-token}"
+              }
+            }
+          }
+        }
+        ```
+
+        3. Save the file. VS Code will automatically detect the MCP server configuration
+        4. A "Start" button will appear in your `.vscode/mcp.json` file. Click it to start the MCP server
+        5. VS Code will prompt you for the subdomain and API token when the server first starts
+
+        **Global Configuration (Personal use)**
+        
+        1. Open VS Code Command Palette (⌘⇧P / Ctrl+Shift+P)
+        2. Run **"MCP: Add Server"** command
+        3. Select **"User Settings"** when prompted
+        4. Or manually edit your `settings.json` and add:
+
+        ```json
+        {
+          "mcp": {
+            "servers": {
+              "glean": {
+                "type": "stdio",
+                "command": "npx",
+                "args": ["-y", "@gleanwork/mcp-server"],
+                "env": {
+                  "GLEAN_SUBDOMAIN": "<your-glean-subdomain>",
+                  "GLEAN_API_TOKEN": "<your-glean-api-token>"
+                }
+              }
+            }
+          }
+        }
+        ```
+
+        5. Use **"MCP: List Servers"** command to view and manage your configured servers
+      </Step>
+
+      <Step title="Test the Integration">
+        <Note>
+          VS Code has native MCP support with agent mode. You can access MCP tools through the Chat view in agent mode. Look for the **Tools** button to manage available MCP servers and tools.
+        </Note>
+
+        1. Open the Chat view in VS Code (⌃⌘I / Ctrl+Alt+I)
+        2. Select **Agent** mode from the dropdown
+        3. Click the **Tools** button to view available MCP tools
+        4. Try a query like "Using Glean, what's our company's policy on remote work?"
+        5. Verify that VS Code can access and search your Glean content
+      </Step>
+    </Steps>
+  </Tab>
+</Tabs>
+</Accordion>
+
 ### Application Integrations
 
 <Accordion title="Claude Desktop">
