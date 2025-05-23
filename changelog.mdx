@@ -3,6 +3,19 @@ title: Change Log
 icon: list-timeline
 ---
 
+<Update label="May 23, 2025" tags={["Tools", "Agents", "MCP", "API Clients"]}>
+- New Features:
+  - Client REST API
+    - New endpoint: `GET /tools/list`
+    - New endpoint: `POST /tools/call`
+  - API Clients
+    - Added support for the new `GET /tools/list` and `POST /tools/call` endpoints
+  - MCP Server
+    - Support for configuring MCP server with VS Code
+- Breaking Changes:
+  - Python API client: aligned method parameters with the other methods in the API client.
+</Update>
+
 <Update label="May 16, 2025" tags={["Governance API", "Agent API"]}>
 - New Features:
   - Governance Admin API surface (10 endpoints)
@@ -10,22 +23,17 @@ icon: list-timeline
     - Reports: createReport, downloadReport, status
     - Visibility Overrides: listVisibilityOverrides, createVisibilityOverride
   - Agent API brought up to the LangChain Agent-Protocol (Agents & Runs stages)
-    - retrieveAgent `GET /agents/{agent_id}`
-    - retrieveAgentSchemas `GET /agents/{agent_id}/schemas`
-    - listAgents `POST /agents/search`
-    - runAgent `POST /agents/runs/wait`
-    - runAgentStream `POST /agents/runs/stream`
-  - Two helper aliases remain (`runAgent`, `runAgentStream`) for parity with previous β release.
+    - Retrieve an Agent `GET /agents/{agent_id}`
+    - Retrieve an Agent's Schemas `GET /agents/{agent_id}/schemas`
+    - List Agents `POST /agents/search`
+    - Run an Agent `POST /agents/runs/wait`
+    - Run an Agent with streaming `POST /agents/runs/stream`
 - Changes & Enhancements:
   - Replaced legacy alpha Run-Workflow endpoints with the standard Agent-Protocol equivalents (see above).
-  - Request/Response schemas for `runAgent`, `retrieveAgentSchemas`, `listAgents` now follow LangChain-AP spec (JSON-Schema alignment, streaming enums, stricter validation).
-  - Overlays now enforce consistent lower-camel method names (`status`, `downloadReport`, …).
 - Breaking Changes:
-  - Agent payloads – old models are incompatible; regenerate code and update type usages.
-  - Deprecated internal `/runworkflow*` paths have been removed.
   - Governance endpoints introduce new permission scopes (`governance.read`, `governance.write`).
 - Bug Fixes:
-  - Python: resolved "unclosed async coroutine" warning in async transport.
+  - Python API client: resolved "unclosed async coroutine" warning in async transport.
 - Language-Specific Notes:
   - Python 0.4.1 uploaded to PyPI, requires 3.8+.
   - TypeScript 0.4.1 published, ESM, bundled types.
