@@ -15,16 +15,18 @@ You can also hide or unhide documents through the **Sensitive Findings** and **C
 
 To call the policy and report endpoints, create a **Client API token** with scope `DATA_GOVERNANCE`. The token must belong to a user who can access the Sensitive Content pages (for example, a Super Admin or Sensitive Content Moderator).
 
-For content-hiding endpoints, generate a token with scope `CONTENT_HIDING`. The associated user must be able to edit document exclusions—typically a Super Admin.
+For content-hiding endpoints, generate a token with scope `CONTENT_HIDING`. The associated user must be able to edit visibility overrides, typically a Super Admin.
 
 See [Authentication](https://developers.glean.com/client/authentication) for detailed steps.
 
 
-## Difference between policies and reports.
+## Difference between policies and reports
 
-Policies are the modern replacement for reports. A report runs a one-off scan and lets you download violations as a CSV when it finishes. A policy adds an interactive dashboard where you can review findings, archive items, and optionally hide flagged documents.
+A report runs a one-off scan and lets you download violations as a CSV when it finishes. 
 
-Policies support two schedules—`WEEKLY` and `CONTINUOUS`. Reports still offer the `ONCE` schedule, so this API remains available until policies add one-time scans.
+Policies support two schedules—`WEEKLY` and `CONTINUOUS`.
+A policy adds an interactive dashboard where you can review findings, archive items, and optionally hide flagged documents.
+
 
 Note: Policy and report APIs share many request fields. Ensure any shared fields use consistent values within the same payload.
 
@@ -43,7 +45,7 @@ Namely, the config **version**, **createdAt** and **createdBy** will automatical
 With these endpoints, you can perform CRUD operations on policies. 
 Policies created/edited through these would reflect in the Sensitive Findings section under the Admin > Governance section in the Glean UI.
 
-### Creating a policy.
+### Creating a policy
 
 This will create a new policy with all the specified configurations. 
 The payload will need the name of the new policy, its configuration, frequency and autoHideDocs. 
@@ -53,7 +55,7 @@ Once created, the entire policy will be returned back along with its unique **id
 
 See [Creating a Policy](https://developers.glean.com/api-reference/client/governance/creates-new-policy) for detailed specs.
 
-### Updating a policy.
+### Updating a policy
 
 This will update an existing policy. Specifically the policy with the same is as the one passed in the path. 
 Any one of the fields **config, frequency, status, autoHideDocs, name** must be passed for the update call to pass. 
@@ -61,7 +63,7 @@ The unset fields will remain the same. Whether the update was successful or not 
 
 See [Updating a Policy](https://developers.glean.com/api-reference/client/governance/updates-an-existing-policy) for detailed specs.
 
-### Getting a policy.
+### Getting a policy
 
 This will fetch an existing policy matching the id provided. 
 The policy version can also be optionally provided to get an older version of the policy if it has been edited.
@@ -69,14 +71,14 @@ The entire policy will be returned.
 
 See [Get a Policy](https://developers.glean.com/api-reference/client/governance/gets-specified-policy) for detailed specs.
 
-### Listing multiple policies.
+### Listing multiple policies
 
 This will fetch all the existing policies with some filtering. 
 You can provide the **autoHide** and **frequency** parameters to filter on.
 
 See [Listing Policies](https://developers.glean.com/api-reference/client/governance/lists-policies) for detailed specs.
 
-### Downloading policy violations.
+### Downloading policy violations
 
 This will download a CSV file of all the violations of a specific policy's latest scan. 
 
@@ -93,7 +95,7 @@ For any of the other features such as updating, other frequencies, etc., please 
 Reports created using this endpoint will appear in the "Sensitive Content Reporting" section under Admin > Governance in the UI.
 
 
-### Creating and running a One-Time report.
+### Creating and running a one-time report
 
 This will create a report and immediately trigger its sensitive content scan. The **frequency** field must be populated with ONCE.
 
@@ -101,7 +103,7 @@ In the config, the **createdAt** and **version** field need not be set. **Create
 
 See [Creating a Report](https://developers.glean.com/api-reference/client/governance/creates-new-one-time-report) for detailed specs.
 
-### Getting Report Scan Status.
+### Getting a reports scan status
 
 This will get the current status of the Report's scan.
 
@@ -115,13 +117,13 @@ It also returns the timestamp at which the scan started.
 
 See [Get Report Status](https://developers.glean.com/api-reference/client/governance/fetches-report-run-status) for detailed specs.
 
-### Downloading Report violations.
+### Downloading report violations
 
 This will download a CSV file of all the violations of a specific report.
 
 See [Download Report Violations](https://developers.glean.com/api-reference/client/governance/downloads-violations-csv-for-report) for detailed specs.
 
-## Content Hiding Apis
+## Content hiding APIs
 
 Content hiding works by setting a "visibility override" to a particular document. These overrides can come from different sources, such as: 
 
