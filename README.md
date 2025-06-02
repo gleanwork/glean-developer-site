@@ -6,8 +6,16 @@ This repository contains the source code for [developers.glean.com](https://deve
 
 ### Prerequisites
 
-- [Node.js](https://nodejs.org/) (v14 or higher)
-- [pnpm](https://pnpm.io/) (recommended for package management)
+If you are using [mise](https://mise.jdx.dev/), you can run the following:
+
+- `mise trust`
+- `mise install`
+
+Otherwise, you can manually install/setup the following prerequisites:
+
+- [Node.js](https://nodejs.org/) (v24 or higher)
+- [pnpm](https://pnpm.io/) (v10)
+- [vale](https://vale.sh/) (for linting)
 
 ### Installation
 
