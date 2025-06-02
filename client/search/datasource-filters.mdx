@@ -15,22 +15,22 @@ If you would like to curl to get the facets, you can use a /search request to ge
 
 ```json
 {
-    "query":"test",
-    "pageSize":10,
-    "requestOptions": {
-        "facetBucketSize" : 3000,
-        "facetFilters": [
-            {
-                "fieldName": "app",
-                "values": [
-                    {
-                        "value": "confluence",
-                        "relationType": "EQUALS"
-                    }
-                ]
-            }
+  "query": "test",
+  "pageSize": 10,
+  "requestOptions": {
+    "facetBucketSize": 3000,
+    "facetFilters": [
+      {
+        "fieldName": "app",
+        "values": [
+          {
+            "value": "confluence",
+            "relationType": "EQUALS"
+          }
         ]
-    }
+      }
+    ]
+  }
 }
 ```
 
@@ -40,26 +40,26 @@ facetResults has the following relevant fields:
 1. [`sourceName`](https://developers.glean.com/client/operation/search/#tag/Search/operation/search!c=200&path=facetResults&t=response) - same as the facet `fieldName` in the `facetFilter`s object
 2. [`operatorName`](https://developers.glean.com/client/operation/search/#tag/Search/operation/search!c=200&path=facetResults&t=response) - not relevant
 3. [`buckets`](https://developers.glean.com/client/operation/search/#tag/Search/operation/search!c=200&path=facetResults&t=response) - a list of facet bucket objects corresponding to a facet value
-    1. The facet bucket object has the following relevant fields:
-        1. [`count`](https://developers.glean.com/client/operation/search/#tag/Search/operation/search!c=200&path=facetResults&t=response) - the number of search results that would be returned if filtering by the facet value
-        2. [`value`](https://developers.glean.com/client/operation/search/#tag/Search/operation/search!c=200&path=facetResults&t=response) - the facet value (ie “engineering” for the space facet)
-            1. [`stringValue`](https://developers.glean.com/client/operation/search/#tag/Search/operation/search!c=200&path=facetResults&t=response) - the string value
-            2. [`intValue`](https://developers.glean.com/client/operation/search/#tag/Search/operation/search!c=200&path=facetResults&t=response)- the integer value (not common)
-            3. [`displayLabel`](https://developers.glean.com/client/operation/search/#tag/Search/operation/search!c=200&path=facetResults&t=response) - alternative value used for display in the UI
-            4. [`iconConfig`](https://developers.glean.com/client/operation/search/#tag/Search/operation/search!c=200&path=facetResults&t=response) - optional image used to represent the facet value, such as a profile picture for people facet values.
+   1. The facet bucket object has the following relevant fields:
+      1. [`count`](https://developers.glean.com/client/operation/search/#tag/Search/operation/search!c=200&path=facetResults&t=response) - the number of search results that would be returned if filtering by the facet value
+      2. [`value`](https://developers.glean.com/client/operation/search/#tag/Search/operation/search!c=200&path=facetResults&t=response) - the facet value (ie “engineering” for the space facet)
+         1. [`stringValue`](https://developers.glean.com/client/operation/search/#tag/Search/operation/search!c=200&path=facetResults&t=response) - the string value
+         2. [`intValue`](https://developers.glean.com/client/operation/search/#tag/Search/operation/search!c=200&path=facetResults&t=response)- the integer value (not common)
+         3. [`displayLabel`](https://developers.glean.com/client/operation/search/#tag/Search/operation/search!c=200&path=facetResults&t=response) - alternative value used for display in the UI
+         4. [`iconConfig`](https://developers.glean.com/client/operation/search/#tag/Search/operation/search!c=200&path=facetResults&t=response) - optional image used to represent the facet value, such as a profile picture for people facet values.
 
 ```json
 {
-    "sourceName": "space",
-    "operatorName": "SelectMultiple",
-    "buckets": [
-        {
-            "count": 3,
-            "value": {
-                "stringValue": "engineering"
-            }
-        }
-    ]
+  "sourceName": "space",
+  "operatorName": "SelectMultiple",
+  "buckets": [
+    {
+      "count": 3,
+      "value": {
+        "stringValue": "engineering"
+      }
+    }
+  ]
 }
 ```
 
@@ -69,24 +69,22 @@ If latency is a concern, and you only want to receive `facetResults`, you can se
 
 ```json
 {
-    "query":"test",
-    "pageSize":0,
-    "requestOptions": {
-        "facetBucketSize":3000,
-        "facetFilters": [
-            {
-                "fieldName": "app",
-                "values": [
-                    {
-                        "value": "confluence",
-                        "relationType": "EQUALS"
-                    }
-                ]
-            }
-        ],
-        "responseHints": [
-            "FACET_RESULTS"
+  "query": "test",
+  "pageSize": 0,
+  "requestOptions": {
+    "facetBucketSize": 3000,
+    "facetFilters": [
+      {
+        "fieldName": "app",
+        "values": [
+          {
+            "value": "confluence",
+            "relationType": "EQUALS"
+          }
         ]
-    }
+      }
+    ],
+    "responseHints": ["FACET_RESULTS"]
+  }
 }
 ```

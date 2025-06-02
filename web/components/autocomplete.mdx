@@ -1,15 +1,21 @@
 ---
-title: "Autocomplete"
+title: 'Autocomplete'
 description: "Build a custom search interface by combining Glean's Autocomplete and Search Results components"
-icon: "magnifying-glass"
+icon: 'magnifying-glass'
 ---
 
 Create a full-featured search experience by integrating Glean's Autocomplete and Search Results components. This approach enables deep UI customization while maintaining straightforward implementation.
 
 <Frame>
   <div className="grid grid-cols-2 gap-3">
-    <img src="../images/introduction/autocomplete-1.png" alt="Autocomplete Interface" />
-    <img src="../images/introduction/search-results.png" alt="Search Results Interface" />
+    <img
+      src="../images/introduction/autocomplete-1.png"
+      alt="Autocomplete Interface"
+    />
+    <img
+      src="../images/introduction/search-results.png"
+      alt="Search Results Interface"
+    />
   </div>
 </Frame>
 
@@ -20,13 +26,17 @@ Create a full-featured search experience by integrating Glean's Autocomplete and
 Include the JavaScript library in your page's `<head>` section. Replace `GLEAN_APP_DOMAIN` with your company's Glean web app domain (typically `app.glean.com` or `your-company.glean.com` for custom subdomains).
 
 <Info>
-  The Glean web app domain differs from your company's Glean backend domain (which typically follows the format `your-company-be.glean.com`).
+  The Glean web app domain differs from your company's Glean backend domain
+  (which typically follows the format `your-company-be.glean.com`).
 </Info>
 
 <CodeGroup>
-```html HTML
-<script defer src="https://{GLEAN_APP_DOMAIN}/embedded-search-latest.min.js"></script>
-```
+  ```html HTML
+  <script
+    defer
+    src="https://{GLEAN_APP_DOMAIN}/embedded-search-latest.min.js"
+  ></script>
+  ```
 </CodeGroup>
 
 ### Component Setup
@@ -34,6 +44,7 @@ Include the JavaScript library in your page's `<head>` section. Replace `GLEAN_A
 The implementation requires two container elements with specific CSS properties and event handling to coordinate the search experience:
 
 1. Create container elements with the following CSS properties:
+
    - `position: relative`
    - `display: block`
    - Appropriate sizing and positioning
@@ -45,28 +56,29 @@ The implementation requires two container elements with specific CSS properties 
 let currentQuery = undefined
 
 function renderSearchResults() {
-  const resultsElement = this.template.querySelector('search-results')
-  window.GleanWebSDK.renderSearchResults(resultsElement, {
-    onSearch: (query) => {
-      currentQuery = query
-      renderSearchBox()
-    },
-    query: currentQuery
-  })
+const resultsElement = this.template.querySelector('search-results')
+window.GleanWebSDK.renderSearchResults(resultsElement, {
+onSearch: (query) => {
+currentQuery = query
+renderSearchBox()
+},
+query: currentQuery
+})
 }
 
 function renderSearchBox() {
-  const autocompleteElement = this.template.querySelector('search-box')
-  window.GleanWebSDK.renderSearchBox(autocompleteElement, {
-    onSearch: (query) => {
-      currentQuery = query
-      renderSearchResults()
-    },
-    query: currentQuery
-  })
+const autocompleteElement = this.template.querySelector('search-box')
+window.GleanWebSDK.renderSearchBox(autocompleteElement, {
+onSearch: (query) => {
+currentQuery = query
+renderSearchResults()
+},
+query: currentQuery
+})
 }
 
 renderSearchBox()
+
 ```
 </CodeGroup>
 
@@ -119,3 +131,4 @@ View a complete working implementation of the Autocomplete with Search component
     title="Autocomplete with Search | Glean"
   />
 </Frame>
+```

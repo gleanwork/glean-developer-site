@@ -5,7 +5,6 @@ icon: message-bot
 
 The Glean Chat API is a powerful tool for integrating conversational AI into your products. It allows you to create custom conversational interfaces that leverage Glean's AI capabilities. This page provides examples of how to use the Chat API to integrate conversational AI into your products.
 
-
 ## Example Conversational Flow Diagram
 
 The following diagram illustrates a multi-message conversation flow between an end user, a custom client, and the Glean server.
@@ -66,18 +65,21 @@ curl 'https://<instance-name>-be.glean.com/rest/api/v1/chat' \
         ]
     }'
 ```
-</CodeGroup>
 
+</CodeGroup>
 
 ## Python Example
 
 _Note: The following example streams the output as it becomes available, whenever possible. To turn off streaming outputs, please set the `stream` field in the request body to `False`_
 
 <Warning>
-As of 04/24/2025, the /chat API response has been changed. The previous way of processing the response message stream has been deprecated.
-As in-line citations (citations inside the fragments) do not contain `startIndex` or `endIndex`, you might still find this deprecated function useful
-as a way to get the `endIndex` of each citation (`startIndex` is no longer populated). Please also note that this function may return the same
-citation multiple times, although each duplicated citation should have a different `endIndex`.
+  As of 04/24/2025, the /chat API response has been changed. The previous way of
+  processing the response message stream has been deprecated. As in-line
+  citations (citations inside the fragments) do not contain `startIndex` or
+  `endIndex`, you might still find this deprecated function useful as a way to
+  get the `endIndex` of each citation (`startIndex` is no longer populated).
+  Please also note that this function may return the same citation multiple
+  times, although each duplicated citation should have a different `endIndex`.
 </Warning>
 
 <CodeGroup>
@@ -85,10 +87,9 @@ citation multiple times, although each duplicated citation should have a differe
 import requests
 import json
 
-
 def process_message_fragment(message):
-    message_type = message['messageType']
-    fragments = message.get('fragments', [])
+message_type = message['messageType']
+fragments = message.get('fragments', [])
 
     message_fragment_str = ''
     if message_type == 'CONTENT':
@@ -114,29 +115,27 @@ def process_message_fragment(message):
                     source = citation['sourceFile']
                     print(f'(Source: File name - {source["name"]})')
 
-
-
 def process_response_message_stream(response):
-    for line in response.iter_lines():
-        if line:
-            line_json = json.loads(line)
-            messages = line_json.get('messages', [])
-            for message in messages:
-                process_message_fragment(message)
+for line in response.iter_lines():
+if line:
+line_json = json.loads(line)
+messages = line_json.get('messages', [])
+for message in messages:
+process_message_fragment(message)
 
 def main():
-    url = 'https://<instance-name>-be.glean.com/rest/api/v1/chat'
-    headers = {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer <TOKEN>'
-    }
-    data = {
-        'stream': True, # Set to False to toggle off streaming mode
-        'messages': [{
-            'author': 'USER',
-            'fragments': [{'text': 'What are the holidays this year?'}]
-        }],
-    }
+url = 'https://<instance-name>-be.glean.com/rest/api/v1/chat'
+headers = {
+'Content-Type': 'application/json',
+'Authorization': 'Bearer <TOKEN>'
+}
+data = {
+'stream': True, # Set to False to toggle off streaming mode
+'messages': [{
+'author': 'USER',
+'fragments': [{'text': 'What are the holidays this year?'}]
+}],
+}
 
     try:
         with requests.post(url, headers=headers, json=data, stream=True) as response:
@@ -149,10 +148,10 @@ def main():
         print(f'Request Exception: {str(e)}')
         exit(1)
 
+if **name** == '**main**':
+main()
 
-if __name__ == '__main__':
-    main()
-```
+````
 
 ```python Multiple Conversations
 import requests
@@ -273,7 +272,7 @@ def main():
 
 if __name__ == '__main__':
     main()
-```
+````
 
 ```python DEPRECATED
 import requests

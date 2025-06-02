@@ -13,18 +13,17 @@ In order to filter search results to show documents that match certain fields vi
 
 Each facetFilter object has the following relevant fields:
 
-| Field Name | Description |
-| --- | --- |
+| Field Name  | Description                                                                                                                                                           |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `fieldName` | the name of the field we are filtering by (eg “from” to facet by user, “type” for document type, etc). fieldName should be unique in the list of facetFilter objects. |
-| `values` | a list of facetFilterValue objects. All values are OR’d between the same field name (we AND between different field names). |
+| `values`    | a list of facetFilterValue objects. All values are OR’d between the same field name (we AND between different field names).                                           |
 
 A facetFilterValue object has the following relevant fields:
 
-| Field Name | Description |
-| --- | --- |
-| `value` | string value that results are being filtered to. |
-| `relationType` | can take on the values below: |
-
+| Field Name     | Description                                      |
+| -------------- | ------------------------------------------------ |
+| `value`        | string value that results are being filtered to. |
+| `relationType` | can take on the values below:                    |
 
 ### Basic Example
 
@@ -48,32 +47,31 @@ To filter to only the document type pdf search results, you would send the follo
 
 ### Topbar Facet Field Names
 
-| Field Name | Description |
-| --- | --- |
-| `last_updated_at` | Filter by document last updated at |
-| `from` | Filter by user who created/modified the document. Supports special value "me" for the current user |
-| `my` | Filter by documents that are in the current user's history. Supports special value "history" |
-| `collection` | Filter by collection name |
-| `has` | Filter by whether a document has a specific field. Supports special value "golink" to filter by documents with a golink |
-| `type` | Filter by document type |
-
+| Field Name        | Description                                                                                                             |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `last_updated_at` | Filter by document last updated at                                                                                      |
+| `from`            | Filter by user who created/modified the document. Supports special value "me" for the current user                      |
+| `my`              | Filter by documents that are in the current user's history. Supports special value "history"                            |
+| `collection`      | Filter by collection name                                                                                               |
+| `has`             | Filter by whether a document has a specific field. Supports special value "golink" to filter by documents with a golink |
+| `type`            | Filter by document type                                                                                                 |
 
 ### Entity Field Names
 
-| Field Name | Description |
-| --- | --- |
-| `businessunit` | Filter by business unit |
-| `city` | Filter by city |
-| `country` | Filter by country |
-| `industry` | Filter by industry |
-| `location` | Filter by location |
-| `region` | Filter by region |
-| `roletype` | Filter by role type |
-| `startafter` | Filter by start date after |
-| `startbefore` | Filter by start date before |
-| `state` | Filter by state |
-| `title` | Filter by title |
-| `reportsto` | Filter by reporting to |
+| Field Name     | Description                 |
+| -------------- | --------------------------- |
+| `businessunit` | Filter by business unit     |
+| `city`         | Filter by city              |
+| `country`      | Filter by country           |
+| `industry`     | Filter by industry          |
+| `location`     | Filter by location          |
+| `region`       | Filter by region            |
+| `roletype`     | Filter by role type         |
+| `startafter`   | Filter by start date after  |
+| `startbefore`  | Filter by start date before |
+| `state`        | Filter by state             |
+| `title`        | Filter by title             |
+| `reportsto`    | Filter by reporting to      |
 
 ## Exceptions to the basic example
 
@@ -93,40 +91,41 @@ Closed date range example for filtering to documents from dates 6/16, 6/17, 6/18
 
 ```json
 [
-   {
-      "fieldName":"last_updated_at",
-      "values":[
-         {
-            "relationType":"GT",
-            "value":"2023-06-15"
-         },
-         {
-            "relationType":"LT",
-            "value":"2023-06-20"
-         }
-      ]
-   }
+  {
+    "fieldName": "last_updated_at",
+    "values": [
+      {
+        "relationType": "GT",
+        "value": "2023-06-15"
+      },
+      {
+        "relationType": "LT",
+        "value": "2023-06-20"
+      }
+    ]
+  }
 ]
 ```
 
 Open date range example for filtering to documents from dates 6/11 onwards:
+
 ```json
 [
-   {
-      "fieldName":"last_updated_at",
-      "values":[
-         {
-            "relationType":"GT",
-            "value":"2023-06-10"
-         },
-      ]
-   }
+  {
+    "fieldName": "last_updated_at",
+    "values": [
+      {
+        "relationType": "GT",
+        "value": "2023-06-10"
+      }
+    ]
+  }
 ]
 ```
 
 #### Special Values
 
-For special values, we allow the values `past_day, past_week, past_month, yesterday, today, past_n_days, past_n_weeks, past_n_months, past_n_years `for the relation type `EQUALS`, where n is a number, ie 5 in `past_5_days`.  For all past_ prefixed values, we also support the last_ prefix, they mean the same thing (ie `last_week` is a viable substitute for `past_week`).
+For special values, we allow the values `past_day, past_week, past_month, yesterday, today, past_n_days, past_n_weeks, past_n_months, past_n_years `for the relation type `EQUALS`, where n is a number, ie 5 in `past_5_days`. For all past* prefixed values, we also support the last* prefix, they mean the same thing (ie `last_week` is a viable substitute for `past_week`).
 
 We allow the values `past_day, past_week, past_month, yesterday,today `for the relation type `LT`.
 
@@ -141,19 +140,34 @@ Sample:
 `updated:today` becomes
 
 ```json
-[{fieldName: "last_updated_at", values: [{relationType: "EQUALS", value: "today"}]}]
+[
+  {
+    "fieldName": "last_updated_at",
+    "values": [{ "relationType": "EQUALS", "value": "today" }]
+  }
+]
 ```
 
 `before:past_week` becomes
 
 ```json
-[{fieldName: "last_updated_at", values: [{relationType: "LT", value: "past_week"}]}]
+[
+  {
+    "fieldName": "last_updated_at",
+    "values": [{ "relationType": "LT", "value": "past_week" }]
+  }
+]
 ```
 
 `after:yesterday` becomes
 
 ```json
-[{fieldName: "last_updated_at", values: [{relationType: "GT", value: "yesterday"}]}]
+[
+  {
+    "fieldName": "last_updated_at",
+    "values": [{ "relationType": "GT", "value": "yesterday" }]
+  }
+]
 ```
 
 #### Timezone considerations
@@ -165,15 +179,19 @@ We factor in user’s timezone for all queries except when you use the value `pa
 `my:` facet will only ever have the value “history”. It filters to show only documents the user has viewed before. The object always looks like this:
 
 ```json
-{fieldName: "suggested", groupName: "", values: [{relationType: "EQUALS", value: "my history"}]}
+{
+  "fieldName": "suggested",
+  "groupName": "",
+  "values": [{ "relationType": "EQUALS", "value": "my history" }]
+}
 ```
-
 
 ### From filter (or any user filter):
 
 If you would like to specify a specific user, for example, if there are 2 people with the same name, “User one”, you can specify which one you mean by using the email address they authenticated with Glean as the `value` . IE [user@glean.com](mailto:user@nvidia.com) and [userone@glean.com](mailto:userone@nvidia.com) would facet by different “User One”s even if they have the same name.
 
 Sample query:
+
 ```json
 from:"User one" updated:today type:document
 requestOptions.facetFilters:

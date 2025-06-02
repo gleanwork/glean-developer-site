@@ -1,7 +1,7 @@
 ---
-title: "Jira Issue Creation Using Redirect Action"
-description: "Implement a redirect action that enables Glean Assistant to create Jira issues through the native Jira interface"
-icon: "jira"
+title: 'Jira Issue Creation Using Redirect Action'
+description: 'Implement a redirect action that enables Glean Assistant to create Jira issues through the native Jira interface'
+icon: 'jira'
 ---
 
 ## Overview
@@ -33,75 +33,75 @@ The manifest configuration is intentionally simpler than that of execution actio
 The OpenAPI specification serves as the blueprint for how Glean Assistant interacts with your redirect action. This specification must clearly define all parameters and their behaviors to ensure accurate field population.
 
 ```yaml
-openapi: "3.0.0"
+openapi: '3.0.0'
 info:
-  title: "Jira Create Ticket"
-  version: "1.0.0"
+  title: 'Jira Create Ticket'
+  version: '1.0.0'
 servers:
-  - url: "https://{YOUR-ATLASSIAN-DOMAIN}.atlassian.net/secure/CreateIssueDetails!init.jspa?"
+  - url: 'https://{YOUR-ATLASSIAN-DOMAIN}.atlassian.net/secure/CreateIssueDetails!init.jspa?'
 paths:
   /:
     post:
-      summary: "Creates an issue or a sub-task from a JSON representation"
+      summary: 'Creates an issue or a sub-task from a JSON representation'
       description: |
         This API allows you to create a ticket or an issue in Jira.
       parameters:
-        - name: "pid"
-          in: "query"
+        - name: 'pid'
+          in: 'query'
           required: true
           schema:
-            type: "string"
-            x-glean-typehint: "JiraProjectID"
-            default: "10000"
-          description: "Project ID where the ticket is created. 10000 refers to Engineering project."
-        - name: "issuetype"
-          in: "query"
+            type: 'string'
+            x-glean-typehint: 'JiraProjectID'
+            default: '10000'
+          description: 'Project ID where the ticket is created. 10000 refers to Engineering project.'
+        - name: 'issuetype'
+          in: 'query'
           required: true
           schema:
-            type: "integer"
+            type: 'integer'
             enum:
               - 10002
               - 10004
-          description: "Issue type. 10002 refers to Task, 10004 refers to Bug."
-        - name: "priority"
-          in: "query"
+          description: 'Issue type. 10002 refers to Task, 10004 refers to Bug.'
+        - name: 'priority'
+          in: 'query'
           schema:
-            type: "integer"
+            type: 'integer'
             minimum: 1
             maximum: 5
-          description: "Numeric priority. 1 (highest) to 5 (lowest)."
-        - name: "summary"
-          in: "query"
+          description: 'Numeric priority. 1 (highest) to 5 (lowest).'
+        - name: 'summary'
+          in: 'query'
           required: true
           schema:
-            type: "string"
-            x-glean-typehint: "Content"
-          description: "Title of the issue."
-        - name: "components"
-          in: "query"
+            type: 'string'
+            x-glean-typehint: 'Content'
+          description: 'Title of the issue.'
+        - name: 'components'
+          in: 'query'
           schema:
-            type: "string"
-            x-glean-typehint: "JiraComponent"
-          description: "Component name where the ticket should be filed."
-        - name: "description"
-          in: "query"
+            type: 'string'
+            x-glean-typehint: 'JiraComponent'
+          description: 'Component name where the ticket should be filed.'
+        - name: 'description'
+          in: 'query'
           schema:
-            type: "string"
-            x-glean-typehint: "Content"
-          description: "Body of the issue."
-        - name: "assignee"
-          in: "query"
+            type: 'string'
+            x-glean-typehint: 'Content'
+          description: 'Body of the issue.'
+        - name: 'assignee'
+          in: 'query'
           schema:
-            type: "string"
-            x-glean-typehint: "JiraId"
-          description: "User to which the issue is assigned."
+            type: 'string'
+            x-glean-typehint: 'JiraId'
+          description: 'User to which the issue is assigned.'
       responses:
         '200':
-          description: "OK"
+          description: 'OK'
           content:
             application/json:
               schema:
-                type: "string"
+                type: 'string'
 ```
 
 ## Parameter Configuration Strategy
@@ -109,15 +109,19 @@ paths:
 The specification includes carefully designed parameters that guide Glean Assistant in populating the Jira issue creation form. Each parameter serves a specific purpose and includes clear instructions for value generation.
 
 ### Project Identification
+
 The project ID parameter (`pid`) requires specific attention as it determines where issues are created. The specification includes a default value and clear description to ensure proper project targeting. For example, setting "10000" as the Engineering project helps maintain consistent issue organization.
 
 ### Issue Type Classification
+
 The issue type parameter uses enumerated values to ensure accurate categorization. The specification maps numeric values to specific issue types, such as 10002 for Tasks and 10004 for Bugs. This mapping ensures that issues are properly classified within your Jira instance.
 
 ### Priority Assignment
+
 The priority parameter implements a numeric scale from 1 to 5, with built-in validation to prevent invalid values. This structured approach maintains consistency with Jira's priority system while allowing for flexible assignment based on issue urgency.
 
 ### Content Generation
+
 Content-related parameters like summary and description use the `x-glean-typehint: "Content"` directive to guide Glean Assistant in generating appropriate text. This hint ensures that generated content matches the expected format and style for Jira issues.
 
 ## Implementation Guidelines
@@ -156,21 +160,27 @@ The implementation includes several measures to prevent common issues:
 A comprehensive testing strategy should verify all aspects of the redirect action's functionality.
 
 ### Functional Testing
+
 Verify that:
+
 1. URLs are properly constructed with all parameters
 2. Field values are correctly populated in Jira's interface
 3. Required fields are properly enforced
 4. Default values are appropriately applied
 
 ### Integration Testing
+
 Confirm that:
+
 1. Redirects function properly across different browsers
 2. Parameter values are properly encoded
 3. Jira's interface receives and displays all values correctly
 4. The user experience remains smooth and intuitive
 
 ### User Experience Testing
+
 Evaluate:
+
 1. The clarity of pre-populated fields
 2. The ease of modifying pre-populated values
 3. The overall flow from Glean Assistant to Jira
@@ -181,14 +191,18 @@ Evaluate:
 Regular maintenance ensures continued effectiveness of the redirect action.
 
 ### Monitoring Requirements
+
 Establish monitoring for:
+
 1. Successful redirect rates
 2. Parameter population accuracy
 3. User interaction patterns
 4. Error occurrence frequencies
 
 ### Update Procedures
+
 Maintain the implementation by:
+
 1. Reviewing and updating parameter configurations
 2. Adjusting type hints based on user feedback
 3. Updating project and issue type mappings

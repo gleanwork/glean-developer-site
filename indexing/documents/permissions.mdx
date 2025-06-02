@@ -161,7 +161,7 @@ The following sequence of steps (with sample API calls) should help us reproduce
 
 1. Index users into Glean: Index users `user1@test.com` and `user2@test.com` before moving to further steps (To learn how to index users, please refer to [Step 1.1](https://developers.glean.com/docs/indexing_api_permissions/#step-11-index-users-into-glean) above).
 
-<br/>
+<br />
 
 2. Index a group named `gleantest_group_1` using the [`/indexgroup`](https://developers.glean.com/indexing/tag/Permissions/paths/~1indexgroup/post/) endpoint:
 
@@ -184,7 +184,7 @@ Some key points about fields in the request body:
   - Cannot be empty
   - Cannot start with the prefix “scio”
 
-<br/>
+<br />
 
 3. Index memberships for each of the two test users using the [`/indexmembership`](https://developers.glean.com/indexing/tag/Permissions/paths/~1indexmembership/post/) endpoint:
 
@@ -218,9 +218,13 @@ curl -X POST https://customer-be.glean.com/api/index/v1/indexmembership \
 - Some key points about fields in the request body:
   - `groupName`: A group with this particular groupName must be indexed before indexing memberships for it.
   - `memberUserId`: This identifies a particular user as a member of the group. This must be the email ID of the user if [`isUserReferencedByEmail`](https://developers.glean.com/indexing/tag/Datasources/paths/~1adddatasource/post/#!path=isUserReferencedByEmail&t=request) is set to true. In the other case, this field must be the userId specified while indexing the user.
-  - <ins>Note</ins>: In case a group needs to be added as a member of another group, that can be done by using the [`memberGroupName`](https://developers.glean.com/indexing/tag/Permissions/paths/~1indexmembership/post/#!path=membership/memberGroupName&t=request) field in place of the `memberUserId` field (Exactly one of the two fields must be present).
+  - <ins>Note</ins>: In case a group needs to be added as a member of another
+    group, that can be done by using the
+    [`memberGroupName`](https://developers.glean.com/indexing/tag/Permissions/paths/~1indexmembership/post/#!path=membership/memberGroupName&t=request)
+    field in place of the `memberUserId` field (Exactly one of the two fields
+    must be present).
 
-<br/>
+<br />
 
 4. Create a document with the [allowedGroups](https://developers.glean.com/indexing/tag/Documents/paths/~1indexdocument/post/#!path=document/permissions/allowedGroups&t=request) field to include `gleantest_group_1`. This would allow members of the group to search for the document using Glean.
 
