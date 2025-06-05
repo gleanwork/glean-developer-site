@@ -1,0 +1,43 @@
+---
+title: 'Rate Limits'
+icon: 'code'
+---
+
+To ensure performance and stability, Glean enforces rate limits at the deployment, user, and endpoint levels.
+
+### Deployment Rate Limits
+
+Applied across all incoming API traffic:
+
+- **8,000 requests per minute** across all IP addresses
+- **100 requests per second** from a single IP address
+
+### User Rate Limit
+
+- **30 requests per second** per user-scoped API token
+
+### Endpoint Rate Limits
+
+Rate limits for specific endpoints per user-scoped API token are as follows:
+
+| Endpoint             | Rate Limit                              |
+| -------------------- | --------------------------------------- |
+| /agents/runs         | 0.5 requests per second                 |
+| /autocomplete        | 10 requests per second                  |
+| /chat                | 0.5 requests per second                 |
+| /feed                | 7 requests per second                   |
+| /indexdocument       | 10 requests per second                  |
+| /indexdocuments      | 10 requests per second                  |
+| /people              | 5 requests per second                   |
+| /processalldocuments | 1 request every 3 hours per data source |
+| /recommendations     | 0.5 requests per second                 |
+| /search              | 5 requests per second                   |
+| /summarize           | 0.5 requests per second                 |
+| rest of endpoints    | 30 requests per second                  |
+
+Glean uses token bucket rate limiters for user and endpoint-level enforcement. This allows for short bursts of activity while maintaining consistent request throughput over time.
+
+### Handling Rate Limits
+
+If you send too many requests in a short period, the API will respond with an HTTP 429 "Too Many Requests" error. To handle this gracefully, watch for 429 status codes and implement a retry mechanism with exponential backoff to gradually reduce request volume.
+If your application requires higher rate limits, please contact your Glean account team to see if the rate limits can be adjusted.
