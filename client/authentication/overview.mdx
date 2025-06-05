@@ -1,9 +1,8 @@
 ---
-title: Authentication
-icon: 'shield-check'
+title: Overview
 ---
 
-The developer-ready Client API endpoints can be accessed via one of two types of Bearer tokens: [OAuth Access Tokens](#oauth-access-tokens) issued by an SSO provider or [Glean-issued tokens](#glean-issued-tokens). Both methods can be used concurrently, but we recommend using OAuth access tokens for a more secure authentication for Client API requests, scoped to the individual user it's issued to.
+The developer-ready Client API endpoints can be accessed via one of two types of Bearer tokens: [OAuth Access Tokens](/client/authentication/oauth) issued by an SSO provider or [Glean-issued tokens](#glean-issued-tokens). Both methods can be used concurrently, but we recommend using OAuth access tokens for a more secure authentication for Client API requests, scoped to the individual user it's issued to.
 
 ## Navigating to Client API Settings
 
@@ -12,48 +11,6 @@ Only admins have access to these settings. To access it, navigate to [this link]
 1. Click on the wrench icon in the left navigation bar. This will open up the admin console.
 2. On the left sidebar, navigate to **Platform** and select **API Tokens**.
 3. In the API Tokens page, select the **Client Tokens** tab. Here you can see a list of all token metadata (note that the token itself won't be visible).
-
-## OAuth Access Tokens
-
-### Setup
-
-Admins can enable this feature in [Glean's Client API Settings](#navigating-to-client-api-settings). To enable use of OAuth access tokens with our Rest APIs,
-click on the toggle labeled "Allow OAuth token-based access." You will need to provide the following:
-
-<Steps>
-  <Step title="Select your OAuth provider">
-    Choose from supported providers: Azure, GSuite, Okta, or OneLogin
-  </Step>
-
-  <Step title="Specify the issuer subdomain">
-    Required if your provider is not GSuite. This value can be found on the payload of your JWT access tokens, and should have one of the following formats:
-    - `https://login.microsoftonline.com/<directory_ID>/v2.0` for Azure
-    - `https://<subdomain>.okta.com` for Okta
-    - `https://<subdomain>.onelogin.com/oidc/2` for OneLogin
-  </Step>
-
-  <Step title="Enter Client IDs">
-    Provide a comma-separated list of Client IDs of the applications for which your access tokens will be issued.
-
-    Once saved, your settings may need up to 10 minutes to take effect.
-
-  </Step>
-</Steps>
-
-### Using access tokens
-
-To use an OAuth access token to authenticate against the Rest API, set the following HTTP headers:
-
-- `Authorization: Bearer <access_token>`
-- `X-Glean-Auth-Type: OAUTH`
-
-Note that OAuth access tokens are treated as user-permissioned tokens with access to all of the [scopes](#scopes) listed below.
-
-**If using GSuite access tokens**, please ensure that your tokens are granted the following [scopes](https://developers.google.com/identity/protocols/oauth2/scopes#oauth2):
-
-- `openid`
-- `email`
-- `profile`
 
 ## Glean-Issued Tokens
 

@@ -1,0 +1,239 @@
+---
+title: OAuth
+---
+
+## OAuth Access Tokens
+
+### Setup
+
+Admins can enable this feature in [Glean's Client API Settings](#navigating-to-client-api-settings). To enable the use of OAuth access tokens with our Rest APIs, click on the toggle labeled "Allow OAuth token-based access." You will need to provide the following:
+
+<Steps>
+  <Step title="Select your OAuth provider">
+    Choose from supported providers: Azure, GSuite, Okta, or OneLogin
+  </Step>
+
+  <Step title="Specify the issuer subdomain">
+    Required if your provider is not GSuite. This value can be found on the payload of your JWT access tokens, and should have one of the following formats:
+    - `https://login.microsoftonline.com/<directory_ID>/v2.0` for Azure
+    - `https://<subdomain>.okta.com` for Okta
+    - `https://<subdomain>.onelogin.com/oidc/2` for OneLogin
+  </Step>
+
+  <Step title="Enter Client IDs">
+    Provide a comma-separated list of Client IDs of the applications for which your access tokens will be issued.
+
+    Once saved, your settings may need up to 10 minutes to take effect.
+
+  </Step>
+</Steps>
+
+### Using Access Tokens
+
+To use an OAuth access token to authenticate against the Rest API, set the following HTTP headers:
+
+- `Authorization: Bearer <access_token>`
+- `X-Glean-Auth-Type: OAUTH`
+
+Note that OAuth access tokens are treated as user-permissioned tokens.
+
+By default these tokens have access to all of the [scopes](./overview#scopes) available to client APIs.  If you need these tokens restricted to specific scopes, please contact your Glean representative.
+
+**If using GSuite access tokens**, please ensure that your tokens are granted the following [scopes](https://developers.google.com/identity/protocols/oauth2/scopes#oauth2):
+
+- `openid`
+- `email`
+- `profile`
+
+### Obtaining Access Tokens
+
+#### Overview
+
+- Token Issuance: Glean does not issue OAuth tokens in this flow. Instead, your Identity Provider (IDP), such as Okta or Google Workspace, issues the tokens. Glean acts only as a consumer of these tokens.
+- Token Validation: Glean validates the following attributes of each OAuth token:
+  - **Token Issuer** – must be configured in the Glean UI
+  - **Client ID** – must match the expected value, also configured in the UI
+  - **Audience** (optional) – can be configured by Glean Support
+- Utilize security best practices and proper token management to secure access and refresh tokens. Check access tokens for expiration and fetch new tokens via the refresh token if needed.
+
+Selecting the right identity provider is very important. Usually, it’s recommended to select the IDP to be used for Glean SSO.
+
+The steps for obtaining a token are:
+
+<Steps>
+  <Step title="Create an OAuth 2.0 client" />
+  <Step title="Register the client with Glean" />
+  <Step title="Use a standard OAuth flow (e.g. an authorization grant flow) to obtain a token" />
+</Steps>
+
+#### Example: GSuite
+
+In this example, we’ll create a Gsuite Oauth Client and create a local custom application that handles Oauth callback using auth code flow \+ exchange the auth code for User Access Token / Refresh token. Then making a Search API call using user Access Token
+
+##### Register OAuth 2.0 Client with IDP
+
+**Steps to Create an OAuth Client ID in Google Cloud Console**
+
+<Steps>
+  <Step title="Create client credentials">
+    Navigate to [https://console.cloud.google.com/apis/credentials](https://console.cloud.google.com/apis/credentials) and click **Create Credentials** \> **OAuth Client ID**.![][create-credentials]
+  </Step>
+
+<Step title="Choose the appropriate application type">
+  For this example, select **Web application**.
+</Step>
+
+<Step title="Enter a name for your OAuth client" />
+
+<Step title="Configure redirect URLs">
+  Under **Authorized redirect URIs**, add the URI that will handle the
+  authorization code exchange. This URI is where the OAuth server (e.g., Google)
+  will send the authorization code after user consent. - This redirect URI
+  typically points to a backend service that receives the authorization code and
+  exchanges it for an **access token** and **refresh token** - For local testing
+  instance using [this example](#example-flask-server), we can enter: -
+  `http://127.0.0.1:5000/oauth/callback` ![][configure-client]
+</Step>
+
+<Step title="Click create">
+  Be sure to store the **Client ID** and **Client Secret** securely.
+</Step>
+
+  <Step title="Validate audience">
+    Navigate to [https://console.cloud.google.com/auth/audience](https://console.cloud.google.com/auth/audience) and make sure that only allowed users / authorized domain users can use your Oauth Client.
+  </Step>
+</Steps>
+
+##### Register Glean as an OAuth Token Consumer
+
+<Steps>
+  <Step title="Navigate to Glean token management">
+    [https://app.glean.com/admin/platform/tokenManagement?tab=client](https://app.glean.com/admin/platform/tokenManagement?tab=client)
+  </Step>
+
+<Step title="Configure client ID">
+  Under **OAuth Access Tokens** \> **Gsuite**, enter the **Client ID** you
+  obtained in Step 6 above. ![][glean-oauth-token-consumer]
+</Step>
+
+  <Step title="Click save" />
+</Steps>
+
+##### Test the Flow End-to-End
+
+<Steps>
+  <Step title="Run an OAuth resource server">
+    Run the [example flask server](#example-flask-server) (replace CLIENT_ID / CLIENT_SECRET)
+  </Step>
+
+  <Step title="Acquire a token">
+    Navigate to [http://127.0.0.1:5000/oauth/authorize](http://127.0.0.1:5000/oauth/authorize).
+
+    After successfully authenticating, you should see an Access Token \+ Refresh token issued by Gsuite
+    ![][access-token-example]
+
+  </Step>
+
+  <Step title="Test the token">
+    Make the following call with the access token
+
+```text
+curl --request POST \
+  --url https://<instance>-be.glean.com/rest/api/v1/search \
+  --header 'Authorization: Bearer <gsuite access token>' \
+  --header 'Content-Type: application/json' \
+  --header 'X-Glean-Auth-Type: OAUTH' \
+  --data '{
+  "trackingToken": "trackingToken",
+  "query": "vacation policy",
+  "pageSize": 10,
+  "requestOptions": {
+    "facetFilters": [
+      {
+        "fieldName": "type",
+        "values": [
+          {
+            "value": "article",
+            "relationType": "EQUALS"
+          },
+          {
+            "value": "document",
+            "relationType": "EQUALS"
+          }
+        ]
+      },
+      {
+        "fieldName": "department",
+        "values": [
+          {
+            "value": "engineering",
+            "relationType": "EQUALS"
+          }
+        ]
+      }
+    ]
+  }
+}'
+```
+
+  </Step>
+</Steps>
+
+##### Example Flask Server
+
+<Warning>
+  This example server is for testing purposes only. Never use this in
+  production.
+</Warning>
+
+```python
+# Replace these with values from your OAuth provider (e.g., Okta, Google)
+CLIENT_ID = os.getenv("OAUTH_CLIENT_ID")
+CLIENT_SECRET = os.getenv("OAUTH_CLIENT_SECRET")
+BASE_DOMAIN = 'http://127.0.0.1:5000/'
+REDIRECT_URI = f"{BASE_DOMAIN}oauth/callback"
+TOKEN_URL = "https://oauth2.googleapis.com/token"
+AUTH_URL = (
+    "https://accounts.google.com/o/oauth2/v2/auth"
+    f"?response_type=code"
+    f"&client_id={CLIENT_ID}"
+    f"&redirect_uri={REDIRECT_URI}"
+    f"&scope=openid%20email%20profile"
+    f"&access_type=offline"
+    f"&prompt=consent"
+)
+
+@app.route("/oauth/authorize")
+def login():
+    return redirect(AUTH_URL)
+
+@app.route("/oauth/callback")
+def callback():
+    code = request.args.get("code")
+    if not code:
+        return "Missing authorization code", 400
+
+    # Exchange code for tokens
+    data = {
+        "grant_type": "authorization_code",
+        "code": code,
+        "redirect_uri": REDIRECT_URI,
+        "client_id": CLIENT_ID,
+        "client_secret": CLIENT_SECRET
+    }
+
+    response = requests.post(TOKEN_URL, data=data)
+    if response.status_code != 200:
+        return f"Token exchange failed: {response.text}", 400
+
+    token_data = response.json()
+    return f"Access Token: {token_data.get('access_token')}<br>Refresh Token: {token_data.get('refresh_token')}"
+
+if __name__ == "__main__":
+    app.run(debug=True)
+```
+
+[create-credentials]: ./images/create-credentials.png
+[configure-client]: ./images/configure-client.png
+[glean-oauth-token-consumer]: ./images/glean-oauth-token-consumer.png
+[access-token-example]: ./images/access-token-example.png
