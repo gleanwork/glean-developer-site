@@ -1,0 +1,48 @@
+name: Trigger Redeploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Reason for redeployment (optional)'
+        required: false
+        default: 'Manual trigger'
+
+permissions:
+  contents: write
+
+jobs:
+  trigger-redeploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.FORMATTING_TOKEN }}
+
+      - name: Update redeploy trigger file
+        run: |
+          # Get current timestamp with seconds
+          TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          REASON="${{ github.event.inputs.reason }}"
+
+          # Create the content for the trigger file
+          cat > _redeploy-trigger.mdx << EOF
+          ---
+          noindex: true
+          ---
+
+          Last updated: $TIMESTAMP
+          Reason: $REASON
+          Triggered by: ${{ github.actor }}
+          Run ID: ${{ github.run_id }}
+          EOF
+
+      - name: Commit and push changes
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "github-actions[bot]"
+          git add _redeploy-trigger.mdx
+          git commit -m "Trigger redeploy: ${{ github.event.inputs.reason || 'Manual trigger' }} [skip ci]"
+          git push
