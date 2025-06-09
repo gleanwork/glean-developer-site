@@ -101,78 +101,105 @@ If you prefer to update manually, search for all instances of:
 </Update>
 
 <Update label="May 27, 2025">
-  ## Remote MCP Server (private beta) With Glean’s [remote MCP
-  server](https://docs.anthropic.com/en/docs/agents-and-tools/remote-mcp-servers),
-  you can access Glean from MCP clients like Claude Desktop, Cursor, or Goose.
-  Your Glean admin can enable a remote MCP server to expose Glean agents and
-  tools. To join the MCP Server private beta, contact your Glean account team.
+
+## Remote MCP Server (private beta)
+
+With Glean’s [remote MCP server](https://docs.anthropic.com/en/docs/agents-and-tools/remote-mcp-servers),
+you can access Glean from MCP clients like Claude Desktop, Cursor, or Goose.
+Your Glean admin can enable a remote MCP server to expose Glean agents and
+tools. To join the MCP Server private beta, contact your Glean account team.
+
 </Update>
 
 <Update label="May 27, 2025">
-  ## Run agent API bug fix in client libraries We fixed a bug that caused [Run
-  Agent Wait for
-  Output](https://developers.glean.com/client/api/agents/create-run-wait-for-output)
-  (`/agents/run/wait`) to return empty responses when used with the API Client
-  libraries. We also fixed a bug that produced non-SSE compliant output when
-  using the [Run Agent Stream
-  Output](https://developers.glean.com/client/api/agents/create-run-stream-output)
-  (`/agents/run/stream`) endpoint.
+
+## Run agent API bug fix in client libraries
+
+We fixed a bug that caused [Run Agent Wait for Output](https://developers.glean.com/client/api/agents/create-run-wait-for-output)
+(`/agents/run/wait`) to return empty responses when used with the API Client
+libraries. We also fixed a bug that produced non-SSE compliant output when
+using the [Run Agent Stream Output](https://developers.glean.com/client/api/agents/create-run-stream-output)
+(`/agents/run/stream`) endpoint.
+
 </Update>
 
 <Update label="May 23, 2025" tags={['Tools', 'Agents', 'MCP', 'API Clients']}>
-  - New Features: - Client REST API - New endpoint: `GET /tools/list` - New
-  endpoint: `POST /tools/call` - API Clients - Added support for the new `GET
-  /tools/list` and `POST /tools/call` endpoints - MCP Server - Support for
-  configuring MCP server with VS Code - Bug Fixes: - Update the OpenAPI Spec to
-  properly mark the request body as a required field. This change more
-  accurately reflects how the API handles the case when the request body is not
-  provided. This affects the following API endpoints: - `/rest/api/v1/search` -
-  `/rest/api/v1/recommendations` - `rest/api/v1/adminsearch` - Breaking Changes:
-  - Python API client: the request body OpenAPI spec change resulted in a
+
+- New Features:
+  - Client REST API
+  - New endpoint: `GET /tools/list`
+  - New endpoint: `POST /tools/call`
+  - API Clients - Added support for the new `GET /tools/list` and `POST /tools/call` endpoints
+  - MCP Server - Support for configuring MCP server with VS Code
+- Bug Fixes:
+  - Update the OpenAPI Spec to properly mark the request body as a required field. This change more
+    accurately reflects how the API handles the case when the request body is not
+    provided. This affects the following API endpoints: - `/rest/api/v1/search` - `/rest/api/v1/recommendations` - `rest/api/v1/adminsearch`
+- Breaking Changes: - Python API client: the request body OpenAPI spec change resulted in a
   breaking change due to language semantics. This aligns search method
   parameters with other methods in the API.
-</Update>
+
+{/* break up the unindented `<li>` and `</Component>` to avoid mdx parsing error */}
+
+  </Update>
 
 <Update label="May 16, 2025" tags={['Governance API', 'Agent API']}>
-  - New Features: - Governance Admin API surface (10 endpoints) - Policies:
-  retrieve, update, list, create, download - Reports: createReport,
-  downloadReport, status - Visibility Overrides: listVisibilityOverrides,
-  createVisibilityOverride - Agent API brought up to the LangChain
-  Agent-Protocol (Agents & Runs stages) - Retrieve an Agent `GET /agents/
-  {agent_id}` - Retrieve an Agent's Schemas `GET /agents/{agent_id}/schemas` -
-  List Agents `POST /agents/search` - Run an Agent `POST /agents/runs/wait` -
-  Run an Agent with streaming `POST /agents/runs/stream` - Changes &
-  Enhancements: - Replaced legacy alpha Run-Workflow endpoints with the standard
-  Agent-Protocol equivalents (see above). - Breaking Changes: - Governance
-  endpoints introduce new permission scopes (`governance.read`,
-  `governance.write`). - Bug Fixes: - Python API client: resolved "unclosed
-  async coroutine" warning in async transport. - Language-Specific Notes: -
-  Python 0.4.1 uploaded to PyPI, requires 3.8+. - TypeScript 0.4.1 published,
-  ESM, bundled types. - Go module path
-  `github.com/gleaninc/glean-sdk-go/v4.1.0`. - Java 0.4.1 available on Maven
-  Central (`com.glean:glean-sdk:0.4.1`).
+
+- New Features:
+  - Governance Admin API surface (10 endpoints)
+  - Policies: retrieve, update, list, create, download - Reports:
+    createReport, downloadReport, status
+  - Visibility Overrides: listVisibilityOverrides,
+    createVisibilityOverride
+  - Agent API brought up to the LangChain Agent-Protocol (Agents & Runs stages)
+  - Retrieve an Agent `GET /agents/ {agent_id}`
+  - Retrieve an Agent's Schemas `GET /agents/{agent_id}/schemas`
+  - List Agents `POST /agents/search`
+  - Run an Agent `POST /agents/runs/wait`
+  - Run an Agent with streaming `POST /agents/runs/stream`
+- Changes & Enhancements:
+  - Replaced legacy alpha Run-Workflow endpoints with the standard Agent-Protocol equivalents (see above).
+- Breaking Changes:
+  - Governance endpoints introduce new permission scopes (`governance.read`,
+    `governance.write`).
+- Bug Fixes:
+  - Python API client: resolved "unclosed async coroutine" warning in async transport.
+  - Language-Specific Notes:
+    - Python 0.4.1 uploaded to PyPI, requires 3.8+.
+    - TypeScript 0.4.1 published, ESM, bundled types.
+    - Go module path `github.com/gleaninc/glean-sdk-go/v4.1.0`.
+    - Java 0.4.1 available on Maven Central (`com.glean:glean-sdk:0.4.1`).
+
+{/* break up the unindented `<li>` and `</Component>` to avoid mdx parsing error */}
+
 </Update>
 
 <Update label="May 10, 2025" tags={['API Clients']}>
-  - Released official API clients for Glean in multiple languages, replacing the
-  previous OpenAPI Generator-based SDK approach - New API clients are now
-  available for: - [Python](https://github.com/gleanwork/api-client-python) -
-  [TypeScript](https://github.com/gleanwork/api-client-typescript) -
-  [Go](https://github.com/gleanwork/api-client-go) -
-  [Java](https://github.com/gleanwork/api-client-java) - Updated documentation
-  with new installation instructions and usage examples - Visit the [API
-  Clients](/api-clients) page for more information
+
+- Released official API clients for Glean in multiple languages, replacing the
+  previous OpenAPI Generator-based SDK approach
+- New API clients are now
+  available for:
+  - [Python](https://github.com/gleanwork/api-client-python)
+  - [TypeScript](https://github.com/gleanwork/api-client-typescript)
+  - [Go](https://github.com/gleanwork/api-client-go)
+  - [Java](https://github.com/gleanwork/api-client-java)
+- Updated documentation with new installation instructions and usage examples
+- Visit the [API Clients](/api-clients) page for more information
+
+{/* break up the unindented `<li>` and `</Component>` to avoid mdx parsing error */}
+
 </Update>
 
 <Update label="May 2, 2025" tags={['Indexing API']}>
-  -
-  [/updatepermissions](https://developers.glean.com/api-reference/indexing/documents/update-document-permissions)
-  - Endpoint to update document permissions: Generally available -
-  [/debug/[datasource]/documents](https://developers.glean.com/api-reference/indexing/troubleshooting/beta:-get-information-of-a-batch-of-documents)
-  - Troubleshooting endpoint for batch queries: Generally available
+
+- [/updatepermissions](https://developers.glean.com/api-reference/indexing/documents/update-document-permissions) Endpoint to update document permissions: Generally available
+- [/debug/datasource/documents](https://developers.glean.com/api-reference/indexing/troubleshooting/beta:-get-information-of-a-batch-of-documents) Troubleshooting endpoint for batch queries: Generally available
+
 </Update>
 
 <Update label="Apr 24, 2025" tags={["Chat API"]}>
+
 In the /chat API, the previous way of processing the response message stream has been deprecated as a result of the launch of LLM-generated citations.
 
 Some notable changes:
