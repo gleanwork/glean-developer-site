@@ -8,11 +8,11 @@
 const betaWarningText =
   'This endpoint is in Beta. Expect changes and instability.';
 const betaPaths = [
-  '/api-reference/client/agents/get-agent',
-  '/api-reference/client/agents/get-agent-schemas',
-  '/api-reference/client/agents/search-agents',
-  '/api-reference/client/agents/create-run-stream-output',
-  '/api-reference/client/agents/create-run-wait-for-output',
+  '/client/api/agents/retrieve-an-agent',
+  '/client/api/agents/list-an-agents-schemas',
+  '/client/api/agents/search-agents',
+  '/client/api/agents/create-an-agent-run-and-stream-the-response',
+  '/client/api/agents/create-an-agent-run-and-wait-for-the-response',
 ];
 
 // Add callout warning for beta endpoints.
