@@ -536,14 +536,7 @@ class DeterministicCircularResolver {
     
     resolveSchemaWithSelectiveInlining(schemaName, allSchemas, visited, depth = 0, inArray = false) {
         /**Resolve a schema with selective inlining of circular references only*/
-        
-        // Check cache first to prevent re-resolving the same schema
-        const cacheKey = `${schemaName}_${inArray}`;
-        if (cacheKey in this.resolvedCache) {
-            return this.resolvedCache[cacheKey];
-        }
-        
-        // Check if we're in a circular reference FIRST
+        // If we've already visited this schema in the current path, it's a cycle
         if (visited.has(schemaName)) {
             let placeholder;
             if (inArray) {
@@ -552,7 +545,7 @@ class DeterministicCircularResolver {
                     properties: {
                         [schemaName]: {
                             type: 'object',
-                            description: `${schemaName} object (circular reference)` // circular reference
+                            description: `${schemaName} object (circular reference)`
                         }
                     }
                 };
@@ -562,17 +555,10 @@ class DeterministicCircularResolver {
                     description: `${schemaName} object (circular reference)`
                 };
             }
-            this.resolvedCache[cacheKey] = placeholder;
             return placeholder;
         }
-        
-        // For schemas that are NOT part of circular references, keep as $ref regardless of depth
-        if (!this.circularRefs.has(schemaName)) {
-            return { $ref: `#/components/schemas/${schemaName}` };
-        }
-        
-        // Only apply depth limit for circular schemas, and increase the limit
-        if (depth > 5) {
+        // Only apply depth limit for all schemas
+        if (depth > 2) {
             let placeholder;
             if (inArray) {
                 placeholder = {
@@ -590,10 +576,8 @@ class DeterministicCircularResolver {
                     description: `${schemaName} object (max depth)`
                 };
             }
-            this.resolvedCache[cacheKey] = placeholder;
             return placeholder;
         }
-        
         const schema = allSchemas[schemaName];
         if (!schema) {
             let placeholder;
@@ -613,19 +597,13 @@ class DeterministicCircularResolver {
                     description: `Schema ${schemaName} not found`
                 };
             }
-            this.resolvedCache[cacheKey] = placeholder;
             return placeholder;
         }
-        
         // Add to visited set to detect circular references
         visited.add(schemaName);
-        
         try {
             const resolved = this.resolveSchemaObjectSelectively(schema, allSchemas, visited, depth, inArray);
             visited.delete(schemaName);
-            
-            // Cache the resolved schema
-            this.resolvedCache[cacheKey] = resolved;
             return resolved;
         } catch (e) {
             visited.delete(schemaName);
@@ -646,7 +624,6 @@ class DeterministicCircularResolver {
                     description: `Error resolving ${schemaName}: ${e}`
                 };
             }
-            this.resolvedCache[cacheKey] = placeholder;
             return placeholder;
         }
     }
@@ -656,22 +633,10 @@ class DeterministicCircularResolver {
         if (typeof obj !== 'object' || obj === null) {
             return obj;
         }
-        
-        // Handle $ref - only inline if it's part of a circular reference
+        // Handle $ref - always use path-based cycle detection
         if ('$ref' in obj && obj['$ref'].startsWith('#/components/schemas/')) {
             const refName = obj['$ref'].replace('#/components/schemas/', '');
-            
-            // If this reference is NOT part of a circular chain, keep it as $ref
-            if (!this.circularRefs.has(refName)) {
-                return obj;  // Keep as $ref
-            }
-            
-            // If we're already visited this schema in current path, return $ref to break the cycle
-            if (visited.has(refName)) {
-                return obj;  // Keep as $ref to break cycle
-            }
-            
-            // Otherwise, inline it
+            // Inline only if this path forms a cycle or max depth is hit
             return this.resolveSchemaWithSelectiveInlining(refName, allSchemas, visited, depth + 1, inArray);
         }
         

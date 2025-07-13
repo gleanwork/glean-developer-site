@@ -248,8 +248,7 @@ components:
           type: boolean
         items:
           type: object
-          description: When type is 'array', this describes the structure of the item in the array.
-          $ref: '#/components/schemas/ToolParameter'
+          description: ToolParameter object (circular reference)
         name:
           description: The name of the parameter
           type: string
@@ -282,7 +281,11 @@ components:
           description: The value of the parameter (for array types)
           type: array
           items:
-            $ref: '#/components/schemas/ToolsCallParameter'
+            type: object
+            properties:
+              ToolsCallParameter:
+                type: object
+                description: ToolsCallParameter object (circular reference)
         name:
           description: The name of the parameter
           type: string
