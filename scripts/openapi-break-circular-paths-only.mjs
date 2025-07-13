@@ -558,7 +558,7 @@ class DeterministicCircularResolver {
             return placeholder;
         }
         // Only apply depth limit for all schemas
-        if (depth > 2) {
+        if (depth > 3) {
             let placeholder;
             if (inArray) {
                 placeholder = {
