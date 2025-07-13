@@ -208,10 +208,18 @@ class DeterministicCircularResolver {
             this.schemaGraph[schemaName] = Array.from(refs).sort();
         }
     }
+
+    printSchemaGraph() {
+        console.log('\nSchema Dependency Graph:');
+        for (const [parent, children] of Object.entries(this.schemaGraph)) {
+            console.log(`- ${parent}: [${children.join(', ')}]`);
+        }
+    }
     
     detectCircularReferences(schemas) {
         /**Detect all circular references - DETERMINISTIC VERSION*/
         this.buildSchemaGraph(schemas);
+        this.printSchemaGraph();
         const visitedGlobal = new Set();
         const circularSchemas = new Set();
         
@@ -459,7 +467,7 @@ class DeterministicCircularResolver {
         }
         
         // Prevent infinite recursion
-        if (depth > 12) {
+        if (depth > 2) {
             let placeholder;
             if (inArray) {
                 placeholder = {
@@ -467,14 +475,14 @@ class DeterministicCircularResolver {
                     properties: {
                         [schemaName]: {
                             type: 'object',
-                            description: `${schemaName} object` // max depth
+                            description: `${schemaName} object )(max depth)` // max depth
                         }
                     }
                 };
             } else {
                 placeholder = {
                     type: 'object',
-                    description: `${schemaName} object`
+                    description: `${schemaName} object (max depth)`
                 };
             }
             this.resolvedCache[cacheKey] = placeholder;
@@ -490,14 +498,14 @@ class DeterministicCircularResolver {
                     properties: {
                         [schemaName]: {
                             type: 'object',
-                            description: `${schemaName} object` // circular reference
+                            description: `${schemaName} object (circular reference)` // circular reference
                         }
                     }
                 };
             } else {
                 placeholder = {
                     type: 'object',
-                    description: `${schemaName} object`
+                    description: `${schemaName} object (circular reference)`
                 };
             }
             this.resolvedCache[cacheKey] = placeholder;
