@@ -38,7 +38,7 @@ Mozilla Firefox and Apple's Safari have already implemented strict third-party c
 Glean has an inbuilt flow that requests users for third-party cookie access if needed. After login, you will see the following screen:
 
 <Frame>
-  ![Glean 3P Cookie Access Request](./images/third_party_cookies/3P-cookie-request.png)
+  <img src="/img/third_party_cookies/3P-cookie-request.png" alt="Glean 3P Cookie Access Request" />
 </Frame>
 
 To grant access:
@@ -47,7 +47,7 @@ To grant access:
 2. You will see a browser prompt:
 
 <Frame caption="Browser prompt for third-party cookie access">
-  ![Browser 3P Cookie Access Prompt](./images/third_party_cookies/3P-cookie-browser-prompt.png)
+  <img src="/img/third_party_cookies/3P-cookie-browser-prompt.png" alt="Browser 3P Cookie Access Prompt" />
 </Frame>
 
 3. Click on "Allow" to grant Glean access to third-party cookies
@@ -60,11 +60,11 @@ To grant access:
 
 If you clicked "Block" when the browser asked for third-party cookie access, any subsequent click on "Allow cookies" will automatically be rejected. To manually grant access:
 
-1. Click on the cookie access icon <img src="./images/third_party_cookies/cookie-access-icon.png" style={{width: "32px", display: "inline"}} /> in the top-right corner of the URL address bar
+1. Click on the cookie access icon <img src="/img/third_party_cookies/cookie-access-icon.png" style={{width: "32px", display: "inline"}} /> in the top-right corner of the URL address bar
 2. In the prompt, switch the glean.com toggle to "On":
 
 <Frame>
-  <img src="./images/third_party_cookies/3P-cookie-chrome-allow.png" alt="Allow Cookies Chrome" />
+  <img src="/img/third_party_cookies/3P-cookie-chrome-allow.png" alt="Allow Cookies Chrome" />
 </Frame>
 
 3. Click on "Allow Cookies" in the Glean UI
