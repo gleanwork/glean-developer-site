@@ -59,10 +59,12 @@ You'll need Glean [API credentials](/get-started/authentication), and specifical
 Configure your Glean credentials by setting the following environment variables:
 
 ```bash
-export GLEAN_SUBDOMAIN="your-glean-subdomain"
+export GLEAN_INSTANCE="your-glean-instance"
 export GLEAN_API_TOKEN="your-glean-api-token"
 export GLEAN_ACT_AS="user@example.com"  # Optional: Email to act as when making requests
 ```
+
+To determine your `GLEAN_INSTANCE` value, open [about Glean](https://app.glean.com/admin/about-glean) in the admin console and locate the **Server instance (QE):** field. The instance name is the subdomain portion before `-be.glean.com`. For example, if the field shows `https://example-instance-be.glean.com/`, then your instance is `example-instance`.
 
 ### Usage Examples
 
@@ -189,7 +191,7 @@ Configure the retriever with custom settings:
 ```python
 # Initialize with custom settings
 retriever = GleanSearchRetriever(
-    subdomain="your-subdomain",  # Override environment variable
+    instance="your-instance",  # Override environment variable
     api_token="your-api-token",  # Override environment variable
     act_as="user@example.com",   # Override environment variable
     page_size=10,               # Default number of results
