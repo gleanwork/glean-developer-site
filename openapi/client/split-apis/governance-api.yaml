@@ -1,8 +1,8 @@
 openapi: 3.0.0
 info:
   version: 0.9.0
-  title: Glean API - Governance
-  description: API endpoints for Governance
+  title: Governance
+  description: Governance operations for Glean API
   x-logo:
     url: https://app.glean.com/images/glean-text2.svg
   x-speakeasy-name: Glean API
@@ -14,6 +14,9 @@ servers:
         description: The instance name (typically the email domain without the TLD) that determines the deployment backend.
 security:
   - APIToken: []
+tags:
+  - name: Governance
+    description: Governance
 paths:
   /rest/api/v1/governance/data/policies/{id}:
     get:
@@ -102,7 +105,8 @@ paths:
                 public static void main(String[] args) throws Exception {
 
                     Glean sdk = Glean.builder()
-                            .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
+                            .apiToken("<YOUR_BEARER_TOKEN_HERE>")
+                            .instance("<YOUR_GLEAN_INSTANCE_HERE>")
                         .build();
 
                     GetpolicyResponse res = sdk.client().governance().data().policies().retrieve()
@@ -199,7 +203,8 @@ paths:
                 public static void main(String[] args) throws Exception {
 
                     Glean sdk = Glean.builder()
-                            .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
+                            .apiToken("<YOUR_BEARER_TOKEN_HERE>")
+                            .instance("<YOUR_GLEAN_INSTANCE_HERE>")
                         .build();
 
                     UpdatepolicyResponse res = sdk.client().governance().data().policies().update()
@@ -299,7 +304,8 @@ paths:
                 public static void main(String[] args) throws Exception {
 
                     Glean sdk = Glean.builder()
-                            .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
+                            .apiToken("<YOUR_BEARER_TOKEN_HERE>")
+                            .instance("<YOUR_GLEAN_INSTANCE_HERE>")
                         .build();
 
                     ListpoliciesResponse res = sdk.client().governance().data().policies().list()
@@ -389,7 +395,8 @@ paths:
                 public static void main(String[] args) throws Exception {
 
                     Glean sdk = Glean.builder()
-                            .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
+                            .apiToken("<YOUR_BEARER_TOKEN_HERE>")
+                            .instance("<YOUR_GLEAN_INSTANCE_HERE>")
                         .build();
 
                     CreateDlpReportRequest req = CreateDlpReportRequest.builder()
@@ -485,7 +492,8 @@ paths:
                 public static void main(String[] args) throws Exception {
 
                     Glean sdk = Glean.builder()
-                            .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
+                            .apiToken("<YOUR_BEARER_TOKEN_HERE>")
+                            .instance("<YOUR_GLEAN_INSTANCE_HERE>")
                         .build();
 
                     DownloadpolicycsvResponse res = sdk.client().governance().data().policies().download()
@@ -577,7 +585,8 @@ paths:
                 public static void main(String[] args) throws Exception {
 
                     Glean sdk = Glean.builder()
-                            .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
+                            .apiToken("<YOUR_BEARER_TOKEN_HERE>")
+                            .instance("<YOUR_GLEAN_INSTANCE_HERE>")
                         .build();
 
                     UpdateDlpConfigRequest req = UpdateDlpConfigRequest.builder()
@@ -673,7 +682,8 @@ paths:
                 public static void main(String[] args) throws Exception {
 
                     Glean sdk = Glean.builder()
-                            .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
+                            .apiToken("<YOUR_BEARER_TOKEN_HERE>")
+                            .instance("<YOUR_GLEAN_INSTANCE_HERE>")
                         .build();
 
                     DownloadreportcsvResponse res = sdk.client().governance().data().reports().download()
@@ -765,7 +775,8 @@ paths:
                 public static void main(String[] args) throws Exception {
 
                     Glean sdk = Glean.builder()
-                            .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
+                            .apiToken("<YOUR_BEARER_TOKEN_HERE>")
+                            .instance("<YOUR_GLEAN_INSTANCE_HERE>")
                         .build();
 
                     GetreportstatusResponse res = sdk.client().governance().data().reports().status()
@@ -858,7 +869,8 @@ paths:
                 public static void main(String[] args) throws Exception {
 
                     Glean sdk = Glean.builder()
-                            .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
+                            .apiToken("<YOUR_BEARER_TOKEN_HERE>")
+                            .instance("<YOUR_GLEAN_INSTANCE_HERE>")
                         .build();
 
                     GetdocvisibilityResponse res = sdk.client().governance().documents().visibilityoverrides().list()
@@ -948,7 +960,8 @@ paths:
                 public static void main(String[] args) throws Exception {
 
                     Glean sdk = Glean.builder()
-                            .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
+                            .apiToken("<YOUR_BEARER_TOKEN_HERE>")
+                            .instance("<YOUR_GLEAN_INSTANCE_HERE>")
                         .build();
 
                     UpdateDocumentVisibilityOverridesRequest req = UpdateDocumentVisibilityOverridesRequest.builder()
@@ -965,6 +978,2511 @@ paths:
             }
 components:
   schemas:
+    GetDlpReportResponse:
+      properties:
+        report:
+          description: Full policy information that will be used for scans.
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+            config:
+              description: Detailed configuration of what documents and sensitive content will be scanned.
+              properties:
+                version:
+                  description: Synonymous with report/policy id.
+                  type: integer
+                  format: int64
+                sensitiveInfoTypes:
+                  deprecated: true
+                  description: DEPRECATED - use `sensitiveContentOptions` instead.
+                  type: array
+                  items:
+                    properties:
+                      likelihoodThreshold:
+                        deprecated: true
+                        type: string
+                        enum:
+                          - LIKELY
+                          - VERY_LIKELY
+                      infoType:
+                        description: Text representation of an info-type to scan for.
+                        type: string
+                    type: object
+                inputOptions:
+                  description: Controls which data-sources and what time-range to include in scans.
+                  properties:
+                    urlGreenlist:
+                      deprecated: true
+                      type: array
+                      description: list of url regex matching documents excluded from report
+                      items:
+                        type: string
+                    datasourcesType:
+                      type: string
+                      description: The types of datasource for which to run the report/policy.
+                      enum:
+                        - ALL
+                        - CUSTOM
+                    datasources:
+                      deprecated: true
+                      type: array
+                      description: List of datasources to consider for report. DEPRECATED - use datasourceInstances instead.
+                      items:
+                        type: string
+                    datasourceInstances:
+                      type: array
+                      description: List of datasource instances to consider for report/policy.
+                      items:
+                        type: string
+                    timePeriodType:
+                      type: string
+                      description: Type of time period for which to run the report/policy. PAST_DAY is deprecated.
+                      enum:
+                        - ALL_TIME
+                        - PAST_YEAR
+                        - PAST_DAY
+                        - CUSTOM
+                    customTimeRange:
+                      properties:
+                        startTime:
+                          type: string
+                          description: start time of the time range, applicable for the CUSTOM type.
+                          format: date-time
+                        endTime:
+                          type: string
+                          description: end time of the time range, applicable for the CUSTOM type.
+                          format: date-time
+                      type: object
+                  type: object
+                externalSharingOptions:
+                  deprecated: true
+                  description: DEPRECATED - use `broadSharingOptions` instead.
+                  type: object
+                  properties:
+                    enabled:
+                      deprecated: true
+                      type: boolean
+                    threshold:
+                      description: The minimum number of users the document is shared with.
+                      type: integer
+                    thresholdEnabled:
+                      description: Documents will be filtered based on how many people have access to it.
+                      type: boolean
+                    anyoneWithLinkEnabled:
+                      deprecated: true
+                      type: boolean
+                    anyoneInternalEnabled:
+                      description: Only users within the organization can access the document.
+                      type: boolean
+                    anonymousAccessEnabled:
+                      description: Anyone on the internet can access the document.
+                      type: boolean
+                    userAccessEnabled:
+                      description: Enable user access check
+                      type: boolean
+                    userIds:
+                      type: array
+                      description: Any one of the specified users can access the document.
+                      items:
+                        type: string
+                    domainAccessEnabled:
+                      type: boolean
+                broadSharingOptions:
+                  description: Controls how "shared" a document must be to get picked for scans.
+                  properties:
+                    enabled:
+                      deprecated: true
+                      type: boolean
+                    threshold:
+                      description: The minimum number of users the document is shared with.
+                      type: integer
+                    thresholdEnabled:
+                      description: Documents will be filtered based on how many people have access to it.
+                      type: boolean
+                    anyoneWithLinkEnabled:
+                      deprecated: true
+                      type: boolean
+                    anyoneInternalEnabled:
+                      description: Only users within the organization can access the document.
+                      type: boolean
+                    anonymousAccessEnabled:
+                      description: Anyone on the internet can access the document.
+                      type: boolean
+                    userAccessEnabled:
+                      description: Enable user access check
+                      type: boolean
+                    userIds:
+                      type: array
+                      description: Any one of the specified users can access the document.
+                      items:
+                        type: string
+                  type: object
+                sensitiveContentOptions:
+                  description: Options for defining sensitive content within scanned documents.
+                  properties:
+                    sensitiveInfoTypes:
+                      description: Predefined categories of terms to consider as sensitive content. See https://cloud.google.com/dlp/docs/infotypes-reference for available types.
+                      type: array
+                      items:
+                        properties:
+                          likelihoodThreshold:
+                            deprecated: true
+                            type: string
+                            enum:
+                              - LIKELY
+                              - VERY_LIKELY
+                          infoType:
+                            description: Text representation of an info-type to scan for.
+                            type: string
+                        type: object
+                    sensitiveTerms:
+                      description: list of words and phrases to consider as sensitive content
+                      type: array
+                      items:
+                        properties:
+                          expression:
+                            description: Sensitive word, phrase, or regular expression.
+                            type: string
+                          hotwords:
+                            description: Zero to three proximate regular expressions necessary to consider an expression as sensitive content.
+                            type: array
+                            items:
+                              properties:
+                                regex:
+                                  type: string
+                                proximity:
+                                  properties:
+                                    windowBefore:
+                                      type: integer
+                                    windowAfter:
+                                      type: integer
+                                  type: object
+                              type: object
+                        type: object
+                    sensitiveRegexes:
+                      description: list of regular expressions to consider as sensitive content
+                      type: array
+                      items:
+                        properties:
+                          expression:
+                            description: Sensitive word, phrase, or regular expression.
+                            type: string
+                          hotwords:
+                            description: Zero to three proximate regular expressions necessary to consider an expression as sensitive content.
+                            type: array
+                            items:
+                              properties:
+                                regex:
+                                  type: string
+                                proximity:
+                                  properties:
+                                    windowBefore:
+                                      type: integer
+                                    windowAfter:
+                                      type: integer
+                                  type: object
+                              type: object
+                        type: object
+                  type: object
+                reportName:
+                  type: string
+                frequency:
+                  description: Interval between scans.
+                  type: string
+                createdBy:
+                  description: Details about the person who created this report/policy.
+                  required:
+                    - name
+                    - obfuscatedId
+                  properties:
+                    name:
+                      type: string
+                      description: The display name.
+                    obfuscatedId:
+                      type: string
+                      description: An opaque identifier that can be used to request metadata for a Person.
+                    metadata:
+                      properties:
+                        firstName:
+                          type: string
+                          description: The first name of the person
+                        email:
+                          type: string
+                          description: The user's primary email address
+                      type: object
+                  type: object
+                createdAt:
+                  description: Timestamp at which this configuration was created.
+                  type: string
+                  format: iso-date-time
+                redactQuote:
+                  description: redact quote in findings of the report
+                  type: boolean
+                autoHideDocs:
+                  description: auto hide documents with findings in the report
+                  type: boolean
+                allowlistOptions:
+                  description: Terms that are allow-listed during the scans. If any finding picked up by a rule exactly matches a term in the allow-list, it will not be counted as a violation.
+                  properties:
+                    terms:
+                      type: array
+                      description: list of words and phrases to consider as whitelisted content
+                      items:
+                        type: string
+                  type: object
+              type: object
+            frequency:
+              type: string
+              description: Interval between scans. DAILY is deprecated.
+              x-include-enum-class-prefix: true
+              enum:
+                - ONCE
+                - DAILY
+                - WEEKLY
+                - CONTINUOUS
+                - NONE
+            status:
+              type: string
+              description: The status of the policy/report. Only ACTIVE status will be picked for scans.
+              x-include-enum-class-prefix: true
+              enum:
+                - ACTIVE
+                - INACTIVE
+                - CANCELLED
+                - NONE
+            createdBy:
+              description: Details about the person who created this report/policy.
+              required:
+                - name
+                - obfuscatedId
+              properties:
+                name:
+                  type: string
+                  description: The display name.
+                obfuscatedId:
+                  type: string
+                  description: An opaque identifier that can be used to request metadata for a Person.
+                metadata:
+                  properties:
+                    firstName:
+                      type: string
+                      description: The first name of the person
+                    email:
+                      type: string
+                      description: The user's primary email address
+                  type: object
+              type: object
+            createdAt:
+              description: Timestamp at which the policy was created.
+              type: string
+              format: iso-date-time
+            lastUpdatedAt:
+              description: Timestamp at which the policy was last updated.
+              type: string
+              format: iso-date-time
+            autoHideDocs:
+              description: Auto hide documents with findings in the policy.
+              type: boolean
+            lastScanStatus:
+              type: string
+              enum:
+                - PENDING
+                - SUCCESS
+                - FAILURE
+                - CANCELLED
+                - CANCELLING
+                - ACTIVE
+            lastScanStartTime:
+              description: The timestamp at which the report's last run/scan began.
+              type: string
+              format: iso-date-time
+            updatedBy:
+              description: Details about the person who created this report/policy.
+              required:
+                - name
+                - obfuscatedId
+              properties:
+                name:
+                  type: string
+                  description: The display name.
+                obfuscatedId:
+                  type: string
+                  description: An opaque identifier that can be used to request metadata for a Person.
+                metadata:
+                  properties:
+                    firstName:
+                      type: string
+                      description: The first name of the person
+                    email:
+                      type: string
+                      description: The user's primary email address
+                  type: object
+              type: object
+          type: object
+      type: object
+    UpdateDlpReportRequest:
+      properties:
+        config:
+          description: Detailed configuration of what documents and sensitive content will be scanned.
+          properties:
+            version:
+              description: Synonymous with report/policy id.
+              type: integer
+              format: int64
+            sensitiveInfoTypes:
+              deprecated: true
+              description: DEPRECATED - use `sensitiveContentOptions` instead.
+              type: array
+              items:
+                properties:
+                  likelihoodThreshold:
+                    deprecated: true
+                    type: string
+                    enum:
+                      - LIKELY
+                      - VERY_LIKELY
+                  infoType:
+                    description: Text representation of an info-type to scan for.
+                    type: string
+                type: object
+            inputOptions:
+              description: Controls which data-sources and what time-range to include in scans.
+              properties:
+                urlGreenlist:
+                  deprecated: true
+                  type: array
+                  description: list of url regex matching documents excluded from report
+                  items:
+                    type: string
+                datasourcesType:
+                  type: string
+                  description: The types of datasource for which to run the report/policy.
+                  enum:
+                    - ALL
+                    - CUSTOM
+                datasources:
+                  deprecated: true
+                  type: array
+                  description: List of datasources to consider for report. DEPRECATED - use datasourceInstances instead.
+                  items:
+                    type: string
+                datasourceInstances:
+                  type: array
+                  description: List of datasource instances to consider for report/policy.
+                  items:
+                    type: string
+                timePeriodType:
+                  type: string
+                  description: Type of time period for which to run the report/policy. PAST_DAY is deprecated.
+                  enum:
+                    - ALL_TIME
+                    - PAST_YEAR
+                    - PAST_DAY
+                    - CUSTOM
+                customTimeRange:
+                  properties:
+                    startTime:
+                      type: string
+                      description: start time of the time range, applicable for the CUSTOM type.
+                      format: date-time
+                    endTime:
+                      type: string
+                      description: end time of the time range, applicable for the CUSTOM type.
+                      format: date-time
+                  type: object
+              type: object
+            externalSharingOptions:
+              deprecated: true
+              description: DEPRECATED - use `broadSharingOptions` instead.
+              type: object
+              properties:
+                enabled:
+                  deprecated: true
+                  type: boolean
+                threshold:
+                  description: The minimum number of users the document is shared with.
+                  type: integer
+                thresholdEnabled:
+                  description: Documents will be filtered based on how many people have access to it.
+                  type: boolean
+                anyoneWithLinkEnabled:
+                  deprecated: true
+                  type: boolean
+                anyoneInternalEnabled:
+                  description: Only users within the organization can access the document.
+                  type: boolean
+                anonymousAccessEnabled:
+                  description: Anyone on the internet can access the document.
+                  type: boolean
+                userAccessEnabled:
+                  description: Enable user access check
+                  type: boolean
+                userIds:
+                  type: array
+                  description: Any one of the specified users can access the document.
+                  items:
+                    type: string
+                domainAccessEnabled:
+                  type: boolean
+            broadSharingOptions:
+              description: Controls how "shared" a document must be to get picked for scans.
+              properties:
+                enabled:
+                  deprecated: true
+                  type: boolean
+                threshold:
+                  description: The minimum number of users the document is shared with.
+                  type: integer
+                thresholdEnabled:
+                  description: Documents will be filtered based on how many people have access to it.
+                  type: boolean
+                anyoneWithLinkEnabled:
+                  deprecated: true
+                  type: boolean
+                anyoneInternalEnabled:
+                  description: Only users within the organization can access the document.
+                  type: boolean
+                anonymousAccessEnabled:
+                  description: Anyone on the internet can access the document.
+                  type: boolean
+                userAccessEnabled:
+                  description: Enable user access check
+                  type: boolean
+                userIds:
+                  type: array
+                  description: Any one of the specified users can access the document.
+                  items:
+                    type: string
+              type: object
+            sensitiveContentOptions:
+              description: Options for defining sensitive content within scanned documents.
+              properties:
+                sensitiveInfoTypes:
+                  description: Predefined categories of terms to consider as sensitive content. See https://cloud.google.com/dlp/docs/infotypes-reference for available types.
+                  type: array
+                  items:
+                    properties:
+                      likelihoodThreshold:
+                        deprecated: true
+                        type: string
+                        enum:
+                          - LIKELY
+                          - VERY_LIKELY
+                      infoType:
+                        description: Text representation of an info-type to scan for.
+                        type: string
+                    type: object
+                sensitiveTerms:
+                  description: list of words and phrases to consider as sensitive content
+                  type: array
+                  items:
+                    properties:
+                      expression:
+                        description: Sensitive word, phrase, or regular expression.
+                        type: string
+                      hotwords:
+                        description: Zero to three proximate regular expressions necessary to consider an expression as sensitive content.
+                        type: array
+                        items:
+                          properties:
+                            regex:
+                              type: string
+                            proximity:
+                              properties:
+                                windowBefore:
+                                  type: integer
+                                windowAfter:
+                                  type: integer
+                              type: object
+                          type: object
+                    type: object
+                sensitiveRegexes:
+                  description: list of regular expressions to consider as sensitive content
+                  type: array
+                  items:
+                    properties:
+                      expression:
+                        description: Sensitive word, phrase, or regular expression.
+                        type: string
+                      hotwords:
+                        description: Zero to three proximate regular expressions necessary to consider an expression as sensitive content.
+                        type: array
+                        items:
+                          properties:
+                            regex:
+                              type: string
+                            proximity:
+                              properties:
+                                windowBefore:
+                                  type: integer
+                                windowAfter:
+                                  type: integer
+                              type: object
+                          type: object
+                    type: object
+              type: object
+            reportName:
+              type: string
+            frequency:
+              description: Interval between scans.
+              type: string
+            createdBy:
+              description: Details about the person who created this report/policy.
+              required:
+                - name
+                - obfuscatedId
+              properties:
+                name:
+                  type: string
+                  description: The display name.
+                obfuscatedId:
+                  type: string
+                  description: An opaque identifier that can be used to request metadata for a Person.
+                metadata:
+                  properties:
+                    firstName:
+                      type: string
+                      description: The first name of the person
+                    email:
+                      type: string
+                      description: The user's primary email address
+                  type: object
+              type: object
+            createdAt:
+              description: Timestamp at which this configuration was created.
+              type: string
+              format: iso-date-time
+            redactQuote:
+              description: redact quote in findings of the report
+              type: boolean
+            autoHideDocs:
+              description: auto hide documents with findings in the report
+              type: boolean
+            allowlistOptions:
+              description: Terms that are allow-listed during the scans. If any finding picked up by a rule exactly matches a term in the allow-list, it will not be counted as a violation.
+              properties:
+                terms:
+                  type: array
+                  description: list of words and phrases to consider as whitelisted content
+                  items:
+                    type: string
+              type: object
+          type: object
+        frequency:
+          type: string
+          description: Interval between scans. DAILY is deprecated.
+          x-include-enum-class-prefix: true
+          enum:
+            - ONCE
+            - DAILY
+            - WEEKLY
+            - CONTINUOUS
+            - NONE
+        status:
+          type: string
+          description: The status of the policy/report. Only ACTIVE status will be picked for scans.
+          x-include-enum-class-prefix: true
+          enum:
+            - ACTIVE
+            - INACTIVE
+            - CANCELLED
+            - NONE
+        autoHideDocs:
+          description: The new autoHideDoc boolean the policy will be updated to if provided.
+          type: boolean
+        reportName:
+          description: The new name of the policy if provided.
+          type: string
+      type: object
+    UpdateDlpReportResponse:
+      properties:
+        result:
+          type: string
+          enum:
+            - SUCCESS
+            - FAILURE
+      type: object
+    ListDlpReportsResponse:
+      properties:
+        reports:
+          type: array
+          items:
+            description: Full policy information that will be used for scans.
+            properties:
+              id:
+                type: string
+              name:
+                type: string
+              config:
+                description: Detailed configuration of what documents and sensitive content will be scanned.
+                properties:
+                  version:
+                    description: Synonymous with report/policy id.
+                    type: integer
+                    format: int64
+                  sensitiveInfoTypes:
+                    deprecated: true
+                    description: DEPRECATED - use `sensitiveContentOptions` instead.
+                    type: array
+                    items:
+                      properties:
+                        likelihoodThreshold:
+                          deprecated: true
+                          type: string
+                          enum:
+                            - LIKELY
+                            - VERY_LIKELY
+                        infoType:
+                          description: Text representation of an info-type to scan for.
+                          type: string
+                      type: object
+                  inputOptions:
+                    description: Controls which data-sources and what time-range to include in scans.
+                    properties:
+                      urlGreenlist:
+                        deprecated: true
+                        type: array
+                        description: list of url regex matching documents excluded from report
+                        items:
+                          type: string
+                      datasourcesType:
+                        type: string
+                        description: The types of datasource for which to run the report/policy.
+                        enum:
+                          - ALL
+                          - CUSTOM
+                      datasources:
+                        deprecated: true
+                        type: array
+                        description: List of datasources to consider for report. DEPRECATED - use datasourceInstances instead.
+                        items:
+                          type: string
+                      datasourceInstances:
+                        type: array
+                        description: List of datasource instances to consider for report/policy.
+                        items:
+                          type: string
+                      timePeriodType:
+                        type: string
+                        description: Type of time period for which to run the report/policy. PAST_DAY is deprecated.
+                        enum:
+                          - ALL_TIME
+                          - PAST_YEAR
+                          - PAST_DAY
+                          - CUSTOM
+                      customTimeRange:
+                        properties:
+                          startTime:
+                            type: string
+                            description: start time of the time range, applicable for the CUSTOM type.
+                            format: date-time
+                          endTime:
+                            type: string
+                            description: end time of the time range, applicable for the CUSTOM type.
+                            format: date-time
+                        type: object
+                    type: object
+                  externalSharingOptions:
+                    deprecated: true
+                    description: DEPRECATED - use `broadSharingOptions` instead.
+                    type: object
+                    properties:
+                      enabled:
+                        deprecated: true
+                        type: boolean
+                      threshold:
+                        description: The minimum number of users the document is shared with.
+                        type: integer
+                      thresholdEnabled:
+                        description: Documents will be filtered based on how many people have access to it.
+                        type: boolean
+                      anyoneWithLinkEnabled:
+                        deprecated: true
+                        type: boolean
+                      anyoneInternalEnabled:
+                        description: Only users within the organization can access the document.
+                        type: boolean
+                      anonymousAccessEnabled:
+                        description: Anyone on the internet can access the document.
+                        type: boolean
+                      userAccessEnabled:
+                        description: Enable user access check
+                        type: boolean
+                      userIds:
+                        type: array
+                        description: Any one of the specified users can access the document.
+                        items:
+                          type: string
+                      domainAccessEnabled:
+                        type: boolean
+                  broadSharingOptions:
+                    description: Controls how "shared" a document must be to get picked for scans.
+                    properties:
+                      enabled:
+                        deprecated: true
+                        type: boolean
+                      threshold:
+                        description: The minimum number of users the document is shared with.
+                        type: integer
+                      thresholdEnabled:
+                        description: Documents will be filtered based on how many people have access to it.
+                        type: boolean
+                      anyoneWithLinkEnabled:
+                        deprecated: true
+                        type: boolean
+                      anyoneInternalEnabled:
+                        description: Only users within the organization can access the document.
+                        type: boolean
+                      anonymousAccessEnabled:
+                        description: Anyone on the internet can access the document.
+                        type: boolean
+                      userAccessEnabled:
+                        description: Enable user access check
+                        type: boolean
+                      userIds:
+                        type: array
+                        description: Any one of the specified users can access the document.
+                        items:
+                          type: string
+                    type: object
+                  sensitiveContentOptions:
+                    description: Options for defining sensitive content within scanned documents.
+                    properties:
+                      sensitiveInfoTypes:
+                        description: Predefined categories of terms to consider as sensitive content. See https://cloud.google.com/dlp/docs/infotypes-reference for available types.
+                        type: array
+                        items:
+                          properties:
+                            likelihoodThreshold:
+                              deprecated: true
+                              type: string
+                              enum:
+                                - LIKELY
+                                - VERY_LIKELY
+                            infoType:
+                              description: Text representation of an info-type to scan for.
+                              type: string
+                          type: object
+                      sensitiveTerms:
+                        description: list of words and phrases to consider as sensitive content
+                        type: array
+                        items:
+                          properties:
+                            expression:
+                              description: Sensitive word, phrase, or regular expression.
+                              type: string
+                            hotwords:
+                              description: Zero to three proximate regular expressions necessary to consider an expression as sensitive content.
+                              type: array
+                              items:
+                                properties:
+                                  regex:
+                                    type: string
+                                  proximity:
+                                    properties:
+                                      windowBefore:
+                                        type: integer
+                                      windowAfter:
+                                        type: integer
+                                    type: object
+                                type: object
+                          type: object
+                      sensitiveRegexes:
+                        description: list of regular expressions to consider as sensitive content
+                        type: array
+                        items:
+                          properties:
+                            expression:
+                              description: Sensitive word, phrase, or regular expression.
+                              type: string
+                            hotwords:
+                              description: Zero to three proximate regular expressions necessary to consider an expression as sensitive content.
+                              type: array
+                              items:
+                                properties:
+                                  regex:
+                                    type: string
+                                  proximity:
+                                    properties:
+                                      windowBefore:
+                                        type: integer
+                                      windowAfter:
+                                        type: integer
+                                    type: object
+                                type: object
+                          type: object
+                    type: object
+                  reportName:
+                    type: string
+                  frequency:
+                    description: Interval between scans.
+                    type: string
+                  createdBy:
+                    description: Details about the person who created this report/policy.
+                    required:
+                      - name
+                      - obfuscatedId
+                    properties:
+                      name:
+                        type: string
+                        description: The display name.
+                      obfuscatedId:
+                        type: string
+                        description: An opaque identifier that can be used to request metadata for a Person.
+                      metadata:
+                        properties:
+                          firstName:
+                            type: string
+                            description: The first name of the person
+                          email:
+                            type: string
+                            description: The user's primary email address
+                        type: object
+                    type: object
+                  createdAt:
+                    description: Timestamp at which this configuration was created.
+                    type: string
+                    format: iso-date-time
+                  redactQuote:
+                    description: redact quote in findings of the report
+                    type: boolean
+                  autoHideDocs:
+                    description: auto hide documents with findings in the report
+                    type: boolean
+                  allowlistOptions:
+                    description: Terms that are allow-listed during the scans. If any finding picked up by a rule exactly matches a term in the allow-list, it will not be counted as a violation.
+                    properties:
+                      terms:
+                        type: array
+                        description: list of words and phrases to consider as whitelisted content
+                        items:
+                          type: string
+                    type: object
+                type: object
+              frequency:
+                type: string
+                description: Interval between scans. DAILY is deprecated.
+                x-include-enum-class-prefix: true
+                enum:
+                  - ONCE
+                  - DAILY
+                  - WEEKLY
+                  - CONTINUOUS
+                  - NONE
+              status:
+                type: string
+                description: The status of the policy/report. Only ACTIVE status will be picked for scans.
+                x-include-enum-class-prefix: true
+                enum:
+                  - ACTIVE
+                  - INACTIVE
+                  - CANCELLED
+                  - NONE
+              createdBy:
+                description: Details about the person who created this report/policy.
+                required:
+                  - name
+                  - obfuscatedId
+                properties:
+                  name:
+                    type: string
+                    description: The display name.
+                  obfuscatedId:
+                    type: string
+                    description: An opaque identifier that can be used to request metadata for a Person.
+                  metadata:
+                    properties:
+                      firstName:
+                        type: string
+                        description: The first name of the person
+                      email:
+                        type: string
+                        description: The user's primary email address
+                    type: object
+                type: object
+              createdAt:
+                description: Timestamp at which the policy was created.
+                type: string
+                format: iso-date-time
+              lastUpdatedAt:
+                description: Timestamp at which the policy was last updated.
+                type: string
+                format: iso-date-time
+              autoHideDocs:
+                description: Auto hide documents with findings in the policy.
+                type: boolean
+              lastScanStatus:
+                type: string
+                enum:
+                  - PENDING
+                  - SUCCESS
+                  - FAILURE
+                  - CANCELLED
+                  - CANCELLING
+                  - ACTIVE
+              lastScanStartTime:
+                description: The timestamp at which the report's last run/scan began.
+                type: string
+                format: iso-date-time
+              updatedBy:
+                description: Details about the person who created this report/policy.
+                required:
+                  - name
+                  - obfuscatedId
+                properties:
+                  name:
+                    type: string
+                    description: The display name.
+                  obfuscatedId:
+                    type: string
+                    description: An opaque identifier that can be used to request metadata for a Person.
+                  metadata:
+                    properties:
+                      firstName:
+                        type: string
+                        description: The first name of the person
+                      email:
+                        type: string
+                        description: The user's primary email address
+                    type: object
+                type: object
+            type: object
+      type: object
+    CreateDlpReportRequest:
+      properties:
+        name:
+          description: Name of the policy being created.
+          type: string
+        config:
+          description: Detailed configuration of what documents and sensitive content will be scanned.
+          properties:
+            version:
+              description: Synonymous with report/policy id.
+              type: integer
+              format: int64
+            sensitiveInfoTypes:
+              deprecated: true
+              description: DEPRECATED - use `sensitiveContentOptions` instead.
+              type: array
+              items:
+                properties:
+                  likelihoodThreshold:
+                    deprecated: true
+                    type: string
+                    enum:
+                      - LIKELY
+                      - VERY_LIKELY
+                  infoType:
+                    description: Text representation of an info-type to scan for.
+                    type: string
+                type: object
+            inputOptions:
+              description: Controls which data-sources and what time-range to include in scans.
+              properties:
+                urlGreenlist:
+                  deprecated: true
+                  type: array
+                  description: list of url regex matching documents excluded from report
+                  items:
+                    type: string
+                datasourcesType:
+                  type: string
+                  description: The types of datasource for which to run the report/policy.
+                  enum:
+                    - ALL
+                    - CUSTOM
+                datasources:
+                  deprecated: true
+                  type: array
+                  description: List of datasources to consider for report. DEPRECATED - use datasourceInstances instead.
+                  items:
+                    type: string
+                datasourceInstances:
+                  type: array
+                  description: List of datasource instances to consider for report/policy.
+                  items:
+                    type: string
+                timePeriodType:
+                  type: string
+                  description: Type of time period for which to run the report/policy. PAST_DAY is deprecated.
+                  enum:
+                    - ALL_TIME
+                    - PAST_YEAR
+                    - PAST_DAY
+                    - CUSTOM
+                customTimeRange:
+                  properties:
+                    startTime:
+                      type: string
+                      description: start time of the time range, applicable for the CUSTOM type.
+                      format: date-time
+                    endTime:
+                      type: string
+                      description: end time of the time range, applicable for the CUSTOM type.
+                      format: date-time
+                  type: object
+              type: object
+            externalSharingOptions:
+              deprecated: true
+              description: DEPRECATED - use `broadSharingOptions` instead.
+              type: object
+              properties:
+                enabled:
+                  deprecated: true
+                  type: boolean
+                threshold:
+                  description: The minimum number of users the document is shared with.
+                  type: integer
+                thresholdEnabled:
+                  description: Documents will be filtered based on how many people have access to it.
+                  type: boolean
+                anyoneWithLinkEnabled:
+                  deprecated: true
+                  type: boolean
+                anyoneInternalEnabled:
+                  description: Only users within the organization can access the document.
+                  type: boolean
+                anonymousAccessEnabled:
+                  description: Anyone on the internet can access the document.
+                  type: boolean
+                userAccessEnabled:
+                  description: Enable user access check
+                  type: boolean
+                userIds:
+                  type: array
+                  description: Any one of the specified users can access the document.
+                  items:
+                    type: string
+                domainAccessEnabled:
+                  type: boolean
+            broadSharingOptions:
+              description: Controls how "shared" a document must be to get picked for scans.
+              properties:
+                enabled:
+                  deprecated: true
+                  type: boolean
+                threshold:
+                  description: The minimum number of users the document is shared with.
+                  type: integer
+                thresholdEnabled:
+                  description: Documents will be filtered based on how many people have access to it.
+                  type: boolean
+                anyoneWithLinkEnabled:
+                  deprecated: true
+                  type: boolean
+                anyoneInternalEnabled:
+                  description: Only users within the organization can access the document.
+                  type: boolean
+                anonymousAccessEnabled:
+                  description: Anyone on the internet can access the document.
+                  type: boolean
+                userAccessEnabled:
+                  description: Enable user access check
+                  type: boolean
+                userIds:
+                  type: array
+                  description: Any one of the specified users can access the document.
+                  items:
+                    type: string
+              type: object
+            sensitiveContentOptions:
+              description: Options for defining sensitive content within scanned documents.
+              properties:
+                sensitiveInfoTypes:
+                  description: Predefined categories of terms to consider as sensitive content. See https://cloud.google.com/dlp/docs/infotypes-reference for available types.
+                  type: array
+                  items:
+                    properties:
+                      likelihoodThreshold:
+                        deprecated: true
+                        type: string
+                        enum:
+                          - LIKELY
+                          - VERY_LIKELY
+                      infoType:
+                        description: Text representation of an info-type to scan for.
+                        type: string
+                    type: object
+                sensitiveTerms:
+                  description: list of words and phrases to consider as sensitive content
+                  type: array
+                  items:
+                    properties:
+                      expression:
+                        description: Sensitive word, phrase, or regular expression.
+                        type: string
+                      hotwords:
+                        description: Zero to three proximate regular expressions necessary to consider an expression as sensitive content.
+                        type: array
+                        items:
+                          properties:
+                            regex:
+                              type: string
+                            proximity:
+                              properties:
+                                windowBefore:
+                                  type: integer
+                                windowAfter:
+                                  type: integer
+                              type: object
+                          type: object
+                    type: object
+                sensitiveRegexes:
+                  description: list of regular expressions to consider as sensitive content
+                  type: array
+                  items:
+                    properties:
+                      expression:
+                        description: Sensitive word, phrase, or regular expression.
+                        type: string
+                      hotwords:
+                        description: Zero to three proximate regular expressions necessary to consider an expression as sensitive content.
+                        type: array
+                        items:
+                          properties:
+                            regex:
+                              type: string
+                            proximity:
+                              properties:
+                                windowBefore:
+                                  type: integer
+                                windowAfter:
+                                  type: integer
+                              type: object
+                          type: object
+                    type: object
+              type: object
+            reportName:
+              type: string
+            frequency:
+              description: Interval between scans.
+              type: string
+            createdBy:
+              description: Details about the person who created this report/policy.
+              required:
+                - name
+                - obfuscatedId
+              properties:
+                name:
+                  type: string
+                  description: The display name.
+                obfuscatedId:
+                  type: string
+                  description: An opaque identifier that can be used to request metadata for a Person.
+                metadata:
+                  properties:
+                    firstName:
+                      type: string
+                      description: The first name of the person
+                    email:
+                      type: string
+                      description: The user's primary email address
+                  type: object
+              type: object
+            createdAt:
+              description: Timestamp at which this configuration was created.
+              type: string
+              format: iso-date-time
+            redactQuote:
+              description: redact quote in findings of the report
+              type: boolean
+            autoHideDocs:
+              description: auto hide documents with findings in the report
+              type: boolean
+            allowlistOptions:
+              description: Terms that are allow-listed during the scans. If any finding picked up by a rule exactly matches a term in the allow-list, it will not be counted as a violation.
+              properties:
+                terms:
+                  type: array
+                  description: list of words and phrases to consider as whitelisted content
+                  items:
+                    type: string
+              type: object
+          type: object
+        frequency:
+          type: string
+          description: Interval between scans. DAILY is deprecated.
+          x-include-enum-class-prefix: true
+          enum:
+            - ONCE
+            - DAILY
+            - WEEKLY
+            - CONTINUOUS
+            - NONE
+        autoHideDocs:
+          description: Controls whether the policy should hide documents with violations.
+          type: boolean
+      type: object
+    CreateDlpReportResponse:
+      properties:
+        report:
+          description: Full policy information that will be used for scans.
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+            config:
+              description: Detailed configuration of what documents and sensitive content will be scanned.
+              properties:
+                version:
+                  description: Synonymous with report/policy id.
+                  type: integer
+                  format: int64
+                sensitiveInfoTypes:
+                  deprecated: true
+                  description: DEPRECATED - use `sensitiveContentOptions` instead.
+                  type: array
+                  items:
+                    properties:
+                      likelihoodThreshold:
+                        deprecated: true
+                        type: string
+                        enum:
+                          - LIKELY
+                          - VERY_LIKELY
+                      infoType:
+                        description: Text representation of an info-type to scan for.
+                        type: string
+                    type: object
+                inputOptions:
+                  description: Controls which data-sources and what time-range to include in scans.
+                  properties:
+                    urlGreenlist:
+                      deprecated: true
+                      type: array
+                      description: list of url regex matching documents excluded from report
+                      items:
+                        type: string
+                    datasourcesType:
+                      type: string
+                      description: The types of datasource for which to run the report/policy.
+                      enum:
+                        - ALL
+                        - CUSTOM
+                    datasources:
+                      deprecated: true
+                      type: array
+                      description: List of datasources to consider for report. DEPRECATED - use datasourceInstances instead.
+                      items:
+                        type: string
+                    datasourceInstances:
+                      type: array
+                      description: List of datasource instances to consider for report/policy.
+                      items:
+                        type: string
+                    timePeriodType:
+                      type: string
+                      description: Type of time period for which to run the report/policy. PAST_DAY is deprecated.
+                      enum:
+                        - ALL_TIME
+                        - PAST_YEAR
+                        - PAST_DAY
+                        - CUSTOM
+                    customTimeRange:
+                      properties:
+                        startTime:
+                          type: string
+                          description: start time of the time range, applicable for the CUSTOM type.
+                          format: date-time
+                        endTime:
+                          type: string
+                          description: end time of the time range, applicable for the CUSTOM type.
+                          format: date-time
+                      type: object
+                  type: object
+                externalSharingOptions:
+                  deprecated: true
+                  description: DEPRECATED - use `broadSharingOptions` instead.
+                  type: object
+                  properties:
+                    enabled:
+                      deprecated: true
+                      type: boolean
+                    threshold:
+                      description: The minimum number of users the document is shared with.
+                      type: integer
+                    thresholdEnabled:
+                      description: Documents will be filtered based on how many people have access to it.
+                      type: boolean
+                    anyoneWithLinkEnabled:
+                      deprecated: true
+                      type: boolean
+                    anyoneInternalEnabled:
+                      description: Only users within the organization can access the document.
+                      type: boolean
+                    anonymousAccessEnabled:
+                      description: Anyone on the internet can access the document.
+                      type: boolean
+                    userAccessEnabled:
+                      description: Enable user access check
+                      type: boolean
+                    userIds:
+                      type: array
+                      description: Any one of the specified users can access the document.
+                      items:
+                        type: string
+                    domainAccessEnabled:
+                      type: boolean
+                broadSharingOptions:
+                  description: Controls how "shared" a document must be to get picked for scans.
+                  properties:
+                    enabled:
+                      deprecated: true
+                      type: boolean
+                    threshold:
+                      description: The minimum number of users the document is shared with.
+                      type: integer
+                    thresholdEnabled:
+                      description: Documents will be filtered based on how many people have access to it.
+                      type: boolean
+                    anyoneWithLinkEnabled:
+                      deprecated: true
+                      type: boolean
+                    anyoneInternalEnabled:
+                      description: Only users within the organization can access the document.
+                      type: boolean
+                    anonymousAccessEnabled:
+                      description: Anyone on the internet can access the document.
+                      type: boolean
+                    userAccessEnabled:
+                      description: Enable user access check
+                      type: boolean
+                    userIds:
+                      type: array
+                      description: Any one of the specified users can access the document.
+                      items:
+                        type: string
+                  type: object
+                sensitiveContentOptions:
+                  description: Options for defining sensitive content within scanned documents.
+                  properties:
+                    sensitiveInfoTypes:
+                      description: Predefined categories of terms to consider as sensitive content. See https://cloud.google.com/dlp/docs/infotypes-reference for available types.
+                      type: array
+                      items:
+                        properties:
+                          likelihoodThreshold:
+                            deprecated: true
+                            type: string
+                            enum:
+                              - LIKELY
+                              - VERY_LIKELY
+                          infoType:
+                            description: Text representation of an info-type to scan for.
+                            type: string
+                        type: object
+                    sensitiveTerms:
+                      description: list of words and phrases to consider as sensitive content
+                      type: array
+                      items:
+                        properties:
+                          expression:
+                            description: Sensitive word, phrase, or regular expression.
+                            type: string
+                          hotwords:
+                            description: Zero to three proximate regular expressions necessary to consider an expression as sensitive content.
+                            type: array
+                            items:
+                              properties:
+                                regex:
+                                  type: string
+                                proximity:
+                                  properties:
+                                    windowBefore:
+                                      type: integer
+                                    windowAfter:
+                                      type: integer
+                                  type: object
+                              type: object
+                        type: object
+                    sensitiveRegexes:
+                      description: list of regular expressions to consider as sensitive content
+                      type: array
+                      items:
+                        properties:
+                          expression:
+                            description: Sensitive word, phrase, or regular expression.
+                            type: string
+                          hotwords:
+                            description: Zero to three proximate regular expressions necessary to consider an expression as sensitive content.
+                            type: array
+                            items:
+                              properties:
+                                regex:
+                                  type: string
+                                proximity:
+                                  properties:
+                                    windowBefore:
+                                      type: integer
+                                    windowAfter:
+                                      type: integer
+                                  type: object
+                              type: object
+                        type: object
+                  type: object
+                reportName:
+                  type: string
+                frequency:
+                  description: Interval between scans.
+                  type: string
+                createdBy:
+                  description: Details about the person who created this report/policy.
+                  required:
+                    - name
+                    - obfuscatedId
+                  properties:
+                    name:
+                      type: string
+                      description: The display name.
+                    obfuscatedId:
+                      type: string
+                      description: An opaque identifier that can be used to request metadata for a Person.
+                    metadata:
+                      properties:
+                        firstName:
+                          type: string
+                          description: The first name of the person
+                        email:
+                          type: string
+                          description: The user's primary email address
+                      type: object
+                  type: object
+                createdAt:
+                  description: Timestamp at which this configuration was created.
+                  type: string
+                  format: iso-date-time
+                redactQuote:
+                  description: redact quote in findings of the report
+                  type: boolean
+                autoHideDocs:
+                  description: auto hide documents with findings in the report
+                  type: boolean
+                allowlistOptions:
+                  description: Terms that are allow-listed during the scans. If any finding picked up by a rule exactly matches a term in the allow-list, it will not be counted as a violation.
+                  properties:
+                    terms:
+                      type: array
+                      description: list of words and phrases to consider as whitelisted content
+                      items:
+                        type: string
+                  type: object
+              type: object
+            frequency:
+              type: string
+              description: Interval between scans. DAILY is deprecated.
+              x-include-enum-class-prefix: true
+              enum:
+                - ONCE
+                - DAILY
+                - WEEKLY
+                - CONTINUOUS
+                - NONE
+            status:
+              type: string
+              description: The status of the policy/report. Only ACTIVE status will be picked for scans.
+              x-include-enum-class-prefix: true
+              enum:
+                - ACTIVE
+                - INACTIVE
+                - CANCELLED
+                - NONE
+            createdBy:
+              description: Details about the person who created this report/policy.
+              required:
+                - name
+                - obfuscatedId
+              properties:
+                name:
+                  type: string
+                  description: The display name.
+                obfuscatedId:
+                  type: string
+                  description: An opaque identifier that can be used to request metadata for a Person.
+                metadata:
+                  properties:
+                    firstName:
+                      type: string
+                      description: The first name of the person
+                    email:
+                      type: string
+                      description: The user's primary email address
+                  type: object
+              type: object
+            createdAt:
+              description: Timestamp at which the policy was created.
+              type: string
+              format: iso-date-time
+            lastUpdatedAt:
+              description: Timestamp at which the policy was last updated.
+              type: string
+              format: iso-date-time
+            autoHideDocs:
+              description: Auto hide documents with findings in the policy.
+              type: boolean
+            lastScanStatus:
+              type: string
+              enum:
+                - PENDING
+                - SUCCESS
+                - FAILURE
+                - CANCELLED
+                - CANCELLING
+                - ACTIVE
+            lastScanStartTime:
+              description: The timestamp at which the report's last run/scan began.
+              type: string
+              format: iso-date-time
+            updatedBy:
+              description: Details about the person who created this report/policy.
+              required:
+                - name
+                - obfuscatedId
+              properties:
+                name:
+                  type: string
+                  description: The display name.
+                obfuscatedId:
+                  type: string
+                  description: An opaque identifier that can be used to request metadata for a Person.
+                metadata:
+                  properties:
+                    firstName:
+                      type: string
+                      description: The first name of the person
+                    email:
+                      type: string
+                      description: The user's primary email address
+                  type: object
+              type: object
+          type: object
+      type: object
+    UpdateDlpConfigRequest:
+      properties:
+        config:
+          description: Detailed configuration of what documents and sensitive content will be scanned.
+          properties:
+            version:
+              description: Synonymous with report/policy id.
+              type: integer
+              format: int64
+            sensitiveInfoTypes:
+              deprecated: true
+              description: DEPRECATED - use `sensitiveContentOptions` instead.
+              type: array
+              items:
+                properties:
+                  likelihoodThreshold:
+                    deprecated: true
+                    type: string
+                    enum:
+                      - LIKELY
+                      - VERY_LIKELY
+                  infoType:
+                    description: Text representation of an info-type to scan for.
+                    type: string
+                type: object
+            inputOptions:
+              description: Controls which data-sources and what time-range to include in scans.
+              properties:
+                urlGreenlist:
+                  deprecated: true
+                  type: array
+                  description: list of url regex matching documents excluded from report
+                  items:
+                    type: string
+                datasourcesType:
+                  type: string
+                  description: The types of datasource for which to run the report/policy.
+                  enum:
+                    - ALL
+                    - CUSTOM
+                datasources:
+                  deprecated: true
+                  type: array
+                  description: List of datasources to consider for report. DEPRECATED - use datasourceInstances instead.
+                  items:
+                    type: string
+                datasourceInstances:
+                  type: array
+                  description: List of datasource instances to consider for report/policy.
+                  items:
+                    type: string
+                timePeriodType:
+                  type: string
+                  description: Type of time period for which to run the report/policy. PAST_DAY is deprecated.
+                  enum:
+                    - ALL_TIME
+                    - PAST_YEAR
+                    - PAST_DAY
+                    - CUSTOM
+                customTimeRange:
+                  properties:
+                    startTime:
+                      type: string
+                      description: start time of the time range, applicable for the CUSTOM type.
+                      format: date-time
+                    endTime:
+                      type: string
+                      description: end time of the time range, applicable for the CUSTOM type.
+                      format: date-time
+                  type: object
+              type: object
+            externalSharingOptions:
+              deprecated: true
+              description: DEPRECATED - use `broadSharingOptions` instead.
+              type: object
+              properties:
+                enabled:
+                  deprecated: true
+                  type: boolean
+                threshold:
+                  description: The minimum number of users the document is shared with.
+                  type: integer
+                thresholdEnabled:
+                  description: Documents will be filtered based on how many people have access to it.
+                  type: boolean
+                anyoneWithLinkEnabled:
+                  deprecated: true
+                  type: boolean
+                anyoneInternalEnabled:
+                  description: Only users within the organization can access the document.
+                  type: boolean
+                anonymousAccessEnabled:
+                  description: Anyone on the internet can access the document.
+                  type: boolean
+                userAccessEnabled:
+                  description: Enable user access check
+                  type: boolean
+                userIds:
+                  type: array
+                  description: Any one of the specified users can access the document.
+                  items:
+                    type: string
+                domainAccessEnabled:
+                  type: boolean
+            broadSharingOptions:
+              description: Controls how "shared" a document must be to get picked for scans.
+              properties:
+                enabled:
+                  deprecated: true
+                  type: boolean
+                threshold:
+                  description: The minimum number of users the document is shared with.
+                  type: integer
+                thresholdEnabled:
+                  description: Documents will be filtered based on how many people have access to it.
+                  type: boolean
+                anyoneWithLinkEnabled:
+                  deprecated: true
+                  type: boolean
+                anyoneInternalEnabled:
+                  description: Only users within the organization can access the document.
+                  type: boolean
+                anonymousAccessEnabled:
+                  description: Anyone on the internet can access the document.
+                  type: boolean
+                userAccessEnabled:
+                  description: Enable user access check
+                  type: boolean
+                userIds:
+                  type: array
+                  description: Any one of the specified users can access the document.
+                  items:
+                    type: string
+              type: object
+            sensitiveContentOptions:
+              description: Options for defining sensitive content within scanned documents.
+              properties:
+                sensitiveInfoTypes:
+                  description: Predefined categories of terms to consider as sensitive content. See https://cloud.google.com/dlp/docs/infotypes-reference for available types.
+                  type: array
+                  items:
+                    properties:
+                      likelihoodThreshold:
+                        deprecated: true
+                        type: string
+                        enum:
+                          - LIKELY
+                          - VERY_LIKELY
+                      infoType:
+                        description: Text representation of an info-type to scan for.
+                        type: string
+                    type: object
+                sensitiveTerms:
+                  description: list of words and phrases to consider as sensitive content
+                  type: array
+                  items:
+                    properties:
+                      expression:
+                        description: Sensitive word, phrase, or regular expression.
+                        type: string
+                      hotwords:
+                        description: Zero to three proximate regular expressions necessary to consider an expression as sensitive content.
+                        type: array
+                        items:
+                          properties:
+                            regex:
+                              type: string
+                            proximity:
+                              properties:
+                                windowBefore:
+                                  type: integer
+                                windowAfter:
+                                  type: integer
+                              type: object
+                          type: object
+                    type: object
+                sensitiveRegexes:
+                  description: list of regular expressions to consider as sensitive content
+                  type: array
+                  items:
+                    properties:
+                      expression:
+                        description: Sensitive word, phrase, or regular expression.
+                        type: string
+                      hotwords:
+                        description: Zero to three proximate regular expressions necessary to consider an expression as sensitive content.
+                        type: array
+                        items:
+                          properties:
+                            regex:
+                              type: string
+                            proximity:
+                              properties:
+                                windowBefore:
+                                  type: integer
+                                windowAfter:
+                                  type: integer
+                              type: object
+                          type: object
+                    type: object
+              type: object
+            reportName:
+              type: string
+            frequency:
+              description: Interval between scans.
+              type: string
+            createdBy:
+              description: Details about the person who created this report/policy.
+              required:
+                - name
+                - obfuscatedId
+              properties:
+                name:
+                  type: string
+                  description: The display name.
+                obfuscatedId:
+                  type: string
+                  description: An opaque identifier that can be used to request metadata for a Person.
+                metadata:
+                  properties:
+                    firstName:
+                      type: string
+                      description: The first name of the person
+                    email:
+                      type: string
+                      description: The user's primary email address
+                  type: object
+              type: object
+            createdAt:
+              description: Timestamp at which this configuration was created.
+              type: string
+              format: iso-date-time
+            redactQuote:
+              description: redact quote in findings of the report
+              type: boolean
+            autoHideDocs:
+              description: auto hide documents with findings in the report
+              type: boolean
+            allowlistOptions:
+              description: Terms that are allow-listed during the scans. If any finding picked up by a rule exactly matches a term in the allow-list, it will not be counted as a violation.
+              properties:
+                terms:
+                  type: array
+                  description: list of words and phrases to consider as whitelisted content
+                  items:
+                    type: string
+              type: object
+          type: object
+        frequency:
+          description: Only "ONCE" is supported for reports.
+          type: string
+      type: object
+    UpdateDlpConfigResponse:
+      properties:
+        result:
+          type: string
+          enum:
+            - SUCCESS
+            - FAILURE
+        reportId:
+          description: The id of the report that was just created and run.
+          type: string
+      type: object
+    ReportStatusResponse:
+      properties:
+        status:
+          type: string
+          enum:
+            - PENDING
+            - SUCCESS
+            - FAILURE
+            - CANCELLED
+            - CANCELLING
+            - ACTIVE
+        startTime:
+          description: The timestamp at which the report's run/scan began.
+          type: string
+          format: iso-date-time
+      type: object
+    GetDocumentVisibilityOverridesResponse:
+      properties:
+        visibilityOverrides:
+          type: array
+          items:
+            properties:
+              docId:
+                type: string
+              override:
+                description: The visibility-override state of the document.
+                type: string
+                enum:
+                  - NONE
+                  - HIDE_FROM_ALL
+                  - HIDE_FROM_GROUPS
+                  - HIDE_FROM_ALL_EXCEPT_OWNER
+            type: object
+      type: object
+    UpdateDocumentVisibilityOverridesRequest:
+      properties:
+        visibilityOverrides:
+          type: array
+          items:
+            properties:
+              docId:
+                type: string
+              override:
+                description: The visibility-override state of the document.
+                type: string
+                enum:
+                  - NONE
+                  - HIDE_FROM_ALL
+                  - HIDE_FROM_GROUPS
+                  - HIDE_FROM_ALL_EXCEPT_OWNER
+            type: object
+      type: object
+    UpdateDocumentVisibilityOverridesResponse:
+      properties:
+        results:
+          description: The documents and whether their visibility was successfully updated.
+          type: array
+          items:
+            type: object
+            properties:
+              docId:
+                type: string
+              override:
+                description: The visibility-override state of the document.
+                type: string
+                enum:
+                  - NONE
+                  - HIDE_FROM_ALL
+                  - HIDE_FROM_GROUPS
+                  - HIDE_FROM_ALL_EXCEPT_OWNER
+              success:
+                description: Whether this document was successfully set to its desired visibility state.
+                type: boolean
+      type: object
+    DlpReport:
+      description: Full policy information that will be used for scans.
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        config:
+          description: Detailed configuration of what documents and sensitive content will be scanned.
+          properties:
+            version:
+              description: Synonymous with report/policy id.
+              type: integer
+              format: int64
+            sensitiveInfoTypes:
+              deprecated: true
+              description: DEPRECATED - use `sensitiveContentOptions` instead.
+              type: array
+              items:
+                properties:
+                  likelihoodThreshold:
+                    deprecated: true
+                    type: string
+                    enum:
+                      - LIKELY
+                      - VERY_LIKELY
+                  infoType:
+                    description: Text representation of an info-type to scan for.
+                    type: string
+                type: object
+            inputOptions:
+              description: Controls which data-sources and what time-range to include in scans.
+              properties:
+                urlGreenlist:
+                  deprecated: true
+                  type: array
+                  description: list of url regex matching documents excluded from report
+                  items:
+                    type: string
+                datasourcesType:
+                  type: string
+                  description: The types of datasource for which to run the report/policy.
+                  enum:
+                    - ALL
+                    - CUSTOM
+                datasources:
+                  deprecated: true
+                  type: array
+                  description: List of datasources to consider for report. DEPRECATED - use datasourceInstances instead.
+                  items:
+                    type: string
+                datasourceInstances:
+                  type: array
+                  description: List of datasource instances to consider for report/policy.
+                  items:
+                    type: string
+                timePeriodType:
+                  type: string
+                  description: Type of time period for which to run the report/policy. PAST_DAY is deprecated.
+                  enum:
+                    - ALL_TIME
+                    - PAST_YEAR
+                    - PAST_DAY
+                    - CUSTOM
+                customTimeRange:
+                  properties:
+                    startTime:
+                      type: string
+                      description: start time of the time range, applicable for the CUSTOM type.
+                      format: date-time
+                    endTime:
+                      type: string
+                      description: end time of the time range, applicable for the CUSTOM type.
+                      format: date-time
+                  type: object
+              type: object
+            externalSharingOptions:
+              deprecated: true
+              description: DEPRECATED - use `broadSharingOptions` instead.
+              type: object
+              properties:
+                enabled:
+                  deprecated: true
+                  type: boolean
+                threshold:
+                  description: The minimum number of users the document is shared with.
+                  type: integer
+                thresholdEnabled:
+                  description: Documents will be filtered based on how many people have access to it.
+                  type: boolean
+                anyoneWithLinkEnabled:
+                  deprecated: true
+                  type: boolean
+                anyoneInternalEnabled:
+                  description: Only users within the organization can access the document.
+                  type: boolean
+                anonymousAccessEnabled:
+                  description: Anyone on the internet can access the document.
+                  type: boolean
+                userAccessEnabled:
+                  description: Enable user access check
+                  type: boolean
+                userIds:
+                  type: array
+                  description: Any one of the specified users can access the document.
+                  items:
+                    type: string
+                domainAccessEnabled:
+                  type: boolean
+            broadSharingOptions:
+              description: Controls how "shared" a document must be to get picked for scans.
+              properties:
+                enabled:
+                  deprecated: true
+                  type: boolean
+                threshold:
+                  description: The minimum number of users the document is shared with.
+                  type: integer
+                thresholdEnabled:
+                  description: Documents will be filtered based on how many people have access to it.
+                  type: boolean
+                anyoneWithLinkEnabled:
+                  deprecated: true
+                  type: boolean
+                anyoneInternalEnabled:
+                  description: Only users within the organization can access the document.
+                  type: boolean
+                anonymousAccessEnabled:
+                  description: Anyone on the internet can access the document.
+                  type: boolean
+                userAccessEnabled:
+                  description: Enable user access check
+                  type: boolean
+                userIds:
+                  type: array
+                  description: Any one of the specified users can access the document.
+                  items:
+                    type: string
+              type: object
+            sensitiveContentOptions:
+              description: Options for defining sensitive content within scanned documents.
+              properties:
+                sensitiveInfoTypes:
+                  description: Predefined categories of terms to consider as sensitive content. See https://cloud.google.com/dlp/docs/infotypes-reference for available types.
+                  type: array
+                  items:
+                    properties:
+                      likelihoodThreshold:
+                        deprecated: true
+                        type: string
+                        enum:
+                          - LIKELY
+                          - VERY_LIKELY
+                      infoType:
+                        description: Text representation of an info-type to scan for.
+                        type: string
+                    type: object
+                sensitiveTerms:
+                  description: list of words and phrases to consider as sensitive content
+                  type: array
+                  items:
+                    properties:
+                      expression:
+                        description: Sensitive word, phrase, or regular expression.
+                        type: string
+                      hotwords:
+                        description: Zero to three proximate regular expressions necessary to consider an expression as sensitive content.
+                        type: array
+                        items:
+                          properties:
+                            regex:
+                              type: string
+                            proximity:
+                              properties:
+                                windowBefore:
+                                  type: integer
+                                windowAfter:
+                                  type: integer
+                              type: object
+                          type: object
+                    type: object
+                sensitiveRegexes:
+                  description: list of regular expressions to consider as sensitive content
+                  type: array
+                  items:
+                    properties:
+                      expression:
+                        description: Sensitive word, phrase, or regular expression.
+                        type: string
+                      hotwords:
+                        description: Zero to three proximate regular expressions necessary to consider an expression as sensitive content.
+                        type: array
+                        items:
+                          properties:
+                            regex:
+                              type: string
+                            proximity:
+                              properties:
+                                windowBefore:
+                                  type: integer
+                                windowAfter:
+                                  type: integer
+                              type: object
+                          type: object
+                    type: object
+              type: object
+            reportName:
+              type: string
+            frequency:
+              description: Interval between scans.
+              type: string
+            createdBy:
+              description: Details about the person who created this report/policy.
+              required:
+                - name
+                - obfuscatedId
+              properties:
+                name:
+                  type: string
+                  description: The display name.
+                obfuscatedId:
+                  type: string
+                  description: An opaque identifier that can be used to request metadata for a Person.
+                metadata:
+                  properties:
+                    firstName:
+                      type: string
+                      description: The first name of the person
+                    email:
+                      type: string
+                      description: The user's primary email address
+                  type: object
+              type: object
+            createdAt:
+              description: Timestamp at which this configuration was created.
+              type: string
+              format: iso-date-time
+            redactQuote:
+              description: redact quote in findings of the report
+              type: boolean
+            autoHideDocs:
+              description: auto hide documents with findings in the report
+              type: boolean
+            allowlistOptions:
+              description: Terms that are allow-listed during the scans. If any finding picked up by a rule exactly matches a term in the allow-list, it will not be counted as a violation.
+              properties:
+                terms:
+                  type: array
+                  description: list of words and phrases to consider as whitelisted content
+                  items:
+                    type: string
+              type: object
+          type: object
+        frequency:
+          type: string
+          description: Interval between scans. DAILY is deprecated.
+          x-include-enum-class-prefix: true
+          enum:
+            - ONCE
+            - DAILY
+            - WEEKLY
+            - CONTINUOUS
+            - NONE
+        status:
+          type: string
+          description: The status of the policy/report. Only ACTIVE status will be picked for scans.
+          x-include-enum-class-prefix: true
+          enum:
+            - ACTIVE
+            - INACTIVE
+            - CANCELLED
+            - NONE
+        createdBy:
+          description: Details about the person who created this report/policy.
+          required:
+            - name
+            - obfuscatedId
+          properties:
+            name:
+              type: string
+              description: The display name.
+            obfuscatedId:
+              type: string
+              description: An opaque identifier that can be used to request metadata for a Person.
+            metadata:
+              properties:
+                firstName:
+                  type: string
+                  description: The first name of the person
+                email:
+                  type: string
+                  description: The user's primary email address
+              type: object
+          type: object
+        createdAt:
+          description: Timestamp at which the policy was created.
+          type: string
+          format: iso-date-time
+        lastUpdatedAt:
+          description: Timestamp at which the policy was last updated.
+          type: string
+          format: iso-date-time
+        autoHideDocs:
+          description: Auto hide documents with findings in the policy.
+          type: boolean
+        lastScanStatus:
+          type: string
+          enum:
+            - PENDING
+            - SUCCESS
+            - FAILURE
+            - CANCELLED
+            - CANCELLING
+            - ACTIVE
+        lastScanStartTime:
+          description: The timestamp at which the report's last run/scan began.
+          type: string
+          format: iso-date-time
+        updatedBy:
+          description: Details about the person who created this report/policy.
+          required:
+            - name
+            - obfuscatedId
+          properties:
+            name:
+              type: string
+              description: The display name.
+            obfuscatedId:
+              type: string
+              description: An opaque identifier that can be used to request metadata for a Person.
+            metadata:
+              properties:
+                firstName:
+                  type: string
+                  description: The first name of the person
+                email:
+                  type: string
+                  description: The user's primary email address
+              type: object
+          type: object
+      type: object
+    DlpConfig:
+      description: Detailed configuration of what documents and sensitive content will be scanned.
+      properties:
+        version:
+          description: Synonymous with report/policy id.
+          type: integer
+          format: int64
+        sensitiveInfoTypes:
+          deprecated: true
+          description: DEPRECATED - use `sensitiveContentOptions` instead.
+          type: array
+          items:
+            properties:
+              likelihoodThreshold:
+                deprecated: true
+                type: string
+                enum:
+                  - LIKELY
+                  - VERY_LIKELY
+              infoType:
+                description: Text representation of an info-type to scan for.
+                type: string
+            type: object
+        inputOptions:
+          description: Controls which data-sources and what time-range to include in scans.
+          properties:
+            urlGreenlist:
+              deprecated: true
+              type: array
+              description: list of url regex matching documents excluded from report
+              items:
+                type: string
+            datasourcesType:
+              type: string
+              description: The types of datasource for which to run the report/policy.
+              enum:
+                - ALL
+                - CUSTOM
+            datasources:
+              deprecated: true
+              type: array
+              description: List of datasources to consider for report. DEPRECATED - use datasourceInstances instead.
+              items:
+                type: string
+            datasourceInstances:
+              type: array
+              description: List of datasource instances to consider for report/policy.
+              items:
+                type: string
+            timePeriodType:
+              type: string
+              description: Type of time period for which to run the report/policy. PAST_DAY is deprecated.
+              enum:
+                - ALL_TIME
+                - PAST_YEAR
+                - PAST_DAY
+                - CUSTOM
+            customTimeRange:
+              properties:
+                startTime:
+                  type: string
+                  description: start time of the time range, applicable for the CUSTOM type.
+                  format: date-time
+                endTime:
+                  type: string
+                  description: end time of the time range, applicable for the CUSTOM type.
+                  format: date-time
+              type: object
+          type: object
+        externalSharingOptions:
+          deprecated: true
+          description: DEPRECATED - use `broadSharingOptions` instead.
+          type: object
+          properties:
+            enabled:
+              deprecated: true
+              type: boolean
+            threshold:
+              description: The minimum number of users the document is shared with.
+              type: integer
+            thresholdEnabled:
+              description: Documents will be filtered based on how many people have access to it.
+              type: boolean
+            anyoneWithLinkEnabled:
+              deprecated: true
+              type: boolean
+            anyoneInternalEnabled:
+              description: Only users within the organization can access the document.
+              type: boolean
+            anonymousAccessEnabled:
+              description: Anyone on the internet can access the document.
+              type: boolean
+            userAccessEnabled:
+              description: Enable user access check
+              type: boolean
+            userIds:
+              type: array
+              description: Any one of the specified users can access the document.
+              items:
+                type: string
+            domainAccessEnabled:
+              type: boolean
+        broadSharingOptions:
+          description: Controls how "shared" a document must be to get picked for scans.
+          properties:
+            enabled:
+              deprecated: true
+              type: boolean
+            threshold:
+              description: The minimum number of users the document is shared with.
+              type: integer
+            thresholdEnabled:
+              description: Documents will be filtered based on how many people have access to it.
+              type: boolean
+            anyoneWithLinkEnabled:
+              deprecated: true
+              type: boolean
+            anyoneInternalEnabled:
+              description: Only users within the organization can access the document.
+              type: boolean
+            anonymousAccessEnabled:
+              description: Anyone on the internet can access the document.
+              type: boolean
+            userAccessEnabled:
+              description: Enable user access check
+              type: boolean
+            userIds:
+              type: array
+              description: Any one of the specified users can access the document.
+              items:
+                type: string
+          type: object
+        sensitiveContentOptions:
+          description: Options for defining sensitive content within scanned documents.
+          properties:
+            sensitiveInfoTypes:
+              description: Predefined categories of terms to consider as sensitive content. See https://cloud.google.com/dlp/docs/infotypes-reference for available types.
+              type: array
+              items:
+                properties:
+                  likelihoodThreshold:
+                    deprecated: true
+                    type: string
+                    enum:
+                      - LIKELY
+                      - VERY_LIKELY
+                  infoType:
+                    description: Text representation of an info-type to scan for.
+                    type: string
+                type: object
+            sensitiveTerms:
+              description: list of words and phrases to consider as sensitive content
+              type: array
+              items:
+                properties:
+                  expression:
+                    description: Sensitive word, phrase, or regular expression.
+                    type: string
+                  hotwords:
+                    description: Zero to three proximate regular expressions necessary to consider an expression as sensitive content.
+                    type: array
+                    items:
+                      properties:
+                        regex:
+                          type: string
+                        proximity:
+                          properties:
+                            windowBefore:
+                              type: integer
+                            windowAfter:
+                              type: integer
+                          type: object
+                      type: object
+                type: object
+            sensitiveRegexes:
+              description: list of regular expressions to consider as sensitive content
+              type: array
+              items:
+                properties:
+                  expression:
+                    description: Sensitive word, phrase, or regular expression.
+                    type: string
+                  hotwords:
+                    description: Zero to three proximate regular expressions necessary to consider an expression as sensitive content.
+                    type: array
+                    items:
+                      properties:
+                        regex:
+                          type: string
+                        proximity:
+                          properties:
+                            windowBefore:
+                              type: integer
+                            windowAfter:
+                              type: integer
+                          type: object
+                      type: object
+                type: object
+          type: object
+        reportName:
+          type: string
+        frequency:
+          description: Interval between scans.
+          type: string
+        createdBy:
+          description: Details about the person who created this report/policy.
+          required:
+            - name
+            - obfuscatedId
+          properties:
+            name:
+              type: string
+              description: The display name.
+            obfuscatedId:
+              type: string
+              description: An opaque identifier that can be used to request metadata for a Person.
+            metadata:
+              properties:
+                firstName:
+                  type: string
+                  description: The first name of the person
+                email:
+                  type: string
+                  description: The user's primary email address
+              type: object
+          type: object
+        createdAt:
+          description: Timestamp at which this configuration was created.
+          type: string
+          format: iso-date-time
+        redactQuote:
+          description: redact quote in findings of the report
+          type: boolean
+        autoHideDocs:
+          description: auto hide documents with findings in the report
+          type: boolean
+        allowlistOptions:
+          description: Terms that are allow-listed during the scans. If any finding picked up by a rule exactly matches a term in the allow-list, it will not be counted as a violation.
+          properties:
+            terms:
+              type: array
+              description: list of words and phrases to consider as whitelisted content
+              items:
+                type: string
+          type: object
+      type: object
     DlpFrequency:
       type: string
       description: Interval between scans. DAILY is deprecated.
@@ -989,97 +3507,6 @@ components:
       enum:
         - SUCCESS
         - FAILURE
-    HotwordProximity:
-      properties:
-        windowBefore:
-          type: integer
-        windowAfter:
-          type: integer
-    ReportStatusResponse:
-      properties:
-        status:
-          type: string
-          enum:
-            - PENDING
-            - SUCCESS
-            - FAILURE
-            - CANCELLED
-            - CANCELLING
-            - ACTIVE
-        startTime:
-          description: The timestamp at which the report's run/scan began.
-          type: string
-          format: iso-date-time
-    SensitiveInfoType:
-      properties:
-        likelihoodThreshold:
-          deprecated: true
-          type: string
-          enum:
-            - LIKELY
-            - VERY_LIKELY
-        infoType:
-          description: Text representation of an info-type to scan for.
-          type: string
-    TimeRange:
-      properties:
-        startTime:
-          type: string
-          description: start time of the time range, applicable for the CUSTOM type.
-          format: date-time
-        endTime:
-          type: string
-          description: end time of the time range, applicable for the CUSTOM type.
-          format: date-time
-        lastNDaysValue:
-          type: integer
-          description: The number of days to look back from the current time, applicable for the LAST_N_DAYS type.
-          format: int64
-    AllowlistOptions:
-      description: Terms that are allow-listed during the scans. If any finding picked up by a rule exactly matches a term in the allow-list, it will not be counted as a violation.
-      properties:
-        terms:
-          type: array
-          description: list of words and phrases to consider as whitelisted content
-          items:
-            type: string
-    SharingOptions:
-      description: Controls how "shared" a document must be to get picked for scans.
-      properties:
-        enabled:
-          deprecated: true
-          type: boolean
-        threshold:
-          description: The minimum number of users the document is shared with.
-          type: integer
-        thresholdEnabled:
-          description: Documents will be filtered based on how many people have access to it.
-          type: boolean
-        anyoneWithLinkEnabled:
-          deprecated: true
-          type: boolean
-        anyoneInternalEnabled:
-          description: Only users within the organization can access the document.
-          type: boolean
-        anonymousAccessEnabled:
-          description: Anyone on the internet can access the document.
-          type: boolean
-        userAccessEnabled:
-          description: Enable user access check
-          type: boolean
-        userIds:
-          type: array
-          description: Any one of the specified users can access the document.
-          items:
-            type: string
-    DlpPersonMetadata:
-      properties:
-        firstName:
-          type: string
-          description: The first name of the person
-        email:
-          type: string
-          description: The user's primary email address
     DocumentVisibilityOverride:
       properties:
         docId:
@@ -1092,38 +3519,23 @@ components:
             - HIDE_FROM_ALL
             - HIDE_FROM_GROUPS
             - HIDE_FROM_ALL_EXCEPT_OWNER
-    UpdateDlpConfigRequest:
+      type: object
+    DocumentVisibilityUpdateResult:
+      type: object
       properties:
-        config:
-          $ref: '#/components/schemas/DlpConfig'
-        frequency:
-          description: Only "ONCE" is supported for reports.
+        docId:
           type: string
-    CreateDlpReportResponse:
-      properties:
-        report:
-          $ref: '#/components/schemas/DlpReport'
-    GetDlpReportResponse:
-      properties:
-        report:
-          $ref: '#/components/schemas/DlpReport'
-    UpdateDlpReportResponse:
-      properties:
-        result:
-          $ref: '#/components/schemas/DlpSimpleResult'
-    Hotword:
-      properties:
-        regex:
+        override:
+          description: The visibility-override state of the document.
           type: string
-        proximity:
-          $ref: '#/components/schemas/HotwordProximity'
-    UpdateDlpConfigResponse:
-      properties:
-        result:
-          $ref: '#/components/schemas/DlpSimpleResult'
-        reportId:
-          description: The id of the report that was just created and run.
-          type: string
+          enum:
+            - NONE
+            - HIDE_FROM_ALL
+            - HIDE_FROM_GROUPS
+            - HIDE_FROM_ALL_EXCEPT_OWNER
+        success:
+          description: Whether this document was successfully set to its desired visibility state.
+          type: boolean
     DlpPerson:
       description: Details about the person who created this report/policy.
       required:
@@ -1137,30 +3549,27 @@ components:
           type: string
           description: An opaque identifier that can be used to request metadata for a Person.
         metadata:
-          $ref: '#/components/schemas/DlpPersonMetadata'
-    ExternalSharingOptions:
-      deprecated: true
-      allOf:
-        - description: DEPRECATED - use `broadSharingOptions` instead.
-        - $ref: '#/components/schemas/SharingOptions'
-        - type: object
           properties:
-            domainAccessEnabled:
-              type: boolean
-    DocumentVisibilityUpdateResult:
-      allOf:
-        - $ref: '#/components/schemas/DocumentVisibilityOverride'
-        - type: object
-          properties:
-            success:
-              description: Whether this document was successfully set to its desired visibility state.
-              type: boolean
-    ListDlpReportsResponse:
+            firstName:
+              type: string
+              description: The first name of the person
+            email:
+              type: string
+              description: The user's primary email address
+          type: object
+      type: object
+    SensitiveInfoType:
       properties:
-        reports:
-          type: array
-          items:
-            $ref: '#/components/schemas/DlpReport'
+        likelihoodThreshold:
+          deprecated: true
+          type: string
+          enum:
+            - LIKELY
+            - VERY_LIKELY
+        infoType:
+          description: Text representation of an info-type to scan for.
+          type: string
+      type: object
     InputOptions:
       description: Controls which data-sources and what time-range to include in scans.
       properties:
@@ -1195,9 +3604,177 @@ components:
             - PAST_YEAR
             - PAST_DAY
             - CUSTOM
-            - LAST_N_DAYS
         customTimeRange:
-          $ref: '#/components/schemas/TimeRange'
+          properties:
+            startTime:
+              type: string
+              description: start time of the time range, applicable for the CUSTOM type.
+              format: date-time
+            endTime:
+              type: string
+              description: end time of the time range, applicable for the CUSTOM type.
+              format: date-time
+          type: object
+      type: object
+    ExternalSharingOptions:
+      deprecated: true
+      description: DEPRECATED - use `broadSharingOptions` instead.
+      type: object
+      properties:
+        enabled:
+          deprecated: true
+          type: boolean
+        threshold:
+          description: The minimum number of users the document is shared with.
+          type: integer
+        thresholdEnabled:
+          description: Documents will be filtered based on how many people have access to it.
+          type: boolean
+        anyoneWithLinkEnabled:
+          deprecated: true
+          type: boolean
+        anyoneInternalEnabled:
+          description: Only users within the organization can access the document.
+          type: boolean
+        anonymousAccessEnabled:
+          description: Anyone on the internet can access the document.
+          type: boolean
+        userAccessEnabled:
+          description: Enable user access check
+          type: boolean
+        userIds:
+          type: array
+          description: Any one of the specified users can access the document.
+          items:
+            type: string
+        domainAccessEnabled:
+          type: boolean
+    SharingOptions:
+      description: Controls how "shared" a document must be to get picked for scans.
+      properties:
+        enabled:
+          deprecated: true
+          type: boolean
+        threshold:
+          description: The minimum number of users the document is shared with.
+          type: integer
+        thresholdEnabled:
+          description: Documents will be filtered based on how many people have access to it.
+          type: boolean
+        anyoneWithLinkEnabled:
+          deprecated: true
+          type: boolean
+        anyoneInternalEnabled:
+          description: Only users within the organization can access the document.
+          type: boolean
+        anonymousAccessEnabled:
+          description: Anyone on the internet can access the document.
+          type: boolean
+        userAccessEnabled:
+          description: Enable user access check
+          type: boolean
+        userIds:
+          type: array
+          description: Any one of the specified users can access the document.
+          items:
+            type: string
+      type: object
+    SensitiveContentOptions:
+      description: Options for defining sensitive content within scanned documents.
+      properties:
+        sensitiveInfoTypes:
+          description: Predefined categories of terms to consider as sensitive content. See https://cloud.google.com/dlp/docs/infotypes-reference for available types.
+          type: array
+          items:
+            properties:
+              likelihoodThreshold:
+                deprecated: true
+                type: string
+                enum:
+                  - LIKELY
+                  - VERY_LIKELY
+              infoType:
+                description: Text representation of an info-type to scan for.
+                type: string
+            type: object
+        sensitiveTerms:
+          description: list of words and phrases to consider as sensitive content
+          type: array
+          items:
+            properties:
+              expression:
+                description: Sensitive word, phrase, or regular expression.
+                type: string
+              hotwords:
+                description: Zero to three proximate regular expressions necessary to consider an expression as sensitive content.
+                type: array
+                items:
+                  properties:
+                    regex:
+                      type: string
+                    proximity:
+                      properties:
+                        windowBefore:
+                          type: integer
+                        windowAfter:
+                          type: integer
+                      type: object
+                  type: object
+            type: object
+        sensitiveRegexes:
+          description: list of regular expressions to consider as sensitive content
+          type: array
+          items:
+            properties:
+              expression:
+                description: Sensitive word, phrase, or regular expression.
+                type: string
+              hotwords:
+                description: Zero to three proximate regular expressions necessary to consider an expression as sensitive content.
+                type: array
+                items:
+                  properties:
+                    regex:
+                      type: string
+                    proximity:
+                      properties:
+                        windowBefore:
+                          type: integer
+                        windowAfter:
+                          type: integer
+                      type: object
+                  type: object
+            type: object
+      type: object
+    AllowlistOptions:
+      description: Terms that are allow-listed during the scans. If any finding picked up by a rule exactly matches a term in the allow-list, it will not be counted as a violation.
+      properties:
+        terms:
+          type: array
+          description: list of words and phrases to consider as whitelisted content
+          items:
+            type: string
+      type: object
+    DlpPersonMetadata:
+      properties:
+        firstName:
+          type: string
+          description: The first name of the person
+        email:
+          type: string
+          description: The user's primary email address
+      type: object
+    TimeRange:
+      properties:
+        startTime:
+          type: string
+          description: start time of the time range, applicable for the CUSTOM type.
+          format: date-time
+        endTime:
+          type: string
+          description: end time of the time range, applicable for the CUSTOM type.
+          format: date-time
+      type: object
     SensitiveExpression:
       properties:
         expression:
@@ -1207,168 +3784,44 @@ components:
           description: Zero to three proximate regular expressions necessary to consider an expression as sensitive content.
           type: array
           items:
-            $ref: '#/components/schemas/Hotword'
-    CreateDlpReportRequest:
+            properties:
+              regex:
+                type: string
+              proximity:
+                properties:
+                  windowBefore:
+                    type: integer
+                  windowAfter:
+                    type: integer
+                type: object
+            type: object
+      type: object
+    Hotword:
       properties:
-        name:
-          description: Name of the policy being created.
+        regex:
           type: string
-        config:
-          description: Details on the configuration used in the scans.
-          $ref: '#/components/schemas/DlpConfig'
-        frequency:
-          description: Interval between scans.
-          $ref: '#/components/schemas/DlpFrequency'
-        autoHideDocs:
-          description: Controls whether the policy should hide documents with violations.
-          type: boolean
-    UpdateDocumentVisibilityOverridesRequest:
+        proximity:
+          properties:
+            windowBefore:
+              type: integer
+            windowAfter:
+              type: integer
+          type: object
+      type: object
+    HotwordProximity:
       properties:
-        visibilityOverrides:
-          type: array
-          items:
-            $ref: '#/components/schemas/DocumentVisibilityOverride'
-    GetDocumentVisibilityOverridesResponse:
-      properties:
-        visibilityOverrides:
-          type: array
-          items:
-            $ref: '#/components/schemas/DocumentVisibilityOverride'
-    UpdateDocumentVisibilityOverridesResponse:
-      properties:
-        results:
-          description: The documents and whether their visibility was successfully updated.
-          type: array
-          items:
-            $ref: '#/components/schemas/DocumentVisibilityUpdateResult'
-    UpdateDlpReportRequest:
-      properties:
-        config:
-          description: The new configuration the policy will follow if provided.
-          $ref: '#/components/schemas/DlpConfig'
-        frequency:
-          description: The new frequency the policy will follow if provided.
-          $ref: '#/components/schemas/DlpFrequency'
-        status:
-          description: The new status the policy will be updated to if provided.
-          $ref: '#/components/schemas/DlpReportStatus'
-        autoHideDocs:
-          description: The new autoHideDoc boolean the policy will be updated to if provided.
-          type: boolean
-        reportName:
-          description: The new name of the policy if provided.
-          type: string
-    DlpReport:
-      description: Full policy information that will be used for scans.
-      properties:
-        id:
-          type: string
-        name:
-          type: string
-        config:
-          description: All details of the policy that is needed for a scan.
-          $ref: '#/components/schemas/DlpConfig'
-        frequency:
-          description: The interval between scans.
-          $ref: '#/components/schemas/DlpFrequency'
-        status:
-          description: The status of the policy.
-          $ref: '#/components/schemas/DlpReportStatus'
-        createdBy:
-          description: Person who created this report.
-          $ref: '#/components/schemas/DlpPerson'
-        createdAt:
-          description: Timestamp at which the policy was created.
-          type: string
-          format: iso-date-time
-        lastUpdatedAt:
-          description: Timestamp at which the policy was last updated.
-          type: string
-          format: iso-date-time
-        autoHideDocs:
-          description: Auto hide documents with findings in the policy.
-          type: boolean
-        lastScanStatus:
-          type: string
-          enum:
-            - PENDING
-            - SUCCESS
-            - FAILURE
-            - CANCELLED
-            - CANCELLING
-            - ACTIVE
-        lastScanStartTime:
-          description: The timestamp at which the report's last run/scan began.
-          type: string
-          format: iso-date-time
-        updatedBy:
-          description: Person who last updated this report.
-          $ref: '#/components/schemas/DlpPerson'
-    SensitiveContentOptions:
-      description: Options for defining sensitive content within scanned documents.
-      properties:
-        sensitiveInfoTypes:
-          description: Predefined categories of terms to consider as sensitive content. See https://cloud.google.com/dlp/docs/infotypes-reference for available types.
-          type: array
-          items:
-            $ref: '#/components/schemas/SensitiveInfoType'
-        sensitiveTerms:
-          description: list of words and phrases to consider as sensitive content
-          type: array
-          items:
-            $ref: '#/components/schemas/SensitiveExpression'
-        sensitiveRegexes:
-          description: list of regular expressions to consider as sensitive content
-          type: array
-          items:
-            $ref: '#/components/schemas/SensitiveExpression'
-    DlpConfig:
-      description: Detailed configuration of what documents and sensitive content will be scanned.
-      properties:
-        version:
-          description: Synonymous with report/policy id.
+        windowBefore:
           type: integer
-          format: int64
-        sensitiveInfoTypes:
-          deprecated: true
-          description: DEPRECATED - use `sensitiveContentOptions` instead.
-          type: array
-          items:
-            $ref: '#/components/schemas/SensitiveInfoType'
-        inputOptions:
-          description: Options for documents to include or exclude in a report
-          $ref: '#/components/schemas/InputOptions'
-        externalSharingOptions:
-          deprecated: true
-          description: DEPRECATED - use `broadSharingOptions` instead.
-          $ref: '#/components/schemas/ExternalSharingOptions'
-        broadSharingOptions:
-          description: Options for defining documents to scan for sensitive content.
-          $ref: '#/components/schemas/SharingOptions'
-        sensitiveContentOptions:
-          description: Options for defining sensitive content within scanned documents.
-          $ref: '#/components/schemas/SensitiveContentOptions'
-        reportName:
-          type: string
-        frequency:
-          description: Interval between scans.
-          type: string
-        createdBy:
-          description: Person who created this report/policy.
-          $ref: '#/components/schemas/DlpPerson'
-        createdAt:
-          description: Timestamp at which this configuration was created.
-          type: string
-          format: iso-date-time
-        redactQuote:
-          description: redact quote in findings of the report
-          type: boolean
-        autoHideDocs:
-          description: auto hide documents with findings in the report
-          type: boolean
-        allowlistOptions:
-          description: Options for defining whitelisting content within scanned documents
-          $ref: '#/components/schemas/AllowlistOptions'
+        windowAfter:
+          type: integer
+      type: object
+  parameters:
+    timezoneOffset:
+      name: timezoneOffset
+      in: query
+      description: The offset of the client's timezone in minutes from UTC. e.g. PDT is -420 because it's 7 hours behind UTC.
+      schema:
+        type: integer
   securitySchemes:
     APIToken:
       scheme: bearer

@@ -1,8 +1,8 @@
 openapi: 3.0.0
 info:
   version: 0.9.0
-  title: Glean API - Activity
-  description: API endpoints for Activity
+  title: Activity
+  description: Activity operations for Glean API
   x-logo:
     url: https://app.glean.com/images/glean-text2.svg
   x-speakeasy-name: Glean API
@@ -14,6 +14,9 @@ servers:
         description: The instance name (typically the email domain without the TLD) that determines the deployment backend.
 security:
   - APIToken: []
+tags:
+  - name: Activity
+    description: Activity
 paths:
   /rest/api/v1/activity:
     post:
@@ -144,7 +147,8 @@ paths:
                 public static void main(String[] args) throws Exception {
 
                     Glean sdk = Glean.builder()
-                            .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
+                            .apiToken("<YOUR_BEARER_TOKEN_HERE>")
+                            .instance("<YOUR_GLEAN_INSTANCE_HERE>")
                         .build();
 
                     Activity req = Activity.builder()
@@ -275,7 +279,8 @@ paths:
                 public static void main(String[] args) throws Exception {
 
                     Glean sdk = Glean.builder()
-                            .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
+                            .apiToken("<YOUR_BEARER_TOKEN_HERE>")
+                            .instance("<YOUR_GLEAN_INSTANCE_HERE>")
                         .build();
 
                     FeedbackResponse res = sdk.client().activity().feedback()
@@ -291,155 +296,9 @@ paths:
             }
 components:
   schemas:
-    SeenFeedbackInfo:
-      properties:
-        isExplicit:
-          type: boolean
-          description: The confidence of the user seeing the object is high because they explicitly interacted with it e.g. answer impression in SERP with additional user interaction.
-    WorkflowFeedbackInfo:
-      properties:
-        source:
-          type: string
-          enum:
-            - ZERO_STATE
-            - LIBRARY
-            - HOMEPAGE
-          description: Where the feedback of the workflow originated from
-    User:
-      properties:
-        userID:
-          description: An opaque user ID for the claimed authority (i.e., the actas param, or the origid if actas is not specified).
-          type: string
-        origID:
-          description: An opaque user ID for the authenticated user (ignores actas).
-          type: string
-    UserViewInfo:
-      properties:
-        docId:
-          type: string
-          description: Unique Glean Document ID of the associated document.
-        docTitle:
-          type: string
-          description: Title of associated document.
-        docUrl:
-          type: string
-          description: URL of associated document.
-    SessionInfo:
-      properties:
-        sessionTrackingToken:
-          type: string
-          description: A unique token for this session. A new session (and token) is created when the user issues a request from a new tab or when our server hasn't seen activity for more than 10 minutes from a tab.
-        tabId:
-          type: string
-          description: A unique id for all requests a user makes from a given tab, no matter how far apart. A new tab id is only generated when a user issues a request from a new tab.
-        lastSeen:
-          type: string
-          format: date-time
-          description: The last time the server saw this token.
-        lastQuery:
-          type: string
-          description: The last query seen by the server.
-    ActivityEventParams:
-      properties:
-        bodyContent:
-          description: The HTML content of the page body.
-          type: string
-        datasourceInstance:
-          type: string
-          description: The full datasource instance name inferred from the URL of the event
-        datasource:
-          type: string
-          description: The datasource without the instance inferred from the URL of the event
-        instanceOnlyName:
-          type: string
-          description: The instance only name of the datasource instance, e.g. 1 for jira_1, inferred from the URL of the event
-        duration:
-          description: Length in seconds of the activity. For VIEWS, this represents the amount the page was visible in the foreground.
-          type: integer
-        query:
-          description: The user's search query associated with a SEARCH.
-          type: string
-        referrer:
-          description: The referring URL of the VIEW or SEARCH.
-          type: string
-        title:
-          description: The page title associated with the URL of the event
-          type: string
-        truncated:
-          description: Indicates that the parameters are incomplete and more parameters may be sent with the same action+timestamp+URL in the future. This is used for sending the duration when a `VIEW` is finished.
-          type: boolean
-    FeedbackChatExchange:
-      properties:
-        timestamp:
-          type: integer
-          format: int64
-          description: Unix timestamp in millis for the chat request.
-        agent:
-          type: string
-          description: Either DEFAULT (company knowledge) or GPT (world knowledge).
-        userQuery:
-          type: string
-          description: Initial query entered by the user.
-        searchQuery:
-          type: string
-          description: Search query performed by the agent.
-        resultDocuments:
-          type: array
-          description: List of documents read by the agent.
-          items:
-            properties:
-              title:
-                type: string
-              url:
-                type: string
-        response:
-          type: string
-    ActivityEvent:
-      required:
-        - action
-        - source
-        - timestamp
-        - url
-      properties:
-        id:
-          type: string
-          description: Universally unique identifier of the event. To allow for reliable retransmission, only the earliest received event of a given UUID is considered valid by the server and subsequent are ignored.
-        action:
-          type: string
-          description: The type of activity this represents.
-          x-enumDescriptions:
-            VIEW: Represents a visit to the given `url`.
-            EDIT: Represents an edit of the document represented by the `url`.
-            SEARCH: Represents a search performed at the given `url`.
-            COMMENT: Represents a comment on the document represented by the `url`.
-            CRAWL: Represents an explicit request to index the given `url` along with associated attributes in this payload.
-            HISTORICAL_SEARCH: Represents a search performed at the given `url` as indicated by the user's history.
-            HISTORICAL_VIEW: Represents a visit to the given `url` as indicated by the user's history.
-          enum:
-            - VIEW
-            - EDIT
-            - SEARCH
-            - COMMENT
-            - CRAWL
-            - HISTORICAL_SEARCH
-            - HISTORICAL_VIEW
-        params:
-          $ref: '#/components/schemas/ActivityEventParams'
-        timestamp:
-          type: string
-          description: The ISO 8601 timestamp when the activity began.
-          format: date-time
-        url:
-          description: The URL of the activity.
-          type: string
     Activity:
       required:
         - events
-      properties:
-        events:
-          type: array
-          items:
-            $ref: '#/components/schemas/ActivityEvent'
       example:
         events:
           - url: https://example.com/
@@ -456,109 +315,85 @@ components:
             params:
               duration: 20
               referrer: https://example.com/document
-    ManualFeedbackInfo:
       properties:
-        email:
-          type: string
-          description: The email address of the user who submitted the Feedback.event.MANUAL_FEEDBACK event.
-        source:
-          type: string
-          description: The source associated with the Feedback.event.MANUAL_FEEDBACK event.
-          enum:
-            - AUTOCOMPLETE
-            - CALENDAR
-            - CHAT
-            - CHAT_GENERAL
-            - CONCEPT_CARD
-            - DESKTOP_APP
-            - DISAMBIGUATION_CARD
-            - EXPERT_DETECTION
-            - FEED
-            - GENERATED_Q_AND_A
-            - INLINE_MENU
-            - NATIVE_RESULT
-            - Q_AND_A
-            - RELATED_QUESTIONS
-            - REPORT_ISSUE
-            - SCIOBOT
-            - SEARCH
-            - SIDEBAR
-            - SUMMARY
-        issue:
-          type: string
-          description: The issue the user indicated in the feedback.
-          deprecated: true
-        issues:
-          type: array
-          description: The issue(s) the user indicated in the feedback.
-          items:
-            type: string
-            enum:
-              - INACCURATE_RESPONSE
-              - INCOMPLETE_OR_NO_ANSWER
-              - INCORRECT_CITATION
-              - MISSING_CITATION
-              - OTHER
-              - OUTDATED_RESPONSE
-              - RESULT_MISSING
-              - RESULT_SHOULD_NOT_APPEAR
-              - RESULTS_HELPFUL
-              - RESULTS_POOR_ORDER
-              - TOO_MUCH_ONE_KIND
-        imageUrls:
+        events:
           type: array
           items:
-            type: string
-          description: URLs of images uploaded by user when providing feedback
-        query:
-          type: string
-          description: The query associated with the Feedback.event.MANUAL_FEEDBACK event.
-        obscuredQuery:
-          type: string
-          description: The query associated with the Feedback.event.MANUAL_FEEDBACK event, but obscured such that the vowels are replaced with special characters. For search feedback events only.
-        activeTab:
-          type: string
-          description: Which tabs the user had chosen at the time of the Feedback.event.MANUAL_FEEDBACK event. For search feedback events only.
-        comments:
-          type: string
-          description: The comments users can optionally add to the Feedback.event.MANUAL_FEEDBACK events.
-        searchResults:
-          type: array
-          items:
-            type: string
-          description: The array of search result Glean Document IDs, ordered by top to bottom result.
-        previousMessages:
-          type: array
-          items:
-            type: string
-          description: The array of previous messages in a chat session, ordered by oldest to newest.
-        chatTranscript:
-          type: array
-          items:
-            $ref: '#/components/schemas/FeedbackChatExchange'
-          description: Array of previous request/response exchanges, ordered by oldest to newest.
-        numQueriesFromFirstRun:
-          type: integer
-          description: How many times this query has been run in the past.
-        vote:
-          type: string
-          description: The vote associated with the Feedback.event.MANUAL_FEEDBACK event.
-          enum:
-            - UPVOTE
-            - DOWNVOTE
-        rating:
-          type: integer
-          description: A rating associated with the user feedback. The value will be between one and the maximum given by ratingScale, inclusive.
-        ratingKey:
-          type: string
-          description: A description of the rating that contextualizes how it appeared to the user, e.g. "satisfied".
-        ratingScale:
-          type: integer
-          description: The scale of comparison for a rating associated with the feedback. Rating values start from one and go up to the maximum specified by ratingScale. For example, a five-option satisfaction rating will have a ratingScale of 5 and a thumbs-up/thumbs-down rating will have a ratingScale of 2.
+            required:
+              - action
+              - source
+              - timestamp
+              - url
+            properties:
+              id:
+                type: string
+                description: Universally unique identifier of the event. To allow for reliable retransmission, only the earliest received event of a given UUID is considered valid by the server and subsequent are ignored.
+              action:
+                type: string
+                description: The type of activity this represents.
+                x-enumDescriptions:
+                  VIEW: Represents a visit to the given `url`.
+                  EDIT: Represents an edit of the document represented by the `url`.
+                  SEARCH: Represents a search performed at the given `url`.
+                  COMMENT: Represents a comment on the document represented by the `url`.
+                  CRAWL: Represents an explicit request to index the given `url` along with associated attributes in this payload.
+                  HISTORICAL_SEARCH: Represents a search performed at the given `url` as indicated by the user's history.
+                  HISTORICAL_VIEW: Represents a visit to the given `url` as indicated by the user's history.
+                enum:
+                  - VIEW
+                  - EDIT
+                  - SEARCH
+                  - COMMENT
+                  - CRAWL
+                  - HISTORICAL_SEARCH
+                  - HISTORICAL_VIEW
+              params:
+                properties:
+                  bodyContent:
+                    description: The HTML content of the page body.
+                    type: string
+                  datasourceInstance:
+                    type: string
+                    description: The full datasource instance name inferred from the URL of the event
+                  datasource:
+                    type: string
+                    description: The datasource without the instance inferred from the URL of the event
+                  instanceOnlyName:
+                    type: string
+                    description: The instance only name of the datasource instance, e.g. 1 for jira_1, inferred from the URL of the event
+                  duration:
+                    description: Length in seconds of the activity. For VIEWS, this represents the amount the page was visible in the foreground.
+                    type: integer
+                  query:
+                    description: The user's search query associated with a SEARCH.
+                    type: string
+                  referrer:
+                    description: The referring URL of the VIEW or SEARCH.
+                    type: string
+                  title:
+                    description: The page title associated with the URL of the event
+                    type: string
+                  truncated:
+                    description: Indicates that the parameters are incomplete and more parameters may be sent with the same action+timestamp+URL in the future. This is used for sending the duration when a `VIEW` is finished.
+                    type: boolean
+                type: object
+              timestamp:
+                type: string
+                description: The ISO 8601 timestamp when the activity began.
+                format: date-time
+              url:
+                description: The URL of the activity.
+                type: string
+            type: object
+      type: object
     Feedback:
       required:
         - event
         - trackingTokens
+      example:
+        trackingTokens:
+          - trackingTokens
+        event: VIEW
       properties:
         id:
           type: string
@@ -652,13 +487,34 @@ components:
           type: string
           description: For type MANUAL_FEEDBACK, contains string of user feedback. For autocomplete, partial query string. For feed, string of user feedback in addition to manual feedback signals extracted from all suggested content.
         sessionInfo:
-          $ref: '#/components/schemas/SessionInfo'
+          properties:
+            sessionTrackingToken:
+              type: string
+              description: A unique token for this session. A new session (and token) is created when the user issues a request from a new tab or when our server hasn't seen activity for more than 10 minutes from a tab.
+            tabId:
+              type: string
+              description: A unique id for all requests a user makes from a given tab, no matter how far apart. A new tab id is only generated when a user issues a request from a new tab.
+            lastSeen:
+              type: string
+              format: date-time
+              description: The last time the server saw this token.
+            lastQuery:
+              type: string
+              description: The last query seen by the server.
+          type: object
         timestamp:
           type: string
           description: The ISO 8601 timestamp when the event occured.
           format: date-time
         user:
-          $ref: '#/components/schemas/User'
+          properties:
+            userID:
+              description: An opaque user ID for the claimed authority (i.e., the actas param, or the origid if actas is not specified).
+              type: string
+            origID:
+              description: An opaque user ID for the authenticated user (ignores actas).
+              type: string
+          type: object
         pathname:
           type: string
           description: The path the client was at when the feedback event triggered.
@@ -675,30 +531,484 @@ components:
           description: The URL the client was at when the feedback event triggered.
         uiTree:
           description: The UI element tree associated with the event, if any.
+          type: array
           items:
             type: string
-          type: array
         uiElement:
           type: string
           description: The UI element associated with the event, if any.
         manualFeedbackInfo:
-          $ref: '#/components/schemas/ManualFeedbackInfo'
+          properties:
+            email:
+              type: string
+              description: The email address of the user who submitted the Feedback.event.MANUAL_FEEDBACK event.
+            source:
+              type: string
+              description: The source associated with the Feedback.event.MANUAL_FEEDBACK event.
+              enum:
+                - AUTOCOMPLETE
+                - CALENDAR
+                - CHAT
+                - CHAT_GENERAL
+                - CONCEPT_CARD
+                - DESKTOP_APP
+                - DISAMBIGUATION_CARD
+                - EXPERT_DETECTION
+                - FEED
+                - GENERATED_Q_AND_A
+                - INLINE_MENU
+                - NATIVE_RESULT
+                - Q_AND_A
+                - RELATED_QUESTIONS
+                - REPORT_ISSUE
+                - SCIOBOT
+                - SEARCH
+                - SIDEBAR
+                - SUMMARY
+            issue:
+              type: string
+              description: The issue the user indicated in the feedback.
+              deprecated: true
+            issues:
+              type: array
+              description: The issue(s) the user indicated in the feedback.
+              items:
+                type: string
+                enum:
+                  - INACCURATE_RESPONSE
+                  - INCOMPLETE_OR_NO_ANSWER
+                  - INCORRECT_CITATION
+                  - MISSING_CITATION
+                  - OTHER
+                  - OUTDATED_RESPONSE
+                  - RESULT_MISSING
+                  - RESULT_SHOULD_NOT_APPEAR
+                  - RESULTS_HELPFUL
+                  - RESULTS_POOR_ORDER
+                  - TOO_MUCH_ONE_KIND
+            imageUrls:
+              type: array
+              description: URLs of images uploaded by user when providing feedback
+              items:
+                type: string
+            query:
+              type: string
+              description: The query associated with the Feedback.event.MANUAL_FEEDBACK event.
+            obscuredQuery:
+              type: string
+              description: The query associated with the Feedback.event.MANUAL_FEEDBACK event, but obscured such that the vowels are replaced with special characters. For search feedback events only.
+            activeTab:
+              type: string
+              description: Which tabs the user had chosen at the time of the Feedback.event.MANUAL_FEEDBACK event. For search feedback events only.
+            comments:
+              type: string
+              description: The comments users can optionally add to the Feedback.event.MANUAL_FEEDBACK events.
+            searchResults:
+              type: array
+              description: The array of search result Glean Document IDs, ordered by top to bottom result.
+              items:
+                type: string
+            previousMessages:
+              type: array
+              description: The array of previous messages in a chat session, ordered by oldest to newest.
+              items:
+                type: string
+            chatTranscript:
+              type: array
+              description: Array of previous request/response exchanges, ordered by oldest to newest.
+              items:
+                properties:
+                  timestamp:
+                    type: integer
+                    format: int64
+                    description: Unix timestamp in millis for the chat request.
+                  agent:
+                    type: string
+                    description: Either DEFAULT (company knowledge) or GPT (world knowledge).
+                  userQuery:
+                    type: string
+                    description: Initial query entered by the user.
+                  searchQuery:
+                    type: string
+                    description: Search query performed by the agent.
+                  resultDocuments:
+                    type: array
+                    description: List of documents read by the agent.
+                    items:
+                      properties:
+                        title:
+                          type: string
+                        url:
+                          type: string
+                      type: object
+                  response:
+                    type: string
+                type: object
+            numQueriesFromFirstRun:
+              type: integer
+              description: How many times this query has been run in the past.
+            vote:
+              type: string
+              description: The vote associated with the Feedback.event.MANUAL_FEEDBACK event.
+              enum:
+                - UPVOTE
+                - DOWNVOTE
+            rating:
+              type: integer
+              description: A rating associated with the user feedback. The value will be between one and the maximum given by ratingScale, inclusive.
+            ratingKey:
+              type: string
+              description: A description of the rating that contextualizes how it appeared to the user, e.g. "satisfied".
+            ratingScale:
+              type: integer
+              description: The scale of comparison for a rating associated with the feedback. Rating values start from one and go up to the maximum specified by ratingScale. For example, a five-option satisfaction rating will have a ratingScale of 5 and a thumbs-up/thumbs-down rating will have a ratingScale of 2.
+          type: object
         seenFeedbackInfo:
-          $ref: '#/components/schemas/SeenFeedbackInfo'
+          properties:
+            isExplicit:
+              type: boolean
+              description: The confidence of the user seeing the object is high because they explicitly interacted with it e.g. answer impression in SERP with additional user interaction.
+          type: object
         userViewInfo:
-          $ref: '#/components/schemas/UserViewInfo'
+          properties:
+            docId:
+              type: string
+              description: Unique Glean Document ID of the associated document.
+            docTitle:
+              type: string
+              description: Title of associated document.
+            docUrl:
+              type: string
+              description: URL of associated document.
+          type: object
         workflowFeedbackInfo:
-          $ref: '#/components/schemas/WorkflowFeedbackInfo'
+          properties:
+            source:
+              type: string
+              enum:
+                - ZERO_STATE
+                - LIBRARY
+                - HOMEPAGE
+              description: Where the feedback of the workflow originated from
+          type: object
         applicationId:
           type: string
           description: The application ID of the client that sent the feedback event.
         agentId:
           type: string
           description: The agent ID of the client that sent the feedback event.
-      example:
-        trackingTokens:
-          - trackingTokens
-        event: VIEW
+      type: object
+    ActivityEvent:
+      required:
+        - action
+        - source
+        - timestamp
+        - url
+      properties:
+        id:
+          type: string
+          description: Universally unique identifier of the event. To allow for reliable retransmission, only the earliest received event of a given UUID is considered valid by the server and subsequent are ignored.
+        action:
+          type: string
+          description: The type of activity this represents.
+          x-enumDescriptions:
+            VIEW: Represents a visit to the given `url`.
+            EDIT: Represents an edit of the document represented by the `url`.
+            SEARCH: Represents a search performed at the given `url`.
+            COMMENT: Represents a comment on the document represented by the `url`.
+            CRAWL: Represents an explicit request to index the given `url` along with associated attributes in this payload.
+            HISTORICAL_SEARCH: Represents a search performed at the given `url` as indicated by the user's history.
+            HISTORICAL_VIEW: Represents a visit to the given `url` as indicated by the user's history.
+          enum:
+            - VIEW
+            - EDIT
+            - SEARCH
+            - COMMENT
+            - CRAWL
+            - HISTORICAL_SEARCH
+            - HISTORICAL_VIEW
+        params:
+          properties:
+            bodyContent:
+              description: The HTML content of the page body.
+              type: string
+            datasourceInstance:
+              type: string
+              description: The full datasource instance name inferred from the URL of the event
+            datasource:
+              type: string
+              description: The datasource without the instance inferred from the URL of the event
+            instanceOnlyName:
+              type: string
+              description: The instance only name of the datasource instance, e.g. 1 for jira_1, inferred from the URL of the event
+            duration:
+              description: Length in seconds of the activity. For VIEWS, this represents the amount the page was visible in the foreground.
+              type: integer
+            query:
+              description: The user's search query associated with a SEARCH.
+              type: string
+            referrer:
+              description: The referring URL of the VIEW or SEARCH.
+              type: string
+            title:
+              description: The page title associated with the URL of the event
+              type: string
+            truncated:
+              description: Indicates that the parameters are incomplete and more parameters may be sent with the same action+timestamp+URL in the future. This is used for sending the duration when a `VIEW` is finished.
+              type: boolean
+          type: object
+        timestamp:
+          type: string
+          description: The ISO 8601 timestamp when the activity began.
+          format: date-time
+        url:
+          description: The URL of the activity.
+          type: string
+      type: object
+    SessionInfo:
+      properties:
+        sessionTrackingToken:
+          type: string
+          description: A unique token for this session. A new session (and token) is created when the user issues a request from a new tab or when our server hasn't seen activity for more than 10 minutes from a tab.
+        tabId:
+          type: string
+          description: A unique id for all requests a user makes from a given tab, no matter how far apart. A new tab id is only generated when a user issues a request from a new tab.
+        lastSeen:
+          type: string
+          format: date-time
+          description: The last time the server saw this token.
+        lastQuery:
+          type: string
+          description: The last query seen by the server.
+      type: object
+    User:
+      properties:
+        userID:
+          description: An opaque user ID for the claimed authority (i.e., the actas param, or the origid if actas is not specified).
+          type: string
+        origID:
+          description: An opaque user ID for the authenticated user (ignores actas).
+          type: string
+      type: object
+    ManualFeedbackInfo:
+      properties:
+        email:
+          type: string
+          description: The email address of the user who submitted the Feedback.event.MANUAL_FEEDBACK event.
+        source:
+          type: string
+          description: The source associated with the Feedback.event.MANUAL_FEEDBACK event.
+          enum:
+            - AUTOCOMPLETE
+            - CALENDAR
+            - CHAT
+            - CHAT_GENERAL
+            - CONCEPT_CARD
+            - DESKTOP_APP
+            - DISAMBIGUATION_CARD
+            - EXPERT_DETECTION
+            - FEED
+            - GENERATED_Q_AND_A
+            - INLINE_MENU
+            - NATIVE_RESULT
+            - Q_AND_A
+            - RELATED_QUESTIONS
+            - REPORT_ISSUE
+            - SCIOBOT
+            - SEARCH
+            - SIDEBAR
+            - SUMMARY
+        issue:
+          type: string
+          description: The issue the user indicated in the feedback.
+          deprecated: true
+        issues:
+          type: array
+          description: The issue(s) the user indicated in the feedback.
+          items:
+            type: string
+            enum:
+              - INACCURATE_RESPONSE
+              - INCOMPLETE_OR_NO_ANSWER
+              - INCORRECT_CITATION
+              - MISSING_CITATION
+              - OTHER
+              - OUTDATED_RESPONSE
+              - RESULT_MISSING
+              - RESULT_SHOULD_NOT_APPEAR
+              - RESULTS_HELPFUL
+              - RESULTS_POOR_ORDER
+              - TOO_MUCH_ONE_KIND
+        imageUrls:
+          type: array
+          description: URLs of images uploaded by user when providing feedback
+          items:
+            type: string
+        query:
+          type: string
+          description: The query associated with the Feedback.event.MANUAL_FEEDBACK event.
+        obscuredQuery:
+          type: string
+          description: The query associated with the Feedback.event.MANUAL_FEEDBACK event, but obscured such that the vowels are replaced with special characters. For search feedback events only.
+        activeTab:
+          type: string
+          description: Which tabs the user had chosen at the time of the Feedback.event.MANUAL_FEEDBACK event. For search feedback events only.
+        comments:
+          type: string
+          description: The comments users can optionally add to the Feedback.event.MANUAL_FEEDBACK events.
+        searchResults:
+          type: array
+          description: The array of search result Glean Document IDs, ordered by top to bottom result.
+          items:
+            type: string
+        previousMessages:
+          type: array
+          description: The array of previous messages in a chat session, ordered by oldest to newest.
+          items:
+            type: string
+        chatTranscript:
+          type: array
+          description: Array of previous request/response exchanges, ordered by oldest to newest.
+          items:
+            properties:
+              timestamp:
+                type: integer
+                format: int64
+                description: Unix timestamp in millis for the chat request.
+              agent:
+                type: string
+                description: Either DEFAULT (company knowledge) or GPT (world knowledge).
+              userQuery:
+                type: string
+                description: Initial query entered by the user.
+              searchQuery:
+                type: string
+                description: Search query performed by the agent.
+              resultDocuments:
+                type: array
+                description: List of documents read by the agent.
+                items:
+                  properties:
+                    title:
+                      type: string
+                    url:
+                      type: string
+                  type: object
+              response:
+                type: string
+            type: object
+        numQueriesFromFirstRun:
+          type: integer
+          description: How many times this query has been run in the past.
+        vote:
+          type: string
+          description: The vote associated with the Feedback.event.MANUAL_FEEDBACK event.
+          enum:
+            - UPVOTE
+            - DOWNVOTE
+        rating:
+          type: integer
+          description: A rating associated with the user feedback. The value will be between one and the maximum given by ratingScale, inclusive.
+        ratingKey:
+          type: string
+          description: A description of the rating that contextualizes how it appeared to the user, e.g. "satisfied".
+        ratingScale:
+          type: integer
+          description: The scale of comparison for a rating associated with the feedback. Rating values start from one and go up to the maximum specified by ratingScale. For example, a five-option satisfaction rating will have a ratingScale of 5 and a thumbs-up/thumbs-down rating will have a ratingScale of 2.
+      type: object
+    SeenFeedbackInfo:
+      properties:
+        isExplicit:
+          type: boolean
+          description: The confidence of the user seeing the object is high because they explicitly interacted with it e.g. answer impression in SERP with additional user interaction.
+      type: object
+    UserViewInfo:
+      properties:
+        docId:
+          type: string
+          description: Unique Glean Document ID of the associated document.
+        docTitle:
+          type: string
+          description: Title of associated document.
+        docUrl:
+          type: string
+          description: URL of associated document.
+      type: object
+    WorkflowFeedbackInfo:
+      properties:
+        source:
+          type: string
+          enum:
+            - ZERO_STATE
+            - LIBRARY
+            - HOMEPAGE
+          description: Where the feedback of the workflow originated from
+      type: object
+    ActivityEventParams:
+      properties:
+        bodyContent:
+          description: The HTML content of the page body.
+          type: string
+        datasourceInstance:
+          type: string
+          description: The full datasource instance name inferred from the URL of the event
+        datasource:
+          type: string
+          description: The datasource without the instance inferred from the URL of the event
+        instanceOnlyName:
+          type: string
+          description: The instance only name of the datasource instance, e.g. 1 for jira_1, inferred from the URL of the event
+        duration:
+          description: Length in seconds of the activity. For VIEWS, this represents the amount the page was visible in the foreground.
+          type: integer
+        query:
+          description: The user's search query associated with a SEARCH.
+          type: string
+        referrer:
+          description: The referring URL of the VIEW or SEARCH.
+          type: string
+        title:
+          description: The page title associated with the URL of the event
+          type: string
+        truncated:
+          description: Indicates that the parameters are incomplete and more parameters may be sent with the same action+timestamp+URL in the future. This is used for sending the duration when a `VIEW` is finished.
+          type: boolean
+      type: object
+    FeedbackChatExchange:
+      properties:
+        timestamp:
+          type: integer
+          format: int64
+          description: Unix timestamp in millis for the chat request.
+        agent:
+          type: string
+          description: Either DEFAULT (company knowledge) or GPT (world knowledge).
+        userQuery:
+          type: string
+          description: Initial query entered by the user.
+        searchQuery:
+          type: string
+          description: Search query performed by the agent.
+        resultDocuments:
+          type: array
+          description: List of documents read by the agent.
+          items:
+            properties:
+              title:
+                type: string
+              url:
+                type: string
+            type: object
+        response:
+          type: string
+      type: object
+  parameters:
+    timezoneOffset:
+      name: timezoneOffset
+      in: query
+      description: The offset of the client's timezone in minutes from UTC. e.g. PDT is -420 because it's 7 hours behind UTC.
+      schema:
+        type: integer
   securitySchemes:
     APIToken:
       scheme: bearer
