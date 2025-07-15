@@ -3,7 +3,7 @@
     {
       "name": "Activity",
       "displayName": "Activity",
-      "description": "Activity",
+      "description": "",
       "file": "activity-api.yaml",
       "configId": "activity",
       "paths": 2,
@@ -23,13 +23,62 @@
           "operationId": "feedback"
         }
       ],
-      "fullyInlined": true,
+      "schemas": 11,
+      "fullyInlined": false,
+      "circularReferencesFixed": true
+    },
+    {
+      "name": "Agents",
+      "displayName": "Agents",
+      "description": "",
+      "file": "agents-api.yaml",
+      "configId": "agents",
+      "paths": 5,
+      "endpoints": [
+        {
+          "method": "POST",
+          "path": "/rest/api/v1/agents/runs/stream",
+          "summary": "Create an agent run and stream the response",
+          "description": "Executes an [agent](https://developers.glean.com/agents/agents-api) run and returns the result as a stream of server-sent events (SSE).",
+          "operationId": "createAndStreamRun"
+        },
+        {
+          "method": "POST",
+          "path": "/rest/api/v1/agents/runs/wait",
+          "summary": "Create an agent run and wait for the response",
+          "description": "Executes an [agent](https://developers.glean.com/agents/agents-api) run and returns the final response.",
+          "operationId": "createAndWaitRun"
+        },
+        {
+          "method": "POST",
+          "path": "/rest/api/v1/agents/search",
+          "summary": "Search agents",
+          "description": "Search for [agents](https://developers.glean.com/agents/agents-api) by agent name.",
+          "operationId": "searchAgents"
+        },
+        {
+          "method": "GET",
+          "path": "/rest/api/v1/agents/{agent_id}",
+          "summary": "Retrieve an agent",
+          "description": "Returns details of an [agent](https://developers.glean.com/agents/agents-api) created in the Agent Builder.",
+          "operationId": "getAgent"
+        },
+        {
+          "method": "GET",
+          "path": "/rest/api/v1/agents/{agent_id}/schemas",
+          "summary": "List an agent's schemas",
+          "description": "Return [agent](https://developers.glean.com/agents/agents-api)'s input and output schemas. You can use these schemas to detect changes to an agent's input or output structure.",
+          "operationId": "getAgentSchemas"
+        }
+      ],
+      "schemas": 11,
+      "fullyInlined": false,
       "circularReferencesFixed": true
     },
     {
       "name": "Announcements",
       "displayName": "Announcements",
-      "description": "Announcements",
+      "description": "",
       "file": "announcements-api.yaml",
       "configId": "announcements",
       "paths": 3,
@@ -56,13 +105,14 @@
           "operationId": "updateannouncement"
         }
       ],
-      "fullyInlined": true,
+      "schemas": 129,
+      "fullyInlined": false,
       "circularReferencesFixed": true
     },
     {
       "name": "Answers",
       "displayName": "Answers",
-      "description": "Answers",
+      "description": "",
       "file": "answers-api.yaml",
       "configId": "answers",
       "paths": 5,
@@ -103,13 +153,14 @@
           "operationId": "listanswers"
         }
       ],
-      "fullyInlined": true,
+      "schemas": 135,
+      "fullyInlined": false,
       "circularReferencesFixed": true
     },
     {
       "name": "Authentication",
       "displayName": "Authentication",
-      "description": "Authentication",
+      "description": "",
       "file": "authentication-api.yaml",
       "configId": "authentication",
       "paths": 1,
@@ -122,17 +173,25 @@
           "operationId": "createauthtoken"
         }
       ],
-      "fullyInlined": true,
+      "schemas": 1,
+      "fullyInlined": false,
       "circularReferencesFixed": true
     },
     {
       "name": "Chat",
       "displayName": "Chat",
-      "description": "Chat",
+      "description": "",
       "file": "chat-api.yaml",
       "configId": "chat",
       "paths": 10,
       "endpoints": [
+        {
+          "method": "POST",
+          "path": "/rest/api/v1/chat#stream",
+          "summary": "Chat",
+          "description": "Have a conversation with Glean AI.",
+          "operationId": "chatStream"
+        },
         {
           "method": "POST",
           "path": "/rest/api/v1/chat",
@@ -146,6 +205,13 @@
           "summary": "Deletes all saved Chats owned by a user",
           "description": "Deletes all saved Chats a user has had and all their contained conversational content.",
           "operationId": "deleteallchats"
+        },
+        {
+          "method": "POST",
+          "path": "/rest/api/v1/deletechatfiles",
+          "summary": "Delete files uploaded by a user for chat.",
+          "description": "Delete files uploaded by a user for Chat.",
+          "operationId": "deletechatfiles"
         },
         {
           "method": "POST",
@@ -163,24 +229,10 @@
         },
         {
           "method": "POST",
-          "path": "/rest/api/v1/listchats",
-          "summary": "Retrieves all saved Chats",
-          "description": "Retrieves all the saved Chats between Glean Assistant and the user. The returned Chats contain only metadata and no conversational content.",
-          "operationId": "listchats"
-        },
-        {
-          "method": "POST",
           "path": "/rest/api/v1/getchatapplication",
           "summary": "Gets the metadata for a custom Chat application",
           "description": "Gets the Chat application details for the specified application ID.",
           "operationId": "getchatapplication"
-        },
-        {
-          "method": "POST",
-          "path": "/rest/api/v1/uploadchatfiles",
-          "summary": "Upload files for Chat.",
-          "description": "Upload files for Chat.",
-          "operationId": "uploadchatfiles"
         },
         {
           "method": "POST",
@@ -191,73 +243,27 @@
         },
         {
           "method": "POST",
-          "path": "/rest/api/v1/deletechatfiles",
-          "summary": "Delete files uploaded by a user for chat.",
-          "description": "Delete files uploaded by a user for Chat.",
-          "operationId": "deletechatfiles"
+          "path": "/rest/api/v1/listchats",
+          "summary": "Retrieves all saved Chats",
+          "description": "Retrieves all the saved Chats between Glean Assistant and the user. The returned Chats contain only metadata and no conversational content.",
+          "operationId": "listchats"
         },
         {
           "method": "POST",
-          "path": "/rest/api/v1/chat#stream",
-          "summary": "Chat",
-          "description": "Have a conversation with Glean AI.",
-          "operationId": "chatStream"
+          "path": "/rest/api/v1/uploadchatfiles",
+          "summary": "Upload files for Chat.",
+          "description": "Upload files for Chat.",
+          "operationId": "uploadchatfiles"
         }
       ],
-      "fullyInlined": true,
-      "circularReferencesFixed": true
-    },
-    {
-      "name": "Agents",
-      "displayName": "Agents",
-      "description": "Agents",
-      "file": "agents-api.yaml",
-      "configId": "agents",
-      "paths": 5,
-      "endpoints": [
-        {
-          "method": "GET",
-          "path": "/rest/api/v1/agents/{agent_id}",
-          "summary": "Retrieve an agent",
-          "description": "Returns details of an [agent](https://developers.glean.com/agents/agents-api) created in the Agent Builder.",
-          "operationId": "getAgent"
-        },
-        {
-          "method": "GET",
-          "path": "/rest/api/v1/agents/{agent_id}/schemas",
-          "summary": "List an agent's schemas",
-          "description": "Return [agent](https://developers.glean.com/agents/agents-api)'s input and output schemas. You can use these schemas to detect changes to an agent's input or output structure.",
-          "operationId": "getAgentSchemas"
-        },
-        {
-          "method": "POST",
-          "path": "/rest/api/v1/agents/search",
-          "summary": "Search agents",
-          "description": "Search for [agents](https://developers.glean.com/agents/agents-api) by agent name.",
-          "operationId": "searchAgents"
-        },
-        {
-          "method": "POST",
-          "path": "/rest/api/v1/agents/runs/stream",
-          "summary": "Create an agent run and stream the response",
-          "description": "Executes an [agent](https://developers.glean.com/agents/agents-api) run and returns the result as a stream of server-sent events (SSE).",
-          "operationId": "createAndStreamRun"
-        },
-        {
-          "method": "POST",
-          "path": "/rest/api/v1/agents/runs/wait",
-          "summary": "Create an agent run and wait for the response",
-          "description": "Executes an [agent](https://developers.glean.com/agents/agents-api) run and returns the final response.",
-          "operationId": "createAndWaitRun"
-        }
-      ],
-      "fullyInlined": true,
+      "schemas": 162,
+      "fullyInlined": false,
       "circularReferencesFixed": true
     },
     {
       "name": "Collections",
       "displayName": "Collections",
-      "description": "Collections",
+      "description": "",
       "file": "collections-api.yaml",
       "configId": "collections",
       "paths": 8,
@@ -319,13 +325,14 @@
           "operationId": "listcollections"
         }
       ],
-      "fullyInlined": true,
+      "schemas": 141,
+      "fullyInlined": false,
       "circularReferencesFixed": true
     },
     {
       "name": "Documents",
       "displayName": "Documents",
-      "description": "Documents",
+      "description": "",
       "file": "documents-api.yaml",
       "configId": "documents",
       "paths": 3,
@@ -352,145 +359,14 @@
           "operationId": "getdocumentsbyfacets"
         }
       ],
-      "fullyInlined": true,
-      "circularReferencesFixed": true
-    },
-    {
-      "name": "Insights",
-      "displayName": "Insights",
-      "description": "Insights",
-      "file": "insights-api.yaml",
-      "configId": "insights",
-      "paths": 1,
-      "endpoints": [
-        {
-          "method": "POST",
-          "path": "/rest/api/v1/insights",
-          "summary": "Read insights",
-          "description": "Reads the aggregate information for each user, query, and content.",
-          "operationId": "insights"
-        }
-      ],
-      "fullyInlined": true,
-      "circularReferencesFixed": true
-    },
-    {
-      "name": "Messages",
-      "displayName": "Messages",
-      "description": "Messages",
-      "file": "messages-api.yaml",
-      "configId": "messages",
-      "paths": 1,
-      "endpoints": [
-        {
-          "method": "POST",
-          "path": "/rest/api/v1/messages",
-          "summary": "Read messages",
-          "description": "Retrieves list of messages from messaging/chat datasources (e.g. Slack, Teams).",
-          "operationId": "messages"
-        }
-      ],
-      "fullyInlined": true,
-      "circularReferencesFixed": true
-    },
-    {
-      "name": "Pins",
-      "displayName": "Pins",
-      "description": "Pins",
-      "file": "pins-api.yaml",
-      "configId": "pins",
-      "paths": 5,
-      "endpoints": [
-        {
-          "method": "POST",
-          "path": "/rest/api/v1/editpin",
-          "summary": "Update pin",
-          "description": "Update an existing user-generated pin.",
-          "operationId": "editpin"
-        },
-        {
-          "method": "POST",
-          "path": "/rest/api/v1/getpin",
-          "summary": "Read pin",
-          "description": "Read pin details given its ID.",
-          "operationId": "getpin"
-        },
-        {
-          "method": "POST",
-          "path": "/rest/api/v1/listpins",
-          "summary": "List pins",
-          "description": "Lists all pins.",
-          "operationId": "listpins"
-        },
-        {
-          "method": "POST",
-          "path": "/rest/api/v1/pin",
-          "summary": "Create pin",
-          "description": "Pin a document as a result for a given search query.Pin results that are known to be a good match.",
-          "operationId": "pin"
-        },
-        {
-          "method": "POST",
-          "path": "/rest/api/v1/unpin",
-          "summary": "Delete pin",
-          "description": "Unpin a previously pinned result.",
-          "operationId": "unpin"
-        }
-      ],
-      "fullyInlined": true,
-      "circularReferencesFixed": true
-    },
-    {
-      "name": "Search",
-      "displayName": "Search",
-      "description": "Search",
-      "file": "search-api.yaml",
-      "configId": "search",
-      "paths": 5,
-      "endpoints": [
-        {
-          "method": "POST",
-          "path": "/rest/api/v1/adminsearch",
-          "summary": "Search the index (admin)",
-          "description": "Retrieves results for search query without respect for permissions. This is available only to privileged users.",
-          "operationId": "adminsearch"
-        },
-        {
-          "method": "POST",
-          "path": "/rest/api/v1/autocomplete",
-          "summary": "Autocomplete",
-          "description": "Retrieve query suggestions, operators and documents for the given partially typed query.",
-          "operationId": "autocomplete"
-        },
-        {
-          "method": "POST",
-          "path": "/rest/api/v1/feed",
-          "summary": "Feed of documents and events",
-          "description": "The personalized feed/home includes different types of contents including suggestions, recents, calendar events and many more.",
-          "operationId": "feed"
-        },
-        {
-          "method": "POST",
-          "path": "/rest/api/v1/recommendations",
-          "summary": "Recommend documents",
-          "description": "Retrieve recommended documents for the given URL or Glean Document ID.",
-          "operationId": "recommendations"
-        },
-        {
-          "method": "POST",
-          "path": "/rest/api/v1/search",
-          "summary": "Search",
-          "description": "Retrieve results from the index for the given query and filters.",
-          "operationId": "search"
-        }
-      ],
-      "fullyInlined": true,
+      "schemas": 130,
+      "fullyInlined": false,
       "circularReferencesFixed": true
     },
     {
       "name": "Entities",
       "displayName": "Entities",
-      "description": "Entities",
+      "description": "",
       "file": "entities-api.yaml",
       "configId": "entities",
       "paths": 2,
@@ -499,7 +375,7 @@
           "method": "POST",
           "path": "/rest/api/v1/listentities",
           "summary": "List entities",
-          "description": "List some set of details for all entities that fit the given criteria and return in the requested order. Does not support negation in filters, assumes relation type EQUALS. There is a limit of 10000 entities that can be retrieved via this endpoint.",
+          "description": "List some set of details for all entities that fit the given criteria and return in the requested order. Does not support negation in filters, assumes relation type EQUALS. There is a limit of 10000 entities that can be retrieved via this endpoint, except when using FULL_DIRECTORY request type for people entities.",
           "operationId": "listentities"
         },
         {
@@ -510,156 +386,18 @@
           "operationId": "people"
         }
       ],
-      "fullyInlined": true,
-      "circularReferencesFixed": true
-    },
-    {
-      "name": "Shortcuts",
-      "displayName": "Shortcuts",
-      "description": "Shortcuts",
-      "file": "shortcuts-api.yaml",
-      "configId": "shortcuts",
-      "paths": 5,
-      "endpoints": [
-        {
-          "method": "POST",
-          "path": "/rest/api/v1/createshortcut",
-          "summary": "Create shortcut",
-          "description": "Create a user-generated shortcut that contains an alias and destination URL.",
-          "operationId": "createshortcut"
-        },
-        {
-          "method": "POST",
-          "path": "/rest/api/v1/deleteshortcut",
-          "summary": "Delete shortcut",
-          "description": "Delete an existing user-generated shortcut.",
-          "operationId": "deleteshortcut"
-        },
-        {
-          "method": "POST",
-          "path": "/rest/api/v1/getshortcut",
-          "summary": "Read shortcut",
-          "description": "Read a particular shortcut's details given its ID.",
-          "operationId": "getshortcut"
-        },
-        {
-          "method": "POST",
-          "path": "/rest/api/v1/listshortcuts",
-          "summary": "List shortcuts",
-          "description": "List shortcuts editable/owned by the currently authenticated user.",
-          "operationId": "listshortcuts"
-        },
-        {
-          "method": "POST",
-          "path": "/rest/api/v1/updateshortcut",
-          "summary": "Update shortcut",
-          "description": "Updates the shortcut with the given ID.",
-          "operationId": "updateshortcut"
-        }
-      ],
-      "fullyInlined": true,
-      "circularReferencesFixed": true
-    },
-    {
-      "name": "Summarize",
-      "displayName": "Summarize",
-      "description": "Summarize",
-      "file": "summarize-api.yaml",
-      "configId": "summarize",
-      "paths": 1,
-      "endpoints": [
-        {
-          "method": "POST",
-          "path": "/rest/api/v1/summarize",
-          "summary": "Summarize documents",
-          "description": "Generate an AI summary of the requested documents.",
-          "operationId": "summarize"
-        }
-      ],
-      "fullyInlined": true,
-      "circularReferencesFixed": true
-    },
-    {
-      "name": "Verification",
-      "displayName": "Verification",
-      "description": "Verification",
-      "file": "verification-api.yaml",
-      "configId": "verification",
-      "paths": 3,
-      "endpoints": [
-        {
-          "method": "POST",
-          "path": "/rest/api/v1/addverificationreminder",
-          "summary": "Create verification",
-          "description": "Creates a verification reminder for the document. Users can create verification reminders from different product surfaces.",
-          "operationId": "addverificationreminder"
-        },
-        {
-          "method": "POST",
-          "path": "/rest/api/v1/listverifications",
-          "summary": "List verifications",
-          "description": "Returns the information to be rendered in verification dashboard. Includes information for each document owned by user regarding their verifications.",
-          "operationId": "listverifications"
-        },
-        {
-          "method": "POST",
-          "path": "/rest/api/v1/verify",
-          "summary": "Update verification",
-          "description": "Verify documents to keep the knowledge up to date within customer corpus.",
-          "operationId": "verify"
-        }
-      ],
-      "fullyInlined": true,
-      "circularReferencesFixed": true
-    },
-    {
-      "name": "Tools",
-      "displayName": "Tools",
-      "description": "Tools",
-      "file": "tools-api.yaml",
-      "configId": "tools",
-      "paths": 2,
-      "endpoints": [
-        {
-          "method": "GET",
-          "path": "/rest/api/v1/tools/list",
-          "summary": "List available tools",
-          "description": "Returns a filtered set of available tools based on optional tool name parameters. If no filters are provided, all available tools are returned.",
-          "operationId": "list-available-tools"
-        },
-        {
-          "method": "POST",
-          "path": "/rest/api/v1/tools/call",
-          "summary": "Execute the specified tool",
-          "description": "Execute the specified tool with provided parameters",
-          "operationId": "execute-the-specified-tool"
-        }
-      ],
-      "fullyInlined": true,
+      "schemas": 132,
+      "fullyInlined": false,
       "circularReferencesFixed": true
     },
     {
       "name": "Governance",
       "displayName": "Governance",
-      "description": "Governance",
+      "description": "",
       "file": "governance-api.yaml",
       "configId": "governance",
       "paths": 7,
       "endpoints": [
-        {
-          "method": "GET",
-          "path": "/rest/api/v1/governance/data/policies/{id}",
-          "summary": "Gets specified policy",
-          "description": "Fetches the specified policy version, or the latest if no version is provided.",
-          "operationId": "getpolicy"
-        },
-        {
-          "method": "POST",
-          "path": "/rest/api/v1/governance/data/policies/{id}",
-          "summary": "Updates an existing policy",
-          "description": "Updates an existing policy.",
-          "operationId": "updatepolicy"
-        },
         {
           "method": "GET",
           "path": "/rest/api/v1/governance/data/policies",
@@ -673,6 +411,20 @@
           "summary": "Creates new policy",
           "description": "Creates a new policy with specified specifications and returns its id.",
           "operationId": "createpolicy"
+        },
+        {
+          "method": "GET",
+          "path": "/rest/api/v1/governance/data/policies/{id}",
+          "summary": "Gets specified policy",
+          "description": "Fetches the specified policy version, or the latest if no version is provided.",
+          "operationId": "getpolicy"
+        },
+        {
+          "method": "POST",
+          "path": "/rest/api/v1/governance/data/policies/{id}",
+          "summary": "Updates an existing policy",
+          "description": "Updates an existing policy.",
+          "operationId": "updatepolicy"
         },
         {
           "method": "GET",
@@ -717,7 +469,273 @@
           "operationId": "setdocvisibility"
         }
       ],
-      "fullyInlined": true,
+      "schemas": 31,
+      "fullyInlined": false,
+      "circularReferencesFixed": true
+    },
+    {
+      "name": "Insights",
+      "displayName": "Insights",
+      "description": "",
+      "file": "insights-api.yaml",
+      "configId": "insights",
+      "paths": 1,
+      "endpoints": [
+        {
+          "method": "POST",
+          "path": "/rest/api/v1/insights",
+          "summary": "Read insights",
+          "description": "Reads the aggregate information for each user, query, and content.",
+          "operationId": "insights"
+        }
+      ],
+      "schemas": 141,
+      "fullyInlined": false,
+      "circularReferencesFixed": true
+    },
+    {
+      "name": "Messages",
+      "displayName": "Messages",
+      "description": "",
+      "file": "messages-api.yaml",
+      "configId": "messages",
+      "paths": 1,
+      "endpoints": [
+        {
+          "method": "POST",
+          "path": "/rest/api/v1/messages",
+          "summary": "Read messages",
+          "description": "Retrieves list of messages from messaging/chat datasources (e.g. Slack, Teams).",
+          "operationId": "messages"
+        }
+      ],
+      "schemas": 141,
+      "fullyInlined": false,
+      "circularReferencesFixed": true
+    },
+    {
+      "name": "Pins",
+      "displayName": "Pins",
+      "description": "",
+      "file": "pins-api.yaml",
+      "configId": "pins",
+      "paths": 5,
+      "endpoints": [
+        {
+          "method": "POST",
+          "path": "/rest/api/v1/editpin",
+          "summary": "Update pin",
+          "description": "Update an existing user-generated pin.",
+          "operationId": "editpin"
+        },
+        {
+          "method": "POST",
+          "path": "/rest/api/v1/getpin",
+          "summary": "Read pin",
+          "description": "Read pin details given its ID.",
+          "operationId": "getpin"
+        },
+        {
+          "method": "POST",
+          "path": "/rest/api/v1/listpins",
+          "summary": "List pins",
+          "description": "Lists all pins.",
+          "operationId": "listpins"
+        },
+        {
+          "method": "POST",
+          "path": "/rest/api/v1/pin",
+          "summary": "Create pin",
+          "description": "Pin a document as a result for a given search query.Pin results that are known to be a good match.",
+          "operationId": "pin"
+        },
+        {
+          "method": "POST",
+          "path": "/rest/api/v1/unpin",
+          "summary": "Delete pin",
+          "description": "Unpin a previously pinned result.",
+          "operationId": "unpin"
+        }
+      ],
+      "schemas": 129,
+      "fullyInlined": false,
+      "circularReferencesFixed": true
+    },
+    {
+      "name": "Search",
+      "displayName": "Search",
+      "description": "",
+      "file": "search-api.yaml",
+      "configId": "search",
+      "paths": 5,
+      "endpoints": [
+        {
+          "method": "POST",
+          "path": "/rest/api/v1/adminsearch",
+          "summary": "Search the index (admin)",
+          "description": "Retrieves results for search query without respect for permissions. This is available only to privileged users.",
+          "operationId": "adminsearch"
+        },
+        {
+          "method": "POST",
+          "path": "/rest/api/v1/autocomplete",
+          "summary": "Autocomplete",
+          "description": "Retrieve query suggestions, operators and documents for the given partially typed query.",
+          "operationId": "autocomplete"
+        },
+        {
+          "method": "POST",
+          "path": "/rest/api/v1/feed",
+          "summary": "Feed of documents and events",
+          "description": "The personalized feed/home includes different types of contents including suggestions, recents, calendar events and many more.",
+          "operationId": "feed"
+        },
+        {
+          "method": "POST",
+          "path": "/rest/api/v1/recommendations",
+          "summary": "Recommend documents",
+          "description": "Retrieve recommended documents for the given URL or Glean Document ID.",
+          "operationId": "recommendations"
+        },
+        {
+          "method": "POST",
+          "path": "/rest/api/v1/search",
+          "summary": "Search",
+          "description": "Retrieve results from the index for the given query and filters.",
+          "operationId": "search"
+        }
+      ],
+      "schemas": 183,
+      "fullyInlined": false,
+      "circularReferencesFixed": true
+    },
+    {
+      "name": "Shortcuts",
+      "displayName": "Shortcuts",
+      "description": "",
+      "file": "shortcuts-api.yaml",
+      "configId": "shortcuts",
+      "paths": 5,
+      "endpoints": [
+        {
+          "method": "POST",
+          "path": "/rest/api/v1/createshortcut",
+          "summary": "Create shortcut",
+          "description": "Create a user-generated shortcut that contains an alias and destination URL.",
+          "operationId": "createshortcut"
+        },
+        {
+          "method": "POST",
+          "path": "/rest/api/v1/deleteshortcut",
+          "summary": "Delete shortcut",
+          "description": "Delete an existing user-generated shortcut.",
+          "operationId": "deleteshortcut"
+        },
+        {
+          "method": "POST",
+          "path": "/rest/api/v1/getshortcut",
+          "summary": "Read shortcut",
+          "description": "Read a particular shortcut's details given its ID.",
+          "operationId": "getshortcut"
+        },
+        {
+          "method": "POST",
+          "path": "/rest/api/v1/listshortcuts",
+          "summary": "List shortcuts",
+          "description": "List shortcuts editable/owned by the currently authenticated user.",
+          "operationId": "listshortcuts"
+        },
+        {
+          "method": "POST",
+          "path": "/rest/api/v1/updateshortcut",
+          "summary": "Update shortcut",
+          "description": "Updates the shortcut with the given ID.",
+          "operationId": "updateshortcut"
+        }
+      ],
+      "schemas": 138,
+      "fullyInlined": false,
+      "circularReferencesFixed": true
+    },
+    {
+      "name": "Summarize",
+      "displayName": "Summarize",
+      "description": "",
+      "file": "summarize-api.yaml",
+      "configId": "summarize",
+      "paths": 1,
+      "endpoints": [
+        {
+          "method": "POST",
+          "path": "/rest/api/v1/summarize",
+          "summary": "Summarize documents",
+          "description": "Generate an AI summary of the requested documents.",
+          "operationId": "summarize"
+        }
+      ],
+      "schemas": 4,
+      "fullyInlined": false,
+      "circularReferencesFixed": true
+    },
+    {
+      "name": "Tools",
+      "displayName": "Tools",
+      "description": "",
+      "file": "tools-api.yaml",
+      "configId": "tools",
+      "paths": 2,
+      "endpoints": [
+        {
+          "method": "POST",
+          "path": "/rest/api/v1/tools/call",
+          "summary": "Execute the specified tool",
+          "description": "Execute the specified tool with provided parameters",
+          "operationId": "execute-the-specified-tool"
+        },
+        {
+          "method": "GET",
+          "path": "/rest/api/v1/tools/list",
+          "summary": "List available tools",
+          "description": "Returns a filtered set of available tools based on optional tool name parameters. If no filters are provided, all available tools are returned.",
+          "operationId": "list-available-tools"
+        }
+      ],
+      "schemas": 6,
+      "fullyInlined": false,
+      "circularReferencesFixed": true
+    },
+    {
+      "name": "Verification",
+      "displayName": "Verification",
+      "description": "",
+      "file": "verification-api.yaml",
+      "configId": "verification",
+      "paths": 3,
+      "endpoints": [
+        {
+          "method": "POST",
+          "path": "/rest/api/v1/addverificationreminder",
+          "summary": "Create verification",
+          "description": "Creates a verification reminder for the document. Users can create verification reminders from different product surfaces.",
+          "operationId": "addverificationreminder"
+        },
+        {
+          "method": "POST",
+          "path": "/rest/api/v1/listverifications",
+          "summary": "List verifications",
+          "description": "Returns the information to be rendered in verification dashboard. Includes information for each document owned by user regarding their verifications.",
+          "operationId": "listverifications"
+        },
+        {
+          "method": "POST",
+          "path": "/rest/api/v1/verify",
+          "summary": "Update verification",
+          "description": "Verify documents to keep the knowledge up to date within customer corpus.",
+          "operationId": "verify"
+        }
+      ],
+      "schemas": 126,
+      "fullyInlined": false,
       "circularReferencesFixed": true
     }
   ]
