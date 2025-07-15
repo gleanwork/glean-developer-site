@@ -1,4 +1,5 @@
 name: Trigger Redeploy
+
 on:
   workflow_dispatch:
     inputs:
@@ -7,36 +8,45 @@ on:
         required: false
         default: 'Manual trigger'
 
+  push:
+    paths:
+      - 'scripts/openapi-capitalize-language.mjs'
+      - 'scripts/openapi-split-break-circular.mjs'
+    branches:
+      - main
+
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
   trigger-redeploy:
     runs-on: ubuntu-latest
+    outputs:
+      has_changes: ${{ steps.check-generated.outputs.has_changes }}
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
-      
+
       - name: Set up mise
         uses: jdx/mise-action@v2
         with:
           cache: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      
+
       - name: Install dependencies
         run: yarn install --immutable
-      
+
       - name: Regenerate OpenAPI documentation
         run: |
           echo "📋 Regenerating OpenAPI documentation..."
           echo "Reason: ${{ github.event.inputs.reason }}"
-          
           yarn openapi:regenerate:all
-          
           echo "✅ Documentation regenerated successfully"
 
       - name: Check for generated changes
@@ -50,9 +60,6 @@ jobs:
             echo "✅ No changes in generated documentation"
           fi
 
-      - name: Test build website
-        run: yarn build
-      
       - name: Create Pull Request
         if: steps.check-generated.outputs.has_changes == 'true'
         id: create-pr
@@ -63,13 +70,13 @@ jobs:
           title: '[Manual] Regenerate OpenAPI Documentation'
           body: |
             ## 🔄 Manual OpenAPI Documentation Regeneration
-            
+
             This PR was manually triggered to regenerate the OpenAPI documentation.
-            
+
             **Trigger reason**: ${{ github.event.inputs.reason }}
             **Triggered by**: ${{ github.actor }}
             **Run ID**: ${{ github.run_id }}
-            
+
             ### Actions taken:
             - Downloaded latest OpenAPI specs from GitHub Pages
             - Split client API by tags
@@ -77,25 +84,54 @@ jobs:
             - Capitalized language names in code samples
             - Regenerated all MDX documentation
             - Cleaned up unnecessary files (.info.mdx, sidebar.ts)
-            
+
             ### Files affected:
             - `openapi/` - Updated spec files
             - `docs/api/client-api/` - Regenerated client API docs
             - `docs/api/indexing-api/` - Regenerated indexing API docs
-            
-            Please review the changes before merging.
+
+            Please review the changes if needed, otherwise the PR will auto-merge when checks pass.
           branch: manual-regenerate-openapi-docs
           delete-branch: true
           labels: |
             documentation
             manual
-      
-      - name: Summary
+
+      - name: Enable Auto-Merge
+        if: steps.check-generated.outputs.has_changes == 'true'
+        uses: peter-evans/enable-pull-request-automerge@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          pull-request-number: ${{ steps.create-pr.outputs.pull-request-number }}
+          merge-method: squash
+
+  verify-build:
+    if: needs.trigger-redeploy.outputs.has_changes == 'true'
+    needs: trigger-redeploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Verify Build
+        run: yarn build
+
+  summary:
+    runs-on: ubuntu-latest
+    needs: trigger-redeploy
+    steps:
+      - name: Print Summary
         run: |
-          if [[ "${{ steps.check-generated.outputs.has_changes }}" == "true" ]]; then
-            echo "🎉 Documentation regenerated and PR created!"
-            echo "PR: ${{ steps.create-pr.outputs.pull-request-url }}"
-            echo "Please review and merge the PR manually."
+          if [[ "${{ needs.trigger-redeploy.outputs.has_changes }}" == "true" ]]; then
+            echo "🎉 Documentation regenerated and PR created with auto-merge enabled!"
           else
             echo "✅ Documentation is already up to date - no changes needed"
           fi
