@@ -2,7 +2,7 @@ import { themes as prismThemes } from 'prism-react-renderer';
 import type { Config } from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
 import type * as OpenApiPlugin from 'docusaurus-plugin-openapi-docs';
-import redirects from './redirects.json';
+const redirects = [...require('./redirects.json'), ...require('./permalinks.json')];
 import { customApiMdGenerator } from './scripts/generator/customMdGenerators';
 
 // Environment variable to control API docs generation
