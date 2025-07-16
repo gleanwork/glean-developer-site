@@ -1,8 +1,8 @@
 openapi: 3.0.0
 info:
   version: 0.9.0
-  title: Authentication
-  description: Authentication operations for Glean API
+  title: Glean API - Authentication
+  description: API endpoints for Authentication
   x-logo:
     url: https://app.glean.com/images/glean-text2.svg
   x-speakeasy-name: Glean API
@@ -14,9 +14,6 @@ servers:
         description: The instance name (typically the email domain without the TLD) that determines the deployment backend.
 security:
   - APIToken: []
-tags:
-  - name: Authentication
-    description: Authentication
 paths:
   /rest/api/v1/createauthtoken:
     post:
@@ -99,8 +96,7 @@ paths:
                 public static void main(String[] args) throws Exception {
 
                     Glean sdk = Glean.builder()
-                            .apiToken("<YOUR_BEARER_TOKEN_HERE>")
-                            .instance("<YOUR_GLEAN_INSTANCE_HERE>")
+                            .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
                         .build();
 
                     CreateauthtokenResponse res = sdk.client().authentication().createToken()
@@ -125,14 +121,6 @@ components:
           description: Unix timestamp for when this token expires (in seconds since epoch UTC).
           type: integer
           format: int64
-      type: object
-  parameters:
-    timezoneOffset:
-      name: timezoneOffset
-      in: query
-      description: The offset of the client's timezone in minutes from UTC. e.g. PDT is -420 because it's 7 hours behind UTC.
-      schema:
-        type: integer
   securitySchemes:
     APIToken:
       scheme: bearer

@@ -1,8 +1,8 @@
 openapi: 3.0.0
 info:
   version: 0.9.0
-  title: Summarize
-  description: Summarize operations for Glean API
+  title: Glean API - Summarize
+  description: API endpoints for Summarize
   x-logo:
     url: https://app.glean.com/images/glean-text2.svg
   x-speakeasy-name: Glean API
@@ -14,9 +14,6 @@ servers:
         description: The instance name (typically the email domain without the TLD) that determines the deployment backend.
 security:
   - APIToken: []
-tags:
-  - name: Summarize
-    description: Summarize
 paths:
   /rest/api/v1/summarize:
     post:
@@ -113,8 +110,7 @@ paths:
                 public static void main(String[] args) throws Exception {
 
                     Glean sdk = Glean.builder()
-                            .apiToken("<YOUR_BEARER_TOKEN_HERE>")
-                            .instance("<YOUR_GLEAN_INSTANCE_HERE>")
+                            .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
                         .build();
 
                     SummarizeRequest req = SummarizeRequest.builder()
@@ -134,77 +130,15 @@ paths:
             }
 components:
   schemas:
-    SummarizeRequest:
-      description: Summary of the document
-      required:
-        - documentSpecs
+    Summary:
       properties:
-        timestamp:
+        text:
           type: string
-          description: The ISO 8601 timestamp associated with the client request.
-          format: date-time
-        query:
-          type: string
-          description: Optional query that the summary should be about
-        preferredSummaryLength:
-          type: integer
-          description: Optional length of summary output. If not given, defaults to 500 chars.
-        documentSpecs:
+        followUpPrompts:
           type: array
-          description: Specifications of documents to summarize
           items:
-            oneOf:
-              - type: object
-                properties:
-                  url:
-                    type: string
-                    description: The URL of the document.
-              - type: object
-                properties:
-                  id:
-                    type: string
-                    description: The ID of the document.
-              - type: object
-                properties:
-                  ugcType:
-                    type: string
-                    enum:
-                      - ANNOUNCEMENTS
-                      - ANSWERS
-                      - COLLECTIONS
-                      - SHORTCUTS
-                    description: The type of the user generated content (UGC datasource).
-                  contentId:
-                    type: integer
-                    description: The id for user generated content.
-                  docType:
-                    type: string
-                    description: The specific type of the user generated content type.
-        trackingToken:
-          type: string
-          description: An opaque token that represents this particular result. To be used for /feedback reporting.
-      type: object
-    SummarizeResponse:
-      properties:
-        error:
-          type: object
-          properties:
-            message:
-              type: string
-        summary:
-          properties:
-            text:
-              type: string
-            followUpPrompts:
-              type: array
-              description: Follow-up prompts based on the summarized doc
-              items:
-                type: string
-          type: object
-        trackingToken:
-          type: string
-          description: An opaque token that represents this summary in this particular query. To be used for /feedback reporting.
-      type: object
+            type: string
+          description: Follow-up prompts based on the summarized doc
     DocumentSpec:
       oneOf:
         - type: object
@@ -233,23 +167,41 @@ components:
             docType:
               type: string
               description: The specific type of the user generated content type.
-    Summary:
+    SummarizeResponse:
       properties:
-        text:
+        error:
+          type: object
+          properties:
+            message:
+              type: string
+        summary:
+          $ref: '#/components/schemas/Summary'
+        trackingToken:
           type: string
-        followUpPrompts:
+          description: An opaque token that represents this summary in this particular query. To be used for /feedback reporting.
+    SummarizeRequest:
+      description: Summary of the document
+      required:
+        - documentSpecs
+      properties:
+        timestamp:
+          type: string
+          description: The ISO 8601 timestamp associated with the client request.
+          format: date-time
+        query:
+          type: string
+          description: Optional query that the summary should be about
+        preferredSummaryLength:
+          type: integer
+          description: Optional length of summary output. If not given, defaults to 500 chars.
+        documentSpecs:
           type: array
-          description: Follow-up prompts based on the summarized doc
           items:
-            type: string
-      type: object
-  parameters:
-    timezoneOffset:
-      name: timezoneOffset
-      in: query
-      description: The offset of the client's timezone in minutes from UTC. e.g. PDT is -420 because it's 7 hours behind UTC.
-      schema:
-        type: integer
+            $ref: '#/components/schemas/DocumentSpec'
+          description: Specifications of documents to summarize
+        trackingToken:
+          type: string
+          description: An opaque token that represents this particular result. To be used for /feedback reporting.
   securitySchemes:
     APIToken:
       scheme: bearer
