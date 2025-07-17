@@ -8,8 +8,24 @@ on:
         default: 'Manual trigger'
 
 jobs:
-  trigger-redeploy:
+  run-script:
     runs-on: ubuntu-latest
     steps:
-      - name: Say hello
-        run: echo "hello world"
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up mise
+        uses: jdx/mise-action@v2
+        with:
+          cache: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        
+      - name: Run script
+        run: uv run scripts/create_indexing_config.py
