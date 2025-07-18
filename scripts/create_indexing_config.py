@@ -26,11 +26,11 @@ def main():
                     display_label="Information Page",
                     doc_category=models.DatasourceCategory.KNOWLEDGE_HUB,
                     property_definitions=[
-                        models.PropertyDefinition(name="title", display_label="Title", property_type=models.PropertyType.TEXT, ui_options=[models.UIOptions.SEARCH_RESULT], hide_ui_facet=true),
-                        models.PropertyDefinition(name="url", display_label="URL", property_type=models.PropertyType.TEXT, ui_options=[models.UIOptions.SEARCH_RESULT], hide_ui_facet=true),
+                        models.PropertyDefinition(name="title", display_label="Title", property_type=models.PropertyType.TEXT, ui_options=[models.UIOptions.SEARCH_RESULT], hide_ui_facet=True),
+                        models.PropertyDefinition(name="url", display_label="URL", property_type=models.PropertyType.TEXT, ui_options=[models.UIOptions.SEARCH_RESULT], hide_ui_facet=True),
                         models.PropertyDefinition(name="section", display_label="Section", property_type=models.PropertyType.TEXT, ui_options=[models.UIOptions.SEARCH_RESULT]),
-                        models.PropertyDefinition(name="heading", display_label="Heading", property_type=models.PropertyType.TEXT, ui_options=[models.UIOptions.SEARCH_RESULT], hide_ui_facet=true),
-                        models.PropertyDefinition(name="content", display_label="Content", property_type=models.PropertyType.TEXT, ui_options=[models.UIOptions.SEARCH_RESULT], hide_ui_facet=true),
+                        models.PropertyDefinition(name="heading", display_label="Heading", property_type=models.PropertyType.TEXT, ui_options=[models.UIOptions.SEARCH_RESULT], hide_ui_facet=True),
+                        models.PropertyDefinition(name="content", display_label="Content", property_type=models.PropertyType.TEXT, ui_options=[models.UIOptions.SEARCH_RESULT], hide_ui_facet=True),
                     ]
                 ),
                 models.ObjectDefinition(
@@ -43,7 +43,7 @@ def main():
                             display_label="Title",
                             property_type=models.PropertyType.TEXT,
                             ui_options=[models.UIOptions.SEARCH_RESULT],
-                            hide_ui_facet=true
+                            hide_ui_facet=True
                         ),
                         models.PropertyDefinition(
                             name="tag",
@@ -56,14 +56,14 @@ def main():
                             display_label="Endpoint",
                             property_type=models.PropertyType.TEXT,
                             ui_options=[models.UIOptions.SEARCH_RESULT],
-                            hide_ui_facet=true
+                            hide_ui_facet=True
                         ),
                         models.PropertyDefinition(
                             name="url",
                             display_label="Full URL",
                             property_type=models.PropertyType.TEXT,
                             ui_options=[models.UIOptions.SEARCH_RESULT],
-                            hide_ui_facet=true
+                            hide_ui_facet=True
                         ),
                         models.PropertyDefinition(
                             name="method",
@@ -76,7 +76,7 @@ def main():
                             display_label="Description",
                             property_type=models.PropertyType.TEXT,
                             ui_options=[models.UIOptions.SEARCH_RESULT],
-                            hide_ui_facet=true
+                            hide_ui_facet=True
                         ),
                         models.PropertyDefinition(
                             name="request_content_type",
@@ -89,14 +89,14 @@ def main():
                             display_label="Request Parameters",
                             property_type=models.PropertyType.TEXT,
                             ui_options=[models.UIOptions.SEARCH_RESULT],
-                            hide_ui_facet=true
+                            hide_ui_facet=True
                         ),
                         models.PropertyDefinition(
                             name="request_body",
                             display_label="Request Body",
                             property_type=models.PropertyType.TEXT,
                             ui_options=[models.UIOptions.SEARCH_RESULT],
-                            hide_ui_facet=true
+                            hide_ui_facet=True
                         ),
                         models.PropertyDefinition(
                             name="response_content_type",
@@ -109,7 +109,7 @@ def main():
                             display_label="Response",
                             property_type=models.PropertyType.TEXT,
                             ui_options=[models.UIOptions.SEARCH_RESULT],
-                            hide_ui_facet=true
+                            hide_ui_facet=True
                         ),
                         models.PropertyDefinition(
                             name="response_codes",
@@ -128,7 +128,7 @@ def main():
                             display_label="Code Examples",
                             property_type=models.PropertyType.TEXT,
                             ui_options=[models.UIOptions.SEARCH_RESULT],
-                            hide_ui_facet=true
+                            hide_ui_facet=True
                         ),
                         models.PropertyDefinition(
                             name="supported_languages",
