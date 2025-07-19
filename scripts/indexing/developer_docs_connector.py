@@ -1,66 +1,56 @@
-#!/usr/bin/env python3
-# /// script
-# dependencies = [
-#     "glean-indexing-sdk",
-# ]
-# ///
+from typing import Union, Sequence, List
 
-from glean.api_client import Glean, models
-import os
+from glean.indexing.connectors import BaseDatasourceConnector
+from glean.indexing.models import (
+    # ContentDefinition,
+    CustomDatasourceConfig,
+    DocumentDefinition,
+    # UserReferenceDefinition,
+    # IndexingMode
+)
+from glean.api_client import models
+from data_types import PageInfoData, ApiReferenceData
 
-def main():
-    with Glean(
-        api_token=os.getenv("GLEAN_API_TOKEN", ""),
-    ) as glean:
-        
-        glean.indexing.datasources.add(
-            name="custom_developer_docs_datasource", 
-            display_name="Glean Developer Docs",
-            datasource_category=models.DatasourceCategory.ENTITY, 
-            icon_url="https://glean-public-external-be.glean.com/api/v1/images?key=eyJ0eXBlIjoiVUdDIiwiaWQiOiIwIiwiZHMiOiJHQUxMRVJZLUlNQUdFLVBJQ0tFUiIsImNpZCI6ImVmNzI4NWM1LWY0ZjgtNDZhYi05NGQ3LTAxMjc4ZjhmNTAwMyIsImV4dCI6Ii5wbmcifQ==",
-            is_entity_datasource=False, 
-            is_test_datasource=False,
-            object_definitions=[
+class CustomDeveloperDocsConnector(BaseDatasourceConnector[Union[PageInfoData, ApiReferenceData]]):
+    configuration: CustomDatasourceConfig = CustomDatasourceConfig(
+        name="customDeveloperDocsDatasource",
+        display_name="Custom Glean Developer Docs",
+        datasource_category="ENTITY",
+        icon_url="https://glean-public-external-be.glean.com/api/v1/images?key=eyJ0eXBlIjoiVUdDIiwiaWQiOiIwIiwiZHMiOiJHQUxMRVJZLUlNQUdFLVBJQ0tFUiIsImNpZCI6ImVmNzI4NWM1LWY0ZjgtNDZhYi05NGQ3LTAxMjc4ZjhmNTAwMyIsImV4dCI6Ii5wbmcifQ==",
+        is_entity_datasource=True,
+        object_definitions=[
                 models.ObjectDefinition(
-                    name="info_page",
+                    name="infoPage",
                     display_label="Information Page",
                     doc_category=models.DatasourceCategory.KNOWLEDGE_HUB,
                     property_definitions=[
-                        models.PropertyDefinition(name="title", display_label="Title", property_type=models.PropertyType.TEXT, ui_options=models.UIOptions.SEARCH_RESULT, hide_ui_facet=True),
-                        models.PropertyDefinition(name="url", display_label="URL", property_type=models.PropertyType.TEXT, ui_options=models.UIOptions.SEARCH_RESULT, hide_ui_facet=True),
-                        models.PropertyDefinition(name="section", display_label="Section", property_type=models.PropertyType.TEXT, ui_options=models.UIOptions.SEARCH_RESULT),
+                        models.PropertyDefinition(name="docTitle", display_label="Title", property_type=models.PropertyType.TEXT, ui_options=models.UIOptions.SEARCH_RESULT, hide_ui_facet=True),
+                        models.PropertyDefinition(name="docSection", display_label="Section", property_type=models.PropertyType.TEXT, ui_options=models.UIOptions.SEARCH_RESULT),
                         models.PropertyDefinition(name="heading", display_label="Heading", property_type=models.PropertyType.TEXT, ui_options=models.UIOptions.SEARCH_RESULT, hide_ui_facet=True),
                         models.PropertyDefinition(name="content", display_label="Content", property_type=models.PropertyType.TEXT, ui_options=models.UIOptions.SEARCH_RESULT, hide_ui_facet=True),
                     ]
                 ),
                 models.ObjectDefinition(
-                    name="api_reference",
+                    name="apiReference",
                     display_label="API Reference",
                     doc_category=models.DatasourceCategory.KNOWLEDGE_HUB,
                     property_definitions=[
                         models.PropertyDefinition(
-                            name="title",
+                            name="apiTitle",
                             display_label="Title",
                             property_type=models.PropertyType.TEXT,
                             ui_options=models.UIOptions.SEARCH_RESULT,
                             hide_ui_facet=True
                         ),
                         models.PropertyDefinition(
-                            name="tag",
+                            name="apiTag",
                             display_label="API Tag",
-                            property_type=models.PropertyType.TEXT,
+                            property_type=models.PropertyType.PICKLIST,
                             ui_options=models.UIOptions.SEARCH_RESULT
                         ),
                         models.PropertyDefinition(
                             name="endpoint",
                             display_label="Endpoint",
-                            property_type=models.PropertyType.TEXT,
-                            ui_options=models.UIOptions.SEARCH_RESULT,
-                            hide_ui_facet=True
-                        ),
-                        models.PropertyDefinition(
-                            name="url",
-                            display_label="Full URL",
                             property_type=models.PropertyType.TEXT,
                             ui_options=models.UIOptions.SEARCH_RESULT,
                             hide_ui_facet=True
@@ -72,36 +62,29 @@ def main():
                             ui_options=models.UIOptions.SEARCH_RESULT,
                         ),
                         models.PropertyDefinition(
-                            name="description",
-                            display_label="Description",
-                            property_type=models.PropertyType.TEXT,
-                            ui_options=models.UIOptions.SEARCH_RESULT,
-                            hide_ui_facet=True
-                        ),
-                        models.PropertyDefinition(
-                            name="request_content_type",
+                            name="requestContentType",
                             display_label="Request Content Type",
-                            property_type=models.PropertyType.TEXT,
+                            property_type=models.PropertyType.PICKLIST,
                             ui_options=models.UIOptions.SEARCH_RESULT
                         ),
                         models.PropertyDefinition(
-                            name="request_parameters",
+                            name="requestParameters",
                             display_label="Request Parameters",
                             property_type=models.PropertyType.TEXT,
                             ui_options=models.UIOptions.SEARCH_RESULT,
                             hide_ui_facet=True
                         ),
                         models.PropertyDefinition(
-                            name="request_body",
+                            name="requestBody",
                             display_label="Request Body",
                             property_type=models.PropertyType.TEXT,
                             ui_options=models.UIOptions.SEARCH_RESULT,
                             hide_ui_facet=True
                         ),
                         models.PropertyDefinition(
-                            name="response_content_type",
+                            name="responseContentType",
                             display_label="Response Content Type",
-                            property_type=models.PropertyType.TEXT,
+                            property_type=models.PropertyType.PICKLIST,
                             ui_options=models.UIOptions.SEARCH_RESULT
                         ),
                         models.PropertyDefinition(
@@ -112,36 +95,56 @@ def main():
                             hide_ui_facet=True
                         ),
                         models.PropertyDefinition(
-                            name="response_codes",
+                            name="responseCodes",
                             display_label="Response Codes",
-                            property_type=models.PropertyType.TEXT,
+                            property_type=models.PropertyType.PICKLIST,
                             ui_options=models.UIOptions.SEARCH_RESULT
                         ),
                         models.PropertyDefinition(
                             name="authentication",
                             display_label="Authentication",
-                            property_type=models.PropertyType.TEXT,
+                            property_type=models.PropertyType.PICKLIST,
                             ui_options=models.UIOptions.SEARCH_RESULT
                         ),
                         models.PropertyDefinition(
-                            name="code_examples",
-                            display_label="Code Examples",
+                            name="pythonCodeSample",
+                            display_label="Python Code Sample",
                             property_type=models.PropertyType.TEXT,
                             ui_options=models.UIOptions.SEARCH_RESULT,
                             hide_ui_facet=True
                         ),
                         models.PropertyDefinition(
-                            name="supported_languages",
-                            display_label="Supported Languages",
+                            name="goCodeSample",
+                            display_label="Go Code Sample",
                             property_type=models.PropertyType.TEXT,
-                            ui_options=models.UIOptions.SEARCH_RESULT
+                            ui_options=models.UIOptions.SEARCH_RESULT,
+                            hide_ui_facet=True
+                        ),
+                        models.PropertyDefinition(
+                            name="javaCodeSample",
+                            display_label="Java Code Sample",
+                            property_type=models.PropertyType.TEXT,
+                            ui_options=models.UIOptions.SEARCH_RESULT,
+                            hide_ui_facet=True
+                        ),
+                        models.PropertyDefinition(
+                            name="typescriptCodeSample",
+                            display_label="TypeScript Code Sample",
+                            property_type=models.PropertyType.TEXT,
+                            ui_options=models.UIOptions.SEARCH_RESULT,
+                            hide_ui_facet=True
+                        ),
+                        models.PropertyDefinition(
+                            name="curlCodeSample",
+                            display_label="Curl Code Sample",
+                            property_type=models.PropertyType.TEXT,
+                            ui_options=models.UIOptions.SEARCH_RESULT,
+                            hide_ui_facet=True
                         ),
                     ]
                 )
             ]
-        )
-        
-        print("Successfully created datasource configuration!")
+    )
 
-if __name__ == "__main__":
-    main()
+    def transform(self, data: Sequence[Union[PageInfoData, ApiReferenceData]]) -> List[DocumentDefinition]:
+        pass
