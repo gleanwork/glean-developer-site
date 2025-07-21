@@ -147,4 +147,4 @@ class CustomDeveloperDocsConnector(BaseDatasourceConnector[Union[PageInfoData, A
     )
 
     def transform(self, data: Sequence[Union[PageInfoData, ApiReferenceData]]) -> List[DocumentDefinition]:
-        pass
+        return []

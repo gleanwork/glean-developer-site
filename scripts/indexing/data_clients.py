@@ -321,7 +321,6 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[PageInfoData, ApiRef
             return code_samples
         
         def _scrape_single_page_with_page(url: str, page):
-            print(f"Scraping {url}...")
             try:
                 page.goto(url, wait_until="networkidle")
             except Exception as e:
@@ -370,6 +369,7 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[PageInfoData, ApiRef
                     browser = p.chromium.launch(headless=True)
                     page = browser.new_page()
                     try:
+                        print(f"Scraping {url}...")
                         data = _scrape_single_page_with_page(url, page)
                         if not data:
                             print(f"Failed to extract data from {url}")

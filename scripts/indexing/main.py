@@ -13,7 +13,7 @@ from developer_docs_connector import CustomDeveloperDocsConnector
 from glean.indexing.models import IndexingMode
 import subprocess
 
-subprocess.run(["python", "-m", "playwright", "install"])
+subprocess.run(["uv", "run", "playwright", "install"])
 
 composite_client = DeveloperDocsDataClient("https://developers.glean.com")
 
