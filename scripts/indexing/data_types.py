@@ -8,6 +8,7 @@ class PageInfoData(TypedDict):
     section: str
     heading: str
     content: str
+    url: str
 
 class ApiReferenceData(TypedDict):
     """Type definition for API Reference data."""
@@ -17,6 +18,7 @@ class ApiReferenceData(TypedDict):
     tag: str # tag the endpoint belongs to (Activity, Announcements, etc.)
     endpoint: str
     method: str
+    description: str
     request_content_type: str
     request_parameters: str
     request_body: str
@@ -29,3 +31,4 @@ class ApiReferenceData(TypedDict):
     java_code_sample: str
     typescript_code_sample: str
     curl_code_sample: str
+    url: str
