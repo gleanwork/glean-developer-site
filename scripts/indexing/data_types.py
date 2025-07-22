@@ -9,6 +9,7 @@ class PageInfoData(TypedDict):
     heading: str
     content: str
     url: str
+    page_type: str
 
 class ApiReferenceData(TypedDict):
     """Type definition for API Reference data."""
@@ -23,7 +24,7 @@ class ApiReferenceData(TypedDict):
     request_parameters: str
     request_body: str
     response_content_type: str
-    response: str
+    response_body: str
     response_codes: List[str]
     authentication: str
     python_code_sample: str
@@ -32,3 +33,4 @@ class ApiReferenceData(TypedDict):
     typescript_code_sample: str
     curl_code_sample: str
     url: str
+    page_type: str

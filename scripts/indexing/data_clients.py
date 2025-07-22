@@ -100,44 +100,33 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[PageInfoData, ApiRef
                         section=section,
                         heading=page_title or section,
                         content=h1_content,
-                        url=url
+                        url=url,
+                        page_type="info_page"
                     )
                     data.append(page_info)
-                elif not h2_tags:
-                    fallback_content = ""
-                    main = soup.find('main')
-                    if main:
-                        fallback_content = main.get_text(separator="\n", strip=True)
-                    if not fallback_content:
-                        markdown_div = soup.find('div', class_=lambda c: c and 'markdown' in c)
-                        if markdown_div:
-                            fallback_content = markdown_div.get_text(separator="\n", strip=True)
-                    if not fallback_content:
-                        body = soup.find('body')
-                        fallback_content = body.get_text(separator="\n", strip=True) if body else ""
-                    if fallback_content:
-                        page_info = PageInfoData(
-                            id=str(uuid.uuid5(uuid.NAMESPACE_URL, url)),
-                            title=page_title,
-                            section=section,
-                            heading=page_title or section,
-                            content=fallback_content,
-                            url=url
-                        )
-                        data.append(page_info)
+            # Track seen (class, heading_text) pairs to avoid duplicates
+            seen_headers = set()
             if h2_tags:
                 for h2 in h2_tags:
                     heading_text = h2.text.strip()
+                    parent_header = h2.find_parent('header')
+                    header_class = tuple(parent_header.get('class', [])) if parent_header else ()
+                    key = (header_class, heading_text)
+                    if key in seen_headers:
+                        continue
+                    seen_headers.add(key)
                     fragment = _slugify(heading_text)
                     full_url = url + "#" + fragment
                     content = _extract_content_until_next_h2(h2)
+                    id_val = str(uuid.uuid5(uuid.NAMESPACE_URL, full_url))
                     page_info = PageInfoData(
-                        id=str(uuid.uuid5(uuid.NAMESPACE_URL, full_url)),
+                        id=id_val,
                         title=page_title,
                         section=section,
                         heading=heading_text,
                         content=content,
-                        url=full_url
+                        url=full_url,
+                        page_type="info_page"
                     )
                     data.append(page_info)
             return data
@@ -354,7 +343,8 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[PageInfoData, ApiRef
                 go_code_sample=code_samples["go"],
                 java_code_sample=code_samples["java"],
                 typescript_code_sample=code_samples["javascript"],
-                curl_code_sample=code_samples["curl"]
+                curl_code_sample=code_samples["curl"],
+                page_type="api_reference"
             )
             return api_ref
         

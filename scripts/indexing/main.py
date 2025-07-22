@@ -15,9 +15,8 @@ import subprocess
 
 subprocess.run(["uv", "run", "playwright", "install"])
 
-composite_client = DeveloperDocsDataClient("https://developers.glean.com")
+developer_docs_data_client = DeveloperDocsDataClient("https://developers.glean.com")
+connector = CustomDeveloperDocsConnector(name="customDeveloperDocsDatasource", data_client=developer_docs_data_client)
 
-connector = CustomDeveloperDocsConnector(name="customDeveloperDocsDatasource", data_client=composite_client)
 connector.configure_datasource(is_test=True)
-
 connector.index_data(mode=IndexingMode.FULL)
