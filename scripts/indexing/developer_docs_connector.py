@@ -61,13 +61,13 @@ class CustomDeveloperDocsConnector(BaseDatasourceConnector[Union[PageInfoData, A
                             name="method",
                             display_label="HTTP Method",
                             property_type=PropertyType.PICKLIST,
-                            ui_options=UIOptions.SEARCH_RESULT,
+                            ui_options=UIOptions.SEARCH_RESULT
                         ),
                         PropertyDefinition(
                             name="requestContentType",
                             display_label="Request Content Type",
                             property_type=PropertyType.PICKLIST,
-                            ui_options=UIOptions.SEARCH_RESULT
+                            ui_options=UIOptions.SEARCH_RESULT,
                             hide_ui_facet=True
                         ),
                         PropertyDefinition(
@@ -102,7 +102,7 @@ class CustomDeveloperDocsConnector(BaseDatasourceConnector[Union[PageInfoData, A
                             name="responseCodes",
                             display_label="Response Codes",
                             property_type=PropertyType.TEXTLIST,
-                            ui_options=UIOptions.SEARCH_RESULT
+                            ui_options=UIOptions.SEARCH_RESULT,
                             hide_ui_facet=True
                         ),
                         PropertyDefinition(
