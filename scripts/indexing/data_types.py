@@ -1,6 +1,6 @@
 from typing import List, TypedDict
 
-class PageInfoData(TypedDict):
+class DocumentationPage(TypedDict):
     """Type definition for Page Information data."""
 
     id: str
@@ -11,7 +11,7 @@ class PageInfoData(TypedDict):
     url: str
     page_type: str
 
-class ApiReferenceData(TypedDict):
+class ApiReferencePage(TypedDict):
     """Type definition for API Reference data."""
     
     id: str

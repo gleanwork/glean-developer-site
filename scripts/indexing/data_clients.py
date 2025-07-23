@@ -1,6 +1,6 @@
 from typing import Sequence, Union, List, Tuple
 from glean.indexing.connectors.base_data_client import BaseConnectorDataClient
-from data_types import PageInfoData, ApiReferenceData
+from data_types import DocumentationPage, ApiReferencePage
 import json
 import re
 import requests
@@ -11,7 +11,7 @@ import uuid
 import concurrent.futures
 import threading
 
-class DeveloperDocsDataClient(BaseConnectorDataClient[Union[PageInfoData, ApiReferenceData]]):
+class DeveloperDocsDataClient(BaseConnectorDataClient[Union[DocumentationPage, ApiReferencePage]]):
     
     def __init__(self, dev_docs_base_url: str):
         self.dev_docs_base_url = dev_docs_base_url
@@ -28,7 +28,7 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[PageInfoData, ApiRef
         soup = BeautifulSoup(html, 'html.parser')
         return bool(soup.find('pre', class_='openapi__method-endpoint'))
 
-    def get_info_page_data(self, urls: List[str]) -> Sequence[ApiReferenceData]:
+    def get_documentation_page_data(self, urls: List[str]) -> Sequence[DocumentationPage]:
 
         def _slugify(text: str) -> str:
             return re.sub(r'[^a-z0-9]+', '-', text.lower()).strip('-')
@@ -84,7 +84,7 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[PageInfoData, ApiRef
                     break
             return "\n".join(content).strip()
 
-        def _extract_page_info_with_fragments(url: str, html: str) -> List[ApiReferenceData]:
+        def _extract_page_info_with_fragments(url: str, html: str) -> List[ApiReferencePage]:
             soup = BeautifulSoup(html, 'html.parser')
             page_title = soup.find('h1').text.strip() if soup.find('h1') else ""
             section = _extract_section_from_breadcrumbs(soup)
@@ -94,7 +94,7 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[PageInfoData, ApiRef
             h1_content = _extract_intro_content_after_header(soup)
             if h1:
                 if h1_content:
-                    page_info = PageInfoData(
+                    page_info = DocumentationPage(
                         id=str(uuid.uuid5(uuid.NAMESPACE_URL, url)),
                         title=page_title,
                         section=section,
@@ -119,7 +119,7 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[PageInfoData, ApiRef
                     full_url = url + "#" + fragment
                     content = _extract_content_until_next_h2(h2)
                     id_val = str(uuid.uuid5(uuid.NAMESPACE_URL, full_url))
-                    page_info = PageInfoData(
+                    page_info = DocumentationPage(
                         id=id_val,
                         title=page_title,
                         section=section,
@@ -167,7 +167,7 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[PageInfoData, ApiRef
         print("INFO PAGE DATA: ", res)
         return res
 
-    def get_api_reference_data(self, urls: List[str]) -> Sequence[ApiReferenceData]:
+    def get_api_reference_page_data(self, urls: List[str]) -> Sequence[ApiReferencePage]:
         
         def _extract_mime_type(soup, section="request"):
             h2 = soup.find("h2", id=section)
@@ -324,7 +324,7 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[PageInfoData, ApiRef
             request_body = _extract_request_body_schema(soup)
             response_body = _extract_response_schema(soup)
             code_samples = _extract_code_samples(page)
-            api_ref = ApiReferenceData(
+            api_ref = ApiReferencePage(
                 id=api_ref_data["id"],
                 title=api_ref_data["title"],
                 tag=api_ref_data["tag"],
@@ -381,7 +381,7 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[PageInfoData, ApiRef
         print("API REFERENCE DATA: ", res)
         return res
 
-    def get_source_data(self, since=None) -> Sequence[Union[PageInfoData, ApiReferenceData]]:
+    def get_source_data(self, since=None) -> Sequence[Union[DocumentationPage, ApiReferencePage]]:
         all_urls = self._get_all_sitemap_urls(self.dev_docs_base_url + "/sitemap.xml")
         info_page_urls = []
         api_ref_urls = []
@@ -403,4 +403,4 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[PageInfoData, ApiRef
                 continue
         print(f"Found {len(api_ref_urls)} API reference pages and {len(info_page_urls)} info pages.")
         
-        return self.get_info_page_data(info_page_urls) + self.get_api_reference_data(api_ref_urls)
+        return self.get_documentation_page_data(info_page_urls) + self.get_api_reference_page_data(api_ref_urls)
