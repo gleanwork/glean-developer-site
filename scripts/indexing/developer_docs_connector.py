@@ -6,6 +6,7 @@ from glean.indexing.models import (
     ContentDefinition,
     CustomDatasourceConfig,
     DocumentDefinition,
+    UserReferenceDefinition
 )
 from glean.api_client.models import (
     ObjectDefinition,
@@ -22,9 +23,10 @@ class CustomDeveloperDocsConnector(BaseDatasourceConnector[Union[PageInfoData, A
     configuration: CustomDatasourceConfig = CustomDatasourceConfig(
         name="customDeveloperDocsDatasource",
         display_name="Custom Glean Developer Docs",
-        datasource_category="ENTITY",
+        datasource_category=DatasourceCategory.KNOWLEDGE_HUB,
+        url_regex="https://developers.glean.com/.*",
         icon_url="https://glean-public-external-be.glean.com/api/v1/images?key=eyJ0eXBlIjoiVUdDIiwiaWQiOiIwIiwiZHMiOiJHQUxMRVJZLUlNQUdFLVBJQ0tFUiIsImNpZCI6ImVmNzI4NWM1LWY0ZjgtNDZhYi05NGQ3LTAxMjc4ZjhmNTAwMyIsImV4dCI6Ii5wbmcifQ==",
-        is_entity_datasource=True,
+        is_entity_datasource=False,
         is_test_datasource=True,
         is_user_referenced_by_email=True,
         object_definitions=[
@@ -97,7 +99,7 @@ class CustomDeveloperDocsConnector(BaseDatasourceConnector[Union[PageInfoData, A
                         PropertyDefinition(
                             name="responseCodes",
                             display_label="Response Codes",
-                            property_type=PropertyType.PICKLIST,
+                            property_type=PropertyType.TEXTLIST,
                             ui_options=UIOptions.SEARCH_RESULT
                         ),
                         PropertyDefinition(
@@ -147,7 +149,6 @@ class CustomDeveloperDocsConnector(BaseDatasourceConnector[Union[PageInfoData, A
     )
 
     def transform(self, data: Sequence[Union[PageInfoData, ApiReferenceData]]) -> List[DocumentDefinition]:
-        
         documents = []
         for page in data:
             if page["page_type"] == "info_page":
@@ -163,7 +164,10 @@ class CustomDeveloperDocsConnector(BaseDatasourceConnector[Union[PageInfoData, A
                         CustomProperty(name="heading", value=page["heading"]),
                     ],
                     permissions=DocumentPermissionsDefinition(
-                        allow_anonymous_access=True
+                        allowed_users=[
+                            UserReferenceDefinition(email="aurelia.wang@glean.com", name="Aurelia Wang"),
+                            UserReferenceDefinition(email="steve.calvert@glean.com", name="Steve Calvert")
+                        ]
                     )
                 )
             elif page["page_type"] == "api_reference":
@@ -192,9 +196,11 @@ class CustomDeveloperDocsConnector(BaseDatasourceConnector[Union[PageInfoData, A
                         CustomProperty(name="curlCodeSample", value=page["curl_code_sample"]),
                     ],
                     permissions=DocumentPermissionsDefinition(
-                        allow_anonymous_access=True
+                        allowed_users=[
+                            UserReferenceDefinition(email="aurelia.wang@glean.com", name="Aurelia Wang"),
+                            UserReferenceDefinition(email="steve.calvert@glean.com", name="Steve Calvert")
+                        ]
                     )
                 )
             documents.append(document)
-        print(documents)
         return documents
