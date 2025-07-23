@@ -68,6 +68,7 @@ class CustomDeveloperDocsConnector(BaseDatasourceConnector[Union[PageInfoData, A
                             display_label="Request Content Type",
                             property_type=PropertyType.PICKLIST,
                             ui_options=UIOptions.SEARCH_RESULT
+                            hide_ui_facet=True
                         ),
                         PropertyDefinition(
                             name="requestParameters",
@@ -87,7 +88,8 @@ class CustomDeveloperDocsConnector(BaseDatasourceConnector[Union[PageInfoData, A
                             name="responseContentType",
                             display_label="Response Content Type",
                             property_type=PropertyType.PICKLIST,
-                            ui_options=UIOptions.SEARCH_RESULT
+                            ui_options=UIOptions.SEARCH_RESULT,
+                            hide_ui_facet=True
                         ),
                         PropertyDefinition(
                             name="responseBody",
@@ -101,12 +103,14 @@ class CustomDeveloperDocsConnector(BaseDatasourceConnector[Union[PageInfoData, A
                             display_label="Response Codes",
                             property_type=PropertyType.TEXTLIST,
                             ui_options=UIOptions.SEARCH_RESULT
+                            hide_ui_facet=True
                         ),
                         PropertyDefinition(
                             name="authentication",
                             display_label="Authentication",
                             property_type=PropertyType.PICKLIST,
-                            ui_options=UIOptions.SEARCH_RESULT
+                            ui_options=UIOptions.SEARCH_RESULT,
+                            hide_ui_facet=True
                         ),
                         PropertyDefinition(
                             name="pythonCodeSample",
