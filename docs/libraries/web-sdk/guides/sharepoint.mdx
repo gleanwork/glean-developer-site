@@ -1,0 +1,369 @@
+---
+title: 'SharePoint'
+description: 'Guide for embedding Glean Search or Chat into SharePoint sites using SharePoint Framework (SPFx)'
+icon: 'share-nodes'
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+# Embedding Glean Search & Chat into SharePoint Sites
+
+## Objective
+
+Some of our customers have a need to embed Glean Search or Chat into SharePoint sites they use internally. While Glean's Web SDK makes it super easy to embed Glean into generic websites and webpages, historically, it has proven somewhat challenging to integrate those into SharePoint. Recent work by Patrick Lynch has addressed this challenge.
+
+## Scope
+
+This accompanying guide aims to offer a runbook on how to help our customers embed Glean Search or Chat into SharePoint sites and pages in their company. A high level understanding of the SharePoint Web Part code is provided along with step by step instructions on how to customize and integrate that code into a customer's environment.
+
+## Audience
+
+Any SE or SA who wishes to help our customers embed Glean into SharePoint Pages. Our objective is to not assume much prior knowledge about SharePoint so anyone with a reasonable technical background of how Glean Embed works should be able to help our customers get this going.
+
+## Background Context
+
+Normally, it's possible to embed Glean Search or Chat into a Web page with a few lines of Javascript code. All you need to do is modify the HTML page that executes when the user interacts with a certain UI object (e.g. a search form). Such modification typically involves intercepting the user request, capturing the entered user query and sending the request to a Glean Search or Chat Embed object. These objects in turn perform the necessary actions to fetch the Search Results or Answers and render it.
+
+This can be seen in some [codepens here](https://codepen.io/collection/OLGNrP).
+
+SharePoint is a Microsoft product that helps organizations manage and share information, collaborate, and streamline communications. Content from SharePoint is rendered through web browsers. Microsoft implements tight security policies which restrict these pages in multiple ways. Therefore special steps are needed to accomplish the Embed of Glean in SharePoint sites.
+
+### Commonly Encountered SharePoint Restrictions
+
+- Custom scripts must often be added through specific mechanisms. Examples include Script Editor Web Parts and the SPFx (SharePoint Framework)
+- Cross-origin requests (CORS) are often restricted, meaning that scripts running in SharePoint may have limitations when trying to access resources from different domains unless properly configured.
+
+### Understanding SharePoint Terminology
+
+This section would be helpful to those who are not familiar with Microsoft SP Terminology.
+
+**SPFx - SharePoint Framework**: The SharePoint Framework (SPFx) is a page and web part model that provides full support for client-side SharePoint development, easy integration with SharePoint data, and extending Microsoft Teams and Microsoft Viva.
+
+**SharePoint Site**: A SharePoint site is a collection of related web pages, lists, libraries, and other resources that are organized for specific purposes, such as collaboration, document management, or project management.
+
+**SharePoint Pages**: Pages in SharePoint are the individual web pages that make up a site. They can contain text, images, videos, documents, and other types of content.
+
+**Web Part**: A SharePoint Web Part is a Component. Pages are made up of Sections and Sections in-turn are made up by assembling components. Each such component is referred to as a Web Part. Web parts can include text, images, documents, lists, or other applications.
+
+## Runbook
+
+This section offers detailed step by step instructions on the integration.
+
+### Prerequisite: Confirm SPFx Support on Customer's SharePoint
+
+Before we can move forward with installing Glean's Embed Search/Chat, we need to ensure that the customer's SharePoint environment supports SharePoint Framework (SPFx). This is typically the case for SharePoint Online and modern SharePoint sites. To confirm that a SharePoint environment supports SharePoint Framework (SPFx), you can check several factors related to the version of SharePoint being used and the specific configurations of the environment. Here's a step-by-step guide on how to do this.
+
+You will need a customer's SP admin to verify all of this information.
+
+#### Step 1: Determine SharePoint Version
+
+**SharePoint Online**: SPFx is fully supported in SharePoint Online. If the organization uses SharePoint Online (part of Microsoft 365), they can confidently proceed with SPFx development.
+
+**SharePoint Server**: For on-premises installations, SPFx is supported starting with SharePoint Server 2016 (Feature Pack 2) and later versions. Specifically:
+
+- **SharePoint Server 2016**: Requires Feature Pack 2 to enable SPFx.
+- **SharePoint Server 2019**: Fully supports SPFx.
+- **SharePoint Subscription Edition**: Supports SPFx.
+
+#### Step 2: Verify Tenant or Site Settings
+
+<Tabs>
+<TabItem value="online" label="For SharePoint Online">
+
+Go to the SharePoint admin center:
+Navigate to `https://<tenant-name>-admin.sharepoint.com`.
+Check if the SharePoint Framework is enabled in the settings.
+
+</TabItem>
+<TabItem value="onprem" label="For SharePoint On-Premises">
+
+Check if the necessary features are enabled:
+Open the SharePoint Central Administration site.
+Navigate to System Settings and ensure that the required features for SPFx are activated.
+
+</TabItem>
+</Tabs>
+
+#### Step 3: Verify the App Catalog
+
+SPFx requires an App Catalog to deploy custom solutions. Check if the App Catalog is set up:
+
+In SharePoint Online, navigate to `https://<tenant-name>.sharepoint.com/sites/appcatalog/_layouts/15/tenantAppCatalog.aspx/manageApps`
+
+The App Catalog will automatically be created the first time you access it via the SharePoint Admin Center.
+
+For on-premises installations, the App Catalog can be created through the admin center.
+
+#### Step 4: Check for Modern Pages
+
+SPFx is designed primarily for modern SharePoint sites. Ensure that the site where you plan to deploy the web part uses the modern experience. In the admin center check under Settings for SharePoint Pages. Learn more about SharePoint classic and modern experiences [here](https://learn.microsoft.com/en-us/sharepoint/dev/spfx/sharepoint-framework-overview).
+
+SharePoint classic pages will not support the SharePoint Framework web parts.
+
+#### Step 5: Verify User Permissions
+
+Ensure that the user deploying SPFx solutions has sufficient permissions:
+
+The user deploying the Glean apps typically needs to be a SharePoint Administrator or have at least site collection administrator rights to deploy SPFx solutions.
+
+#### Step 6: Check Documentation
+
+Refer to the official Microsoft documentation:
+
+Microsoft provides comprehensive documentation regarding SPFx, including system requirements and supported versions. You can find this information on the [Microsoft Docs site for SharePoint Framework](https://learn.microsoft.com/en-us/sharepoint/dev/spfx/sharepoint-framework-overview).
+
+For developers, check this [article](https://learn.microsoft.com/en-us/sharepoint/dev/spfx/yeoman-generator-for-spfx-intro) to learn how to set up an environment for SPFx development.
+
+## Code Structure
+
+At the highest level, the code extends a base class provided by Microsoft SharePoint (`BaseClientSideWebPart`) to implement GleanSearchWebPart class and pass it the appropriate parameters. The `render()` method is where all the magic of invoking the GleanSearch component happens - this will be called when the corresponding UI element (see below) is rendered by the browser - note that the render() method is a required method for a Web Part since its an abstract method with no default implementation.
+
+The structure of the environment parameters expected by this abstract class are defined in `components/GleanSearchProps.ts`
+
+### How the code Works
+
+**Glean Search Embedding**: The TSX (TypeScript (.TSX) file written using JSX syntax) file can be downloaded [here](https://github.com/askscio/cs-tools/tree/main/sharepoint-webpart-search).
+
+This identifies a UI element in the page based on a query Selector (see below).
+
+Once found, it loads Glean Embed from `https://app.glean.com/embedded-search-latest.min.js`
+
+It then dynamically attaches an EmbeddedSearch object.
+
+**Searching for the Input Element**: The code uses `document.querySelector('input[placeholder*="Search"]')` to find an input element that contains the placeholder text "Search". This approach assumes that there is an input field in the SharePoint page that users interact with for search functionality.
+
+If your customer has a different way to identify the search box where they want Glean Search, this code will need to be modified by the customer.
+
+**Dynamic Element Selection**: The component uses an interval to repeatedly attempt to locate the search box. This is useful in scenarios where the search box may not be immediately available in the DOM when the component mounts (for example, if it is part of another component that loads after).
+
+**Custom Selector**: The search box's selector (`'input[placeholder*="Search"]'`) is based on the specific design of the SharePoint page. If the SharePoint site uses a different structure or placeholder text, you would need to modify this selector accordingly.
+
+### Sending the Web Part Code to the Customer
+
+Web part code for installing Glean Search and Chat is located in the following folders:
+- https://github.com/askscio/cs-tools/tree/main/sharepoint-webpart-chat
+- https://github.com/askscio/cs-tools/tree/main/sharepoint-webpart-search
+
+`glean.sendsafely.com` can be used to share this code safely with the customer.
+
+:::note Important Notes
+- Please note that this is generic code and some of the instructions below should guide you in how to help the customer integrate it for settings specific to them.
+- Most of this document uses the Webpart-Search as an example. Corresponding set of steps need to be done for Chat as well if Chat should be made available as a Web Part.
+- At the highest level, this code implements Web Parts (components) for Search and Chat individually. Each can be installed separately (both are not required to be done together)
+:::
+
+### Help the Customer Prepare Dev Environment
+
+There are several utilities that need to be installed in the customer's environment. Individual commands are provided. It is recommended to use Node Version Manager (nvm) to manage different Node.js environments. Using nvm allows for quickly switching between Node.js versions that are specific to the Microsoft SharePoint Framework (SPFx).
+
+**Node.js**: Version 18.x is required since the later versions may not be compatible with SPFx builds.
+
+To check node version, you can use `npm -v`
+
+To install 18.x version - go to https://nodejs.org/en/download/package-manager and follow the instructions there
+
+If you run into Python issues, it's best to clean up and use `pyenv`. Some helpful instructions are here - https://github.com/pyenv/pyenv#homebrew-in-macos
+
+**Yeoman**: This is used to generate boilerplate code for SPFx.
+```bash
+npm install -g yo
+```
+
+**SharePoint Framework Yeoman Generator**: Learn more about the SPFx Yeoman Generator [here](https://learn.microsoft.com/en-us/sharepoint/dev/spfx/yeoman-generator-for-spfx-intro).
+```bash
+npm install -g @microsoft/generator-sharepoint
+```
+
+**Gulp**: gulp is a JavaScript based task runner used to automate tasks to build and deploy the package to deploy the Webpart solution. Read more about Gulp here.
+```bash
+npm install -g gulp
+```
+
+**Code Editor**: Visual Studio Code or your favorite editor.
+
+## Create the SPFx Web Part
+
+Instructions for integrating GleanChat into SharePoint.
+
+### Generate New SPFx Web Part
+
+1. Open a command prompt or terminal.
+2. Create a new directory for the project and navigate to the location.
+   ```bash
+   mkdir GleanSearchWebPart
+   cd GleanSearchWebPart
+   ```
+3. Run the Yeoman generator to create a new SPFx web part
+   ```bash
+   yo @microsoft/sharepoint
+   ```
+4. Follow the prompts to set up the project:
+   - **Solution Name**: Enter a name for the solution (e.g., `GleanSearchWebPart`).
+   - **Target for deployment**: Choose SharePoint Online only.
+   - **Web Part Name**: Enter a name for your web part (e.g., `GleanSearch`).
+   - **Framework**: Choose React
+
+### Replace the Default Code
+
+1. Navigate to `src/webparts/<your-webpart-name>` directory
+2. Edit the `<your-webpart-name>` with the actual name you want.
+3. Replace the generated web part code from above with the Glean Search web part code that was shared.
+4. Customize the Web part code for your SharePoint implementation.
+
+### Potential Considerations
+
+**Adjust the Selector**: If the search box is styled differently or has a different placeholder, the selector used in `document.querySelector` will need to be updated.
+
+**Testing**: It's important to test this functionality in the actual SharePoint environment to ensure it correctly identifies the search box. You may need to adjust the code based on how the site is structured.
+
+If possible test the web part deployment and customizations in a non-production environment.
+
+**Customizing Further**: If the customer has a more complex search box setup with additional logic it might be necessary to ensure the correct search box is found. For example: A customer may have implemented the search box in a custom component or has multiple search inputs.
+
+## Build and Package the Web Part
+
+At this point, we assume that any modifications or customizations that you need are done. The code is ready to be built and packaged
+
+### Build the Project
+
+1. Return to the root directory of the SPFx project.
+2. Run the following command to build the project:
+   ```bash
+   gulp build
+   ```
+
+### Bundle and Package
+
+1. Create a production bundle:
+   ```bash
+   gulp bundle --ship
+   ```
+2. Package the solution:
+   ```bash
+   gulp package-solution --ship
+   ```
+
+## Deploy the SPFx Web Part
+
+The following instructions show how to configure the Glean Search Web part for SharePoint M365 (previously known as SharePoint Online).
+
+### Upload to App Catalog
+
+1. Navigate to the SharePoint App Catalog (e.g., `https://<tenant-name>.sharepoint.com/sites/appcatalog/_layouts/15/tenantAppCatalog.aspx/manageApps`)
+2. Upload the generated `.sppkg` file located in the `sharepoint/solution` folder.
+
+### Enable App
+
+After uploading, select the option to **Enable app** (application). There are two options to **Only enable this app** or **Enable this app and add it to all sites**. The second option is preferred and will make the web part available to all sites.
+
+Once the application is enabled a confirmation screen will appear.
+
+Glean Search has been enabled and added to all sites.
+
+## Add the Glean Search Web Part to a SharePoint Page
+
+The following instructions show how to configure the Glean Search Web part for SharePoint M365 (previously known as SharePoint Online).
+
+### Navigate to SharePoint Page
+
+Go to a SharePoint site where the web part will be added. For these instructions a simple Team site was created with no web parts.
+
+### Edit the Page
+
+Click on the **Edit** button to modify the page.
+
+### Add the Web Part
+
+1. Click on the **+** icon to add a new web part to the page. There are different sections on the page where you can add the part. The section of the page is not important as the Glean Search web part will be initiated when the search box in the SharePoint site will be clicking. It will not show up in the section that it is added to.
+2. Search for the Glean Search web part by the name given during the creation process (see Create the SPFx Web part) and select it.
+
+### Configure Properties
+
+If applicable, configure any properties needed for the Glean Search web part.
+
+### Save and Publish the Page
+
+Save and **Republish** the page to make the Glean Search functionality live.
+
+## Test the Integration
+
+### Testing
+
+After publishing, ensure that the Glean Search functionality works as expected.
+
+Verify that any API calls, search features, and UI elements operate correctly.
+
+## Documentation and Support
+
+### Provide Documentation
+
+It may be helpful to provide documentation on how to use Glean Search within SharePoint and any troubleshooting steps they may need.
+
+### Ongoing Support
+
+Offer ongoing support for any issues or questions that arise after integration.
+
+## For embedding Glean Chat
+
+The larger set of steps are the same as for Glean Search. The main difference is in finding the UI element where Gleanchat should be installed.
+
+Modifications need to be made to some parameters in https://github.com/askscio/cs-tools/blob/main/sharepoint-webpart-chat/src/webparts/gleanChat/components/GleanChat.tsx
+
+Application ID can be set up so the customer can set up a chat with an AI app that was already setup.
+
+## References
+
+### Overview of BaseClientSideWebPart
+
+`BaseClientSideWebPart` is provided by Microsoft as part of the SharePoint Framework (SPFx). It is a base class that developers extend to create custom client-side web parts for SharePoint. Here's a bit more detail about it:
+
+**Part of SPFx**: `BaseClientSideWebPart` is part of the `@microsoft/sp-webpart-base` package, which is included in SPFx projects. This package provides core functionality for developing client-side web parts.
+
+**Purpose**: The primary purpose of `BaseClientSideWebPart` is to facilitate the creation of web parts by providing common functionalities and lifecycle methods that can be overridden in custom web parts.
+
+**Key Features**:
+- **Lifecycle Methods**: It provides lifecycle methods like `onInit`, `render`, `onDispose`, and `onThemeChanged`, which allow developers to define what happens at various points in the web part's lifecycle.
+- **Property Management**: It manages the properties defined in the web part, making it easier to handle user-defined settings through the property pane.
+- **Context Access**: It provides access to the context of the web part, allowing developers to interact with SharePoint resources, manage user context, and handle different environments (e.g., Teams, SharePoint Online).
+
+**Usage**: When creating a new SPFx web part, developers typically extend `BaseClientSideWebPart` to build their custom functionality. For example:
+
+```typescript
+import { BaseClientSideWebPart } from '@microsoft/sp-webpart-base';
+
+export default class MyCustomWebPart extends BaseClientSideWebPart {
+  // Custom implementation goes here
+}
+```
+
+**Further Documentation**: Microsoft provides extensive documentation on SPFx and `BaseClientSideWebPart`, which you can find on the [Microsoft Docs site for SharePoint Framework](https://learn.microsoft.com/en-us/sharepoint/dev/spfx/sharepoint-framework-overview).
+
+## Troubleshooting
+
+### Error code 404 when trying accessing the App Catalog
+
+You may need to create a Catalog. As your SharePoint admin, if you're trying to access your SharePoint App Catalog and are encountering issues (example a 404 error), here are some key things to check.
+
+**Steps to Access the SharePoint App Catalog**
+
+**Ensure App Catalog Is Set Up**: The App Catalog must be created in your SharePoint tenant before you can access it. If it hasn't been set up yet, you won't be able to access it.
+
+To set it up:
+1. Go to the **SharePoint Admin Center**: `https://admin.microsoft.com`.
+2. In the left-hand navigation pane, click on **More features** (under Admin Centers).
+3. Under **Apps**, click **App Catalog**.
+4. If prompted, create a new App Catalog site by following the setup instructions.
+
+## Useful Links
+
+- [SharePoint Framework on learn.microsoft.com](https://learn.microsoft.com/en-us/sharepoint/dev/spfx/sharepoint-framework-overview)
+- [https://learn.microsoft.com/en-us/sharepoint/use-app-catalog](https://learn.microsoft.com/en-us/sharepoint/use-app-catalog)
+- [https://www.voitanos.io/blog/spfx-5w1h-why-did-microsoft-create-sharepoint-framework/](https://www.voitanos.io/blog/spfx-5w1h-why-did-microsoft-create-sharepoint-framework/)
+- [https://support.microsoft.com/en-us/office/allow-or-restrict-the-ability-to-embed-content-on-sharepoint-pages-e7baf83f-09d0-4bd1-9058-4aa483ee137b](https://support.microsoft.com/en-us/office/allow-or-restrict-the-ability-to-embed-content-on-sharepoint-pages-e7baf83f-09d0-4bd1-9058-4aa483ee137b)
+- [https://learn.microsoft.com/en-us/sharepoint/dev/spfx/yeoman-generator-for-spfx-intro](https://learn.microsoft.com/en-us/sharepoint/dev/spfx/yeoman-generator-for-spfx-intro)
+
+## References for Local Test
+
+- [App Catalog Page](https://learn.microsoft.com/en-us/sharepoint/use-app-catalog)
+- [Tenant Settings Page](https://learn.microsoft.com/en-us/sharepoint/dev/spfx/tenant-scoped-deployment)
