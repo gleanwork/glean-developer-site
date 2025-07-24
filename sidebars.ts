@@ -1072,6 +1072,11 @@ const sidebars: SidebarsConfig = {
                     id: 'api/client-api/authentication/createauthtoken',
                     label: 'Create authentication token',
                   },
+                  {
+                    type: 'doc',
+                    id: 'api-info/indexing/authentication/token-rotation',
+                    label: 'Token Rotation',
+                  },
                 ],
               },
               {
