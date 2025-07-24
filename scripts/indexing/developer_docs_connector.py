@@ -1,4 +1,4 @@
-from typing import Union, Sequence, List
+from typing import Union, List
 from collections import Counter
 
 from glean.indexing.connectors import BaseDatasourceConnector
@@ -65,7 +65,7 @@ class CustomDeveloperDocsConnector(BaseDatasourceConnector[Union[DocumentationPa
             ]
     )
 
-    def transform(self, data: Sequence[Union[DocumentationPage, ApiReferencePage]]) -> List[DocumentDefinition]:
+    def transform(self, data: List[Union[DocumentationPage, ApiReferencePage]]) -> List[DocumentDefinition]:
         documents = []
         for page in data:
             if page["page_type"] == "info_page":

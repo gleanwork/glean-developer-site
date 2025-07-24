@@ -1,4 +1,4 @@
-from typing import Sequence, Union, List, Tuple
+from typing import Union, List, Tuple
 from glean.indexing.connectors.base_data_client import BaseConnectorDataClient
 from data_types import DocumentationPage, ApiReferencePage
 import json
@@ -28,12 +28,12 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[DocumentationPage, A
         soup = BeautifulSoup(html, 'html.parser')
         return bool(soup.find('pre', class_='openapi__method-endpoint'))
 
-    def get_documentation_page_data(self, urls: List[str]) -> Sequence[DocumentationPage]:
+    def get_documentation_page_data(self, urls: List[str]) -> List[DocumentationPage]:
 
         def _slugify(text: str) -> str:
             return re.sub(r'[^a-z0-9]+', '-', text.lower()).strip('-')
 
-        def _extract_section_from_breadcrumbs(soup):
+        def _extract_section_from_breadcrumbs(soup) -> str:
             breadcrumbs = soup.select('ul.breadcrumbs li.breadcrumbs__item')
             if not breadcrumbs or len(breadcrumbs) < 2:
                 return "unknown"
@@ -52,7 +52,7 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[DocumentationPage, A
                 return breadcrumbs[-2].get_text(strip=True)
             return "unknown"
 
-        def _extract_content_until_next_h2(start_elem):
+        def _extract_content_until_next_h2(start_elem) -> str:
             content_parts = []
             for sibling in start_elem.next_siblings:
                 if isinstance(sibling, str):
@@ -64,7 +64,7 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[DocumentationPage, A
                     content_parts.append(text)
             return "\n".join(content_parts)
 
-        def _extract_intro_content_after_header(soup):
+        def _extract_intro_content_after_header(soup) -> str:
             h1 = soup.find('h1')
             header = h1.find_parent() if h1 else None
             if not header:
@@ -84,7 +84,7 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[DocumentationPage, A
                     break
             return "\n".join(content).strip()
 
-        def _extract_page_info_with_fragments(url: str, html: str) -> List[ApiReferencePage]:
+        def _extract_page_info_with_fragments(url: str, html: str) -> List[DocumentationPage]:
             soup = BeautifulSoup(html, 'html.parser')
             page_title = soup.find('h1').text.strip() if soup.find('h1') else ""
             section = _extract_section_from_breadcrumbs(soup)
@@ -131,45 +131,42 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[DocumentationPage, A
                     data.append(page_info)
             return data
 
-        def _scrape_dynamic_info_pages(urls: List[str], max_workers=10):
+        def _scrape_dynamic_info_pages(urls: List[str], max_workers=10) -> List[DocumentationPage]:
             all_page_info = []
             lock = threading.Lock()
             url_idx_tuples = list(enumerate(urls))
             ordered_results = [None] * len(urls)
             
-            def _fetch_and_extract_with_index(idx_url_tuple):
+            def _fetch_and_extract_with_index(idx_url_tuple) -> Tuple[int, List[DocumentationPage]]:
                 idx, url = idx_url_tuple
                 page_info = _fetch_and_extract(url)
                 return (idx, page_info)
             
-            def _fetch_and_extract(url):
+            def _fetch_and_extract(url) -> List[DocumentationPage]:
                 print(f"Scraping {url}...")
                 try:
                     response = requests.get(url)
                     if response.status_code != 200:
-                        print(f"Failed to fetch {url} - {response.status_code}")
-                        return []
+                        raise RuntimeError(f"Failed to fetch {url} - HTTP {response.status_code}")
                     page_info = _extract_page_info_with_fragments(url, response.text)
                     return page_info
                 except Exception as e:
-                    print(f"Error scraping {url}: {e}")
-                    return []
+                    raise RuntimeError(f"Error scraping {url}: {e}") from e
             
             with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
                 for idx, page_info in executor.map(_fetch_and_extract_with_index, url_idx_tuples):
                     ordered_results[idx] = page_info
             for page_info in ordered_results:
-                if page_info:
-                    all_page_info.extend(page_info)
-            return [page_info for page_info in all_page_info if page_info is not None]
+                all_page_info.extend(page_info)
+            return all_page_info
         
         res = _scrape_dynamic_info_pages(urls)
         print("INFO PAGE DATA: ", res)
         return res
 
-    def get_api_reference_page_data(self, urls: List[str]) -> Sequence[ApiReferencePage]:
+    def get_api_reference_page_data(self, urls: List[str]) -> List[ApiReferencePage]:
         
-        def _extract_mime_type(soup, section="request"):
+        def _extract_mime_type(soup, section="request") -> str:
             h2 = soup.find("h2", id=section)
             if not h2:
                 return ""
@@ -180,7 +177,7 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[DocumentationPage, A
                  or container.select_one('ul.openapi-tabs__mime > li')
             return li.text.strip() if li else ""
 
-        def _extract_authentication_type(soup):
+        def _extract_authentication_type(soup) -> str:
             details = soup.find('details', class_='openapi-security__details')
             if details:
                 header = details.find('h4', class_='openapi-security__summary-header')
@@ -228,7 +225,7 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[DocumentationPage, A
                 "url": url
             }
 
-        def _extract_request_body_schema(soup):
+        def _extract_request_body_schema(soup) -> str:
             request_body_schema = ""
             body_sections = soup.find_all('details', class_=lambda x: x and ('mime' in x or 'body' in x.lower())) or \
                         soup.find_all('details', string=re.compile(r'Body', re.IGNORECASE))
@@ -246,7 +243,7 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[DocumentationPage, A
             else:
                 return ""
 
-        def _extract_response_schema(soup):
+        def _extract_response_schema(soup) -> str:
             response_schema = ""
             response_sections = soup.find_all('details', class_=lambda x: x and 'response' in x) or \
                             [section for section in soup.find_all('details') 
@@ -263,7 +260,7 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[DocumentationPage, A
             else:
                 return ""
 
-        def _extract_query_parameters(soup):
+        def _extract_query_parameters(soup) -> str:
             query_params_content = ""
             param_sections = [section for section in soup.find_all('details') 
                             if section.find('summary') and 
@@ -280,7 +277,7 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[DocumentationPage, A
             else:
                 return ""
 
-        def _extract_code_samples(page):
+        def _extract_code_samples(page) -> dict:
             code_samples = {
                 "python": "",
                 "go": "",
@@ -309,12 +306,11 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[DocumentationPage, A
                     continue
             return code_samples
         
-        def _scrape_single_page_with_page(url: str, page):
+        def _scrape_single_page_with_page(url: str, page) -> ApiReferencePage:
             try:
                 page.goto(url, wait_until="networkidle")
             except Exception as e:
-                print(f"Failed to load {url}: {e}")
-                return None
+                raise RuntimeError(f"Failed to load {url}: {e}") from e
 
             page.wait_for_timeout(3000)
             html_content = page.content()
@@ -348,12 +344,12 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[DocumentationPage, A
             )
             return api_ref
         
-        def _scrape_dynamic_api_pages(urls: List[str], max_workers=10):
+        def _scrape_dynamic_api_pages(urls: List[str], max_workers=10) -> List[ApiReferencePage]:
             results = [None] * len(urls)
             lock = threading.Lock()
             url_idx_tuples = list(enumerate(urls))
             
-            def _scrape_with_browser(url_idx_tuple: Tuple[int, str]):
+            def _scrape_with_browser(url_idx_tuple: Tuple[int, str]) -> Tuple[int, ApiReferencePage]:
                 idx, url = url_idx_tuple
                 with sync_playwright() as p:
                     browser = p.chromium.launch(headless=True)
@@ -361,27 +357,22 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[DocumentationPage, A
                     try:
                         print(f"Scraping {url}...")
                         data = _scrape_single_page_with_page(url, page)
-                        if not data:
-                            print(f"Failed to extract data from {url}")
+                        return (idx, data)
                     except Exception as e:
-                        print(f"Error scraping {url}: {e}")
-                        data = None
+                        raise RuntimeError(f"Error scraping {url}: {e}") from e
                     finally:
                         browser.close()
-                return (idx, data)
             
             with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
                 for idx, data in executor.map(_scrape_with_browser, url_idx_tuples):
-                    if data:
-                        with lock:
-                            results[idx] = data
-            return [api_ref for api_ref in results if api_ref is not None]
+                    results[idx] = data
+            return results
         
         res = _scrape_dynamic_api_pages(urls)
         print("API REFERENCE DATA: ", res)
         return res
 
-    def get_source_data(self, since=None) -> Sequence[Union[DocumentationPage, ApiReferencePage]]:
+    def get_source_data(self, since: str = None) -> List[Union[DocumentationPage, ApiReferencePage]]:
         all_urls = self._get_all_sitemap_urls(self.dev_docs_base_url + "/sitemap.xml")
         info_page_urls = []
         api_ref_urls = []
@@ -391,16 +382,14 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[DocumentationPage, A
             try:
                 response = requests.get(url)
                 if response.status_code != 200:
-                    print(f"Failed to fetch {url} - {response.status_code}")
-                    continue
+                    raise RuntimeError(f"Failed to fetch {url} - HTTP {response.status_code}")
                 html = response.text
                 if self._is_api_reference_page(html):
                     api_ref_urls.append(url)
                 else:
                     info_page_urls.append(url)
             except Exception as e:
-                print(f"Error checking {url}: {e}")
-                continue
+                raise RuntimeError(f"Error checking {url}: {e}") from e
         print(f"Found {len(api_ref_urls)} API reference pages and {len(info_page_urls)} info pages.")
         
         return self.get_documentation_page_data(info_page_urls) + self.get_api_reference_page_data(api_ref_urls)
