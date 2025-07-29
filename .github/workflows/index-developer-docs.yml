@@ -26,8 +26,17 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
-      - name: Run script
+      - name: Install dependencies
+        working-directory: scripts/indexing
+        run: uv sync
+
+      - name: Install Playwright browsers
+        working-directory: scripts/indexing
+        run: uv run playwright install
+
+      - name: Run indexing script
+        working-directory: scripts/indexing
         env:
           GLEAN_INDEXING_API_TOKEN: ${{ secrets.GLEAN_INDEXING_API_TOKEN }}
           GLEAN_INSTANCE: ${{ secrets.GLEAN_INSTANCE }}
-        run: uv run scripts/indexing/main.py
+        run: uv run main.py
