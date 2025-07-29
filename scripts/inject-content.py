@@ -42,35 +42,24 @@ class LLMContentInjector:
     def _extract_hierarchical_schema(self, soup: BeautifulSoup, section_type: str = "request") -> Dict:
         """Extract hierarchical JSON schema from the DOM structure."""
         schema = {}
+        details_elements = []
+                
+        if section_type == "responses":
+            outer_container = soup.find('div', class_='openapi-tabs__schema-container')
+            print("HEREOUTER", outer_container)
+            if outer_container:
+                details_elements = outer_container.find_all('details', class_='openapi-markdown__details')
+        else:
+            details_elements = soup.find_all('details', class_='openapi-markdown__details')
+
+        for details in details_elements:
+            summary = details.find('summary')
+            if summary and summary.get('id', '').count('-') == 1:
+                print("HEREIMP", details)
+                property_data = self._parse_property_from_details(details)
+                if property_data:
+                    schema.update(property_data)
         
-        # Find all top-level openapi-markdown__details elements in the section
-        section_header = soup.find('h2', id=section_type)
-        print("HERE2", section_header)
-        if not section_header:
-            return schema
-        
-        # Find the content between this h2 and the next h2
-        section_content = []
-        current = section_header.next_sibling
-        while current:
-            if hasattr(current, 'name') and current.name == 'h2':
-                break
-            section_content.append(current)
-            current = current.next_sibling
-        print("HERE3", section_content)
-        
-        # Find all openapi-markdown__details elements in the section
-        for content_elem in section_content:
-            if hasattr(content_elem, 'find_all'):
-                details_elements = content_elem.find_all('details', class_='openapi-markdown__details')
-                for details in details_elements:
-                    # Only process top-level details (not nested ones)
-                    summary = details.find('summary')
-                    if summary and summary.get('id', '').count('-') == 1:  # e.g., "request-events"
-                        print("HEREIMP", details)
-                        property_data = self._parse_property_from_details(details)
-                        if property_data:
-                            schema.update(property_data)
         print("HERESCHEMA", schema)
         
         return schema
@@ -98,9 +87,18 @@ class LLMContentInjector:
         
         # Get description
         description = ""
+        # First try: direct sibling p tag (simpler structure)
         desc_elem = summary.find_next_sibling('p')
         if desc_elem:
             description = desc_elem.get_text(strip=True)
+        else:
+            # Second try: nested p tag within the collapsible content
+            # Look for the content div after summary and find the first p tag
+            content_div = summary.find_next_sibling('div')
+            if content_div:
+                nested_p = content_div.find('p')
+                if nested_p:
+                    description = nested_p.get_text(strip=True)
         
         # Check if this is an array type by looking for "Array [" pattern
         is_array = False
@@ -206,6 +204,18 @@ class LLMContentInjector:
         
         return result
     
+    def _extract_mime_type(self, soup: BeautifulSoup, section: str = "request") -> str:
+        """Extract MIME type from the API page."""
+        h2 = soup.find("h2", id=section)
+        if not h2:
+            return ""
+        container = h2.find_next("div", class_="openapi-tabs__mime-container")
+        if not container:
+            return ""
+        li = container.select_one('ul.openapi-tabs__mime > li[aria-selected="true"]') \
+             or container.select_one('ul.openapi-tabs__mime > li')
+        return li.text.strip() if li else ""
+    
     def _extract_code_samples(self, page) -> Dict[str, str]:
         """Extract code samples from the page using Playwright."""
         code_samples = {
@@ -230,12 +240,17 @@ class LLMContentInjector:
                 if page.locator(tab_selector).count() > 0:
                     page.click(tab_selector)
                     page.wait_for_timeout(500)
+                    
+                    # Extract code from visible containers only (skip the hidden default one)
                     code_lines = []
                     content_spans = page.locator('.openapi-explorer__code-block-code-line-content')
                     for i in range(content_spans.count()):
-                        line_content = content_spans.nth(i).inner_text()
-                        if line_content.strip():
-                            code_lines.append(line_content)
+                        span_element = content_spans.nth(i)
+                        # Only extract from visible elements (skips the hidden default container)
+                        if span_element.is_visible():
+                            line_content = span_element.inner_text()
+                            if line_content.strip():
+                                code_lines.append(line_content)
                     if code_lines:
                         code_text = '\n'.join(code_lines)
                         code_samples[key] = code_text
@@ -272,6 +287,10 @@ class LLMContentInjector:
                 print("HEREREQUEST", request_schema)
                 print("HERERESPONSE", response_schema)
                 
+                # Extract MIME types for both request and response
+                request_mime_type = self._extract_mime_type(soup, "request")
+                response_mime_type = self._extract_mime_type(soup, "responses")
+                
                 # Extract code samples
                 code_samples = self._extract_code_samples(page)
                 
@@ -281,6 +300,8 @@ class LLMContentInjector:
                     "authentication": authentication,
                     "request_schema": request_schema,
                     "response_schema": response_schema,
+                    "request_mime_type": request_mime_type,
+                    "response_mime_type": response_mime_type,
                     **code_samples
                 }
                 
@@ -288,74 +309,6 @@ class LLMContentInjector:
                 
             finally:
                 browser.close()
-    
-    def _format_json_schema(self, schema: Dict, indent: int = 2) -> str:
-        """Format schema dictionary as clean JSON with proper hierarchy."""
-        if not schema:
-            return ""
-        
-        def format_value(value, level=0):
-            spaces = "  " * level
-            
-            if isinstance(value, dict) and "type" in value:
-                prop_type = value.get("type", "")
-                properties = value.get("properties", {})
-                
-                if properties:
-                    lines = ["{"]
-                    prop_items = list(properties.items())
-                    for i, (key, prop_value) in enumerate(prop_items):
-                        comma = "," if i < len(prop_items) - 1 else ""
-                        formatted_prop = format_value(prop_value, level + 1)
-                        lines.append(f'{spaces}  "{key}": {formatted_prop}{comma}')
-                    lines.append(f'{spaces}}}')
-                    return '\n'.join(lines)
-                else:
-                    if prop_type.startswith("string"):
-                        return '"example_string"'
-                    elif prop_type == "integer":
-                        return "0"
-                    elif prop_type == "boolean":
-                        return "true"
-                    elif prop_type.endswith("[]"):
-                        base_type = prop_type[:-2]
-                        if base_type == "ActivityEvent":
-                            return "[{}]"
-                        else:
-                            return "[]"
-                    else:
-                        return '"example_value"'
-            else:
-                return json.dumps(value)
-        
-        lines = ["{"]
-        items = list(schema.items())
-        
-        for i, (key, value) in enumerate(items):
-            comma = "," if i < len(items) - 1 else ""
-            
-            if isinstance(value, dict) and value.get("type", "").endswith("[]"):
-                properties = value.get("properties", {})
-                if properties:
-                    lines.append(f'  "{key}": [')
-                    lines.append('    {')
-                    
-                    prop_items = list(properties.items())
-                    for j, (prop_key, prop_value) in enumerate(prop_items):
-                        prop_comma = "," if j < len(prop_items) - 1 else ""
-                        formatted_prop = format_value(prop_value, 2)
-                        lines.append(f'      "{prop_key}": {formatted_prop}{prop_comma}')
-                    
-                    lines.append('    }')
-                    lines.append(f'  ]{comma}')
-                else:
-                    lines.append(f'  "{key}": []{comma}')
-            else:
-                formatted_value = format_value(value, 1)
-                lines.append(f'  "{key}": {formatted_value}{comma}')
-        
-        lines.append("}")
-        return '\n'.join(lines)
     
     def _format_enhanced_content(self, api_data: Dict) -> str:
         """Format the API data into clean markdown for injection."""
@@ -371,7 +324,14 @@ class LLMContentInjector:
         # Request section
         if api_data.get('request_schema'):
             content_parts.append("## Request")
-            content_parts.append("- **Content-Type:** application/json")
+            
+            # Use extracted MIME type or fallback to application/json
+            mime_type = api_data.get('request_mime_type', '')
+            if mime_type:
+                content_parts.append(f"- **Content-Type:** {mime_type}")
+            else:
+                content_parts.append("- **Content-Type:** application/json")
+            
             content_parts.append("")
             content_parts.append("### Request Body")
             content_parts.append("")
@@ -383,6 +343,14 @@ class LLMContentInjector:
         # Response section
         if api_data.get('response_schema'):
             content_parts.append("## Response")
+            
+            # Use extracted response MIME type
+            response_mime_type = api_data.get('response_mime_type', '')
+            if response_mime_type:
+                content_parts.append(f"- **Content-Type:** {response_mime_type}")
+            else:
+                content_parts.append("- **Content-Type:** application/json")
+            
             content_parts.append("")
             content_parts.append("### Response Body")
             content_parts.append("")
@@ -408,8 +376,7 @@ class LLMContentInjector:
             for lang, code in code_samples.items():
                 if code:
                     content_parts.append(f"### {lang}")
-                    lang_code = lang.lower().replace("typescript", "javascript")
-                    content_parts.append(f"```{lang_code}")
+                    content_parts.append(f"```{lang.lower()}")
                     content_parts.append(code)
                     content_parts.append("```")
                     content_parts.append("")
