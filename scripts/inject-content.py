@@ -53,16 +53,45 @@ class LLMContentInjector:
         else:
             h2_section = soup.find('h2', id=section_type)
             if h2_section:
-                details_elements = h2_section.next_sibling.find_all('details', class_='openapi-markdown__details')
+                # Navigate through the nested structure: h2 -> tabs-container -> ... -> details
+                next_container = h2_section.find_next_sibling('div')
+                if next_container:
+                    details_elements = next_container.find_all('details', class_='openapi-markdown__details')
+                else:
+                    details_elements = []
 
+        # Process the main details elements that contain the schema structure
         for details in details_elements:
             summary = details.find('summary')
             print("HREESUMMARY", summary)
-            if summary and summary.get('id', '').count('-') == 1:
-                print("HEREIMP", details)
-                property_data = self._parse_property_from_details(details)
-                if property_data:
-                    schema.update(property_data)
+            
+            # Find the UL container that holds all the property divs
+            ul_container = details.find('ul')
+            if ul_container:
+                # Get all direct child divs that represent properties
+                property_divs = ul_container.find_all('div', recursive=False)
+                
+                for prop_div in property_divs:
+                    # Check if this div contains a nested details element (complex object)
+                    nested_details = prop_div.find('details', class_='openapi-markdown__details')
+                    
+                    if nested_details:
+                        # This is a complex object with nested details
+                        property_data = self._parse_property_from_details(nested_details)
+                        if property_data:
+                            schema.update(property_data)
+                    else:
+                        # This is a simple property div
+                        schema_item = prop_div.find('div', class_='openapi-schema__list-item')
+                        if schema_item:
+                            container = schema_item.find('span', class_='openapi-schema__container')
+                            if container:
+                                property_elem = container.find('strong', class_='openapi-schema__property')
+                                if property_elem:
+                                    property_name = property_elem.get_text(strip=True)
+                                    simple_property = self._parse_simple_property_from_item(schema_item)
+                                    if simple_property:
+                                        schema[property_name] = simple_property
         
         print("HERESCHEMA", schema)
         
