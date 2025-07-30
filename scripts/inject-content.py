@@ -48,12 +48,16 @@ class LLMContentInjector:
             outer_container = soup.find('div', class_='openapi-tabs__schema-container')
             print("HEREOUTER", outer_container)
             if outer_container:
+                tab_item = outer_container.find('div', class_='openapi-tabs__item')
                 details_elements = outer_container.find_all('details', class_='openapi-markdown__details')
         else:
-            details_elements = soup.find_all('details', class_='openapi-markdown__details')
+            h2_section = soup.find('h2', id=section_type)
+            if h2_section:
+                details_elements = h2_section.next_sibling.find_all('details', class_='openapi-markdown__details')
 
         for details in details_elements:
             summary = details.find('summary')
+            print("HREESUMMARY", summary)
             if summary and summary.get('id', '').count('-') == 1:
                 print("HEREIMP", details)
                 property_data = self._parse_property_from_details(details)
