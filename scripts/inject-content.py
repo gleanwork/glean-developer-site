@@ -64,6 +64,147 @@ class LLMContentInjector:
         
         return schema
     
+    def _extract_description_with_tables(self, desc_elem) -> str:
+        """Extract description text including formatted table data, possible values, and examples."""
+        if not desc_elem:
+            return ""
+        
+        description_parts = []
+        
+        # Get regular text content
+        text_content = desc_elem.get_text(strip=True)
+        if text_content:
+            description_parts.append(text_content)
+        
+        # Look for tables in the description element or its parent
+        tables = desc_elem.find_all('table')
+        parent = desc_elem.parent
+        if not tables and parent:
+            # Check parent element for tables
+            tables = parent.find_all('table')
+        
+        # Process each table
+        for table in tables:
+            table_text = self._format_table_data(table)
+            if table_text:
+                description_parts.append(table_text)
+        
+        # Extract possible values and examples and add to description
+        # Try multiple scopes to find possible values and examples
+        search_containers = []
+        if parent:
+            search_containers.append(parent)
+            # Also try grandparent in case the structure is nested differently
+            if parent.parent:
+                search_containers.append(parent.parent)
+        
+        possible_values = []
+        example = ""
+        
+        for container in search_containers:
+            if not possible_values or not example:
+                pv, ex = self._extract_enum_and_example(container)
+                if not possible_values and pv:
+                    possible_values = pv
+                if not example and ex:
+                    example = ex
+        
+        if possible_values:
+            values_str = ', '.join([f"`{val}`" for val in possible_values])
+            description_parts.append(f"Possible values: {values_str}")
+        
+        if example:
+            description_parts.append(f"Example: `{example}`")
+        
+        return '\n\n'.join(description_parts)
+    
+    def _format_table_data(self, table) -> str:
+        """Convert HTML table to readable text format."""
+        if not table:
+            return ""
+        
+        formatted_rows = []
+        
+        # Process body rows - format as "VALUE: Description"
+        tbody = table.find('tbody')
+        if tbody:
+            for tr in tbody.find_all('tr'):
+                cells = [td.get_text(strip=True) for td in tr.find_all(['td', 'th'])]
+                if len(cells) >= 2:  # Need at least enum value and description
+                    enum_value = cells[0]
+                    description = cells[1]
+                    formatted_rows.append(f"{enum_value}: {description}")
+        else:
+            # Handle tables without explicit tbody - skip header row
+            all_rows = table.find_all('tr')
+            for tr in all_rows[1:]:  # Skip first row (header)
+                cells = [td.get_text(strip=True) for td in tr.find_all(['td', 'th'])]
+                if len(cells) >= 2:  # Need at least enum value and description
+                    enum_value = cells[0]
+                    description = cells[1]
+                    formatted_rows.append(f"{enum_value}: {description}")
+        
+        return '\n'.join(formatted_rows) if formatted_rows else ""
+
+    def _extract_enum_and_example(self, content_div) -> tuple:
+        """Extract possible values and examples from content div."""
+        possible_values = []
+        example = ""
+        
+        # Extract possible values - search more broadly
+        possible_values_elem = content_div.find(string=re.compile(r'Possible values:'))
+        if not possible_values_elem:
+            # Try searching in all descendants
+            for elem in content_div.find_all(string=re.compile(r'Possible values:')):
+                possible_values_elem = elem
+                break
+        
+        if possible_values_elem:
+            # Get the parent element (usually <strong> or similar)
+            immediate_parent = possible_values_elem.parent
+            # Find the containing paragraph or div that has the actual values
+            container = immediate_parent
+            if immediate_parent and immediate_parent.name in ['strong', 'b', 'em']:
+                container = immediate_parent.parent
+            
+            if container:
+                # Look for code elements within the container
+                codes = container.find_all('code')
+                if codes:
+                    possible_values = [code.get_text(strip=True) for code in codes]
+                else:
+                    # Fallback: try to parse from text using regex
+                    values_text = container.get_text()
+                    enum_match = re.search(r'\[(.*?)\]', values_text)
+                    if enum_match:
+                        enum_str = enum_match.group(1)
+                        possible_values = [v.strip().strip('`"\'') for v in enum_str.split(',')]
+        
+        # Extract example - search more broadly
+        example_elem = content_div.find(string=re.compile(r'Example:'))
+        if not example_elem:
+            # Try searching in all descendants
+            for elem in content_div.find_all(string=re.compile(r'Example:')):
+                example_elem = elem
+                break
+                
+        if example_elem:
+            parent = example_elem.parent
+            if parent:
+                # Look for code element after "Example:"
+                code_elem = parent.find('code')
+                if code_elem:
+                    example = code_elem.get_text(strip=True)
+                else:
+                    # Look for sibling elements that might contain the example
+                    next_sibling = parent.find_next_sibling()
+                    if next_sibling:
+                        code_elem = next_sibling.find('code')
+                        if code_elem:
+                            example = code_elem.get_text(strip=True)
+        
+        return possible_values, example
+
     def _parse_property_from_details(self, details) -> Dict:
         """Parse a property from an openapi-markdown__details element."""
         summary = details.find('summary')
@@ -85,12 +226,16 @@ class LLMContentInjector:
         required_elem = summary.find(class_="openapi-schema__required")
         is_required = bool(required_elem)
         
-        # Get description
+        # Get description (including table data, possible values, and examples)
         description = ""
+        
         # First try: direct sibling p tag (simpler structure)
         desc_elem = summary.find_next_sibling('p')
+        content_div = None
+        
         if desc_elem:
-            description = desc_elem.get_text(strip=True)
+            description = self._extract_description_with_tables(desc_elem)
+            content_div = summary.find_next_sibling('div')
         else:
             # Second try: nested p tag within the collapsible content
             # Look for the content div after summary and find the first p tag
@@ -98,7 +243,10 @@ class LLMContentInjector:
             if content_div:
                 nested_p = content_div.find('p')
                 if nested_p:
-                    description = nested_p.get_text(strip=True)
+                    description = self._extract_description_with_tables(nested_p)
+                else:
+                    # Third try: look for tables directly in the content div
+                    description = self._extract_description_with_tables(content_div)
         
         # Check if this is an array type by looking for "Array [" pattern
         is_array = False
@@ -175,32 +323,20 @@ class LLMContentInjector:
         required_elem = container.find('span', class_='openapi-schema__required')
         is_required = bool(required_elem)
         
-        # Get description from the p tag
+        # Get description (including table data if present)
         description = ""
         desc_elem = schema_item.find('p')
         if desc_elem:
-            description = desc_elem.get_text(strip=True)
-        
-        # Handle enum values if present
-        enum_values = []
-        possible_values_elem = schema_item.find(string=re.compile(r'Possible values:'))
-        if possible_values_elem:
-            parent = possible_values_elem.parent
-            if parent:
-                values_text = parent.get_text()
-                enum_match = re.search(r'\[(.*?)\]', values_text)
-                if enum_match:
-                    enum_str = enum_match.group(1)
-                    enum_values = [v.strip().strip('`"\'') for v in enum_str.split(',')]
+            description = self._extract_description_with_tables(desc_elem)
+        else:
+            # Look for tables directly in the schema item
+            description = self._extract_description_with_tables(schema_item)
         
         result = {
             "type": field_type,
             "description": description,
             "required": is_required
         }
-        
-        if enum_values:
-            result["enum"] = enum_values
         
         return result
     
@@ -335,8 +471,9 @@ class LLMContentInjector:
             content_parts.append("")
             content_parts.append("### Request Body")
             content_parts.append("")
+            
             content_parts.append("```json")
-            content_parts.append(str(api_data['request_schema']))
+            content_parts.append(json.dumps(api_data['request_schema'], indent=2))
             content_parts.append("```")
             content_parts.append("")
         
@@ -354,8 +491,9 @@ class LLMContentInjector:
             content_parts.append("")
             content_parts.append("### Response Body")
             content_parts.append("")
+            
             content_parts.append("```json")
-            content_parts.append(str(api_data['response_schema']))
+            content_parts.append(json.dumps(api_data['response_schema'], indent=2))
             content_parts.append("```")
             content_parts.append("")
         
@@ -381,7 +519,7 @@ class LLMContentInjector:
                     content_parts.append("```")
                     content_parts.append("")
         
-        return '\n'.join(content_parts)
+                return '\n'.join(content_parts)
     
     def _find_api_sections_in_llms_file(self) -> List[Dict]:
         """Parse the llms-full.txt file to find API sections to enhance."""
