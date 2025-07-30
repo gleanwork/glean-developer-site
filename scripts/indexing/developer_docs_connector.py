@@ -22,7 +22,7 @@ from data_types import DocumentationPage, ApiReferencePage
 
 class CustomDeveloperDocsConnector(BaseDatasourceConnector[Union[DocumentationPage, ApiReferencePage]]):
     configuration: CustomDatasourceConfig = CustomDatasourceConfig(
-        name="devDocs",
+        name="devdocs",
         display_name="Glean Developer Docs",
         datasource_category=DatasourceCategory.KNOWLEDGE_HUB,
         url_regex="https://developers.glean.com/.*",
