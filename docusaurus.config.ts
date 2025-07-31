@@ -192,7 +192,7 @@ const config: Config = {
         searchOptions: {
           backend: 'https://glean-public-external-be.glean.com',
           webAppUrl: 'https://glean-public-external.glean.com',
-          datasourcesFilter: ['webj88x6azgleandeveloperdocs'],
+          datasourcesFilter: ['devdocs'],
         },
         chatOptions: false,
         enableAnonymousAuth: true,
