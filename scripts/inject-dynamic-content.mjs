@@ -955,7 +955,7 @@ class LLMContentInjector {
       }
     }
 
-    const outputFile = this.llmsFilePath.replace('.txt', '-enhanced-node.txt');
+    const outputFile = this.llmsFilePath.replace('.txt', '-enhanced.txt');
     await fs.writeFile(outputFile, enhancedContent, 'utf-8');
   }
 }
