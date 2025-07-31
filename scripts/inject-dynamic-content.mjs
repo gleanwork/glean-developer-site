@@ -89,19 +89,20 @@ class LLMContentInjector {
 
       const ulContainer = $details.find('ul');
         if (ulContainer.length) {
-          if (sectionType === 'responses') {
-            const wrapperDiv = ulContainer.children('div');
-            if (wrapperDiv.length == 1) { // if there is one big wrapper div
-              propertyDivs = wrapperDiv.children('div').toArray();
-            } else {
-              propertyDivs = ulContainer.children('div').toArray();
-            }
-          } else {
+          const firstDiv = ulContainer.children('div').first();
+          if (firstDiv.length && firstDiv.attr('id')) { // no wrapper div
             propertyDivs = ulContainer.children('div').toArray();
+          } else if (firstDiv.length && firstDiv.attr('class')) { // no wrapper div, no id tailored names
+            propertyDivs = ulContainer.children('div.openapi-schema__list-item').addBack().toArray();
+          } else if (firstDiv.length && firstDiv.children('div').length > 0) { // one big wrapper div
+            propertyDivs = firstDiv.children('div').toArray();
           }
         }
 
-        // console.log(`DEBUG: Found ${propertyDivs.length} property divs`);
+        //console.log(`DEBUG: Found ${propertyDivs.length} property divs`);
+        // if (propertyDivs.length > 0) {
+        //   console.log('First propertyDiv HTML:', $(propertyDivs[0]).html());
+        // }
 
         for (const propDiv of propertyDivs) {
           const $propDiv = $(propDiv);
@@ -535,48 +536,42 @@ class LLMContentInjector {
 
   _extractMimeType($, section = 'request') {
     /**Extract MIME type from the API page.*/
-    const h2 = $(`h2#${section}`);
-    if (!h2.length) {
-      return '';
-    }
-
-    let container = null;
-    
-    h2.nextAll().each((_, elem) => {
-      const $elem = $(elem);
+    if (section === 'responses') {
+      const tabsContainer = $('.row.theme-api-markdown > .openapi-left-panel__container > .openapi-tabs__container');
+      const mimeContainer = tabsContainer.find('.openapi-tabs__mime-container').first();
+      // console.log(`DEBUG: Found mime container: "${mimeContainer}"`);
       
-      // Check if the element itself is the container
-      if ($elem.hasClass('openapi-tabs__mime-container')) {
-        container = $elem;
-        return false;
+      if (mimeContainer.length) {
+        const activeMimeItem = mimeContainer.find('li.openapi-tabs__mime-item.active').first();
+        if (activeMimeItem.length) {
+          // console.log(`DEBUG: Found active mime item: "${activeMimeItem.text().trim()}"`);
+          return activeMimeItem.text().trim();
+        }
+        
+        const firstMimeItem = mimeContainer.find('li.openapi-tabs__mime-item').first();
+        if (firstMimeItem.length) {
+          // console.log(`DEBUG: Found first mime item: "${firstMimeItem}"`);
+          return firstMimeItem.text().trim();
+        }
       }
+    } else {
+      const tabsContainer = $('.row.theme-api-markdown > .openapi-left-panel__container > .tabs-container');
+      const mimeContainer = tabsContainer.find('.openapi-tabs__mime-container').first();
       
-      // Check if the element contains the container
-      const found = $elem.find('.openapi-tabs__mime-container').first();
-      if (found.length) {
-        container = found;
-        return false;
+      if (mimeContainer.length) {
+        const activeMimeItem = mimeContainer.find('li.openapi-tabs__mime-item.active').first();
+        if (activeMimeItem.length) {
+          return activeMimeItem.text().trim();
+        }
+        
+        const firstMimeItem = mimeContainer.find('li.openapi-tabs__mime-item').first();
+        if (firstMimeItem.length) {
+          return firstMimeItem.text().trim();
+        }
       }
-    });
-    
-    if (!container) {
-      return '';
     }
     
-    // Try multiple selectors to find the li element
-    let li = container.find('ul.openapi-tabs__mime > li[aria-selected="true"]').first();
-    if (!li.length) {
-      li = container.find('li[aria-selected="true"]').first();
-    }
-    if (!li.length) {
-      li = container.find('ul.openapi-tabs__mime > li').first();
-    }
-    if (!li.length) {
-      li = container.find('li').first();
-    }
-    
-    const result = li.length ? li.text().trim() : '';
-    return result;
+    return 'application/json';
   }
 
   async _extractCodeSamples(page) {
