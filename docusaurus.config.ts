@@ -46,6 +46,7 @@ const config: Config = {
           sidebarPath: './sidebars.ts',
           routeBasePath: '/',
           docItemComponent: '@theme/ApiItem',
+          editUrl: 'https://github.com/gleanwork/glean-developer-site/edit/main/',
         },
         theme: {
           customCss: './src/css/custom.css',
