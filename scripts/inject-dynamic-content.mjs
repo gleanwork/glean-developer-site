@@ -84,7 +84,7 @@ class LLMContentInjector {
     }
 
       const $details = $(detailsElements);
-      // console.log(`DEBUG: Found details element: "${$details.html()}"`);
+      console.log(`DEBUG: Found details element: "${$details.html()}"`);
       let propertyDivs = [];
 
       const ulContainer = $details.find('ul');
@@ -92,17 +92,20 @@ class LLMContentInjector {
           const firstDiv = ulContainer.children('div').first();
           if (firstDiv.length && firstDiv.attr('id')) { // no wrapper div
             propertyDivs = ulContainer.children('div').toArray();
+            console.log('here1')
           } else if (firstDiv.length && firstDiv.attr('class')) { // no wrapper div, no id tailored names
             propertyDivs = ulContainer.children('div.openapi-schema__list-item').addBack().toArray();
+            console.log('here2')
           } else if (firstDiv.length && firstDiv.children('div').length > 0) { // one big wrapper div
             propertyDivs = firstDiv.children('div').toArray();
+            console.log('here3')
           }
         }
 
-        //console.log(`DEBUG: Found ${propertyDivs.length} property divs`);
-        // if (propertyDivs.length > 0) {
-        //   console.log('First propertyDiv HTML:', $(propertyDivs[0]).html());
-        // }
+        console.log(`DEBUG: Found ${propertyDivs.length} property divs`);
+        if (propertyDivs.length > 0) {
+          console.log('First propertyDiv HTML:', $(propertyDivs[0]).html());
+        }
 
         for (const propDiv of propertyDivs) {
           const $propDiv = $(propDiv);
@@ -313,27 +316,23 @@ class LLMContentInjector {
 
     let description = '';
     let contentDiv = summary.next('div');
-    // console.log(`DEBUG: Found content div: "${contentDiv}"`);
+    console.log(`DEBUG: Found content div: "${contentDiv}"`);
     if (contentDiv.length) {
-    // Only look for direct child <p> elements, not nested ones that belong to child properties
-        const directP = contentDiv.children('p').first();
-        if (directP.length) {
-            description = this._extractDescriptionWithTables($, directP);
-        } else {
-            // Check if there's a description in the collapsibleContent div
-            const collapsibleContent = contentDiv.find('.collapsibleContent_i85q').first();
-            if (collapsibleContent.length) {
-            // Look for the description pattern: div with margin styles containing a <p>
-            const marginDiv = collapsibleContent.find('div[style*="margin-top: 0.5rem; margin-bottom: 0.5rem"]').first();
-            if (marginDiv.length) {
-                const descP = marginDiv.find('p').first();
-                if (descP.length) {
-                description = this._extractDescriptionWithTables($, descP);
-                }
+        const collapsibleContent = contentDiv.find('.collapsibleContent_i85q').first();
+        if (collapsibleContent.length) {
+          const firstLevelDiv = collapsibleContent.children('div[style*="margin-left: 1rem"]').first();
+          if (firstLevelDiv.length) {
+            const secondLevelDiv = firstLevelDiv.children('div[style*="margin-top: 0.5rem"]').first();
+            if (secondLevelDiv.length) {
+              const descriptionP = secondLevelDiv.children('p');
+              if (descriptionP.length) {
+                console.log("Found descP", descriptionP.html())
+                description = this._extractDescriptionWithTables($, descriptionP);
+              }
             }
-            }
+          }
         }
-    }
+      }
 
     let isArray = false;
     const arrayIndicator = details.find('li');
@@ -674,6 +673,8 @@ class LLMContentInjector {
           ...codeSamples,
         };
 
+        // console.log(`${url}, ${JSON.stringify(result)}`)
+
         return result;
       } catch (error) {
         console.log(
@@ -901,22 +902,36 @@ class LLMContentInjector {
     const urlsToProcess = limit ? apiUrls.slice(0, limit) : apiUrls;
 
     const apiSections = await this._findApiSectionsInLlmsFile();
+    // console.log("API SECTIONS", JSON.stringify(apiSections))
+    console.log("API SECTIONS TITLES", apiSections.map(section => section.title))
 
     const enhancedApis = {};
+    const matchedApiData = new Set();  // Track which API data items got matched
+    const matchedSections = new Set(); // Track which sections got matched
+    
     try {
       const scrapedData = await this._scrapeApiPagesParallel(urlsToProcess, 5);
+      console.log("SCRAPED DATA TITLES", scrapedData.map(api => api.title))
 
       for (const apiData of scrapedData) {
         for (const section of apiSections) {
           if (
-            section.title.toLowerCase().includes(apiData.title.toLowerCase()) ||
-            apiData.title.toLowerCase().includes(section.title.toLowerCase())
+            section.title === apiData.title
           ) {
+            console.log("Found API DATA", apiData.title, "-> Section:", section.title)
+            if (enhancedApis[section.title]) {
+              console.log("⚠ OVERWRITING existing entry for section:", section.title)
+            }
             enhancedApis[section.title] = apiData;
+            matchedSections.add(section.title);
             break;
           }
         }
       }
+      
+      console.log("Matched API data count:", matchedApiData.size);
+      console.log("Matched sections count:", matchedSections.size);
+      console.log("Unmatched API data:", scrapedData.filter(api => !matchedApiData.has(api.title)).map(api => api.title));
     } catch (error) {
       console.error(`Error scraping API pages: ${error.message}`);
       return;
@@ -928,10 +943,17 @@ class LLMContentInjector {
     let offset = 0;
     let injectionsCount = 0;
 
+    console.log("api section length", apiSections.length)
+    console.log("enhancedApis length", Object.keys(enhancedApis).length)
+    console.log('api section count unique', new Set(apiSections.map(section => section.title)).size)
+    console.log('enhancedApis count unique', new Set(Object.keys(enhancedApis)).size)
+
     for (const section of apiSections) {
       if (section.title in enhancedApis) {
+        console.log("Found section", section.title)
         const apiData = enhancedApis[section.title];
         const enhancedSection = this._formatEnhancedContent(apiData);
+        console.log("Enhanced section", section.title, enhancedSection)
 
         const sectionContent = section.original_content;
 
