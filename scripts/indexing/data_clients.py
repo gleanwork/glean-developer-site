@@ -229,17 +229,56 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[DocumentationPage, A
             """Extract description text including any tables."""
             if not element:
                 return ""
-            # For now, just get all text - could be enhanced to handle tables specially
-            return element.get_text('\n', strip=True)
+            
+            # Check if this element contains a table
+            table = element.find('table')
+            if table:
+                # Extract table data in simple format
+                table_parts = []
+                tbody = table.find('tbody')
+                if tbody:
+                    rows = tbody.find_all('tr')
+                    for row in rows:
+                        cells = row.find_all('td')
+                        if len(cells) >= 2:
+                            key = cells[0].get_text(strip=True)
+                            value = cells[1].get_text(strip=True)
+                            table_parts.append(f"{key}: {value}")
+                
+                return '\n'.join(table_parts)
+            else:
+                # Regular text content
+                return element.get_text('\n', strip=True)
+
+        def _parse_properties_from_divs(property_divs) -> dict:
+            """Unified function to parse properties from a collection of divs."""
+            properties = {}
+            
+            for prop_div in property_divs:
+                # Try to find nested details first (complex properties)
+                nested_details = prop_div.find('details', class_='openapi-markdown__details')
+                if nested_details:
+                    property_data = _parse_property_from_details(nested_details)
+                    properties.update(property_data)
+                else:
+                    # Try to find schema items (simple properties)
+                    schema_item = prop_div.find(class_='openapi-schema__list-item')
+                    if schema_item:
+                        container = schema_item.find(class_='openapi-schema__container')
+                        if container:
+                            property_elem = container.find('strong', class_='openapi-schema__property')
+                            if property_elem:
+                                property_name = property_elem.get_text(strip=True)
+                                simple_property = _parse_simple_property_from_item(schema_item)
+                                if simple_property:
+                                    properties[property_name] = simple_property
+            
+            return properties
 
         def _parse_simple_property_from_item(schema_item) -> dict:
             """Parse a simple property from openapi-schema__list-item."""
             container = schema_item.find(class_='openapi-schema__container')
             if not container:
-                return {}
-            
-            property_elem = container.find('strong', class_='openapi-schema__property')
-            if not property_elem:
                 return {}
             
             type_elem = container.find(class_='openapi-schema__name')
@@ -250,19 +289,21 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[DocumentationPage, A
             
             description = ''
             # Only look for direct child <p> elements, not nested ones
-            desc_elem = None
-            for child in schema_item.children:
-                if hasattr(child, 'name') and child.name == 'p':
-                    desc_elem = child
-                    break
+            desc_elem = schema_item.find('p', recursive=False)
             
             if desc_elem:
                 description = _extract_description_with_tables(desc_elem)
             else:
-                # If no direct child <p>, check for <p> immediately following the container
-                direct_p = container.find_next_sibling('p')
-                if direct_p:
-                    description = _extract_description_with_tables(direct_p)
+                # If no direct child <p>, check for all <p> and <div> siblings following the container
+                description_parts = []
+                for sibling in container.next_siblings:
+                    if hasattr(sibling, 'name') and sibling.name in ['p', 'div']:
+                        part = _extract_description_with_tables(sibling)
+                        if part:
+                            description_parts.append(part)
+                
+                if description_parts:
+                    description = '\n\n'.join(description_parts)
             
             return {
                 'type': field_type,
@@ -336,27 +377,15 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[DocumentationPage, A
                 # Find divs with id starting with the pattern
                 child_divs = details.find_all('div', id=lambda x: x and x.startswith(child_pattern))
                 
+                # Filter to only divs directly under our details element
+                filtered_divs = []
                 for child_div in child_divs:
-                    # Check if this div is directly under our details element
                     parent_details = child_div.find_parent('details', class_='openapi-markdown__details')
-                    if parent_details and parent_details != details:
-                        continue
-                    
-                    child_details = child_div.find('details', class_='openapi-markdown__details')
-                    if child_details:
-                        nested_data = _parse_property_from_details(child_details)
-                        children.update(nested_data)
-                    else:
-                        schema_item = child_div.find(class_='openapi-schema__list-item')
-                        if schema_item:
-                            container = schema_item.find(class_='openapi-schema__container')
-                            if container:
-                                property_elem = container.find('strong', class_='openapi-schema__property')
-                                if property_elem:
-                                    child_name = property_elem.get_text(strip=True)
-                                    child_property = _parse_simple_property_from_item(schema_item)
-                                    if child_property and len(child_property) > 0:
-                                        children[child_name] = child_property
+                    if parent_details == details:
+                        filtered_divs.append(child_div)
+                
+                # Use unified parser for children
+                children = _parse_properties_from_divs(filtered_divs)
             
             property_data = {
                 'type': property_type,
@@ -414,7 +443,7 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[DocumentationPage, A
                         # Find divs with class openapi-schema__list-item
                         schema_list_items = ul_container.find_all('div', class_='openapi-schema__list-item')
                         if schema_list_items:
-                            property_divs = schema_list_items
+                            property_divs = schema_list_items + [ul_container]
                         else:
                             property_divs = div_children
                         print('here2 - no wrapper div, no id tailored names')
@@ -428,29 +457,8 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[DocumentationPage, A
             if property_divs:
                 print(f'First propertyDiv HTML: {property_divs[0]}')
             
-            schema = {}
-            
-            for prop_div in property_divs:
-                # Look for nested details within this property div
-                nested_details = prop_div.find('details', class_='openapi-markdown__details')
-                
-                if nested_details:
-                    # Extract property data from nested details
-                    property_data = _parse_property_from_details(nested_details)
-                    if property_data and len(property_data) > 0:
-                        schema.update(property_data)
-                else:
-                    # Look for schema items
-                    schema_item = prop_div.find(class_='openapi-schema__list-item')
-                    if schema_item:
-                        container = schema_item.find(class_='openapi-schema__container')
-                        if container:
-                            property_elem = container.find('strong', class_='openapi-schema__property')
-                            if property_elem:
-                                property_name = property_elem.get_text(strip=True)
-                                simple_property = _parse_simple_property_from_item(schema_item)
-                                if simple_property and len(simple_property) > 0:
-                                    schema[property_name] = simple_property
+            # Use unified parser for all properties
+            schema = _parse_properties_from_divs(property_divs)
             
             if schema:
                 # Convert the structured schema to a formatted string
@@ -527,6 +535,7 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[DocumentationPage, A
                         if len(code_lines) > 0:
                             code_text = '\n'.join(code_lines)
                             code_samples[key] = code_text
+                            print(f"{url} {lang} CODE SAMPLE: ", code_text)
                 except Exception as e:
                     continue
             return code_samples
@@ -542,6 +551,7 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[DocumentationPage, A
             soup = BeautifulSoup(html_content, 'html.parser')
             api_ref_data = _extract_api_reference(url, html_content)
             request_parameters = _extract_query_parameters(soup)
+            print(f"{url} REQUEST PARAMETERS: ", request_parameters)
             request_body = _extract_body_schema(soup, "request")
             print(f"{url} REQUEST BODY: ", request_body)
             response_body = _extract_body_schema(soup, "response")
