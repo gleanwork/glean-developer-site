@@ -59,10 +59,78 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[DocumentationPage, A
                     continue
                 if sibling.name == 'h2':
                     break
-                text = sibling.get_text(separator="\n", strip=True)
-                if text:
-                    content_parts.append(text)
+                
+                if sibling.name == 'table':
+                    table_text = _format_table_content(sibling)
+                    if table_text:
+                        content_parts.append(table_text)
+                else:
+                    text = sibling.get_text(separator="\n", strip=True)
+                    if text:
+                        content_parts.append(text)
             return "\n".join(content_parts)
+
+        def _format_table_content(table) -> str:
+            """Format table content in a clear, LLM-friendly way."""
+            if not table:
+                return ""
+            
+            print(f"DEBUG: Processing table with HTML: {table.prettify()}")
+            
+            headers = []
+            thead = table.find('thead', recursive=False)
+            print(f"DEBUG: Found thead: {thead}")
+            if thead:
+                header_row = thead.find('tr')
+                print(f"DEBUG: Processing header row with HTML: {header_row.prettify()}")
+                if header_row:
+                    for th in header_row.find_all(['th', 'td']):
+                        header_text = th.get_text(separator=" ").strip()
+                        headers.append(header_text)
+                        print(f"DEBUG: Found header: '{header_text}'")
+            
+            print(f"DEBUG: Final headers: {headers}")
+            
+            data_rows = []
+            tbody = table.find('tbody')
+            rows_container = tbody if tbody else table
+            
+            for row in rows_container.find_all('tr'):
+                if not headers or row != table.find('tr'):
+                    cells = row.find_all(['td', 'th'])
+                    if cells:
+                        row_data = []
+                        for cell in cells:
+                            cell_text = cell.get_text(separator=" ").strip()
+                            row_data.append(cell_text)
+                        if any(row_data):
+                            data_rows.append(row_data)
+                            print(f"DEBUG: Added row: {row_data}")
+            
+            print(f"DEBUG: Total data rows: {len(data_rows)}")
+            
+            if not data_rows:
+                return ""
+            
+            formatted_parts = []
+            
+            if headers and len(headers) >= 2:
+                formatted_parts.append(f"Table ({headers[0]} → {headers[1]}):")
+                for row in data_rows:
+                    if len(row) >= 2:
+                        key = row[0]
+                        value = row[1]
+                        if len(row) > 2:
+                            value = f"{value} ({', '.join(row[2:])})"
+                        formatted_parts.append(f"• {key}: {value}")
+            else:
+                formatted_parts.append("Table data:")
+                for i, row in enumerate(data_rows):
+                    formatted_parts.append(f"• Row {i+1}: {' | '.join(row)}")
+            
+            result = "\n".join(formatted_parts)
+            print(f"DEBUG: Final formatted table: {result}")
+            return result
 
         def _extract_intro_content_after_header(soup) -> str:
             h1 = soup.find('h1')
@@ -70,22 +138,34 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[DocumentationPage, A
             if not header:
                 return ""
             content = []
-            found_h2 = False
-            for elem in header.next_elements:
-                if isinstance(elem, Tag):
-                    if elem.name == 'h2':
-                        found_h2 = True
+            for sibling in header.next_siblings:
+                if isinstance(sibling, Tag):
+                    content_container = None
+                    if sibling.name == 'div' and 'row' in sibling.get('class', []):
+                        markdown_div = sibling.find('div', class_=['markdown', 'col'])
+                        if markdown_div:
+                            content_container = markdown_div
+                    elif sibling.find('h2'):
+                        content_container = sibling
+                    
+                    if content_container:
+                        for child in content_container.children:
+                            if isinstance(child, Tag):
+                                if child.name == 'h2':
+                                    break
+                                if child.name == 'table':
+                                    table_text = _format_table_content(child)
+                                    if table_text:
+                                        content.append(table_text)
+                                elif child.name in ['p', 'ul', 'ol', 'li', 'div']:
+                                    text = child.get_text(separator="\n", strip=True)
+                                    if text:
+                                        content.append(text)
                         break
-                    if elem.name in ['p', 'ul', 'ol', 'li']:
-                        text = elem.get_text(separator="\n", strip=True)
-                        if text:
-                            content.append(text)
-                if elem is not header and getattr(elem, 'name', None) == 'header':
-                    break
             return "\n".join(content).strip()
 
         def _extract_page_info_with_fragments(url: str, html: str) -> List[DocumentationPage]:
-            soup = BeautifulSoup(html, 'html.parser')
+            soup = BeautifulSoup(html, 'lxml')
             page_title = soup.find('h1').text.strip() if soup.find('h1') else ""
             section = _extract_section_from_breadcrumbs(soup)
             data = []
@@ -104,6 +184,7 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[DocumentationPage, A
                         page_type="info_page"
                     )
                     data.append(page_info)
+            
             # Track seen (class, heading_text) pairs to avoid duplicates
             seen_headers = set()
             if h2_tags:
@@ -283,13 +364,11 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[DocumentationPage, A
             is_required = required_elem is not None
             
             description = ''
-            # Only look for direct child <p> elements, not nested ones
             desc_elem = schema_item.find('p', recursive=False)
             
             if desc_elem:
                 description = _extract_description_with_tables(desc_elem)
             else:
-                # If no direct child <p>, check for all <p> and <div> siblings following the container
                 description_parts = []
                 for sibling in container.next_siblings:
                     if hasattr(sibling, 'name') and sibling.name in ['p', 'div']:
@@ -357,7 +436,7 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[DocumentationPage, A
                 if not oneof_badge:
                     print(f"DEBUG: No oneOf badge found in first_level_div")
                     for child_div in first_level_div.find_all('div', recursive=False):
-                        if not child_div.find('details'):  # Skip divs that contain nested details
+                        if not child_div.find('details'):
                             oneof_badge = child_div.find('span', class_='badge badge--info', string='oneOf')
                             if oneof_badge:
                                 print(f"DEBUG: Found oneOf badge in child_div: {child_div}")
@@ -366,7 +445,6 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[DocumentationPage, A
                 if oneof_badge:
                     print(f"DEBUG: Found oneOf constraint for {property_name}")
                     
-                    # Find the schema tabs container within first_level_div only
                     tabs_container = first_level_div.find('div', class_='openapi-tabs__schema-container')
                     if tabs_container:
                         oneof_options = []
@@ -376,47 +454,14 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[DocumentationPage, A
                         for panel in tab_panels:
                             panel_properties = {}
                             
-                            # Method 1: Find all direct child divs with IDs (these might contain nested details)
                             panel_child_divs = []
                             for child in panel.children:
                                 if hasattr(child, 'name') and child.name == 'div' and child.get('id'):
                                     panel_child_divs.append(child)
                             
-                            # Method 2: Also find schema list items that don't have IDs
-                            # schema_items = panel.find_all('div', class_='openapi-schema__list-item')
-                            
-                            # Combine both approaches - use child divs with IDs if available, otherwise fall back to schema items
                             if panel_child_divs:
                                 print(f"DEBUG: Found {len(panel_child_divs)} child divs with IDs in oneOf panel")
                                 panel_properties = _parse_properties_from_divs(panel_child_divs)
-                            # else:
-                            #     print(f"DEBUG: Found {len(schema_items)} schema items in oneOf panel")
-                            #     # Parse simple schema items
-                            #     for item in schema_items:
-                            #         container = item.find('span', class_='openapi-schema__container')
-                            #         if container:
-                            #             prop_elem = container.find('strong', class_='openapi-schema__property')
-                            #             if prop_elem:
-                            #                 prop_name = prop_elem.get_text(strip=True)
-                                            
-                            #                 type_elem = container.find('span', class_='openapi-schema__name')
-                            #                 prop_type = type_elem.get_text(strip=True) if type_elem else 'string'
-                                            
-                            #                 # Extract description from sibling <p> elements
-                            #                 prop_description = ''
-                            #                 for sibling in item.find_all('p'):
-                            #                     desc_text = _extract_description_with_tables(sibling)
-                            #                     if desc_text:
-                            #                         if prop_description:
-                            #                             prop_description += ' ' + desc_text
-                            #                         else:
-                            #                             prop_description = desc_text
-                                            
-                            #                 panel_properties[prop_name] = {
-                            #                     'type': prop_type,
-                            #                     'description': prop_description,
-                            #                     'required': False  # In oneOf, individual props are typically optional
-                            #                 }
                             
                             if panel_properties:
                                 oneof_options.append({
@@ -432,7 +477,12 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[DocumentationPage, A
                         option_descriptions = []
                         for i, option in enumerate(oneof_options, 1):
                             props = list(option['properties'].keys())
-                            option_descriptions.append(f"({i}) {{ {', '.join(props)} }}")
+                            props_with_types = []
+                            for prop_name in props:
+                                prop_data = option['properties'].get(prop_name, {})
+                                prop_type = prop_data.get('type', 'unknown')
+                                props_with_types.append(f"{prop_name} ({prop_type})")
+                            option_descriptions.append(f"({i}) {{ {', '.join(props_with_types)} }}")
                         
                         enhanced_description += ', '.join(option_descriptions) + ". Mixing fields is not allowed."
                         
@@ -483,6 +533,18 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[DocumentationPage, A
             
             if len(children) > 0:
                 property_data['properties'] = children
+                
+                field_summaries = []
+                for child_name, child_data in children.items():
+                    child_type = child_data.get('type', 'unknown')
+                    field_summaries.append(f"{child_name} ({child_type})")
+                
+                if field_summaries:
+                    summary_text = f" Fields: {', '.join(field_summaries)}."
+                    if description:
+                        property_data['description'] = description + summary_text
+                    else:
+                        property_data['description'] = f"Object with fields: {', '.join(field_summaries)}."
             
             return {property_name: property_data}
 
@@ -541,7 +603,14 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[DocumentationPage, A
             schema = _parse_properties_from_divs(property_divs)
             
             if schema:
-                import json
+                property_names = list(schema.keys())
+                if len(property_names) >= 1:
+                    search_tip = {
+                        "description": f"Tip: This schema may have nested structures. Search for property names (e.g. '{property_names[0]}', '{property_names[1] if len(property_names) > 1 else property_names[0]}', etc) or use headings in descriptions for navigation.",
+                        "type": "info"
+                    }
+                    schema = {"_search_tip": search_tip, **schema}
+                
                 return json.dumps(schema, indent=2)
             else:
                 return ""
@@ -601,7 +670,6 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[DocumentationPage, A
                                         }
                             
                             if parameters:
-                                import json
                                 return json.dumps(parameters, indent=2)
             
             return ""
