@@ -21,7 +21,8 @@ class ApiReferencePage(TypedDict):
     method: str
     description: str
     request_content_type: str
-    request_parameters: str
+    request_query_parameters: str
+    request_path_parameters: str
     request_body: str
     response_content_type: str
     response_body: str
