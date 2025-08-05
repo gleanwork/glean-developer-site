@@ -27,37 +27,15 @@ Before beginning this implementation, ensure you have:
 ## Implementation Guide
 
 <Steps>
-  <Step title="Action Manifest Configuration">
-    <p>The first step involves creating an action manifest that defines the core properties of your Jira integration. This manifest establishes the fundamental characteristics and authentication requirements of your action.</p>
-
-    <details>
-      <summary>Click to expand the action manifest configuration</summary>
-
-    ```json
-    {
-      "type": "ACTION",
-      "name": "CreateJiraIssue",
-      "displayName": "Create Jira Issue Action",
-      "description": "This action allows you to create a new issue in Jira. You can specify the project, issue type, and other details.",
-      "enablePreview": true,
-      "actionType": "EXECUTION",
-      "logoUrl": "path/to/your/logo.png",
-      "auth": {
-        "type": "OAUTH_ADMIN",
-        "client_url": "https://auth.atlassian.com/authorize?audience={ATLASSIAN-DOMAIN}.atlassian.net&prompt=consent",
-        "scopes": ["write:jira-work", "offline_access", "read:me"],
-        "authorization_url": "https://auth.atlassian.com/oauth/token"
-      }
-    }
-    ```
-
-    </details>
-
-    <p>We use the <code>OAUTH_ADMIN</code> authentication type because Jira's cloud API supports using admin tokens to create issues on behalf of other users. This approach simplifies the authentication flow while maintaining proper user attribution.</p>
-  </Step>
-
   <Step title="Server Implementation">
     <p>The server implementation handles requests from Glean's actions backend and manages the creation of Jira issues. This implementation includes proper security measures and ensures accurate user attribution.</p>
+    
+    <p>Note: This example uses OAuth authentication configured through the Glean Admin UI. When setting up your action, you'll configure OAuth with the following settings:</p>
+    <ul>
+      <li>Client URL: <code>https://auth.atlassian.com/authorize?audience={`{ATLASSIAN-DOMAIN}`}.atlassian.net&prompt=consent</code></li>
+      <li>Authorization URL: <code>https://auth.atlassian.com/oauth/token</code></li>
+      <li>Scopes: <code>write:jira-work</code>, <code>offline_access</code>, <code>read:me</code></li>
+    </ul>
 
     <details>
       <summary>Click to expand the complete Python server implementation</summary>
