@@ -64,10 +64,10 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[DocumentationPage, A
                     table_text = _format_table_content(sibling)
                     if table_text:
                         content_parts.append(table_text)
-                else:
-                    text = sibling.get_text(separator="\n", strip=True)
-                    if text:
-                        content_parts.append(text)
+                if sibling.name in ['p', 'ol', 'li']:
+                        text = sibling.get_text(separator="\n", strip=True)
+                        if text:
+                            content_parts.append(text)
             return "\n".join(content_parts)
 
         def _format_table_content(table) -> str:
@@ -137,32 +137,23 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[DocumentationPage, A
             header = h1.find_parent() if h1 else None
             if not header:
                 return ""
-            content = []
-            for sibling in header.next_siblings:
-                if isinstance(sibling, Tag):
-                    content_container = None
-                    if sibling.name == 'div' and 'row' in sibling.get('class', []):
-                        markdown_div = sibling.find('div', class_=['markdown', 'col'])
-                        if markdown_div:
-                            content_container = markdown_div
-                    elif sibling.find('h2'):
-                        content_container = sibling
-                    
-                    if content_container:
-                        for child in content_container.children:
-                            if isinstance(child, Tag):
-                                if child.name == 'h2':
-                                    break
-                                if child.name == 'table':
-                                    table_text = _format_table_content(child)
-                                    if table_text:
-                                        content.append(table_text)
-                                elif child.name in ['p', 'ul', 'ol', 'li', 'div']:
-                                    text = child.get_text(separator="\n", strip=True)
-                                    if text:
-                                        content.append(text)
-                        break
-            return "\n".join(content).strip()
+
+            content_parts = []
+            for elem in header.next_elements:
+                if isinstance(elem, Tag):
+                    if elem.name == 'h2':
+                        break   
+                    if elem.name == 'table':
+                        table_text = _format_table_content(elem)
+                        if table_text:
+                            content_parts.append(table_text)
+                    if elem.name in ['p', 'ol', 'li']:
+                        text = elem.get_text(separator="\n", strip=True)
+                        if text:
+                            content_parts.append(text)
+                if elem is not header and getattr(elem, 'name', None) == 'header':
+                    break
+            return "\n".join(content_parts).strip()
 
         def _extract_page_info_with_fragments(url: str, html: str) -> List[DocumentationPage]:
             soup = BeautifulSoup(html, 'lxml')
@@ -283,9 +274,41 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[DocumentationPage, A
                     method = method_span.text.strip()
                     endpoint_full = endpoint_h2.text.strip()
                     endpoint = re.sub(r'https://.*?(/.*)', r'\1', endpoint_full)
-            description_tag = soup.select_one('p')
-            description = description_tag.text.strip() if description_tag else ""
-            response_codes = [tab.text.strip() for tab in soup.select('.openapi-tabs__response-code-item')]
+            
+            beta_admonition = soup.find('div', class_='theme-admonition')
+            beta_text = ""
+            if beta_admonition:
+                beta_p = beta_admonition.find('p')
+                if beta_p:
+                    beta_text = beta_p.get_text(strip=True)
+            
+            description = ""
+            left_panel = soup.find(class_='openapi-left-panel__container')
+            if left_panel:
+                direct_p = left_panel.find('p', recursive=False)
+                if direct_p:
+                    description = direct_p.get_text(strip=True)
+            
+            if beta_text and description:
+                description = f"{beta_text} {description}"
+
+            response_codes = []
+            tabs_container = soup.select_one('.openapi-tabs__container')
+            if tabs_container:
+                tab_panels = tabs_container.select('div[role="tabpanel"].tabItem_Ymn6')
+                response_code_tabs = tabs_container.select('.openapi-tabs__response-code-item')
+                
+                for i, code_tab in enumerate(response_code_tabs):
+                    code = code_tab.text.strip()
+                    desc = ""
+                    if i < len(tab_panels):
+                        p_tag = tab_panels[i].select_one('p')
+                        if p_tag:
+                            desc = p_tag.text.strip()
+                    response_codes.append(f"{code}: {desc}" if desc else code)
+            else:
+                response_codes = [tab.text.strip() for tab in soup.select('.openapi-tabs__response-code-item')]
+            
             req_mime = _extract_mime_type(soup, section="request")
             res_mime = _extract_mime_type(soup, section="responses")
             auth_type = _extract_authentication_type(soup)
