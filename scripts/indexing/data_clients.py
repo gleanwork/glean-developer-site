@@ -64,10 +64,10 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[DocumentationPage, A
                     table_text = _format_table_content(sibling)
                     if table_text:
                         content_parts.append(table_text)
-                if sibling.name in ['p', 'ol', 'li']:
-                        text = sibling.get_text(separator="\n", strip=True)
-                        if text:
-                            content_parts.append(text)
+                else:
+                    text = sibling.get_text(separator=" ", strip=True)
+                    if text:
+                        content_parts.append(text)
             return "\n".join(content_parts)
 
         def _format_table_content(table) -> str:
@@ -295,16 +295,25 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[DocumentationPage, A
             response_codes = []
             tabs_container = soup.select_one('.openapi-tabs__container')
             if tabs_container:
-                tab_panels = tabs_container.select('div[role="tabpanel"].tabItem_Ymn6')
                 response_code_tabs = tabs_container.select('.openapi-tabs__response-code-item')
+
+                margin_top_md = tabs_container.select_one('div.margin-top--md')
+                top_level_panels = []
+                
+                if margin_top_md:
+                    for child in margin_top_md.children:
+                        if (hasattr(child, 'name') and child.name == 'div' and 
+                            child.get('role') == 'tabpanel' and 
+                            'tabItem_Ymn6' in child.get('class', [])):
+                            top_level_panels.append(child)
                 
                 for i, code_tab in enumerate(response_code_tabs):
                     code = code_tab.text.strip()
                     desc = ""
-                    if i < len(tab_panels):
-                        p_tag = tab_panels[i].select_one('p')
+                    if i < len(top_level_panels):
+                        p_tag = top_level_panels[i].find('p')
                         if p_tag:
-                            desc = p_tag.text.strip()
+                            desc = p_tag.get_text(strip=True)
                     response_codes.append(f"{code}: {desc}" if desc else code)
             else:
                 response_codes = [tab.text.strip() for tab in soup.select('.openapi-tabs__response-code-item')]
