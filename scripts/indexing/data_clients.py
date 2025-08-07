@@ -189,7 +189,10 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[DocumentationPage, A
                     seen_headers.add(key)
                     fragment = _slugify(heading_text)
                     full_url = url + "#" + fragment
-                    content = _extract_content_until_next_h2(h2)
+                    if "entryHeader_Mafo" in header_class:
+                        content = _extract_content_until_next_h2(parent_header)
+                    else:
+                        content = _extract_content_until_next_h2(h2)
                     id_val = str(uuid.uuid5(uuid.NAMESPACE_URL, full_url))
                     page_info = DocumentationPage(
                         id=id_val,
