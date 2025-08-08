@@ -521,29 +521,14 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[DocumentationPage, A
                         
                         enhanced_description += ', '.join(option_descriptions) + ". Mixing fields is not allowed."
                         
-                        is_array = False
-                        array_indicator = details.find('li')
-                        if array_indicator:
-                            array_div = array_indicator.find('div')
-                            if array_div and 'Array [' in array_div.get_text():
-                                is_array = True
-                        
                         property_data = {
                             'type': property_type,
                             'description': enhanced_description,
                             'required': is_required,
-                            'is_array': is_array,
                             'oneOf': oneof_options
                         }
                         
                         return {property_name: property_data}
-
-            is_array = False
-            array_indicator = details.find('li')
-            if array_indicator:
-                array_div = array_indicator.find('div')
-                if array_div and 'Array [' in array_div.get_text():
-                    is_array = True
             
             children = {}
             summary_id = summary.get('id', '')
@@ -563,23 +548,22 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[DocumentationPage, A
                 'type': property_type,
                 'description': description,
                 'required': is_required,
-                'is_array': is_array,
             }
             
             if len(children) > 0:
                 property_data['properties'] = children
                 
-                field_summaries = []
-                for child_name, child_data in children.items():
-                    child_type = child_data.get('type', 'unknown')
-                    field_summaries.append(f"{child_name} ({child_type})")
+                # field_summaries = []
+                # for child_name, child_data in children.items():
+                #     child_type = child_data.get('type', 'unknown')
+                #     field_summaries.append(f"{child_name} ({child_type})")
                 
-                if field_summaries:
-                    summary_text = f" Fields: {', '.join(field_summaries)}."
-                    if description:
-                        property_data['description'] = description + summary_text
-                    else:
-                        property_data['description'] = f"Object with fields: {', '.join(field_summaries)}."
+                # if field_summaries:
+                #     summary_text = f" Fields: {', '.join(field_summaries)}."
+                #     if description:
+                #         property_data['description'] = description + summary_text
+                #     else:
+                #         property_data['description'] = f"Object with fields: {', '.join(field_summaries)}."
             
             return {property_name: property_data}
 
@@ -636,19 +620,7 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[DocumentationPage, A
                 print(f'First propertyDiv HTML: {property_divs[0]}')
             
             schema = _parse_properties_from_divs(property_divs)
-            
-            if schema:
-                property_names = list(schema.keys())
-                if len(property_names) >= 1:
-                    search_tip = {
-                        "description": f"Tip: This schema may have nested structures. Search for property names (e.g. '{property_names[0]}', '{property_names[1] if len(property_names) > 1 else property_names[0]}', etc) or use headings in descriptions for navigation.",
-                        "type": "info"
-                    }
-                    schema = {"_search_tip": search_tip, **schema}
-                
-                return json.dumps(schema, indent=2)
-            else:
-                return ""
+            return json.dumps(schema, indent=2)
 
         def _extract_request_parameters(soup, param_type) -> str:
             """Extract query or path parameters from the request section."""
