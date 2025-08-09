@@ -1,7 +1,7 @@
 ---
 title: 'Authentication'
 description: 'Explains the authentication options for the Web SDK.'
-icon: cookie
+icon: lock
 ---
 
 ## Authentication
