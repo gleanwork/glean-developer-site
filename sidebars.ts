@@ -244,6 +244,11 @@ const sidebars: SidebarsConfig = {
               label: 'Third-Party Cookie Management',
             },
             {
+              type: 'doc',
+              id: 'libraries/web-sdk/authentication',
+              label: 'Authentication',
+            },
+            {
               type: 'category',
               label: 'Components',
               items: [
