@@ -28,6 +28,6 @@ You can streamline the authentication process in two ways:
   When implementing auth token authentication:
   - You must configure an [onAuthTokenRequired](https://app.glean.com/meta/browser_api/interfaces/Options.html#onAuthTokenRequired) callback
   - This callback handles token refresh when expiration approaches
-  - Server-to-server authentication becomes mandatory if [third-party cookies](./3rd-party-cookies]) are
+  - Server-to-server authentication becomes mandatory if [third-party cookies](./3rd-party-cookies) are
   blocked in the user's browser
 :::
