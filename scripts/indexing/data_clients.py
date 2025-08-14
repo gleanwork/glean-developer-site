@@ -139,20 +139,20 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[DocumentationPage, A
                 return ""
 
             content_parts = []
-            for elem in header.next_elements:
-                if isinstance(elem, Tag):
-                    if elem.name == 'h2':
-                        break   
-                    if elem.name == 'table':
-                        table_text = _format_table_content(elem)
-                        if table_text:
-                            content_parts.append(table_text)
-                    if elem.name in ['p', 'ol', 'li']:
-                        text = elem.get_text(separator="\n", strip=True)
-                        if text:
-                            content_parts.append(text)
-                if elem is not header and getattr(elem, 'name', None) == 'header':
+            for sibling in header.next_siblings:
+                if isinstance(sibling, str):
+                    continue
+                if sibling.name == 'h2':
                     break
+                    
+                if sibling.name == 'table':
+                    table_text = _format_table_content(sibling)
+                    if table_text:
+                        content_parts.append(table_text)
+                else:
+                    text = sibling.get_text(separator=" ", strip=True)
+                    if text:
+                        content_parts.append(text)
             return "\n".join(content_parts).strip()
 
         def _extract_page_info_with_fragments(url: str, html: str) -> List[DocumentationPage]:
