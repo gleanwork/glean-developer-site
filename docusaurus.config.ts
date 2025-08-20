@@ -203,6 +203,7 @@ const config: Config = {
           backend: 'https://glean-public-external-be.glean.com',
           webAppUrl: 'https://glean-public-external.glean.com',
           datasourcesFilter: ['devdocs', 'gleandocs'],
+          disableAssistant: true,
         },
         chatOptions: false,
         enableAnonymousAuth: true,
