@@ -1,21 +1,21 @@
-import React from "react";
+import React from 'react';
 
-import { ClosingArrayBracket, OpeningArrayBracket } from "@theme/ArrayBrackets";
-import Details from "@theme/Details";
-import DiscriminatorTabs from "@theme/DiscriminatorTabs";
-import Markdown from "@theme/Markdown";
-import SchemaItem from "@theme/SchemaItem";
-import SchemaTabs from "@theme/SchemaTabs";
-import TabItem from "@theme/TabItem";
+import { ClosingArrayBracket, OpeningArrayBracket } from '@theme/ArrayBrackets';
+import Details from '@theme/Details';
+import DiscriminatorTabs from '@theme/DiscriminatorTabs';
+import Markdown from '@theme/Markdown';
+import SchemaItem from '@theme/SchemaItem';
+import SchemaTabs from '@theme/SchemaTabs';
+import TabItem from '@theme/TabItem';
 // eslint-disable-next-line import/no-extraneous-dependencies
-import { merge } from "allof-merge";
-import clsx from "clsx";
+import { merge } from 'allof-merge';
+import clsx from 'clsx';
 import {
   getQualifierMessage,
   getSchemaName,
-} from "docusaurus-plugin-openapi-docs/lib/markdown/schema";
-import { SchemaObject } from "docusaurus-plugin-openapi-docs/lib/openapi/types";
-import isEmpty from "lodash/isEmpty";
+} from 'docusaurus-plugin-openapi-docs/lib/markdown/schema';
+import { SchemaObject } from 'docusaurus-plugin-openapi-docs/lib/openapi/types';
+import isEmpty from 'lodash/isEmpty';
 
 // eslint-disable-next-line import/no-extraneous-dependencies
 // const jsonSchemaMergeAllOf = require("json-schema-merge-allof");
@@ -31,29 +31,38 @@ const mergeAllOf = (allOf: any) => {
 };
 
 // Helper function to generate anchor IDs for parameters
-const generateParameterId = (name: string, schemaType: "request" | "response", parentPath: string = "") => {
+const generateParameterId = (
+  name: string,
+  schemaType: 'request' | 'response',
+  parentPath: string = '',
+) => {
   // Clean the name for use as an ID
   const cleanName = name.toLowerCase().replace(/[^a-z0-9]/g, '-');
   const cleanParentPath = parentPath.toLowerCase().replace(/[^a-z0-9]/g, '-');
-  const fullPath = cleanParentPath ? `${cleanParentPath}-${cleanName}` : cleanName;
+  const fullPath = cleanParentPath
+    ? `${cleanParentPath}-${cleanName}`
+    : cleanName;
   return `${schemaType}-${fullPath}`;
 };
 
 // ---------------------------------------------------------------
 // Deep-link handler: sequentially expand nested <details> by ID path
 // ---------------------------------------------------------------
-if (typeof window !== "undefined") {
+if (typeof window !== 'undefined') {
   const HASH_PREFIX_REGEX = /^#(request|response)-.+/;
   const FLASH_DURATION = 2000;
 
   const flash = (el: HTMLElement) => {
-    el.style.animation = "none";
+    el.style.animation = 'none';
     // eslint-disable-next-line @typescript-eslint/no-unused-expressions
     el.offsetHeight;
     el.style.animation = `highlight-flash ${FLASH_DURATION}ms ease-out`;
   };
 
-  const waitForElement = (selector: string, timeout = 3000): Promise<HTMLElement | null> => {
+  const waitForElement = (
+    selector: string,
+    timeout = 3000,
+  ): Promise<HTMLElement | null> => {
     return new Promise((resolve) => {
       const existing = document.querySelector(selector);
       if (existing) {
@@ -81,10 +90,10 @@ if (typeof window !== "undefined") {
   const openParents = (el: HTMLElement) => {
     let p: HTMLElement | null = el.parentElement;
     while (p) {
-      if (p.tagName.toLowerCase() === "details") {
+      if (p.tagName.toLowerCase() === 'details') {
         const detailsEl = p as HTMLDetailsElement;
         if (!detailsEl.open) {
-          const summary = detailsEl.querySelector("summary");
+          const summary = detailsEl.querySelector('summary');
           if (summary) {
             (summary as HTMLElement).click(); // let Docusaurus/JS handle state attributes
           } else {
@@ -98,7 +107,7 @@ if (typeof window !== "undefined") {
 
   const openDetailsElement = (detailsEl: HTMLDetailsElement) => {
     if (!detailsEl.open) {
-      const summary = detailsEl.querySelector("summary");
+      const summary = detailsEl.querySelector('summary');
       summary ? (summary as HTMLElement).click() : (detailsEl.open = true);
     }
   };
@@ -110,7 +119,7 @@ if (typeof window !== "undefined") {
 
     (async () => {
       const fullId = hash.slice(1); // remove '#'
-      const parts = fullId.split("-");
+      const parts = fullId.split('-');
       // console.log('Hash parts:', parts);
       if (parts.length < 2) return;
 
@@ -129,27 +138,27 @@ if (typeof window !== "undefined") {
 
         if (i < segments.length - 1) {
           // Not yet at target → ensure its details container is open
-          const details = el.closest("details") as HTMLDetailsElement | null;
+          const details = el.closest('details') as HTMLDetailsElement | null;
           // console.log(`Details container for ${selector}:`, details);
           if (details) {
             // console.log(`Opening details for ${selector}, was open:`, details.open);
             openDetailsElement(details);
             // Wait for the details to fully expand and render nested content
-            await new Promise(resolve => setTimeout(resolve, 100));
+            await new Promise((resolve) => setTimeout(resolve, 100));
           }
         } else {
           // This is the final target
           // console.log('Final target reached, opening parents and scrolling');
           openParents(el as HTMLElement);
-          await new Promise(resolve => setTimeout(resolve, 200));
-          
+          await new Promise((resolve) => setTimeout(resolve, 200));
+
           // First scroll attempt
-          el.scrollIntoView({ behavior: "smooth", block: "start" });
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
           flash(el as HTMLElement);
-          
+
           // Second scroll attempt after a delay to ensure proper positioning
           setTimeout(() => {
-            el.scrollIntoView({ behavior: "smooth", block: "start" });
+            el.scrollIntoView({ behavior: 'smooth', block: 'start' });
           }, 600);
         }
       }
@@ -157,26 +166,26 @@ if (typeof window !== "undefined") {
   };
 
   // Run on initial page load and whenever the hash changes.
-  window.addEventListener("load", runDeepLink);
-  window.addEventListener("hashchange", runDeepLink);
-  
+  window.addEventListener('load', runDeepLink);
+  window.addEventListener('hashchange', runDeepLink);
+
   // Also listen for any navigation events
   const originalPushState = history.pushState;
   const originalReplaceState = history.replaceState;
-  
-  history.pushState = function(...args) {
+
+  history.pushState = function (...args) {
     originalPushState.apply(history, args);
     setTimeout(runDeepLink, 50);
   };
-  
-  history.replaceState = function(...args) {
+
+  history.replaceState = function (...args) {
     originalReplaceState.apply(history, args);
     setTimeout(runDeepLink, 50);
   };
-  
+
   // Also run when DOM is ready (for SPA navigation)
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", runDeepLink);
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', runDeepLink);
   } else {
     // DOM is already ready
     setTimeout(runDeepLink, 0);
@@ -190,7 +199,7 @@ interface MarkdownProps {
 // Renders string as markdown, useful for descriptions and qualifiers
 const MarkdownWrapper: React.FC<MarkdownProps> = ({ text }) => {
   return (
-    <div style={{ marginTop: ".5rem", marginBottom: ".5rem" }}>
+    <div style={{ marginTop: '.5rem', marginBottom: '.5rem' }}>
       <Markdown>{text}</Markdown>
     </div>
   );
@@ -204,7 +213,7 @@ interface SummaryProps {
     nullable?: boolean;
   };
   required?: boolean | string[];
-  schemaType?: "request" | "response";
+  schemaType?: 'request' | 'response';
   parentPath?: string;
 }
 
@@ -214,10 +223,12 @@ const Summary: React.FC<SummaryProps> = ({
   schema,
   required,
   schemaType,
-  parentPath = "",
+  parentPath = '',
 }) => {
   const { deprecated, nullable } = schema;
-  const parameterId = schemaType ? generateParameterId(name, schemaType, parentPath) : undefined;
+  const parameterId = schemaType
+    ? generateParameterId(name, schemaType, parentPath)
+    : undefined;
 
   const isRequired = Array.isArray(required)
     ? required.includes(name)
@@ -227,8 +238,8 @@ const Summary: React.FC<SummaryProps> = ({
     <summary id={parameterId}>
       <span className="openapi-schema__container">
         <strong
-          className={clsx("openapi-schema__property", {
-            "openapi-schema__strikethrough": deprecated,
+          className={clsx('openapi-schema__property', {
+            'openapi-schema__strikethrough': deprecated,
           })}
         >
           {name}
@@ -252,15 +263,19 @@ const Summary: React.FC<SummaryProps> = ({
 // Common props interface
 interface SchemaProps {
   schema: SchemaObject;
-  schemaType: "request" | "response";
+  schemaType: 'request' | 'response';
   parentPath?: string;
 }
 
-const AnyOneOf: React.FC<SchemaProps> = ({ schema, schemaType, parentPath = "" }) => {
-  const type = schema.oneOf ? "oneOf" : "anyOf";
+const AnyOneOf: React.FC<SchemaProps> = ({
+  schema,
+  schemaType,
+  parentPath = '',
+}) => {
+  const type = schema.oneOf ? 'oneOf' : 'anyOf';
   return (
     <>
-      <span className="badge badge--info" style={{ marginBottom: "1rem" }}>
+      <span className="badge badge--info" style={{ marginBottom: '1rem' }}>
         {type}
       </span>
       <SchemaTabs>
@@ -274,8 +289,8 @@ const AnyOneOf: React.FC<SchemaProps> = ({ schema, schemaType, parentPath = "" }
               value={`${index}-item-properties`}
             >
               {/* Handle primitive types directly */}
-              {["string", "number", "integer", "boolean"].includes(
-                anyOneSchema.type
+              {['string', 'number', 'integer', 'boolean'].includes(
+                anyOneSchema.type,
               ) && (
                 <SchemaItem
                   collapsible={false}
@@ -289,7 +304,7 @@ const AnyOneOf: React.FC<SchemaProps> = ({ schema, schemaType, parentPath = "" }
               )}
 
               {/* Handle empty object as a primitive type */}
-              {anyOneSchema.type === "object" &&
+              {anyOneSchema.type === 'object' &&
                 !anyOneSchema.properties &&
                 !anyOneSchema.allOf &&
                 !anyOneSchema.oneOf &&
@@ -306,20 +321,40 @@ const AnyOneOf: React.FC<SchemaProps> = ({ schema, schemaType, parentPath = "" }
                 )}
 
               {/* Handle actual object types with properties or nested schemas */}
-              {anyOneSchema.type === "object" && anyOneSchema.properties && (
-                <Properties schema={anyOneSchema} schemaType={schemaType} parentPath={parentPath} />
+              {anyOneSchema.type === 'object' && anyOneSchema.properties && (
+                <Properties
+                  schema={anyOneSchema}
+                  schemaType={schemaType}
+                  parentPath={parentPath}
+                />
               )}
               {anyOneSchema.allOf && (
-                <SchemaNode schema={anyOneSchema} schemaType={schemaType} parentPath={parentPath} />
+                <SchemaNode
+                  schema={anyOneSchema}
+                  schemaType={schemaType}
+                  parentPath={parentPath}
+                />
               )}
               {anyOneSchema.oneOf && (
-                <SchemaNode schema={anyOneSchema} schemaType={schemaType} parentPath={parentPath} />
+                <SchemaNode
+                  schema={anyOneSchema}
+                  schemaType={schemaType}
+                  parentPath={parentPath}
+                />
               )}
               {anyOneSchema.anyOf && (
-                <SchemaNode schema={anyOneSchema} schemaType={schemaType} parentPath={parentPath} />
+                <SchemaNode
+                  schema={anyOneSchema}
+                  schemaType={schemaType}
+                  parentPath={parentPath}
+                />
               )}
               {anyOneSchema.items && (
-                <Items schema={anyOneSchema} schemaType={schemaType} parentPath={parentPath} />
+                <Items
+                  schema={anyOneSchema}
+                  schemaType={schemaType}
+                  parentPath={parentPath}
+                />
               )}
             </TabItem>
           );
@@ -329,7 +364,11 @@ const AnyOneOf: React.FC<SchemaProps> = ({ schema, schemaType, parentPath = "" }
   );
 };
 
-const Properties: React.FC<SchemaProps> = ({ schema, schemaType, parentPath = "" }) => {
+const Properties: React.FC<SchemaProps> = ({
+  schema,
+  schemaType,
+  parentPath = '',
+}) => {
   const discriminator = schema.discriminator;
   if (discriminator && !discriminator.mapping) {
     const anyOneOf = schema.oneOf ?? schema.anyOf ?? {};
@@ -343,7 +382,7 @@ const Properties: React.FC<SchemaProps> = ({ schema, schemaType, parentPath = ""
         delete anyOneSchema.properties[discriminator.propertyName];
       return (inferredMapping[anyOneSchema.title] = anyOneSchema);
     });
-    discriminator["mapping"] = inferredMapping;
+    discriminator['mapping'] = inferredMapping;
   }
   if (Object.keys(schema.properties as {}).length === 0) {
     return (
@@ -375,7 +414,7 @@ const Properties: React.FC<SchemaProps> = ({ schema, schemaType, parentPath = ""
             schemaType={schemaType}
             parentPath={parentPath}
           />
-        )
+        ),
       )}
     </>
   );
@@ -388,7 +427,7 @@ const PropertyDiscriminator: React.FC<SchemaEdgeProps> = ({
   schemaType,
   discriminator,
   required,
-  parentPath = "",
+  parentPath = '',
 }) => {
   if (!schema) {
     return null;
@@ -398,7 +437,10 @@ const PropertyDiscriminator: React.FC<SchemaEdgeProps> = ({
 
   return (
     <>
-      <div className="openapi-discriminator__item openapi-schema__list-item" id={parameterId}>
+      <div
+        className="openapi-discriminator__item openapi-schema__list-item"
+        id={parameterId}
+      >
         <div>
           <span className="openapi-schema__container">
             <strong className="openapi-discriminator__name openapi-schema__property">
@@ -412,7 +454,7 @@ const PropertyDiscriminator: React.FC<SchemaEdgeProps> = ({
               <span className="openapi-schema__required">required</span>
             )}
           </span>
-          <div style={{ marginLeft: "1rem" }}>
+          <div style={{ marginLeft: '1rem' }}>
             {schema.description && (
               <MarkdownWrapper text={schema.description} />
             )}
@@ -455,7 +497,7 @@ const PropertyDiscriminator: React.FC<SchemaEdgeProps> = ({
                 schemaType={schemaType}
                 parentPath={parentPath ? `${parentPath}-${name}` : name}
               />
-            )
+            ),
         )}
     </>
   );
@@ -464,7 +506,7 @@ const PropertyDiscriminator: React.FC<SchemaEdgeProps> = ({
 interface DiscriminatorNodeProps {
   discriminator: any;
   schema: SchemaObject;
-  schemaType: "request" | "response";
+  schemaType: 'request' | 'response';
   parentPath?: string;
 }
 
@@ -472,7 +514,7 @@ const DiscriminatorNode: React.FC<DiscriminatorNodeProps> = ({
   discriminator,
   schema,
   schemaType,
-  parentPath = "",
+  parentPath = '',
 }) => {
   let discriminatedSchemas: any = {};
   let inferredMapping: any = {};
@@ -496,7 +538,7 @@ const DiscriminatorNode: React.FC<DiscriminatorNodeProps> = ({
     Object.entries(discriminatedSchemas).forEach(
       ([_, subschema]: [string, any], index) => {
         inferredMapping[subschema.title ?? `PROP${index}`] = subschema;
-      }
+      },
     );
     discriminator.mapping = inferredMapping;
   }
@@ -557,7 +599,7 @@ const DiscriminatorNode: React.FC<DiscriminatorNodeProps> = ({
 const AdditionalProperties: React.FC<SchemaProps> = ({
   schema,
   schemaType,
-  parentPath = "",
+  parentPath = '',
 }) => {
   const additionalProperties = schema.additionalProperties;
 
@@ -605,11 +647,11 @@ const AdditionalProperties: React.FC<SchemaProps> = ({
 
   // Handle primitive types
   if (
-    additionalProperties.type === "string" ||
-    additionalProperties.type === "boolean" ||
-    additionalProperties.type === "integer" ||
-    additionalProperties.type === "number" ||
-    additionalProperties.type === "object"
+    additionalProperties.type === 'string' ||
+    additionalProperties.type === 'boolean' ||
+    additionalProperties.type === 'integer' ||
+    additionalProperties.type === 'number' ||
+    additionalProperties.type === 'object'
   ) {
     const schemaName = getSchemaName(additionalProperties);
     return (
@@ -636,10 +678,10 @@ const SchemaNodeDetails: React.FC<SchemaEdgeProps> = ({
   schema,
   required,
   schemaType,
-  parentPath = "",
+  parentPath = '',
 }) => {
   const parameterId = generateParameterId(name, schemaType, parentPath);
-  
+
   return (
     <div id={parameterId}>
       <SchemaItem collapsible={true}>
@@ -656,14 +698,16 @@ const SchemaNodeDetails: React.FC<SchemaEdgeProps> = ({
             />
           }
         >
-          <div style={{ marginLeft: "1rem" }}>
-            {schema.description && <MarkdownWrapper text={schema.description} />}
+          <div style={{ marginLeft: '1rem' }}>
+            {schema.description && (
+              <MarkdownWrapper text={schema.description} />
+            )}
             {getQualifierMessage(schema) && (
               <MarkdownWrapper text={getQualifierMessage(schema)} />
             )}
-            <SchemaNode 
-              schema={schema} 
-              schemaType={schemaType} 
+            <SchemaNode
+              schema={schema}
+              schemaType={schemaType}
               parentPath={parentPath ? `${parentPath}-${name}` : name}
             />
           </div>
@@ -675,15 +719,19 @@ const SchemaNodeDetails: React.FC<SchemaEdgeProps> = ({
 
 const Items: React.FC<{
   schema: any;
-  schemaType: "request" | "response";
+  schemaType: 'request' | 'response';
   parentPath?: string;
-}> = ({ schema, schemaType, parentPath = "" }) => {
+}> = ({ schema, schemaType, parentPath = '' }) => {
   // Handles case when schema.items has properties
   if (schema.items?.properties) {
     return (
       <>
         <OpeningArrayBracket />
-        <Properties schema={schema.items} schemaType={schemaType} parentPath={parentPath} />
+        <Properties
+          schema={schema.items}
+          schemaType={schemaType}
+          parentPath={parentPath}
+        />
         <ClosingArrayBracket />
       </>
     );
@@ -694,7 +742,11 @@ const Items: React.FC<{
     return (
       <>
         <OpeningArrayBracket />
-        <AdditionalProperties schema={schema.items} schemaType={schemaType} parentPath={parentPath} />
+        <AdditionalProperties
+          schema={schema.items}
+          schemaType={schemaType}
+          parentPath={parentPath}
+        />
         <ClosingArrayBracket />
       </>
     );
@@ -705,7 +757,11 @@ const Items: React.FC<{
     return (
       <>
         <OpeningArrayBracket />
-        <AnyOneOf schema={schema.items} schemaType={schemaType} parentPath={parentPath} />
+        <AnyOneOf
+          schema={schema.items}
+          schemaType={schemaType}
+          parentPath={parentPath}
+        />
         <ClosingArrayBracket />
       </>
     );
@@ -723,8 +779,16 @@ const Items: React.FC<{
       return (
         <>
           <OpeningArrayBracket />
-          <AnyOneOf schema={mergedSchemas} schemaType={schemaType} parentPath={parentPath} />
-          <Properties schema={mergedSchemas} schemaType={schemaType} parentPath={parentPath} />
+          <AnyOneOf
+            schema={mergedSchemas}
+            schemaType={schemaType}
+            parentPath={parentPath}
+          />
+          <Properties
+            schema={mergedSchemas}
+            schemaType={schemaType}
+            parentPath={parentPath}
+          />
           <ClosingArrayBracket />
         </>
       );
@@ -735,7 +799,11 @@ const Items: React.FC<{
       return (
         <>
           <OpeningArrayBracket />
-          <AnyOneOf schema={mergedSchemas} schemaType={schemaType} parentPath={parentPath} />
+          <AnyOneOf
+            schema={mergedSchemas}
+            schemaType={schemaType}
+            parentPath={parentPath}
+          />
           <ClosingArrayBracket />
         </>
       );
@@ -746,7 +814,11 @@ const Items: React.FC<{
       return (
         <>
           <OpeningArrayBracket />
-          <Properties schema={mergedSchemas} schemaType={schemaType} parentPath={parentPath} />
+          <Properties
+            schema={mergedSchemas}
+            schemaType={schemaType}
+            parentPath={parentPath}
+          />
           <ClosingArrayBracket />
         </>
       );
@@ -755,14 +827,14 @@ const Items: React.FC<{
 
   // Handles basic types (string, number, integer, boolean, object)
   if (
-    schema.items?.type === "string" ||
-    schema.items?.type === "number" ||
-    schema.items?.type === "integer" ||
-    schema.items?.type === "boolean" ||
-    schema.items?.type === "object"
+    schema.items?.type === 'string' ||
+    schema.items?.type === 'number' ||
+    schema.items?.type === 'integer' ||
+    schema.items?.type === 'boolean' ||
+    schema.items?.type === 'object'
   ) {
     return (
-      <div style={{ marginLeft: ".5rem" }}>
+      <div style={{ marginLeft: '.5rem' }}>
         <OpeningArrayBracket />
         <SchemaItem
           collapsible={false}
@@ -808,7 +880,7 @@ interface SchemaEdgeProps {
   required?: boolean | string[];
   nullable?: boolean | undefined;
   discriminator?: any;
-  schemaType: "request" | "response";
+  schemaType: 'request' | 'response';
   parentPath?: string;
 }
 
@@ -818,11 +890,11 @@ const SchemaEdge: React.FC<SchemaEdgeProps> = ({
   required,
   discriminator,
   schemaType,
-  parentPath = "",
+  parentPath = '',
 }) => {
   if (
-    (schemaType === "request" && schema.readOnly) ||
-    (schemaType === "response" && schema.writeOnly)
+    (schemaType === 'request' && schema.readOnly) ||
+    (schemaType === 'response' && schema.writeOnly)
   ) {
     return null;
   }
@@ -920,7 +992,7 @@ const SchemaEdge: React.FC<SchemaEdgeProps> = ({
       schema.allOf &&
       schema.allOf.length &&
       schema.allOf.length === 1 &&
-      typeof schema.allOf[0] === "string"
+      typeof schema.allOf[0] === 'string'
     ) {
       const parameterId = generateParameterId(name, schemaType, parentPath);
       return (
@@ -943,8 +1015,8 @@ const SchemaEdge: React.FC<SchemaEdgeProps> = ({
     const mergedSchemas = mergeAllOf(schema) as SchemaObject;
 
     if (
-      (schemaType === "request" && mergedSchemas.readOnly) ||
-      (schemaType === "response" && mergedSchemas.writeOnly)
+      (schemaType === 'request' && mergedSchemas.readOnly) ||
+      (schemaType === 'response' && mergedSchemas.writeOnly)
     ) {
       return null;
     }
@@ -1009,7 +1081,9 @@ const SchemaEdge: React.FC<SchemaEdgeProps> = ({
         <SchemaItem
           collapsible={false}
           name={name}
-          required={Array.isArray(required) ? required.includes(name) : required}
+          required={
+            Array.isArray(required) ? required.includes(name) : required
+          }
           schemaName={mergedSchemaName}
           qualifierMessage={getQualifierMessage(mergedSchemas)}
           schema={mergedSchemas}
@@ -1039,28 +1113,58 @@ const SchemaEdge: React.FC<SchemaEdgeProps> = ({
 
 function renderChildren(
   schema: SchemaObject,
-  schemaType: "request" | "response",
-  parentPath: string = ""
+  schemaType: 'request' | 'response',
+  parentPath: string = '',
 ) {
   return (
     <>
-      {schema.oneOf && <AnyOneOf schema={schema} schemaType={schemaType} parentPath={parentPath} />}
-      {schema.anyOf && <AnyOneOf schema={schema} schemaType={schemaType} parentPath={parentPath} />}
+      {schema.oneOf && (
+        <AnyOneOf
+          schema={schema}
+          schemaType={schemaType}
+          parentPath={parentPath}
+        />
+      )}
+      {schema.anyOf && (
+        <AnyOneOf
+          schema={schema}
+          schemaType={schemaType}
+          parentPath={parentPath}
+        />
+      )}
       {schema.properties && (
-        <Properties schema={schema} schemaType={schemaType} parentPath={parentPath} />
+        <Properties
+          schema={schema}
+          schemaType={schemaType}
+          parentPath={parentPath}
+        />
       )}
       {schema.additionalProperties && (
-        <AdditionalProperties schema={schema} schemaType={schemaType} parentPath={parentPath} />
+        <AdditionalProperties
+          schema={schema}
+          schemaType={schemaType}
+          parentPath={parentPath}
+        />
       )}
-      {schema.items && <Items schema={schema} schemaType={schemaType} parentPath={parentPath} />}
+      {schema.items && (
+        <Items
+          schema={schema}
+          schemaType={schemaType}
+          parentPath={parentPath}
+        />
+      )}
     </>
   );
 }
 
-const SchemaNode: React.FC<SchemaProps> = ({ schema, schemaType, parentPath = "" }) => {
+const SchemaNode: React.FC<SchemaProps> = ({
+  schema,
+  schemaType,
+  parentPath = '',
+}) => {
   if (
-    (schemaType === "request" && schema.readOnly) ||
-    (schemaType === "response" && schema.writeOnly)
+    (schemaType === 'request' && schema.readOnly) ||
+    (schemaType === 'response' && schema.writeOnly)
   ) {
     return null;
   }
@@ -1082,8 +1186,8 @@ const SchemaNode: React.FC<SchemaProps> = ({ schema, schemaType, parentPath = ""
     const mergedSchemas = mergeAllOf(schema) as SchemaObject;
 
     if (
-      (schemaType === "request" && mergedSchemas.readOnly) ||
-      (schemaType === "response" && mergedSchemas.writeOnly)
+      (schemaType === 'request' && mergedSchemas.readOnly) ||
+      (schemaType === 'response' && mergedSchemas.writeOnly)
     ) {
       return null;
     }
@@ -1091,16 +1195,32 @@ const SchemaNode: React.FC<SchemaProps> = ({ schema, schemaType, parentPath = ""
     return (
       <div>
         {mergedSchemas.oneOf && (
-          <AnyOneOf schema={mergedSchemas} schemaType={schemaType} parentPath={parentPath} />
+          <AnyOneOf
+            schema={mergedSchemas}
+            schemaType={schemaType}
+            parentPath={parentPath}
+          />
         )}
         {mergedSchemas.anyOf && (
-          <AnyOneOf schema={mergedSchemas} schemaType={schemaType} parentPath={parentPath} />
+          <AnyOneOf
+            schema={mergedSchemas}
+            schemaType={schemaType}
+            parentPath={parentPath}
+          />
         )}
         {mergedSchemas.properties && (
-          <Properties schema={mergedSchemas} schemaType={schemaType} parentPath={parentPath} />
+          <Properties
+            schema={mergedSchemas}
+            schemaType={schemaType}
+            parentPath={parentPath}
+          />
         )}
         {mergedSchemas.items && (
-          <Items schema={mergedSchemas} schemaType={schemaType} parentPath={parentPath} />
+          <Items
+            schema={mergedSchemas}
+            schemaType={schemaType}
+            parentPath={parentPath}
+          />
         )}
       </div>
     );

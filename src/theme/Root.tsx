@@ -1,4 +1,10 @@
-import React, { createContext, useCallback, useEffect, useMemo, useState } from 'react';
+import React, {
+  createContext,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import type { ReactNode } from 'react';
 import type { FeatureFlagsMap } from '@site/src/lib/featureFlagTypes';
 import { flagsSnapshotToBooleans } from '@site/src/lib/featureFlags';
@@ -18,7 +24,8 @@ const initialState: FeatureFlagsState = {
   debug: false,
 };
 
-export const FeatureFlagsContext = createContext<FeatureFlagsState>(initialState);
+export const FeatureFlagsContext =
+  createContext<FeatureFlagsState>(initialState);
 
 function getLocalVisitorId(): string | undefined {
   if (typeof window === 'undefined') return undefined;
@@ -51,7 +58,10 @@ function readCache(): FeatureFlagsMap | undefined {
 function writeCache(data: FeatureFlagsMap) {
   if (typeof window === 'undefined') return;
   try {
-    window.localStorage.setItem('ff:cache', JSON.stringify({ ts: Date.now(), data }));
+    window.localStorage.setItem(
+      'ff:cache',
+      JSON.stringify({ ts: Date.now(), data }),
+    );
   } catch {}
 }
 
@@ -68,12 +78,37 @@ async function fetchRuntimeFlags(): Promise<FeatureFlagsMap | undefined> {
 
 export default function Root({ children }: { children: ReactNode }) {
   const { siteConfig } = useDocusaurusContext();
-  const debug = typeof window !== 'undefined' && (window as any).__FLAGS_DEBUG__;
-  const initial = ((siteConfig?.customFields as any)?.__BUILD_FLAGS__ as FeatureFlagsMap) || {};
+  const debug =
+    typeof window !== 'undefined' && (window as any).__FLAGS_DEBUG__;
+  const initial =
+    ((siteConfig?.customFields as any)?.__BUILD_FLAGS__ as FeatureFlagsMap) ||
+    {};
   const [raw, setRaw] = useState<FeatureFlagsMap>(initial);
 
   const visitorId = getLocalVisitorId();
-  const booleans = useMemo(() => flagsSnapshotToBooleans(raw, { visitorId }), [raw, visitorId]);
+
+  // Check for URL parameter overrides
+  const urlOverrides = useMemo(() => {
+    if (typeof window === 'undefined') return {};
+    const params = new URLSearchParams(window.location.search);
+    const overrides: Record<string, boolean> = {};
+
+    // Check for ff_ prefixed params (e.g., ?ff_remote-mcp-docs=true)
+    for (const [key, value] of params) {
+      if (key.startsWith('ff_')) {
+        const flagName = key.slice(3);
+        overrides[flagName] = value === 'true' || value === '1';
+      }
+    }
+
+    return overrides;
+  }, []);
+
+  const booleans = useMemo(() => {
+    const base = flagsSnapshotToBooleans(raw, { visitorId });
+    // Apply URL overrides
+    return { ...base, ...urlOverrides };
+  }, [raw, visitorId, urlOverrides]);
 
   const refresh = useCallback(() => {
     const cached = readCache();
@@ -93,9 +128,14 @@ export default function Root({ children }: { children: ReactNode }) {
     refresh();
   }, [refresh]);
 
-  const value = useMemo(() => ({ raw, booleans, refresh, debug }), [raw, booleans, refresh, debug]);
+  const value = useMemo(
+    () => ({ raw, booleans, refresh, debug }),
+    [raw, booleans, refresh, debug],
+  );
 
-  return <FeatureFlagsContext.Provider value={value}>{children}</FeatureFlagsContext.Provider>;
+  return (
+    <FeatureFlagsContext.Provider value={value}>
+      {children}
+    </FeatureFlagsContext.Provider>
+  );
 }
-
-
