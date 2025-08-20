@@ -4,6 +4,8 @@ import type * as Preset from '@docusaurus/preset-classic';
 import type * as OpenApiPlugin from 'docusaurus-plugin-openapi-docs';
 const redirects = [...require('./redirects.json'), ...require('./permalinks.json')];
 import { customApiMdGenerator } from './scripts/generator/customMdGenerators';
+import { getBuildTimeFlags } from './src/utils/buildTimeFlags';
+import { flagsSnapshotToBooleans } from './src/lib/featureFlags';
 
 // Environment variable to control API docs generation
 const shouldGenerateApiDocs = process.env.GENERATE_API_DOCS !== 'false';
@@ -68,7 +70,14 @@ const config: Config = {
         src: 'img/glean-developer-logo-light.svg',
         srcDark: 'img/glean-developer-logo-dark.svg',
       },
-      items: [
+      items: ((items) => {
+        const { getBuildTimeFlags } = require('./src/utils/buildTimeFlags');
+        const { flagsSnapshotToBooleans } = require('./src/lib/featureFlags');
+        const { getNavbarItems } = require('./src/utils/filtering');
+        const raw = getBuildTimeFlags();
+        const bools = flagsSnapshotToBooleans(raw, {});
+        return getNavbarItems(items, bools);
+      })([
         {
           label: 'More from Glean',
           position: 'right',
@@ -110,7 +119,7 @@ const config: Config = {
             },
           ],
         },
-      ],
+      ]),
     },
     prism: {
       theme: prismThemes.github,
@@ -417,6 +426,14 @@ const config: Config = {
   markdown: {
     mermaid: true,
   },
+  customFields: (() => {
+    const raw = getBuildTimeFlags();
+    const booleans = flagsSnapshotToBooleans(raw, {});
+    return {
+      __BUILD_FLAGS__: raw,
+      __BUILD_FLAGS_BOOLEANS__: booleans,
+    } as Record<string, unknown>;
+  })(),
 };
 
 export default config;

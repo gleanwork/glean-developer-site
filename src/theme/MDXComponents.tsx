@@ -5,6 +5,7 @@ import { Steps, Step } from '@site/src/components/Steps';
 import Card from '@site/src/components/Card';
 import CardGroup from '@site/src/components/CardGroup';
 import Frame from '@site/src/components/Frame';
+import FeatureFlag from '@site/src/components/FeatureFlag';
 export default {
   // Reusing the default mapping
   ...MDXComponents,
@@ -13,4 +14,5 @@ export default {
   Card,
   CardGroup,
   Frame,
+  FeatureFlag,
 };

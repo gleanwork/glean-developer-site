@@ -1,11 +1,17 @@
 import type { SidebarsConfig } from '@docusaurus/plugin-content-docs';
+import { getBuildTimeFlags } from './src/utils/buildTimeFlags';
+import { flagsSnapshotToBooleans } from './src/lib/featureFlags';
+import { filterByFeatureFlags } from './src/utils/filtering';
 
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
 
 // Environment variable to control API docs generation (same as in docusaurus.config.ts)
 const shouldGenerateApiDocs = process.env.GENERATE_API_DOCS !== 'false';
 
-const sidebars: SidebarsConfig = {
+const rawFlags = getBuildTimeFlags();
+const boolFlags = flagsSnapshotToBooleans(rawFlags, {});
+
+const baseSidebars: SidebarsConfig = {
   docSidebar: [
     {
       type: 'category',
@@ -1501,5 +1507,7 @@ const sidebars: SidebarsConfig = {
       : []),
   ],
 };
+
+const sidebars = filterByFeatureFlags(baseSidebars, boolFlags);
 
 export default sidebars;
