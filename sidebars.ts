@@ -120,6 +120,11 @@ const baseSidebars: SidebarsConfig = {
               id: 'guides/search/faceted-filters',
               label: 'Faceted Filtering',
             },
+            {
+              type: 'doc',
+              id: 'guides/search/llm-content',
+              label: 'LLM Snippets',
+            },
           ],
         },
         {
