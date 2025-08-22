@@ -41,8 +41,12 @@ export default function MCPQuickInstaller() {
     useState<string>('claude-code');
   const [instanceName, setInstanceName] = useState('');
   const [serverName, setServerName] = useState('default');
-  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [authMethod, setAuthMethod] = useState<'oauth' | 'bearer'>('oauth');
   const [authToken, setAuthToken] = useState('');
+  const [serverStatus, setServerStatus] = useState<
+    'idle' | 'checking' | 'reachable' | 'unreachable'
+  >('idle');
+  const [statusMessage, setStatusMessage] = useState('');
 
   const selectedClient = useMemo(() => {
     const client =
@@ -82,6 +86,65 @@ export default function MCPQuickInstaller() {
   };
 
   const handleInstallClick = () => {};
+
+  // Check server reachability when URL is complete
+  useEffect(() => {
+    if (!serverUrl) {
+      setServerStatus('idle');
+      setStatusMessage('');
+      return;
+    }
+
+    const checkReachability = async () => {
+      setServerStatus('checking');
+      setStatusMessage('');
+
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+        const response = await fetch(serverUrl, {
+          method: 'HEAD',
+          signal: controller.signal,
+          mode: 'no-cors', // Use no-cors to avoid CORS issues
+        });
+
+        clearTimeout(timeoutId);
+
+        // With no-cors, we can't read the status, but if fetch succeeds, server exists
+        setServerStatus('reachable');
+        setStatusMessage('Server endpoint detected');
+      } catch (error) {
+        if (error instanceof Error) {
+          if (error.name === 'AbortError') {
+            setServerStatus('unreachable');
+            setStatusMessage('Connection timeout');
+          } else {
+            // Try a more permissive check - just see if we can reach the domain
+            try {
+              const url = new URL(serverUrl);
+              const baseUrl = `${url.protocol}//${url.host}`;
+
+              const response = await fetch(baseUrl, {
+                method: 'HEAD',
+                mode: 'no-cors',
+              });
+
+              // If we can reach the domain, assume the endpoint exists
+              setServerStatus('reachable');
+              setStatusMessage('Server endpoint detected');
+            } catch {
+              setServerStatus('unreachable');
+              setStatusMessage('Unable to reach server');
+            }
+          }
+        }
+      }
+    };
+
+    const debounceTimer = setTimeout(checkReachability, 500);
+    return () => clearTimeout(debounceTimer);
+  }, [serverUrl]);
 
   useEffect(() => {
     const firstClient = allClients[0];
@@ -178,52 +241,82 @@ export default function MCPQuickInstaller() {
             </div>
           </div>
 
-          <div className={styles.advancedSection}>
-            <button
-              className={styles.advancedToggle}
-              onClick={() => setShowAdvanced(!showAdvanced)}
-              type="button"
-            >
-              <span className={styles.advancedToggleIcon}>
-                {showAdvanced ? '▼' : '▶'}
-              </span>
-              Advanced Settings (Optional)
-            </button>
-
-            {showAdvanced && (
-              <div className={styles.advancedContent}>
-                <div className={styles.advancedInfo}>
-                  <p>
-                    <strong>Default:</strong> OAuth with Dynamic Client
-                    Registration (recommended)
-                  </p>
-                  <p>
-                    Only add a token below if you want to use bearer token
-                    authentication instead of OAuth.
-                  </p>
-                </div>
-                <div className={styles.formGroup}>
-                  <label htmlFor="auth-token">Bearer Token (Optional)</label>
-                  <input
-                    id="auth-token"
-                    type="password"
-                    value={authToken}
-                    onChange={(e) => setAuthToken(e.target.value)}
-                    placeholder="Leave empty for OAuth/DCR"
-                    className={styles.input}
-                  />
-                  <small className={styles.inputHelp}>
-                    {!selectedClient.requiresMcpRemoteForHttp
-                      ? 'Will be added as Authorization header'
-                      : 'Will be set as GLEAN_API_TOKEN environment variable'}
-                  </small>
-                </div>
-              </div>
-            )}
+          <div className={styles.formGroup}>
+            <label htmlFor="auth-method" className={styles.label}>
+              Authentication Method
+            </label>
+            <div className={styles.selectWrapper}>
+              <select
+                id="auth-method"
+                value={authMethod}
+                onChange={(e) =>
+                  setAuthMethod(e.target.value as 'oauth' | 'bearer')
+                }
+                className={styles.select}
+              >
+                <option value="oauth">OAuth (Recommended)</option>
+                <option value="bearer">Bearer Token</option>
+              </select>
+              <span className={styles.selectArrow}>▼</span>
+            </div>
+            <small className={styles.hint}>
+              {authMethod === 'oauth'
+                ? 'Uses Dynamic Client Registration for automatic authentication'
+                : 'Requires a manually generated API token from Glean'}
+            </small>
           </div>
 
+          {authMethod === 'bearer' && (
+            <div className={styles.formGroup}>
+              <label htmlFor="auth-token" className={styles.label}>
+                Bearer Token
+              </label>
+              <input
+                id="auth-token"
+                type="password"
+                value={authToken}
+                onChange={(e) => setAuthToken(e.target.value)}
+                placeholder="Enter your Glean API token"
+                className={styles.input}
+              />
+              <small className={styles.hint}>
+                {!selectedClient.requiresMcpRemoteForHttp
+                  ? 'Will be added as Authorization header'
+                  : 'Will be set as GLEAN_API_TOKEN environment variable'}
+              </small>
+            </div>
+          )}
+
           <div className={styles.serverUrlSection}>
-            <label className={styles.serverUrlLabel}>Server URL</label>
+            <div className={styles.serverUrlHeader}>
+              <label className={styles.serverUrlLabel}>Server URL</label>
+              {serverStatus !== 'idle' && (
+                <span className={styles.serverStatus}>
+                  {serverStatus === 'checking' && (
+                    <>
+                      <span className={styles.statusSpinner} />
+                      <span className={styles.statusText}>Checking...</span>
+                    </>
+                  )}
+                  {serverStatus === 'reachable' && (
+                    <>
+                      <span className={styles.statusIcon}>✓</span>
+                      <span className={styles.statusTextSuccess}>
+                        {statusMessage}
+                      </span>
+                    </>
+                  )}
+                  {serverStatus === 'unreachable' && (
+                    <>
+                      <span className={styles.statusIconError}>✗</span>
+                      <span className={styles.statusTextError}>
+                        {statusMessage}
+                      </span>
+                    </>
+                  )}
+                </span>
+              )}
+            </div>
             <div className={styles.serverUrlField}>
               <input
                 type="text"
@@ -278,7 +371,7 @@ export default function MCPQuickInstaller() {
               serverName={fullServerName}
               serverUrl={serverUrl}
               onInstall={handleInstallClick}
-              authToken={authToken}
+              authToken={authMethod === 'bearer' ? authToken : ''}
             />
           ) : (
             <Tabs className={styles.installTabs}>
@@ -306,12 +399,21 @@ export default function MCPQuickInstaller() {
                       <button
                         className={styles.copyConfigIcon}
                         onClick={() => {
+                          // Note: The configure-mcp-server CLI tool doesn't support --token flag
+                          // Users will need to manually add the --header flag to the generated config
                           const cliCommand =
                             selectedClientId === 'claude-code'
                               ? `claude mcp add ${fullServerName} ${serverUrl || 'https://[instance]-be.glean.com/mcp/[endpoint]'} --transport http`
-                              : `npx @gleanwork/configure-mcp-server remote --url ${serverUrl || 'https://[instance]-be.glean.com/mcp/[endpoint]'} --client ${selectedClientId}${authToken ? ` --token ${authToken}` : ''}`;
+                              : `npx @gleanwork/configure-mcp-server remote --url ${serverUrl || 'https://[instance]-be.glean.com/mcp/[endpoint]'} --client ${selectedClientId}`;
                           navigator.clipboard.writeText(cliCommand);
-                          toast.success('CLI command copied to clipboard!');
+
+                          if (authMethod === 'bearer' && authToken) {
+                            toast.info(
+                              'Note: Add the bearer token to your config manually after running the CLI command',
+                            );
+                          } else {
+                            toast.success('CLI command copied to clipboard!');
+                          }
                         }}
                         title="Copy CLI command"
                         type="button"
@@ -334,13 +436,13 @@ export default function MCPQuickInstaller() {
                           {selectedClientId === 'claude-code'
                             ? `claude mcp add ${fullServerName} ${serverUrl || 'https://[instance]-be.glean.com/mcp/[endpoint]'} --transport http`
                             : `npx @gleanwork/configure-mcp-server remote \\
-  --url ${serverUrl || 'https://[instance]-be.glean.com/mcp/[endpoint]'} \\
-  --client ${selectedClientId}${
-    authToken
-      ? ` \\
-  --token ${authToken}`
-      : ''
-  }`}
+   --url ${serverUrl || 'https://[instance]-be.glean.com/mcp/[endpoint]'} \\
+   --client ${selectedClientId}${
+     authMethod === 'bearer' && authToken
+       ? ` \\
+   --token ${authToken}`
+       : ''
+   }`}
                         </code>
                       </pre>
                     </div>
@@ -410,23 +512,69 @@ export default function MCPQuickInstaller() {
                               const builder = registry.createBuilder(
                                 selectedClient.id as ClientId,
                               );
-                              const config = builder.buildConfiguration({
+
+                              // Generate base config without auth token
+                              const baseConfig = builder.buildConfiguration({
                                 mode: 'remote',
                                 serverUrl,
                                 serverName: fullServerName,
-                                apiToken: authToken || undefined,
                                 includeWrapper: false,
                               });
 
                               if (selectedClient.id === 'goose') {
-                                return config;
+                                // Goose uses YAML and env vars for auth
+                                if (authMethod === 'bearer' && authToken) {
+                                  // Parse YAML, add env vars, return YAML
+                                  const lines = baseConfig.split('\n');
+                                  const envIndex = lines.findIndex((line) =>
+                                    line.includes('envs:'),
+                                  );
+                                  if (envIndex !== -1) {
+                                    lines.splice(
+                                      envIndex + 1,
+                                      0,
+                                      `    GLEAN_API_TOKEN: ${authToken}`,
+                                    );
+                                  } else {
+                                    // Add envs section before the last line
+                                    lines.splice(
+                                      lines.length - 1,
+                                      0,
+                                      '  envs:',
+                                      `    GLEAN_API_TOKEN: ${authToken}`,
+                                    );
+                                  }
+                                  return lines.join('\n');
+                                }
+                                return baseConfig;
                               }
 
                               try {
-                                const parsed = JSON.parse(config);
+                                const parsed = JSON.parse(baseConfig);
+                                const serverEntry = parsed[fullServerName];
+
+                                if (authMethod === 'bearer' && authToken) {
+                                  if (serverEntry.type === 'http') {
+                                    // For native HTTP clients, add Authorization header
+                                    serverEntry.headers = {
+                                      Authorization: `Bearer ${authToken}`,
+                                    };
+                                  } else if (
+                                    serverEntry.type === 'stdio' &&
+                                    serverEntry.args
+                                  ) {
+                                    // For stdio clients using mcp-remote to connect to remote HTTP server
+                                    // Add --header flag with Authorization header
+                                    serverEntry.args.push(
+                                      '--header',
+                                      `Authorization: Bearer ${authToken}`,
+                                    );
+                                  }
+                                }
+
                                 return JSON.stringify(parsed, null, 2);
                               } catch {
-                                return config;
+                                return baseConfig;
                               }
                             } catch (e) {
                               console.error('Config generation error:', e);
@@ -437,26 +585,30 @@ export default function MCPQuickInstaller() {
                                       ? {
                                           type: 'stdio',
                                           command: 'npx',
-                                          args: [
-                                            '-y',
-                                            'mcp-remote',
-                                            serverUrl ||
-                                              'https://[instance]-be.glean.com/mcp/[endpoint]',
-                                          ],
-                                          ...(authToken
-                                            ? {
-                                                env: {
-                                                  GLEAN_API_TOKEN: authToken,
-                                                },
-                                              }
-                                            : {}),
+                                          args:
+                                            authMethod === 'bearer' && authToken
+                                              ? [
+                                                  '-y',
+                                                  'mcp-remote',
+                                                  serverUrl ||
+                                                    'https://[instance]-be.glean.com/mcp/[endpoint]',
+                                                  '--header',
+                                                  `Authorization: Bearer ${authToken}`,
+                                                ]
+                                              : [
+                                                  '-y',
+                                                  'mcp-remote',
+                                                  serverUrl ||
+                                                    'https://[instance]-be.glean.com/mcp/[endpoint]',
+                                                ],
                                         }
                                       : {
                                           type: 'http',
                                           url:
                                             serverUrl ||
                                             'https://[instance]-be.glean.com/mcp/[endpoint]',
-                                          ...(authToken
+                                          ...(authMethod === 'bearer' &&
+                                          authToken
                                             ? {
                                                 headers: {
                                                   Authorization: `Bearer ${authToken}`,

@@ -100,15 +100,69 @@ export function InstallButton({
             throw new Error('Registry not loaded');
           }
           const builder = registry.createBuilder(client.id as ClientId);
-          const config = builder.buildConfiguration({
+
+          // Generate base config without auth
+          const baseConfig = builder.buildConfiguration({
             mode: 'remote',
             serverUrl,
             serverName,
-            apiToken: authToken || undefined,
             includeWrapper: false, // Use partial config without mcpServers wrapper
           });
 
-          await navigator.clipboard.writeText(config);
+          let finalConfig = baseConfig;
+
+          // Add auth token if provided
+          if (authToken) {
+            if (client.id === 'goose') {
+              // Goose uses YAML - add env vars
+              const lines = baseConfig.split('\n');
+              const envIndex = lines.findIndex((line) =>
+                line.includes('envs:'),
+              );
+              if (envIndex !== -1) {
+                lines.splice(
+                  envIndex + 1,
+                  0,
+                  `    GLEAN_API_TOKEN: ${authToken}`,
+                );
+              } else {
+                lines.splice(
+                  lines.length - 1,
+                  0,
+                  '  envs:',
+                  `    GLEAN_API_TOKEN: ${authToken}`,
+                );
+              }
+              finalConfig = lines.join('\n');
+            } else {
+              // JSON config
+              try {
+                const parsed = JSON.parse(baseConfig);
+                const serverEntry = parsed[serverName];
+
+                if (serverEntry.type === 'http') {
+                  // Native HTTP - add Authorization header
+                  serverEntry.headers = {
+                    Authorization: `Bearer ${authToken}`,
+                  };
+                } else if (serverEntry.type === 'stdio' && serverEntry.args) {
+                  // Stdio with mcp-remote connecting to remote HTTP server
+                  // Add --header flag with Authorization header
+                  serverEntry.args.push(
+                    '--header',
+                    `Authorization: Bearer ${authToken}`,
+                  );
+                }
+
+                finalConfig = JSON.stringify(parsed, null, 2);
+              } catch {
+                // If parsing fails, use original config
+                finalConfig = baseConfig;
+              }
+            }
+          }
+
+          await navigator.clipboard.writeText(finalConfig);
           toast.success('Configuration copied! Add it to your MCP settings.');
         } catch (error) {
           console.error('Error generating configuration:', error);
@@ -119,10 +173,15 @@ export function InstallButton({
               ...(client.requiresMcpRemoteForHttp
                 ? {
                     command: 'npx',
-                    args: ['-y', 'mcp-remote', serverUrl],
-                    ...(authToken
-                      ? { env: { GLEAN_API_TOKEN: authToken } }
-                      : {}),
+                    args: authToken
+                      ? [
+                          '-y',
+                          'mcp-remote',
+                          serverUrl,
+                          '--header',
+                          `Authorization: Bearer ${authToken}`,
+                        ]
+                      : ['-y', 'mcp-remote', serverUrl],
                   }
                 : {
                     url: serverUrl,

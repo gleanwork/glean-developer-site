@@ -162,13 +162,13 @@ describe('MCPQuickInstaller Component', () => {
       const select = screen.getByLabelText('Select Your Host Application');
       await user.selectOptions(select, 'cursor');
 
-      // Expand advanced settings
-      const advancedToggle = screen.getByText('Advanced Settings (Optional)');
-      await user.click(advancedToggle);
+      // Select Bearer Token auth method
+      const authMethodSelect = screen.getByLabelText('Authentication Method');
+      await user.selectOptions(authMethodSelect, 'bearer');
 
       // Enter token
       const tokenInput = screen.getByPlaceholderText(
-        'Leave empty for OAuth/DCR',
+        'Enter your Glean API token',
       );
       await user.type(tokenInput, 'test_token_123');
 
