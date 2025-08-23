@@ -82,6 +82,14 @@ export default function RemoteMCPContent() {
 
       <MCPQuickInstaller />
 
+      <Admonition type="tip">
+        <p>
+          For ChatGPT Connectors and Claude for Teams/Enterprise, administrator
+          setup is required. The configurator will provide instructions when you
+          select these hosts.
+        </p>
+      </Admonition>
+
       <hr />
 
       <h2>Common Use Cases</h2>
@@ -259,36 +267,6 @@ export default function RemoteMCPContent() {
           </Admonition>
         </TabItem>
       </Tabs>
-
-      <h2>Installation Methods</h2>
-
-      <p>
-        The configurator above provides everything you need to connect your host
-        application to Glean:
-      </p>
-
-      <ul>
-        <li>
-          <strong>Quick Setup:</strong> One-click installation for supported
-          hosts, or copy the configuration for manual setup
-        </li>
-        <li>
-          <strong>CLI Command:</strong> Generate the exact{' '}
-          <code>npx @gleanwork/configure-mcp-server</code> command for your host
-        </li>
-        <li>
-          <strong>Manual Config:</strong> Get the raw JSON/YAML configuration to
-          add to your host's settings
-        </li>
-      </ul>
-
-      <Admonition type="tip">
-        <p>
-          For ChatGPT Connectors and Claude for Teams/Enterprise, administrator
-          setup is required. The configurator will provide instructions when you
-          select these hosts.
-        </p>
-      </Admonition>
 
       <h2>Authentication</h2>
 
