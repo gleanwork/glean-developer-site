@@ -3,6 +3,7 @@ import {
   MCPConfigRegistry,
   type ClientId,
 } from '@gleanwork/mcp-config-schema/browser';
+import { buildMcpServerName } from '@gleanwork/mcp-config-schema';
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 import { Toaster, toast } from 'sonner';
@@ -73,7 +74,10 @@ export default function MCPQuickInstaller() {
     [instanceName, serverName],
   );
 
-  const fullServerName = useMemo(() => `glean_${serverName}`, [serverName]);
+  const fullServerName = useMemo(
+    () => buildMcpServerName({ serverName }),
+    [serverName],
+  );
 
   const handleClientChange = (clientId: string) => {
     setSelectedClientId(clientId);
