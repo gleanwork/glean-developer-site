@@ -1,8 +1,12 @@
 import { themes as prismThemes } from 'prism-react-renderer';
+import path from 'path';
 import type { Config } from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
 import type * as OpenApiPlugin from 'docusaurus-plugin-openapi-docs';
-const redirects = [...require('./redirects.json'), ...require('./permalinks.json')];
+const redirects = [
+  ...require('./redirects.json'),
+  ...require('./permalinks.json'),
+];
 import { customApiMdGenerator } from './scripts/generator/customMdGenerators';
 import { getBuildTimeFlags } from './src/utils/buildTimeFlags';
 import { flagsSnapshotToBooleans } from './src/lib/featureFlags';
@@ -48,7 +52,8 @@ const config: Config = {
           sidebarPath: './sidebars.ts',
           routeBasePath: '/',
           docItemComponent: '@theme/ApiItem',
-          editUrl: 'https://github.com/gleanwork/glean-developer-site/edit/main/',
+          editUrl:
+            'https://github.com/gleanwork/glean-developer-site/edit/main/',
         },
         theme: {
           customCss: './src/css/custom.css',
@@ -178,6 +183,27 @@ const config: Config = {
   } satisfies Preset.ThemeConfig,
 
   plugins: [
+    function (context, options) {
+      return {
+        name: 'webpack-config',
+        configureWebpack(config, isServer) {
+          return {
+            resolve: {
+              fallback: {
+                fs: false,
+                path: false,
+              },
+              alias: {
+                '@gleanwork/mcp-config-schema/browser': path.resolve(
+                  __dirname,
+                  'node_modules/@gleanwork/mcp-config-schema/dist/browser.js',
+                ),
+              },
+            },
+          };
+        },
+      };
+    },
     [
       '@docusaurus/plugin-client-redirects',
       {

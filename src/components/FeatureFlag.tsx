@@ -7,7 +7,11 @@ export type FeatureFlagProps = {
   fallback?: ReactNode;
 };
 
-export default function FeatureFlag({ flag, children, fallback = null }: FeatureFlagProps) {
+export default function FeatureFlag({
+  flag,
+  children,
+  fallback = null,
+}: FeatureFlagProps) {
   const { booleans } = useContext(FeatureFlagsContext);
 
   const enabled = useMemo(() => {
@@ -16,6 +20,3 @@ export default function FeatureFlag({ flag, children, fallback = null }: Feature
 
   return enabled ? <>{children}</> : <>{fallback}</>;
 }
-
-
-
