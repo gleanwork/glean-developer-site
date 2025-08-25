@@ -101,7 +101,7 @@ export default function Home() {
               </ul>
 
               <Link
-                className="button button--primary button--lg"
+                className={clsx('button button--primary button--lg', styles.mcpButton)}
                 to="guides/mcp"
               >
                 Learn more about Glean's MCP integration
