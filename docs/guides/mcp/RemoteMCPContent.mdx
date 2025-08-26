@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useContext } from 'react';
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 import { Icon } from '@site/src/components/Icons';
@@ -6,15 +6,22 @@ import MCPConfigurator from '@site/src/components/MCPConfigurator';
 import Card from '@site/src/components/Card';
 import Admonition from '@theme/Admonition';
 import { MCPConfigRegistry } from '@gleanwork/mcp-config-schema/browser';
+import { FeatureFlagsContext } from '@site/src/theme/Root';
 
 export const CompatibilityTable = () => {
   const registry = useMemo(() => new MCPConfigRegistry(), []);
+  const { booleans } = useContext(FeatureFlagsContext);
+  const showClaudeTeams = booleans['show-claude-teams'] || false;
 
   const compatibilityData = useMemo(() => {
     if (!registry) return [];
 
     const allClients = registry.getAllConfigs();
     return allClients
+      .filter(
+        (client) =>
+          showClaudeTeams || client.id !== 'claude-teams-enterprise',
+      )
       .map((client) => {
         const config = registry.getConfig(client.id);
 
@@ -41,7 +48,7 @@ export const CompatibilityTable = () => {
         };
       })
       .sort((a, b) => a.name.localeCompare(b.name));
-  }, [registry]);
+  }, [registry, showClaudeTeams]);
 
   return (
     <table>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useContext } from 'react';
 import {
   MCPConfigRegistry,
   type ClientId,
@@ -9,6 +9,7 @@ import TabItem from '@theme/TabItem';
 import { Toaster, toast } from 'sonner';
 import styles from './styles.module.css';
 import { InstallButton } from './InstallButton';
+import { FeatureFlagsContext } from '@site/src/theme/Root';
 
 const CLIENT_LOGOS: Record<string, string> = {
   'claude-code': '/img/mcp-clients/claude.png',
@@ -20,8 +21,6 @@ const CLIENT_LOGOS: Record<string, string> = {
   windsurf: '/img/mcp-clients/windsurf.png',
   chatgpt: '/img/mcp-clients/chatgpt.png',
 };
-
-const SHOW_CLAUDE_TEAMS = false;
 
 function getPlatform(): 'darwin' | 'linux' | 'win32' | undefined {
   const userAgent = navigator.userAgent.toLowerCase();
@@ -57,6 +56,8 @@ function getConfigPath(
 
 export default function MCPConfigurator() {
   const registry = useMemo(() => new MCPConfigRegistry(), []);
+  const { booleans } = useContext(FeatureFlagsContext);
+  const showClaudeTeams = booleans['show-claude-teams'] || false;
 
   const allClients = useMemo(() => {
     if (!registry) return [];
@@ -65,8 +66,7 @@ export default function MCPConfigurator() {
 
     return allRegistryClients
       .filter(
-        (client) =>
-          SHOW_CLAUDE_TEAMS || client.id !== 'claude-teams-enterprise',
+        (client) => showClaudeTeams || client.id !== 'claude-teams-enterprise',
       )
       .map((client) => ({
         ...client,
@@ -74,7 +74,7 @@ export default function MCPConfigurator() {
 
         isAdminRequired: client.localConfigSupport === 'none',
       }));
-  }, [registry]);
+  }, [registry, showClaudeTeams]);
 
   const [selectedClientId, setSelectedClientId] =
     useState<string>('claude-code');
