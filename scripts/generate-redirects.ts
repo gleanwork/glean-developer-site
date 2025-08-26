@@ -111,25 +111,27 @@ function findBestMatch(
 }
 
 function compressRedirects(
-  existingRedirects: Array<Redirect>, 
-  newRedirects: Array<Redirect>
+  existingRedirects: Array<Redirect>,
+  newRedirects: Array<Redirect>,
 ): Array<Redirect> {
   const allRedirects = [...existingRedirects, ...newRedirects];
-  
+
   // Create a map for quick lookups
   const redirectMap = new Map<string, string>();
-  allRedirects.forEach(redirect => {
+  allRedirects.forEach((redirect) => {
     redirectMap.set(redirect.from, redirect.to);
   });
 
   // Track which redirects came from mintlify
-  const mintlifyRedirects = new Set(existingRedirects.map(r => r.from));
+  const mintlifyRedirects = new Set(existingRedirects.map((r) => r.from));
 
   // Function to follow redirect chains
   function followChain(start: string, visited = new Set<string>()): string {
     if (visited.has(start)) {
       // Circular reference detected, return the start to avoid infinite loop
-      console.warn(`Circular redirect detected: ${Array.from(visited).join(' -> ')} -> ${start}`);
+      console.warn(
+        `Circular redirect detected: ${Array.from(visited).join(' -> ')} -> ${start}`,
+      );
       return start;
     }
 
@@ -143,22 +145,24 @@ function compressRedirects(
   }
 
   const finalRedirects: Array<Redirect> = [];
-  
+
   // Process all redirects
   for (const redirect of allRedirects) {
     const finalDestination = followChain(redirect.to);
     const wasCompressed = finalDestination !== redirect.to;
-    
+
     // Include redirect if:
     // 1. It's a new redirect (B->C from sitemap), OR
     // 2. It's a mintlify redirect that got compressed (A->B->C becomes A->C)
     if (!mintlifyRedirects.has(redirect.from) || wasCompressed) {
       finalRedirects.push({
         from: redirect.from,
-        to: finalDestination
+        to: finalDestination,
       });
     } else {
-      console.log(`🗑️  Excluding mintlify redirect (no compression): ${redirect.from} -> ${redirect.to}`);
+      console.log(
+        `🗑️  Excluding mintlify redirect (no compression): ${redirect.from} -> ${redirect.to}`,
+      );
     }
   }
 
@@ -177,7 +181,7 @@ function loadExistingRedirects(): Array<Redirect> {
     // Handle both formats: {source, destination} and {from, to}
     return data.map((item: any) => ({
       from: item.source || item.from,
-      to: item.destination || item.to
+      to: item.destination || item.to,
     }));
   } catch (error) {
     console.warn('Could not load existing redirects:', error);
@@ -227,7 +231,7 @@ async function generateRedirects(): Promise<void> {
     const newRedirects: Array<Redirect> = [];
 
     // Create a set of existing "from" paths to avoid duplicates
-    const existingFromPaths = new Set(existingRedirects.map(r => r.from));
+    const existingFromPaths = new Set(existingRedirects.map((r) => r.from));
 
     for (const oldPath of oldPaths) {
       // Skip if we already have a redirect for this path
@@ -252,12 +256,17 @@ async function generateRedirects(): Promise<void> {
       `\n✅ Generated ${newRedirects.length} new redirects out of ${oldPaths.length} old paths`,
     );
 
-    console.log(`📋 Total existing redirects: ${existingRedirects.length}, new redirects: ${newRedirects.length}`);
+    console.log(
+      `📋 Total existing redirects: ${existingRedirects.length}, new redirects: ${newRedirects.length}`,
+    );
 
     // Compress redirect chains
     console.log('\n🔄 Compressing redirect chains...');
-    const compressedRedirects = compressRedirects(existingRedirects, newRedirects);
-    
+    const compressedRedirects = compressRedirects(
+      existingRedirects,
+      newRedirects,
+    );
+
     console.log(`✅ Final redirects: ${compressedRedirects.length}`);
 
     const redirectsJson = JSON.stringify(compressedRedirects, null, 2);
@@ -274,7 +283,9 @@ async function generateRedirects(): Promise<void> {
     const totalInput = existingRedirects.length + newRedirects.length;
     const eliminated = totalInput - compressedRedirects.length;
     if (eliminated > 0) {
-      console.log(`\n🎯 Eliminated ${eliminated} redirects (compression + mintlify exclusion)`);
+      console.log(
+        `\n🎯 Eliminated ${eliminated} redirects (compression + mintlify exclusion)`,
+      );
     }
   } catch (error) {
     console.error('❌ Error generating redirects:', error);
