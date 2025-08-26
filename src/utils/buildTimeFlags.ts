@@ -25,6 +25,3 @@ export function getBuildTimeFlags(): FeatureFlagsMap {
   memo = flags;
   return flags;
 }
-
-
-

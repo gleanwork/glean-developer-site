@@ -29,28 +29,32 @@ function getFileHash(filePath) {
 
 function getDirectoryHash(dirPath) {
   if (!fs.existsSync(dirPath)) return null;
-  
-  const files = fs.readdirSync(dirPath)
-    .filter(file => file.endsWith('.md'))
+
+  const files = fs
+    .readdirSync(dirPath)
+    .filter((file) => file.endsWith('.md'))
     .sort();
-  
-  const fileHashes = files.map(file => {
+
+  const fileHashes = files.map((file) => {
     const filePath = path.join(dirPath, file);
     const stats = fs.statSync(filePath);
     const content = fs.readFileSync(filePath, 'utf-8');
     return {
       file,
       hash: crypto.createHash('md5').update(content).digest('hex'),
-      mtime: stats.mtime.toISOString()
+      mtime: stats.mtime.toISOString(),
     };
   });
-  
-  return crypto.createHash('md5').update(JSON.stringify(fileHashes)).digest('hex');
+
+  return crypto
+    .createHash('md5')
+    .update(JSON.stringify(fileHashes))
+    .digest('hex');
 }
 
 function loadCache() {
   if (!fs.existsSync(CACHE_FILE)) return null;
-  
+
   try {
     return JSON.parse(fs.readFileSync(CACHE_FILE, 'utf-8'));
   } catch (error) {
@@ -70,10 +74,10 @@ function saveCache(cache) {
 function hasChanges() {
   const cache = loadCache();
   if (!cache) return true;
-  
+
   const currentHash = getDirectoryHash(CHANGELOG_DIR);
   const outputExists = fs.existsSync(OUTPUT_FILE);
-  
+
   return !outputExists || cache.directoryHash !== currentHash;
 }
 
@@ -167,7 +171,9 @@ function generateChangelogData() {
   }
 
   if (!hasChanges()) {
-    console.log('No changes detected in changelog entries, skipping generation');
+    console.log(
+      'No changes detected in changelog entries, skipping generation',
+    );
     return;
   }
 
@@ -199,7 +205,10 @@ function generateChangelogData() {
     ...new Set(entries.flatMap((entry) => entry.categories)),
   ].sort();
 
-  const mostRecentDate = entries.length > 0 ? entries[0].date : new Date().toISOString().split('T')[0];
+  const mostRecentDate =
+    entries.length > 0
+      ? entries[0].date
+      : new Date().toISOString().split('T')[0];
 
   const changelogData = {
     entries,
