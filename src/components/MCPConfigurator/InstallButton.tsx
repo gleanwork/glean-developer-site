@@ -159,8 +159,6 @@ export function InstallButton({
           if (authToken) {
             if (client.id === 'goose') {
               // Goose uses YAML format with native HTTP (streamable_http)
-              // Note: As of Goose issue #2423, custom headers support is still pending
-              // For now, we'll add the header in the expected format for when it's supported
               const lines = baseConfig.split('\n');
 
               // Find the headers section (it should exist as empty object)

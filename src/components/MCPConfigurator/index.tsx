@@ -446,8 +446,6 @@ export default function MCPConfigurator() {
                       <button
                         className={styles.copyConfigIcon}
                         onClick={() => {
-                          // Note: The configure-mcp-server CLI tool doesn't support --token flag
-                          // Users will need to manually add the --header flag to the generated config
                           let cliCommand =
                             selectedClientId === 'claude-code'
                               ? `claude mcp add ${fullServerName} ${serverUrl || 'https://[instance]-be.glean.com/mcp/[endpoint]'} --transport http`
@@ -464,17 +462,7 @@ export default function MCPConfigurator() {
 
                           navigator.clipboard.writeText(cliCommand);
 
-                          if (
-                            authMethod === 'bearer' &&
-                            authToken &&
-                            selectedClientId !== 'claude-code'
-                          ) {
-                            toast.info(
-                              'Note: Add the bearer token to your config manually after running the CLI command',
-                            );
-                          } else {
-                            toast.success('CLI command copied to clipboard!');
-                          }
+                          toast.success('CLI command copied to clipboard!');
                         }}
                         title="Copy CLI command"
                         type="button"
