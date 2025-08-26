@@ -21,7 +21,7 @@ const CLIENT_LOGOS: Record<string, string> = {
   chatgpt: '/img/mcp-clients/chatgpt.png',
 };
 
-export default function MCPQuickInstaller() {
+export default function MCPConfigurator() {
   const registry = useMemo(() => new MCPConfigRegistry(), []);
 
   const allClients = useMemo(() => {
@@ -527,25 +527,50 @@ export default function MCPQuickInstaller() {
                               if (selectedClient.id === 'goose') {
                                 // Goose uses YAML and env vars for auth
                                 if (authMethod === 'bearer' && authToken) {
-                                  // Parse YAML, add env vars, return YAML
+                                  // Parse YAML, add env vars
                                   const lines = baseConfig.split('\n');
                                   const envIndex = lines.findIndex((line) =>
-                                    line.includes('envs:'),
+                                    line.trim().startsWith('envs:'),
                                   );
+
                                   if (envIndex !== -1) {
-                                    lines.splice(
-                                      envIndex + 1,
-                                      0,
-                                      `    GLEAN_API_TOKEN: ${authToken}`,
-                                    );
+                                    // Check if envs is empty object ({})
+                                    if (lines[envIndex].includes('{}')) {
+                                      // Replace the empty object with the env var
+                                      lines[envIndex] = '  envs:';
+                                      lines.splice(
+                                        envIndex + 1,
+                                        0,
+                                        `    GLEAN_API_TOKEN: ${authToken}`,
+                                      );
+                                    } else {
+                                      // Add to existing envs
+                                      lines.splice(
+                                        envIndex + 1,
+                                        0,
+                                        `    GLEAN_API_TOKEN: ${authToken}`,
+                                      );
+                                    }
                                   } else {
-                                    // Add envs section before the last line
-                                    lines.splice(
-                                      lines.length - 1,
-                                      0,
-                                      '  envs:',
-                                      `    GLEAN_API_TOKEN: ${authToken}`,
+                                    // Find where to insert envs (before env_keys or at end)
+                                    const envKeysIndex = lines.findIndex(
+                                      (line) =>
+                                        line.trim().startsWith('env_keys:'),
                                     );
+                                    if (envKeysIndex !== -1) {
+                                      lines.splice(
+                                        envKeysIndex,
+                                        0,
+                                        '  envs:',
+                                        `    GLEAN_API_TOKEN: ${authToken}`,
+                                      );
+                                    } else {
+                                      // Add at the end
+                                      lines.push(
+                                        '  envs:',
+                                        `    GLEAN_API_TOKEN: ${authToken}`,
+                                      );
+                                    }
                                   }
                                   return lines.join('\n');
                                 }
@@ -562,16 +587,24 @@ export default function MCPQuickInstaller() {
                                     serverEntry.headers = {
                                       Authorization: `Bearer ${authToken}`,
                                     };
-                                  } else if (
-                                    serverEntry.type === 'stdio' &&
-                                    serverEntry.args
-                                  ) {
-                                    // For stdio clients using mcp-remote to connect to remote HTTP server
-                                    // Add --header flag with Authorization header
-                                    serverEntry.args.push(
-                                      '--header',
-                                      `Authorization: Bearer ${authToken}`,
-                                    );
+                                  } else if (serverEntry.type === 'stdio' || (!serverEntry.type && serverEntry.command)) {
+                                    // For stdio clients using mcp-remote (with or without type field)
+                                    if (serverEntry.args) {
+                                      // Add --header flag with Authorization header
+                                      serverEntry.args.push(
+                                        '--header',
+                                        `Authorization: Bearer ${authToken}`,
+                                      );
+                                    } else if (serverEntry.command) {
+                                      // Some stdio configs might not have args array initially
+                                      serverEntry.args = [
+                                        '-y',
+                                        'mcp-remote',
+                                        serverUrl,
+                                        '--header',
+                                        `Authorization: Bearer ${authToken}`,
+                                      ];
+                                    }
                                   }
                                 }
 

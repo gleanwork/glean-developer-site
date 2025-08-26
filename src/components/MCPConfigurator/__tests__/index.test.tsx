@@ -2,7 +2,7 @@ import React from 'react';
 import { describe, test, expect, beforeEach, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import MCPQuickInstaller from '../index';
+import MCPConfigurator from '../index';
 
 // Mock sonner toast
 vi.mock('sonner', () => ({
@@ -21,7 +21,7 @@ describe('MCPQuickInstaller Component', () => {
 
   describe('Initial Rendering', () => {
     test('renders with default state', () => {
-      render(<MCPQuickInstaller />);
+      render(<MCPConfigurator />);
 
       expect(
         screen.getByText('Quick Install Remote MCP Server'),
@@ -40,7 +40,7 @@ describe('MCPQuickInstaller Component', () => {
 
     test('shows server URL when instance and endpoint are provided', async () => {
       const user = userEvent.setup();
-      render(<MCPQuickInstaller />);
+      render(<MCPConfigurator />);
 
       const instanceInput = screen.getByPlaceholderText(
         'Instance name (e.g., acme)',
@@ -58,7 +58,7 @@ describe('MCPQuickInstaller Component', () => {
   describe('Host Selection Behavior', () => {
     test('ChatGPT automatically sets server endpoint to "chatgpt"', async () => {
       const user = userEvent.setup();
-      render(<MCPQuickInstaller />);
+      render(<MCPConfigurator />);
 
       const select = screen.getByLabelText('Select Your Host Application');
       await user.selectOptions(select, 'chatgpt');
@@ -72,7 +72,7 @@ describe('MCPQuickInstaller Component', () => {
 
     test('switching from ChatGPT resets endpoint to "default"', async () => {
       const user = userEvent.setup();
-      render(<MCPQuickInstaller />);
+      render(<MCPConfigurator />);
 
       const select = screen.getByLabelText('Select Your Host Application');
 
@@ -96,7 +96,7 @@ describe('MCPQuickInstaller Component', () => {
   describe('Tab Display Logic', () => {
     test('admin-required hosts show no tabs', async () => {
       const user = userEvent.setup();
-      render(<MCPQuickInstaller />);
+      render(<MCPConfigurator />);
 
       const select = screen.getByLabelText('Select Your Host Application');
       await user.selectOptions(select, 'chatgpt');
@@ -111,7 +111,7 @@ describe('MCPQuickInstaller Component', () => {
 
     test('regular hosts show all three tabs', async () => {
       const user = userEvent.setup();
-      render(<MCPQuickInstaller />);
+      render(<MCPConfigurator />);
 
       const select = screen.getByLabelText('Select Your Host Application');
       await user.selectOptions(select, 'cursor');
@@ -126,7 +126,7 @@ describe('MCPQuickInstaller Component', () => {
   describe('CLI Command Generation', () => {
     test('generates correct CLI command with instance and token', async () => {
       const user = userEvent.setup();
-      render(<MCPQuickInstaller />);
+      render(<MCPConfigurator />);
 
       // Select Cursor
       const select = screen.getByLabelText('Select Your Host Application');
@@ -156,7 +156,7 @@ describe('MCPQuickInstaller Component', () => {
 
     test('includes token in CLI command when provided', async () => {
       const user = userEvent.setup();
-      render(<MCPQuickInstaller />);
+      render(<MCPConfigurator />);
 
       // Select a non-admin host first
       const select = screen.getByLabelText('Select Your Host Application');
@@ -193,7 +193,7 @@ describe('MCPQuickInstaller Component', () => {
   describe('Manual Configuration', () => {
     test('shows correct JSON config for stdio hosts', async () => {
       const user = userEvent.setup();
-      render(<MCPQuickInstaller />);
+      render(<MCPConfigurator />);
 
       // Select Windsurf (actual stdio host that uses mcp-remote)
       const select = screen.getByLabelText('Select Your Host Application');
@@ -224,7 +224,7 @@ describe('MCPQuickInstaller Component', () => {
 
     test('shows correct JSON config for http hosts', async () => {
       const user = userEvent.setup();
-      render(<MCPQuickInstaller />);
+      render(<MCPConfigurator />);
 
       // Select VS Code (http host)
       const select = screen.getByLabelText('Select Your Host Application');

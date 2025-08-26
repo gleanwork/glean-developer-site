@@ -117,21 +117,43 @@ export function InstallButton({
               // Goose uses YAML - add env vars
               const lines = baseConfig.split('\n');
               const envIndex = lines.findIndex((line) =>
-                line.includes('envs:'),
+                line.trim().startsWith('envs:'),
               );
+
               if (envIndex !== -1) {
-                lines.splice(
-                  envIndex + 1,
-                  0,
-                  `    GLEAN_API_TOKEN: ${authToken}`,
-                );
+                // Check if envs is empty object ({})
+                if (lines[envIndex].includes('{}')) {
+                  // Replace the empty object with the env var
+                  lines[envIndex] = '  envs:';
+                  lines.splice(
+                    envIndex + 1,
+                    0,
+                    `    GLEAN_API_TOKEN: ${authToken}`,
+                  );
+                } else {
+                  // Add to existing envs
+                  lines.splice(
+                    envIndex + 1,
+                    0,
+                    `    GLEAN_API_TOKEN: ${authToken}`,
+                  );
+                }
               } else {
-                lines.splice(
-                  lines.length - 1,
-                  0,
-                  '  envs:',
-                  `    GLEAN_API_TOKEN: ${authToken}`,
+                // Find where to insert envs (before env_keys or at end)
+                const envKeysIndex = lines.findIndex((line) =>
+                  line.trim().startsWith('env_keys:'),
                 );
+                if (envKeysIndex !== -1) {
+                  lines.splice(
+                    envKeysIndex,
+                    0,
+                    '  envs:',
+                    `    GLEAN_API_TOKEN: ${authToken}`,
+                  );
+                } else {
+                  // Add at the end
+                  lines.push('  envs:', `    GLEAN_API_TOKEN: ${authToken}`);
+                }
               }
               finalConfig = lines.join('\n');
             } else {
@@ -145,8 +167,8 @@ export function InstallButton({
                   serverEntry.headers = {
                     Authorization: `Bearer ${authToken}`,
                   };
-                } else if (serverEntry.type === 'stdio' && serverEntry.args) {
-                  // Stdio with mcp-remote connecting to remote HTTP server
+                } else if ((serverEntry.type === 'stdio' || (!serverEntry.type && serverEntry.command)) && serverEntry.args) {
+                  // Stdio with mcp-remote connecting to remote HTTP server (with or without type field)
                   // Add --header flag with Authorization header
                   serverEntry.args.push(
                     '--header',
