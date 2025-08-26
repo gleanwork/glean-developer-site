@@ -158,31 +158,30 @@ export function InstallButton({
           // Add auth token if provided
           if (authToken) {
             if (client.id === 'goose') {
-              // Goose uses YAML format but now supports native HTTP with headers
+              // Goose uses YAML format with native HTTP (streamable_http)
+              // Note: As of Goose issue #2423, custom headers support is still pending
+              // For now, we'll add the header in the expected format for when it's supported
               const lines = baseConfig.split('\n');
 
-              // Find the headers section or add it
+              // Find the headers section (it should exist as empty object)
               const headersIndex = lines.findIndex((line) =>
                 line.trim().startsWith('headers:'),
               );
 
               if (headersIndex !== -1) {
-                // Add to existing headers
-                lines.splice(
-                  headersIndex + 1,
-                  0,
-                  `    Authorization: Bearer ${authToken}`,
-                );
-              } else {
-                // Find where to insert headers (after url)
-                const urlIndex = lines.findIndex((line) =>
-                  line.trim().startsWith('url:'),
-                );
-                if (urlIndex !== -1) {
+                // Replace empty headers object with Authorization header
+                if (lines[headersIndex].includes('{}')) {
+                  lines[headersIndex] = '  headers:';
                   lines.splice(
-                    urlIndex + 1,
+                    headersIndex + 1,
                     0,
-                    '  headers:',
+                    `    Authorization: Bearer ${authToken}`,
+                  );
+                } else {
+                  // Add to existing headers
+                  lines.splice(
+                    headersIndex + 1,
+                    0,
                     `    Authorization: Bearer ${authToken}`,
                   );
                 }
