@@ -94,6 +94,10 @@ export function InstallButton({
         const claudeCommand = `claude mcp add ${serverName} ${serverUrl} --transport http`;
         await navigator.clipboard.writeText(claudeCommand);
         toast.success('CLI command copied! Run it in your terminal.');
+      } else if (client.id === 'vscode') {
+        // VSCode uses URLs for installation
+        await navigator.clipboard.writeText(serverUrl);
+        toast.success('Server URL copied! Use it to install the MCP server.');
       } else {
         try {
           if (!registry) {
@@ -269,6 +273,17 @@ export function InstallButton({
         subtitle: isClicked
           ? 'Command copied! Run: claude mcp add ...'
           : 'Click to copy `claude mcp add ...` command',
+        icon: logoElement,
+      };
+    }
+
+    // Special text for VSCode
+    if (client.id === 'vscode') {
+      return {
+        text: `Copy Server URL for ${client.displayName}`,
+        subtitle: isClicked
+          ? 'Server URL copied! Use it to install the MCP server.'
+          : 'Click to copy server URL',
         icon: logoElement,
       };
     }
