@@ -128,7 +128,10 @@ export function InstallButton({
     } else {
       // Special handling for Claude Code
       if (client.id === 'claude-code') {
-        const claudeCommand = `claude mcp add ${serverName} ${serverUrl} --transport http`;
+        let claudeCommand = `claude mcp add ${serverName} ${serverUrl} --transport http`;
+        if (authToken) {
+          claudeCommand += ` --header "Authorization: Bearer ${authToken}"`;
+        }
         await navigator.clipboard.writeText(claudeCommand);
         toast.success('CLI command copied! Run it in your terminal.');
       } else if (client.id === 'vscode') {
