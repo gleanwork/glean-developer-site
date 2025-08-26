@@ -23,6 +23,38 @@ const CLIENT_LOGOS: Record<string, string> = {
 
 const SHOW_CLAUDE_TEAMS = false;
 
+function getPlatform(): 'darwin' | 'linux' | 'win32' | undefined {
+  const userAgent = navigator.userAgent.toLowerCase();
+
+  if (userAgent.includes('mac')) {
+    return 'darwin';
+  } else if (userAgent.includes('win')) {
+    return 'win32';
+  } else if (userAgent.includes('linux')) {
+    return 'linux';
+  }
+
+  return undefined;
+}
+
+function getConfigPath(
+  client: any,
+  platform?: 'darwin' | 'linux' | 'win32',
+): string | undefined {
+  const currentPlatform = platform || getPlatform();
+  if (!currentPlatform || !client.configPath) {
+    return undefined;
+  }
+
+  const path = client.configPath[currentPlatform];
+  if (!path) {
+    return undefined;
+  }
+
+  // Replace environment variables with actual values for display
+  return path.replace('$HOME', '~').replace('%APPDATA%', '%APPDATA%');
+}
+
 export default function MCPConfigurator() {
   const registry = useMemo(() => new MCPConfigRegistry(), []);
 
@@ -504,6 +536,22 @@ export default function MCPConfigurator() {
                         </svg>
                       </button>
                     </div>
+                    {(() => {
+                      const configPath = getConfigPath(selectedClient);
+                      if (configPath) {
+                        return (
+                          <div className={styles.configPathInfo}>
+                            <small className={styles.configPathLabel}>
+                              Config file location:
+                            </small>
+                            <code className={styles.configPath}>
+                              {configPath}
+                            </code>
+                          </div>
+                        );
+                      }
+                      return null;
+                    })()}
                     <div className={styles.configCode}>
                       <pre>
                         <code>
@@ -599,7 +647,10 @@ export default function MCPConfigurator() {
                                     serverEntry.headers = {
                                       Authorization: `Bearer ${authToken}`,
                                     };
-                                  } else if (serverEntry.type === 'stdio' || (!serverEntry.type && serverEntry.command)) {
+                                  } else if (
+                                    serverEntry.type === 'stdio' ||
+                                    (!serverEntry.type && serverEntry.command)
+                                  ) {
                                     // For stdio clients using mcp-remote (with or without type field)
                                     if (serverEntry.args) {
                                       // Add --header flag with Authorization header

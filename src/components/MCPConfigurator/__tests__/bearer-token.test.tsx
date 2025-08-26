@@ -40,10 +40,12 @@ describe('Bearer Token Configuration', () => {
         fireEvent.change(tokenInput, { target: { value: 'test-token-123' } });
       });
 
-            await waitFor(() => {
-        const configCode = container.querySelector('[class*="configCode"] code');
+      await waitFor(() => {
+        const configCode = container.querySelector(
+          '[class*="configCode"] code',
+        );
         const config = configCode?.textContent;
-        
+
         expect(config).toContain('"Authorization": "Bearer test-token-123"');
         expect(config).toContain('"headers"');
       });
@@ -66,10 +68,12 @@ describe('Bearer Token Configuration', () => {
         fireEvent.change(tokenInput, { target: { value: 'test-token-456' } });
       });
 
-            await waitFor(() => {
-        const configCode = container.querySelector('[class*="configCode"] code');
+      await waitFor(() => {
+        const configCode = container.querySelector(
+          '[class*="configCode"] code',
+        );
         const config = configCode?.textContent;
-        
+
         expect(config).toContain('--header');
         expect(config).toContain('Authorization: Bearer test-token-456');
       });
@@ -92,20 +96,22 @@ describe('Bearer Token Configuration', () => {
         fireEvent.change(tokenInput, { target: { value: 'test-token-789' } });
       });
 
-            await waitFor(() => {
-        const configCode = container.querySelector('[class*="configCode"] code');
+      await waitFor(() => {
+        const configCode = container.querySelector(
+          '[class*="configCode"] code',
+        );
         const config = configCode?.textContent;
-        
+
         expect(config).toContain('GLEAN_API_TOKEN: test-token-789');
         expect(config).toContain('envs:');
       });
     });
   });
 
-    // CLI Command tests are covered in all-hosts-bearer.test.ts
+  // CLI Command tests are covered in all-hosts-bearer.test.ts
   // These tests validate the logic without UI interaction complexity
 
-    // Config Button tests are covered in all-hosts-bearer.test.ts
+  // Config Button tests are covered in all-hosts-bearer.test.ts
   // These tests validate the logic without UI interaction complexity
 
   describe('OAuth vs Bearer Token', () => {
@@ -121,10 +127,12 @@ describe('Bearer Token Configuration', () => {
       const authMethodSelect = getByLabelText('Authentication Method');
       expect(authMethodSelect).toHaveValue('oauth');
 
-            await waitFor(() => {
-        const configCode = container.querySelector('[class*="configCode"] code');
+      await waitFor(() => {
+        const configCode = container.querySelector(
+          '[class*="configCode"] code',
+        );
         const config = configCode?.textContent;
-        
+
         expect(config).not.toContain('Authorization');
         expect(config).not.toContain('headers');
         expect(config).not.toContain('--header');

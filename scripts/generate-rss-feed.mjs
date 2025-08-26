@@ -40,7 +40,9 @@ function generateRSSFeed() {
   }
 
   if (!needsRegeneration()) {
-    console.log('No changes detected in changelog data, skipping RSS generation');
+    console.log(
+      'No changes detected in changelog data, skipping RSS generation',
+    );
     return;
   }
 

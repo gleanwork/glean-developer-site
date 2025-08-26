@@ -22,7 +22,7 @@ describe('Bearer Token Handling for All Hosts', () => {
       '%s generates correct bearer token config',
       (hostId, configType, hasHeaders, hasHeaderFlag) => {
         const config = registry.getConfig(hostId as ClientId);
-        
+
         // Skip admin-required hosts
         if (config?.localConfigSupport === 'none') {
           return;
@@ -45,7 +45,7 @@ describe('Bearer Token Handling for All Hosts', () => {
           const envIndex = lines.findIndex((line) =>
             line.trim().startsWith('envs:'),
           );
-          
+
           if (envIndex !== -1 && lines[envIndex].includes('{}')) {
             lines[envIndex] = '  envs:';
             lines.splice(envIndex + 1, 0, `    GLEAN_API_TOKEN: ${authToken}`);
@@ -67,18 +67,25 @@ describe('Bearer Token Handling for All Hosts', () => {
             finalConfig = JSON.stringify(parsed, null, 2);
 
             expect(finalConfig).toContain('"headers"');
-            expect(finalConfig).toContain(`"Authorization": "Bearer ${authToken}"`);
+            expect(finalConfig).toContain(
+              `"Authorization": "Bearer ${authToken}"`,
+            );
           } else if (configType === 'stdio') {
             // Needs mcp-remote bridge
             if (serverEntry.type === 'stdio' || serverEntry.command) {
               if (!serverEntry.args) {
                 serverEntry.args = [];
               }
-              serverEntry.args.push('--header', `Authorization: Bearer ${authToken}`);
+              serverEntry.args.push(
+                '--header',
+                `Authorization: Bearer ${authToken}`,
+              );
               finalConfig = JSON.stringify(parsed, null, 2);
 
               expect(finalConfig).toContain('--header');
-              expect(finalConfig).toContain(`Authorization: Bearer ${authToken}`);
+              expect(finalConfig).toContain(
+                `Authorization: Bearer ${authToken}`,
+              );
             }
           }
         }
@@ -87,8 +94,8 @@ describe('Bearer Token Handling for All Hosts', () => {
 
     test('admin-required hosts (chatgpt, claude-teams) skip local config', () => {
       const adminHosts = ['chatgpt', 'claude-teams-enterprise'];
-      
-      adminHosts.forEach(hostId => {
+
+      adminHosts.forEach((hostId) => {
         const config = registry.getConfig(hostId as ClientId);
         expect(config?.localConfigSupport).toBe('none');
       });
@@ -98,8 +105,8 @@ describe('Bearer Token Handling for All Hosts', () => {
   describe('OAuth vs Bearer Token', () => {
     test('OAuth mode generates clean config without auth headers', () => {
       const hosts = ['cursor', 'vscode', 'claude-desktop', 'windsurf'];
-      
-      hosts.forEach(hostId => {
+
+      hosts.forEach((hostId) => {
         const config = registry.getConfig(hostId as ClientId);
         if (config?.localConfigSupport === 'none') return;
 
@@ -123,7 +130,7 @@ describe('Bearer Token Handling for All Hosts', () => {
   describe('CLI Command Generation', () => {
     test('claude-code uses special claude CLI command', () => {
       const expectedCommand = `claude mcp add ${serverName} ${serverUrl} --transport http`;
-      
+
       // The CLI command for claude-code doesn't include bearer token
       // as the claude CLI doesn't support it directly
       expect(expectedCommand).not.toContain('--token');
@@ -132,10 +139,10 @@ describe('Bearer Token Handling for All Hosts', () => {
 
     test('other hosts use configure-mcp-server CLI with --token flag', () => {
       const hosts = ['cursor', 'vscode', 'windsurf', 'goose'];
-      
-      hosts.forEach(hostId => {
+
+      hosts.forEach((hostId) => {
         const expectedCommand = `npx @gleanwork/configure-mcp-server remote --url ${serverUrl} --client ${hostId} --token ${authToken}`;
-        
+
         expect(expectedCommand).toContain('--token');
         expect(expectedCommand).toContain(authToken);
       });
@@ -145,8 +152,8 @@ describe('Bearer Token Handling for All Hosts', () => {
   describe('Config Button Behavior', () => {
     test('native HTTP hosts copy config with Authorization header', () => {
       const hosts = ['cursor', 'vscode'];
-      
-      hosts.forEach(hostId => {
+
+      hosts.forEach((hostId) => {
         const builder = registry.createBuilder(hostId as ClientId);
         const baseConfig = builder.buildConfiguration({
           mode: 'remote',
@@ -161,17 +168,19 @@ describe('Bearer Token Handling for All Hosts', () => {
         };
 
         const finalConfig = JSON.stringify(parsed, null, 2);
-        
+
         expect(parsed[serverName].type).toBe('http');
         expect(parsed[serverName].headers).toBeDefined();
-        expect(parsed[serverName].headers.Authorization).toBe(`Bearer ${authToken}`);
+        expect(parsed[serverName].headers.Authorization).toBe(
+          `Bearer ${authToken}`,
+        );
       });
     });
 
     test('stdio hosts copy config with --header flag', () => {
       const hosts = ['claude-desktop', 'windsurf'];
-      
-      hosts.forEach(hostId => {
+
+      hosts.forEach((hostId) => {
         const builder = registry.createBuilder(hostId as ClientId);
         const baseConfig = builder.buildConfiguration({
           mode: 'remote',
@@ -182,14 +191,16 @@ describe('Bearer Token Handling for All Hosts', () => {
 
         const parsed = JSON.parse(baseConfig);
         const serverEntry = parsed[serverName];
-        
+
         if (!serverEntry.args) {
           serverEntry.args = [];
         }
         serverEntry.args.push('--header', `Authorization: Bearer ${authToken}`);
 
         expect(serverEntry.args).toContain('--header');
-        expect(serverEntry.args).toContain(`Authorization: Bearer ${authToken}`);
+        expect(serverEntry.args).toContain(
+          `Authorization: Bearer ${authToken}`,
+        );
       });
     });
   });

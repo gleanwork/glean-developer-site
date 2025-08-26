@@ -5,9 +5,7 @@
       "slug": "oauth-for-remote-mcp-server-private-beta",
       "title": "OAuth for Remote MCP Server (Private Beta)",
       "date": "2025-06-17",
-      "categories": [
-        "MCP"
-      ],
+      "categories": ["MCP"],
       "summary": "<p>You can now use the Device Authorization Flow with the same SSO provider configured in Glean to authenticate users connecting their clients to Glean’s remote MCP server.</p>\n<p><a href=\"../guides/mcp/#configuration\">See here for setup instructions</a></p>\n<p>Note: OAuth is also enabled for the local MCP server.</p>\n",
       "fullContent": "<p>You can now use the Device Authorization Flow with the same SSO provider configured in Glean to authenticate users connecting their clients to Glean’s remote MCP server.</p>\n<p><a href=\"../guides/mcp/#configuration\">See here for setup instructions</a></p>\n<p>Note: OAuth is also enabled for the local MCP server.</p>\n",
       "hasTruncation": true,
@@ -18,9 +16,7 @@
       "slug": "go-api-client-v060",
       "title": "Go API Client v0.6.0",
       "date": "2025-06-06",
-      "categories": [
-        "SDK"
-      ],
+      "categories": ["SDK"],
       "summary": "<p><strong>Breaking Changes:</strong> Updated minimum go version to 1.22 (from 1.20).</p>\n",
       "fullContent": "<p><strong>Breaking Changes:</strong> Updated minimum go version to 1.22 (from 1.20).</p>\n",
       "hasTruncation": true,
@@ -31,9 +27,7 @@
       "slug": "updates-to-api-reference-code-snippets",
       "title": "Updates to API Reference Code Snippets",
       "date": "2025-05-31",
-      "categories": [
-        "Documentation"
-      ],
+      "categories": ["Documentation"],
       "summary": "<p>Update the generated code snippets that are displayed throughout the <a href=\"../api/client-api/activity/overview\">Client<br>API Reference</a> and <a href=\"../api/indexing-api/authentication-overview\">Indexing API<br>Reference</a> docs to include the<br>required <code>instance</code> parameter in the API client constructor.</p>\n",
       "fullContent": "<p>Update the generated code snippets that are displayed throughout the <a href=\"../api/client-api/activity/overview\">Client<br>API Reference</a> and <a href=\"../api/indexing-api/authentication-overview\">Indexing API<br>Reference</a> docs to include the<br>required <code>instance</code> parameter in the API client constructor.</p>\n",
       "hasTruncation": true,
@@ -44,9 +38,7 @@
       "slug": "python-api-client-v060-breaking-changes",
       "title": "Python API Client v0.6.0 - Breaking Changes",
       "date": "2025-05-31",
-      "categories": [
-        "SDK"
-      ],
+      "categories": ["SDK"],
       "summary": "<p>The Python API client now uses a namespaced package structure. All imports must be updated from <code>glean</code> to <code>glean.api_client</code>.</p>\n",
       "fullContent": "<p>The Python API client now uses a namespaced package structure. All imports must be updated from <code>glean</code> to <code>glean.api_client</code>.</p>\n<h3>What Changed</h3>\n<ul>\n<li>Import paths have changed from <code>from glean import ...</code> to <code>from glean.api_client import ...</code></li>\n<li>This affects all classes including <code>Glean</code>, <code>models</code>, and other API components</li>\n</ul>\n<h3>Migration Required</h3>\n<p><strong>Before:</strong></p>\n<pre><code class=\"language-python\">from glean import Glean\nfrom glean import models\nfrom glean.models import Something\nfrom glean.exceptions import ApiError\n</code></pre>\n<p><strong>After:</strong></p>\n<pre><code class=\"language-python\">from glean.api_client import Glean\nfrom glean.api_client import models\nfrom glean.api_client.models import Something\nfrom glean.api_client.exceptions import ApiError\n</code></pre>\n<h3>Automated Migration</h3>\n<p>Use <a href=\"https://ast-grep.github.io/\">ast-grep</a> (a structural search and replace tool) to automatically update your Python code:</p>\n<pre><code class=\"language-bash\"># First, update imports from glean submodules (e.g., from glean.models import ...)\nast-grep --update-all \\\n  --pattern &#39;from glean.$SUBMODULE import $$REST&#39; \\\n  --rewrite &#39;from glean.api_client.$SUBMODULE import $$REST&#39; \\\n  --lang python \\\n  path/to/your/code\n\n# Then, update basic glean imports (e.g., from glean import ...)\nast-grep --update-all \\\n  --pattern &#39;from glean import $$REST&#39; \\\n  --rewrite &#39;from glean.api_client import $$REST&#39; \\\n  --lang python \\\n  path/to/your/code\n\n# Finally, fix any double-nesting that may have occurred\nast-grep --update-all \\\n  --pattern &#39;from glean.api_client.api_client import $$REST&#39; \\\n  --rewrite &#39;from glean.api_client import $$REST&#39; \\\n  --lang python \\\n  path/to/your/code\n</code></pre>\n<h3>Manual Steps</h3>\n<p>If you prefer to update manually, search for all instances of:</p>\n<ul>\n<li><code>from glean import</code> → <code>from glean.api_client import</code></li>\n<li><code>from glean.</code> (but not glean.api_client) → <code>from glean.api_client.</code></li>\n</ul>\n<h3>Compatibility</h3>\n<ul>\n<li>This change affects all Python API client users</li>\n<li>No functional changes to the API itself - only import paths</li>\n<li>Ensure you&#39;re using the latest version of the Python API client package</li>\n</ul>\n",
       "hasTruncation": true,
@@ -57,9 +49,7 @@
       "slug": "run-agent-api-bug-fix-in-client-libraries",
       "title": "Run agent API bug fix in client libraries",
       "date": "2025-05-27",
-      "categories": [
-        "API"
-      ],
+      "categories": ["API"],
       "summary": "<p>We fixed a bug that caused <a href=\"../api/client-api/agents/create-and-wait-run\">Run Agent Wait for Output</a><br>(<code>/agents/run/wait</code>) to return empty responses when used with the API Client<br>libraries.</p>\n",
       "fullContent": "<p>We fixed a bug that caused <a href=\"../api/client-api/agents/create-and-wait-run\">Run Agent Wait for Output</a><br>(<code>/agents/run/wait</code>) to return empty responses when used with the API Client<br>libraries.</p>\n<p>We also fixed a bug that produced non-SSE compliant output when<br>using the <a href=\"../api/client-api/agents/create-and-stream-run\">Run Agent Stream Output</a><br>(<code>/agents/run/stream</code>) endpoint.</p>\n",
       "hasTruncation": true,
@@ -70,9 +60,7 @@
       "slug": "remote-mcp-server-private-beta",
       "title": "Remote MCP Server (private beta)",
       "date": "2025-05-27",
-      "categories": [
-        "MCP"
-      ],
+      "categories": ["MCP"],
       "summary": "<p>With Glean’s <a href=\"https://docs.anthropic.com/en/docs/agents-and-tools/remote-mcp-servers\">remote MCP server</a>,<br>you can access Glean from MCP clients like Claude Desktop, Cursor, or Goose.<br>Your Glean admin can enable a remote MCP server to expose Glean agents and<br>tools. To join the MCP Server private beta, contact your Glean account team.</p>\n",
       "fullContent": "<p>With Glean’s <a href=\"https://docs.anthropic.com/en/docs/agents-and-tools/remote-mcp-servers\">remote MCP server</a>,<br>you can access Glean from MCP clients like Claude Desktop, Cursor, or Goose.<br>Your Glean admin can enable a remote MCP server to expose Glean agents and<br>tools. To join the MCP Server private beta, contact your Glean account team.</p>\n",
       "hasTruncation": true,
@@ -83,9 +71,7 @@
       "slug": "new-features-for-tools-and-agents-api-api-clients-mcp",
       "title": "New Features for Tools and Agents API, API Clients, MCP",
       "date": "2025-05-23",
-      "categories": [
-        "API"
-      ],
+      "categories": ["API"],
       "summary": "<ul>\n<li>New Features:<ul>\n<li>Client REST API</li>\n<li>New endpoint: <code>GET /tools/list</code></li>\n<li>New endpoint: <code>POST /tools/call</code></li>\n<li>API Clients - Added support for the new <code>GET /tools/list</code> and <code>POST /tools/call</code> endpoints</li>\n<li>MCP Server - Support for configuring MCP server with VS Code</li>\n</ul>\n</li>\n</ul>\n",
       "fullContent": "<ul>\n<li><p>New Features:</p>\n<ul>\n<li>Client REST API</li>\n<li>New endpoint: <code>GET /tools/list</code></li>\n<li>New endpoint: <code>POST /tools/call</code></li>\n<li>API Clients - Added support for the new <code>GET /tools/list</code> and <code>POST /tools/call</code> endpoints</li>\n<li>MCP Server - Support for configuring MCP server with VS Code</li>\n</ul>\n</li>\n<li><p>Bug Fixes:</p>\n<ul>\n<li>Update the OpenAPI Spec to properly mark the request body as a required field. This change more<br>accurately reflects how the API handles the case when the request body is not<br>provided. This affects the following API endpoints: - <code>/rest/api/v1/search</code> - <code>/rest/api/v1/recommendations</code> - <code>rest/api/v1/adminsearch</code></li>\n</ul>\n</li>\n<li><p>Breaking Changes: - Python API client: the request body OpenAPI spec change resulted in a<br>breaking change due to language semantics. This aligns search method<br>parameters with other methods in the API.</p>\n</li>\n</ul>\n",
       "hasTruncation": true,
@@ -96,9 +82,7 @@
       "slug": "new-governance-and-agent-api-features",
       "title": "New Governance and Agent API Features",
       "date": "2025-05-16",
-      "categories": [
-        "API"
-      ],
+      "categories": ["API"],
       "summary": "<ul>\n<li>New Features:<ul>\n<li>Governance Admin API surface (10 endpoints)</li>\n<li>Policies: retrieve, update, list, create, download - Reports:<br>createReport, downloadReport, status</li>\n<li>Visibility Overrides: listVisibilityOverrides,<br>createVisibilityOverride</li>\n<li>Agent API brought up to the LangChain Agent-Protocol (Agents &amp; Runs stages)</li>\n<li>Retrieve an Agent <code>GET /agents/ {agent_id}</code></li>\n</ul>\n</li>\n</ul>\n",
       "fullContent": "<ul>\n<li><p>New Features:</p>\n<ul>\n<li>Governance Admin API surface (10 endpoints)</li>\n<li>Policies: retrieve, update, list, create, download - Reports:<br>createReport, downloadReport, status</li>\n<li>Visibility Overrides: listVisibilityOverrides,<br>createVisibilityOverride</li>\n<li>Agent API brought up to the LangChain Agent-Protocol (Agents &amp; Runs stages)</li>\n<li>Retrieve an Agent <code>GET /agents/ {agent_id}</code></li>\n</ul>\n</li>\n<li><p>Retrieve an Agent&#39;s Schemas <code>GET /agents/{agent_id}/schemas</code></p>\n<ul>\n<li>List Agents <code>POST /agents/search</code></li>\n<li>Run an Agent <code>POST /agents/runs/wait</code></li>\n<li>Run an Agent with streaming <code>POST /agents/runs/stream</code></li>\n</ul>\n</li>\n<li><p>Changes &amp; Enhancements:</p>\n<ul>\n<li>Replaced legacy alpha Run-Workflow endpoints with the standard Agent-Protocol equivalents (see above).</li>\n</ul>\n</li>\n<li><p>Breaking Changes:</p>\n<ul>\n<li>Governance endpoints introduce new permission scopes (<code>governance.read</code>,<br><code>governance.write</code>).</li>\n</ul>\n</li>\n<li><p>Bug Fixes:</p>\n<ul>\n<li>Python API client: resolved &quot;unclosed async coroutine&quot; warning in async transport.</li>\n<li>Language-Specific Notes:<ul>\n<li>Python 0.4.1 uploaded to PyPI, requires 3.8+.</li>\n<li>TypeScript 0.4.1 published, ESM, bundled types.</li>\n<li>Go module path <code>github.com/gleaninc/glean-sdk-go/v4.1.0</code>.</li>\n<li>Java 0.4.1 available on Maven Central (<code>com.glean:glean-sdk:0.4.1</code>).</li>\n</ul>\n</li>\n</ul>\n</li>\n</ul>\n",
       "hasTruncation": true,
@@ -109,9 +93,7 @@
       "slug": "official-api-clients-release",
       "title": "Official API Clients Release",
       "date": "2025-05-10",
-      "categories": [
-        "SDK"
-      ],
+      "categories": ["SDK"],
       "summary": "<ul>\n<li>Released official API clients for Glean in multiple languages, replacing the<br>previous OpenAPI Generator-based SDK approach</li>\n</ul>\n",
       "fullContent": "<ul>\n<li><p>Released official API clients for Glean in multiple languages, replacing the<br>previous OpenAPI Generator-based SDK approach</p>\n</li>\n<li><p>New API clients are now<br>available for:</p>\n<ul>\n<li><a href=\"https://github.com/gleanwork/api-client-python\">Python</a></li>\n<li><a href=\"https://github.com/gleanwork/api-client-typescript\">TypeScript</a></li>\n<li><a href=\"https://github.com/gleanwork/api-client-go\">Go</a></li>\n<li><a href=\"https://github.com/gleanwork/api-client-java\">Java</a></li>\n</ul>\n</li>\n<li><p>Updated documentation with new installation instructions and usage examples</p>\n</li>\n<li><p>Visit the <a href=\"../libraries/api-clients\">API Clients</a> page for more information</p>\n</li>\n</ul>\n",
       "hasTruncation": true,
@@ -122,9 +104,7 @@
       "slug": "new-indexing-api-endpoints-for-documents-and-troubleshooting copy",
       "title": "New Indexing API Endpoints for Documents and Troubleshooting",
       "date": "2025-05-02",
-      "categories": [
-        "API"
-      ],
+      "categories": ["API"],
       "summary": "<ul>\n<li><a href=\"../api/indexing-api/update-document-permissions\">/updatepermissions</a> Endpoint to update document permissions: Generally available</li>\n<li><a href=\"../api/indexing-api/beta-get-information-of-a-batch-of-documents\">/debug/datasource/documents</a> Troubleshooting endpoint for batch queries: Generally available</li>\n</ul>\n",
       "fullContent": "<ul>\n<li><a href=\"../api/indexing-api/update-document-permissions\">/updatepermissions</a> Endpoint to update document permissions: Generally available</li>\n<li><a href=\"../api/indexing-api/beta-get-information-of-a-batch-of-documents\">/debug/datasource/documents</a> Troubleshooting endpoint for batch queries: Generally available</li>\n</ul>\n",
       "hasTruncation": true,
@@ -135,9 +115,7 @@
       "slug": "deprecate-previous-processing-message-stream",
       "title": "Deprecate Previous Way of Processing Response Message Stream",
       "date": "2025-04-24",
-      "categories": [
-        "API"
-      ],
+      "categories": ["API"],
       "summary": "<p>In the /chat API, the previous way of processing the response message stream has been deprecated as a result of the launch of LLM-generated citations.</p>\n",
       "fullContent": "<p>In the /chat API, the previous way of processing the response message stream has been deprecated as a result of the launch of LLM-generated citations.</p>\n<ul>\n<li>LLM citations are interleaved within the response text fragments. Each fragment can have &quot;text&quot; or &quot;citation&quot;.</li>\n<li>If streaming is set to False, the response may still be broken up into across multiple fragments.</li>\n<li>The citations interleaved inside the response do not have reference ranges (start and end indices) or snippets as they used to.</li>\n<li>For backwards compatibility, we still return a chat message with citations at the end in the old format, except there will be no startIndex and no snippets.</li>\n</ul>\n<p>Visit the <a href=\"../guides/chat/chatbot-example\">Simple Chatbot Guide</a> for more information and an example.</p>\n",
       "hasTruncation": true,
@@ -148,9 +126,7 @@
       "slug": "deprecate-scioactas-header",
       "title": "Deprecate x-scio-actas Header in Favor of x-glean-actas",
       "date": "2025-04-18",
-      "categories": [
-        "API"
-      ],
+      "categories": ["API"],
       "summary": "<ul>\n<li>Deprecate X-Scio-ActAs in favor of X-Glean-AtAs. X-Scio-ActAs continues to<br>work, but it is an error to specify both headers.</li>\n</ul>\n",
       "fullContent": "<ul>\n<li>Deprecate X-Scio-ActAs in favor of X-Glean-AtAs. X-Scio-ActAs continues to<br>work, but it is an error to specify both headers.</li>\n</ul>\n",
       "hasTruncation": true,
@@ -161,9 +137,7 @@
       "slug": "debug-endpoints-permission-status",
       "title": "Debug Endpoints Permission Status",
       "date": "2025-04-17",
-      "categories": [
-        "API"
-      ],
+      "categories": ["API"],
       "summary": "<ul>\n<li><a href=\"../api/indexing-api/beta-get-document-information\"><code>/debug/{datasource}/document</code></a> - New response field <code>permissionIdentityStatus</code> under <code>status</code>: Provides information regarding upload status of users and groups specified in document permissions</li>\n</ul>\n",
       "fullContent": "<ul>\n<li><p><a href=\"../api/indexing-api/beta-get-document-information\"><code>/debug/{datasource}/document</code></a> - New response field <code>permissionIdentityStatus</code> under <code>status</code>: Provides information regarding upload status of users and groups specified in document permissions</p>\n</li>\n<li><p><a href=\"../api/indexing-api/beta-get-document-information\"><code>/debug/{datasource}/documents</code></a> - New response field <code>permissionIdentityStatus</code> under <code>status</code>: Provides information regarding upload status of users and groups specified in document permissions</p>\n</li>\n</ul>\n",
       "hasTruncation": true,
@@ -174,9 +148,7 @@
       "slug": "update-dev-site",
       "title": "Update Developer Site",
       "date": "2025-03-26",
-      "categories": [
-        "Website"
-      ],
+      "categories": ["Website"],
       "summary": "<p>The developer site has been updated with a new look, content, and features. Some new features include:</p>\n",
       "fullContent": "<p>The developer site has been updated with a new look, content, and features. Some new features include:</p>\n<ul>\n<li>This documentation site is now open sourced on <a href=\"https://github.com/gleanwork/glean-developer-site\">GitHub</a></li>\n<li>This changelog page, which gives you a single place to see updates across the platform.</li>\n<li>Ability to switch between light and dark mode.</li>\n<li>A new <a href=\"../libraries/api-clients\">API Clients</a> page with documentation for all available API Clients.</li>\n<li>A list of <a href=\"https://community.glean.com/\">community projects and resources</a> to help you get started with Glean.</li>\n<li>Each API has its own documentation page with detailed information.</li>\n</ul>\n<p>And much more...</p>\n",
       "hasTruncation": true,
@@ -187,9 +159,7 @@
       "slug": "add-mcp",
       "title": "Add MCP",
       "date": "2025-03-11",
-      "categories": [
-        "MCP"
-      ],
+      "categories": ["MCP"],
       "summary": "<p>Added a Model Context Protocol (MCP) server implementation for Glean&#39;s search and chat capabilities on <a href=\"https://github.com/gleanwork/mcp-server\">GitHub</a>.</p>\n<p>This server provides a standardized interface for AI models to interact with Glean&#39;s content search and conversational AI features through stdio communication.</p>\n<p>Visit the <a href=\"../guides/agents/overview\">Agents</a> for more information.</p>\n",
       "fullContent": "<p>Added a Model Context Protocol (MCP) server implementation for Glean&#39;s search and chat capabilities on <a href=\"https://github.com/gleanwork/mcp-server\">GitHub</a>.</p>\n<p>This server provides a standardized interface for AI models to interact with Glean&#39;s content search and conversational AI features through stdio communication.</p>\n<p>Visit the <a href=\"../guides/agents/overview\">Agents</a> for more information.</p>\n",
       "hasTruncation": true,
@@ -200,9 +170,7 @@
       "slug": "general-updates",
       "title": "LangChain SDK Release",
       "date": "2025-03-05",
-      "categories": [
-        "SDK"
-      ],
+      "categories": ["SDK"],
       "summary": "<p>Added LangChain SDK for Python on <a href=\"https://github.com/gleanwork/langchain-glean\">GitHub</a>. This SDK provides a simple interface for interacting with Glean&#39;s search and chat capabilities when using LangChain.</p>\n<p>Visit the <a href=\"../guides/agents/overview\">Agents</a> for more information.</p>\n",
       "fullContent": "<p>Added LangChain SDK for Python on <a href=\"https://github.com/gleanwork/langchain-glean\">GitHub</a>. This SDK provides a simple interface for interacting with Glean&#39;s search and chat capabilities when using LangChain.</p>\n<p>Visit the <a href=\"../guides/agents/overview\">Agents</a> for more information.</p>\n",
       "hasTruncation": true,
@@ -213,22 +181,14 @@
       "slug": "update-permissions",
       "title": "Update Permissions Endpoint",
       "date": "2025-02-19",
-      "categories": [
-        "API"
-      ],
+      "categories": ["API"],
       "summary": "<p><a href=\"../api/indexing-api/update-document-permissions\"><code>/updatepermissions</code></a></p>\n<ul>\n<li>Beta launch of new endpoint to update document permissions -<br>  <a href=\"../api/indexing-api/beta-get-information-of-a-batch-of-documents\"><code>/debug/[datasource]/documents</code></a></li>\n<li>Beta launch of new troubleshooting endpoint for batch queries</li>\n</ul>\n",
       "fullContent": "<p><a href=\"../api/indexing-api/update-document-permissions\"><code>/updatepermissions</code></a></p>\n<ul>\n<li>Beta launch of new endpoint to update document permissions -<br>  <a href=\"../api/indexing-api/beta-get-information-of-a-batch-of-documents\"><code>/debug/[datasource]/documents</code></a></li>\n<li>Beta launch of new troubleshooting endpoint for batch queries</li>\n</ul>\n",
       "hasTruncation": true,
       "fileName": "2025-02-19-update-permissions.md"
     }
   ],
-  "categories": [
-    "API",
-    "Documentation",
-    "MCP",
-    "SDK",
-    "Website"
-  ],
+  "categories": ["API", "Documentation", "MCP", "SDK", "Website"],
   "generatedAt": "2025-06-17T00:00:00.000Z",
   "totalEntries": 17
 }

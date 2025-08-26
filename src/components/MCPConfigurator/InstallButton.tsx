@@ -6,12 +6,49 @@ import {
 import { toast } from 'sonner';
 import styles from './styles.module.css';
 
+function getPlatform(): 'darwin' | 'linux' | 'win32' | undefined {
+  const userAgent = navigator.userAgent.toLowerCase();
+
+  if (userAgent.includes('mac')) {
+    return 'darwin';
+  } else if (userAgent.includes('win')) {
+    return 'win32';
+  } else if (userAgent.includes('linux')) {
+    return 'linux';
+  }
+
+  return undefined;
+}
+
+function getConfigPath(
+  client: any,
+  platform?: 'darwin' | 'linux' | 'win32',
+): string | undefined {
+  const currentPlatform = platform || getPlatform();
+  if (!currentPlatform || !client.configPath) {
+    return undefined;
+  }
+
+  const path = client.configPath[currentPlatform];
+  if (!path) {
+    return undefined;
+  }
+
+  // Replace environment variables with actual values for display
+  return path.replace('$HOME', '~').replace('%APPDATA%', '%APPDATA%');
+}
+
 interface ClientWithLogo {
   id: string;
   displayName: string;
   logo?: string;
   isAdminRequired?: boolean;
   requiresMcpRemoteForHttp?: boolean;
+  configPath?: {
+    darwin?: string;
+    linux?: string;
+    win32?: string;
+  };
 }
 
 interface InstallButtonProps {
@@ -171,7 +208,11 @@ export function InstallButton({
                   serverEntry.headers = {
                     Authorization: `Bearer ${authToken}`,
                   };
-                } else if ((serverEntry.type === 'stdio' || (!serverEntry.type && serverEntry.command)) && serverEntry.args) {
+                } else if (
+                  (serverEntry.type === 'stdio' ||
+                    (!serverEntry.type && serverEntry.command)) &&
+                  serverEntry.args
+                ) {
                   // Stdio with mcp-remote connecting to remote HTTP server (with or without type field)
                   // Add --header flag with Authorization header
                   serverEntry.args.push(
@@ -189,7 +230,12 @@ export function InstallButton({
           }
 
           await navigator.clipboard.writeText(finalConfig);
-          toast.success('Configuration copied! Add it to your MCP settings.');
+          const configPath = getConfigPath(client);
+          if (configPath) {
+            toast.success(`Configuration copied! Add it to ${configPath}`);
+          } else {
+            toast.success('Configuration copied! Add it to your MCP settings.');
+          }
         } catch (error) {
           console.error('Error generating configuration:', error);
 
@@ -220,7 +266,12 @@ export function InstallButton({
           await navigator.clipboard.writeText(
             JSON.stringify(fallbackConfig, null, 2),
           );
-          toast.success('Configuration copied! Add it to your MCP settings.');
+          const configPath = getConfigPath(client);
+          if (configPath) {
+            toast.success(`Configuration copied! Add it to ${configPath}`);
+          } else {
+            toast.success('Configuration copied! Add it to your MCP settings.');
+          }
         }
       }
     }
