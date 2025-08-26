@@ -21,6 +21,8 @@ const CLIENT_LOGOS: Record<string, string> = {
   chatgpt: '/img/mcp-clients/chatgpt.png',
 };
 
+const SHOW_CLAUDE_TEAMS = false;
+
 export default function MCPConfigurator() {
   const registry = useMemo(() => new MCPConfigRegistry(), []);
 
@@ -29,12 +31,17 @@ export default function MCPConfigurator() {
 
     const allRegistryClients = registry.getAllConfigs();
 
-    return allRegistryClients.map((client) => ({
-      ...client,
-      logo: CLIENT_LOGOS[client.id] || '/img/mcp-clients/default.png',
+    return allRegistryClients
+      .filter(
+        (client) =>
+          SHOW_CLAUDE_TEAMS || client.id !== 'claude-teams-enterprise',
+      )
+      .map((client) => ({
+        ...client,
+        logo: CLIENT_LOGOS[client.id] || '/img/mcp-clients/default.png',
 
-      isAdminRequired: client.localConfigSupport === 'none',
-    }));
+        isAdminRequired: client.localConfigSupport === 'none',
+      }));
   }, [registry]);
 
   const [selectedClientId, setSelectedClientId] =
