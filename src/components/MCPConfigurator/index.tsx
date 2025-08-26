@@ -604,50 +604,34 @@ export default function MCPConfigurator() {
                               });
 
                               if (selectedClient.id === 'goose') {
-                                // Goose uses YAML and env vars for auth
+                                // Goose uses YAML format but now supports native HTTP
                                 if (authMethod === 'bearer' && authToken) {
-                                  // Parse YAML, add env vars
+                                  // Parse YAML, add Authorization header for HTTP
                                   const lines = baseConfig.split('\n');
-                                  const envIndex = lines.findIndex((line) =>
-                                    line.trim().startsWith('envs:'),
+
+                                  // Find the headers section or add it
+                                  const headersIndex = lines.findIndex((line) =>
+                                    line.trim().startsWith('headers:'),
                                   );
 
-                                  if (envIndex !== -1) {
-                                    // Check if envs is empty object ({})
-                                    if (lines[envIndex].includes('{}')) {
-                                      // Replace the empty object with the env var
-                                      lines[envIndex] = '  envs:';
-                                      lines.splice(
-                                        envIndex + 1,
-                                        0,
-                                        `    GLEAN_API_TOKEN: ${authToken}`,
-                                      );
-                                    } else {
-                                      // Add to existing envs
-                                      lines.splice(
-                                        envIndex + 1,
-                                        0,
-                                        `    GLEAN_API_TOKEN: ${authToken}`,
-                                      );
-                                    }
-                                  } else {
-                                    // Find where to insert envs (before env_keys or at end)
-                                    const envKeysIndex = lines.findIndex(
-                                      (line) =>
-                                        line.trim().startsWith('env_keys:'),
+                                  if (headersIndex !== -1) {
+                                    // Add to existing headers
+                                    lines.splice(
+                                      headersIndex + 1,
+                                      0,
+                                      `    Authorization: Bearer ${authToken}`,
                                     );
-                                    if (envKeysIndex !== -1) {
+                                  } else {
+                                    // Find where to insert headers (after url)
+                                    const urlIndex = lines.findIndex((line) =>
+                                      line.trim().startsWith('url:'),
+                                    );
+                                    if (urlIndex !== -1) {
                                       lines.splice(
-                                        envKeysIndex,
+                                        urlIndex + 1,
                                         0,
-                                        '  envs:',
-                                        `    GLEAN_API_TOKEN: ${authToken}`,
-                                      );
-                                    } else {
-                                      // Add at the end
-                                      lines.push(
-                                        '  envs:',
-                                        `    GLEAN_API_TOKEN: ${authToken}`,
+                                        '  headers:',
+                                        `    Authorization: Bearer ${authToken}`,
                                       );
                                     }
                                   }
