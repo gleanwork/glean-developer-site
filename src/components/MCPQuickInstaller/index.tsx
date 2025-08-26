@@ -10,7 +10,6 @@ import { Toaster, toast } from 'sonner';
 import styles from './styles.module.css';
 import { InstallButton } from './InstallButton';
 
-// Map client IDs to logo paths
 const CLIENT_LOGOS: Record<string, string> = {
   'claude-code': '/img/mcp-clients/claude.png',
   vscode: '/img/mcp-clients/vscode.png',
@@ -668,7 +667,8 @@ export default function MCPQuickInstaller() {
               <p>
                 By default, authentication uses OAuth with Dynamic Client
                 Registration (DCR) - no API keys needed. If you need to use an
-                API token instead, expand the Advanced Settings above.
+                API token instead, chose the <strong>Bearer Token</strong>{' '}
+                option under <strong>Authentication Method</strong>.
               </p>
             </div>
           </details>

@@ -1,0 +1,205 @@
+import React, { useMemo } from 'react';
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import { Icon } from '@site/src/components/Icons';
+import MCPQuickInstaller from '@site/src/components/MCPQuickInstaller';
+import Card from '@site/src/components/Card';
+import Admonition from '@theme/Admonition';
+import { MCPConfigRegistry } from '@gleanwork/mcp-config-schema/browser';
+
+export const CompatibilityTable = () => {
+  const registry = useMemo(() => new MCPConfigRegistry(), []);
+
+  const compatibilityData = useMemo(() => {
+    if (!registry) return [];
+
+    const allClients = registry.getAllConfigs();
+    return allClients
+      .map((client) => {
+        const config = registry.getConfig(client.id);
+
+        let oauthMethod = 'Bridge';
+        if (config?.clientSupports === 'http') {
+          oauthMethod = 'Native';
+        }
+
+        let configMethod = 'Quick Installer / CLI / Manual';
+        if (client.id === 'chatgpt') {
+          configMethod = 'Custom Setup';
+        } else if (config?.localConfigSupport === 'none') {
+          configMethod = 'Administrator Setup';
+        } else if (config?.oneClick) {
+          configMethod = 'One-Click / CLI / Manual';
+        }
+
+        return {
+          name: client.displayName,
+          oauthMethod,
+          configMethod,
+          hasOneClick: !!config?.oneClick,
+          requiresBridge: config?.clientSupports === 'stdio-only',
+        };
+      })
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [registry]);
+
+  return (
+    <table>
+      <thead>
+        <tr>
+          <th>MCP Host Application</th>
+          <th>Recommended OAuth Method</th>
+          <th>Configuration Method</th>
+        </tr>
+      </thead>
+      <tbody>
+        {compatibilityData.map((client, index) => (
+          <tr key={index}>
+            <td>{client.name}</td>
+            <td>{client.oauthMethod}</td>
+            <td>{client.configMethod}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+};
+
+# <Icon name="mcp" iconSet="glean" className="inline" height="1.4rem" /> Model Context Protocol (MCP) Remote Server
+
+Connect your AI tools to Glean's enterprise knowledge base with zero setup required. The Remote MCP Server is built directly into Glean's platform, providing instant access to your organization's data through any MCP-compatible host application.
+
+<Admonition type="info" title="Public Beta">
+  <p>
+    The Remote MCP Server is available to all Glean customers during the
+    public beta period.
+  </p>
+  <p>
+    <strong>General Availability:</strong> Targeting late September 2025
+  </p>
+</Admonition>
+
+## Install Now
+
+Get started in seconds with our quick installer. Select your host application, enter your Glean instance details, and you're ready to go.
+
+<MCPQuickInstaller />
+
+<Admonition type="tip">
+  <p>
+    For ChatGPT Connectors and Claude for Teams/Enterprise, administrator
+    setup is required. The configurator will provide instructions when you
+    select these hosts.
+  </p>
+</Admonition>
+
+<details>
+  <summary>Host Compatibility</summary>
+
+  MCP host compatibility is evolving. The table below reflects validated support and our recommended OAuth method:
+
+  <CompatibilityTable />
+</details>
+
+---
+
+## Available Servers
+
+During the public beta, we're providing access to two specialized MCP servers:
+
+<Tabs>
+  <TabItem value="tools" label="Tools Server (Default)">
+    <p>
+      The Tools Server provides unified access to Glean's core
+      capabilities through a streamlined interface. This server is ideal
+      for general-purpose AI interactions with your enterprise data.
+    </p>
+
+    <p>
+      <strong>Endpoint:</strong>{' '}
+      <code>https://[instance]-be.glean.com/mcp/default</code>
+    </p>
+
+    <p>
+      <strong>Key Features:</strong>
+    </p>
+    <ul>
+      <li>Comprehensive search across all your connected data sources</li>
+      <li>Intelligent chat interactions with context awareness</li>
+      <li>Document retrieval and analysis</li>
+      <li>People directory search</li>
+    </ul>
+  </TabItem>
+
+  <TabItem value="chatgpt" label="ChatGPT Server">
+    <p>
+      The ChatGPT Server is optimized specifically for ChatGPT Connectors,
+      providing seamless integration with OpenAI's ChatGPT workspace.
+    </p>
+
+    <p>
+      <strong>Endpoint:</strong>{' '}
+      <code>https://[instance]-be.glean.com/mcp/chatgpt</code>
+    </p>
+
+    <p>
+      <strong>Key Features:</strong>
+    </p>
+    <ul>
+      <li>Conforms to OpenAI's MCP Connector spec</li>
+      <li>Optimized response formatting for ChatGPT</li>
+      <li>Automatic citation handling</li>
+      <li>Token-efficient responses</li>
+    </ul>
+
+    <Admonition type="tip">
+      <p>
+        Use this endpoint specifically for ChatGPT integrations as it uses
+        tool naming conventions that ChatGPT expects (e.g., "fetch"
+        instead of "read_document").
+      </p>
+    </Admonition>
+  </TabItem>
+</Tabs>
+
+## Core Capabilities
+
+The remote MCP server exposes a curated set of Glean capabilities as MCP tools. Administrators can enable defaults and optionally add more.
+
+### Default Tools
+
+- **`search`** (Search) - Search across your entire knowledge base
+- **`chat`** (Chat) - Interactive conversations with Glean's AI
+- **`read_document`** (Read Document) - Retrieve specific documents by ID or URL
+
+### Additional Configurable Tools
+
+- **`code_search`** (Code Search) - Search your codebase and repositories
+- **`employee_search`** (Employee Search) - Find people and expertise in your organization
+- **`gemini_web_search`** (Gemini Web Search) - Search the web with Gemini
+- **`gmail_search`** (Gmail Search) - Search Gmail messages and threads
+- **`meeting_lookup`** (Meeting Lookup) - Find meeting recordings and notes
+- **`outlook_search`** (Outlook Search) - Search Outlook emails and calendar
+- **`web_browser`** (Web Browser) - Browse and extract content from web pages
+
+---
+
+## Local MCP Server
+
+You can also use Glean's open-source stdio MCP server:
+
+<Card title="@gleanwork/local-mcp-server" icon="GitHub">
+  <p>
+    Self-hosted MCP server implementation for Glean's search and chat
+    capabilities
+  </p>
+  <p>
+    <a href="https://github.com/gleanwork/mcp-server">View on GitHub</a>
+  </p>
+</Card>
+
+The local server is ideal for:
+- Development and testing
+- Air-gapped environments
+- Custom tool development
+- Full control over the server infrastructure
