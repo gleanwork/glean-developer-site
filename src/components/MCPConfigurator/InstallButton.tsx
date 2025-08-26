@@ -3,6 +3,7 @@ import {
   MCPConfigRegistry,
   type ClientId,
 } from '@gleanwork/mcp-config-schema/browser';
+import { CLIENT } from '@gleanwork/mcp-config-schema';
 import { toast } from 'sonner';
 import styles from './styles.module.css';
 
@@ -95,9 +96,9 @@ export function InstallButton({
     if (client.isAdminRequired) {
       // Open documentation for admin-required hosts
       const docUrl =
-        client.id === 'chatgpt'
+        client.id === CLIENT.CHATGPT
           ? 'https://platform.openai.com/docs/mcp#connect-in-chatgpt'
-          : client.id === 'claude-teams-enterprise'
+          : client.id === CLIENT.CLAUDE_TEAMS_ENTERPRISE
             ? 'https://support.anthropic.com/en/articles/11724452-browsing-and-connecting-to-tools-from-the-directory'
             : 'https://developers.glean.com/docs/guides/mcp';
       window.open(docUrl, '_blank');
@@ -127,14 +128,14 @@ export function InstallButton({
       }
     } else {
       // Special handling for Claude Code
-      if (client.id === 'claude-code') {
+      if (client.id === CLIENT.CLAUDE_CODE) {
         let claudeCommand = `claude mcp add ${serverName} ${serverUrl} --transport http`;
         if (authToken) {
           claudeCommand += ` --header "Authorization: Bearer ${authToken}"`;
         }
         await navigator.clipboard.writeText(claudeCommand);
         toast.success('CLI command copied! Run it in your terminal.');
-      } else if (client.id === 'vscode') {
+      } else if (client.id === CLIENT.VSCODE) {
         // VSCode uses URLs for installation
         await navigator.clipboard.writeText(serverUrl);
         toast.success('Server URL copied! Use it to install the MCP server.');
@@ -157,7 +158,7 @@ export function InstallButton({
 
           // Add auth token if provided
           if (authToken) {
-            if (client.id === 'goose') {
+            if (client.id === CLIENT.GOOSE) {
               // Goose uses YAML format with native HTTP (streamable_http)
               const lines = baseConfig.split('\n');
 
@@ -306,7 +307,7 @@ export function InstallButton({
     }
 
     // Special text for Claude Code command
-    if (client.id === 'claude-code') {
+    if (client.id === CLIENT.CLAUDE_CODE) {
       return {
         text: `Get CLI Command for ${client.displayName}`,
         subtitle: isClicked
@@ -317,7 +318,7 @@ export function InstallButton({
     }
 
     // Special text for VSCode
-    if (client.id === 'vscode') {
+    if (client.id === CLIENT.VSCODE) {
       return {
         text: `Copy Server URL for ${client.displayName}`,
         subtitle: isClicked

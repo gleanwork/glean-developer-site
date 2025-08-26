@@ -3,6 +3,7 @@ import {
   MCPConfigRegistry,
   type ClientId,
 } from '@gleanwork/mcp-config-schema/browser';
+import { CLIENT } from '@gleanwork/mcp-config-schema';
 import { buildMcpServerName } from '@gleanwork/mcp-config-schema';
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
@@ -12,14 +13,14 @@ import { InstallButton } from './InstallButton';
 import { FeatureFlagsContext } from '@site/src/theme/Root';
 
 const CLIENT_LOGOS: Record<string, string> = {
-  'claude-code': '/img/mcp-clients/claude.png',
-  vscode: '/img/mcp-clients/vscode.png',
-  'claude-desktop': '/img/mcp-clients/claude.png',
-  'claude-teams-enterprise': '/img/mcp-clients/claude.png',
-  cursor: '/img/mcp-clients/cursor.png',
-  goose: '/img/mcp-clients/goose.png',
-  windsurf: '/img/mcp-clients/windsurf.png',
-  chatgpt: '/img/mcp-clients/chatgpt.png',
+  [CLIENT.CLAUDE_CODE]: '/img/mcp-clients/claude.png',
+  [CLIENT.VSCODE]: '/img/mcp-clients/vscode.png',
+  [CLIENT.CLAUDE_DESKTOP]: '/img/mcp-clients/claude.png',
+  [CLIENT.CLAUDE_TEAMS_ENTERPRISE]: '/img/mcp-clients/claude.png',
+  [CLIENT.CURSOR]: '/img/mcp-clients/cursor.png',
+  [CLIENT.GOOSE]: '/img/mcp-clients/goose.png',
+  [CLIENT.WINDSURF]: '/img/mcp-clients/windsurf.png',
+  [CLIENT.CHATGPT]: '/img/mcp-clients/chatgpt.png',
 };
 
 function getPlatform(): 'darwin' | 'linux' | 'win32' | undefined {
@@ -66,7 +67,8 @@ export default function MCPConfigurator() {
 
     return allRegistryClients
       .filter(
-        (client) => showClaudeTeams || client.id !== 'claude-teams-enterprise',
+        (client) =>
+          showClaudeTeams || client.id !== CLIENT.CLAUDE_TEAMS_ENTERPRISE,
       )
       .map((client) => ({
         ...client,
@@ -76,8 +78,9 @@ export default function MCPConfigurator() {
       }));
   }, [registry, showClaudeTeams]);
 
-  const [selectedClientId, setSelectedClientId] =
-    useState<string>('claude-code');
+  const [selectedClientId, setSelectedClientId] = useState<string>(
+    CLIENT.CLAUDE_CODE,
+  );
   const [instanceName, setInstanceName] = useState('');
   const [serverName, setServerName] = useState('default');
   const [authMethod, setAuthMethod] = useState<'oauth' | 'bearer'>('oauth');
@@ -120,7 +123,7 @@ export default function MCPConfigurator() {
   const handleClientChange = (clientId: string) => {
     setSelectedClientId(clientId);
 
-    if (clientId === 'chatgpt') {
+    if (clientId === CLIENT.CHATGPT) {
       setServerName('chatgpt');
     } else if (serverName === 'chatgpt') {
       setServerName('default');
@@ -193,7 +196,7 @@ export default function MCPConfigurator() {
     if (firstClient) {
       setSelectedClientId(firstClient.id);
 
-      if (firstClient.id === 'chatgpt') {
+      if (firstClient.id === CLIENT.CHATGPT) {
         setServerName('chatgpt');
       }
     }
@@ -276,15 +279,15 @@ export default function MCPConfigurator() {
                   onChange={(e) => setServerName(e.target.value)}
                   placeholder="Server (e.g., default)"
                   className={styles.input}
-                  disabled={selectedClientId === 'chatgpt'}
+                  disabled={selectedClientId === CLIENT.CHATGPT}
                 />
                 <small className={styles.hint}>MCP server endpoint</small>
               </div>
             </div>
           </div>
 
-          {selectedClientId !== 'chatgpt' &&
-            selectedClientId !== 'claude-teams-enterprise' && (
+          {selectedClientId !== CLIENT.CHATGPT &&
+            selectedClientId !== CLIENT.CLAUDE_TEAMS_ENTERPRISE && (
               <div className={styles.formGroup}>
                 <label htmlFor="auth-method" className={styles.label}>
                   Authentication Method
@@ -312,8 +315,8 @@ export default function MCPConfigurator() {
             )}
 
           {authMethod === 'bearer' &&
-            selectedClientId !== 'chatgpt' &&
-            selectedClientId !== 'claude-teams-enterprise' && (
+            selectedClientId !== CLIENT.CHATGPT &&
+            selectedClientId !== CLIENT.CLAUDE_TEAMS_ENTERPRISE && (
               <div className={styles.formGroup}>
                 <label htmlFor="auth-token" className={styles.label}>
                   Bearer Token
@@ -401,7 +404,7 @@ export default function MCPConfigurator() {
             </div>
             {selectedClient.isAdminRequired && serverUrl && (
               <small className={styles.serverUrlHelp}>
-                {selectedClient.id === 'chatgpt'
+                {selectedClient.id === CLIENT.CHATGPT
                   ? 'Share this URL with your ChatGPT administrator'
                   : 'Share this URL with your organization administrator'}
               </small>
@@ -447,13 +450,13 @@ export default function MCPConfigurator() {
                         className={styles.copyConfigIcon}
                         onClick={() => {
                           let cliCommand =
-                            selectedClientId === 'claude-code'
+                            selectedClientId === CLIENT.CLAUDE_CODE
                               ? `claude mcp add ${fullServerName} ${serverUrl || 'https://[instance]-be.glean.com/mcp/[endpoint]'} --transport http`
                               : `npx @gleanwork/configure-mcp-server remote --url ${serverUrl || 'https://[instance]-be.glean.com/mcp/[endpoint]'} --client ${selectedClientId}`;
 
                           // Add bearer token to Claude Code command if present
                           if (
-                            selectedClientId === 'claude-code' &&
+                            selectedClientId === CLIENT.CLAUDE_CODE &&
                             authMethod === 'bearer' &&
                             authToken
                           ) {
@@ -482,7 +485,7 @@ export default function MCPConfigurator() {
                     <div className={styles.cliCode}>
                       <pre>
                         <code>
-                          {selectedClientId === 'claude-code'
+                          {selectedClientId === CLIENT.CLAUDE_CODE
                             ? `claude mcp add ${fullServerName} ${serverUrl || 'https://[instance]-be.glean.com/mcp/[endpoint]'} --transport http${
                                 authMethod === 'bearer' && authToken
                                   ? ` \\
@@ -501,7 +504,7 @@ export default function MCPConfigurator() {
                       </pre>
                     </div>
                     <p className={styles.cliHelp}>
-                      {selectedClientId === 'claude-code'
+                      {selectedClientId === CLIENT.CLAUDE_CODE
                         ? `Run this command in your terminal to add the MCP server to ${selectedClient.displayName}.`
                         : `Run this command in your terminal to configure ${selectedClient.displayName} automatically.`}
                     </p>
@@ -591,7 +594,7 @@ export default function MCPConfigurator() {
                                 includeWrapper: false,
                               });
 
-                              if (selectedClient.id === 'goose') {
+                              if (selectedClient.id === CLIENT.GOOSE) {
                                 // Goose uses YAML format with native HTTP (streamable_http)
                                 // Note: As of Goose issue #2423, custom headers support is still pending
                                 // For now, we'll add the header in the expected format for when it's supported

@@ -6,6 +6,7 @@ import MCPConfigurator from '@site/src/components/MCPConfigurator';
 import Card from '@site/src/components/Card';
 import Admonition from '@theme/Admonition';
 import { MCPConfigRegistry } from '@gleanwork/mcp-config-schema/browser';
+import { CLIENT } from '@gleanwork/mcp-config-schema';
 import { FeatureFlagsContext } from '@site/src/theme/Root';
 
 export const CompatibilityTable = () => {
@@ -20,7 +21,7 @@ export const CompatibilityTable = () => {
     return allClients
       .filter(
         (client) =>
-          showClaudeTeams || client.id !== 'claude-teams-enterprise',
+          showClaudeTeams || client.id !== CLIENT.CLAUDE_TEAMS_ENTERPRISE,
       )
       .map((client) => {
         const config = registry.getConfig(client.id);
@@ -31,7 +32,7 @@ export const CompatibilityTable = () => {
         }
 
         let configMethod = 'Quick Installer / CLI / Manual';
-        if (client.id === 'chatgpt') {
+        if (client.id === CLIENT.CHATGPT) {
           configMethod = 'Custom Setup';
         } else if (config?.localConfigSupport === 'none') {
           configMethod = 'Administrator Setup';
