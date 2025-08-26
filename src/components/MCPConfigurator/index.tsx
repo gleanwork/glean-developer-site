@@ -244,51 +244,56 @@ export default function MCPConfigurator() {
             </div>
           </div>
 
-          <div className={styles.formGroup}>
-            <label htmlFor="auth-method" className={styles.label}>
-              Authentication Method
-            </label>
-            <div className={styles.selectWrapper}>
-              <select
-                id="auth-method"
-                value={authMethod}
-                onChange={(e) =>
-                  setAuthMethod(e.target.value as 'oauth' | 'bearer')
-                }
-                className={styles.select}
-              >
-                <option value="oauth">OAuth (Recommended)</option>
-                <option value="bearer">Bearer Token</option>
-              </select>
-              <span className={styles.selectArrow}>▼</span>
-            </div>
-            <small className={styles.hint}>
-              {authMethod === 'oauth'
-                ? 'Uses Dynamic Client Registration for automatic authentication'
-                : 'Requires a manually generated API token from Glean'}
-            </small>
-          </div>
+          {selectedClientId !== 'chatgpt' &&
+            selectedClientId !== 'claude-teams-enterprise' && (
+              <div className={styles.formGroup}>
+                <label htmlFor="auth-method" className={styles.label}>
+                  Authentication Method
+                </label>
+                <div className={styles.selectWrapper}>
+                  <select
+                    id="auth-method"
+                    value={authMethod}
+                    onChange={(e) =>
+                      setAuthMethod(e.target.value as 'oauth' | 'bearer')
+                    }
+                    className={styles.select}
+                  >
+                    <option value="oauth">OAuth (Recommended)</option>
+                    <option value="bearer">Bearer Token</option>
+                  </select>
+                  <span className={styles.selectArrow}>▼</span>
+                </div>
+                <small className={styles.hint}>
+                  {authMethod === 'oauth'
+                    ? 'Uses Dynamic Client Registration for automatic authentication'
+                    : 'Requires a manually generated API token from Glean'}
+                </small>
+              </div>
+            )}
 
-          {authMethod === 'bearer' && (
-            <div className={styles.formGroup}>
-              <label htmlFor="auth-token" className={styles.label}>
-                Bearer Token
-              </label>
-              <input
-                id="auth-token"
-                type="password"
-                value={authToken}
-                onChange={(e) => setAuthToken(e.target.value)}
-                placeholder="Enter your Glean API token"
-                className={styles.input}
-              />
-              <small className={styles.hint}>
-                {!selectedClient.requiresMcpRemoteForHttp
-                  ? 'Will be added as Authorization header'
-                  : 'Will be set as GLEAN_API_TOKEN environment variable'}
-              </small>
-            </div>
-          )}
+          {authMethod === 'bearer' &&
+            selectedClientId !== 'chatgpt' &&
+            selectedClientId !== 'claude-teams-enterprise' && (
+              <div className={styles.formGroup}>
+                <label htmlFor="auth-token" className={styles.label}>
+                  Bearer Token
+                </label>
+                <input
+                  id="auth-token"
+                  type="password"
+                  value={authToken}
+                  onChange={(e) => setAuthToken(e.target.value)}
+                  placeholder="Enter your Glean API token"
+                  className={styles.input}
+                />
+                <small className={styles.hint}>
+                  {!selectedClient.requiresMcpRemoteForHttp
+                    ? 'Will be added as Authorization header'
+                    : 'Will be set as GLEAN_API_TOKEN environment variable'}
+                </small>
+              </div>
+            )}
 
           <div className={styles.serverUrlSection}>
             <div className={styles.serverUrlHeader}>
