@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useContext } from 'react';
 import {
+  CLIENT,
   MCPConfigRegistry,
   type ClientId,
 } from '@gleanwork/mcp-config-schema/browser';
@@ -9,36 +10,77 @@ import TabItem from '@theme/TabItem';
 import { Toaster, toast } from 'sonner';
 import styles from './styles.module.css';
 import { InstallButton } from './InstallButton';
+import { FeatureFlagsContext } from '@site/src/theme/Root';
 
 const CLIENT_LOGOS: Record<string, string> = {
-  'claude-code': '/img/mcp-clients/claude.png',
-  vscode: '/img/mcp-clients/vscode.png',
-  'claude-desktop': '/img/mcp-clients/claude.png',
-  'claude-teams-enterprise': '/img/mcp-clients/claude.png',
-  cursor: '/img/mcp-clients/cursor.png',
-  goose: '/img/mcp-clients/goose.png',
-  windsurf: '/img/mcp-clients/windsurf.png',
-  chatgpt: '/img/mcp-clients/chatgpt.png',
+  [CLIENT.CLAUDE_CODE]: '/img/mcp-clients/claude.png',
+  [CLIENT.VSCODE]: '/img/mcp-clients/vscode.png',
+  [CLIENT.CLAUDE_DESKTOP]: '/img/mcp-clients/claude.png',
+  [CLIENT.CLAUDE_TEAMS_ENTERPRISE]: '/img/mcp-clients/claude.png',
+  [CLIENT.CURSOR]: '/img/mcp-clients/cursor.png',
+  [CLIENT.GOOSE]: '/img/mcp-clients/goose.png',
+  [CLIENT.WINDSURF]: '/img/mcp-clients/windsurf.png',
+  [CLIENT.CHATGPT]: '/img/mcp-clients/chatgpt.png',
 };
 
-export default function MCPQuickInstaller() {
+function getPlatform(): 'darwin' | 'linux' | 'win32' | undefined {
+  const userAgent = navigator.userAgent.toLowerCase();
+
+  if (userAgent.includes('mac')) {
+    return 'darwin';
+  } else if (userAgent.includes('win')) {
+    return 'win32';
+  } else if (userAgent.includes('linux')) {
+    return 'linux';
+  }
+
+  return undefined;
+}
+
+function getConfigPath(
+  client: any,
+  platform?: 'darwin' | 'linux' | 'win32',
+): string | undefined {
+  const currentPlatform = platform || getPlatform();
+  if (!currentPlatform || !client.configPath) {
+    return undefined;
+  }
+
+  const path = client.configPath[currentPlatform];
+  if (!path) {
+    return undefined;
+  }
+
+  // Replace environment variables with actual values for display
+  return path.replace('$HOME', '~').replace('%APPDATA%', '%APPDATA%');
+}
+
+export default function MCPConfigurator() {
   const registry = useMemo(() => new MCPConfigRegistry(), []);
+  const { booleans } = useContext(FeatureFlagsContext);
+  const showClaudeTeams = booleans['show-claude-teams'] || false;
 
   const allClients = useMemo(() => {
     if (!registry) return [];
 
     const allRegistryClients = registry.getAllConfigs();
 
-    return allRegistryClients.map((client) => ({
-      ...client,
-      logo: CLIENT_LOGOS[client.id] || '/img/mcp-clients/default.png',
+    return allRegistryClients
+      .filter(
+        (client) =>
+          showClaudeTeams || client.id !== CLIENT.CLAUDE_TEAMS_ENTERPRISE,
+      )
+      .map((client) => ({
+        ...client,
+        logo: CLIENT_LOGOS[client.id] || '/img/mcp-clients/default.png',
 
-      isAdminRequired: client.localConfigSupport === 'none',
-    }));
-  }, [registry]);
+        isAdminRequired: client.localConfigSupport === 'none',
+      }));
+  }, [registry, showClaudeTeams]);
 
-  const [selectedClientId, setSelectedClientId] =
-    useState<string>('claude-code');
+  const [selectedClientId, setSelectedClientId] = useState<string>(
+    CLIENT.CLAUDE_CODE,
+  );
   const [instanceName, setInstanceName] = useState('');
   const [serverName, setServerName] = useState('default');
   const [authMethod, setAuthMethod] = useState<'oauth' | 'bearer'>('oauth');
@@ -81,7 +123,7 @@ export default function MCPQuickInstaller() {
   const handleClientChange = (clientId: string) => {
     setSelectedClientId(clientId);
 
-    if (clientId === 'chatgpt') {
+    if (clientId === CLIENT.CHATGPT) {
       setServerName('chatgpt');
     } else if (serverName === 'chatgpt') {
       setServerName('default');
@@ -154,7 +196,7 @@ export default function MCPQuickInstaller() {
     if (firstClient) {
       setSelectedClientId(firstClient.id);
 
-      if (firstClient.id === 'chatgpt') {
+      if (firstClient.id === CLIENT.CHATGPT) {
         setServerName('chatgpt');
       }
     }
@@ -237,58 +279,63 @@ export default function MCPQuickInstaller() {
                   onChange={(e) => setServerName(e.target.value)}
                   placeholder="Server (e.g., default)"
                   className={styles.input}
-                  disabled={selectedClientId === 'chatgpt'}
+                  disabled={selectedClientId === CLIENT.CHATGPT}
                 />
                 <small className={styles.hint}>MCP server endpoint</small>
               </div>
             </div>
           </div>
 
-          <div className={styles.formGroup}>
-            <label htmlFor="auth-method" className={styles.label}>
-              Authentication Method
-            </label>
-            <div className={styles.selectWrapper}>
-              <select
-                id="auth-method"
-                value={authMethod}
-                onChange={(e) =>
-                  setAuthMethod(e.target.value as 'oauth' | 'bearer')
-                }
-                className={styles.select}
-              >
-                <option value="oauth">OAuth (Recommended)</option>
-                <option value="bearer">Bearer Token</option>
-              </select>
-              <span className={styles.selectArrow}>▼</span>
-            </div>
-            <small className={styles.hint}>
-              {authMethod === 'oauth'
-                ? 'Uses Dynamic Client Registration for automatic authentication'
-                : 'Requires a manually generated API token from Glean'}
-            </small>
-          </div>
+          {selectedClientId !== CLIENT.CHATGPT &&
+            selectedClientId !== CLIENT.CLAUDE_TEAMS_ENTERPRISE && (
+              <div className={styles.formGroup}>
+                <label htmlFor="auth-method" className={styles.label}>
+                  Authentication Method
+                </label>
+                <div className={styles.selectWrapper}>
+                  <select
+                    id="auth-method"
+                    value={authMethod}
+                    onChange={(e) =>
+                      setAuthMethod(e.target.value as 'oauth' | 'bearer')
+                    }
+                    className={styles.select}
+                  >
+                    <option value="oauth">OAuth (Recommended)</option>
+                    <option value="bearer">Bearer Token</option>
+                  </select>
+                  <span className={styles.selectArrow}>▼</span>
+                </div>
+                <small className={styles.hint}>
+                  {authMethod === 'oauth'
+                    ? 'Uses Dynamic Client Registration for automatic authentication'
+                    : 'Requires a manually generated API token from Glean'}
+                </small>
+              </div>
+            )}
 
-          {authMethod === 'bearer' && (
-            <div className={styles.formGroup}>
-              <label htmlFor="auth-token" className={styles.label}>
-                Bearer Token
-              </label>
-              <input
-                id="auth-token"
-                type="password"
-                value={authToken}
-                onChange={(e) => setAuthToken(e.target.value)}
-                placeholder="Enter your Glean API token"
-                className={styles.input}
-              />
-              <small className={styles.hint}>
-                {!selectedClient.requiresMcpRemoteForHttp
-                  ? 'Will be added as Authorization header'
-                  : 'Will be set as GLEAN_API_TOKEN environment variable'}
-              </small>
-            </div>
-          )}
+          {authMethod === 'bearer' &&
+            selectedClientId !== CLIENT.CHATGPT &&
+            selectedClientId !== CLIENT.CLAUDE_TEAMS_ENTERPRISE && (
+              <div className={styles.formGroup}>
+                <label htmlFor="auth-token" className={styles.label}>
+                  Bearer Token
+                </label>
+                <input
+                  id="auth-token"
+                  type="password"
+                  value={authToken}
+                  onChange={(e) => setAuthToken(e.target.value)}
+                  placeholder="Enter your Glean API token"
+                  className={styles.input}
+                />
+                <small className={styles.hint}>
+                  {!selectedClient.requiresMcpRemoteForHttp
+                    ? 'Will be added as Authorization header'
+                    : 'Will be set as GLEAN_API_TOKEN environment variable'}
+                </small>
+              </div>
+            )}
 
           <div className={styles.serverUrlSection}>
             <div className={styles.serverUrlHeader}>
@@ -357,7 +404,7 @@ export default function MCPQuickInstaller() {
             </div>
             {selectedClient.isAdminRequired && serverUrl && (
               <small className={styles.serverUrlHelp}>
-                {selectedClient.id === 'chatgpt'
+                {selectedClient.id === CLIENT.CHATGPT
                   ? 'Share this URL with your ChatGPT administrator'
                   : 'Share this URL with your organization administrator'}
               </small>
@@ -402,21 +449,23 @@ export default function MCPQuickInstaller() {
                       <button
                         className={styles.copyConfigIcon}
                         onClick={() => {
-                          // Note: The configure-mcp-server CLI tool doesn't support --token flag
-                          // Users will need to manually add the --header flag to the generated config
-                          const cliCommand =
-                            selectedClientId === 'claude-code'
+                          let cliCommand =
+                            selectedClientId === CLIENT.CLAUDE_CODE
                               ? `claude mcp add ${fullServerName} ${serverUrl || 'https://[instance]-be.glean.com/mcp/[endpoint]'} --transport http`
                               : `npx @gleanwork/configure-mcp-server remote --url ${serverUrl || 'https://[instance]-be.glean.com/mcp/[endpoint]'} --client ${selectedClientId}`;
+
+                          // Add bearer token to Claude Code command if present
+                          if (
+                            selectedClientId === CLIENT.CLAUDE_CODE &&
+                            authMethod === 'bearer' &&
+                            authToken
+                          ) {
+                            cliCommand += ` --header "Authorization: Bearer ${authToken}"`;
+                          }
+
                           navigator.clipboard.writeText(cliCommand);
 
-                          if (authMethod === 'bearer' && authToken) {
-                            toast.info(
-                              'Note: Add the bearer token to your config manually after running the CLI command',
-                            );
-                          } else {
-                            toast.success('CLI command copied to clipboard!');
-                          }
+                          toast.success('CLI command copied to clipboard!');
                         }}
                         title="Copy CLI command"
                         type="button"
@@ -436,8 +485,13 @@ export default function MCPQuickInstaller() {
                     <div className={styles.cliCode}>
                       <pre>
                         <code>
-                          {selectedClientId === 'claude-code'
-                            ? `claude mcp add ${fullServerName} ${serverUrl || 'https://[instance]-be.glean.com/mcp/[endpoint]'} --transport http`
+                          {selectedClientId === CLIENT.CLAUDE_CODE
+                            ? `claude mcp add ${fullServerName} ${serverUrl || 'https://[instance]-be.glean.com/mcp/[endpoint]'} --transport http${
+                                authMethod === 'bearer' && authToken
+                                  ? ` \\
+   --header "Authorization: Bearer ${authToken}"`
+                                  : ''
+                              }`
                             : `npx @gleanwork/configure-mcp-server remote \\
    --url ${serverUrl || 'https://[instance]-be.glean.com/mcp/[endpoint]'} \\
    --client ${selectedClientId}${
@@ -450,7 +504,7 @@ export default function MCPQuickInstaller() {
                       </pre>
                     </div>
                     <p className={styles.cliHelp}>
-                      {selectedClientId === 'claude-code'
+                      {selectedClientId === CLIENT.CLAUDE_CODE
                         ? `Run this command in your terminal to add the MCP server to ${selectedClient.displayName}.`
                         : `Run this command in your terminal to configure ${selectedClient.displayName} automatically.`}
                     </p>
@@ -492,6 +546,22 @@ export default function MCPQuickInstaller() {
                         </svg>
                       </button>
                     </div>
+                    {(() => {
+                      const configPath = getConfigPath(selectedClient);
+                      if (configPath) {
+                        return (
+                          <div className={styles.configPathInfo}>
+                            <small className={styles.configPathLabel}>
+                              Config file location:
+                            </small>
+                            <code className={styles.configPath}>
+                              {configPath}
+                            </code>
+                          </div>
+                        );
+                      }
+                      return null;
+                    })()}
                     <div className={styles.configCode}>
                       <pre>
                         <code>
@@ -524,28 +594,35 @@ export default function MCPQuickInstaller() {
                                 includeWrapper: false,
                               });
 
-                              if (selectedClient.id === 'goose') {
-                                // Goose uses YAML and env vars for auth
+                              if (selectedClient.id === CLIENT.GOOSE) {
+                                // Goose uses YAML format with native HTTP (streamable_http)
+                                // Note: As of Goose issue #2423, custom headers support is still pending
+                                // For now, we'll add the header in the expected format for when it's supported
                                 if (authMethod === 'bearer' && authToken) {
-                                  // Parse YAML, add env vars, return YAML
                                   const lines = baseConfig.split('\n');
-                                  const envIndex = lines.findIndex((line) =>
-                                    line.includes('envs:'),
+
+                                  // Find the headers section (it should exist as empty object)
+                                  const headersIndex = lines.findIndex((line) =>
+                                    line.trim().startsWith('headers:'),
                                   );
-                                  if (envIndex !== -1) {
-                                    lines.splice(
-                                      envIndex + 1,
-                                      0,
-                                      `    GLEAN_API_TOKEN: ${authToken}`,
-                                    );
-                                  } else {
-                                    // Add envs section before the last line
-                                    lines.splice(
-                                      lines.length - 1,
-                                      0,
-                                      '  envs:',
-                                      `    GLEAN_API_TOKEN: ${authToken}`,
-                                    );
+
+                                  if (headersIndex !== -1) {
+                                    // Replace empty headers object with Authorization header
+                                    if (lines[headersIndex].includes('{}')) {
+                                      lines[headersIndex] = '  headers:';
+                                      lines.splice(
+                                        headersIndex + 1,
+                                        0,
+                                        `    Authorization: Bearer ${authToken}`,
+                                      );
+                                    } else {
+                                      // Add to existing headers
+                                      lines.splice(
+                                        headersIndex + 1,
+                                        0,
+                                        `    Authorization: Bearer ${authToken}`,
+                                      );
+                                    }
                                   }
                                   return lines.join('\n');
                                 }
@@ -563,15 +640,26 @@ export default function MCPQuickInstaller() {
                                       Authorization: `Bearer ${authToken}`,
                                     };
                                   } else if (
-                                    serverEntry.type === 'stdio' &&
-                                    serverEntry.args
+                                    serverEntry.type === 'stdio' ||
+                                    (!serverEntry.type && serverEntry.command)
                                   ) {
-                                    // For stdio clients using mcp-remote to connect to remote HTTP server
-                                    // Add --header flag with Authorization header
-                                    serverEntry.args.push(
-                                      '--header',
-                                      `Authorization: Bearer ${authToken}`,
-                                    );
+                                    // For stdio clients using mcp-remote (with or without type field)
+                                    if (serverEntry.args) {
+                                      // Add --header flag with Authorization header
+                                      serverEntry.args.push(
+                                        '--header',
+                                        `Authorization: Bearer ${authToken}`,
+                                      );
+                                    } else if (serverEntry.command) {
+                                      // Some stdio configs might not have args array initially
+                                      serverEntry.args = [
+                                        '-y',
+                                        'mcp-remote',
+                                        serverUrl,
+                                        '--header',
+                                        `Authorization: Bearer ${authToken}`,
+                                      ];
+                                    }
                                   }
                                 }
 

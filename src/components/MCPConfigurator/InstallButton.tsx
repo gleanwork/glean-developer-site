@@ -3,8 +3,41 @@ import {
   MCPConfigRegistry,
   type ClientId,
 } from '@gleanwork/mcp-config-schema/browser';
+import { CLIENT } from '@gleanwork/mcp-config-schema';
 import { toast } from 'sonner';
 import styles from './styles.module.css';
+
+function getPlatform(): 'darwin' | 'linux' | 'win32' | undefined {
+  const userAgent = navigator.userAgent.toLowerCase();
+
+  if (userAgent.includes('mac')) {
+    return 'darwin';
+  } else if (userAgent.includes('win')) {
+    return 'win32';
+  } else if (userAgent.includes('linux')) {
+    return 'linux';
+  }
+
+  return undefined;
+}
+
+function getConfigPath(
+  client: any,
+  platform?: 'darwin' | 'linux' | 'win32',
+): string | undefined {
+  const currentPlatform = platform || getPlatform();
+  if (!currentPlatform || !client.configPath) {
+    return undefined;
+  }
+
+  const path = client.configPath[currentPlatform];
+  if (!path) {
+    return undefined;
+  }
+
+  // Replace environment variables with actual values for display
+  return path.replace('$HOME', '~').replace('%APPDATA%', '%APPDATA%');
+}
 
 interface ClientWithLogo {
   id: string;
@@ -12,6 +45,11 @@ interface ClientWithLogo {
   logo?: string;
   isAdminRequired?: boolean;
   requiresMcpRemoteForHttp?: boolean;
+  configPath?: {
+    darwin?: string;
+    linux?: string;
+    win32?: string;
+  };
 }
 
 interface InstallButtonProps {
@@ -58,9 +96,9 @@ export function InstallButton({
     if (client.isAdminRequired) {
       // Open documentation for admin-required hosts
       const docUrl =
-        client.id === 'chatgpt'
+        client.id === CLIENT.CHATGPT
           ? 'https://platform.openai.com/docs/mcp#connect-in-chatgpt'
-          : client.id === 'claude-teams-enterprise'
+          : client.id === CLIENT.CLAUDE_TEAMS_ENTERPRISE
             ? 'https://support.anthropic.com/en/articles/11724452-browsing-and-connecting-to-tools-from-the-directory'
             : 'https://developers.glean.com/docs/guides/mcp';
       window.open(docUrl, '_blank');
@@ -90,10 +128,17 @@ export function InstallButton({
       }
     } else {
       // Special handling for Claude Code
-      if (client.id === 'claude-code') {
-        const claudeCommand = `claude mcp add ${serverName} ${serverUrl} --transport http`;
+      if (client.id === CLIENT.CLAUDE_CODE) {
+        let claudeCommand = `claude mcp add ${serverName} ${serverUrl} --transport http`;
+        if (authToken) {
+          claudeCommand += ` --header "Authorization: Bearer ${authToken}"`;
+        }
         await navigator.clipboard.writeText(claudeCommand);
         toast.success('CLI command copied! Run it in your terminal.');
+      } else if (client.id === CLIENT.VSCODE) {
+        // VSCode uses URLs for installation
+        await navigator.clipboard.writeText(serverUrl);
+        toast.success('Server URL copied! Use it to install the MCP server.');
       } else {
         try {
           if (!registry) {
@@ -113,25 +158,32 @@ export function InstallButton({
 
           // Add auth token if provided
           if (authToken) {
-            if (client.id === 'goose') {
-              // Goose uses YAML - add env vars
+            if (client.id === CLIENT.GOOSE) {
+              // Goose uses YAML format with native HTTP (streamable_http)
               const lines = baseConfig.split('\n');
-              const envIndex = lines.findIndex((line) =>
-                line.includes('envs:'),
+
+              // Find the headers section (it should exist as empty object)
+              const headersIndex = lines.findIndex((line) =>
+                line.trim().startsWith('headers:'),
               );
-              if (envIndex !== -1) {
-                lines.splice(
-                  envIndex + 1,
-                  0,
-                  `    GLEAN_API_TOKEN: ${authToken}`,
-                );
-              } else {
-                lines.splice(
-                  lines.length - 1,
-                  0,
-                  '  envs:',
-                  `    GLEAN_API_TOKEN: ${authToken}`,
-                );
+
+              if (headersIndex !== -1) {
+                // Replace empty headers object with Authorization header
+                if (lines[headersIndex].includes('{}')) {
+                  lines[headersIndex] = '  headers:';
+                  lines.splice(
+                    headersIndex + 1,
+                    0,
+                    `    Authorization: Bearer ${authToken}`,
+                  );
+                } else {
+                  // Add to existing headers
+                  lines.splice(
+                    headersIndex + 1,
+                    0,
+                    `    Authorization: Bearer ${authToken}`,
+                  );
+                }
               }
               finalConfig = lines.join('\n');
             } else {
@@ -145,8 +197,12 @@ export function InstallButton({
                   serverEntry.headers = {
                     Authorization: `Bearer ${authToken}`,
                   };
-                } else if (serverEntry.type === 'stdio' && serverEntry.args) {
-                  // Stdio with mcp-remote connecting to remote HTTP server
+                } else if (
+                  (serverEntry.type === 'stdio' ||
+                    (!serverEntry.type && serverEntry.command)) &&
+                  serverEntry.args
+                ) {
+                  // Stdio with mcp-remote connecting to remote HTTP server (with or without type field)
                   // Add --header flag with Authorization header
                   serverEntry.args.push(
                     '--header',
@@ -163,7 +219,12 @@ export function InstallButton({
           }
 
           await navigator.clipboard.writeText(finalConfig);
-          toast.success('Configuration copied! Add it to your MCP settings.');
+          const configPath = getConfigPath(client);
+          if (configPath) {
+            toast.success(`Configuration copied! Add it to ${configPath}`);
+          } else {
+            toast.success('Configuration copied! Add it to your MCP settings.');
+          }
         } catch (error) {
           console.error('Error generating configuration:', error);
 
@@ -194,7 +255,12 @@ export function InstallButton({
           await navigator.clipboard.writeText(
             JSON.stringify(fallbackConfig, null, 2),
           );
-          toast.success('Configuration copied! Add it to your MCP settings.');
+          const configPath = getConfigPath(client);
+          if (configPath) {
+            toast.success(`Configuration copied! Add it to ${configPath}`);
+          } else {
+            toast.success('Configuration copied! Add it to your MCP settings.');
+          }
         }
       }
     }
@@ -241,12 +307,23 @@ export function InstallButton({
     }
 
     // Special text for Claude Code command
-    if (client.id === 'claude-code') {
+    if (client.id === CLIENT.CLAUDE_CODE) {
       return {
         text: `Get CLI Command for ${client.displayName}`,
         subtitle: isClicked
           ? 'Command copied! Run: claude mcp add ...'
           : 'Click to copy `claude mcp add ...` command',
+        icon: logoElement,
+      };
+    }
+
+    // Special text for VSCode
+    if (client.id === CLIENT.VSCODE) {
+      return {
+        text: `Copy Server URL for ${client.displayName}`,
+        subtitle: isClicked
+          ? 'Server URL copied! Use it to install the MCP server.'
+          : 'Click to copy server URL',
         icon: logoElement,
       };
     }
