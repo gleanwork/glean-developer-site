@@ -75,21 +75,14 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[DocumentationPage, A
             if not table:
                 return ""
             
-            print(f"DEBUG: Processing table with HTML: {table.prettify()}")
-            
             headers = []
             thead = table.find('thead', recursive=False)
-            print(f"DEBUG: Found thead: {thead}")
             if thead:
                 header_row = thead.find('tr')
-                print(f"DEBUG: Processing header row with HTML: {header_row.prettify()}")
                 if header_row:
                     for th in header_row.find_all(['th', 'td']):
                         header_text = th.get_text(separator=" ").strip()
                         headers.append(header_text)
-                        print(f"DEBUG: Found header: '{header_text}'")
-            
-            print(f"DEBUG: Final headers: {headers}")
             
             data_rows = []
             tbody = table.find('tbody')
@@ -105,9 +98,6 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[DocumentationPage, A
                             row_data.append(cell_text)
                         if any(row_data):
                             data_rows.append(row_data)
-                            print(f"DEBUG: Added row: {row_data}")
-            
-            print(f"DEBUG: Total data rows: {len(data_rows)}")
             
             if not data_rows:
                 return ""
@@ -129,7 +119,6 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[DocumentationPage, A
                     formatted_parts.append(f"• Row {i+1}: {' | '.join(row)}")
             
             result = "\n".join(formatted_parts)
-            print(f"DEBUG: Final formatted table: {result}")
             return result
 
         def _extract_intro_content_after_header(soup) -> str:
@@ -440,7 +429,6 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[DocumentationPage, A
             
             description = ''
             content_div = summary.find_next_sibling('div')
-            print(f"DEBUG: Found content div: {content_div}")
             
             if content_div:
                 collapsible_content = content_div.find(class_='collapsibleContent_i85q')
@@ -463,23 +451,18 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[DocumentationPage, A
                         if second_level_div:
                             for child in second_level_div.children:
                                 if hasattr(child, 'name') and child.name == 'p':
-                                    print(f"Found descP: {child}")
                                     description = _extract_description_with_tables(child)
                                     break
 
                 oneof_badge = first_level_div.find('span', class_='badge badge--info', string='oneOf', recursive=False)
                 if not oneof_badge:
-                    print(f"DEBUG: No oneOf badge found in first_level_div")
                     for child_div in first_level_div.find_all('div', recursive=False):
                         if not child_div.find('details'):
                             oneof_badge = child_div.find('span', class_='badge badge--info', string='oneOf')
                             if oneof_badge:
-                                print(f"DEBUG: Found oneOf badge in child_div: {child_div}")
                                 break
 
-                if oneof_badge:
-                    print(f"DEBUG: Found oneOf constraint for {property_name}")
-                    
+                if oneof_badge:                    
                     tabs_container = first_level_div.find('div', class_='openapi-tabs__schema-container')
                     if tabs_container:
                         oneof_options = []
@@ -495,7 +478,6 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[DocumentationPage, A
                                     panel_child_divs.append(child)
                             
                             if panel_child_divs:
-                                print(f"DEBUG: Found {len(panel_child_divs)} child divs with IDs in oneOf panel")
                                 panel_properties = _parse_properties_from_divs(panel_child_divs)
                             
                             if panel_properties:
@@ -589,7 +571,6 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[DocumentationPage, A
                 if not details_elements:
                     return ""
             
-            print(f"DEBUG: Found {section} details element: {details_elements}")
             property_divs = []
             
             ul_container = details_elements.find('ul')
@@ -601,7 +582,6 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[DocumentationPage, A
                     
                     if first_div.get('id'):
                         property_divs = div_children
-                        print('here1 - no wrapper div with id')
                     
                     elif first_div.get('class') and not first_div.get('id'):
                         schema_list_items = ul_container.find_all('div', class_='openapi-schema__list-item')
@@ -609,15 +589,9 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[DocumentationPage, A
                             property_divs = schema_list_items + [ul_container]
                         else:
                             property_divs = div_children
-                        print('here2 - no wrapper div, no id tailored names')
                     
                     elif first_div.find_all('div', recursive=False):
                         property_divs = first_div.find_all('div', recursive=False)
-                        print('here3 - one big wrapper div')
-            
-            print(f"DEBUG: Found {len(property_divs)} property divs")
-            if property_divs:
-                print(f'First propertyDiv HTML: {property_divs[0]}')
             
             schema = _parse_properties_from_divs(property_divs)
             return json.dumps(schema, indent=2)
@@ -715,7 +689,6 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[DocumentationPage, A
                         if len(code_lines) > 0:
                             code_text = '\n'.join(code_lines)
                             code_samples[key] = code_text
-                            print(f"{url} {lang} CODE SAMPLE: ", code_text)
                 except Exception as e:
                     continue
             return code_samples
@@ -731,16 +704,10 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[DocumentationPage, A
             soup = BeautifulSoup(html_content, 'html.parser')
             api_ref_data = _extract_api_reference(url, html_content)
             request_query_parameters = _extract_request_parameters(soup, "query")
-            print(f"{url} REQUEST QUERY PARAMETERS: ", request_query_parameters)
             request_path_parameters = _extract_request_parameters(soup, "path")
-            print(f"{url} REQUEST PATH PARAMETERS: ", request_path_parameters)         
             request_body = _extract_body_schema(soup, "request")
-            print(f"{url} REQUEST BODY: ", request_body)
             response_body = _extract_body_schema(soup, "response")
-            print(f"{url} RESPONSE BODY: ", response_body)
             code_samples = _extract_code_samples(page)
-            print(f"{url} CODE SAMPLES: ", code_samples)
-            print(f"{url} ID: ", api_ref_data["id"])
             api_ref = ApiReferencePage(
                 id=api_ref_data["id"],
                 title=api_ref_data["title"],
