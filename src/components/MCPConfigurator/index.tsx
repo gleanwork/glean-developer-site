@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useMemo, useContext } from 'react';
 import {
+  CLIENT,
   MCPConfigRegistry,
   type ClientId,
 } from '@gleanwork/mcp-config-schema/browser';
-import { CLIENT } from '@gleanwork/mcp-config-schema';
 import { buildMcpServerName } from '@gleanwork/mcp-config-schema';
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
