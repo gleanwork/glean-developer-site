@@ -7,7 +7,7 @@ import subprocess
 
 try:
     developer_docs_data_client = DeveloperDocsDataClient("https://developers.glean.com")
-    connector = CustomDeveloperDocsConnector(name="hierarchytest", data_client=developer_docs_data_client)
+    connector = CustomDeveloperDocsConnector(name="devdocs", data_client=developer_docs_data_client)
 
     connector.configure_datasource(is_test=True)
     connector.index_data(mode=IndexingMode.FULL)
