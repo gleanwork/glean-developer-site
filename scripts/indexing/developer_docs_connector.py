@@ -28,7 +28,7 @@ class CustomDeveloperDocsConnector(BaseDatasourceConnector[Union[DocumentationPa
         url_regex="https://developers.glean.com/.*",
         icon_url="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB8AAAAeCAYAAADU8sWcAAACY0lEQVR4Ae2XPW8TQRCG3z0bbAonFikokuIiAuIKhEkkp6BIIBTgBjs/wImgtfjqQoEFBakAIbkmOD8ABwpEQSBIpAhSkE1zfEkcEinSoCMpINje5WZhDx9RnEvhcwo/0sr74Z13ZnbOvmVo4LNIx3+ilkCLCIHbh9mTshozJVrFRp5zXEbrsYQmThrsqSXF39dTMwJiEgHhiNp7tUh/yBRndAg8QLBEa4JvaFqdteyMmyEET2gcLI42oGmsW0Mb6YjvbvHZexbMyrpnzqysYezggmyl4oqcmzr/FivWD182txVft2vS4K2rJnLjyx7Dc44gjakdOdaF6SumdCI7tuTLgabiZCB7asmNilj7XnX7zx6tys9efR/69KizVnP3ZYYWPft2JP765TcZAaWWSI72YHZ+GIYToRJQ0Z0+dwCx+B5M3z+KXP7QHyftqsxY4cZH7EhcRayMT1zSHeGkjFAx/3jV7aezfW4/d30AhYeD6HKcIQo3P8nmX/yL97xi3eFN31EpJYeMRMyzRnOxeMMeAf/iyZH9m7zPjb+RxSedczJilv8ex0iPZy89FZnBRU/WcvkB+BYn6BxLyyfcVFNxpYdeSaNUD4rMRK/bp2qnp0Jx7a6BqTvGVhLNq52EqcjIkUZKxa/uOmVJoY5L7ns+jOxFvZl5hLENZIiOgFKvhFTk/6ecqh0XnB+a24anOLeCmbXUJGNiBkHDsND5Y+mIByse4iijHQhU5KXhHT/7whmMIiAYmM01flymPcIiGSFQRDBYrI5/1yXFh1+phHOP0jlEa97lBaxoOFruZ3M2DX8DCtj6T6hFP/oAAAAASUVORK5CYII=",
         is_entity_datasource=False,
-        is_test_datasource=True,
+        is_test_datasource=False,
         is_user_referenced_by_email=True,
         object_definitions=[
                 ObjectDefinition(
