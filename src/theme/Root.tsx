@@ -89,7 +89,8 @@ export default function Root({ children }: { children: ReactNode }) {
 
   // Check for URL parameter overrides
   const { urlOverrides, timeOverride } = useMemo(() => {
-    if (typeof window === 'undefined') return { urlOverrides: {}, timeOverride: undefined };
+    if (typeof window === 'undefined')
+      return { urlOverrides: {}, timeOverride: undefined };
     const params = new URLSearchParams(window.location.search);
     const overrides: Record<string, boolean> = {};
     let timeOverride: string | undefined;
@@ -109,9 +110,9 @@ export default function Root({ children }: { children: ReactNode }) {
   }, []);
 
   const booleans = useMemo(() => {
-    const context = { 
+    const context = {
       visitorId,
-      ...(timeOverride ? { currentTime: timeOverride } : {})
+      ...(timeOverride ? { currentTime: timeOverride } : {}),
     };
     const base = flagsSnapshotToBooleans(raw, context);
     // Apply URL overrides

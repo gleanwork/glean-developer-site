@@ -20,6 +20,13 @@ This document describes the feature flag system implemented for the Glean Develo
     },
     "beta-tutorials": {
       "enabled": false
+    },
+    "mcp-cli-version": {
+      "enabled": true,
+      "metadata": {
+        "version": "1.0.0-beta.1"
+      },
+      "description": "Version to pin the @gleanwork/configure-mcp-server package to"
     }
   }
 }
@@ -174,6 +181,26 @@ FLAGS_DEBUG=true
 {
   "enabled": false
 }
+```
+
+**Using metadata for configuration values:**
+
+```json
+{
+  "enabled": true,
+  "metadata": {
+    "version": "1.0.0-beta.1",
+    "apiUrl": "https://api.example.com",
+    "maxRetries": 3
+  }
+}
+```
+
+The `metadata` field can store arbitrary configuration values that can be accessed in components:
+
+```typescript
+const { raw } = useContext(FeatureFlagsContext);
+const version = raw['mcp-cli-version']?.metadata?.version as string | undefined;
 ```
 
 ## Debug Mode

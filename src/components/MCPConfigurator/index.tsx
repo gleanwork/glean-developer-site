@@ -57,8 +57,12 @@ function getConfigPath(
 
 export default function MCPConfigurator() {
   const registry = useMemo(() => new MCPConfigRegistry(), []);
-  const { booleans } = useContext(FeatureFlagsContext);
+  const { booleans, raw } = useContext(FeatureFlagsContext);
   const showClaudeTeams = booleans['show-claude-teams'] || false;
+
+  const cliPackageVersion = raw['mcp-cli-version']?.metadata?.version as
+    | string
+    | undefined;
 
   const allClients = useMemo(() => {
     if (!registry) return [];
@@ -449,10 +453,14 @@ export default function MCPConfigurator() {
                       <button
                         className={styles.copyConfigIcon}
                         onClick={() => {
+                          const packageName = cliPackageVersion
+                            ? `@gleanwork/configure-mcp-server@${cliPackageVersion}`
+                            : '@gleanwork/configure-mcp-server';
+
                           let cliCommand =
                             selectedClientId === CLIENT.CLAUDE_CODE
                               ? `claude mcp add ${fullServerName} ${serverUrl || 'https://[instance]-be.glean.com/mcp/[endpoint]'} --transport http`
-                              : `npx @gleanwork/configure-mcp-server remote --url ${serverUrl || 'https://[instance]-be.glean.com/mcp/[endpoint]'} --client ${selectedClientId}`;
+                              : `npx ${packageName} remote --url ${serverUrl || 'https://[instance]-be.glean.com/mcp/[endpoint]'} --client ${selectedClientId}`;
 
                           // Add bearer token to Claude Code command if present
                           if (
@@ -492,7 +500,7 @@ export default function MCPConfigurator() {
    --header "Authorization: Bearer ${authToken}"`
                                   : ''
                               }`
-                            : `npx @gleanwork/configure-mcp-server remote \\
+                            : `npx ${cliPackageVersion ? `@gleanwork/configure-mcp-server@${cliPackageVersion}` : '@gleanwork/configure-mcp-server'} remote \\
    --url ${serverUrl || 'https://[instance]-be.glean.com/mcp/[endpoint]'} \\
    --client ${selectedClientId}${
      authMethod === 'bearer' && authToken
