@@ -89,8 +89,10 @@ export default function Root({ children }: { children: ReactNode }) {
 
   // Check for URL parameter overrides
   const { urlOverrides, timeOverride } = useMemo(() => {
-    if (typeof window === 'undefined')
+    if (typeof window === 'undefined') {
       return { urlOverrides: {}, timeOverride: undefined };
+    }
+
     const params = new URLSearchParams(window.location.search);
     const overrides: Record<string, boolean> = {};
     let timeOverride: string | undefined;
