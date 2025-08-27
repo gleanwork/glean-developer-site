@@ -88,27 +88,35 @@ export default function Root({ children }: { children: ReactNode }) {
   const visitorId = getLocalVisitorId();
 
   // Check for URL parameter overrides
-  const urlOverrides = useMemo(() => {
-    if (typeof window === 'undefined') return {};
+  const { urlOverrides, timeOverride } = useMemo(() => {
+    if (typeof window === 'undefined') return { urlOverrides: {}, timeOverride: undefined };
     const params = new URLSearchParams(window.location.search);
     const overrides: Record<string, boolean> = {};
+    let timeOverride: string | undefined;
 
     // Check for ff_ prefixed params (e.g., ?ff_remote-mcp-docs=true)
+    // Also check for ff_time for testing date-based flags (e.g., ?ff_time=2025-01-01T00:00:00Z)
     for (const [key, value] of params) {
-      if (key.startsWith('ff_')) {
+      if (key === 'ff_time') {
+        timeOverride = value;
+      } else if (key.startsWith('ff_')) {
         const flagName = key.slice(3);
         overrides[flagName] = value === 'true' || value === '1';
       }
     }
 
-    return overrides;
+    return { urlOverrides: overrides, timeOverride };
   }, []);
 
   const booleans = useMemo(() => {
-    const base = flagsSnapshotToBooleans(raw, { visitorId });
+    const context = { 
+      visitorId,
+      ...(timeOverride ? { currentTime: timeOverride } : {})
+    };
+    const base = flagsSnapshotToBooleans(raw, context);
     // Apply URL overrides
     return { ...base, ...urlOverrides };
-  }, [raw, visitorId, urlOverrides]);
+  }, [raw, visitorId, urlOverrides, timeOverride]);
 
   const refresh = useCallback(() => {
     const cached = readCache();

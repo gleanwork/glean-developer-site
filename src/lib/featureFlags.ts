@@ -24,6 +24,22 @@ export function evaluateFlag(
   const def = flags[flagName];
   if (!def) return { enabled: false, reason: 'missing' };
 
+  const now = context.currentTime ? new Date(context.currentTime) : new Date();
+  
+  if (def.enableAfter) {
+    const enableDate = new Date(def.enableAfter);
+    if (!isNaN(enableDate.getTime()) && now < enableDate) {
+      return { enabled: false, reason: 'not-yet-enabled' };
+    }
+  }
+  
+  if (def.disableAfter) {
+    const disableDate = new Date(def.disableAfter);
+    if (!isNaN(disableDate.getTime()) && now > disableDate) {
+      return { enabled: false, reason: 'expired' };
+    }
+  }
+
   if (def.enabled === false) return { enabled: false, reason: 'disabled' };
 
   if (def.allowedUsers && def.allowedUsers.length > 0) {
