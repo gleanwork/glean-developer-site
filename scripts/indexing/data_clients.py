@@ -6,10 +6,9 @@ import re
 import requests
 import xml.etree.ElementTree as ET
 from playwright.sync_api import sync_playwright
-from bs4 import BeautifulSoup, Tag
+from bs4 import BeautifulSoup
 import uuid
 import concurrent.futures
-import threading
 
 class DeveloperDocsDataClient(BaseConnectorDataClient[Union[DocumentationPage, ApiReferencePage]]):
     
@@ -197,7 +196,6 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[DocumentationPage, A
 
         def _scrape_dynamic_info_pages(urls: List[str], max_workers=10) -> List[DocumentationPage]:
             all_page_info = []
-            lock = threading.Lock()
             url_idx_tuples = list(enumerate(urls))
             ordered_results = [None] * len(urls)
             
@@ -454,63 +452,62 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[DocumentationPage, A
                                     description = _extract_description_with_tables(child)
                                     break
 
-                oneof_badge = first_level_div.find('span', class_='badge badge--info', string='oneOf', recursive=False)
-                if not oneof_badge:
-                    for child_div in first_level_div.find_all('div', recursive=False):
-                        if not child_div.find('details'):
-                            oneof_badge = child_div.find('span', class_='badge badge--info', string='oneOf')
-                            if oneof_badge:
-                                break
+                        oneof_badge = first_level_div.find('span', class_='badge badge--info', string='oneOf', recursive=False)
+                        if not oneof_badge:
+                            for child_div in first_level_div.find_all('div', recursive=False):
+                                if not child_div.find('details'):
+                                    oneof_badge = child_div.find('span', class_='badge badge--info', string='oneOf')
+                                    if oneof_badge:
+                                        break
 
-                if oneof_badge:                    
-                    tabs_container = first_level_div.find('div', class_='openapi-tabs__schema-container')
-                    if tabs_container:
-                        oneof_options = []
-                        
-                        tab_panels = tabs_container.find_all('div', attrs={'role': 'tabpanel'})
-                        
-                        for panel in tab_panels:
-                            panel_properties = {}
-                            
-                            panel_child_divs = []
-                            for child in panel.children:
-                                if hasattr(child, 'name') and child.name == 'div' and child.get('id'):
-                                    panel_child_divs.append(child)
-                            
-                            if panel_child_divs:
-                                panel_properties = _parse_properties_from_divs(panel_child_divs)
-                            
-                            if panel_properties:
-                                oneof_options.append({
-                                    'properties': panel_properties
-                                })
-                        
-                        enhanced_description = description
-                        if enhanced_description:
-                            enhanced_description += f" Each object must be ONE OF: "
-                        else:
-                            enhanced_description = "Each object must be ONE OF: "
-                        
-                        option_descriptions = []
-                        for i, option in enumerate(oneof_options, 1):
-                            props = list(option['properties'].keys())
-                            props_with_types = []
-                            for prop_name in props:
-                                prop_data = option['properties'].get(prop_name, {})
-                                prop_type = prop_data.get('type', 'unknown')
-                                props_with_types.append(f"{prop_name} ({prop_type})")
-                            option_descriptions.append(f"({i}) {{ {', '.join(props_with_types)} }}")
-                        
-                        enhanced_description += ', '.join(option_descriptions) + ". Mixing fields is not allowed."
-                        
-                        property_data = {
-                            'type': property_type,
-                            'description': enhanced_description,
-                            'required': is_required,
-                            'oneOf': oneof_options
-                        }
-                        
-                        return {property_name: property_data}
+                        if oneof_badge:                    
+                            tabs_container = first_level_div.find('div', class_='openapi-tabs__schema-container')
+                            if tabs_container:
+                                oneof_options = []
+                                
+                                tab_panels = tabs_container.find_all('div', attrs={'role': 'tabpanel'})
+                                for panel in tab_panels:
+                                    panel_properties = {}
+                                    
+                                    panel_child_divs = []
+                                    for child in panel.children:
+                                        if hasattr(child, 'name') and child.name == 'div' and child.get('id'):
+                                            panel_child_divs.append(child)
+                                    
+                                    if panel_child_divs:
+                                        panel_properties = _parse_properties_from_divs(panel_child_divs)
+                                    
+                                    if panel_properties:
+                                        oneof_options.append({
+                                            'properties': panel_properties
+                                        })
+                                
+                                enhanced_description = description
+                                if enhanced_description:
+                                    enhanced_description += f" Each object must be ONE OF: "
+                                else:
+                                    enhanced_description = "Each object must be ONE OF: "
+                                
+                                option_descriptions = []
+                                for i, option in enumerate(oneof_options, 1):
+                                    props = list(option['properties'].keys())
+                                    props_with_types = []
+                                    for prop_name in props:
+                                        prop_data = option['properties'].get(prop_name, {})
+                                        prop_type = prop_data.get('type', 'unknown')
+                                        props_with_types.append(f"{prop_name} ({prop_type})")
+                                    option_descriptions.append(f"({i}) {{ {', '.join(props_with_types)} }}")
+                                
+                                enhanced_description += ', '.join(option_descriptions) + ". Mixing fields is not allowed."
+                                
+                                property_data = {
+                                    'type': property_type,
+                                    'description': enhanced_description,
+                                    'required': is_required,
+                                    'oneOf': oneof_options
+                                }
+                                
+                                return {property_name: property_data}
             
             children = {}
             summary_id = summary.get('id', '')
@@ -534,18 +531,6 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[DocumentationPage, A
             
             if len(children) > 0:
                 property_data['properties'] = children
-                
-                # field_summaries = []
-                # for child_name, child_data in children.items():
-                #     child_type = child_data.get('type', 'unknown')
-                #     field_summaries.append(f"{child_name} ({child_type})")
-                
-                # if field_summaries:
-                #     summary_text = f" Fields: {', '.join(field_summaries)}."
-                #     if description:
-                #         property_data['description'] = description + summary_text
-                #     else:
-                #         property_data['description'] = f"Object with fields: {', '.join(field_summaries)}."
             
             return {property_name: property_data}
 
@@ -735,7 +720,6 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[DocumentationPage, A
         
         def _scrape_dynamic_api_pages(urls: List[str], max_workers=10) -> List[ApiReferencePage]:
             results = [None] * len(urls)
-            lock = threading.Lock()
             url_idx_tuples = list(enumerate(urls))
             
             def _scrape_with_browser(url_idx_tuple: Tuple[int, str]) -> Tuple[int, ApiReferencePage]:
