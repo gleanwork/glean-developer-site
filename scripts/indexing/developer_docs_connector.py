@@ -38,6 +38,7 @@ class CustomDeveloperDocsConnector(BaseDatasourceConnector[Union[DocumentationPa
                     property_definitions=PropertyDefinitionBuilder()
                         .add_property("docSection", "Section", property_type=PropertyType.TEXT, ui_options=UIOptions.SEARCH_RESULT)
                         .add_property("heading", "Heading", property_type=PropertyType.TEXT, ui_options=UIOptions.SEARCH_RESULT, hide_ui_facet=True)
+                        .add_property("content", "Content", property_type=PropertyType.TEXT, ui_options=UIOptions.SEARCH_RESULT, hide_ui_facet=True)
                         .build()
                 ),
                 ObjectDefinition(
@@ -47,9 +48,11 @@ class CustomDeveloperDocsConnector(BaseDatasourceConnector[Union[DocumentationPa
                     property_definitions=PropertyDefinitionBuilder()
                         .add_property("apiTag", "API Tag", property_type=PropertyType.PICKLIST, ui_options=UIOptions.SEARCH_RESULT)
                         .add_property("endpoint", "Endpoint", property_type=PropertyType.TEXT, ui_options=UIOptions.SEARCH_RESULT, hide_ui_facet=True)
+                        .add_property("endpointDescription", "Endpoint Description", property_type=PropertyType.TEXT, ui_options=UIOptions.SEARCH_RESULT, hide_ui_facet=True)
                         .add_property("method", "HTTP Method", property_type=PropertyType.PICKLIST, ui_options=UIOptions.SEARCH_RESULT, hide_ui_facet=True)
                         .add_property("requestContentType", "Request Content Type", property_type=PropertyType.PICKLIST, ui_options=UIOptions.SEARCH_RESULT, hide_ui_facet=True)
-                        .add_property("requestParameters", "Request Parameters", property_type=PropertyType.TEXT, ui_options=UIOptions.SEARCH_RESULT, hide_ui_facet=True)
+                        .add_property("requestQueryParameters", "Request Query Parameters", property_type=PropertyType.TEXT, ui_options=UIOptions.SEARCH_RESULT, hide_ui_facet=True)
+                        .add_property("requestPathParameters", "Request Path Parameters", property_type=PropertyType.TEXT, ui_options=UIOptions.SEARCH_RESULT, hide_ui_facet=True)
                         .add_property("requestBody", "Request Body", property_type=PropertyType.TEXT, ui_options=UIOptions.SEARCH_RESULT, hide_ui_facet=True)
                         .add_property("responseContentType", "Response Content Type", property_type=PropertyType.PICKLIST, ui_options=UIOptions.SEARCH_RESULT, hide_ui_facet=True)
                         .add_property("responseBody", "Response Body", property_type=PropertyType.TEXT, ui_options=UIOptions.SEARCH_RESULT, hide_ui_facet=True)
@@ -75,10 +78,10 @@ class CustomDeveloperDocsConnector(BaseDatasourceConnector[Union[DocumentationPa
                     datasource=self.name,
                     view_url=page["url"],
                     object_type="infoPage",
-                    body=ContentDefinition(mime_type="text/plain", text_content=page["content"]),
                     custom_properties=[
                         CustomProperty(name="docSection", value=page["section"]),
                         CustomProperty(name="heading", value=page["heading"]),
+                        CustomProperty(name='content', value=page["content"])
                     ],
                     permissions=DocumentPermissionsDefinition(
                         allow_anonymous_access=True
@@ -91,13 +94,14 @@ class CustomDeveloperDocsConnector(BaseDatasourceConnector[Union[DocumentationPa
                     datasource=self.name,
                     view_url=page["url"],
                     object_type="apiReference",
-                    summary=ContentDefinition(mime_type="text/plain", text_content=page["description"]),
                     custom_properties=[
                         CustomProperty(name="apiTag", value=page["tag"]),
                         CustomProperty(name="endpoint", value=page["endpoint"]),
                         CustomProperty(name="method", value=page["method"]),
+                        CustomProperty(name="endpointDescription", value=page["description"]),
                         CustomProperty(name="requestContentType", value=page["request_content_type"]),
-                        CustomProperty(name="requestParameters", value=page["request_parameters"]),
+                        CustomProperty(name="requestQueryParameters", value=page["request_query_parameters"]),
+                        CustomProperty(name="requestPathParameters", value=page["request_path_parameters"]),
                         CustomProperty(name="requestBody", value=page["request_body"]),
                         CustomProperty(name="responseContentType", value=page["response_content_type"]),
                         CustomProperty(name="responseBody", value=page["response_body"]),

@@ -6,8 +6,6 @@ from glean.indexing.models import IndexingMode
 import subprocess
 
 try:
-    subprocess.run(["uv", "run", "playwright", "install"])
-
     developer_docs_data_client = DeveloperDocsDataClient("https://developers.glean.com")
     connector = CustomDeveloperDocsConnector(name="devdocs", data_client=developer_docs_data_client)
 

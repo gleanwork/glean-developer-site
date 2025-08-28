@@ -59,33 +59,93 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[DocumentationPage, A
                     continue
                 if sibling.name == 'h2':
                     break
-                text = sibling.get_text(separator="\n", strip=True)
-                if text:
-                    content_parts.append(text)
+                
+                if sibling.name == 'table':
+                    table_text = _format_table_content(sibling)
+                    if table_text:
+                        content_parts.append(table_text)
+                else:
+                    text = sibling.get_text(separator=" ", strip=True)
+                    if text:
+                        content_parts.append(text)
             return "\n".join(content_parts)
+
+        def _format_table_content(table) -> str:
+            """Format table content in a clear, LLM-friendly way."""
+            if not table:
+                return ""
+            
+            headers = []
+            thead = table.find('thead', recursive=False)
+            if thead:
+                header_row = thead.find('tr')
+                if header_row:
+                    for th in header_row.find_all(['th', 'td']):
+                        header_text = th.get_text(separator=" ").strip()
+                        headers.append(header_text)
+            
+            data_rows = []
+            tbody = table.find('tbody')
+            rows_container = tbody if tbody else table
+            
+            for row in rows_container.find_all('tr'):
+                if not headers or row != table.find('tr'):
+                    cells = row.find_all(['td', 'th'])
+                    if cells:
+                        row_data = []
+                        for cell in cells:
+                            cell_text = cell.get_text(separator=" ").strip()
+                            row_data.append(cell_text)
+                        if any(row_data):
+                            data_rows.append(row_data)
+            
+            if not data_rows:
+                return ""
+            
+            formatted_parts = []
+            
+            if headers and len(headers) >= 2:
+                formatted_parts.append(f"Table ({headers[0]} → {headers[1]}):")
+                for row in data_rows:
+                    if len(row) >= 2:
+                        key = row[0]
+                        value = row[1]
+                        if len(row) > 2:
+                            value = f"{value} ({', '.join(row[2:])})"
+                        formatted_parts.append(f"• {key}: {value}")
+            else:
+                formatted_parts.append("Table data:")
+                for i, row in enumerate(data_rows):
+                    formatted_parts.append(f"• Row {i+1}: {' | '.join(row)}")
+            
+            result = "\n".join(formatted_parts)
+            return result
 
         def _extract_intro_content_after_header(soup) -> str:
             h1 = soup.find('h1')
             header = h1.find_parent() if h1 else None
             if not header:
                 return ""
-            content = []
-            found_h2 = False
-            for elem in header.next_elements:
-                if isinstance(elem, Tag):
-                    if elem.name == 'h2':
-                        found_h2 = True
-                        break
-                    if elem.name in ['p', 'ul', 'ol', 'li']:
-                        text = elem.get_text(separator="\n", strip=True)
-                        if text:
-                            content.append(text)
-                if elem is not header and getattr(elem, 'name', None) == 'header':
+
+            content_parts = []
+            for sibling in header.next_siblings:
+                if isinstance(sibling, str):
+                    continue
+                if sibling.name == 'h2':
                     break
-            return "\n".join(content).strip()
+                    
+                if sibling.name == 'table':
+                    table_text = _format_table_content(sibling)
+                    if table_text:
+                        content_parts.append(table_text)
+                else:
+                    text = sibling.get_text(separator=" ", strip=True)
+                    if text:
+                        content_parts.append(text)
+            return "\n".join(content_parts).strip()
 
         def _extract_page_info_with_fragments(url: str, html: str) -> List[DocumentationPage]:
-            soup = BeautifulSoup(html, 'html.parser')
+            soup = BeautifulSoup(html, 'lxml')
             page_title = soup.find('h1').text.strip() if soup.find('h1') else ""
             section = _extract_section_from_breadcrumbs(soup)
             data = []
@@ -104,6 +164,7 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[DocumentationPage, A
                         page_type="info_page"
                     )
                     data.append(page_info)
+            
             # Track seen (class, heading_text) pairs to avoid duplicates
             seen_headers = set()
             if h2_tags:
@@ -117,7 +178,10 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[DocumentationPage, A
                     seen_headers.add(key)
                     fragment = _slugify(heading_text)
                     full_url = url + "#" + fragment
-                    content = _extract_content_until_next_h2(h2)
+                    if "entryHeader_Mafo" in header_class:
+                        content = _extract_content_until_next_h2(parent_header)
+                    else:
+                        content = _extract_content_until_next_h2(h2)
                     id_val = str(uuid.uuid5(uuid.NAMESPACE_URL, full_url))
                     page_info = DocumentationPage(
                         id=id_val,
@@ -202,9 +266,50 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[DocumentationPage, A
                     method = method_span.text.strip()
                     endpoint_full = endpoint_h2.text.strip()
                     endpoint = re.sub(r'https://.*?(/.*)', r'\1', endpoint_full)
-            description_tag = soup.select_one('p')
-            description = description_tag.text.strip() if description_tag else ""
-            response_codes = [tab.text.strip() for tab in soup.select('.openapi-tabs__response-code-item')]
+            
+            beta_admonition = soup.find('div', class_='theme-admonition')
+            beta_text = ""
+            if beta_admonition:
+                beta_p = beta_admonition.find('p')
+                if beta_p:
+                    beta_text = beta_p.get_text(strip=True)
+            
+            description = ""
+            left_panel = soup.find(class_='openapi-left-panel__container')
+            if left_panel:
+                direct_p = left_panel.find('p', recursive=False)
+                if direct_p:
+                    description = direct_p.get_text(strip=True)
+            
+            if beta_text and description:
+                description = f"{beta_text} {description}"
+
+            response_codes = []
+            tabs_container = soup.select_one('.openapi-tabs__container')
+            if tabs_container:
+                response_code_tabs = tabs_container.select('.openapi-tabs__response-code-item')
+
+                margin_top_md = tabs_container.select_one('div.margin-top--md')
+                top_level_panels = []
+                
+                if margin_top_md:
+                    for child in margin_top_md.children:
+                        if (hasattr(child, 'name') and child.name == 'div' and 
+                            child.get('role') == 'tabpanel' and 
+                            'tabItem_Ymn6' in child.get('class', [])):
+                            top_level_panels.append(child)
+                
+                for i, code_tab in enumerate(response_code_tabs):
+                    code = code_tab.text.strip()
+                    desc = ""
+                    if i < len(top_level_panels):
+                        p_tag = top_level_panels[i].find('p')
+                        if p_tag:
+                            desc = p_tag.get_text(strip=True)
+                    response_codes.append(f"{code}: {desc}" if desc else code)
+            else:
+                response_codes = [tab.text.strip() for tab in soup.select('.openapi-tabs__response-code-item')]
+            
             req_mime = _extract_mime_type(soup, section="request")
             res_mime = _extract_mime_type(soup, section="responses")
             auth_type = _extract_authentication_type(soup)
@@ -225,84 +330,366 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[DocumentationPage, A
                 "url": url
             }
 
-        def _extract_request_body_schema(soup) -> str:
-            request_body_schema = ""
-            body_sections = soup.find_all('details', class_=lambda x: x and ('mime' in x or 'body' in x.lower())) or \
-                        soup.find_all('details', string=re.compile(r'Body', re.IGNORECASE))
-            if not body_sections:
-                body_sections = [section for section in soup.find_all('details') 
-                            if section.find('summary') and 'body' in section.find('summary').get_text('\n').lower()]
-            if body_sections:
-                for body_section in body_sections:
-                    body_text = body_section.get_text('\n', strip=True)
-                    if body_text and len(body_text) > 10:
-                        request_body_schema += body_text + "\n\n"
-                        break
-            if request_body_schema:
-                return request_body_schema.strip()
-            else:
+        def _extract_description_with_tables(element) -> str:
+            """Extract description text including any tables."""
+            if not element:
                 return ""
+            
+            table = element.find('table')
+            if table:
+                table_parts = []
+                tbody = table.find('tbody')
+                if tbody:
+                    rows = tbody.find_all('tr')
+                    for row in rows:
+                        cells = row.find_all('td')
+                        if len(cells) >= 2:
+                            key = cells[0].get_text(strip=True)
+                            value = cells[1].get_text(strip=True)
+                            table_parts.append(f"{key}: {value}")
+                
+                return ' '.join(table_parts)
+            else:
+                return element.get_text(' ', strip=True)
 
-        def _extract_response_schema(soup) -> str:
-            response_schema = ""
-            response_sections = soup.find_all('details', class_=lambda x: x and 'response' in x) or \
-                            [section for section in soup.find_all('details') 
-                            if section.find('summary') and ('response' in section.find('summary').get_text('\n').lower() or 
-                                                            'schema' in section.find('summary').get_text('\n').lower())]
-            if response_sections:
-                for response_section in response_sections:
-                    response_text = response_section.get_text('\n',strip=True)
-                    if response_text and len(response_text) > 50:
-                        response_schema += response_text + "\n\n"
-                        break
-            if response_schema:
-                return response_schema.strip()
-            else:
-                return ""
+        def _parse_properties_from_divs(property_divs) -> dict:
+            """Unified function to parse properties from a collection of divs."""
+            properties = {}
+            
+            for prop_div in property_divs:
+                nested_details = prop_div.find('details', class_='openapi-markdown__details')
+                if nested_details:
+                    property_data = _parse_property_from_details(nested_details)
+                    properties.update(property_data)
+                else:
+                    schema_item = prop_div.find(class_='openapi-schema__list-item')
+                    if schema_item:
+                        container = schema_item.find(class_='openapi-schema__container')
+                        if container:
+                            property_elem = container.find('strong', class_='openapi-schema__property')
+                            if property_elem:
+                                property_name = property_elem.get_text(strip=True)
+                                simple_property = _parse_simple_property_from_item(schema_item)
+                                if simple_property:
+                                    properties[property_name] = simple_property
+            
+            return properties
 
-        def _extract_query_parameters(soup) -> str:
-            query_params_content = ""
-            param_sections = [section for section in soup.find_all('details') 
-                            if section.find('summary') and 
-                            ('parameter' in section.find('summary').get_text('\n').lower() or 
-                            'query' in section.find('summary').get_text('\n').lower())]
-            if param_sections:
-                for param_section in param_sections:
-                    param_text = param_section.get_text('\n',strip=True)
-                    if param_text and len(param_text) > 10:
-                        query_params_content += param_text + "\n\n"
-                        break
-            if query_params_content:
-                return query_params_content.strip()
+        def _parse_simple_property_from_item(schema_item) -> dict:
+            """Parse a simple property from openapi-schema__list-item."""
+            container = schema_item.find(class_='openapi-schema__container')
+            if not container:
+                return {}
+            
+            type_elem = container.find(class_='openapi-schema__name')
+            field_type = type_elem.get_text(strip=True) if type_elem else 'unknown'
+            
+            required_elem = container.find(class_='openapi-schema__required')
+            is_required = required_elem is not None
+            
+            description = ''
+            desc_elem = schema_item.find('p', recursive=False)
+            
+            if desc_elem:
+                description = _extract_description_with_tables(desc_elem)
             else:
+                description_parts = []
+                for sibling in container.next_siblings:
+                    if hasattr(sibling, 'name') and sibling.name in ['p', 'div']:
+                        part = _extract_description_with_tables(sibling)
+                        if part:
+                            description_parts.append(part)
+                
+                if description_parts:
+                    description = ' '.join(description_parts)
+            
+            return {
+                'type': field_type,
+                'description': description,
+                'required': is_required,
+            }
+
+        def _parse_property_from_details(details) -> dict:
+            """Parse a property from an openapi-markdown__details element."""
+            summary = details.find('summary')
+            if not summary:
+                return {}
+            
+            property_elem = summary.find(class_='openapi-schema__property')
+            if not property_elem:
+                return {}
+            
+            property_name = property_elem.get_text(strip=True)
+            
+            type_elem = summary.find(class_='openapi-schema__name')
+            property_type = type_elem.get_text(strip=True) if type_elem else 'object'
+            
+            required_elem = summary.find(class_='openapi-schema__required')
+            is_required = required_elem is not None
+            
+            description = ''
+            content_div = summary.find_next_sibling('div')
+            
+            if content_div:
+                collapsible_content = content_div.find(class_='collapsibleContent_i85q')
+                if collapsible_content:
+                    first_level_div = None
+                    for div in collapsible_content.find_all('div', recursive=False):
+                        style = div.get('style', '')
+                        if 'margin-left: 1rem' in style:
+                            first_level_div = div
+                            break
+                    
+                    if first_level_div:
+                        second_level_div = None
+                        for div in first_level_div.find_all('div', recursive=False):
+                            style = div.get('style', '')
+                            if 'margin-top: 0.5rem' in style:
+                                second_level_div = div
+                                break
+                        
+                        if second_level_div:
+                            for child in second_level_div.children:
+                                if hasattr(child, 'name') and child.name == 'p':
+                                    description = _extract_description_with_tables(child)
+                                    break
+
+                oneof_badge = first_level_div.find('span', class_='badge badge--info', string='oneOf', recursive=False)
+                if not oneof_badge:
+                    for child_div in first_level_div.find_all('div', recursive=False):
+                        if not child_div.find('details'):
+                            oneof_badge = child_div.find('span', class_='badge badge--info', string='oneOf')
+                            if oneof_badge:
+                                break
+
+                if oneof_badge:                    
+                    tabs_container = first_level_div.find('div', class_='openapi-tabs__schema-container')
+                    if tabs_container:
+                        oneof_options = []
+                        
+                        tab_panels = tabs_container.find_all('div', attrs={'role': 'tabpanel'})
+                        
+                        for panel in tab_panels:
+                            panel_properties = {}
+                            
+                            panel_child_divs = []
+                            for child in panel.children:
+                                if hasattr(child, 'name') and child.name == 'div' and child.get('id'):
+                                    panel_child_divs.append(child)
+                            
+                            if panel_child_divs:
+                                panel_properties = _parse_properties_from_divs(panel_child_divs)
+                            
+                            if panel_properties:
+                                oneof_options.append({
+                                    'properties': panel_properties
+                                })
+                        
+                        enhanced_description = description
+                        if enhanced_description:
+                            enhanced_description += f" Each object must be ONE OF: "
+                        else:
+                            enhanced_description = "Each object must be ONE OF: "
+                        
+                        option_descriptions = []
+                        for i, option in enumerate(oneof_options, 1):
+                            props = list(option['properties'].keys())
+                            props_with_types = []
+                            for prop_name in props:
+                                prop_data = option['properties'].get(prop_name, {})
+                                prop_type = prop_data.get('type', 'unknown')
+                                props_with_types.append(f"{prop_name} ({prop_type})")
+                            option_descriptions.append(f"({i}) {{ {', '.join(props_with_types)} }}")
+                        
+                        enhanced_description += ', '.join(option_descriptions) + ". Mixing fields is not allowed."
+                        
+                        property_data = {
+                            'type': property_type,
+                            'description': enhanced_description,
+                            'required': is_required,
+                            'oneOf': oneof_options
+                        }
+                        
+                        return {property_name: property_data}
+            
+            children = {}
+            summary_id = summary.get('id', '')
+            if summary_id:
+                child_pattern = f"{summary_id}-"
+                child_divs = details.find_all('div', id=lambda x: x and x.startswith(child_pattern))
+                
+                filtered_divs = []
+                for child_div in child_divs:
+                    parent_details = child_div.find_parent('details', class_='openapi-markdown__details')
+                    if parent_details == details:
+                        filtered_divs.append(child_div)
+                
+                children = _parse_properties_from_divs(filtered_divs)
+            
+            property_data = {
+                'type': property_type,
+                'description': description,
+                'required': is_required,
+            }
+            
+            if len(children) > 0:
+                property_data['properties'] = children
+                
+                # field_summaries = []
+                # for child_name, child_data in children.items():
+                #     child_type = child_data.get('type', 'unknown')
+                #     field_summaries.append(f"{child_name} ({child_type})")
+                
+                # if field_summaries:
+                #     summary_text = f" Fields: {', '.join(field_summaries)}."
+                #     if description:
+                #         property_data['description'] = description + summary_text
+                #     else:
+                #         property_data['description'] = f"Object with fields: {', '.join(field_summaries)}."
+            
+            return {property_name: property_data}
+
+        def _extract_body_schema(soup, section) -> str:
+            if section == "request":
+                tabs_container = soup.select_one('.row.theme-api-markdown > .openapi-left-panel__container > .tabs-container')
+                if not tabs_container:
+                    return ""
+                
+                details_elements = tabs_container.select_one('details.openapi-markdown__details')
+                if not details_elements:
+                    return ""
+            elif section == "response":
+                tabs_container = soup.select_one('.row.theme-api-markdown > .openapi-left-panel__container > .openapi-tabs__container')
+                if not tabs_container:
+                    return ""
+                
+                schema_container = tabs_container.select_one('.openapi-tabs__schema-container')
+                if not schema_container:
+                    return ""
+                
+                details_elements = schema_container.select_one('details.openapi-markdown__details.response')
+                if not details_elements:
+                    return ""
+            
+            property_divs = []
+            
+            ul_container = details_elements.find('ul')
+            if ul_container:
+                div_children = ul_container.find_all('div', recursive=False)
+                
+                if div_children:
+                    first_div = div_children[0]
+                    
+                    if first_div.get('id'):
+                        property_divs = div_children
+                    
+                    elif first_div.get('class') and not first_div.get('id'):
+                        schema_list_items = ul_container.find_all('div', class_='openapi-schema__list-item')
+                        if schema_list_items:
+                            property_divs = schema_list_items + [ul_container]
+                        else:
+                            property_divs = div_children
+                    
+                    elif first_div.find_all('div', recursive=False):
+                        property_divs = first_div.find_all('div', recursive=False)
+            
+            schema = _parse_properties_from_divs(property_divs)
+            return json.dumps(schema, indent=2)
+
+        def _extract_request_parameters(soup, param_type) -> str:
+            """Extract query or path parameters from the request section."""
+            h2_section = soup.find('h2', id='request')
+            if not h2_section:
                 return ""
+            
+            header_text = f"{param_type.capitalize()} Parameters"
+            
+            details_elements = []
+            current_sibling = h2_section.find_next_sibling()
+            while current_sibling:
+                if (current_sibling.name == 'details' and 
+                    'openapi-markdown__details' in current_sibling.get('class', [])):
+                    details_elements.append(current_sibling)
+                elif (current_sibling.name == 'div' and 
+                      'tabs-container' in current_sibling.get('class', [])):
+                    break
+                current_sibling = current_sibling.find_next_sibling()
+            
+            for details in details_elements:
+                summary = details.find('summary')
+                if summary:
+                    h3 = summary.find('h3', class_='openapi-markdown__details-summary-header-params')
+                    if h3:
+                        h3_text = h3.get_text()
+                        if header_text in h3_text:
+                            parameters = {}
+                            ul_container = details.find('ul')
+                            if ul_container:
+                                param_items = ul_container.find_all(class_='openapi-params__list-item')
+                                
+                                for item in param_items:
+                                    container = item.find(class_='openapi-schema__container')
+                                    if container:
+                                        prop_elem = container.find('strong', class_='openapi-schema__property')
+                                        if not prop_elem:
+                                            continue
+                                        param_name = prop_elem.get_text(strip=True)
+                                        
+                                        type_elem = container.find(class_='openapi-schema__type')
+                                        param_type_str = type_elem.get_text(strip=True) if type_elem else 'string'
+                                        
+                                        required_elem = container.find(class_='openapi-schema__required')
+                                        is_required = required_elem is not None
+                                        
+                                        desc_elem = item.find('p')
+                                        description = desc_elem.get_text(strip=True) if desc_elem else ''
+                                        
+                                        parameters[param_name] = {
+                                            'type': param_type_str,
+                                            'description': description,
+                                            'required': is_required,
+                                        }
+                            
+                            if parameters:
+                                return json.dumps(parameters, indent=2)
+            
+            return ""
 
         def _extract_code_samples(page) -> dict:
-            code_samples = {
-                "python": "",
-                "go": "",
-                "java": "",
-                "javascript": "",
-                "curl": ""
+            languages = {
+                'python': 'python_code_sample',
+                'go': 'go_code_sample', 
+                'java': 'java_code_sample',
+                'javascript': 'typescript_code_sample',
+                'curl': 'curl_code_sample',
             }
-            languages = ["python", "go", "java", "javascript", "curl"]
-            for lang in languages:
+            
+            code_samples = {key: '' for key in languages.values()}
+            
+            for lang, key in languages.items():
                 try:
                     tab_selector = f'.openapi-tabs__code-item--{lang}'
-                    if page.locator(tab_selector).count() > 0:
+                    tab_count = page.locator(tab_selector).count()
+                    if tab_count > 0:
                         page.click(tab_selector)
                         page.wait_for_timeout(500)
+                        
                         code_lines = []
                         content_spans = page.locator('.openapi-explorer__code-block-code-line-content')
-                        for i in range(content_spans.count()):
-                            line_content = content_spans.nth(i).inner_text()
-                            if line_content.strip():
-                                code_lines.append(line_content)
-                        if code_lines:
+                        span_count = content_spans.count()
+                        
+                        for i in range(span_count):
+                            span_element = content_spans.nth(i)
+                            is_visible = span_element.is_visible()
+                            if is_visible:
+                                line_content = span_element.inner_text()
+                                if line_content.strip():
+                                    code_lines.append(line_content)
+                        
+                        if len(code_lines) > 0:
                             code_text = '\n'.join(code_lines)
-                            code_samples[lang] = code_text
+                            code_samples[key] = code_text
                 except Exception as e:
-                    print(f"Error extracting {lang} code: {e}")
                     continue
             return code_samples
         
@@ -316,9 +703,10 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[DocumentationPage, A
             html_content = page.content()
             soup = BeautifulSoup(html_content, 'html.parser')
             api_ref_data = _extract_api_reference(url, html_content)
-            request_parameters = _extract_query_parameters(soup)
-            request_body = _extract_request_body_schema(soup)
-            response_body = _extract_response_schema(soup)
+            request_query_parameters = _extract_request_parameters(soup, "query")
+            request_path_parameters = _extract_request_parameters(soup, "path")
+            request_body = _extract_body_schema(soup, "request")
+            response_body = _extract_body_schema(soup, "response")
             code_samples = _extract_code_samples(page)
             api_ref = ApiReferencePage(
                 id=api_ref_data["id"],
@@ -332,14 +720,15 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[DocumentationPage, A
                 authentication=api_ref_data["authentication"],
                 response_codes=api_ref_data["response_codes"],
                 url=api_ref_data["url"],
-                request_parameters=request_parameters,
+                request_query_parameters=request_query_parameters,
+                request_path_parameters=request_path_parameters,
                 request_body=request_body,
                 response_body=response_body,
-                python_code_sample=code_samples["python"],
-                go_code_sample=code_samples["go"],
-                java_code_sample=code_samples["java"],
-                typescript_code_sample=code_samples["javascript"],
-                curl_code_sample=code_samples["curl"],
+                python_code_sample=code_samples["python_code_sample"],
+                go_code_sample=code_samples["go_code_sample"],
+                java_code_sample=code_samples["java_code_sample"],
+                typescript_code_sample=code_samples["typescript_code_sample"],
+                curl_code_sample=code_samples["curl_code_sample"],
                 page_type="api_reference"
             )
             return api_ref
