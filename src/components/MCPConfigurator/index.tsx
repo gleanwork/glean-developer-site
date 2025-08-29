@@ -437,7 +437,7 @@ export default function MCPConfigurator() {
                     serverName={fullServerName}
                     serverUrl={serverUrl}
                     onInstall={handleInstallClick}
-                    authToken={authToken}
+                    authToken={authMethod === 'bearer' ? authToken : ''}
                   />
                 </div>
               </TabItem>
