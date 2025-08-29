@@ -23,7 +23,6 @@ describe('Bearer Token Handling for All Hosts', () => {
       (hostId, configType, hasHeaders, hasHeaderFlag) => {
         const clientConfig = registry.getConfig(hostId as ClientId);
 
-        // Skip admin-required hosts
         if (clientConfig?.localConfigSupport === 'none') {
           return;
         }
@@ -37,11 +36,9 @@ describe('Bearer Token Handling for All Hosts', () => {
         });
         const baseConfig = builder.toString(config);
 
-        // Simulate adding bearer token
         let finalConfig = baseConfig;
 
         if (hostId === 'goose') {
-          // Goose uses YAML
           const lines = baseConfig.split('\n');
           const envIndex = lines.findIndex((line) =>
             line.trim().startsWith('envs:'),
@@ -61,7 +58,6 @@ describe('Bearer Token Handling for All Hosts', () => {
           const serverEntry = parsed[serverName];
 
           if (configType === 'http') {
-            // Native HTTP support
             serverEntry.headers = {
               Authorization: `Bearer ${authToken}`,
             };
@@ -72,7 +68,6 @@ describe('Bearer Token Handling for All Hosts', () => {
               `"Authorization": "Bearer ${authToken}"`,
             );
           } else if (configType === 'stdio') {
-            // Needs mcp-remote bridge
             if (serverEntry.type === 'stdio' || serverEntry.command) {
               if (!serverEntry.args) {
                 serverEntry.args = [];
@@ -133,8 +128,6 @@ describe('Bearer Token Handling for All Hosts', () => {
     test('claude-code uses special claude CLI command', () => {
       const expectedCommand = `claude mcp add ${serverName} ${serverUrl} --transport http`;
 
-      // The CLI command for claude-code doesn't include bearer token
-      // as the claude CLI doesn't support it directly
       expect(expectedCommand).not.toContain('--token');
       expect(expectedCommand).toContain('claude mcp add');
     });

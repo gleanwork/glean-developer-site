@@ -6,6 +6,7 @@ import MCPConfigurator from '@site/src/components/MCPConfigurator';
 import Card from '@site/src/components/Card';
 import Admonition from '@theme/Admonition';
 import { CLIENT, MCPConfigRegistry } from '@gleanwork/mcp-config-schema/browser';
+import { clientNeedsMcpRemote } from '@gleanwork/mcp-config-schema';
 import { FeatureFlagsContext } from '@site/src/theme/Root';
 
 export const CompatibilityTable = () => {
@@ -26,7 +27,7 @@ export const CompatibilityTable = () => {
         const config = registry.getConfig(client.id);
 
         let oauthMethod = 'Bridge';
-        if (config?.transports?.includes('http') && !config?.requiresMcpRemoteForHttp) {
+        if (config?.transports?.includes('http') && !clientNeedsMcpRemote(client.id)) {
           oauthMethod = 'Native';
         }
 

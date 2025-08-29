@@ -27,19 +27,18 @@ describe('MCP Configuration Registry', () => {
     });
 
     test.each([
-      ['cursor', false], // native HTTP, not admin
-      ['claude-code', false], // native HTTP, not admin
-      ['claude-desktop', false], // not admin
-      ['vscode', false], // native HTTP, not admin
-      ['windsurf', false], // not admin
-      ['goose', false], // native HTTP (streamable_http), not admin
-      ['chatgpt', true], // is admin
-      ['claude-teams-enterprise', true], // is admin
-    ])('%s has isAdmin=%s', (clientId, isAdmin) => {
+      { client: 'cursor', admin: false },
+      { client: 'claude-code', admin: false },
+      { client: 'claude-desktop', admin: false },
+      { client: 'vscode', admin: false },
+      { client: 'windsurf', admin: false },
+      { client: 'goose', admin: false },
+      { client: 'chatgpt', admin: true },
+      { client: 'claude-teams-enterprise', admin: true },
+    ])('$client has isAdmin=$admin', ({ client: clientId, admin: isAdmin }) => {
       const config = registry.getConfig(clientId as ClientId);
       expect(config).toBeDefined();
 
-      // Check if admin required
       const hasLocalConfig = config?.localConfigSupport !== 'none';
       expect(!hasLocalConfig).toBe(isAdmin);
     });
@@ -50,7 +49,6 @@ describe('MCP Configuration Registry', () => {
       const allClients = registry.getAllConfigs();
 
       allClients.forEach((client) => {
-        // Skip admin-required hosts that don't support local config
         const clientConfig = registry.getConfig(client.id as ClientId);
         if (clientConfig?.localConfigSupport === 'none') {
           return;
@@ -66,7 +64,6 @@ describe('MCP Configuration Registry', () => {
         });
         const output = builder.toString(config);
 
-        // Goose returns YAML, others return JSON
         if (client.id === 'goose') {
           expect(output).toContain('glean_default:');
           expect(output).toContain('type: streamable_http');
@@ -74,7 +71,6 @@ describe('MCP Configuration Registry', () => {
             'uri: https://test-be.glean.com/mcp/default',
           );
         } else {
-          // Should produce valid JSON
           expect(() => JSON.parse(output)).not.toThrow();
 
           const parsed = JSON.parse(output);
@@ -84,7 +80,7 @@ describe('MCP Configuration Registry', () => {
     });
 
     test('hosts that use mcp-remote bridge', () => {
-      const bridgeHosts = ['windsurf', 'claude-desktop']; // These still use mcp-remote
+      const bridgeHosts = ['windsurf', 'claude-desktop'];
 
       bridgeHosts.forEach((hostId) => {
         const builder = registry.createBuilder(hostId as ClientId);
@@ -96,9 +92,8 @@ describe('MCP Configuration Registry', () => {
         });
         const output = builder.toString(config);
 
-        // Bridge hosts return JSON with command/args
         const parsed = JSON.parse(output);
-        // Bridge hosts don't have a 'type' field, they just have command/args
+
         expect(
           parsed.glean_default.command ||
             parsed.mcpServers?.glean_default?.command,
@@ -116,7 +111,6 @@ describe('MCP Configuration Registry', () => {
       httpHosts.forEach((hostId) => {
         const clientConfig = registry.getConfig(hostId as ClientId);
 
-        // Skip if admin required
         if (clientConfig?.localConfigSupport === 'none') return;
 
         const builder = registry.createBuilder(hostId as ClientId);
@@ -154,8 +148,7 @@ describe('MCP Configuration Registry', () => {
       });
       const output = builder.toString(config);
 
-      // Claude Code actually returns JSON config, not a CLI command
-      // The CLI command is generated in the UI component
+
       const parsed = JSON.parse(output);
       expect(parsed.glean_default.type).toBe('http');
       expect(parsed.glean_default.url).toBe(
@@ -164,7 +157,6 @@ describe('MCP Configuration Registry', () => {
     });
 
     test('configuration structure matches expected format', () => {
-      // Test that native HTTP hosts have the correct structure
       const builder = registry.createBuilder('vscode' as ClientId);
 
       const config = builder.buildConfiguration({
@@ -181,9 +173,6 @@ describe('MCP Configuration Registry', () => {
       expect(parsed.glean_default.url).toBe(
         'https://test-be.glean.com/mcp/default',
       );
-
-      // Note: The mcp-config-schema doesn't currently add auth headers
-      // Auth is handled via OAuth/DCR by default
     });
   });
 
@@ -197,6 +186,7 @@ describe('MCP Configuration Registry', () => {
 
         if (config?.oneClick) {
           const url = builder.buildOneClickUrl({
+            transport: 'http',
             serverUrl: 'https://test-be.glean.com/mcp/default',
             serverName: 'glean_default',
           });

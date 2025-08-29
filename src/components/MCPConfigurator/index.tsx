@@ -4,7 +4,7 @@ import {
   MCPConfigRegistry,
   type ClientId,
 } from '@gleanwork/mcp-config-schema/browser';
-import { buildMcpServerName } from '@gleanwork/mcp-config-schema';
+import { buildMcpServerName, clientNeedsMcpRemote } from '@gleanwork/mcp-config-schema';
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 import { Toaster, toast } from 'sonner';
@@ -333,7 +333,7 @@ export default function MCPConfigurator() {
                   className={styles.input}
                 />
                 <small className={styles.hint}>
-                  {!selectedClient.requiresMcpRemoteForHttp
+                  {!clientNeedsMcpRemote(selectedClient.id)
                     ? 'Will be added as Authorization header'
                     : 'Will be set as GLEAN_API_TOKEN environment variable'}
                 </small>
@@ -578,7 +578,7 @@ export default function MCPConfigurator() {
                                 return JSON.stringify(
                                   {
                                     [fullServerName]: {
-                                      type: selectedClient.requiresMcpRemoteForHttp
+                                      type: clientNeedsMcpRemote(selectedClient.id)
                                         ? 'stdio'
                                         : 'http',
                                       '...': `Complete the 'Configure Server URL' section above`,
@@ -593,7 +593,6 @@ export default function MCPConfigurator() {
                                 selectedClient.id as ClientId,
                               );
 
-                              // Generate config with auth token if provided
                               const config = builder.buildConfiguration({
                                 transport: 'http',
                                 serverUrl,
@@ -610,7 +609,7 @@ export default function MCPConfigurator() {
                               return JSON.stringify(
                                 {
                                   [fullServerName]:
-                                    selectedClient.requiresMcpRemoteForHttp
+                                    clientNeedsMcpRemote(selectedClient.id)
                                       ? {
                                           type: 'stdio',
                                           command: 'npx',

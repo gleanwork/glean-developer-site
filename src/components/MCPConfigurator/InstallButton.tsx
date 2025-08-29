@@ -3,7 +3,7 @@ import {
   MCPConfigRegistry,
   type ClientId,
 } from '@gleanwork/mcp-config-schema/browser';
-import { CLIENT } from '@gleanwork/mcp-config-schema';
+import { CLIENT, clientNeedsMcpRemote } from '@gleanwork/mcp-config-schema';
 import { toast } from 'sonner';
 import styles from './styles.module.css';
 
@@ -44,7 +44,7 @@ interface ClientWithLogo {
   displayName: string;
   logo?: string;
   isAdminRequired?: boolean;
-  requiresMcpRemoteForHttp?: boolean;
+
   configPath?: {
     darwin?: string;
     linux?: string;
@@ -168,8 +168,8 @@ export function InstallButton({
 
           const fallbackConfig = {
             [serverName]: {
-              type: client.requiresMcpRemoteForHttp ? 'stdio' : 'http',
-              ...(client.requiresMcpRemoteForHttp
+              type: clientNeedsMcpRemote(client.id as ClientId) ? 'stdio' : 'http',
+              ...(clientNeedsMcpRemote(client.id as ClientId)
                 ? {
                     command: 'npx',
                     args: authToken

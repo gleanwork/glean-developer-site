@@ -46,7 +46,6 @@ describe('Bearer Token Configuration', () => {
         );
         const config = configCode?.textContent;
 
-        // v0.11.0 now properly includes bearer tokens for all HTTP clients
         expect(config).toContain('"Authorization": "Bearer test-token-123"');
         expect(config).toContain('"headers"');
         expect(config).toContain('"type": "http"');
@@ -104,19 +103,12 @@ describe('Bearer Token Configuration', () => {
         );
         const config = configCode?.textContent;
 
-        // Goose now uses headers in YAML format
         expect(config).toContain('Authorization: Bearer test-token-789');
         expect(config).toContain('headers:');
         expect(config).toContain('type: streamable_http');
       });
     });
   });
-
-  // CLI Command tests are covered in all-hosts-bearer.test.ts
-  // These tests validate the logic without UI interaction complexity
-
-  // Config Button tests are covered in all-hosts-bearer.test.ts
-  // These tests validate the logic without UI interaction complexity
 
   describe('OAuth vs Bearer Token', () => {
     test('OAuth mode does not include any auth headers', async () => {
