@@ -228,7 +228,11 @@ const config: Config = {
         searchOptions: {
           backend: 'https://glean-public-external-be.glean.com',
           webAppUrl: 'https://glean-public-external.glean.com',
-          datasourcesFilter: ['devdocs', 'gleandocs', 'webjjldruagleancommunity'],
+          datasourcesFilter: [
+            'devdocs',
+            'gleandocs',
+            'webjjldruagleancommunity',
+          ],
           disableAssistant: true,
         },
         chatOptions: false,

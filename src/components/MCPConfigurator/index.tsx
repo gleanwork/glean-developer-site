@@ -60,9 +60,8 @@ export default function MCPConfigurator() {
   const { isEnabled, flagConfigs } = useContext(FeatureFlagsContext);
   const showClaudeTeams = isEnabled('show-claude-teams');
 
-  const cliPackageVersion = flagConfigs['mcp-cli-version']?.metadata?.version as
-    | string
-    | undefined;
+  const cliPackageVersion = flagConfigs['mcp-cli-version']?.metadata
+    ?.version as string | undefined;
 
   const allClients = useMemo(() => {
     if (!registry) return [];
@@ -594,87 +593,18 @@ export default function MCPConfigurator() {
                                 selectedClient.id as ClientId,
                               );
 
-                              // Generate base config without auth token
-                              const baseConfig = builder.buildConfiguration({
-                                mode: 'remote',
+                              // Generate config with auth token if provided
+                              const config = builder.buildConfiguration({
+                                transport: 'http',
                                 serverUrl,
                                 serverName: fullServerName,
                                 includeWrapper: false,
+                                apiToken:
+                                  authMethod === 'bearer' && authToken
+                                    ? authToken
+                                    : undefined,
                               });
-
-                              if (selectedClient.id === CLIENT.GOOSE) {
-                                // Goose uses YAML format with native HTTP (streamable_http)
-                                // Note: As of Goose issue #2423, custom headers support is still pending
-                                // For now, we'll add the header in the expected format for when it's supported
-                                if (authMethod === 'bearer' && authToken) {
-                                  const lines = baseConfig.split('\n');
-
-                                  // Find the headers section (it should exist as empty object)
-                                  const headersIndex = lines.findIndex((line) =>
-                                    line.trim().startsWith('headers:'),
-                                  );
-
-                                  if (headersIndex !== -1) {
-                                    // Replace empty headers object with Authorization header
-                                    if (lines[headersIndex].includes('{}')) {
-                                      lines[headersIndex] = '  headers:';
-                                      lines.splice(
-                                        headersIndex + 1,
-                                        0,
-                                        `    Authorization: Bearer ${authToken}`,
-                                      );
-                                    } else {
-                                      // Add to existing headers
-                                      lines.splice(
-                                        headersIndex + 1,
-                                        0,
-                                        `    Authorization: Bearer ${authToken}`,
-                                      );
-                                    }
-                                  }
-                                  return lines.join('\n');
-                                }
-                                return baseConfig;
-                              }
-
-                              try {
-                                const parsed = JSON.parse(baseConfig);
-                                const serverEntry = parsed[fullServerName];
-
-                                if (authMethod === 'bearer' && authToken) {
-                                  if (serverEntry.type === 'http') {
-                                    // For native HTTP clients, add Authorization header
-                                    serverEntry.headers = {
-                                      Authorization: `Bearer ${authToken}`,
-                                    };
-                                  } else if (
-                                    serverEntry.type === 'stdio' ||
-                                    (!serverEntry.type && serverEntry.command)
-                                  ) {
-                                    // For stdio clients using mcp-remote (with or without type field)
-                                    if (serverEntry.args) {
-                                      // Add --header flag with Authorization header
-                                      serverEntry.args.push(
-                                        '--header',
-                                        `Authorization: Bearer ${authToken}`,
-                                      );
-                                    } else if (serverEntry.command) {
-                                      // Some stdio configs might not have args array initially
-                                      serverEntry.args = [
-                                        '-y',
-                                        'mcp-remote',
-                                        serverUrl,
-                                        '--header',
-                                        `Authorization: Bearer ${authToken}`,
-                                      ];
-                                    }
-                                  }
-                                }
-
-                                return JSON.stringify(parsed, null, 2);
-                              } catch {
-                                return baseConfig;
-                              }
+                              return builder.toString(config);
                             } catch (e) {
                               console.error('Config generation error:', e);
                               return JSON.stringify(

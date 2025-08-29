@@ -125,7 +125,7 @@ export default function Root({ children }: { children: ReactNode }) {
 
   const isEnabled = useCallback(
     (flag: string) => flags[flag] || false,
-    [flags]
+    [flags],
   );
 
   const refresh = useCallback(() => {

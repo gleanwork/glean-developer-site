@@ -26,7 +26,7 @@ export const CompatibilityTable = () => {
         const config = registry.getConfig(client.id);
 
         let oauthMethod = 'Bridge';
-        if (config?.clientSupports === 'http') {
+        if (config?.transports?.includes('http') && !config?.requiresMcpRemoteForHttp) {
           oauthMethod = 'Native';
         }
 
@@ -44,7 +44,7 @@ export const CompatibilityTable = () => {
           oauthMethod,
           configMethod,
           hasOneClick: !!config?.oneClick,
-          requiresBridge: config?.clientSupports === 'stdio-only',
+          requiresBridge: config?.transports?.includes('stdio') && !config?.transports?.includes('http'),
         };
       })
       .sort((a, b) => a.name.localeCompare(b.name));

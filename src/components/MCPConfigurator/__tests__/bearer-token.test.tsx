@@ -46,8 +46,10 @@ describe('Bearer Token Configuration', () => {
         );
         const config = configCode?.textContent;
 
+        // v0.11.0 now properly includes bearer tokens for all HTTP clients
         expect(config).toContain('"Authorization": "Bearer test-token-123"');
         expect(config).toContain('"headers"');
+        expect(config).toContain('"type": "http"');
       });
     });
 
@@ -79,7 +81,7 @@ describe('Bearer Token Configuration', () => {
       });
     });
 
-    test('goose includes GLEAN_API_TOKEN environment variable', async () => {
+    test('goose includes Authorization header in YAML', async () => {
       const { getByLabelText, container } = render(<MCPConfigurator />);
 
       const hostSelect = getByLabelText('Select Your Host Application');
@@ -102,8 +104,10 @@ describe('Bearer Token Configuration', () => {
         );
         const config = configCode?.textContent;
 
-        expect(config).toContain('GLEAN_API_TOKEN: test-token-789');
-        expect(config).toContain('envs:');
+        // Goose now uses headers in YAML format
+        expect(config).toContain('Authorization: Bearer test-token-789');
+        expect(config).toContain('headers:');
+        expect(config).toContain('type: streamable_http');
       });
     });
   });
