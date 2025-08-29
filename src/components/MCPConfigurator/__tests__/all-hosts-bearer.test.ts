@@ -136,7 +136,7 @@ describe('Bearer Token Handling for All Hosts', () => {
       const hosts = ['cursor', 'vscode', 'windsurf', 'goose'];
 
       hosts.forEach((hostId) => {
-        const expectedCommand = `npx @gleanwork/configure-mcp-server remote --url ${serverUrl} --client ${hostId} --token ${authToken}`;
+        const expectedCommand = `npx -y @gleanwork/configure-mcp-server remote --url ${serverUrl} --client ${hostId} --token ${authToken}`;
 
         expect(expectedCommand).toContain('--token');
         expect(expectedCommand).toContain(authToken);

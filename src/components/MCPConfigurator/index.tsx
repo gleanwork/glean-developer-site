@@ -459,7 +459,7 @@ export default function MCPConfigurator() {
                           let cliCommand =
                             selectedClientId === CLIENT.CLAUDE_CODE
                               ? `claude mcp add ${fullServerName} ${serverUrl || 'https://[instance]-be.glean.com/mcp/[endpoint]'} --transport http`
-                              : `npx ${packageName} remote --url ${serverUrl || 'https://[instance]-be.glean.com/mcp/[endpoint]'} --client ${selectedClientId}`;
+                              : `npx -y ${packageName} remote --url ${serverUrl || 'https://[instance]-be.glean.com/mcp/[endpoint]'} --client ${selectedClientId}`;
 
                           // Add bearer token to Claude Code command if present
                           if (
@@ -499,7 +499,7 @@ export default function MCPConfigurator() {
    --header "Authorization: Bearer ${authToken}"`
                                   : ''
                               }`
-                            : `npx ${cliPackageVersion ? `@gleanwork/configure-mcp-server@${cliPackageVersion}` : '@gleanwork/configure-mcp-server'} remote \\
+                            : `npx -y ${cliPackageVersion ? `@gleanwork/configure-mcp-server@${cliPackageVersion}` : '@gleanwork/configure-mcp-server'} remote \\
    --url ${serverUrl || 'https://[instance]-be.glean.com/mcp/[endpoint]'} \\
    --client ${selectedClientId}${
      authMethod === 'bearer' && authToken
