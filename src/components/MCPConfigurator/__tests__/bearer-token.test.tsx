@@ -48,6 +48,7 @@ describe('Bearer Token Configuration', () => {
 
         expect(config).toContain('"Authorization": "Bearer test-token-123"');
         expect(config).toContain('"headers"');
+        expect(config).toContain('"type": "http"');
       });
     });
 
@@ -79,7 +80,7 @@ describe('Bearer Token Configuration', () => {
       });
     });
 
-    test('goose includes GLEAN_API_TOKEN environment variable', async () => {
+    test('goose includes Authorization header in YAML', async () => {
       const { getByLabelText, container } = render(<MCPConfigurator />);
 
       const hostSelect = getByLabelText('Select Your Host Application');
@@ -102,17 +103,12 @@ describe('Bearer Token Configuration', () => {
         );
         const config = configCode?.textContent;
 
-        expect(config).toContain('GLEAN_API_TOKEN: test-token-789');
-        expect(config).toContain('envs:');
+        expect(config).toContain('Authorization: Bearer test-token-789');
+        expect(config).toContain('headers:');
+        expect(config).toContain('type: streamable_http');
       });
     });
   });
-
-  // CLI Command tests are covered in all-hosts-bearer.test.ts
-  // These tests validate the logic without UI interaction complexity
-
-  // Config Button tests are covered in all-hosts-bearer.test.ts
-  // These tests validate the logic without UI interaction complexity
 
   describe('OAuth vs Bearer Token', () => {
     test('OAuth mode does not include any auth headers', async () => {
@@ -137,6 +133,49 @@ describe('Bearer Token Configuration', () => {
         expect(config).not.toContain('headers');
         expect(config).not.toContain('--header');
         expect(config).not.toContain('GLEAN_API_TOKEN');
+      });
+    });
+  });
+
+  describe('Auth Method Switching Bug Fix', () => {
+    test('switching from bearer to oauth removes token from config', async () => {
+      const { getByDisplayValue, getByText, getByRole, container } = render(<MCPConfigurator />);
+      
+      // First select a non-admin client (cursor) to show auth options
+      const clientSelect = getByRole('combobox', { name: /select your host application/i });
+      fireEvent.change(clientSelect, { target: { value: 'cursor' } });
+      
+      // Set up instance and server name
+      const instanceInput = getByDisplayValue('');
+      fireEvent.change(instanceInput, { target: { value: 'testcompany' } });
+      
+      // Now the auth method dropdown should be available
+      await waitFor(() => {
+        const authSelect = container.querySelector('#auth-method') as HTMLSelectElement;
+        expect(authSelect).toBeInTheDocument();
+        
+        // Switch to bearer auth
+        fireEvent.change(authSelect, { target: { value: 'bearer' } });
+      });
+      
+      // Set a token
+      await waitFor(() => {
+        const tokenInput = container.querySelector('#auth-token') as HTMLInputElement;
+        expect(tokenInput).toBeInTheDocument();
+        fireEvent.change(tokenInput, { target: { value: 'test-token-123' } });
+      });
+      
+      // Switch back to oauth
+      const authSelect = container.querySelector('#auth-method') as HTMLSelectElement;
+      fireEvent.change(authSelect, { target: { value: 'oauth' } });
+      
+      // Check that the manual config doesn't contain the token
+      await waitFor(() => {
+        const configText = getByText(/"type": "http"/).closest('code')?.textContent;
+        expect(configText).toBeTruthy();
+        expect(configText).not.toContain('Authorization');
+        expect(configText).not.toContain('test-token-123');
+        expect(configText).not.toContain('headers');
       });
     });
   });

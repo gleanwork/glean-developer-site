@@ -6,7 +6,7 @@ import React, {
   useState,
 } from 'react';
 import type { ReactNode } from 'react';
-import type { FeatureFlagsMap } from '@site/src/lib/featureFlagTypes';
+import type { FeatureFlagsMap, FeatureFlagDefinition } from '@site/src/lib/featureFlagTypes';
 import { flagsSnapshotToBooleans } from '@site/src/lib/featureFlags';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 
@@ -90,42 +90,78 @@ export default function Root({ children }: { children: ReactNode }) {
   const visitorId = getLocalVisitorId();
 
   // Check for URL parameter overrides
-  const { urlOverrides, timeOverride } = useMemo(() => {
+  const { urlOverrides, flagConfigOverrides, timeOverride } = useMemo(() => {
     if (typeof window === 'undefined') {
-      return { urlOverrides: {}, timeOverride: undefined };
+      return { urlOverrides: {}, flagConfigOverrides: {}, timeOverride: undefined };
     }
 
     const params = new URLSearchParams(window.location.search);
     const overrides: Record<string, boolean> = {};
+    const configOverrides: Record<string, Partial<FeatureFlagDefinition>> = {};
     let timeOverride: string | undefined;
 
     // Check for ff_ prefixed params (e.g., ?ff_remote-mcp-docs=true)
     // Also check for ff_time for testing date-based flags (e.g., ?ff_time=2025-01-01T00:00:00Z)
+    // Also check for ff_flagname_metadatakey=value for metadata (e.g., ?ff_mcp-cli-version_version=beta)
     for (const [key, value] of params) {
       if (key === 'ff_time') {
         timeOverride = value;
       } else if (key.startsWith('ff_')) {
-        const flagName = key.slice(3);
-        overrides[flagName] = value === 'true' || value === '1';
+        const flagPart = key.slice(3);
+        
+        // Check if this is a metadata parameter (contains underscore)
+        if (flagPart.includes('_')) {
+          const [flagName, metadataKey] = flagPart.split('_', 2);
+          if (!configOverrides[flagName]) {
+            configOverrides[flagName] = { enabled: true, metadata: {} };
+          }
+          if (!configOverrides[flagName].metadata) {
+            configOverrides[flagName].metadata = {};
+          }
+          configOverrides[flagName].metadata![metadataKey] = value;
+        } else {
+          // Regular boolean flag
+          const flagName = flagPart;
+          overrides[flagName] = value === 'true' || value === '1';
+        }
       }
     }
 
-    return { urlOverrides: overrides, timeOverride };
+    return { urlOverrides: overrides, flagConfigOverrides: configOverrides, timeOverride };
   }, []);
+
+  // Merge flagConfigs with URL parameter overrides
+  const mergedFlagConfigs = useMemo(() => {
+    const merged = { ...flagConfigs };
+    
+    // Apply URL parameter config overrides
+    for (const [flagName, override] of Object.entries(flagConfigOverrides)) {
+      merged[flagName] = {
+        ...merged[flagName],
+        ...override,
+        metadata: {
+          ...merged[flagName]?.metadata,
+          ...override.metadata,
+        },
+      };
+    }
+    
+    return merged;
+  }, [flagConfigs, flagConfigOverrides]);
 
   const flags = useMemo(() => {
     const context = {
       visitorId,
       ...(timeOverride ? { currentTime: timeOverride } : {}),
     };
-    const base = flagsSnapshotToBooleans(flagConfigs, context);
+    const base = flagsSnapshotToBooleans(mergedFlagConfigs, context);
     // Apply URL overrides
     return { ...base, ...urlOverrides };
-  }, [flagConfigs, visitorId, urlOverrides, timeOverride]);
+  }, [mergedFlagConfigs, visitorId, urlOverrides, timeOverride]);
 
   const isEnabled = useCallback(
     (flag: string) => flags[flag] || false,
-    [flags]
+    [flags],
   );
 
   const refresh = useCallback(() => {
@@ -147,8 +183,8 @@ export default function Root({ children }: { children: ReactNode }) {
   }, [refresh]);
 
   const value = useMemo(
-    () => ({ flagConfigs, flags, isEnabled, refresh, debug }),
-    [flagConfigs, flags, isEnabled, refresh, debug],
+    () => ({ flagConfigs: mergedFlagConfigs, flags, isEnabled, refresh, debug }),
+    [mergedFlagConfigs, flags, isEnabled, refresh, debug],
   );
 
   return (

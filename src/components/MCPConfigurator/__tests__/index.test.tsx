@@ -144,7 +144,7 @@ describe('MCPQuickInstaller Component', () => {
 
       // Check CLI command content
       const cliCommand = screen.getByText(
-        /npx @gleanwork\/configure-mcp-server remote/,
+        /npx -y @gleanwork\/configure-mcp-server remote/,
       );
       expect(cliCommand).toBeInTheDocument();
       // The URL should contain the instance and endpoint
@@ -184,7 +184,7 @@ describe('MCPQuickInstaller Component', () => {
 
       // Check token is included
       const cliCommand = screen.getByText(
-        /npx @gleanwork\/configure-mcp-server remote/,
+        /npx -y @gleanwork\/configure-mcp-server remote/,
       );
       expect(cliCommand.textContent).toContain('--token test_token_123');
     });

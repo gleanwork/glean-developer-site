@@ -3,7 +3,7 @@ import {
   MCPConfigRegistry,
   type ClientId,
 } from '@gleanwork/mcp-config-schema/browser';
-import { CLIENT } from '@gleanwork/mcp-config-schema';
+import { CLIENT, clientNeedsMcpRemote } from '@gleanwork/mcp-config-schema';
 import { toast } from 'sonner';
 import styles from './styles.module.css';
 
@@ -44,7 +44,7 @@ interface ClientWithLogo {
   displayName: string;
   logo?: string;
   isAdminRequired?: boolean;
-  requiresMcpRemoteForHttp?: boolean;
+
   configPath?: {
     darwin?: string;
     linux?: string;
@@ -80,7 +80,7 @@ export function InstallButton({
 
       const builder = registry.createBuilder(client.id as ClientId);
       const url = builder.buildOneClickUrl({
-        mode: 'remote',
+        transport: 'http',
         serverUrl,
         serverName,
         apiToken: authToken || undefined,
@@ -146,77 +146,15 @@ export function InstallButton({
           }
           const builder = registry.createBuilder(client.id as ClientId);
 
-          // Generate base config without auth
-          const baseConfig = builder.buildConfiguration({
-            mode: 'remote',
+          // Generate config with auth token if provided
+          const config = builder.buildConfiguration({
+            transport: 'http',
             serverUrl,
             serverName,
             includeWrapper: false, // Use partial config without mcpServers wrapper
+            apiToken: authToken || undefined,
           });
-
-          let finalConfig = baseConfig;
-
-          // Add auth token if provided
-          if (authToken) {
-            if (client.id === CLIENT.GOOSE) {
-              // Goose uses YAML format with native HTTP (streamable_http)
-              const lines = baseConfig.split('\n');
-
-              // Find the headers section (it should exist as empty object)
-              const headersIndex = lines.findIndex((line) =>
-                line.trim().startsWith('headers:'),
-              );
-
-              if (headersIndex !== -1) {
-                // Replace empty headers object with Authorization header
-                if (lines[headersIndex].includes('{}')) {
-                  lines[headersIndex] = '  headers:';
-                  lines.splice(
-                    headersIndex + 1,
-                    0,
-                    `    Authorization: Bearer ${authToken}`,
-                  );
-                } else {
-                  // Add to existing headers
-                  lines.splice(
-                    headersIndex + 1,
-                    0,
-                    `    Authorization: Bearer ${authToken}`,
-                  );
-                }
-              }
-              finalConfig = lines.join('\n');
-            } else {
-              // JSON config
-              try {
-                const parsed = JSON.parse(baseConfig);
-                const serverEntry = parsed[serverName];
-
-                if (serverEntry.type === 'http') {
-                  // Native HTTP - add Authorization header
-                  serverEntry.headers = {
-                    Authorization: `Bearer ${authToken}`,
-                  };
-                } else if (
-                  (serverEntry.type === 'stdio' ||
-                    (!serverEntry.type && serverEntry.command)) &&
-                  serverEntry.args
-                ) {
-                  // Stdio with mcp-remote connecting to remote HTTP server (with or without type field)
-                  // Add --header flag with Authorization header
-                  serverEntry.args.push(
-                    '--header',
-                    `Authorization: Bearer ${authToken}`,
-                  );
-                }
-
-                finalConfig = JSON.stringify(parsed, null, 2);
-              } catch {
-                // If parsing fails, use original config
-                finalConfig = baseConfig;
-              }
-            }
-          }
+          const finalConfig = builder.toString(config);
 
           await navigator.clipboard.writeText(finalConfig);
           const configPath = getConfigPath(client);
@@ -230,8 +168,8 @@ export function InstallButton({
 
           const fallbackConfig = {
             [serverName]: {
-              type: client.requiresMcpRemoteForHttp ? 'stdio' : 'http',
-              ...(client.requiresMcpRemoteForHttp
+              type: clientNeedsMcpRemote(client.id as ClientId) ? 'stdio' : 'http',
+              ...(clientNeedsMcpRemote(client.id as ClientId)
                 ? {
                     command: 'npx',
                     args: authToken
