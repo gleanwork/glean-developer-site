@@ -1,7 +1,6 @@
 import React from 'react';
 import { vi } from 'vitest';
 
-// Mock FeatureFlagsContext from @site/src/theme/Root
 vi.mock('@site/src/theme/Root', () => ({
   FeatureFlagsContext: React.createContext({
     isEnabled: () => false,
