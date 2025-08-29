@@ -57,10 +57,10 @@ function getConfigPath(
 
 export default function MCPConfigurator() {
   const registry = useMemo(() => new MCPConfigRegistry(), []);
-  const { booleans, raw } = useContext(FeatureFlagsContext);
-  const showClaudeTeams = booleans['show-claude-teams'] || false;
+  const { isEnabled, flagConfigs } = useContext(FeatureFlagsContext);
+  const showClaudeTeams = isEnabled('show-claude-teams');
 
-  const cliPackageVersion = raw['mcp-cli-version']?.metadata?.version as
+  const cliPackageVersion = flagConfigs['mcp-cli-version']?.metadata?.version as
     | string
     | undefined;
 

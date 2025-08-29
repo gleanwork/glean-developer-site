@@ -11,15 +11,17 @@ import { flagsSnapshotToBooleans } from '@site/src/lib/featureFlags';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 
 type FeatureFlagsState = {
-  raw: FeatureFlagsMap;
-  booleans: Record<string, boolean>;
+  flagConfigs: FeatureFlagsMap;
+  flags: Record<string, boolean>;
+  isEnabled: (flag: string) => boolean;
   refresh: () => void;
   debug: boolean;
 };
 
 const initialState: FeatureFlagsState = {
-  raw: {},
-  booleans: {},
+  flagConfigs: {},
+  flags: {},
+  isEnabled: () => false,
   refresh: () => {},
   debug: false,
 };
@@ -83,7 +85,7 @@ export default function Root({ children }: { children: ReactNode }) {
   const initial =
     ((siteConfig?.customFields as any)?.__BUILD_FLAGS__ as FeatureFlagsMap) ||
     {};
-  const [raw, setRaw] = useState<FeatureFlagsMap>(initial);
+  const [flagConfigs, setFlagConfigs] = useState<FeatureFlagsMap>(initial);
 
   const visitorId = getLocalVisitorId();
 
@@ -111,26 +113,31 @@ export default function Root({ children }: { children: ReactNode }) {
     return { urlOverrides: overrides, timeOverride };
   }, []);
 
-  const booleans = useMemo(() => {
+  const flags = useMemo(() => {
     const context = {
       visitorId,
       ...(timeOverride ? { currentTime: timeOverride } : {}),
     };
-    const base = flagsSnapshotToBooleans(raw, context);
+    const base = flagsSnapshotToBooleans(flagConfigs, context);
     // Apply URL overrides
     return { ...base, ...urlOverrides };
-  }, [raw, visitorId, urlOverrides, timeOverride]);
+  }, [flagConfigs, visitorId, urlOverrides, timeOverride]);
+
+  const isEnabled = useCallback(
+    (flag: string) => flags[flag] || false,
+    [flags]
+  );
 
   const refresh = useCallback(() => {
     const cached = readCache();
     if (cached) {
-      setRaw(cached);
+      setFlagConfigs(cached);
       return;
     }
     fetchRuntimeFlags().then((next) => {
       if (next) {
         writeCache(next);
-        setRaw(next);
+        setFlagConfigs(next);
       }
     });
   }, []);
@@ -140,8 +147,8 @@ export default function Root({ children }: { children: ReactNode }) {
   }, [refresh]);
 
   const value = useMemo(
-    () => ({ raw, booleans, refresh, debug }),
-    [raw, booleans, refresh, debug],
+    () => ({ flagConfigs, flags, isEnabled, refresh, debug }),
+    [flagConfigs, flags, isEnabled, refresh, debug],
   );
 
   return (

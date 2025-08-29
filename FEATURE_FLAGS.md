@@ -91,9 +91,9 @@ import { useContext } from 'react';
 import { FeatureFlagsContext } from '@site/src/theme/Root';
 
 function Component() {
-  const { booleans } = useContext(FeatureFlagsContext);
+  const { isEnabled } = useContext(FeatureFlagsContext);
   
-  if (booleans['new-ui']) {
+  if (isEnabled('new-ui')) {
     return <NewUI />;
   }
   return <OldUI />;
@@ -199,8 +199,8 @@ FLAGS_DEBUG=true
 The `metadata` field can store arbitrary configuration values that can be accessed in components:
 
 ```typescript
-const { raw } = useContext(FeatureFlagsContext);
-const version = raw['mcp-cli-version']?.metadata?.version as string | undefined;
+const { flagConfigs } = useContext(FeatureFlagsContext);
+const version = flagConfigs['mcp-cli-version']?.metadata?.version as string | undefined;
 ```
 
 ## Debug Mode
@@ -279,7 +279,7 @@ Alice will always see "new-search" but never "beta-ui" unless the percentages ch
 ### Feature Deprecation
 
 1. Add flag with `enabled: true`
-2. Wrap old feature in `!booleans['new-feature']`
+2. Wrap old feature in `!isEnabled('new-feature')`
 3. After migration, remove flag and old code
 
 ## Troubleshooting
