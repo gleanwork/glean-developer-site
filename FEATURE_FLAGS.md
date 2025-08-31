@@ -20,6 +20,13 @@ This document describes the feature flag system implemented for the Glean Develo
     },
     "beta-tutorials": {
       "enabled": false
+    },
+    "mcp-cli-version": {
+      "enabled": true,
+      "metadata": {
+        "version": "1.0.0-beta.1"
+      },
+      "description": "Version to pin the @gleanwork/configure-mcp-server package to"
     }
   }
 }
@@ -84,9 +91,9 @@ import { useContext } from 'react';
 import { FeatureFlagsContext } from '@site/src/theme/Root';
 
 function Component() {
-  const { booleans } = useContext(FeatureFlagsContext);
+  const { isEnabled } = useContext(FeatureFlagsContext);
   
-  if (booleans['new-ui']) {
+  if (isEnabled('new-ui')) {
     return <NewUI />;
   }
   return <OldUI />;
@@ -176,6 +183,26 @@ FLAGS_DEBUG=true
 }
 ```
 
+**Using metadata for configuration values:**
+
+```json
+{
+  "enabled": true,
+  "metadata": {
+    "version": "1.0.0-beta.1",
+    "apiUrl": "https://api.example.com",
+    "maxRetries": 3
+  }
+}
+```
+
+The `metadata` field can store arbitrary configuration values that can be accessed in components:
+
+```typescript
+const { flagConfigs } = useContext(FeatureFlagsContext);
+const version = flagConfigs['mcp-cli-version']?.metadata?.version as string | undefined;
+```
+
 ## Debug Mode
 
 With `FLAGS_DEBUG=true`:
@@ -252,7 +279,7 @@ Alice will always see "new-search" but never "beta-ui" unless the percentages ch
 ### Feature Deprecation
 
 1. Add flag with `enabled: true`
-2. Wrap old feature in `!booleans['new-feature']`
+2. Wrap old feature in `!isEnabled('new-feature')`
 3. After migration, remove flag and old code
 
 ## Troubleshooting

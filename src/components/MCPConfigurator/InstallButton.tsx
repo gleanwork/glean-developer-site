@@ -3,15 +3,53 @@ import {
   MCPConfigRegistry,
   type ClientId,
 } from '@gleanwork/mcp-config-schema/browser';
+import { CLIENT, clientNeedsMcpRemote } from '@gleanwork/mcp-config-schema';
 import { toast } from 'sonner';
 import styles from './styles.module.css';
+
+function getPlatform(): 'darwin' | 'linux' | 'win32' | undefined {
+  const userAgent = navigator.userAgent.toLowerCase();
+
+  if (userAgent.includes('mac')) {
+    return 'darwin';
+  } else if (userAgent.includes('win')) {
+    return 'win32';
+  } else if (userAgent.includes('linux')) {
+    return 'linux';
+  }
+
+  return undefined;
+}
+
+function getConfigPath(
+  client: any,
+  platform?: 'darwin' | 'linux' | 'win32',
+): string | undefined {
+  const currentPlatform = platform || getPlatform();
+  if (!currentPlatform || !client.configPath) {
+    return undefined;
+  }
+
+  const path = client.configPath[currentPlatform];
+  if (!path) {
+    return undefined;
+  }
+
+  // Replace environment variables with actual values for display
+  return path.replace('$HOME', '~').replace('%APPDATA%', '%APPDATA%');
+}
 
 interface ClientWithLogo {
   id: string;
   displayName: string;
   logo?: string;
   isAdminRequired?: boolean;
-  requiresMcpRemoteForHttp?: boolean;
+
+  configPath?: {
+    darwin?: string;
+    linux?: string;
+    win32?: string;
+  };
 }
 
 interface InstallButtonProps {
@@ -42,7 +80,7 @@ export function InstallButton({
 
       const builder = registry.createBuilder(client.id as ClientId);
       const url = builder.buildOneClickUrl({
-        mode: 'remote',
+        transport: 'http',
         serverUrl,
         serverName,
         apiToken: authToken || undefined,
@@ -58,9 +96,9 @@ export function InstallButton({
     if (client.isAdminRequired) {
       // Open documentation for admin-required hosts
       const docUrl =
-        client.id === 'chatgpt'
+        client.id === CLIENT.CHATGPT
           ? 'https://platform.openai.com/docs/mcp#connect-in-chatgpt'
-          : client.id === 'claude-teams-enterprise'
+          : client.id === CLIENT.CLAUDE_TEAMS_ENTERPRISE
             ? 'https://support.anthropic.com/en/articles/11724452-browsing-and-connecting-to-tools-from-the-directory'
             : 'https://developers.glean.com/docs/guides/mcp';
       window.open(docUrl, '_blank');
@@ -90,10 +128,17 @@ export function InstallButton({
       }
     } else {
       // Special handling for Claude Code
-      if (client.id === 'claude-code') {
-        const claudeCommand = `claude mcp add ${serverName} ${serverUrl} --transport http`;
+      if (client.id === CLIENT.CLAUDE_CODE) {
+        let claudeCommand = `claude mcp add ${serverName} ${serverUrl} --transport http`;
+        if (authToken) {
+          claudeCommand += ` --header "Authorization: Bearer ${authToken}"`;
+        }
         await navigator.clipboard.writeText(claudeCommand);
         toast.success('CLI command copied! Run it in your terminal.');
+      } else if (client.id === CLIENT.VSCODE) {
+        // VSCode uses URLs for installation
+        await navigator.clipboard.writeText(serverUrl);
+        toast.success('Server URL copied! Use it to install the MCP server.');
       } else {
         try {
           if (!registry) {
@@ -101,76 +146,30 @@ export function InstallButton({
           }
           const builder = registry.createBuilder(client.id as ClientId);
 
-          // Generate base config without auth
-          const baseConfig = builder.buildConfiguration({
-            mode: 'remote',
+          // Generate config with auth token if provided
+          const config = builder.buildConfiguration({
+            transport: 'http',
             serverUrl,
             serverName,
             includeWrapper: false, // Use partial config without mcpServers wrapper
+            apiToken: authToken || undefined,
           });
-
-          let finalConfig = baseConfig;
-
-          // Add auth token if provided
-          if (authToken) {
-            if (client.id === 'goose') {
-              // Goose uses YAML - add env vars
-              const lines = baseConfig.split('\n');
-              const envIndex = lines.findIndex((line) =>
-                line.includes('envs:'),
-              );
-              if (envIndex !== -1) {
-                lines.splice(
-                  envIndex + 1,
-                  0,
-                  `    GLEAN_API_TOKEN: ${authToken}`,
-                );
-              } else {
-                lines.splice(
-                  lines.length - 1,
-                  0,
-                  '  envs:',
-                  `    GLEAN_API_TOKEN: ${authToken}`,
-                );
-              }
-              finalConfig = lines.join('\n');
-            } else {
-              // JSON config
-              try {
-                const parsed = JSON.parse(baseConfig);
-                const serverEntry = parsed[serverName];
-
-                if (serverEntry.type === 'http') {
-                  // Native HTTP - add Authorization header
-                  serverEntry.headers = {
-                    Authorization: `Bearer ${authToken}`,
-                  };
-                } else if (serverEntry.type === 'stdio' && serverEntry.args) {
-                  // Stdio with mcp-remote connecting to remote HTTP server
-                  // Add --header flag with Authorization header
-                  serverEntry.args.push(
-                    '--header',
-                    `Authorization: Bearer ${authToken}`,
-                  );
-                }
-
-                finalConfig = JSON.stringify(parsed, null, 2);
-              } catch {
-                // If parsing fails, use original config
-                finalConfig = baseConfig;
-              }
-            }
-          }
+          const finalConfig = builder.toString(config);
 
           await navigator.clipboard.writeText(finalConfig);
-          toast.success('Configuration copied! Add it to your MCP settings.');
+          const configPath = getConfigPath(client);
+          if (configPath) {
+            toast.success(`Configuration copied! Add it to ${configPath}`);
+          } else {
+            toast.success('Configuration copied! Add it to your MCP settings.');
+          }
         } catch (error) {
           console.error('Error generating configuration:', error);
 
           const fallbackConfig = {
             [serverName]: {
-              type: client.requiresMcpRemoteForHttp ? 'stdio' : 'http',
-              ...(client.requiresMcpRemoteForHttp
+              type: clientNeedsMcpRemote(client.id as ClientId) ? 'stdio' : 'http',
+              ...(clientNeedsMcpRemote(client.id as ClientId)
                 ? {
                     command: 'npx',
                     args: authToken
@@ -194,7 +193,12 @@ export function InstallButton({
           await navigator.clipboard.writeText(
             JSON.stringify(fallbackConfig, null, 2),
           );
-          toast.success('Configuration copied! Add it to your MCP settings.');
+          const configPath = getConfigPath(client);
+          if (configPath) {
+            toast.success(`Configuration copied! Add it to ${configPath}`);
+          } else {
+            toast.success('Configuration copied! Add it to your MCP settings.');
+          }
         }
       }
     }
@@ -241,12 +245,23 @@ export function InstallButton({
     }
 
     // Special text for Claude Code command
-    if (client.id === 'claude-code') {
+    if (client.id === CLIENT.CLAUDE_CODE) {
       return {
         text: `Get CLI Command for ${client.displayName}`,
         subtitle: isClicked
           ? 'Command copied! Run: claude mcp add ...'
           : 'Click to copy `claude mcp add ...` command',
+        icon: logoElement,
+      };
+    }
+
+    // Special text for VSCode
+    if (client.id === CLIENT.VSCODE) {
+      return {
+        text: `Copy Server URL for ${client.displayName}`,
+        subtitle: isClicked
+          ? 'Server URL copied! Use it to install the MCP server.'
+          : 'Click to copy server URL',
         icon: logoElement,
       };
     }

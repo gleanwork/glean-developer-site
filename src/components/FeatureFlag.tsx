@@ -12,11 +12,11 @@ export default function FeatureFlag({
   children,
   fallback = null,
 }: FeatureFlagProps) {
-  const { booleans } = useContext(FeatureFlagsContext);
+  const { isEnabled } = useContext(FeatureFlagsContext);
 
   const enabled = useMemo(() => {
-    return !!booleans[flag];
-  }, [booleans, flag]);
+    return isEnabled(flag);
+  }, [isEnabled, flag]);
 
   return enabled ? <>{children}</> : <>{fallback}</>;
 }
