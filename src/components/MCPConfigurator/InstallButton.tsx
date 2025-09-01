@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import {
   MCPConfigRegistry,
   type ClientId,
+  buildCommand,
 } from '@gleanwork/mcp-config-schema/browser';
 import { CLIENT, clientNeedsMcpRemote } from '@gleanwork/mcp-config-schema';
 import { toast } from 'sonner';
@@ -129,12 +130,19 @@ export function InstallButton({
     } else {
       // Special handling for Claude Code
       if (client.id === CLIENT.CLAUDE_CODE) {
-        let claudeCommand = `claude mcp add ${serverName} ${serverUrl} --transport http`;
-        if (authToken) {
-          claudeCommand += ` --header "Authorization: Bearer ${authToken}"`;
+        const serverData = {
+          transport: 'http' as const,
+          serverUrl,
+          serverName,
+          apiToken: authToken || undefined,
+        };
+        const claudeCommand = buildCommand(CLIENT.CLAUDE_CODE as ClientId, serverData);
+        if (claudeCommand) {
+          await navigator.clipboard.writeText(claudeCommand);
+          toast.success('CLI command copied! Run it in your terminal.');
+        } else {
+          toast.error('Unable to generate CLI command');
         }
-        await navigator.clipboard.writeText(claudeCommand);
-        toast.success('CLI command copied! Run it in your terminal.');
       } else if (client.id === CLIENT.VSCODE) {
         // VSCode uses URLs for installation
         await navigator.clipboard.writeText(serverUrl);
