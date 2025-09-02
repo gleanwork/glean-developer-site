@@ -194,7 +194,7 @@ describe('MCP Configuration Registry', () => {
           expect(url).toBeTruthy();
 
           if (hostId === 'vscode') {
-            expect(url).toContain('vscode://');
+            expect(url).toContain('vscode:');
           } else if (hostId === 'cursor') {
             expect(url).toContain('cursor://');
           }

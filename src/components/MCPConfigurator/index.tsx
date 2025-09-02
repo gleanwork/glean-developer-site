@@ -4,7 +4,8 @@ import {
   MCPConfigRegistry,
   type ClientId,
   clientNeedsMcpRemote,
-  buildCommand
+  buildCommand,
+  buildMcpServerName,
 } from '@gleanwork/mcp-config-schema/browser';
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
