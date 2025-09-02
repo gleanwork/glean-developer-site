@@ -208,7 +208,7 @@ const version = flagConfigs['mcp-cli-version']?.metadata?.version as string | un
 With `FLAGS_DEBUG=true`:
 
 - Check console for active flags
-- Override via URL: `?flags=flag1:on,flag2:off`
+- Override via URL: `?ff_my-feature-flag=true&ff_my-other-feature-flag=true`
 - Access `window.__FLAGS_DEBUG__`
 
 ## How Percentage Rollouts Work
