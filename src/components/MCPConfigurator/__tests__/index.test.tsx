@@ -178,40 +178,33 @@ describe('MCPQuickInstaller Component', () => {
       const user = userEvent.setup();
       render(<MCPConfigurator />);
 
-      // Select Cursor (non-Claude Code client)
+
       const select = screen.getByLabelText('Select Your Host Application');
       await user.selectOptions(select, 'cursor');
 
-      // Select Bearer Token auth method
       const authMethodSelect = screen.getByLabelText('Authentication Method');
       await user.selectOptions(authMethodSelect, 'bearer');
 
-      // Enter token
       const tokenInput = screen.getByPlaceholderText('Enter your Glean API token');
       await user.type(tokenInput, 'test_validation_token');
 
-      // Enter instance
       const instanceInput = screen.getByPlaceholderText('Instance name (e.g., acme)');
       await user.type(instanceInput, 'testcompany');
 
-      // Click CLI Command tab
       const cliTab = screen.getByText('CLI Command');
       await user.click(cliTab);
 
-      // Get the CLI command display text
       const cliCommandElement = screen.getByText((content, element) => {
         return element?.tagName === 'CODE' && content.includes('npx -y @gleanwork/configure-mcp-server remote');
       });
 
       const cliCommandText = cliCommandElement.textContent || '';
 
-      // Validate exact format
       expect(cliCommandText).toContain('npx -y @gleanwork/configure-mcp-server remote');
       expect(cliCommandText).toContain('--url https://testcompany-be.glean.com/mcp/default');
       expect(cliCommandText).toContain('--client cursor');
       expect(cliCommandText).toContain('--token test_validation_token');
 
-      // Validate the exact command structure (multiline)
       const lines = cliCommandText.trim().split('\n');
       expect(lines[0]).toBe('npx -y @gleanwork/configure-mcp-server remote \\');
       expect(lines[1]).toBe('   --url https://testcompany-be.glean.com/mcp/default \\');
@@ -223,39 +216,31 @@ describe('MCPQuickInstaller Component', () => {
       const user = userEvent.setup();
       render(<MCPConfigurator />);
 
-      // Select Claude Code
       const select = screen.getByLabelText('Select Your Host Application');
       await user.selectOptions(select, CLIENT.CLAUDE_CODE);
 
-      // Select Bearer Token auth method
       const authMethodSelect = screen.getByLabelText('Authentication Method');
       await user.selectOptions(authMethodSelect, 'bearer');
 
-      // Enter token
       const tokenInput = screen.getByPlaceholderText('Enter your Glean API token');
       await user.type(tokenInput, 'test_claude_token');
 
-      // Enter instance
       const instanceInput = screen.getByPlaceholderText('Instance name (e.g., acme)');
       await user.type(instanceInput, 'testcompany');
 
-      // Click CLI Command tab
       const cliTab = screen.getByText('CLI Command');
       await user.click(cliTab);
 
-      // Get the CLI command display text
       const cliCommandElement = screen.getByText((content, element) => {
         return element?.tagName === 'CODE' && content.includes('claude mcp add');
       });
 
       const cliCommandText = cliCommandElement.textContent || '';
 
-      // Validate exact format
       expect(cliCommandText).toContain('claude mcp add glean_default https://testcompany-be.glean.com/mcp/default');
       expect(cliCommandText).toContain('--transport http');
       expect(cliCommandText).toContain('--header "Authorization: Bearer test_claude_token"');
 
-      // Validate the exact command structure (multiline)
       const lines = cliCommandText.trim().split('\n');
       expect(lines[0]).toBe('claude mcp add glean_default https://testcompany-be.glean.com/mcp/default \\');
       expect(lines[1]).toBe('   --transport http \\');
@@ -267,48 +252,41 @@ describe('MCPQuickInstaller Component', () => {
       const user = userEvent.setup();
       render(<MCPConfigurator />);
 
-      // Select Cursor (non-Claude Code client)
+
       const select = screen.getByLabelText('Select Your Host Application');
       await user.selectOptions(select, 'cursor');
 
-      // Enter instance (no token)
       const instanceInput = screen.getByPlaceholderText('Instance name (e.g., acme)');
       await user.type(instanceInput, 'testcompany');
 
-      // Click CLI Command tab
       const cliTab = screen.getByText('CLI Command');
       await user.click(cliTab);
 
-      // Get the CLI command display text
       const cliCommandElement = screen.getByText((content, element) => {
         return element?.tagName === 'CODE' && content.includes('npx -y @gleanwork/configure-mcp-server remote');
       });
 
       const cliCommandText = cliCommandElement.textContent || '';
 
-      // Validate exact format without token
       expect(cliCommandText).toContain('npx -y @gleanwork/configure-mcp-server remote');
       expect(cliCommandText).toContain('--url https://testcompany-be.glean.com/mcp/default');
       expect(cliCommandText).toContain('--client cursor');
       expect(cliCommandText).not.toContain('--token');
 
-      // Validate the exact command structure (multiline)
       const lines = cliCommandText.trim().split('\n');
       expect(lines[0]).toBe('npx -y @gleanwork/configure-mcp-server remote \\');
       expect(lines[1]).toBe('   --url https://testcompany-be.glean.com/mcp/default \\');
       expect(lines[2]).toBe('   --client cursor');
-      expect(lines.length).toBe(3); // No token line
+      expect(lines.length).toBe(3);
     });
 
     test('validates CLI command with custom server name', async () => {
       const user = userEvent.setup();
       render(<MCPConfigurator />);
 
-      // Select Cursor
       const select = screen.getByLabelText('Select Your Host Application');
       await user.selectOptions(select, 'cursor');
 
-      // Enter instance and custom server name
       const instanceInput = screen.getByPlaceholderText('Instance name (e.g., acme)');
       await user.type(instanceInput, 'testcompany');
 
@@ -316,23 +294,19 @@ describe('MCPQuickInstaller Component', () => {
       await user.clear(serverInput);
       await user.type(serverInput, 'custom-server');
 
-      // Click CLI Command tab
       const cliTab = screen.getByText('CLI Command');
       await user.click(cliTab);
 
-      // Get the CLI command display text
       const cliCommandElement = screen.getByText((content, element) => {
         return element?.tagName === 'CODE' && content.includes('npx -y @gleanwork/configure-mcp-server remote');
       });
 
       const cliCommandText = cliCommandElement.textContent || '';
 
-      // Validate URL contains custom server name
       expect(cliCommandText).toContain('--url https://testcompany-be.glean.com/mcp/custom-server');
     });
 
     test('buildCommand produces identical output to original logic', async () => {
-      // Test data
       const serverData = {
         transport: 'http' as const,
         serverUrl: 'https://testcompany-be.glean.com/mcp/default',
@@ -341,15 +315,12 @@ describe('MCPQuickInstaller Component', () => {
         configureMcpServerVersion: undefined,
       };
 
-      // Test Claude Code
       const claudeCommand = buildCommand('claude-code', serverData);
       expect(claudeCommand).toBe('claude mcp add glean_default https://testcompany-be.glean.com/mcp/default --transport http --scope user --header "Authorization: Bearer test_token_123"');
 
-      // Test Cursor
       const cursorCommand = buildCommand('cursor', serverData);
       expect(cursorCommand).toBe('npx -y @gleanwork/configure-mcp-server remote --url https://testcompany-be.glean.com/mcp/default --client cursor --token test_token_123');
 
-      // Test without token
       const serverDataNoToken = { ...serverData, apiToken: undefined };
       const claudeCommandNoToken = buildCommand('claude-code', serverDataNoToken);
       expect(claudeCommandNoToken).toBe('claude mcp add glean_default https://testcompany-be.glean.com/mcp/default --transport http --scope user');
@@ -359,44 +330,35 @@ describe('MCPQuickInstaller Component', () => {
     });
 
     test('validates CLI command copy functionality matches display', async () => {
-      // Mock clipboard API
       const mockWriteText = vi.fn();
       vi.spyOn(navigator.clipboard, 'writeText').mockImplementation(mockWriteText);
 
       const user = userEvent.setup();
       render(<MCPConfigurator />);
 
-      // Select Cursor
       const select = screen.getByLabelText('Select Your Host Application');
       await user.selectOptions(select, 'cursor');
 
-      // Select Bearer Token auth method
       const authMethodSelect = screen.getByLabelText('Authentication Method');
       await user.selectOptions(authMethodSelect, 'bearer');
 
-      // Enter token
       const tokenInput = screen.getByPlaceholderText('Enter your Glean API token');
       await user.type(tokenInput, 'test_copy_token');
 
-      // Enter instance
       const instanceInput = screen.getByPlaceholderText('Instance name (e.g., acme)');
       await user.type(instanceInput, 'testcompany');
 
-      // Click CLI Command tab
       const cliTab = screen.getByText('CLI Command');
       await user.click(cliTab);
 
-      // Get the displayed CLI command text
       const cliCommandElement = screen.getByText((content, element) => {
         return element?.tagName === 'CODE' && content.includes('npx -y @gleanwork/configure-mcp-server remote');
       });
       const displayedCommand = cliCommandElement.textContent || '';
 
-      // Click the copy button
       const copyButton = screen.getByTitle('Copy CLI command');
       await user.click(copyButton);
 
-      // Verify the copied command matches the displayed command (without line breaks)
       expect(mockWriteText).toHaveBeenCalledWith(
         displayedCommand.replace(/\s*\\\s*\n\s*/g, ' ').trim()
       );
@@ -419,7 +381,6 @@ describe('MCPQuickInstaller Component', () => {
       const manualTab = screen.getByText('Manual Config');
       await user.click(manualTab);
 
-      // Find the manual config JSON specifically (not the CLI command)
       const configPre = screen.getByText((content, element) => {
         const isCodeElement = element?.tagName === 'CODE';
         const hasGleanDefault = content.includes('glean_default');
@@ -449,7 +410,6 @@ describe('MCPQuickInstaller Component', () => {
       const manualTab = screen.getByText('Manual Config');
       await user.click(manualTab);
 
-      // Find the manual config JSON specifically (not the CLI command)
       const configPre = screen.getByText((content, element) => {
         const isCodeElement = element?.tagName === 'CODE';
         const hasGleanDefault = content.includes('glean_default');
