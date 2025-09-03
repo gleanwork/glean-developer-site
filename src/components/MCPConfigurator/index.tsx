@@ -3,8 +3,10 @@ import {
   CLIENT,
   MCPConfigRegistry,
   type ClientId,
+  clientNeedsMcpRemote,
+  buildCommand,
+  buildMcpServerName,
 } from '@gleanwork/mcp-config-schema/browser';
-import { buildMcpServerName, clientNeedsMcpRemote } from '@gleanwork/mcp-config-schema';
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 import { Toaster, toast } from 'sonner';
@@ -452,27 +454,23 @@ export default function MCPConfigurator() {
                       <button
                         className={styles.copyConfigIcon}
                         onClick={() => {
-                          const packageName = cliPackageVersion
-                            ? `@gleanwork/configure-mcp-server@${cliPackageVersion}`
-                            : '@gleanwork/configure-mcp-server';
+                          // Use buildCommand to generate the CLI command
+                          const serverData = {
+                            transport: 'http' as const,
+                            serverUrl: serverUrl || 'https://[instance]-be.glean.com/mcp/[endpoint]',
+                            serverName: fullServerName,
+                            apiToken: authMethod === 'bearer' && authToken ? authToken : undefined,
+                            configureMcpServerVersion: cliPackageVersion,
+                          };
 
-                          let cliCommand =
-                            selectedClientId === CLIENT.CLAUDE_CODE
-                              ? `claude mcp add ${fullServerName} ${serverUrl || 'https://[instance]-be.glean.com/mcp/[endpoint]'} --transport http`
-                              : `npx -y ${packageName} remote --url ${serverUrl || 'https://[instance]-be.glean.com/mcp/[endpoint]'} --client ${selectedClientId}`;
+                          const cliCommand = buildCommand(selectedClientId as ClientId, serverData);
 
-                          // Add bearer token to Claude Code command if present
-                          if (
-                            selectedClientId === CLIENT.CLAUDE_CODE &&
-                            authMethod === 'bearer' &&
-                            authToken
-                          ) {
-                            cliCommand += ` --header "Authorization: Bearer ${authToken}"`;
+                          if (cliCommand) {
+                            navigator.clipboard.writeText(cliCommand);
+                            toast.success('CLI command copied to clipboard!');
+                          } else {
+                            toast.error('Unable to generate CLI command for this configuration');
                           }
-
-                          navigator.clipboard.writeText(cliCommand);
-
-                          toast.success('CLI command copied to clipboard!');
                         }}
                         title="Copy CLI command"
                         type="button"
@@ -492,21 +490,25 @@ export default function MCPConfigurator() {
                     <div className={styles.cliCode}>
                       <pre>
                         <code>
-                          {selectedClientId === CLIENT.CLAUDE_CODE
-                            ? `claude mcp add ${fullServerName} ${serverUrl || 'https://[instance]-be.glean.com/mcp/[endpoint]'} --transport http${
-                                authMethod === 'bearer' && authToken
-                                  ? ` \\
-   --header "Authorization: Bearer ${authToken}"`
-                                  : ''
-                              }`
-                            : `npx -y ${cliPackageVersion ? `@gleanwork/configure-mcp-server@${cliPackageVersion}` : '@gleanwork/configure-mcp-server'} remote \\
-   --url ${serverUrl || 'https://[instance]-be.glean.com/mcp/[endpoint]'} \\
-   --client ${selectedClientId}${
-     authMethod === 'bearer' && authToken
-       ? ` \\
-   --token ${authToken}`
-       : ''
-   }`}
+                          {(() => {
+                            // Use buildCommand to generate the CLI command for display
+                            const serverData = {
+                              transport: 'http' as const,
+                              serverUrl: serverUrl || 'https://[instance]-be.glean.com/mcp/[endpoint]',
+                              serverName: fullServerName,
+                              apiToken: authMethod === 'bearer' && authToken ? authToken : undefined,
+                              configureMcpServerVersion: cliPackageVersion,
+                            };
+
+                            const cliCommand = buildCommand(selectedClientId as ClientId, serverData);
+
+                            if (cliCommand) {
+                              // Format the command for display with proper line breaks
+                              return cliCommand.replace(/ --/g, ' \\\n   --');
+                            }
+
+                            return 'Unable to generate CLI command for this configuration';
+                          })()}
                         </code>
                       </pre>
                     </div>
