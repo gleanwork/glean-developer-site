@@ -96,6 +96,31 @@ describe('Bearer Token Handling for All Hosts', () => {
         expect(config?.localConfigSupport).toBe('none');
       });
     });
+
+    test('bearer token works with includeWrapper:true', () => {
+      const testHosts = ['cursor', 'vscode', 'claude-code'];
+
+      testHosts.forEach((hostId) => {
+        const builder = registry.createBuilder(hostId as ClientId);
+        const config = builder.buildConfiguration({
+          transport: 'http',
+          serverUrl,
+          serverName,
+          includeWrapper: true,
+          apiToken: authToken,
+        });
+        const output = builder.toString(config);
+        const parsed = JSON.parse(output);
+
+        // VSCode uses 'servers' while others use 'mcpServers'
+        const wrapperKey = hostId === 'vscode' ? 'servers' : 'mcpServers';
+        expect(parsed).toHaveProperty(wrapperKey);
+        expect(parsed[wrapperKey][serverName]).toHaveProperty('headers');
+        expect(parsed[wrapperKey][serverName].headers.Authorization).toBe(
+          `Bearer ${authToken}`,
+        );
+      });
+    });
   });
 
   describe('OAuth vs Bearer Token', () => {

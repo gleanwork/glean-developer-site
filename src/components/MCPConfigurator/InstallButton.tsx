@@ -36,7 +36,6 @@ function getConfigPath(
     return undefined;
   }
 
-  // Replace environment variables with actual values for display
   return path.replace('$HOME', '~').replace('%APPDATA%', '%APPDATA%');
 }
 
@@ -95,7 +94,6 @@ export function InstallButton({
 
   const handleClick = async () => {
     if (client.isAdminRequired) {
-      // Open documentation for admin-required hosts
       const docUrl =
         client.id === CLIENT.CHATGPT
           ? 'https://platform.openai.com/docs/mcp#connect-in-chatgpt'
@@ -125,10 +123,9 @@ export function InstallButton({
         toast.success(`Opening ${client.displayName}...`);
         setTimeout(() => {
           window.location.href = deeplink;
-        }, 500); // Small delay to ensure toast is visible
+        }, 500);
       }
     } else {
-      // Special handling for Claude Code
       if (client.id === CLIENT.CLAUDE_CODE) {
         const serverData = {
           transport: 'http' as const,
@@ -136,7 +133,10 @@ export function InstallButton({
           serverName,
           apiToken: authToken || undefined,
         };
-        const claudeCommand = buildCommand(CLIENT.CLAUDE_CODE as ClientId, serverData);
+        const claudeCommand = buildCommand(
+          CLIENT.CLAUDE_CODE as ClientId,
+          serverData,
+        );
         if (claudeCommand) {
           await navigator.clipboard.writeText(claudeCommand);
           toast.success('CLI command copied! Run it in your terminal.');
@@ -144,7 +144,6 @@ export function InstallButton({
           toast.error('Unable to generate CLI command');
         }
       } else if (client.id === CLIENT.VSCODE) {
-        // VSCode uses URLs for installation
         await navigator.clipboard.writeText(serverUrl);
         toast.success('Server URL copied! Use it to install the MCP server.');
       } else {
@@ -154,12 +153,11 @@ export function InstallButton({
           }
           const builder = registry.createBuilder(client.id as ClientId);
 
-          // Generate config with auth token if provided
           const config = builder.buildConfiguration({
             transport: 'http',
             serverUrl,
             serverName,
-            includeWrapper: false, // Use partial config without mcpServers wrapper
+            includeWrapper: true,
             apiToken: authToken || undefined,
           });
           const finalConfig = builder.toString(config);
@@ -167,16 +165,22 @@ export function InstallButton({
           await navigator.clipboard.writeText(finalConfig);
           const configPath = getConfigPath(client);
           if (configPath) {
-            toast.success(`Configuration copied! Add it to ${configPath}`);
+            toast.success(
+              `Complete configuration copied! Merge it with your config at ${configPath}`,
+            );
           } else {
-            toast.success('Configuration copied! Add it to your MCP settings.');
+            toast.success(
+              'Complete configuration copied! Merge it with your MCP settings.',
+            );
           }
         } catch (error) {
           console.error('Error generating configuration:', error);
 
           const fallbackConfig = {
             [serverName]: {
-              type: clientNeedsMcpRemote(client.id as ClientId) ? 'stdio' : 'http',
+              type: clientNeedsMcpRemote(client.id as ClientId)
+                ? 'stdio'
+                : 'http',
               ...(clientNeedsMcpRemote(client.id as ClientId)
                 ? {
                     command: 'npx',
@@ -252,7 +256,6 @@ export function InstallButton({
       };
     }
 
-    // Special text for Claude Code command
     if (client.id === CLIENT.CLAUDE_CODE) {
       return {
         text: `Get CLI Command for ${client.displayName}`,
@@ -263,7 +266,6 @@ export function InstallButton({
       };
     }
 
-    // Special text for VSCode
     if (client.id === CLIENT.VSCODE) {
       return {
         text: `Copy Server URL for ${client.displayName}`,

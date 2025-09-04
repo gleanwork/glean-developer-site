@@ -139,39 +139,50 @@ describe('Bearer Token Configuration', () => {
 
   describe('Auth Method Switching Bug Fix', () => {
     test('switching from bearer to oauth removes token from config', async () => {
-      const { getByDisplayValue, getByText, getByRole, container } = render(<MCPConfigurator />);
-      
+      const { getByDisplayValue, getByText, getByRole, container } = render(
+        <MCPConfigurator />,
+      );
+
       // First select a non-admin client (cursor) to show auth options
-      const clientSelect = getByRole('combobox', { name: /select your host application/i });
+      const clientSelect = getByRole('combobox', {
+        name: /select your host application/i,
+      });
       fireEvent.change(clientSelect, { target: { value: 'cursor' } });
-      
+
       // Set up instance and server name
       const instanceInput = getByDisplayValue('');
       fireEvent.change(instanceInput, { target: { value: 'testcompany' } });
-      
+
       // Now the auth method dropdown should be available
       await waitFor(() => {
-        const authSelect = container.querySelector('#auth-method') as HTMLSelectElement;
+        const authSelect = container.querySelector(
+          '#auth-method',
+        ) as HTMLSelectElement;
         expect(authSelect).toBeInTheDocument();
-        
+
         // Switch to bearer auth
         fireEvent.change(authSelect, { target: { value: 'bearer' } });
       });
-      
+
       // Set a token
       await waitFor(() => {
-        const tokenInput = container.querySelector('#auth-token') as HTMLInputElement;
+        const tokenInput = container.querySelector(
+          '#auth-token',
+        ) as HTMLInputElement;
         expect(tokenInput).toBeInTheDocument();
         fireEvent.change(tokenInput, { target: { value: 'test-token-123' } });
       });
-      
+
       // Switch back to oauth
-      const authSelect = container.querySelector('#auth-method') as HTMLSelectElement;
+      const authSelect = container.querySelector(
+        '#auth-method',
+      ) as HTMLSelectElement;
       fireEvent.change(authSelect, { target: { value: 'oauth' } });
-      
+
       // Check that the manual config doesn't contain the token
       await waitFor(() => {
-        const configText = getByText(/"type": "http"/).closest('code')?.textContent;
+        const configText =
+          getByText(/"type": "http"/).closest('code')?.textContent;
         expect(configText).toBeTruthy();
         expect(configText).not.toContain('Authorization');
         expect(configText).not.toContain('test-token-123');

@@ -428,20 +428,290 @@ export default function MCPConfigurator() {
               onInstall={handleInstallClick}
               authToken={authMethod === 'bearer' ? authToken : ''}
             />
-          ) : (() => {
-            const hideButton =
-              selectedClient.id === CLIENT.CLAUDE_CODE ||
-              selectedClient.id === CLIENT.CLAUDE_DESKTOP ||
-              selectedClient.id === CLIENT.GOOSE ||
-              selectedClient.id === CLIENT.WINDSURF;
+          ) : (
+            (() => {
+              const hideButton =
+                selectedClient.id === CLIENT.CLAUDE_CODE ||
+                selectedClient.id === CLIENT.CLAUDE_DESKTOP ||
+                selectedClient.id === CLIENT.GOOSE ||
+                selectedClient.id === CLIENT.WINDSURF;
 
-            if (hideButton) {
+              if (hideButton) {
+                return (
+                  <Tabs
+                    className={styles.installTabs}
+                    defaultValue="cli"
+                    key={`${selectedClientId}-no-button`}
+                  >
+                    <TabItem value="cli" label="CLI Command">
+                      <div className={styles.tabContent}>
+                        <div className={styles.cliCommand}>
+                          <div className={styles.cliHeader}>
+                            <h4 className={styles.cliTitle}>
+                              CLI Installation Command
+                            </h4>
+                            <button
+                              className={styles.copyConfigIcon}
+                              onClick={() => {
+                                const serverData = {
+                                  transport: 'http' as const,
+                                  serverUrl:
+                                    serverUrl ||
+                                    'https://[instance]-be.glean.com/mcp/[endpoint]',
+                                  serverName: fullServerName,
+                                  apiToken:
+                                    authMethod === 'bearer' && authToken
+                                      ? authToken
+                                      : undefined,
+                                  configureMcpServerVersion: cliPackageVersion,
+                                };
+
+                                const cliCommand = buildCommand(
+                                  selectedClientId as ClientId,
+                                  serverData,
+                                );
+
+                                if (cliCommand) {
+                                  navigator.clipboard.writeText(cliCommand);
+                                  toast.success(
+                                    'CLI command copied to clipboard!',
+                                  );
+                                } else {
+                                  toast.error(
+                                    'Unable to generate CLI command for this configuration',
+                                  );
+                                }
+                              }}
+                              title="Copy CLI command"
+                              type="button"
+                              disabled={!instanceName || !serverName}
+                            >
+                              <svg
+                                width="16"
+                                height="16"
+                                viewBox="0 0 16 16"
+                                fill="currentColor"
+                              >
+                                <path d="M4 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V2zm2 0v8h8V2H6z" />
+                                <path d="M2 6a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-2H8v2H2V8h2V6H2z" />
+                              </svg>
+                            </button>
+                          </div>
+                          <div className={styles.cliCode}>
+                            <pre>
+                              <code>
+                                {(() => {
+                                  const serverData = {
+                                    transport: 'http' as const,
+                                    serverUrl:
+                                      serverUrl ||
+                                      'https://[instance]-be.glean.com/mcp/[endpoint]',
+                                    serverName: fullServerName,
+                                    apiToken:
+                                      authMethod === 'bearer' && authToken
+                                        ? authToken
+                                        : undefined,
+                                    configureMcpServerVersion:
+                                      cliPackageVersion,
+                                  };
+
+                                  const cliCommand = buildCommand(
+                                    selectedClientId as ClientId,
+                                    serverData,
+                                  );
+
+                                  if (cliCommand) {
+                                    return cliCommand.replace(
+                                      / --/g,
+                                      ' \\\n   --',
+                                    );
+                                  }
+
+                                  return 'Unable to generate CLI command for this configuration';
+                                })()}
+                              </code>
+                            </pre>
+                          </div>
+                          <p className={styles.cliHelp}>
+                            {selectedClientId === CLIENT.CLAUDE_CODE
+                              ? `Run this command in your terminal to add the MCP server to ${selectedClient.displayName}.`
+                              : `Run this command in your terminal to configure ${selectedClient.displayName} automatically.`}
+                          </p>
+                        </div>
+                      </div>
+                    </TabItem>
+
+                    <TabItem value="manual" label="Manual Config">
+                      <div className={styles.tabContent}>
+                        <div className={styles.manualConfig}>
+                          <div className={styles.manualHeader}>
+                            <h4 className={styles.manualTitle}>
+                              Configuration Preview
+                            </h4>
+                            <button
+                              className={styles.copyConfigIcon}
+                              onClick={() => {
+                                const configElement = document.querySelector(
+                                  `.${styles.configCode} code`,
+                                );
+                                if (configElement) {
+                                  navigator.clipboard.writeText(
+                                    configElement.textContent || '',
+                                  );
+                                  toast.success(
+                                    'Configuration copied to clipboard!',
+                                  );
+                                }
+                              }}
+                              title="Copy configuration"
+                              type="button"
+                            >
+                              <svg
+                                width="16"
+                                height="16"
+                                viewBox="0 0 16 16"
+                                fill="currentColor"
+                              >
+                                <path d="M4 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V2zm2 0v8h8V2H6z" />
+                                <path d="M2 6a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-2H8v2H2V8h2V6H2z" />
+                              </svg>
+                            </button>
+                          </div>
+                          {(() => {
+                            const configPath = getConfigPath(selectedClient);
+                            if (configPath) {
+                              return (
+                                <div className={styles.configPathInfo}>
+                                  <small className={styles.configPathLabel}>
+                                    Config file location:
+                                  </small>
+                                  <code className={styles.configPath}>
+                                    {configPath}
+                                  </code>
+                                </div>
+                              );
+                            }
+                            return null;
+                          })()}
+                          <div className={styles.configCode}>
+                            <pre>
+                              <code>
+                                {(() => {
+                                  try {
+                                    if (!registry || !serverUrl) {
+                                      return JSON.stringify(
+                                        {
+                                          [fullServerName]: {
+                                            type: clientNeedsMcpRemote(
+                                              selectedClient.id,
+                                            )
+                                              ? 'stdio'
+                                              : 'http',
+                                            '...': `Complete the 'Configure Server URL' section above`,
+                                          },
+                                        },
+                                        null,
+                                        2,
+                                      );
+                                    }
+
+                                    const builder = registry.createBuilder(
+                                      selectedClient.id as ClientId,
+                                    );
+
+                                    const config = builder.buildConfiguration({
+                                      transport: 'http',
+                                      serverUrl,
+                                      serverName: fullServerName,
+                                      includeWrapper: true,
+                                      apiToken:
+                                        authMethod === 'bearer' && authToken
+                                          ? authToken
+                                          : undefined,
+                                    });
+                                    return builder.toString(config);
+                                  } catch (e) {
+                                    console.error(
+                                      'Config generation error:',
+                                      e,
+                                    );
+                                    return JSON.stringify(
+                                      {
+                                        [fullServerName]: clientNeedsMcpRemote(
+                                          selectedClient.id,
+                                        )
+                                          ? {
+                                              type: 'stdio',
+                                              command: 'npx',
+                                              args:
+                                                authMethod === 'bearer' &&
+                                                authToken
+                                                  ? [
+                                                      '-y',
+                                                      'mcp-remote',
+                                                      serverUrl ||
+                                                        'https://[instance]-be.glean.com/mcp/[endpoint]',
+                                                      '--header',
+                                                      `Authorization: Bearer ${authToken}`,
+                                                    ]
+                                                  : [
+                                                      '-y',
+                                                      'mcp-remote',
+                                                      serverUrl ||
+                                                        'https://[instance]-be.glean.com/mcp/[endpoint]',
+                                                    ],
+                                            }
+                                          : {
+                                              type: 'http',
+                                              url:
+                                                serverUrl ||
+                                                'https://[instance]-be.glean.com/mcp/[endpoint]',
+                                              ...(authMethod === 'bearer' &&
+                                              authToken
+                                                ? {
+                                                    headers: {
+                                                      Authorization: `Bearer ${authToken}`,
+                                                    },
+                                                  }
+                                                : {}),
+                                            },
+                                      },
+                                      null,
+                                      2,
+                                    );
+                                  }
+                                })()}
+                              </code>
+                            </pre>
+                          </div>
+                        </div>
+                      </div>
+                    </TabItem>
+                  </Tabs>
+                );
+              }
+
+              // For hosts that should show the button (Cursor, VSCode, etc.)
               return (
-                <Tabs 
-                  className={styles.installTabs} 
-                  defaultValue="cli"
-                  key={`${selectedClientId}-no-button`}
+                <Tabs
+                  className={styles.installTabs}
+                  defaultValue="quick"
+                  key={`${selectedClientId}-with-button`}
                 >
+                  <TabItem value="quick" label="Quick Setup">
+                    <div className={styles.tabContent}>
+                      <InstallButton
+                        client={selectedClient}
+                        registry={registry}
+                        instanceName={instanceName}
+                        serverName={fullServerName}
+                        serverUrl={serverUrl}
+                        onInstall={handleInstallClick}
+                        authToken={authMethod === 'bearer' ? authToken : ''}
+                      />
+                    </div>
+                  </TabItem>
+
                   <TabItem value="cli" label="CLI Command">
                     <div className={styles.tabContent}>
                       <div className={styles.cliCommand}>
@@ -454,19 +724,31 @@ export default function MCPConfigurator() {
                             onClick={() => {
                               const serverData = {
                                 transport: 'http' as const,
-                                serverUrl: serverUrl || 'https://[instance]-be.glean.com/mcp/[endpoint]',
+                                serverUrl:
+                                  serverUrl ||
+                                  'https://[instance]-be.glean.com/mcp/[endpoint]',
                                 serverName: fullServerName,
-                                apiToken: authMethod === 'bearer' && authToken ? authToken : undefined,
+                                apiToken:
+                                  authMethod === 'bearer' && authToken
+                                    ? authToken
+                                    : undefined,
                                 configureMcpServerVersion: cliPackageVersion,
                               };
 
-                              const cliCommand = buildCommand(selectedClientId as ClientId, serverData);
+                              const cliCommand = buildCommand(
+                                selectedClientId as ClientId,
+                                serverData,
+                              );
 
                               if (cliCommand) {
                                 navigator.clipboard.writeText(cliCommand);
-                                toast.success('CLI command copied to clipboard!');
+                                toast.success(
+                                  'CLI command copied to clipboard!',
+                                );
                               } else {
-                                toast.error('Unable to generate CLI command for this configuration');
+                                toast.error(
+                                  'Unable to generate CLI command for this configuration',
+                                );
                               }
                             }}
                             title="Copy CLI command"
@@ -490,16 +772,27 @@ export default function MCPConfigurator() {
                               {(() => {
                                 const serverData = {
                                   transport: 'http' as const,
-                                  serverUrl: serverUrl || 'https://[instance]-be.glean.com/mcp/[endpoint]',
+                                  serverUrl:
+                                    serverUrl ||
+                                    'https://[instance]-be.glean.com/mcp/[endpoint]',
                                   serverName: fullServerName,
-                                  apiToken: authMethod === 'bearer' && authToken ? authToken : undefined,
+                                  apiToken:
+                                    authMethod === 'bearer' && authToken
+                                      ? authToken
+                                      : undefined,
                                   configureMcpServerVersion: cliPackageVersion,
                                 };
 
-                                const cliCommand = buildCommand(selectedClientId as ClientId, serverData);
+                                const cliCommand = buildCommand(
+                                  selectedClientId as ClientId,
+                                  serverData,
+                                );
 
                                 if (cliCommand) {
-                                  return cliCommand.replace(/ --/g, ' \\\n   --');
+                                  return cliCommand.replace(
+                                    / --/g,
+                                    ' \\\n   --',
+                                  );
                                 }
 
                                 return 'Unable to generate CLI command for this configuration';
@@ -517,381 +810,152 @@ export default function MCPConfigurator() {
                   </TabItem>
 
                   <TabItem value="manual" label="Manual Config">
-                <div className={styles.tabContent}>
-                  <div className={styles.manualConfig}>
-                    <div className={styles.manualHeader}>
-                      <h4 className={styles.manualTitle}>
-                        Configuration Preview
-                      </h4>
-                      <button
-                        className={styles.copyConfigIcon}
-                        onClick={() => {
-                          const configElement = document.querySelector(
-                            `.${styles.configCode} code`,
-                          );
-                          if (configElement) {
-                            navigator.clipboard.writeText(
-                              configElement.textContent || '',
-                            );
-                            toast.success('Configuration copied to clipboard!');
-                          }
-                        }}
-                        title="Copy configuration"
-                        type="button"
-                      >
-                        <svg
-                          width="16"
-                          height="16"
-                          viewBox="0 0 16 16"
-                          fill="currentColor"
-                        >
-                          <path d="M4 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V2zm2 0v8h8V2H6z" />
-                          <path d="M2 6a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-2H8v2H2V8h2V6H2z" />
-                        </svg>
-                      </button>
-                    </div>
-                    {(() => {
-                      const configPath = getConfigPath(selectedClient);
-                      if (configPath) {
-                        return (
-                          <div className={styles.configPathInfo}>
-                            <small className={styles.configPathLabel}>
-                              Config file location:
-                            </small>
-                            <code className={styles.configPath}>
-                              {configPath}
-                            </code>
-                          </div>
-                        );
-                      }
-                      return null;
-                    })()}
-                    <div className={styles.configCode}>
-                      <pre>
-                        <code>
-                          {(() => {
-                            try {
-                              if (!registry || !serverUrl) {
-                                return JSON.stringify(
-                                  {
-                                    [fullServerName]: {
-                                      type: clientNeedsMcpRemote(selectedClient.id)
-                                        ? 'stdio'
-                                        : 'http',
-                                      '...': `Complete the 'Configure Server URL' section above`,
-                                    },
-                                  },
-                                  null,
-                                  2,
+                    <div className={styles.tabContent}>
+                      <div className={styles.manualConfig}>
+                        <div className={styles.manualHeader}>
+                          <h4 className={styles.manualTitle}>
+                            Configuration Preview
+                          </h4>
+                          <button
+                            className={styles.copyConfigIcon}
+                            onClick={() => {
+                              const configElement = document.querySelector(
+                                `.${styles.configCode} code`,
+                              );
+                              if (configElement) {
+                                navigator.clipboard.writeText(
+                                  configElement.textContent || '',
+                                );
+                                toast.success(
+                                  'Configuration copied to clipboard!',
                                 );
                               }
-
-                              const builder = registry.createBuilder(
-                                selectedClient.id as ClientId,
-                              );
-
-                              const config = builder.buildConfiguration({
-                                transport: 'http',
-                                serverUrl,
-                                serverName: fullServerName,
-                                includeWrapper: false,
-                                apiToken:
-                                  authMethod === 'bearer' && authToken
-                                    ? authToken
-                                    : undefined,
-                              });
-                              return builder.toString(config);
-                            } catch (e) {
-                              console.error('Config generation error:', e);
-                              return JSON.stringify(
-                                {
-                                  [fullServerName]:
-                                    clientNeedsMcpRemote(selectedClient.id)
-                                      ? {
-                                          type: 'stdio',
-                                          command: 'npx',
-                                          args:
-                                            authMethod === 'bearer' && authToken
-                                              ? [
-                                                  '-y',
-                                                  'mcp-remote',
-                                                  serverUrl ||
-                                                    'https://[instance]-be.glean.com/mcp/[endpoint]',
-                                                  '--header',
-                                                  `Authorization: Bearer ${authToken}`,
-                                                ]
-                                              : [
-                                                  '-y',
-                                                  'mcp-remote',
-                                                  serverUrl ||
-                                                    'https://[instance]-be.glean.com/mcp/[endpoint]',
-                                                ],
-                                        }
-                                      : {
-                                          type: 'http',
-                                          url:
-                                            serverUrl ||
-                                            'https://[instance]-be.glean.com/mcp/[endpoint]',
-                                          ...(authMethod === 'bearer' &&
-                                          authToken
-                                            ? {
-                                                headers: {
-                                                  Authorization: `Bearer ${authToken}`,
-                                                },
-                                              }
-                                            : {}),
-                                        },
-                                },
-                                null,
-                                2,
-                              );
-                            }
-                          })()}
-                        </code>
-                      </pre>
-                    </div>
-                  </div>
-                </div>
-              </TabItem>
-            </Tabs>
-          );
-        }
-
-        // For hosts that should show the button (Cursor, VSCode, etc.)
-        return (
-          <Tabs 
-            className={styles.installTabs}
-            defaultValue="quick"
-            key={`${selectedClientId}-with-button`}
-          >
-            <TabItem value="quick" label="Quick Setup">
-              <div className={styles.tabContent}>
-                <InstallButton
-                  client={selectedClient}
-                  registry={registry}
-                  instanceName={instanceName}
-                  serverName={fullServerName}
-                  serverUrl={serverUrl}
-                  onInstall={handleInstallClick}
-                  authToken={authMethod === 'bearer' ? authToken : ''}
-                />
-              </div>
-            </TabItem>
-
-            <TabItem value="cli" label="CLI Command">
-              <div className={styles.tabContent}>
-                <div className={styles.cliCommand}>
-                  <div className={styles.cliHeader}>
-                    <h4 className={styles.cliTitle}>
-                      CLI Installation Command
-                    </h4>
-                    <button
-                      className={styles.copyConfigIcon}
-                      onClick={() => {
-                        const serverData = {
-                          transport: 'http' as const,
-                          serverUrl: serverUrl || 'https://[instance]-be.glean.com/mcp/[endpoint]',
-                          serverName: fullServerName,
-                          apiToken: authMethod === 'bearer' && authToken ? authToken : undefined,
-                          configureMcpServerVersion: cliPackageVersion,
-                        };
-
-                        const cliCommand = buildCommand(selectedClientId as ClientId, serverData);
-
-                        if (cliCommand) {
-                          navigator.clipboard.writeText(cliCommand);
-                          toast.success('CLI command copied to clipboard!');
-                        } else {
-                          toast.error('Unable to generate CLI command for this configuration');
-                        }
-                      }}
-                      title="Copy CLI command"
-                      type="button"
-                      disabled={!instanceName || !serverName}
-                    >
-                      <svg
-                        width="16"
-                        height="16"
-                        viewBox="0 0 16 16"
-                        fill="currentColor"
-                      >
-                        <path d="M4 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V2zm2 0v8h8V2H6z" />
-                        <path d="M2 6a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-2H8v2H2V8h2V6H2z" />
-                      </svg>
-                    </button>
-                  </div>
-                  <div className={styles.cliCode}>
-                    <pre>
-                      <code>
-                        {(() => {
-                          const serverData = {
-                            transport: 'http' as const,
-                            serverUrl: serverUrl || 'https://[instance]-be.glean.com/mcp/[endpoint]',
-                            serverName: fullServerName,
-                            apiToken: authMethod === 'bearer' && authToken ? authToken : undefined,
-                            configureMcpServerVersion: cliPackageVersion,
-                          };
-
-                          const cliCommand = buildCommand(selectedClientId as ClientId, serverData);
-
-                          if (cliCommand) {
-                            return cliCommand.replace(/ --/g, ' \\\n   --');
-                          }
-
-                          return 'Unable to generate CLI command for this configuration';
-                        })()}
-                      </code>
-                    </pre>
-                  </div>
-                  <p className={styles.cliHelp}>
-                    {selectedClientId === CLIENT.CLAUDE_CODE
-                      ? `Run this command in your terminal to add the MCP server to ${selectedClient.displayName}.`
-                      : `Run this command in your terminal to configure ${selectedClient.displayName} automatically.`}
-                  </p>
-                </div>
-              </div>
-            </TabItem>
-
-            <TabItem value="manual" label="Manual Config">
-              <div className={styles.tabContent}>
-                <div className={styles.manualConfig}>
-                  <div className={styles.manualHeader}>
-                    <h4 className={styles.manualTitle}>
-                      Configuration Preview
-                    </h4>
-                    <button
-                      className={styles.copyConfigIcon}
-                      onClick={() => {
-                        const configElement = document.querySelector(
-                          `.${styles.configCode} code`,
-                        );
-                        if (configElement) {
-                          navigator.clipboard.writeText(
-                            configElement.textContent || '',
-                          );
-                          toast.success('Configuration copied to clipboard!');
-                        }
-                      }}
-                      title="Copy configuration"
-                      type="button"
-                    >
-                      <svg
-                        width="16"
-                        height="16"
-                        viewBox="0 0 16 16"
-                        fill="currentColor"
-                      >
-                        <path d="M4 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V2zm2 0v8h8V2H6z" />
-                        <path d="M2 6a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-2H8v2H2V8h2V6H2z" />
-                      </svg>
-                    </button>
-                  </div>
-                  {(() => {
-                    const configPath = getConfigPath(selectedClient);
-                    if (configPath) {
-                      return (
-                        <div className={styles.configPathInfo}>
-                          <small className={styles.configPathLabel}>
-                            Config file location:
-                          </small>
-                          <code className={styles.configPath}>
-                            {configPath}
-                          </code>
+                            }}
+                            title="Copy configuration"
+                            type="button"
+                          >
+                            <svg
+                              width="16"
+                              height="16"
+                              viewBox="0 0 16 16"
+                              fill="currentColor"
+                            >
+                              <path d="M4 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V2zm2 0v8h8V2H6z" />
+                              <path d="M2 6a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-2H8v2H2V8h2V6H2z" />
+                            </svg>
+                          </button>
                         </div>
-                      );
-                    }
-                    return null;
-                  })()}
-                  <div className={styles.configCode}>
-                    <pre>
-                      <code>
                         {(() => {
-                          try {
-                            if (!registry || !serverUrl) {
-                              return JSON.stringify(
-                                {
-                                  [fullServerName]: {
-                                    type: clientNeedsMcpRemote(selectedClient.id)
-                                      ? 'stdio'
-                                      : 'http',
-                                    '...': `Complete the 'Configure Server URL' section above`,
-                                  },
-                                },
-                                null,
-                                2,
-                              );
-                            }
-
-                            const builder = registry.createBuilder(
-                              selectedClient.id as ClientId,
-                            );
-
-                            const config = builder.buildConfiguration({
-                              transport: 'http',
-                              serverUrl,
-                              serverName: fullServerName,
-                              includeWrapper: false,
-                              apiToken:
-                                authMethod === 'bearer' && authToken
-                                  ? authToken
-                                  : undefined,
-                            });
-                            return builder.toString(config);
-                          } catch (e) {
-                            console.error('Config generation error:', e);
-                            return JSON.stringify(
-                              {
-                                [fullServerName]:
-                                  clientNeedsMcpRemote(selectedClient.id)
-                                    ? {
-                                        type: 'stdio',
-                                        command: 'npx',
-                                        args:
-                                          authMethod === 'bearer' && authToken
-                                            ? [
-                                                '-y',
-                                                'mcp-remote',
-                                                serverUrl ||
-                                                  'https://[instance]-be.glean.com/mcp/[endpoint]',
-                                                '--header',
-                                                `Authorization: Bearer ${authToken}`,
-                                              ]
-                                            : [
-                                                '-y',
-                                                'mcp-remote',
-                                                serverUrl ||
-                                                  'https://[instance]-be.glean.com/mcp/[endpoint]',
-                                              ],
-                                      }
-                                    : {
-                                        type: 'http',
-                                        url:
-                                          serverUrl ||
-                                          'https://[instance]-be.glean.com/mcp/[endpoint]',
-                                        ...(authMethod === 'bearer' &&
-                                        authToken
-                                          ? {
-                                              headers: {
-                                                Authorization: `Bearer ${authToken}`,
-                                              },
-                                            }
-                                          : {}),
-                                      },
-                              },
-                              null,
-                              2,
+                          const configPath = getConfigPath(selectedClient);
+                          if (configPath) {
+                            return (
+                              <div className={styles.configPathInfo}>
+                                <small className={styles.configPathLabel}>
+                                  Config file location:
+                                </small>
+                                <code className={styles.configPath}>
+                                  {configPath}
+                                </code>
+                              </div>
                             );
                           }
+                          return null;
                         })()}
-                      </code>
-                    </pre>
-                  </div>
-                </div>
-              </div>
-            </TabItem>
-          </Tabs>
-        );
-      })()}
+                        <div className={styles.configCode}>
+                          <pre>
+                            <code>
+                              {(() => {
+                                try {
+                                  if (!registry || !serverUrl) {
+                                    return JSON.stringify(
+                                      {
+                                        [fullServerName]: {
+                                          type: clientNeedsMcpRemote(
+                                            selectedClient.id,
+                                          )
+                                            ? 'stdio'
+                                            : 'http',
+                                          '...': `Complete the 'Configure Server URL' section above`,
+                                        },
+                                      },
+                                      null,
+                                      2,
+                                    );
+                                  }
+
+                                  const builder = registry.createBuilder(
+                                    selectedClient.id as ClientId,
+                                  );
+
+                                  const config = builder.buildConfiguration({
+                                    transport: 'http',
+                                    serverUrl,
+                                    serverName: fullServerName,
+                                    includeWrapper: true,
+                                    apiToken:
+                                      authMethod === 'bearer' && authToken
+                                        ? authToken
+                                        : undefined,
+                                  });
+                                  return builder.toString(config);
+                                } catch (e) {
+                                  console.error('Config generation error:', e);
+                                  return JSON.stringify(
+                                    {
+                                      [fullServerName]: clientNeedsMcpRemote(
+                                        selectedClient.id,
+                                      )
+                                        ? {
+                                            type: 'stdio',
+                                            command: 'npx',
+                                            args:
+                                              authMethod === 'bearer' &&
+                                              authToken
+                                                ? [
+                                                    '-y',
+                                                    'mcp-remote',
+                                                    serverUrl ||
+                                                      'https://[instance]-be.glean.com/mcp/[endpoint]',
+                                                    '--header',
+                                                    `Authorization: Bearer ${authToken}`,
+                                                  ]
+                                                : [
+                                                    '-y',
+                                                    'mcp-remote',
+                                                    serverUrl ||
+                                                      'https://[instance]-be.glean.com/mcp/[endpoint]',
+                                                  ],
+                                          }
+                                        : {
+                                            type: 'http',
+                                            url:
+                                              serverUrl ||
+                                              'https://[instance]-be.glean.com/mcp/[endpoint]',
+                                            ...(authMethod === 'bearer' &&
+                                            authToken
+                                              ? {
+                                                  headers: {
+                                                    Authorization: `Bearer ${authToken}`,
+                                                  },
+                                                }
+                                              : {}),
+                                          },
+                                    },
+                                    null,
+                                    2,
+                                  );
+                                }
+                              })()}
+                            </code>
+                          </pre>
+                        </div>
+                      </div>
+                    </div>
+                  </TabItem>
+                </Tabs>
+              );
+            })()
+          )}
         </div>
 
         <div className={styles.helpSection}>

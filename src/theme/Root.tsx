@@ -6,7 +6,10 @@ import React, {
   useState,
 } from 'react';
 import type { ReactNode } from 'react';
-import type { FeatureFlagsMap, FeatureFlagDefinition } from '@site/src/lib/featureFlagTypes';
+import type {
+  FeatureFlagsMap,
+  FeatureFlagDefinition,
+} from '@site/src/lib/featureFlagTypes';
 import { flagsSnapshotToBooleans } from '@site/src/lib/featureFlags';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 
@@ -92,7 +95,11 @@ export default function Root({ children }: { children: ReactNode }) {
   // Check for URL parameter overrides
   const { urlOverrides, flagConfigOverrides, timeOverride } = useMemo(() => {
     if (typeof window === 'undefined') {
-      return { urlOverrides: {}, flagConfigOverrides: {}, timeOverride: undefined };
+      return {
+        urlOverrides: {},
+        flagConfigOverrides: {},
+        timeOverride: undefined,
+      };
     }
 
     const params = new URLSearchParams(window.location.search);
@@ -108,7 +115,7 @@ export default function Root({ children }: { children: ReactNode }) {
         timeOverride = value;
       } else if (key.startsWith('ff_')) {
         const flagPart = key.slice(3);
-        
+
         // Check if this is a metadata parameter (contains underscore)
         if (flagPart.includes('_')) {
           const [flagName, metadataKey] = flagPart.split('_', 2);
@@ -127,13 +134,17 @@ export default function Root({ children }: { children: ReactNode }) {
       }
     }
 
-    return { urlOverrides: overrides, flagConfigOverrides: configOverrides, timeOverride };
+    return {
+      urlOverrides: overrides,
+      flagConfigOverrides: configOverrides,
+      timeOverride,
+    };
   }, []);
 
   // Merge flagConfigs with URL parameter overrides
   const mergedFlagConfigs = useMemo(() => {
     const merged = { ...flagConfigs };
-    
+
     // Apply URL parameter config overrides
     for (const [flagName, override] of Object.entries(flagConfigOverrides)) {
       merged[flagName] = {
@@ -145,7 +156,7 @@ export default function Root({ children }: { children: ReactNode }) {
         },
       };
     }
-    
+
     return merged;
   }, [flagConfigs, flagConfigOverrides]);
 
@@ -183,7 +194,13 @@ export default function Root({ children }: { children: ReactNode }) {
   }, [refresh]);
 
   const value = useMemo(
-    () => ({ flagConfigs: mergedFlagConfigs, flags, isEnabled, refresh, debug }),
+    () => ({
+      flagConfigs: mergedFlagConfigs,
+      flags,
+      isEnabled,
+      refresh,
+      debug,
+    }),
     [mergedFlagConfigs, flags, isEnabled, refresh, debug],
   );
 
