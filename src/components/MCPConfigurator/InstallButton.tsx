@@ -96,7 +96,7 @@ export function InstallButton({
     if (client.isAdminRequired) {
       const docUrl =
         client.id === CLIENT.CHATGPT
-          ? 'https://platform.openai.com/docs/mcp#connect-in-chatgpt'
+          ? 'https://chatgpt.com/#settings/Connectors'
           : client.id === CLIENT.CLAUDE_TEAMS_ENTERPRISE
             ? 'https://support.anthropic.com/en/articles/11724452-browsing-and-connecting-to-tools-from-the-directory'
             : 'https://developers.glean.com/docs/guides/mcp';
