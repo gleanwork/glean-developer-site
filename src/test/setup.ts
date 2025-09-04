@@ -21,6 +21,13 @@ window.location = { href: '' } as any;
 // Mock window.open
 window.open = vi.fn();
 
+// Mock ResizeObserver for react-tooltip
+global.ResizeObserver = class ResizeObserver {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+};
+
 // Suppress console errors during tests
 const originalError = console.error;
 beforeAll(() => {
