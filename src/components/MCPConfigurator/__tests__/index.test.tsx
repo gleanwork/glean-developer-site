@@ -178,36 +178,48 @@ describe('MCPQuickInstaller Component', () => {
       const user = userEvent.setup();
       render(<MCPConfigurator />);
 
-
       const select = screen.getByLabelText('Select Your Host Application');
       await user.selectOptions(select, 'cursor');
 
       const authMethodSelect = screen.getByLabelText('Authentication Method');
       await user.selectOptions(authMethodSelect, 'bearer');
 
-      const tokenInput = screen.getByPlaceholderText('Enter your Glean API token');
+      const tokenInput = screen.getByPlaceholderText(
+        'Enter your Glean API token',
+      );
       await user.type(tokenInput, 'test_validation_token');
 
-      const instanceInput = screen.getByPlaceholderText('Instance name (e.g., acme)');
+      const instanceInput = screen.getByPlaceholderText(
+        'Instance name (e.g., acme)',
+      );
       await user.type(instanceInput, 'testcompany');
 
       const cliTab = screen.getByText('CLI Command');
       await user.click(cliTab);
 
       const cliCommandElement = screen.getByText((content, element) => {
-        return element?.tagName === 'CODE' && content.includes('npx -y @gleanwork/configure-mcp-server remote');
+        return (
+          element?.tagName === 'CODE' &&
+          content.includes('npx -y @gleanwork/configure-mcp-server remote')
+        );
       });
 
       const cliCommandText = cliCommandElement.textContent || '';
 
-      expect(cliCommandText).toContain('npx -y @gleanwork/configure-mcp-server remote');
-      expect(cliCommandText).toContain('--url https://testcompany-be.glean.com/mcp/default');
+      expect(cliCommandText).toContain(
+        'npx -y @gleanwork/configure-mcp-server remote',
+      );
+      expect(cliCommandText).toContain(
+        '--url https://testcompany-be.glean.com/mcp/default',
+      );
       expect(cliCommandText).toContain('--client cursor');
       expect(cliCommandText).toContain('--token test_validation_token');
 
       const lines = cliCommandText.trim().split('\n');
       expect(lines[0]).toBe('npx -y @gleanwork/configure-mcp-server remote \\');
-      expect(lines[1]).toBe('   --url https://testcompany-be.glean.com/mcp/default \\');
+      expect(lines[1]).toBe(
+        '   --url https://testcompany-be.glean.com/mcp/default \\',
+      );
       expect(lines[2]).toBe('   --client cursor \\');
       expect(lines[3]).toBe('   --token test_validation_token');
     });
@@ -222,60 +234,84 @@ describe('MCPQuickInstaller Component', () => {
       const authMethodSelect = screen.getByLabelText('Authentication Method');
       await user.selectOptions(authMethodSelect, 'bearer');
 
-      const tokenInput = screen.getByPlaceholderText('Enter your Glean API token');
+      const tokenInput = screen.getByPlaceholderText(
+        'Enter your Glean API token',
+      );
       await user.type(tokenInput, 'test_claude_token');
 
-      const instanceInput = screen.getByPlaceholderText('Instance name (e.g., acme)');
+      const instanceInput = screen.getByPlaceholderText(
+        'Instance name (e.g., acme)',
+      );
       await user.type(instanceInput, 'testcompany');
 
       const cliTab = screen.getByText('CLI Command');
       await user.click(cliTab);
 
       const cliCommandElement = screen.getByText((content, element) => {
-        return element?.tagName === 'CODE' && content.includes('claude mcp add');
+        return (
+          element?.tagName === 'CODE' && content.includes('claude mcp add')
+        );
       });
 
       const cliCommandText = cliCommandElement.textContent || '';
 
-      expect(cliCommandText).toContain('claude mcp add glean_default https://testcompany-be.glean.com/mcp/default');
+      expect(cliCommandText).toContain(
+        'claude mcp add glean_default https://testcompany-be.glean.com/mcp/default',
+      );
       expect(cliCommandText).toContain('--transport http');
-      expect(cliCommandText).toContain('--header "Authorization: Bearer test_claude_token"');
+      expect(cliCommandText).toContain(
+        '--header "Authorization: Bearer test_claude_token"',
+      );
 
       const lines = cliCommandText.trim().split('\n');
-      expect(lines[0]).toBe('claude mcp add glean_default https://testcompany-be.glean.com/mcp/default \\');
+      expect(lines[0]).toBe(
+        'claude mcp add glean_default https://testcompany-be.glean.com/mcp/default \\',
+      );
       expect(lines[1]).toBe('   --transport http \\');
       expect(lines[2]).toBe('   --scope user \\');
-      expect(lines[3]).toBe('   --header "Authorization: Bearer test_claude_token"');
+      expect(lines[3]).toBe(
+        '   --header "Authorization: Bearer test_claude_token"',
+      );
     });
 
     test('validates CLI command without token', async () => {
       const user = userEvent.setup();
       render(<MCPConfigurator />);
 
-
       const select = screen.getByLabelText('Select Your Host Application');
       await user.selectOptions(select, 'cursor');
 
-      const instanceInput = screen.getByPlaceholderText('Instance name (e.g., acme)');
+      const instanceInput = screen.getByPlaceholderText(
+        'Instance name (e.g., acme)',
+      );
       await user.type(instanceInput, 'testcompany');
 
       const cliTab = screen.getByText('CLI Command');
       await user.click(cliTab);
 
       const cliCommandElement = screen.getByText((content, element) => {
-        return element?.tagName === 'CODE' && content.includes('npx -y @gleanwork/configure-mcp-server remote');
+        return (
+          element?.tagName === 'CODE' &&
+          content.includes('npx -y @gleanwork/configure-mcp-server remote')
+        );
       });
 
       const cliCommandText = cliCommandElement.textContent || '';
 
-      expect(cliCommandText).toContain('npx -y @gleanwork/configure-mcp-server remote');
-      expect(cliCommandText).toContain('--url https://testcompany-be.glean.com/mcp/default');
+      expect(cliCommandText).toContain(
+        'npx -y @gleanwork/configure-mcp-server remote',
+      );
+      expect(cliCommandText).toContain(
+        '--url https://testcompany-be.glean.com/mcp/default',
+      );
       expect(cliCommandText).toContain('--client cursor');
       expect(cliCommandText).not.toContain('--token');
 
       const lines = cliCommandText.trim().split('\n');
       expect(lines[0]).toBe('npx -y @gleanwork/configure-mcp-server remote \\');
-      expect(lines[1]).toBe('   --url https://testcompany-be.glean.com/mcp/default \\');
+      expect(lines[1]).toBe(
+        '   --url https://testcompany-be.glean.com/mcp/default \\',
+      );
       expect(lines[2]).toBe('   --client cursor');
       expect(lines.length).toBe(3);
     });
@@ -287,7 +323,9 @@ describe('MCPQuickInstaller Component', () => {
       const select = screen.getByLabelText('Select Your Host Application');
       await user.selectOptions(select, 'cursor');
 
-      const instanceInput = screen.getByPlaceholderText('Instance name (e.g., acme)');
+      const instanceInput = screen.getByPlaceholderText(
+        'Instance name (e.g., acme)',
+      );
       await user.type(instanceInput, 'testcompany');
 
       const serverInput = screen.getByPlaceholderText('Server (e.g., default)');
@@ -298,12 +336,17 @@ describe('MCPQuickInstaller Component', () => {
       await user.click(cliTab);
 
       const cliCommandElement = screen.getByText((content, element) => {
-        return element?.tagName === 'CODE' && content.includes('npx -y @gleanwork/configure-mcp-server remote');
+        return (
+          element?.tagName === 'CODE' &&
+          content.includes('npx -y @gleanwork/configure-mcp-server remote')
+        );
       });
 
       const cliCommandText = cliCommandElement.textContent || '';
 
-      expect(cliCommandText).toContain('--url https://testcompany-be.glean.com/mcp/custom-server');
+      expect(cliCommandText).toContain(
+        '--url https://testcompany-be.glean.com/mcp/custom-server',
+      );
     });
 
     test('buildCommand produces identical output to original logic', async () => {
@@ -316,22 +359,35 @@ describe('MCPQuickInstaller Component', () => {
       };
 
       const claudeCommand = buildCommand('claude-code', serverData);
-      expect(claudeCommand).toBe('claude mcp add glean_default https://testcompany-be.glean.com/mcp/default --transport http --scope user --header "Authorization: Bearer test_token_123"');
+      expect(claudeCommand).toBe(
+        'claude mcp add glean_default https://testcompany-be.glean.com/mcp/default --transport http --scope user --header "Authorization: Bearer test_token_123"',
+      );
 
       const cursorCommand = buildCommand('cursor', serverData);
-      expect(cursorCommand).toBe('npx -y @gleanwork/configure-mcp-server remote --url https://testcompany-be.glean.com/mcp/default --client cursor --token test_token_123');
+      expect(cursorCommand).toBe(
+        'npx -y @gleanwork/configure-mcp-server remote --url https://testcompany-be.glean.com/mcp/default --client cursor --token test_token_123',
+      );
 
       const serverDataNoToken = { ...serverData, apiToken: undefined };
-      const claudeCommandNoToken = buildCommand('claude-code', serverDataNoToken);
-      expect(claudeCommandNoToken).toBe('claude mcp add glean_default https://testcompany-be.glean.com/mcp/default --transport http --scope user');
+      const claudeCommandNoToken = buildCommand(
+        'claude-code',
+        serverDataNoToken,
+      );
+      expect(claudeCommandNoToken).toBe(
+        'claude mcp add glean_default https://testcompany-be.glean.com/mcp/default --transport http --scope user',
+      );
 
       const cursorCommandNoToken = buildCommand('cursor', serverDataNoToken);
-      expect(cursorCommandNoToken).toBe('npx -y @gleanwork/configure-mcp-server remote --url https://testcompany-be.glean.com/mcp/default --client cursor');
+      expect(cursorCommandNoToken).toBe(
+        'npx -y @gleanwork/configure-mcp-server remote --url https://testcompany-be.glean.com/mcp/default --client cursor',
+      );
     });
 
     test('validates CLI command copy functionality matches display', async () => {
       const mockWriteText = vi.fn();
-      vi.spyOn(navigator.clipboard, 'writeText').mockImplementation(mockWriteText);
+      vi.spyOn(navigator.clipboard, 'writeText').mockImplementation(
+        mockWriteText,
+      );
 
       const user = userEvent.setup();
       render(<MCPConfigurator />);
@@ -342,17 +398,24 @@ describe('MCPQuickInstaller Component', () => {
       const authMethodSelect = screen.getByLabelText('Authentication Method');
       await user.selectOptions(authMethodSelect, 'bearer');
 
-      const tokenInput = screen.getByPlaceholderText('Enter your Glean API token');
+      const tokenInput = screen.getByPlaceholderText(
+        'Enter your Glean API token',
+      );
       await user.type(tokenInput, 'test_copy_token');
 
-      const instanceInput = screen.getByPlaceholderText('Instance name (e.g., acme)');
+      const instanceInput = screen.getByPlaceholderText(
+        'Instance name (e.g., acme)',
+      );
       await user.type(instanceInput, 'testcompany');
 
       const cliTab = screen.getByText('CLI Command');
       await user.click(cliTab);
 
       const cliCommandElement = screen.getByText((content, element) => {
-        return element?.tagName === 'CODE' && content.includes('npx -y @gleanwork/configure-mcp-server remote');
+        return (
+          element?.tagName === 'CODE' &&
+          content.includes('npx -y @gleanwork/configure-mcp-server remote')
+        );
       });
       const displayedCommand = cliCommandElement.textContent || '';
 
@@ -360,7 +423,7 @@ describe('MCPQuickInstaller Component', () => {
       await user.click(copyButton);
 
       expect(mockWriteText).toHaveBeenCalledWith(
-        displayedCommand.replace(/\s*\\\s*\n\s*/g, ' ').trim()
+        displayedCommand.replace(/\s*\\\s*\n\s*/g, ' ').trim(),
       );
     });
   });
@@ -384,15 +447,21 @@ describe('MCPQuickInstaller Component', () => {
       const configPre = screen.getByText((content, element) => {
         const isCodeElement = element?.tagName === 'CODE';
         const hasGleanDefault = content.includes('glean_default');
-        const isManualConfig = content.includes('"command": "npx"') && content.includes('"args":');
+        const isManualConfig =
+          content.includes('"command": "npx"') && content.includes('"args":');
         return isCodeElement && hasGleanDefault && isManualConfig;
       });
       expect(configPre).toBeTruthy();
 
       const config = JSON.parse(configPre.textContent || '{}');
-      expect(config.glean_default).toBeDefined();
-      expect(config.glean_default.command).toBe('npx');
-      expect(config.glean_default.args).toContain('mcp-remote');
+      // Config now includes wrapper (mcpServers or servers)
+      const serverConfig =
+        config.mcpServers?.glean_default ||
+        config.servers?.glean_default ||
+        config.glean_default;
+      expect(serverConfig).toBeDefined();
+      expect(serverConfig.command).toBe('npx');
+      expect(serverConfig.args).toContain('mcp-remote');
     });
 
     test('shows correct JSON config for http hosts', async () => {
@@ -413,16 +482,20 @@ describe('MCPQuickInstaller Component', () => {
       const configPre = screen.getByText((content, element) => {
         const isCodeElement = element?.tagName === 'CODE';
         const hasGleanDefault = content.includes('glean_default');
-        const isManualConfig = content.includes('"type": "http"') && content.includes('"url":');
+        const isManualConfig =
+          content.includes('"type": "http"') && content.includes('"url":');
         return isCodeElement && hasGleanDefault && isManualConfig;
       });
       expect(configPre).toBeTruthy();
 
       const config = JSON.parse(configPre.textContent || '{}');
-      expect(config.glean_default).toBeDefined();
-      expect(config.glean_default.url).toContain(
-        'https://mycompany-be.glean.com/mcp/',
-      );
+      // Config now includes wrapper (mcpServers or servers)
+      const serverConfig =
+        config.mcpServers?.glean_default ||
+        config.servers?.glean_default ||
+        config.glean_default;
+      expect(serverConfig).toBeDefined();
+      expect(serverConfig.url).toContain('https://mycompany-be.glean.com/mcp/');
     });
   });
 });

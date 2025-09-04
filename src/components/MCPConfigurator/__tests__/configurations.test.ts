@@ -148,7 +148,6 @@ describe('MCP Configuration Registry', () => {
       });
       const output = builder.toString(config);
 
-
       const parsed = JSON.parse(output);
       expect(parsed.glean_default.type).toBe('http');
       expect(parsed.glean_default.url).toBe(
@@ -211,6 +210,105 @@ describe('MCP Configuration Registry', () => {
         const config = registry.getConfig(hostId as ClientId);
         expect(config?.localConfigSupport).toBe('none');
       });
+    });
+  });
+
+  describe('Configuration Wrapper Behavior', () => {
+    test('includeWrapper:true wraps config in wrapper object', () => {
+      const testHosts = ['cursor', 'vscode', 'claude-code'];
+
+      testHosts.forEach((hostId) => {
+        const builder = registry.createBuilder(hostId as ClientId);
+
+        const configWithWrapper = builder.buildConfiguration({
+          transport: 'http',
+          serverUrl: 'https://test-be.glean.com/mcp/default',
+          serverName: 'glean_default',
+          includeWrapper: true,
+        });
+        const outputWithWrapper = builder.toString(configWithWrapper);
+        const parsedWithWrapper = JSON.parse(outputWithWrapper);
+
+        // VSCode uses 'servers' while others use 'mcpServers'
+        const wrapperKey = hostId === 'vscode' ? 'servers' : 'mcpServers';
+        expect(parsedWithWrapper).toHaveProperty(wrapperKey);
+
+        const wrappedConfig = parsedWithWrapper[wrapperKey];
+        expect(wrappedConfig).toHaveProperty('glean_default');
+        expect(wrappedConfig.glean_default.type).toBe('http');
+        expect(wrappedConfig.glean_default.url).toBe(
+          'https://test-be.glean.com/mcp/default',
+        );
+      });
+    });
+
+    test('includeWrapper:false returns unwrapped config', () => {
+      const testHosts = ['cursor', 'vscode', 'claude-code'];
+
+      testHosts.forEach((hostId) => {
+        const builder = registry.createBuilder(hostId as ClientId);
+
+        const configWithoutWrapper = builder.buildConfiguration({
+          transport: 'http',
+          serverUrl: 'https://test-be.glean.com/mcp/default',
+          serverName: 'glean_default',
+          includeWrapper: false,
+        });
+        const outputWithoutWrapper = builder.toString(configWithoutWrapper);
+        const parsedWithoutWrapper = JSON.parse(outputWithoutWrapper);
+
+        expect(parsedWithoutWrapper).toHaveProperty('glean_default');
+        expect(parsedWithoutWrapper).not.toHaveProperty('mcpServers');
+        expect(parsedWithoutWrapper.glean_default.type).toBe('http');
+        expect(parsedWithoutWrapper.glean_default.url).toBe(
+          'https://test-be.glean.com/mcp/default',
+        );
+      });
+    });
+
+    test('wrapper behavior for mcp-remote bridge hosts', () => {
+      const bridgeHosts = ['windsurf', 'claude-desktop'];
+
+      bridgeHosts.forEach((hostId) => {
+        const builder = registry.createBuilder(hostId as ClientId);
+
+        const configWithWrapper = builder.buildConfiguration({
+          transport: 'http',
+          serverUrl: 'https://test-be.glean.com/mcp/default',
+          serverName: 'glean_default',
+          includeWrapper: true,
+        });
+        const outputWithWrapper = builder.toString(configWithWrapper);
+        const parsedWithWrapper = JSON.parse(outputWithWrapper);
+
+        // All bridge hosts should use mcpServers
+        expect(parsedWithWrapper).toHaveProperty('mcpServers');
+        expect(parsedWithWrapper.mcpServers).toHaveProperty('glean_default');
+        expect(parsedWithWrapper.mcpServers.glean_default.command).toBe('npx');
+        expect(parsedWithWrapper.mcpServers.glean_default.args).toContain(
+          'mcp-remote',
+        );
+      });
+    });
+
+    test('wrapper behavior with auth token', () => {
+      const builder = registry.createBuilder('cursor' as ClientId);
+
+      const configWithAuth = builder.buildConfiguration({
+        transport: 'http',
+        serverUrl: 'https://test-be.glean.com/mcp/default',
+        serverName: 'glean_default',
+        includeWrapper: true,
+        apiToken: 'test-token-123',
+      });
+      const outputWithAuth = builder.toString(configWithAuth);
+      const parsedWithAuth = JSON.parse(outputWithAuth);
+
+      expect(parsedWithAuth).toHaveProperty('mcpServers');
+      expect(parsedWithAuth.mcpServers.glean_default).toHaveProperty('headers');
+      expect(
+        parsedWithAuth.mcpServers.glean_default.headers.Authorization,
+      ).toBe('Bearer test-token-123');
     });
   });
 });
