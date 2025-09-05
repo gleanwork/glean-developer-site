@@ -10,6 +10,7 @@ import {
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 import { Toaster, toast } from 'sonner';
+import { Tooltip } from 'react-tooltip';
 import styles from './styles.module.css';
 import { InstallButton } from './InstallButton';
 import { FeatureFlagsContext } from '@site/src/theme/Root';
@@ -61,6 +62,7 @@ export default function MCPConfigurator() {
   const registry = useMemo(() => new MCPConfigRegistry(), []);
   const { isEnabled, flagConfigs } = useContext(FeatureFlagsContext);
   const showClaudeTeams = isEnabled('show-claude-teams');
+  const [showHint, setShowHint] = useState(false);
 
   const cliPackageVersion = flagConfigs['mcp-cli-version']?.metadata
     ?.version as string | undefined;
@@ -207,6 +209,22 @@ export default function MCPConfigurator() {
     }
   }, [allClients]);
 
+  useEffect(() => {
+    const hasInteracted = localStorage.getItem('mcp-configurator-interacted');
+    if (!hasInteracted) {
+      const timer = setTimeout(() => {
+        setShowHint(true);
+        setTimeout(() => setShowHint(false), 3000);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, []);
+
+  const handleInteraction = () => {
+    localStorage.setItem('mcp-configurator-interacted', 'true');
+    setShowHint(false);
+  };
+
   if (!selectedClient) {
     return (
       <div className={styles.container}>
@@ -220,6 +238,7 @@ export default function MCPConfigurator() {
 
   return (
     <>
+      <Tooltip id="mcp-tooltip" className="mcp-tooltip" />
       <Toaster
         position="top-center"
         toastOptions={{
@@ -230,9 +249,22 @@ export default function MCPConfigurator() {
           },
         }}
       />
-      <div className={styles.container}>
+      <div id="mcp-configurator" className={styles.container}>
         <div className={styles.header}>
-          <h2 className={styles.title}>Quick Install Remote MCP Server</h2>
+          <h2 className={styles.title}>
+            <svg
+              className={styles.titleIcon}
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fillRule="evenodd"
+                d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z"
+                clipRule="evenodd"
+              />
+            </svg>
+            Quick Install Remote MCP Server
+          </h2>
           <p className={styles.subtitle}>
             Get connected in seconds with our MCP Host configurator
           </p>
@@ -243,12 +275,21 @@ export default function MCPConfigurator() {
             <label htmlFor="client-select" className={styles.label}>
               Select Your Host Application
             </label>
-            <div className={styles.selectWrapper}>
+            <div
+              className={`${styles.selectWrapper} ${showHint ? styles.showHint : ''}`}
+            >
               <select
                 id="client-select"
                 value={selectedClientId}
-                onChange={(e) => handleClientChange(e.target.value)}
+                onChange={(e) => {
+                  handleClientChange(e.target.value);
+                  handleInteraction();
+                }}
+                onFocus={handleInteraction}
                 className={styles.select}
+                data-tooltip-id="mcp-tooltip"
+                data-tooltip-content="Choose the AI application you want to connect to Glean"
+                data-tooltip-place="top"
               >
                 {allClients.map((client) => (
                   <option key={client.id} value={client.id}>
@@ -268,9 +309,16 @@ export default function MCPConfigurator() {
                   id="instance-name"
                   type="text"
                   value={instanceName}
-                  onChange={(e) => setInstanceName(e.target.value)}
+                  onChange={(e) => {
+                    setInstanceName(e.target.value);
+                    handleInteraction();
+                  }}
+                  onFocus={handleInteraction}
                   placeholder="Instance name (e.g., acme)"
                   className={styles.input}
+                  data-tooltip-id="mcp-tooltip"
+                  data-tooltip-content="Enter your company's Glean instance name (the part before -be.glean.com)"
+                  data-tooltip-place="top"
                 />
                 <small className={styles.hint}>
                   Your company's Glean instance
@@ -285,6 +333,13 @@ export default function MCPConfigurator() {
                   placeholder="Server (e.g., default)"
                   className={styles.input}
                   disabled={selectedClientId === CLIENT.CHATGPT}
+                  data-tooltip-id="mcp-tooltip"
+                  data-tooltip-content={
+                    selectedClientId === CLIENT.CHATGPT
+                      ? 'ChatGPT uses a fixed endpoint'
+                      : "Leave as 'default' unless using a custom endpoint"
+                  }
+                  data-tooltip-place="top"
                 />
                 <small className={styles.hint}>MCP server endpoint</small>
               </div>
