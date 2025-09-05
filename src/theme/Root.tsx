@@ -12,6 +12,7 @@ import type {
 } from '@site/src/lib/featureFlagTypes';
 import { flagsSnapshotToBooleans } from '@site/src/lib/featureFlags';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
+import KeyboardShortcuts from './KeyboardShortcuts';
 
 type FeatureFlagsState = {
   flagConfigs: FeatureFlagsMap;
@@ -206,6 +207,7 @@ export default function Root({ children }: { children: ReactNode }) {
 
   return (
     <FeatureFlagsContext.Provider value={value}>
+      <KeyboardShortcuts />
       {children}
     </FeatureFlagsContext.Provider>
   );
