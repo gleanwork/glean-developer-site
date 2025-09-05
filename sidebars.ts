@@ -301,6 +301,11 @@ const baseSidebars: SidebarsConfig = {
                 },
                 {
                   type: 'doc',
+                  id: 'libraries/web-sdk/guides/sharepoint',
+                  label: 'SharePoint',
+                },
+                {
+                  type: 'doc',
                   id: 'libraries/web-sdk/guides/zendesk',
                   label: 'Zendesk',
                 },
