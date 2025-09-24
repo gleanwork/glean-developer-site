@@ -52,7 +52,7 @@ paths:
         - lang: Python
           label: Python (API Client)
           source: |-
-            from glean.api_client import Glean
+            from glean.api_client import Glean, models
             import os
 
 
@@ -62,7 +62,10 @@ paths:
             ) as glean:
 
                 res = glean.client.documents.summarize(document_specs=[
-                    {},
+                    {
+                        "ugc_type": models.DocumentSpecUgcType2.SHORTCUTS,
+                        "ugc_id": "<id>",
+                    },
                 ])
 
                 # Handle response
@@ -80,9 +83,17 @@ paths:
             async function run() {
               const result = await glean.client.documents.summarize({
                 documentSpecs: [
-                  {},
-                  {},
-                  {},
+                  {
+                    ugcType: "SHORTCUTS",
+                    ugcId: "<id>",
+                  },
+                  {
+                    id: "<id>",
+                  },
+                  {
+                    ugcType: "SHORTCUTS",
+                    ugcId: "<id>",
+                  },
                 ],
               });
 
@@ -93,7 +104,7 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithInstance(os.Getenv(\"GLEAN_INSTANCE\")),\n    )\n\n    res, err := s.Client.Documents.Summarize(ctx, components.SummarizeRequest{\n        DocumentSpecs: []components.DocumentSpecUnion{\n            components.CreateDocumentSpecUnionDocumentSpec1(\n                components.DocumentSpec1{},\n            ),\n        },\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.SummarizeResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithInstance(os.Getenv(\"GLEAN_INSTANCE\")),\n    )\n\n    res, err := s.Client.Documents.Summarize(ctx, components.SummarizeRequest{\n        DocumentSpecs: []components.DocumentSpecUnion{\n            components.CreateDocumentSpecUnionDocumentSpec4(\n                components.DocumentSpec4{\n                    UgcType: components.DocumentSpecUgcType2Shortcuts,\n                    UgcID: \"<id>\",\n                },\n            ),\n        },\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.SummarizeResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -115,7 +126,9 @@ paths:
 
                     SummarizeRequest req = SummarizeRequest.builder()
                             .documentSpecs(List.of(
-                                DocumentSpecUnion.of(DocumentSpec1.builder()
+                                DocumentSpecUnion.of(DocumentSpec4.builder()
+                                    .ugcType(DocumentSpecUgcType2.SHORTCUTS)
+                                    .ugcId("<id>")
                                     .build())))
                             .build();
 
@@ -140,18 +153,28 @@ components:
             type: string
           description: Follow-up prompts based on the summarized doc
     DocumentSpec:
+      x-multiple-discriminators: true
       oneOf:
         - type: object
+          required:
+            - url
           properties:
             url:
               type: string
+              x-discriminator: true
               description: The URL of the document.
         - type: object
+          required:
+            - id
           properties:
             id:
               type: string
+              x-discriminator: true
               description: The ID of the document.
         - type: object
+          required:
+            - contentId
+            - ugcType
           properties:
             ugcType:
               type: string
@@ -160,10 +183,33 @@ components:
                 - ANSWERS
                 - COLLECTIONS
                 - SHORTCUTS
+                - CHATS
               description: The type of the user generated content (UGC datasource).
             contentId:
               type: integer
-              description: The id for user generated content.
+              x-discriminator: true
+              description: The numeric id for user generated content. Used for ANNOUNCEMENTS, ANSWERS, COLLECTIONS, SHORTCUTS.
+            docType:
+              type: string
+              description: The specific type of the user generated content type.
+        - type: object
+          required:
+            - ugcType
+            - ugcId
+          properties:
+            ugcType:
+              type: string
+              enum:
+                - ANNOUNCEMENTS
+                - ANSWERS
+                - COLLECTIONS
+                - SHORTCUTS
+                - CHATS
+              description: The type of the user generated content (UGC datasource).
+            ugcId:
+              type: string
+              x-discriminator: true
+              description: The string id for user generated content. Used for CHATS.
             docType:
               type: string
               description: The specific type of the user generated content type.
