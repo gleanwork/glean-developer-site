@@ -168,7 +168,6 @@ paths:
 
                 res = glean.client.chat.create(messages=[
                     {
-                        "author": models.Author.USER,
                         "fragments": [
                             models.ChatMessageFragment(
                                 text="What are the company holidays this year?",
@@ -209,7 +208,7 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithInstance(os.Getenv(\"GLEAN_INSTANCE\")),\n    )\n\n    res, err := s.Client.Chat.Create(ctx, components.ChatRequest{\n        Messages: []components.ChatMessage{\n            components.ChatMessage{\n                Author: components.AuthorUser.ToPointer(),\n                Fragments: []components.ChatMessageFragment{\n                    components.ChatMessageFragment{\n                        Text: apiclientgo.String(\"What are the company holidays this year?\"),\n                    },\n                },\n            },\n        },\n    }, nil)\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.ChatResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithInstance(os.Getenv(\"GLEAN_INSTANCE\")),\n    )\n\n    res, err := s.Client.Chat.Create(ctx, components.ChatRequest{\n        Messages: []components.ChatMessage{\n            components.ChatMessage{\n                Fragments: []components.ChatMessageFragment{\n                    components.ChatMessageFragment{\n                        Text: apiclientgo.Pointer(\"What are the company holidays this year?\"),\n                    },\n                },\n            },\n        },\n    }, nil)\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.ChatResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -233,7 +232,6 @@ paths:
                             .chatRequest(ChatRequest.builder()
                                 .messages(List.of(
                                     ChatMessage.builder()
-                                        .author(Author.USER)
                                         .fragments(List.of(
                                             ChatMessageFragment.builder()
                                                 .text("What are the company holidays this year?")
@@ -825,9 +823,6 @@ paths:
                                 .build())
                             .call();
 
-                    if (res.uploadChatFilesResponse().isPresent()) {
-                        // handle response
-                    }
                 }
             }
   /rest/api/v1/getchatfiles:
@@ -1198,7 +1193,6 @@ paths:
 
                 res = glean.client.chat.create_stream(messages=[
                     {
-                        "author": models.Author.USER,
                         "fragments": [
                             models.ChatMessageFragment(
                                 text="What are the company holidays this year?",
@@ -1239,7 +1233,7 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithInstance(os.Getenv(\"GLEAN_INSTANCE\")),\n    )\n\n    res, err := s.Client.Chat.CreateStream(ctx, components.ChatRequest{\n        Messages: []components.ChatMessage{\n            components.ChatMessage{\n                Author: components.AuthorUser.ToPointer(),\n                Fragments: []components.ChatMessageFragment{\n                    components.ChatMessageFragment{\n                        Text: apiclientgo.String(\"What are the company holidays this year?\"),\n                    },\n                },\n            },\n        },\n    }, nil)\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.ChatRequestStream != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithInstance(os.Getenv(\"GLEAN_INSTANCE\")),\n    )\n\n    res, err := s.Client.Chat.CreateStream(ctx, components.ChatRequest{\n        Messages: []components.ChatMessage{\n            components.ChatMessage{\n                Fragments: []components.ChatMessageFragment{\n                    components.ChatMessageFragment{\n                        Text: apiclientgo.Pointer(\"What are the company holidays this year?\"),\n                    },\n                },\n            },\n        },\n    }, nil)\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.ChatRequestStream != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -1263,7 +1257,6 @@ paths:
                             .chatRequest(ChatRequest.builder()
                                 .messages(List.of(
                                     ChatMessage.builder()
-                                        .author(Author.USER)
                                         .fragments(List.of(
                                             ChatMessageFragment.builder()
                                                 .text("What are the company holidays this year?")
@@ -1313,6 +1306,8 @@ components:
         - THREAD_ROOT
         - PREFIX
         - SUFFIX
+        - AUTHOR_PREFIX
+        - AUTHOR_SUFFIX
     CollectionPinnableCategories:
       type: string
       description: Categories a Collection can be pinned to.
@@ -1470,15 +1465,6 @@ components:
           items:
             type: string
           description: A non-empty list of ids of the Chats to be deleted.
-    GetChatFilesRequest:
-      required:
-        - fileIds
-      properties:
-        fileIds:
-          type: array
-          items:
-            type: string
-          description: IDs of files to fetch.
     UploadChatFilesRequest:
       required:
         - files
@@ -1489,6 +1475,18 @@ components:
             type: string
             format: binary
           description: Raw files to be uploaded for chat in binary format.
+    GetChatFilesRequest:
+      required:
+        - fileIds
+      properties:
+        fileIds:
+          type: array
+          items:
+            type: string
+          description: IDs of files to fetch.
+        chatId:
+          type: string
+          description: The ID of the chat that contains the chat file.
     CustomFieldValueStr:
       properties:
         strText:
@@ -1508,29 +1506,6 @@ components:
         text:
           type: string
           example: From https://en.wikipedia.org/wiki/Diffuse_sky_radiation, the sky is blue because blue light is more strongly scattered than longer-wavelength light.
-    AgentConfig:
-      description: Describes the agent that executes the request.
-      properties:
-        agent:
-          type: string
-          description: Name of the agent.
-          x-enumDescriptions:
-            DEFAULT: Integrates with your company's knowledge.
-            GPT: Communicates directly with the LLM.
-            UNIVERSAL: Uses both company and web knowledge.
-          enum:
-            - DEFAULT
-            - GPT
-            - UNIVERSAL
-        mode:
-          type: string
-          description: Top level modes to run GleanChat in.
-          x-enumDescriptions:
-            DEFAULT: Used if no mode supplied.
-            QUICK: Deprecated.
-          enum:
-            - DEFAULT
-            - QUICK
     CustomFieldValueHyperlink:
       properties:
         urlAnchor:
@@ -1605,6 +1580,16 @@ components:
         daysFromNow:
           type: integer
           description: The number of days from now. Specification relative to current time. Can be negative.
+    ToolSets:
+      type: object
+      description: The types of tools that the agent is allowed to use. Only works with FAST and ADVANCED `agent` values
+      properties:
+        enableWebSearch:
+          type: boolean
+          description: 'Whether the agent is allowed to use web search (default: true).'
+        enableCompanyTools:
+          type: boolean
+          description: 'Whether the agent is allowed to search internal company resources (default: true).'
     ViewerInfo:
       properties:
         role:
@@ -2069,18 +2054,28 @@ components:
             type: string
           description: The plaintext content of the document.
     DocumentSpec:
+      x-multiple-discriminators: true
       oneOf:
         - type: object
+          required:
+            - url
           properties:
             url:
               type: string
+              x-discriminator: true
               description: The URL of the document.
         - type: object
+          required:
+            - id
           properties:
             id:
               type: string
+              x-discriminator: true
               description: The ID of the document.
         - type: object
+          required:
+            - contentId
+            - ugcType
           properties:
             ugcType:
               type: string
@@ -2089,10 +2084,33 @@ components:
                 - ANSWERS
                 - COLLECTIONS
                 - SHORTCUTS
+                - CHATS
               description: The type of the user generated content (UGC datasource).
             contentId:
               type: integer
-              description: The id for user generated content.
+              x-discriminator: true
+              description: The numeric id for user generated content. Used for ANNOUNCEMENTS, ANSWERS, COLLECTIONS, SHORTCUTS.
+            docType:
+              type: string
+              description: The specific type of the user generated content type.
+        - type: object
+          required:
+            - ugcType
+            - ugcId
+          properties:
+            ugcType:
+              type: string
+              enum:
+                - ANNOUNCEMENTS
+                - ANSWERS
+                - COLLECTIONS
+                - SHORTCUTS
+                - CHATS
+              description: The type of the user generated content (UGC datasource).
+            ugcId:
+              type: string
+              x-discriminator: true
+              description: The string id for user generated content. Used for CHATS.
             docType:
               type: string
               description: The specific type of the user generated content type.
@@ -2175,6 +2193,35 @@ components:
           enum:
             - DEFAULT
             - OUT_OF_OFFICE
+    AgentConfig:
+      description: Describes the agent that executes the request.
+      properties:
+        agent:
+          type: string
+          description: Name of the agent.
+          x-enumDescriptions:
+            DEFAULT: Integrates with your company's knowledge. This will soon be deprecated in favor of the FAST and ADVANCED `agent` values
+            GPT: Communicates directly with the LLM. This will soon be deprecated in favor of the FAST and ADVANCED `agent` values
+            UNIVERSAL: Uses both company and web knowledge. This will soon be deprecated in favor of the FAST and ADVANCED `agent` values
+            FAST: Uses an agent powered by the agentic engine that responds faster but may have lower quality results. Requires the agentic engine to be enabled in the deployment.
+            ADVANCED: Uses an agent powered by the agentic engine that thinks for longer and potentially makes more LLM calls to return higher quality results. Requires the agentic engine to be enabled in the deployment.
+          enum:
+            - DEFAULT
+            - GPT
+            - UNIVERSAL
+            - FAST
+            - ADVANCED
+        toolSets:
+          $ref: '#/components/schemas/ToolSets'
+        mode:
+          type: string
+          description: Top level modes to run GleanChat in.
+          x-enumDescriptions:
+            DEFAULT: Used if no mode supplied.
+            QUICK: Deprecated.
+          enum:
+            - DEFAULT
+            - QUICK
     CountInfo:
       required:
         - count
@@ -2199,19 +2246,6 @@ components:
           description: The unique id of the entity in the knowledge graph
         type:
           $ref: '#/components/schemas/EntityType'
-    Group:
-      required:
-        - type
-        - id
-      properties:
-        type:
-          $ref: '#/components/schemas/GroupType'
-        id:
-          type: string
-          description: A unique identifier for the group. May be the same as name.
-        name:
-          type: string
-          description: Name of the group.
     Badge:
       type: object
       description: Displays a user's accomplishment or milestone
@@ -2281,6 +2315,25 @@ components:
         delete:
           type: boolean
           description: True if user has delete permission for this feature and scope
+    Group:
+      required:
+        - type
+        - id
+      properties:
+        type:
+          $ref: '#/components/schemas/GroupType'
+        id:
+          type: string
+          description: A unique identifier for the group. May be the same as name.
+        name:
+          type: string
+          description: Name of the group.
+        datasourceInstance:
+          type: string
+          description: Datasource instance if the group belongs to one e.g. external groups.
+        provisioningId:
+          type: string
+          description: identifier for greenlist provisioning, aka sciokey
     Code:
       example: &ref_96
         repoName: scio
@@ -2656,16 +2709,6 @@ components:
                   person: *ref_0
                 type: object
       type: object
-    Chat:
-      description: A historical representation of a series of chat messages a user had with Glean Assistant.
-      allOf:
-        - $ref: '#/components/schemas/ChatMetadata'
-      properties:
-        messages:
-          type: array
-          items:
-            $ref: '#/components/schemas/ChatMessage'
-          description: The chat messages within a Chat.
     ChatFileMetadata:
       type: object
       description: Metadata of a file uploaded by a user for Chat.
@@ -2917,7 +2960,7 @@ components:
           items:
             $ref: '#/components/schemas/ReferenceRange'
     ChatMessageFragment:
-      description: Represents a part of a ChatMessage that originates from a single action/tool. It is designed to support rich data formats beyond simple text, allowing for a more dynamic and interactive chat experience. Each fragment can include various types of content, such as text, search queries, action information, and more. Also, each ChatMessageFragment should only have one of structuredResults, querySuggestion, writeAction, followupAction, or file.
+      description: Represents a part of a ChatMessage that originates from a single action/tool. It is designed to support rich data formats beyond simple text, allowing for a more dynamic and interactive chat experience. Each fragment can include various types of content, such as text, search queries, action information, and more. Also, each ChatMessageFragment should only have one of structuredResults, querySuggestion, writeAction, followupAction, agentRecommendation or file.
       allOf:
         - $ref: '#/components/schemas/Result'
         - type: object
@@ -2943,7 +2986,7 @@ components:
           $ref: '#/components/schemas/AgentConfig'
           description: Describes the agent config that generated this message. Populated on responses and not required on requests.
         author:
-          default: GLEAN_AI
+          default: USER
           enum:
             - USER
             - GLEAN_AI
@@ -2984,6 +3027,7 @@ components:
             ERROR: A message that describes an error while processing the request.
             HEADING: A heading message used to distinguish different sections of the holistic response.
             WARNING: A warning message to be shown to the user.
+            SERVER_TOOL: A message used to for server-side tool auth/use, for request and response.
           enum:
             - UPDATE
             - CONTENT
@@ -2993,6 +3037,7 @@ components:
             - ERROR
             - HEADING
             - WARNING
+            - SERVER_TOOL
         hasMoreFragments:
           deprecated: true
           type: boolean
@@ -3072,6 +3117,22 @@ components:
         title:
           description: Title or name of the custom entity.
           type: string
+    Chat:
+      description: A historical representation of a series of chat messages a user had with Glean Assistant.
+      allOf:
+        - $ref: '#/components/schemas/ChatMetadata'
+        - $ref: '#/components/schemas/PermissionedObject'
+      properties:
+        messages:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChatMessage'
+          description: The chat messages within a Chat.
+        roles:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserRoleSpecification'
+          description: A list of roles for this Chat.
     CodeLine:
       properties:
         content:
@@ -3166,7 +3227,8 @@ components:
           type: array
           items: *ref_9
         snippet:
-          description: A matching snippet from the document. Query term matches are marked by the unicode characters uE006 and uE007.
+          deprecated: true
+          description: A matching snippet from the document. Query term matches are marked by the unicode characters uE006 and uE007. Use 'text' field instead.
           type: string
         snippetTextOrdering:
           description: Used for sorting based off the snippet's location within all_snippetable_text
@@ -3583,7 +3645,7 @@ components:
           description: Disables automatic adjustment of the input query for spelling corrections or other reasons.
         returnLlmContentOverSnippets:
           type: boolean
-          description: '[beta] Enables expanded content to be returned for LLM usage. The size of content per result returned should be modified using maxSnippetSize. Server may return less or more than what is specified in maxSnippetSize. For more details, https://docs.google.com/document/d/1CTOLSxWWT9WDEnHVLoCUaxbGYyXYP8kctPRF-RluSQY/edit. Requires sufficient permissions.'
+          description: Enables expanded content to be returned for LLM usage. The size of content per result returned should be modified using maxSnippetSize. Server may return less or more than what is specified in maxSnippetSize. For more details, see https://developers.glean.com/guides/search/llm-content.
         inclusions:
           $ref: '#/components/schemas/RestrictionFilters'
           description: A list of filters which restrict the search results to only the specified content.
@@ -6989,7 +7051,8 @@ components:
                     type: array
                     items: *ref_101
                   snippet:
-                    description: A matching snippet from the document. Query term matches are marked by the unicode characters uE006 and uE007.
+                    deprecated: true
+                    description: A matching snippet from the document. Query term matches are marked by the unicode characters uE006 and uE007. Use 'text' field instead.
                     type: string
                   snippetTextOrdering:
                     description: Used for sorting based off the snippet's location within all_snippetable_text
@@ -7664,7 +7727,8 @@ components:
                 type: array
                 items: *ref_136
               snippet:
-                description: A matching snippet from the document. Query term matches are marked by the unicode characters uE006 and uE007.
+                deprecated: true
+                description: A matching snippet from the document. Query term matches are marked by the unicode characters uE006 and uE007. Use 'text' field instead.
                 type: string
               snippetTextOrdering:
                 description: Used for sorting based off the snippet's location within all_snippetable_text
@@ -8403,7 +8467,8 @@ components:
                 type: array
                 items: *ref_71
               snippet:
-                description: A matching snippet from the document. Query term matches are marked by the unicode characters uE006 and uE007.
+                deprecated: true
+                description: A matching snippet from the document. Query term matches are marked by the unicode characters uE006 and uE007. Use 'text' field instead.
                 type: string
               snippetTextOrdering:
                 description: Used for sorting based off the snippet's location within all_snippetable_text

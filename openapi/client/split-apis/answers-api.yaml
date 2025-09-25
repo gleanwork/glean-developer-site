@@ -190,7 +190,7 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithInstance(os.Getenv(\"GLEAN_INSTANCE\")),\n    )\n\n    res, err := s.Client.Answers.Create(ctx, components.CreateAnswerRequest{\n        Data: components.AnswerCreationData{\n            Question: apiclientgo.String(\"Why is the sky blue?\"),\n            BodyText: apiclientgo.String(\"From https://en.wikipedia.org/wiki/Diffuse_sky_radiation, the sky is blue because blue light is more strongly scattered than longer-wavelength light.\"),\n            AudienceFilters: []components.FacetFilter{\n                components.FacetFilter{\n                    FieldName: apiclientgo.String(\"type\"),\n                    Values: []components.FacetFilterValue{\n                        components.FacetFilterValue{\n                            Value: apiclientgo.String(\"Spreadsheet\"),\n                            RelationType: components.RelationTypeEquals.ToPointer(),\n                        },\n                        components.FacetFilterValue{\n                            Value: apiclientgo.String(\"Presentation\"),\n                            RelationType: components.RelationTypeEquals.ToPointer(),\n                        },\n                    },\n                },\n            },\n            AddedRoles: []components.UserRoleSpecification{\n                components.UserRoleSpecification{\n                    Person: &components.Person{\n                        Name: \"George Clooney\",\n                        ObfuscatedID: \"abc123\",\n                    },\n                    Role: components.UserRoleViewer,\n                },\n            },\n            RemovedRoles: []components.UserRoleSpecification{\n                components.UserRoleSpecification{\n                    Person: &components.Person{\n                        Name: \"George Clooney\",\n                        ObfuscatedID: \"abc123\",\n                    },\n                    Role: components.UserRoleAnswerModerator,\n                },\n            },\n            Roles: []components.UserRoleSpecification{\n                components.UserRoleSpecification{\n                    Person: &components.Person{\n                        Name: \"George Clooney\",\n                        ObfuscatedID: \"abc123\",\n                    },\n                    Role: components.UserRoleOwner,\n                },\n            },\n            CombinedAnswerText: &components.StructuredTextMutableProperties{\n                Text: \"From https://en.wikipedia.org/wiki/Diffuse_sky_radiation, the sky is blue because blue light is more strongly scattered than longer-wavelength light.\",\n            },\n        },\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.Answer != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithInstance(os.Getenv(\"GLEAN_INSTANCE\")),\n    )\n\n    res, err := s.Client.Answers.Create(ctx, components.CreateAnswerRequest{\n        Data: components.AnswerCreationData{\n            Question: apiclientgo.Pointer(\"Why is the sky blue?\"),\n            BodyText: apiclientgo.Pointer(\"From https://en.wikipedia.org/wiki/Diffuse_sky_radiation, the sky is blue because blue light is more strongly scattered than longer-wavelength light.\"),\n            AudienceFilters: []components.FacetFilter{\n                components.FacetFilter{\n                    FieldName: apiclientgo.Pointer(\"type\"),\n                    Values: []components.FacetFilterValue{\n                        components.FacetFilterValue{\n                            Value: apiclientgo.Pointer(\"Spreadsheet\"),\n                            RelationType: components.RelationTypeEquals.ToPointer(),\n                        },\n                        components.FacetFilterValue{\n                            Value: apiclientgo.Pointer(\"Presentation\"),\n                            RelationType: components.RelationTypeEquals.ToPointer(),\n                        },\n                    },\n                },\n            },\n            AddedRoles: []components.UserRoleSpecification{\n                components.UserRoleSpecification{\n                    Person: &components.Person{\n                        Name: \"George Clooney\",\n                        ObfuscatedID: \"abc123\",\n                    },\n                    Role: components.UserRoleViewer,\n                },\n            },\n            RemovedRoles: []components.UserRoleSpecification{\n                components.UserRoleSpecification{\n                    Person: &components.Person{\n                        Name: \"George Clooney\",\n                        ObfuscatedID: \"abc123\",\n                    },\n                    Role: components.UserRoleAnswerModerator,\n                },\n            },\n            Roles: []components.UserRoleSpecification{\n                components.UserRoleSpecification{\n                    Person: &components.Person{\n                        Name: \"George Clooney\",\n                        ObfuscatedID: \"abc123\",\n                    },\n                    Role: components.UserRoleOwner,\n                },\n            },\n            CombinedAnswerText: &components.StructuredTextMutableProperties{\n                Text: \"From https://en.wikipedia.org/wiki/Diffuse_sky_radiation, the sky is blue because blue light is more strongly scattered than longer-wavelength light.\",\n            },\n        },\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.Answer != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -333,7 +333,7 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithInstance(os.Getenv(\"GLEAN_INSTANCE\")),\n    )\n\n    res, err := s.Client.Answers.Delete(ctx, components.DeleteAnswerRequest{\n        ID: 3,\n        DocID: apiclientgo.String(\"ANSWERS_answer_3\"),\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithInstance(os.Getenv(\"GLEAN_INSTANCE\")),\n    )\n\n    res, err := s.Client.Answers.Delete(ctx, components.DeleteAnswerRequest{\n        ID: 3,\n        DocID: apiclientgo.Pointer(\"ANSWERS_answer_3\"),\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -545,7 +545,7 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithInstance(os.Getenv(\"GLEAN_INSTANCE\")),\n    )\n\n    res, err := s.Client.Answers.Update(ctx, components.EditAnswerRequest{\n        ID: 3,\n        DocID: apiclientgo.String(\"ANSWERS_answer_3\"),\n        Question: apiclientgo.String(\"Why is the sky blue?\"),\n        BodyText: apiclientgo.String(\"From https://en.wikipedia.org/wiki/Diffuse_sky_radiation, the sky is blue because blue light is more strongly scattered than longer-wavelength light.\"),\n        AudienceFilters: []components.FacetFilter{\n            components.FacetFilter{\n                FieldName: apiclientgo.String(\"type\"),\n                Values: []components.FacetFilterValue{\n                    components.FacetFilterValue{\n                        Value: apiclientgo.String(\"Spreadsheet\"),\n                        RelationType: components.RelationTypeEquals.ToPointer(),\n                    },\n                    components.FacetFilterValue{\n                        Value: apiclientgo.String(\"Presentation\"),\n                        RelationType: components.RelationTypeEquals.ToPointer(),\n                    },\n                },\n            },\n        },\n        AddedRoles: []components.UserRoleSpecification{\n            components.UserRoleSpecification{\n                Person: &components.Person{\n                    Name: \"George Clooney\",\n                    ObfuscatedID: \"abc123\",\n                },\n                Role: components.UserRoleEditor,\n            },\n        },\n        RemovedRoles: []components.UserRoleSpecification{\n            components.UserRoleSpecification{\n                Person: &components.Person{\n                    Name: \"George Clooney\",\n                    ObfuscatedID: \"abc123\",\n                },\n                Role: components.UserRoleOwner,\n            },\n        },\n        Roles: []components.UserRoleSpecification{\n            components.UserRoleSpecification{\n                Person: &components.Person{\n                    Name: \"George Clooney\",\n                    ObfuscatedID: \"abc123\",\n                },\n                Role: components.UserRoleEditor,\n            },\n        },\n        CombinedAnswerText: &components.StructuredTextMutableProperties{\n            Text: \"From https://en.wikipedia.org/wiki/Diffuse_sky_radiation, the sky is blue because blue light is more strongly scattered than longer-wavelength light.\",\n        },\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.Answer != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithInstance(os.Getenv(\"GLEAN_INSTANCE\")),\n    )\n\n    res, err := s.Client.Answers.Update(ctx, components.EditAnswerRequest{\n        ID: 3,\n        DocID: apiclientgo.Pointer(\"ANSWERS_answer_3\"),\n        Question: apiclientgo.Pointer(\"Why is the sky blue?\"),\n        BodyText: apiclientgo.Pointer(\"From https://en.wikipedia.org/wiki/Diffuse_sky_radiation, the sky is blue because blue light is more strongly scattered than longer-wavelength light.\"),\n        AudienceFilters: []components.FacetFilter{\n            components.FacetFilter{\n                FieldName: apiclientgo.Pointer(\"type\"),\n                Values: []components.FacetFilterValue{\n                    components.FacetFilterValue{\n                        Value: apiclientgo.Pointer(\"Spreadsheet\"),\n                        RelationType: components.RelationTypeEquals.ToPointer(),\n                    },\n                    components.FacetFilterValue{\n                        Value: apiclientgo.Pointer(\"Presentation\"),\n                        RelationType: components.RelationTypeEquals.ToPointer(),\n                    },\n                },\n            },\n        },\n        AddedRoles: []components.UserRoleSpecification{\n            components.UserRoleSpecification{\n                Person: &components.Person{\n                    Name: \"George Clooney\",\n                    ObfuscatedID: \"abc123\",\n                },\n                Role: components.UserRoleEditor,\n            },\n        },\n        RemovedRoles: []components.UserRoleSpecification{\n            components.UserRoleSpecification{\n                Person: &components.Person{\n                    Name: \"George Clooney\",\n                    ObfuscatedID: \"abc123\",\n                },\n                Role: components.UserRoleOwner,\n            },\n        },\n        Roles: []components.UserRoleSpecification{\n            components.UserRoleSpecification{\n                Person: &components.Person{\n                    Name: \"George Clooney\",\n                    ObfuscatedID: \"abc123\",\n                },\n                Role: components.UserRoleEditor,\n            },\n        },\n        CombinedAnswerText: &components.StructuredTextMutableProperties{\n            Text: \"From https://en.wikipedia.org/wiki/Diffuse_sky_radiation, the sky is blue because blue light is more strongly scattered than longer-wavelength light.\",\n        },\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.Answer != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -694,7 +694,7 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithInstance(os.Getenv(\"GLEAN_INSTANCE\")),\n    )\n\n    res, err := s.Client.Answers.Retrieve(ctx, components.GetAnswerRequest{\n        ID: apiclientgo.Int64(3),\n        DocID: apiclientgo.String(\"ANSWERS_answer_3\"),\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.GetAnswerResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithInstance(os.Getenv(\"GLEAN_INSTANCE\")),\n    )\n\n    res, err := s.Client.Answers.Retrieve(ctx, components.GetAnswerRequest{\n        ID: apiclientgo.Pointer[int64](3),\n        DocID: apiclientgo.Pointer(\"ANSWERS_answer_3\"),\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.GetAnswerResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -843,6 +843,8 @@ components:
         - THREAD_ROOT
         - PREFIX
         - SUFFIX
+        - AUTHOR_PREFIX
+        - AUTHOR_SUFFIX
     CollectionPinnableCategories:
       type: string
       description: Categories a Collection can be pinned to.
@@ -1434,18 +1436,28 @@ components:
             type: string
           description: The plaintext content of the document.
     DocumentSpec:
+      x-multiple-discriminators: true
       oneOf:
         - type: object
+          required:
+            - url
           properties:
             url:
               type: string
+              x-discriminator: true
               description: The URL of the document.
         - type: object
+          required:
+            - id
           properties:
             id:
               type: string
+              x-discriminator: true
               description: The ID of the document.
         - type: object
+          required:
+            - contentId
+            - ugcType
           properties:
             ugcType:
               type: string
@@ -1454,10 +1466,33 @@ components:
                 - ANSWERS
                 - COLLECTIONS
                 - SHORTCUTS
+                - CHATS
               description: The type of the user generated content (UGC datasource).
             contentId:
               type: integer
-              description: The id for user generated content.
+              x-discriminator: true
+              description: The numeric id for user generated content. Used for ANNOUNCEMENTS, ANSWERS, COLLECTIONS, SHORTCUTS.
+            docType:
+              type: string
+              description: The specific type of the user generated content type.
+        - type: object
+          required:
+            - ugcType
+            - ugcId
+          properties:
+            ugcType:
+              type: string
+              enum:
+                - ANNOUNCEMENTS
+                - ANSWERS
+                - COLLECTIONS
+                - SHORTCUTS
+                - CHATS
+              description: The type of the user generated content (UGC datasource).
+            ugcId:
+              type: string
+              x-discriminator: true
+              description: The string id for user generated content. Used for CHATS.
             docType:
               type: string
               description: The specific type of the user generated content type.
@@ -1564,19 +1599,6 @@ components:
           description: The unique id of the entity in the knowledge graph
         type:
           $ref: '#/components/schemas/EntityType'
-    Group:
-      required:
-        - type
-        - id
-      properties:
-        type:
-          $ref: '#/components/schemas/GroupType'
-        id:
-          type: string
-          description: A unique identifier for the group. May be the same as name.
-        name:
-          type: string
-          description: Name of the group.
     Badge:
       type: object
       description: Displays a user's accomplishment or milestone
@@ -1628,6 +1650,25 @@ components:
         delete:
           type: boolean
           description: True if user has delete permission for this feature and scope
+    Group:
+      required:
+        - type
+        - id
+      properties:
+        type:
+          $ref: '#/components/schemas/GroupType'
+        id:
+          type: string
+          description: A unique identifier for the group. May be the same as name.
+        name:
+          type: string
+          description: Name of the group.
+        datasourceInstance:
+          type: string
+          description: Datasource instance if the group belongs to one e.g. external groups.
+        provisioningId:
+          type: string
+          description: identifier for greenlist provisioning, aka sciokey
     Code:
       example: &ref_96
         repoName: scio
@@ -2231,7 +2272,8 @@ components:
           type: array
           items: *ref_9
         snippet:
-          description: A matching snippet from the document. Query term matches are marked by the unicode characters uE006 and uE007.
+          deprecated: true
+          description: A matching snippet from the document. Query term matches are marked by the unicode characters uE006 and uE007. Use 'text' field instead.
           type: string
         snippetTextOrdering:
           description: Used for sorting based off the snippet's location within all_snippetable_text
@@ -2567,7 +2609,7 @@ components:
           description: Disables automatic adjustment of the input query for spelling corrections or other reasons.
         returnLlmContentOverSnippets:
           type: boolean
-          description: '[beta] Enables expanded content to be returned for LLM usage. The size of content per result returned should be modified using maxSnippetSize. Server may return less or more than what is specified in maxSnippetSize. For more details, https://docs.google.com/document/d/1CTOLSxWWT9WDEnHVLoCUaxbGYyXYP8kctPRF-RluSQY/edit. Requires sufficient permissions.'
+          description: Enables expanded content to be returned for LLM usage. The size of content per result returned should be modified using maxSnippetSize. Server may return less or more than what is specified in maxSnippetSize. For more details, see https://developers.glean.com/guides/search/llm-content.
         inclusions:
           $ref: '#/components/schemas/RestrictionFilters'
           description: A list of filters which restrict the search results to only the specified content.
@@ -5973,7 +6015,8 @@ components:
                     type: array
                     items: *ref_101
                   snippet:
-                    description: A matching snippet from the document. Query term matches are marked by the unicode characters uE006 and uE007.
+                    deprecated: true
+                    description: A matching snippet from the document. Query term matches are marked by the unicode characters uE006 and uE007. Use 'text' field instead.
                     type: string
                   snippetTextOrdering:
                     description: Used for sorting based off the snippet's location within all_snippetable_text
@@ -6648,7 +6691,8 @@ components:
                 type: array
                 items: *ref_136
               snippet:
-                description: A matching snippet from the document. Query term matches are marked by the unicode characters uE006 and uE007.
+                deprecated: true
+                description: A matching snippet from the document. Query term matches are marked by the unicode characters uE006 and uE007. Use 'text' field instead.
                 type: string
               snippetTextOrdering:
                 description: Used for sorting based off the snippet's location within all_snippetable_text
@@ -7387,7 +7431,8 @@ components:
                 type: array
                 items: *ref_71
               snippet:
-                description: A matching snippet from the document. Query term matches are marked by the unicode characters uE006 and uE007.
+                deprecated: true
+                description: A matching snippet from the document. Query term matches are marked by the unicode characters uE006 and uE007. Use 'text' field instead.
                 type: string
               snippetTextOrdering:
                 description: Used for sorting based off the snippet's location within all_snippetable_text

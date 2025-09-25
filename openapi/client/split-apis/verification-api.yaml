@@ -336,6 +336,8 @@ components:
         - THREAD_ROOT
         - PREFIX
         - SUFFIX
+        - AUTHOR_PREFIX
+        - AUTHOR_SUFFIX
     CollectionPinnableCategories:
       type: string
       description: Categories a Collection can be pinned to.
@@ -938,18 +940,28 @@ components:
             type: string
           description: The plaintext content of the document.
     DocumentSpec:
+      x-multiple-discriminators: true
       oneOf:
         - type: object
+          required:
+            - url
           properties:
             url:
               type: string
+              x-discriminator: true
               description: The URL of the document.
         - type: object
+          required:
+            - id
           properties:
             id:
               type: string
+              x-discriminator: true
               description: The ID of the document.
         - type: object
+          required:
+            - contentId
+            - ugcType
           properties:
             ugcType:
               type: string
@@ -958,10 +970,33 @@ components:
                 - ANSWERS
                 - COLLECTIONS
                 - SHORTCUTS
+                - CHATS
               description: The type of the user generated content (UGC datasource).
             contentId:
               type: integer
-              description: The id for user generated content.
+              x-discriminator: true
+              description: The numeric id for user generated content. Used for ANNOUNCEMENTS, ANSWERS, COLLECTIONS, SHORTCUTS.
+            docType:
+              type: string
+              description: The specific type of the user generated content type.
+        - type: object
+          required:
+            - ugcType
+            - ugcId
+          properties:
+            ugcType:
+              type: string
+              enum:
+                - ANNOUNCEMENTS
+                - ANSWERS
+                - COLLECTIONS
+                - SHORTCUTS
+                - CHATS
+              description: The type of the user generated content (UGC datasource).
+            ugcId:
+              type: string
+              x-discriminator: true
+              description: The string id for user generated content. Used for CHATS.
             docType:
               type: string
               description: The specific type of the user generated content type.
@@ -1053,19 +1088,6 @@ components:
           description: The unique id of the entity in the knowledge graph
         type:
           $ref: '#/components/schemas/EntityType'
-    Group:
-      required:
-        - type
-        - id
-      properties:
-        type:
-          $ref: '#/components/schemas/GroupType'
-        id:
-          type: string
-          description: A unique identifier for the group. May be the same as name.
-        name:
-          type: string
-          description: Name of the group.
     Badge:
       type: object
       description: Displays a user's accomplishment or milestone
@@ -1117,6 +1139,25 @@ components:
         delete:
           type: boolean
           description: True if user has delete permission for this feature and scope
+    Group:
+      required:
+        - type
+        - id
+      properties:
+        type:
+          $ref: '#/components/schemas/GroupType'
+        id:
+          type: string
+          description: A unique identifier for the group. May be the same as name.
+        name:
+          type: string
+          description: Name of the group.
+        datasourceInstance:
+          type: string
+          description: Datasource instance if the group belongs to one e.g. external groups.
+        provisioningId:
+          type: string
+          description: identifier for greenlist provisioning, aka sciokey
     Code:
       example: &ref_96
         repoName: scio
@@ -1670,7 +1711,8 @@ components:
           type: array
           items: *ref_9
         snippet:
-          description: A matching snippet from the document. Query term matches are marked by the unicode characters uE006 and uE007.
+          deprecated: true
+          description: A matching snippet from the document. Query term matches are marked by the unicode characters uE006 and uE007. Use 'text' field instead.
           type: string
         snippetTextOrdering:
           description: Used for sorting based off the snippet's location within all_snippetable_text
@@ -2006,7 +2048,7 @@ components:
           description: Disables automatic adjustment of the input query for spelling corrections or other reasons.
         returnLlmContentOverSnippets:
           type: boolean
-          description: '[beta] Enables expanded content to be returned for LLM usage. The size of content per result returned should be modified using maxSnippetSize. Server may return less or more than what is specified in maxSnippetSize. For more details, https://docs.google.com/document/d/1CTOLSxWWT9WDEnHVLoCUaxbGYyXYP8kctPRF-RluSQY/edit. Requires sufficient permissions.'
+          description: Enables expanded content to be returned for LLM usage. The size of content per result returned should be modified using maxSnippetSize. Server may return less or more than what is specified in maxSnippetSize. For more details, see https://developers.glean.com/guides/search/llm-content.
         inclusions:
           $ref: '#/components/schemas/RestrictionFilters'
           description: A list of filters which restrict the search results to only the specified content.
@@ -5412,7 +5454,8 @@ components:
                     type: array
                     items: *ref_101
                   snippet:
-                    description: A matching snippet from the document. Query term matches are marked by the unicode characters uE006 and uE007.
+                    deprecated: true
+                    description: A matching snippet from the document. Query term matches are marked by the unicode characters uE006 and uE007. Use 'text' field instead.
                     type: string
                   snippetTextOrdering:
                     description: Used for sorting based off the snippet's location within all_snippetable_text
@@ -6087,7 +6130,8 @@ components:
                 type: array
                 items: *ref_136
               snippet:
-                description: A matching snippet from the document. Query term matches are marked by the unicode characters uE006 and uE007.
+                deprecated: true
+                description: A matching snippet from the document. Query term matches are marked by the unicode characters uE006 and uE007. Use 'text' field instead.
                 type: string
               snippetTextOrdering:
                 description: Used for sorting based off the snippet's location within all_snippetable_text
@@ -6826,7 +6870,8 @@ components:
                 type: array
                 items: *ref_71
               snippet:
-                description: A matching snippet from the document. Query term matches are marked by the unicode characters uE006 and uE007.
+                deprecated: true
+                description: A matching snippet from the document. Query term matches are marked by the unicode characters uE006 and uE007. Use 'text' field instead.
                 type: string
               snippetTextOrdering:
                 description: Used for sorting based off the snippet's location within all_snippetable_text

@@ -2479,7 +2479,7 @@ paths:
             }
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithInstance(os.Getenv(\"GLEAN_INSTANCE\")),\n    )\n\n    res, err := s.Indexing.Datasources.Add(ctx, components.CustomDatasourceConfig{\n        Name: \"<value>\",\n        URLRegex: apiclientgo.String(\"https://example-company.datasource.com/.*\"),\n        Quicklinks: []components.Quicklink{\n            components.Quicklink{\n                IconConfig: &components.IconConfig{\n                    Color: apiclientgo.String(\"#343CED\"),\n                    Key: apiclientgo.String(\"person_icon\"),\n                    IconType: components.IconTypeGlyph.ToPointer(),\n                    Name: apiclientgo.String(\"user\"),\n                },\n            },\n        },\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithInstance(os.Getenv(\"GLEAN_INSTANCE\")),\n    )\n\n    res, err := s.Indexing.Datasources.Add(ctx, components.CustomDatasourceConfig{\n        Name: \"<value>\",\n        URLRegex: apiclientgo.Pointer(\"https://example-company.datasource.com/.*\"),\n        Quicklinks: []components.Quicklink{\n            components.Quicklink{\n                IconConfig: &components.IconConfig{\n                    Color: apiclientgo.Pointer(\"#343CED\"),\n                    Key: apiclientgo.Pointer(\"person_icon\"),\n                    IconType: components.IconTypeGlyph.ToPointer(),\n                    Name: apiclientgo.Pointer(\"user\"),\n                },\n            },\n        },\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res != nil {\n        // handle response\n    }\n}"
   /api/index/v1/getdatasourceconfig:
     post:
       summary: Get datasource config
@@ -5220,6 +5220,7 @@ components:
             - EXTERNAL_SHORTCUT
             - ENTITY
             - CALENDAR
+            - AGENTS
           description: The document category of this object type.
         propertyDefinitions:
           type: array
@@ -5355,6 +5356,7 @@ components:
             - EXTERNAL_SHORTCUT
             - ENTITY
             - CALENDAR
+            - AGENTS
           default: UNCATEGORIZED
           description: The type of this datasource. It is an important signal for relevance and must be specified and cannot be UNCATEGORIZED. Please refer to [this](https://developers.glean.com/docs/indexing_api_datasource_category/) for more details.
         urlRegex:
