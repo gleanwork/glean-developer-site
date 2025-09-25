@@ -39,13 +39,13 @@ This document describes the feature flag system implemented for the Glean Develo
 #### Option 1: Individual flags
 
 ```bash
-FF_NEW_API_DOCS=true FF_BETA_TUTORIALS=false yarn build
+FF_NEW_API_DOCS=true FF_BETA_TUTORIALS=false pnpm build
 ```
 
 #### Option 2: JSON config
 
 ```bash
-FEATURE_FLAGS_JSON='{"new-api-docs":{"enabled":true}}' yarn build
+FEATURE_FLAGS_JSON='{"new-api-docs":{"enabled":true}}' pnpm build
 ```
 
 **Hide sidebar sections:**

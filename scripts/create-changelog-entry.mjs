@@ -190,7 +190,7 @@ categories: [{{CATEGORIES}}]
       chalk.green(`\n✅ Created: ${path.relative(process.cwd(), filepath)}`),
     );
     console.log(chalk.yellow('📝 Next steps:'));
-    console.log(chalk.yellow('  • Run: yarn start (to see changes locally)'));
+    console.log(chalk.yellow('  • Run: pnpm start (to see changes locally)'));
   } catch (error) {
     console.error(
       chalk.red('❌ Error creating changelog entry:'),
