@@ -40,13 +40,13 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install dependencies
-        run: yarn install --immutable
+        run: pnpm install --frozen-lockfile
 
       - name: Regenerate OpenAPI documentation
         run: |
           echo "📋 Regenerating OpenAPI documentation..."
           echo "Reason: ${{ github.event.inputs.reason }}"
-          yarn openapi:regenerate:all
+          pnpm openapi:regenerate:all
           echo "✅ Documentation regenerated successfully"
 
       - name: Check for generated changes
@@ -118,10 +118,10 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install dependencies
-        run: yarn install --immutable
+        run: pnpm install --frozen-lockfile
 
       - name: Verify Build
-        run: yarn build
+        run: pnpm build
 
   summary:
     runs-on: ubuntu-latest

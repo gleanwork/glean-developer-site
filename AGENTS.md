@@ -1,19 +1,19 @@
 # AGENTS Instructions
 
-This repository contains a Docusaurus website built with Node.js and Yarn.
+This repository contains a Docusaurus website built with Node.js and pnpm.
 
 ## Environment
 
 Versions of tools are handled transparently by mise. No need to manage tool versions explicitly.
 
-Use `yarn install` to install dependencies locally.
+Use `pnpm install` to install dependencies locally.
 
 ## Programmatic Checks
 
-AVOID RUNNING `yarn start` - this causes very slow build times, and will interupt the agent workflow.
+AVOID RUNNING `pnpm start` - this causes very slow build times, and will interupt the agent workflow.
 
-- Run `yarn build` to ensure the site builds successfully.
-- Formatting is handled by Prettier. Run `yarn format` to apply the project's style (single quotes and trailing commas).
+- Run `pnpm build` to ensure the site builds successfully.
+- Formatting is handled by Prettier. Run `pnpm format` to apply the project's style (single quotes and trailing commas).
 
 No other automated tests are defined.
 

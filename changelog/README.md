@@ -7,7 +7,7 @@ This guide explains how to create and manage changelog entries for the Glean Dev
 The easiest way to create a new changelog entry is using our interactive generator:
 
 ```bash
-yarn changelog:new
+pnpm changelog:new
 ```
 
 This will guide you through creating a properly formatted entry with the correct filename, frontmatter, and structure.
@@ -112,20 +112,20 @@ If no truncate marker exists, the system will automatically truncate content usi
 
 The changelog system is integrated into the build process:
 
-1. **Development**: Run `yarn generate:changelog` to process entries
-2. **Production**: The `yarn build` command automatically generates changelog data
+1. **Development**: Run `pnpm generate:changelog` to process entries
+2. **Production**: The `pnpm build` command automatically generates changelog data
 3. **Hot Reloading**: Changes to entries are reflected immediately during development
 
 ## Available Scripts
 
-- `yarn changelog:new` - Create a new changelog entry interactively
-- `yarn generate:changelog` - Process existing entries into JSON data
-- `yarn build` - Build the site (includes changelog generation)
-- `yarn start` - Start development server
+- `pnpm changelog:new` - Create a new changelog entry interactively
+- `pnpm generate:changelog` - Process existing entries into JSON data
+- `pnpm build` - Build the site (includes changelog generation)
+- `pnpm start` - Start development server
 
 ## Best Practices
 
-1. **Use the generator** - `yarn changelog:new` ensures proper formatting
+1. **Use the generator** - `pnpm changelog:new` ensures proper formatting
 2. **Keep summaries concise** - The pre-truncate content should be 1-3 sentences
 3. **Choose appropriate tags** - Focus on the primary component affected
 4. **Include relevant links** - Link to documentation, GitHub issues, or related resources

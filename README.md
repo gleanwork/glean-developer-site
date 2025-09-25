@@ -21,7 +21,7 @@ This project uses [mise](https://mise.jdx.dev/) to manage tool versions. Install
 mise install
 ```
 
-This will automatically install the correct versions of Node.js and Yarn as specified in `mise.toml`.
+This will automatically install the correct versions of Node.js and pnpm as specified in `mise.toml`.
 
 ## Installation
 
@@ -30,7 +30,7 @@ Clone the repository and install dependencies:
 ```bash
 git clone <repository-url>
 cd glean-developer-site
-yarn install
+pnpm install
 ```
 
 ## Development
@@ -38,17 +38,17 @@ yarn install
 Start the development server:
 
 ```bash
-yarn start
+pnpm start
 ```
 
 This command starts a local development server and opens your browser to `http://127.0.0.1:8888`. Most changes are reflected live without having to restart the server.
 
 ### Available Scripts
 
-- `yarn start` - Start development server
-- `yarn build` - Build the site for production
-- `yarn serve` - Serve the built site locally
-- `yarn clear` - Clear Docusaurus cache
+- `pnpm start` - Start development server
+- `pnpm build` - Build the site for production
+- `pnpm serve` - Serve the built site locally
+- `pnpm clear` - Clear Docusaurus cache
 
 ## Project Structure
 
@@ -73,10 +73,10 @@ This command starts a local development server and opens your browser to `http:/
 
 ### Changelog Management
 
-Use the yarn command to create new changelog entries:
+Use the pnpm command to create new changelog entries:
 
 ```bash
-yarn changelog:new
+pnpm changelog:new
 ```
 
 ### OpenAPI Integration
@@ -91,7 +91,7 @@ you want this tag injected at build time:
 
 ```bash
 export GOOGLE_SITE_VERIFICATION=your-token
-yarn build
+pnpm build
 ```
 
 If the variable is not set, the tag is omitted.
@@ -101,7 +101,7 @@ If the variable is not set, the tag is omitted.
 Run the build command to test for any issues:
 
 ```bash
-yarn build
+pnpm build
 ```
 
 This will catch any broken links, missing imports, or other build-time errors.
