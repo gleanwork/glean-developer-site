@@ -15,7 +15,6 @@ import {
   getSchemaName,
 } from 'docusaurus-plugin-openapi-docs/lib/markdown/schema';
 import { SchemaObject } from 'docusaurus-plugin-openapi-docs/lib/openapi/types';
-import isEmpty from 'lodash/isEmpty';
 
 // eslint-disable-next-line import/no-extraneous-dependencies
 // const jsonSchemaMergeAllOf = require("json-schema-merge-allof");
@@ -1252,6 +1251,13 @@ const SchemaNode: React.FC<SchemaProps> = ({
   }
 
   return renderChildren(schema, schemaType, parentPath);
+};
+function isEmpty(value: any): boolean {
+  if (value == null) return true;
+  if (typeof value === 'string' || Array.isArray(value)) return value.length === 0;
+  if (value instanceof Map || value instanceof Set) return value.size === 0;
+  if (typeof value === 'object') return Object.keys(value).length === 0;
+  return false;
 };
 
 export default SchemaNode;
