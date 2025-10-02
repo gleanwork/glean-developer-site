@@ -1,0 +1,401 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+    <channel>
+        <title>Glean Developer Changelog</title>
+        <link>https://glean-developer-site.vercel.app</link>
+        <description>Updates and changes to the Glean Developer Platform</description>
+        <lastBuildDate>Tue, 17 Jun 2025 00:00:00 GMT</lastBuildDate>
+        <docs>https://validator.w3.org/feed/docs/rss2.html</docs>
+        <generator>Glean Developer Site</generator>
+        <language>en</language>
+        <image>
+            <title>Glean Developer Changelog</title>
+            <url>https://glean-developer-site.vercel.app/img/glean-developer-logo-light.svg</url>
+            <link>https://glean-developer-site.vercel.app</link>
+        </image>
+        <copyright>Copyright © 2025 Glean</copyright>
+        <item>
+            <title><![CDATA[OAuth for Remote MCP Server (Private Beta)]]></title>
+            <link>https://glean-developer-site.vercel.app/changelog#oauth-for-remote-mcp-server-private-beta</link>
+            <guid isPermaLink="false">2025-06-17-oauth-for-remote-mcp-server-private-beta</guid>
+            <pubDate>Tue, 17 Jun 2025 00:00:00 GMT</pubDate>
+            <description><![CDATA[<p>You can now use the Device Authorization Flow with the same SSO provider configured in Glean to authenticate users connecting their clients to Glean’s remote MCP server.</p>
+<p><a href="../guides/mcp/#configuration">See here for setup instructions</a></p>
+<p>Note: OAuth is also enabled for the local MCP server.</p>
+]]></description>
+            <content:encoded><![CDATA[<p>You can now use the Device Authorization Flow with the same SSO provider configured in Glean to authenticate users connecting their clients to Glean’s remote MCP server.</p>
+<p><a href="../guides/mcp/#configuration">See here for setup instructions</a></p>
+<p>Note: OAuth is also enabled for the local MCP server.</p>
+]]></content:encoded>
+            <category>MCP</category>
+        </item>
+        <item>
+            <title><![CDATA[Go API Client v0.6.0]]></title>
+            <link>https://glean-developer-site.vercel.app/changelog#go-api-client-v060</link>
+            <guid isPermaLink="false">2025-06-06-go-api-client-v060</guid>
+            <pubDate>Fri, 06 Jun 2025 00:00:00 GMT</pubDate>
+            <description><![CDATA[<p><strong>Breaking Changes:</strong> Updated minimum go version to 1.22 (from 1.20).</p>
+]]></description>
+            <content:encoded><![CDATA[<p><strong>Breaking Changes:</strong> Updated minimum go version to 1.22 (from 1.20).</p>
+]]></content:encoded>
+            <category>SDK</category>
+        </item>
+        <item>
+            <title><![CDATA[Updates to API Reference Code Snippets]]></title>
+            <link>https://glean-developer-site.vercel.app/changelog#updates-to-api-reference-code-snippets</link>
+            <guid isPermaLink="false">2025-05-31-updates-to-api-reference-code-snippets</guid>
+            <pubDate>Sat, 31 May 2025 00:00:00 GMT</pubDate>
+            <description><![CDATA[<p>Update the generated code snippets that are displayed throughout the <a href="../api/client-api/activity/overview">Client<br>API Reference</a> and <a href="../api/indexing-api/authentication-overview">Indexing API<br>Reference</a> docs to include the<br>required <code>instance</code> parameter in the API client constructor.</p>
+]]></description>
+            <content:encoded><![CDATA[<p>Update the generated code snippets that are displayed throughout the <a href="../api/client-api/activity/overview">Client<br>API Reference</a> and <a href="../api/indexing-api/authentication-overview">Indexing API<br>Reference</a> docs to include the<br>required <code>instance</code> parameter in the API client constructor.</p>
+]]></content:encoded>
+            <category>Documentation</category>
+        </item>
+        <item>
+            <title><![CDATA[Python API Client v0.6.0 - Breaking Changes]]></title>
+            <link>https://glean-developer-site.vercel.app/changelog#python-api-client-v060-breaking-changes</link>
+            <guid isPermaLink="false">2025-05-31-python-api-client-v060-breaking-changes</guid>
+            <pubDate>Sat, 31 May 2025 00:00:00 GMT</pubDate>
+            <description><![CDATA[<p>The Python API client now uses a namespaced package structure. All imports must be updated from <code>glean</code> to <code>glean.api_client</code>.</p>
+]]></description>
+            <content:encoded><![CDATA[<p>The Python API client now uses a namespaced package structure. All imports must be updated from <code>glean</code> to <code>glean.api_client</code>.</p>
+<h3>What Changed</h3>
+<ul>
+<li>Import paths have changed from <code>from glean import ...</code> to <code>from glean.api_client import ...</code></li>
+<li>This affects all classes including <code>Glean</code>, <code>models</code>, and other API components</li>
+</ul>
+<h3>Migration Required</h3>
+<p><strong>Before:</strong></p>
+<pre><code class="language-python">from glean import Glean
+from glean import models
+from glean.models import Something
+from glean.exceptions import ApiError
+</code></pre>
+<p><strong>After:</strong></p>
+<pre><code class="language-python">from glean.api_client import Glean
+from glean.api_client import models
+from glean.api_client.models import Something
+from glean.api_client.exceptions import ApiError
+</code></pre>
+<h3>Automated Migration</h3>
+<p>Use <a href="https://ast-grep.github.io/">ast-grep</a> (a structural search and replace tool) to automatically update your Python code:</p>
+<pre><code class="language-bash"># First, update imports from glean submodules (e.g., from glean.models import ...)
+ast-grep --update-all \
+  --pattern &#39;from glean.$SUBMODULE import $$REST&#39; \
+  --rewrite &#39;from glean.api_client.$SUBMODULE import $$REST&#39; \
+  --lang python \
+  path/to/your/code
+
+# Then, update basic glean imports (e.g., from glean import ...)
+ast-grep --update-all \
+  --pattern &#39;from glean import $$REST&#39; \
+  --rewrite &#39;from glean.api_client import $$REST&#39; \
+  --lang python \
+  path/to/your/code
+
+# Finally, fix any double-nesting that may have occurred
+ast-grep --update-all \
+  --pattern &#39;from glean.api_client.api_client import $$REST&#39; \
+  --rewrite &#39;from glean.api_client import $$REST&#39; \
+  --lang python \
+  path/to/your/code
+</code></pre>
+<h3>Manual Steps</h3>
+<p>If you prefer to update manually, search for all instances of:</p>
+<ul>
+<li><code>from glean import</code> → <code>from glean.api_client import</code></li>
+<li><code>from glean.</code> (but not glean.api_client) → <code>from glean.api_client.</code></li>
+</ul>
+<h3>Compatibility</h3>
+<ul>
+<li>This change affects all Python API client users</li>
+<li>No functional changes to the API itself - only import paths</li>
+<li>Ensure you&#39;re using the latest version of the Python API client package</li>
+</ul>
+]]></content:encoded>
+            <category>SDK</category>
+        </item>
+        <item>
+            <title><![CDATA[Run agent API bug fix in client libraries]]></title>
+            <link>https://glean-developer-site.vercel.app/changelog#run-agent-api-bug-fix-in-client-libraries</link>
+            <guid isPermaLink="false">2025-05-27-run-agent-api-bug-fix-in-client-libraries</guid>
+            <pubDate>Tue, 27 May 2025 00:00:00 GMT</pubDate>
+            <description><![CDATA[<p>We fixed a bug that caused <a href="../api/client-api/agents/create-and-wait-run">Run Agent Wait for Output</a><br>(<code>/agents/run/wait</code>) to return empty responses when used with the API Client<br>libraries.</p>
+]]></description>
+            <content:encoded><![CDATA[<p>We fixed a bug that caused <a href="../api/client-api/agents/create-and-wait-run">Run Agent Wait for Output</a><br>(<code>/agents/run/wait</code>) to return empty responses when used with the API Client<br>libraries.</p>
+<p>We also fixed a bug that produced non-SSE compliant output when<br>using the <a href="../api/client-api/agents/create-and-stream-run">Run Agent Stream Output</a><br>(<code>/agents/run/stream</code>) endpoint.</p>
+]]></content:encoded>
+            <category>API</category>
+        </item>
+        <item>
+            <title><![CDATA[Remote MCP Server (private beta)]]></title>
+            <link>https://glean-developer-site.vercel.app/changelog#remote-mcp-server-private-beta</link>
+            <guid isPermaLink="false">2025-05-27-remote-mcp-server-private-beta</guid>
+            <pubDate>Tue, 27 May 2025 00:00:00 GMT</pubDate>
+            <description><![CDATA[<p>With Glean’s <a href="https://docs.anthropic.com/en/docs/agents-and-tools/remote-mcp-servers">remote MCP server</a>,<br>you can access Glean from MCP clients like Claude Desktop, Cursor, or Goose.<br>Your Glean admin can enable a remote MCP server to expose Glean agents and<br>tools. To join the MCP Server private beta, contact your Glean account team.</p>
+]]></description>
+            <content:encoded><![CDATA[<p>With Glean’s <a href="https://docs.anthropic.com/en/docs/agents-and-tools/remote-mcp-servers">remote MCP server</a>,<br>you can access Glean from MCP clients like Claude Desktop, Cursor, or Goose.<br>Your Glean admin can enable a remote MCP server to expose Glean agents and<br>tools. To join the MCP Server private beta, contact your Glean account team.</p>
+]]></content:encoded>
+            <category>MCP</category>
+        </item>
+        <item>
+            <title><![CDATA[New Features for Tools and Agents API, API Clients, MCP]]></title>
+            <link>https://glean-developer-site.vercel.app/changelog#new-features-for-tools-and-agents-api-api-clients-mcp</link>
+            <guid isPermaLink="false">2025-05-23-new-features-for-tools-and-agents-api-api-clients-mcp</guid>
+            <pubDate>Fri, 23 May 2025 00:00:00 GMT</pubDate>
+            <description><![CDATA[<ul>
+<li>New Features:<ul>
+<li>Client REST API</li>
+<li>New endpoint: <code>GET /tools/list</code></li>
+<li>New endpoint: <code>POST /tools/call</code></li>
+<li>API Clients - Added support for the new <code>GET /tools/list</code> and <code>POST /tools/call</code> endpoints</li>
+<li>MCP Server - Support for configuring MCP server with VS Code</li>
+</ul>
+</li>
+</ul>
+]]></description>
+            <content:encoded><![CDATA[<ul>
+<li><p>New Features:</p>
+<ul>
+<li>Client REST API</li>
+<li>New endpoint: <code>GET /tools/list</code></li>
+<li>New endpoint: <code>POST /tools/call</code></li>
+<li>API Clients - Added support for the new <code>GET /tools/list</code> and <code>POST /tools/call</code> endpoints</li>
+<li>MCP Server - Support for configuring MCP server with VS Code</li>
+</ul>
+</li>
+<li><p>Bug Fixes:</p>
+<ul>
+<li>Update the OpenAPI Spec to properly mark the request body as a required field. This change more<br>accurately reflects how the API handles the case when the request body is not<br>provided. This affects the following API endpoints: - <code>/rest/api/v1/search</code> - <code>/rest/api/v1/recommendations</code> - <code>rest/api/v1/adminsearch</code></li>
+</ul>
+</li>
+<li><p>Breaking Changes: - Python API client: the request body OpenAPI spec change resulted in a<br>breaking change due to language semantics. This aligns search method<br>parameters with other methods in the API.</p>
+</li>
+</ul>
+]]></content:encoded>
+            <category>API</category>
+        </item>
+        <item>
+            <title><![CDATA[New Governance and Agent API Features]]></title>
+            <link>https://glean-developer-site.vercel.app/changelog#new-governance-and-agent-api-features</link>
+            <guid isPermaLink="false">2025-05-16-new-governance-and-agent-api-features</guid>
+            <pubDate>Fri, 16 May 2025 00:00:00 GMT</pubDate>
+            <description><![CDATA[<ul>
+<li>New Features:<ul>
+<li>Governance Admin API surface (10 endpoints)</li>
+<li>Policies: retrieve, update, list, create, download - Reports:<br>createReport, downloadReport, status</li>
+<li>Visibility Overrides: listVisibilityOverrides,<br>createVisibilityOverride</li>
+<li>Agent API brought up to the LangChain Agent-Protocol (Agents &amp; Runs stages)</li>
+<li>Retrieve an Agent <code>GET /agents/ {agent_id}</code></li>
+</ul>
+</li>
+</ul>
+]]></description>
+            <content:encoded><![CDATA[<ul>
+<li><p>New Features:</p>
+<ul>
+<li>Governance Admin API surface (10 endpoints)</li>
+<li>Policies: retrieve, update, list, create, download - Reports:<br>createReport, downloadReport, status</li>
+<li>Visibility Overrides: listVisibilityOverrides,<br>createVisibilityOverride</li>
+<li>Agent API brought up to the LangChain Agent-Protocol (Agents &amp; Runs stages)</li>
+<li>Retrieve an Agent <code>GET /agents/ {agent_id}</code></li>
+</ul>
+</li>
+<li><p>Retrieve an Agent&#39;s Schemas <code>GET /agents/{agent_id}/schemas</code></p>
+<ul>
+<li>List Agents <code>POST /agents/search</code></li>
+<li>Run an Agent <code>POST /agents/runs/wait</code></li>
+<li>Run an Agent with streaming <code>POST /agents/runs/stream</code></li>
+</ul>
+</li>
+<li><p>Changes &amp; Enhancements:</p>
+<ul>
+<li>Replaced legacy alpha Run-Workflow endpoints with the standard Agent-Protocol equivalents (see above).</li>
+</ul>
+</li>
+<li><p>Breaking Changes:</p>
+<ul>
+<li>Governance endpoints introduce new permission scopes (<code>governance.read</code>,<br><code>governance.write</code>).</li>
+</ul>
+</li>
+<li><p>Bug Fixes:</p>
+<ul>
+<li>Python API client: resolved &quot;unclosed async coroutine&quot; warning in async transport.</li>
+<li>Language-Specific Notes:<ul>
+<li>Python 0.4.1 uploaded to PyPI, requires 3.8+.</li>
+<li>TypeScript 0.4.1 published, ESM, bundled types.</li>
+<li>Go module path <code>github.com/gleaninc/glean-sdk-go/v4.1.0</code>.</li>
+<li>Java 0.4.1 available on Maven Central (<code>com.glean:glean-sdk:0.4.1</code>).</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+]]></content:encoded>
+            <category>API</category>
+        </item>
+        <item>
+            <title><![CDATA[Official API Clients Release]]></title>
+            <link>https://glean-developer-site.vercel.app/changelog#official-api-clients-release</link>
+            <guid isPermaLink="false">2025-05-10-official-api-clients-release</guid>
+            <pubDate>Sat, 10 May 2025 00:00:00 GMT</pubDate>
+            <description><![CDATA[<ul>
+<li>Released official API clients for Glean in multiple languages, replacing the<br>previous OpenAPI Generator-based SDK approach</li>
+</ul>
+]]></description>
+            <content:encoded><![CDATA[<ul>
+<li><p>Released official API clients for Glean in multiple languages, replacing the<br>previous OpenAPI Generator-based SDK approach</p>
+</li>
+<li><p>New API clients are now<br>available for:</p>
+<ul>
+<li><a href="https://github.com/gleanwork/api-client-python">Python</a></li>
+<li><a href="https://github.com/gleanwork/api-client-typescript">TypeScript</a></li>
+<li><a href="https://github.com/gleanwork/api-client-go">Go</a></li>
+<li><a href="https://github.com/gleanwork/api-client-java">Java</a></li>
+</ul>
+</li>
+<li><p>Updated documentation with new installation instructions and usage examples</p>
+</li>
+<li><p>Visit the <a href="../libraries/api-clients">API Clients</a> page for more information</p>
+</li>
+</ul>
+]]></content:encoded>
+            <category>SDK</category>
+        </item>
+        <item>
+            <title><![CDATA[New Indexing API Endpoints for Documents and Troubleshooting]]></title>
+            <link>https://glean-developer-site.vercel.app/changelog#new-indexing-api-endpoints-for-documents-and-troubleshooting copy</link>
+            <guid isPermaLink="false">2025-05-02-new-indexing-api-endpoints-for-documents-and-troubleshooting copy</guid>
+            <pubDate>Fri, 02 May 2025 00:00:00 GMT</pubDate>
+            <description><![CDATA[<ul>
+<li><a href="../api/indexing-api/update-document-permissions">/updatepermissions</a> Endpoint to update document permissions: Generally available</li>
+<li><a href="../api/indexing-api/beta-get-information-of-a-batch-of-documents">/debug/datasource/documents</a> Troubleshooting endpoint for batch queries: Generally available</li>
+</ul>
+]]></description>
+            <content:encoded><![CDATA[<ul>
+<li><a href="../api/indexing-api/update-document-permissions">/updatepermissions</a> Endpoint to update document permissions: Generally available</li>
+<li><a href="../api/indexing-api/beta-get-information-of-a-batch-of-documents">/debug/datasource/documents</a> Troubleshooting endpoint for batch queries: Generally available</li>
+</ul>
+]]></content:encoded>
+            <category>API</category>
+        </item>
+        <item>
+            <title><![CDATA[Deprecate Previous Way of Processing Response Message Stream]]></title>
+            <link>https://glean-developer-site.vercel.app/changelog#deprecate-previous-processing-message-stream</link>
+            <guid isPermaLink="false">2025-04-24-deprecate-previous-processing-message-stream</guid>
+            <pubDate>Thu, 24 Apr 2025 00:00:00 GMT</pubDate>
+            <description><![CDATA[<p>In the /chat API, the previous way of processing the response message stream has been deprecated as a result of the launch of LLM-generated citations.</p>
+]]></description>
+            <content:encoded><![CDATA[<p>In the /chat API, the previous way of processing the response message stream has been deprecated as a result of the launch of LLM-generated citations.</p>
+<ul>
+<li>LLM citations are interleaved within the response text fragments. Each fragment can have &quot;text&quot; or &quot;citation&quot;.</li>
+<li>If streaming is set to False, the response may still be broken up into across multiple fragments.</li>
+<li>The citations interleaved inside the response do not have reference ranges (start and end indices) or snippets as they used to.</li>
+<li>For backwards compatibility, we still return a chat message with citations at the end in the old format, except there will be no startIndex and no snippets.</li>
+</ul>
+<p>Visit the <a href="../guides/chat/chatbot-example">Simple Chatbot Guide</a> for more information and an example.</p>
+]]></content:encoded>
+            <category>API</category>
+        </item>
+        <item>
+            <title><![CDATA[Deprecate x-scio-actas Header in Favor of x-glean-actas]]></title>
+            <link>https://glean-developer-site.vercel.app/changelog#deprecate-scioactas-header</link>
+            <guid isPermaLink="false">2025-04-18-deprecate-scioactas-header</guid>
+            <pubDate>Fri, 18 Apr 2025 00:00:00 GMT</pubDate>
+            <description><![CDATA[<ul>
+<li>Deprecate X-Scio-ActAs in favor of X-Glean-AtAs. X-Scio-ActAs continues to<br>work, but it is an error to specify both headers.</li>
+</ul>
+]]></description>
+            <content:encoded><![CDATA[<ul>
+<li>Deprecate X-Scio-ActAs in favor of X-Glean-AtAs. X-Scio-ActAs continues to<br>work, but it is an error to specify both headers.</li>
+</ul>
+]]></content:encoded>
+            <category>API</category>
+        </item>
+        <item>
+            <title><![CDATA[Debug Endpoints Permission Status]]></title>
+            <link>https://glean-developer-site.vercel.app/changelog#debug-endpoints-permission-status</link>
+            <guid isPermaLink="false">2025-04-17-debug-endpoints-permission-status</guid>
+            <pubDate>Thu, 17 Apr 2025 00:00:00 GMT</pubDate>
+            <description><![CDATA[<ul>
+<li><a href="../api/indexing-api/beta-get-document-information"><code>/debug/{datasource}/document</code></a> - New response field <code>permissionIdentityStatus</code> under <code>status</code>: Provides information regarding upload status of users and groups specified in document permissions</li>
+</ul>
+]]></description>
+            <content:encoded><![CDATA[<ul>
+<li><p><a href="../api/indexing-api/beta-get-document-information"><code>/debug/{datasource}/document</code></a> - New response field <code>permissionIdentityStatus</code> under <code>status</code>: Provides information regarding upload status of users and groups specified in document permissions</p>
+</li>
+<li><p><a href="../api/indexing-api/beta-get-document-information"><code>/debug/{datasource}/documents</code></a> - New response field <code>permissionIdentityStatus</code> under <code>status</code>: Provides information regarding upload status of users and groups specified in document permissions</p>
+</li>
+</ul>
+]]></content:encoded>
+            <category>API</category>
+        </item>
+        <item>
+            <title><![CDATA[Update Developer Site]]></title>
+            <link>https://glean-developer-site.vercel.app/changelog#update-dev-site</link>
+            <guid isPermaLink="false">2025-03-26-update-dev-site</guid>
+            <pubDate>Wed, 26 Mar 2025 00:00:00 GMT</pubDate>
+            <description><![CDATA[<p>The developer site has been updated with a new look, content, and features. Some new features include:</p>
+]]></description>
+            <content:encoded><![CDATA[<p>The developer site has been updated with a new look, content, and features. Some new features include:</p>
+<ul>
+<li>This documentation site is now open sourced on <a href="https://github.com/gleanwork/glean-developer-site">GitHub</a></li>
+<li>This changelog page, which gives you a single place to see updates across the platform.</li>
+<li>Ability to switch between light and dark mode.</li>
+<li>A new <a href="../libraries/api-clients">API Clients</a> page with documentation for all available API Clients.</li>
+<li>A list of <a href="https://community.glean.com/">community projects and resources</a> to help you get started with Glean.</li>
+<li>Each API has its own documentation page with detailed information.</li>
+</ul>
+<p>And much more...</p>
+]]></content:encoded>
+            <category>Website</category>
+        </item>
+        <item>
+            <title><![CDATA[Add MCP]]></title>
+            <link>https://glean-developer-site.vercel.app/changelog#add-mcp</link>
+            <guid isPermaLink="false">2025-03-11-add-mcp</guid>
+            <pubDate>Tue, 11 Mar 2025 00:00:00 GMT</pubDate>
+            <description><![CDATA[<p>Added a Model Context Protocol (MCP) server implementation for Glean&#39;s search and chat capabilities on <a href="https://github.com/gleanwork/mcp-server">GitHub</a>.</p>
+<p>This server provides a standardized interface for AI models to interact with Glean&#39;s content search and conversational AI features through stdio communication.</p>
+<p>Visit the <a href="../guides/agents/overview">Agents</a> for more information.</p>
+]]></description>
+            <content:encoded><![CDATA[<p>Added a Model Context Protocol (MCP) server implementation for Glean&#39;s search and chat capabilities on <a href="https://github.com/gleanwork/mcp-server">GitHub</a>.</p>
+<p>This server provides a standardized interface for AI models to interact with Glean&#39;s content search and conversational AI features through stdio communication.</p>
+<p>Visit the <a href="../guides/agents/overview">Agents</a> for more information.</p>
+]]></content:encoded>
+            <category>MCP</category>
+        </item>
+        <item>
+            <title><![CDATA[LangChain SDK Release]]></title>
+            <link>https://glean-developer-site.vercel.app/changelog#general-updates</link>
+            <guid isPermaLink="false">2025-03-05-general-updates</guid>
+            <pubDate>Wed, 05 Mar 2025 00:00:00 GMT</pubDate>
+            <description><![CDATA[<p>Added LangChain SDK for Python on <a href="https://github.com/gleanwork/langchain-glean">GitHub</a>. This SDK provides a simple interface for interacting with Glean&#39;s search and chat capabilities when using LangChain.</p>
+<p>Visit the <a href="../guides/agents/overview">Agents</a> for more information.</p>
+]]></description>
+            <content:encoded><![CDATA[<p>Added LangChain SDK for Python on <a href="https://github.com/gleanwork/langchain-glean">GitHub</a>. This SDK provides a simple interface for interacting with Glean&#39;s search and chat capabilities when using LangChain.</p>
+<p>Visit the <a href="../guides/agents/overview">Agents</a> for more information.</p>
+]]></content:encoded>
+            <category>SDK</category>
+        </item>
+        <item>
+            <title><![CDATA[Update Permissions Endpoint]]></title>
+            <link>https://glean-developer-site.vercel.app/changelog#update-permissions</link>
+            <guid isPermaLink="false">2025-02-19-update-permissions</guid>
+            <pubDate>Wed, 19 Feb 2025 00:00:00 GMT</pubDate>
+            <description><![CDATA[<p><a href="../api/indexing-api/update-document-permissions"><code>/updatepermissions</code></a></p>
+<ul>
+<li>Beta launch of new endpoint to update document permissions -<br>  <a href="../api/indexing-api/beta-get-information-of-a-batch-of-documents"><code>/debug/[datasource]/documents</code></a></li>
+<li>Beta launch of new troubleshooting endpoint for batch queries</li>
+</ul>
+]]></description>
+            <content:encoded><![CDATA[<p><a href="../api/indexing-api/update-document-permissions"><code>/updatepermissions</code></a></p>
+<ul>
+<li>Beta launch of new endpoint to update document permissions -<br>  <a href="../api/indexing-api/beta-get-information-of-a-batch-of-documents"><code>/debug/[datasource]/documents</code></a></li>
+<li>Beta launch of new troubleshooting endpoint for batch queries</li>
+</ul>
+]]></content:encoded>
+            <category>API</category>
+        </item>
+    </channel>
+</rss>
