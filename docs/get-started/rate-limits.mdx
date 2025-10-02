@@ -44,4 +44,7 @@ Glean uses token bucket rate limiters for user and endpoint-level enforcement. T
 ### Handling Rate Limits
 
 If you send too many requests in a short period, the API will respond with an HTTP 429 "Too Many Requests" error. To handle this gracefully, watch for 429 status codes and implement a retry mechanism with exponential backoff to gradually reduce request volume.
+
+For applications that need to make many requests, consider using a global token with the [X-Glean-ActAs](../api-info/client/authentication/glean-issued#authentication-headers) header to distribute requests across different users' rate limit quotas. Since requests with the ActAs header are counted towards the impersonated user's quota rather than the token creator's, this approach can help avoid hitting rate limits for a single user.
+
 If your application requires higher rate limits, please contact your Glean account team to see if the rate limits can be adjusted.
