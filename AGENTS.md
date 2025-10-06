@@ -14,8 +14,7 @@ AVOID RUNNING `pnpm start` - this causes very slow build times, and will interup
 
 - Run `pnpm build` to ensure the site builds successfully.
 - Formatting is handled by Prettier. Run `pnpm format` to apply the project's style (single quotes and trailing commas).
-
-No other automated tests are defined.
+- Test with `pnpm test`.  This will execute `vitest run`.  Always execute in run mode (using `pnpm test`) to avoid getting stuck.
 
 ## Content Guidelines
 
