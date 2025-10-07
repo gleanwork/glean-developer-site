@@ -19,8 +19,8 @@ paths:
     post:
       tags:
         - Insights
-      summary: Read insights
-      description: Reads the aggregate information for each user, query, and content.
+      summary: Get insights
+      description: Gets the aggregate usage insights data displayed in the Insights Dashboards.
       operationId: insights
       x-visibility: Public
       x-codegen-request-body-name: payload
@@ -30,7 +30,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/InsightsRequest'
-        description: Includes request params for insights dashboard data.
+        description: Includes request parameters for insights requests.
         required: true
         x-exportParamName: InsightsRequest
       responses:
@@ -52,7 +52,7 @@ paths:
         - lang: Python
           label: Python (API Client)
           source: |-
-            from glean.api_client import Glean, models
+            from glean.api_client import Glean
             import os
 
 
@@ -61,9 +61,7 @@ paths:
                 instance=os.getenv("GLEAN_INSTANCE", ""),
             ) as glean:
 
-                res = glean.client.insights.retrieve(categories=[
-                    models.InsightsRequestCategory.COLLECTIONS,
-                ])
+                res = glean.client.insights.retrieve()
 
                 # Handle response
                 print(res)
@@ -78,13 +76,7 @@ paths:
             });
 
             async function run() {
-              const result = await glean.client.insights.retrieve({
-                categories: [
-                  "COLLECTIONS",
-                  "SHORTCUTS",
-                  "ANNOUNCEMENTS",
-                ],
-              });
+              const result = await glean.client.insights.retrieve({});
 
               // Handle the result
               console.log(result);
@@ -93,17 +85,15 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithInstance(os.Getenv(\"GLEAN_INSTANCE\")),\n    )\n\n    res, err := s.Client.Insights.Retrieve(ctx, components.InsightsRequest{\n        Categories: []components.InsightsRequestCategory{\n            components.InsightsRequestCategoryCollections,\n        },\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.InsightsResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithInstance(os.Getenv(\"GLEAN_INSTANCE\")),\n    )\n\n    res, err := s.Client.Insights.Retrieve(ctx, components.InsightsRequest{})\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.InsightsResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
             package hello.world;
 
             import java.lang.Exception;
-            import java.util.List;
             import org.openapis.openapi.Glean;
             import org.openapis.openapi.models.components.InsightsRequest;
-            import org.openapis.openapi.models.components.InsightsRequestCategory;
             import org.openapis.openapi.models.operations.InsightsResponse;
 
             public class Application {
@@ -115,8 +105,6 @@ paths:
                         .build();
 
                     InsightsRequest req = InsightsRequest.builder()
-                            .categories(List.of(
-                                InsightsRequestCategory.COLLECTIONS))
                             .build();
 
                     InsightsResponse res = sdk.client().insights().retrieve()
@@ -843,6 +831,26 @@ components:
       description: Custom fields specific to individual datasources
       additionalProperties:
         $ref: '#/components/schemas/CustomDataValue'
+    InsightsAssistantRequest:
+      properties:
+        departments:
+          type: array
+          items:
+            type: string
+          description: Departments for which Insights are requested.
+        dayRange:
+          $ref: '#/components/schemas/Period'
+          description: Time period for which Insights are requested.
+    InsightsOverviewRequest:
+      properties:
+        departments:
+          type: array
+          items:
+            type: string
+          description: Departments for which Insights are requested.
+        dayRange:
+          $ref: '#/components/schemas/Period'
+          description: Time period for which Insights are requested.
     GrantPermission:
       description: Describes the grant permission level that a user has for a specific feature
       properties:
@@ -928,24 +936,6 @@ components:
           key: person_icon
           iconType: GLYPH
           name: user
-    InsightsRequest:
-      allOf:
-        - $ref: '#/components/schemas/DownloadInsightsRequest'
-        - type: object
-          properties:
-            assistantActivityTypes:
-              type: array
-              items:
-                type: string
-                enum:
-                  - GLEAN_CHAT
-                  - AI_SUMMARY
-                  - AI_ANSWER
-                  - GLEANBOT_RESPONSE
-              description: Types of activity that should count in the definition of an Assistant Active User. Affects only insights for AI category.
-            disablePerUserInsights:
-              type: boolean
-              description: If true, suppresses the generation of per-user Insights in the response. Default is false.
     Period:
       properties:
         minDaysFromNow:
@@ -974,6 +964,21 @@ components:
         delete:
           type: boolean
           description: True if user has delete permission for this feature and scope
+    AgentsInsightsV2Request:
+      properties:
+        agentIds:
+          type: array
+          items:
+            type: string
+          description: IDs of the Agents for which Insights should be returned. An empty array signifies all.
+        departments:
+          type: array
+          items:
+            type: string
+          description: Departments for which Insights are requested.
+        dayRange:
+          $ref: '#/components/schemas/Period'
+          description: Time period for which Insights are requested.
     Group:
       required:
         - type
@@ -1589,38 +1594,6 @@ components:
           description: The roleIds of the roles a user has.
           items:
             type: string
-    DownloadInsightsRequest:
-      required:
-        - categories
-      properties:
-        categories:
-          type: array
-          items:
-            type: string
-            enum:
-              - AGENTS
-              - AI
-              - AI_APPS
-              - ANNOUNCEMENTS
-              - ANSWERS
-              - COLLECTIONS
-              - CONTENT
-              - GLEAN_ASSIST
-              - QUERIES
-              - SHORTCUTS
-              - USERS
-          description: Categories of data requested. Request can include single or multiple types.
-        departments:
-          type: array
-          items:
-            type: string
-          description: Departments that the data is requested for. If this is empty, corresponds to whole company.
-        dayRange:
-          $ref: '#/components/schemas/Period'
-        aiAppRequestOptions:
-          $ref: '#/components/schemas/InsightsAiAppRequestOptions'
-        agentsRequestOptions:
-          $ref: '#/components/schemas/InsightsAgentsRequestOptions'
     CustomFieldValue:
       oneOf:
         - *ref_4
@@ -1818,6 +1791,70 @@ components:
           type: array
           items: *ref_14
       type: object
+    InsightsRequest:
+      properties:
+        overviewRequest:
+          $ref: '#/components/schemas/InsightsOverviewRequest'
+          x-visibility: Public
+          description: If specified, will return data for the Overview section of the Insights Dashboard.
+        assistantRequest:
+          $ref: '#/components/schemas/InsightsAssistantRequest'
+          x-visibility: Public
+          description: If specified, will return data for the Assistant section of the Insights Dashboard.
+        agentsRequest:
+          $ref: '#/components/schemas/AgentsInsightsV2Request'
+          x-visibility: Public
+          description: If specified, will return data for the Agents section of the Insights Dashboard.
+        disablePerUserInsights:
+          type: boolean
+          description: If true, suppresses the generation of per-user Insights in the response. Default is false.
+        categories:
+          deprecated: true
+          type: array
+          items:
+            type: string
+            enum:
+              - AGENTS
+              - AGENT_USERS
+              - TOP_AGENTS
+              - AGENTS_USAGE_BY_DEPARTMENT
+              - AI
+              - AI_APPS
+              - ANNOUNCEMENTS
+              - ANSWERS
+              - COLLECTIONS
+              - CONTENT
+              - GLEAN_ASSIST
+              - QUERIES
+              - SHORTCUTS
+              - USERS
+          description: Categories of data requested. Request can include single or multiple types.
+        departments:
+          deprecated: true
+          type: array
+          items:
+            type: string
+          description: Departments that the data is requested for. If this is empty, corresponds to whole company.
+        dayRange:
+          deprecated: true
+          $ref: '#/components/schemas/Period'
+        aiAppRequestOptions:
+          deprecated: true
+          $ref: '#/components/schemas/InsightsAiAppRequestOptions'
+        agentsRequestOptions:
+          deprecated: true
+          $ref: '#/components/schemas/InsightsAgentsRequestOptions'
+        assistantActivityTypes:
+          deprecated: true
+          type: array
+          items:
+            type: string
+            enum:
+              - GLEAN_CHAT
+              - AI_SUMMARY
+              - AI_ANSWER
+              - GLEANBOT_RESPONSE
+          description: Types of activity that should count in the definition of an Assistant Active User. Affects only insights for AI category.
     SearchResultSnippet:
       example: &ref_142
         snippet: snippet
