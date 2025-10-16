@@ -221,7 +221,6 @@ paths:
                 },
               });
 
-              // Handle the result
               console.log(result);
             }
 
@@ -364,7 +363,6 @@ paths:
                 resultSize: 10,
               });
 
-              // Handle the result
               console.log(result);
             }
 
@@ -473,7 +471,6 @@ paths:
                 timeoutMillis: 5000,
               });
 
-              // Handle the result
               console.log(result);
             }
 
@@ -747,6 +744,54 @@ paths:
             async function run() {
               const result = await glean.client.search.recommendations({
                 sourceDocument: {
+                  containerDocument: {
+                    metadata: {
+                      datasource: "datasource",
+                      objectType: "Feature Request",
+                      container: "container",
+                      parentId: "JIRA_EN-1337",
+                      mimeType: "mimeType",
+                      documentId: "documentId",
+                      createTime: new Date("2000-01-23T04:56:07.000Z"),
+                      updateTime: new Date("2000-01-23T04:56:07.000Z"),
+                      author: {
+                        name: "name",
+                        obfuscatedId: "<id>",
+                      },
+                      components: [
+                        "Backend",
+                        "Networking",
+                      ],
+                      status: "[\"Done\"]",
+                      customData: {
+                        "someCustomField": {},
+                      },
+                    },
+                  },
+                  parentDocument: {
+                    metadata: {
+                      datasource: "datasource",
+                      objectType: "Feature Request",
+                      container: "container",
+                      parentId: "JIRA_EN-1337",
+                      mimeType: "mimeType",
+                      documentId: "documentId",
+                      createTime: new Date("2000-01-23T04:56:07.000Z"),
+                      updateTime: new Date("2000-01-23T04:56:07.000Z"),
+                      author: {
+                        name: "name",
+                        obfuscatedId: "<id>",
+                      },
+                      components: [
+                        "Backend",
+                        "Networking",
+                      ],
+                      status: "[\"Done\"]",
+                      customData: {
+                        "someCustomField": {},
+                      },
+                    },
+                  },
                   metadata: {
                     datasource: "datasource",
                     objectType: "Feature Request",
@@ -793,6 +838,54 @@ paths:
                     },
                   ],
                   context: {
+                    containerDocument: {
+                      metadata: {
+                        datasource: "datasource",
+                        objectType: "Feature Request",
+                        container: "container",
+                        parentId: "JIRA_EN-1337",
+                        mimeType: "mimeType",
+                        documentId: "documentId",
+                        createTime: new Date("2000-01-23T04:56:07.000Z"),
+                        updateTime: new Date("2000-01-23T04:56:07.000Z"),
+                        author: {
+                          name: "name",
+                          obfuscatedId: "<id>",
+                        },
+                        components: [
+                          "Backend",
+                          "Networking",
+                        ],
+                        status: "[\"Done\"]",
+                        customData: {
+                          "someCustomField": {},
+                        },
+                      },
+                    },
+                    parentDocument: {
+                      metadata: {
+                        datasource: "datasource",
+                        objectType: "Feature Request",
+                        container: "container",
+                        parentId: "JIRA_EN-1337",
+                        mimeType: "mimeType",
+                        documentId: "documentId",
+                        createTime: new Date("2000-01-23T04:56:07.000Z"),
+                        updateTime: new Date("2000-01-23T04:56:07.000Z"),
+                        author: {
+                          name: "name",
+                          obfuscatedId: "<id>",
+                        },
+                        components: [
+                          "Backend",
+                          "Networking",
+                        ],
+                        status: "[\"Done\"]",
+                        customData: {
+                          "someCustomField": {},
+                        },
+                      },
+                    },
                     metadata: {
                       datasource: "datasource",
                       objectType: "Feature Request",
@@ -819,7 +912,6 @@ paths:
                 },
               });
 
-              // Handle the result
               console.log(result);
             }
 
@@ -1226,7 +1318,6 @@ paths:
                 },
               });
 
-              // Handle the result
               console.log(result);
             }
 
@@ -1837,6 +1928,11 @@ components:
         actionId:
           type: string
           description: The ID of the associated action.
+        parameters:
+          type: object
+          description: Map of assistant predicted parameters and their corresponding values.
+          additionalProperties:
+            type: string
         recommendationText:
           type: string
           description: Text to be displayed to the user when recommending the action instance.
@@ -2360,23 +2456,6 @@ components:
         delete:
           type: boolean
           description: True if user has delete permission for this feature and scope
-    DigestUpdate:
-      type: object
-      properties:
-        url:
-          type: string
-          description: URL link to the content or document.
-        title:
-          type: string
-          description: Title or headline of the update.
-        datasource:
-          type: string
-          description: Name or identifier of the data source (e.g., slack, confluence, etc.).
-        summary:
-          type: string
-          description: Brief summary or description of the update content.
-        type:
-          $ref: '#/components/schemas/UpdateType'
     Group:
       required:
         - type
@@ -2443,6 +2522,28 @@ components:
         repoName:
           type: string
       type: object
+    DigestUpdate:
+      type: object
+      properties:
+        urls:
+          type: array
+          description: List of URLs for similar updates that are grouped together and rendered as a single update.
+          items:
+            type: string
+        url:
+          type: string
+          description: URL link to the content or document.
+        title:
+          type: string
+          description: Title or headline of the update.
+        datasource:
+          type: string
+          description: Name or identifier of the data source (e.g., slack, confluence, etc.).
+        summary:
+          type: string
+          description: Brief summary or description of the update content.
+        type:
+          $ref: '#/components/schemas/UpdateType'
     FeedRequestOptions:
       required:
         - resultSize
@@ -2816,6 +2917,7 @@ components:
               - ZERO_STATE_WORKFLOW_CREATED_BY_ME
               - ZERO_STATE_WORKFLOW_FAVORITES
               - ZERO_STATE_WORKFLOW_POPULAR
+              - ZERO_STATE_WORKFLOW_RECENT
               - ZERO_STATE_WORKFLOW_SUGGESTION
               - PERSONALIZED_CHAT_SUGGESTION
               - DAILY_DIGEST
@@ -2882,6 +2984,7 @@ components:
             - ZERO_STATE_WORKFLOW_CREATED_BY_ME
             - ZERO_STATE_WORKFLOW_FAVORITES
             - ZERO_STATE_WORKFLOW_POPULAR
+            - ZERO_STATE_WORKFLOW_RECENT
             - ZERO_STATE_WORKFLOW_SUGGESTION
             - PERSONALIZED_CHAT_SUGGESTION
             - DAILY_DIGEST

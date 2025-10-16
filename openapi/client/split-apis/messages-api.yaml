@@ -61,7 +61,7 @@ paths:
                 instance=os.getenv("GLEAN_INSTANCE", ""),
             ) as glean:
 
-                res = glean.client.messages.retrieve(id_type=models.IDType.CONVERSATION_ID, id="<id>")
+                res = glean.client.messages.retrieve(id_type=models.IDType.CONVERSATION_ID, id="<id>", datasource=models.Datasource.SLACK)
 
                 # Handle response
                 print(res)
@@ -79,16 +79,16 @@ paths:
               const result = await glean.client.messages.retrieve({
                 idType: "CONVERSATION_ID",
                 id: "<id>",
+                datasource: "SLACK",
               });
 
-              // Handle the result
               console.log(result);
             }
 
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithInstance(os.Getenv(\"GLEAN_INSTANCE\")),\n    )\n\n    res, err := s.Client.Messages.Retrieve(ctx, components.MessagesRequest{\n        IDType: components.IDTypeConversationID,\n        ID: \"<id>\",\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.MessagesResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithInstance(os.Getenv(\"GLEAN_INSTANCE\")),\n    )\n\n    res, err := s.Client.Messages.Retrieve(ctx, components.MessagesRequest{\n        IDType: components.IDTypeConversationID,\n        ID: \"<id>\",\n        Datasource: components.DatasourceSlack,\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.MessagesResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -96,8 +96,7 @@ paths:
 
             import java.lang.Exception;
             import org.openapis.openapi.Glean;
-            import org.openapis.openapi.models.components.IdType;
-            import org.openapis.openapi.models.components.MessagesRequest;
+            import org.openapis.openapi.models.components.*;
             import org.openapis.openapi.models.operations.MessagesResponse;
 
             public class Application {
@@ -111,6 +110,7 @@ paths:
                     MessagesRequest req = MessagesRequest.builder()
                             .idType(IdType.CONVERSATION_ID)
                             .id("<id>")
+                            .datasource(Datasource.SLACK)
                             .build();
 
                     MessagesResponse res = sdk.client().messages().retrieve()
@@ -254,6 +254,7 @@ components:
       required:
         - id
         - idType
+        - datasource
       properties:
         idType:
           type: string
@@ -285,9 +286,11 @@ components:
           type: string
           enum:
             - SLACK
+            - SLACKENTGRID
             - MICROSOFTTEAMS
+            - GCHAT
             - FACEBOOKWORKPLACE
-          description: The type of the data source. Missing field defaults to SLACK.
+          description: The type of the data source.
         datasourceInstanceDisplayName:
           type: string
           description: The datasource instance display name from which the document was extracted. This is used for appinstance facet filter for datasources that support multiple instances.
@@ -584,6 +587,11 @@ components:
         actionId:
           type: string
           description: The ID of the associated action.
+        parameters:
+          type: object
+          description: Map of assistant predicted parameters and their corresponding values.
+          additionalProperties:
+            type: string
         recommendationText:
           type: string
           description: Text to be displayed to the user when recommending the action instance.
