@@ -5,8 +5,11 @@
   "scripts": {
     "docusaurus": "docusaurus",
     "start": "docusaurus start --host 127.0.0.1 --port 8888",
+    "build": "node scripts/cache/build-with-cache.mjs",
+    "build:verbose": "VERBOSE=true node scripts/cache/build-with-cache.mjs",
     "build": "pnpm run generate:changelog && pnpm run generate:rss && docusaurus build",
     "build:fast": "GENERATE_API_DOCS=false pnpm run generate:changelog && pnpm run generate:rss && docusaurus build",
+    "build:nocache": "yarn generate:changelog && yarn generate:rss && docusaurus build",
     "start:fast": "GENERATE_API_DOCS=false docusaurus start --host 127.0.0.1 --port 8889",
     "swizzle": "docusaurus swizzle",
     "deploy": "docusaurus deploy",
@@ -58,7 +61,14 @@
     "openapi:generate:indexing": "docusaurus gen-api-docs indexing",
     "openapi:clean:after:all": "pnpm run openapi:clean:after:client && pnpm run openapi:clean:after:indexing",
     "openapi:clean:after:client": "find docs/api/client-api -type f -name 'sidebar.ts' -delete && find docs/api/client-api -type f -name '*.info.mdx' -delete && find docs/api/client-api -type f -name '*.tag.mdx' -delete",
-    "openapi:clean:after:indexing": "rm -f docs/api/indexing-api/sidebar.ts docs/api/indexing-api/glean-api.info.mdx && find docs/api/indexing-api -type f -name '*.info.mdx' -delete && find docs/api/indexing-api -type f -name '*.tag.mdx' -delete"
+    "openapi:clean:after:indexing": "rm -f docs/api/indexing-api/sidebar.ts docs/api/indexing-api/glean-api.info.mdx && find docs/api/indexing-api -type f -name '*.info.mdx' -delete && find docs/api/indexing-api -type f -name '*.tag.mdx' -delete",
+    "cache:clear": "node scripts/cache/cache-cli.mjs clear",
+    "cache:clear:openapi": "node scripts/cache/cache-cli.mjs clear openapi",
+    "cache:clear:changelog": "node scripts/cache/cache-cli.mjs clear changelog",
+    "cache:stats": "node scripts/cache/cache-cli.mjs stats",
+    "cache:validate": "node scripts/cache/validate-cache.mjs",
+    "cache:validate:full": "node scripts/cache/validate-cache.mjs --compare",
+    "cache:rebuild": "node scripts/cache/cache-cli.mjs rebuild"
   },
   "dependencies": {
     "@docusaurus/core": "^3.8.1",
