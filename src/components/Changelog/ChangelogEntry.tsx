@@ -5,6 +5,7 @@ import styles from './ChangelogEntry.module.css';
 
 interface ChangelogEntryProps {
   entry: ChangelogEntry;
+  showDate?: boolean;
 }
 
 interface CategoryBadgeProps {
@@ -31,7 +32,8 @@ function CategoryBadge({ category }: CategoryBadgeProps): React.ReactElement {
 }
 
 export default function ChangelogEntry({ 
-  entry 
+  entry,
+  showDate = true 
 }: ChangelogEntryProps): React.ReactElement {
   const stripHtml = (html: string) => html.replace(/<[^>]*>/g, '').trim();
   const summaryText = stripHtml(entry.summary);
@@ -44,13 +46,15 @@ export default function ChangelogEntry({
   return (
     <div className={styles.changelogEntry}>
       <div className={styles.entryDate}>
-        <time>
-          <div className={styles.monthDay}>{monthDay}</div>
-          <div className={styles.year}>{year}</div>
-        </time>
+        {showDate ? (
+          <time>
+            <div className={styles.monthDay}>{monthDay}</div>
+            <div className={styles.year}>{year}</div>
+          </time>
+        ) : null}
       </div>
       <div className={styles.contentWrapper}>
-        <div className={styles.entryDot}></div>
+        {showDate && <div className={styles.entryDot}></div>}
         <div className={styles.entryContent}>
           <header className={styles.entryHeader}>
             <h2>{entry.title}</h2>
