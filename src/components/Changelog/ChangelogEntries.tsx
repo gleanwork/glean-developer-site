@@ -20,9 +20,18 @@ export default function ChangelogEntries({
 
   return (
     <div className={styles.changelogEntries}>
-      {entries.map((entry) => (
-        <ChangelogEntryComponent key={entry.id} entry={entry} />
-      ))}
+      {entries.map((entry, index) => {
+        const previousEntry = index > 0 ? entries[index - 1] : null;
+        const showDate = !previousEntry || previousEntry.date !== entry.date;
+        
+        return (
+          <ChangelogEntryComponent 
+            key={entry.id} 
+            entry={entry} 
+            showDate={showDate}
+          />
+        );
+      })}
     </div>
   );
 } 
