@@ -4,226 +4,61 @@ import TabItem from '@theme/TabItem';
 import { Icon } from '@site/src/components/Icons';
 import MCPConfigurator from '@site/src/components/MCPConfigurator';
 import Card from '@site/src/components/Card';
+import CardGroup from '@site/src/components/CardGroup';
 import Admonition from '@theme/Admonition';
 import { CLIENT, MCPConfigRegistry } from '@gleanwork/mcp-config-schema/browser';
 import { clientNeedsMcpRemote } from '@gleanwork/mcp-config-schema';
 import { FeatureFlagsContext } from '@site/src/theme/Root';
 
-export const CompatibilityTable = () => {
-  const registry = useMemo(() => new MCPConfigRegistry(), []);
-  const { isEnabled } = useContext(FeatureFlagsContext);
-  const showClaudeTeams = isEnabled('show-claude-teams');
-
-  const compatibilityData = useMemo(() => {
-    if (!registry) return [];
-
-    const allClients = registry.getAllConfigs();
-    return allClients
-      .filter(
-        (client) =>
-          showClaudeTeams || client.id !== CLIENT.CLAUDE_TEAMS_ENTERPRISE,
-      )
-      .map((client) => {
-        const config = registry.getConfig(client.id);
-
-        let oauthMethod = 'Bridge';
-        if (config?.transports?.includes('http') && !clientNeedsMcpRemote(client.id)) {
-          oauthMethod = 'Native';
-        }
-
-        let configMethod = 'Quick Installer / CLI / Manual';
-        if (client.id === CLIENT.CHATGPT) {
-          configMethod = 'Custom Setup';
-        } else if (config?.localConfigSupport === 'none') {
-          configMethod = 'Administrator Setup';
-        } else if (config?.oneClick) {
-          configMethod = 'One-Click / CLI / Manual';
-        }
-
-        return {
-          name: client.displayName,
-          oauthMethod,
-          configMethod,
-          hasOneClick: !!config?.oneClick,
-          requiresBridge: config?.transports?.includes('stdio') && !config?.transports?.includes('http'),
-        };
-      })
-      .sort((a, b) => a.name.localeCompare(b.name));
-  }, [registry, showClaudeTeams]);
-
-  return (
-    <table>
-      <thead>
-        <tr>
-          <th>MCP Host Application</th>
-          <th>Recommended OAuth Method</th>
-          <th>Configuration Method</th>
-        </tr>
-      </thead>
-      <tbody>
-        {compatibilityData.map((client, index) => (
-          <tr key={index}>
-            <td>{client.name}</td>
-            <td>{client.oauthMethod}</td>
-            <td>{client.configMethod}</td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  );
-};
 
 # <Icon name="mcp" iconSet="glean" className="inline" height="1.4rem" /> Model Context Protocol (MCP) Remote Server
 
 Connect your AI tools to Glean's enterprise knowledge base with zero setup required. The Remote MCP Server is built directly into Glean's platform, providing instant access to your organization's data through any MCP-compatible host application.
 
-<Admonition type="info" title="Public Beta">
+## Get Started
+
+<Card
+  title="Open MCP Configurator"
+  icon="mcp"
+  iconSet="glean"
+  href="https://app.glean.com/settings/install"
+>
+  The MCP Configurator provides tailored connection instructions, configuration snippets, and OAuth setup for each supported host application.
   <p>
-    The Remote MCP Server is available to all Glean customers during the
-    public beta period.
+    Learn more about using the [MCP Configurator](https://docs.glean.com/user-guide/mcp/usage).
   </p>
-  <p>
-    <strong>General Availability:</strong> Targeting mid-late October 2025
-  </p>
-</Admonition>
+</Card>
 
-## Install Now
-
-Get started in seconds with our quick installer. <a href="#mcp-configurator" onClick={(e) => {
-  e.preventDefault();
-  const element = document.getElementById('mcp-configurator');
-  if (element) {
-    element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    element.style.animation = 'none';
-    setTimeout(() => {
-      element.style.animation = '';
-    }, 10);
-    setTimeout(() => {
-      const firstSelect = element.querySelector('select');
-      if (firstSelect) {
-        firstSelect.focus();
-      }
-    }, 500);
-  }
-}} style={{ cursor: 'pointer', color: 'var(--ifm-color-primary)' }}>Click here to configure your setup</a> - select your host application and enter your Glean instance details below.
-
-<MCPConfigurator />
-
-<Admonition type="tip">
-  <p>
-    For ChatGPT Connectors and Claude for Teams/Enterprise, administrator
-    setup is required. The configurator will provide instructions when you
-    select these hosts.
-  </p>
-</Admonition>
-
-<details>
-  <summary>Host Compatibility</summary>
-
-  MCP host compatibility is evolving. The table below reflects validated support and our recommended OAuth method:
-
-  <CompatibilityTable />
-</details>
 
 ---
 
-## Available Servers
+## Documentation
 
-During the public beta, we're providing access to two specialized MCP servers:
+For comprehensive guides on setting up and using Glean's MCP servers:
 
-<Tabs>
-  <TabItem value="tools" label="Tools Server (Default)">
-    <p>
-      The Tools Server provides unified access to Glean's core
-      capabilities through a streamlined interface. This server is ideal
-      for general-purpose AI interactions with your enterprise data.
-    </p>
-
-    <p>
-      <strong>Endpoint:</strong>{' '}
-      <code>https://[instance]-be.glean.com/mcp/default</code>
-    </p>
-
-    <p>
-      <strong>Key Features:</strong>
-    </p>
-    <ul>
-      <li>Comprehensive search across all your connected data sources</li>
-      <li>Intelligent chat interactions with context awareness</li>
-      <li>Document retrieval and analysis</li>
-      <li>People directory search</li>
-    </ul>
-  </TabItem>
-
-  <TabItem value="chatgpt" label="ChatGPT Server">
-    <p>
-      The ChatGPT Server is optimized specifically for ChatGPT Connectors,
-      providing seamless integration with OpenAI's ChatGPT workspace.
-    </p>
-
-    <p>
-      <strong>Endpoint:</strong>{' '}
-      <code>https://[instance]-be.glean.com/mcp/chatgpt</code>
-    </p>
-
-    <p>
-      <strong>Key Features:</strong>
-    </p>
-    <ul>
-      <li>Conforms to OpenAI's MCP [Connector spec](https://platform.openai.com/docs/mcp)</li>
-      <li>Optimized response formatting for ChatGPT</li>
-      <li>Automatic citation handling</li>
-      <li>Token-efficient responses</li>
-    </ul>
-
-    <Admonition type="tip">
-      <p>
-        Use this endpoint specifically for ChatGPT integrations as it uses
-        tool naming conventions that ChatGPT expects (e.g., "fetch"
-        instead of "read_document").
-      </p>
-    </Admonition>
-  </TabItem>
-</Tabs>
-
-To configure Glean's MCP servers, follow [these setup instructions](https://docs.glean.com/administration/platform/mcp/connecting-to-glean-mcp-server).
-
-## Core Capabilities
-
-The remote MCP server exposes a curated set of Glean capabilities as MCP tools. Administrators can enable defaults and optionally add more.
-
-### Default Tools
-
-- **`search`** (Search) - Search across your entire knowledge base
-- **`chat`** (Chat) - Interactive conversations with Glean's AI
-- **`read_document`** (Read Document) - Retrieve specific documents by ID or URL
-
-### Additional Configurable Tools
-
-- **`code_search`** (Code Search) - Search your codebase and repositories
-- **`employee_search`** (Employee Search) - Find people and expertise in your organization
-- **`gmail_search`** (Gmail Search) - Search Gmail messages and threads
-- **`meeting_lookup`** (Meeting Lookup) - Find meeting recordings and notes
-- **`outlook_search`** (Outlook Search) - Search Outlook emails and calendar
-
----
-
-## Troubleshooting
-
-#### Client Authentication Failed
-
-When repeatedly connecting and disconnecting, some host applications may end up using stale client ids.  If you see the message
-
-> Client authentication failed (e.g., unknown client, no client authentication included, or unsupported authentication method). The requested OAuth 2.0 Client does not exist.
-
-while authenticating, you can clear your MCP credentials and re-authenticate.  Doing so is specific to the MCP host application.
-
-* **Visual Studio Code** - Run the command `Authentication: Remove Dynamic Authentication Providers`
-* **Cursor** - Run the command `Cursor: Clear All MCP Tokens`
-
-
+<CardGroup cols={2}>
+  <Card 
+    title="Administrator Guide" 
+    icon="Settings"
+    href="https://docs.glean.com/administration/platform/mcp/about"
+  >
+    Setup instructions, architecture overview, authentication methods, and managing MCP servers for your organization.
+  </Card>
+  
+  <Card 
+    title="User Guide" 
+    icon="Users"
+    href="https://docs.glean.com/user-guide/mcp/usage"
+  >
+    Installation steps, supported hosts, usage examples by role, and troubleshooting tips for end users.
+  </Card>
+</CardGroup>
 
 ## Local MCP Server
+
+<Admonition type="info" title="Local MCP Server">
+  The local MCP server is not in active development and is not recommended for production use.
+</Admonition>
 
 You can also use Glean's open-source stdio MCP server:
 
