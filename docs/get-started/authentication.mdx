@@ -28,13 +28,13 @@ All Glean API requests require specifying your organization's specific Glean ins
 
 ### Example
 
-If your Server instance shows: `https://acme-prod-be.glean.com/`  
+If your Server instance shows: `https://acme-prod-be.glean.com/`
 Your instance name is: **`acme-prod`**
 
 ### Usage in APIs
 
 Your instance name is used in:
-- **API Base URLs**: 
+- **API Base URLs**:
   - Client API: `https://{instance}-be.glean.com/rest/api/v1/`
   - Indexing API: `https://{instance}-be.glean.com/api/index/v1/`
 - **API Client/SDK Configuration**: Set as `GLEAN_INSTANCE` environment variable
@@ -48,23 +48,23 @@ Glean offers two distinct APIs with different authentication capabilities. Choos
 <CardGroup cols={2}>
   <Card title="Client API Authentication" icon="Code">
     **For end-user applications and integrations**
-        
+
     - Search, chat, collections, agents
     - User-facing functionality
     - OAuth (recommended) + Glean tokens
     - Base URL: `https://instance-be.glean.com/rest/api/v1/`
-    
+
     [Implementation Guide →](/api-info/client/authentication/overview)
   </Card>
-  
+
   <Card title="Indexing API Authentication" icon="Database">
     **For administrative operations and content management**
-        
+
     - Document indexing, datasource management
     - Administrative operations
     - Glean tokens only (no OAuth support)
     - Base URL: `https://instance-be.glean.com/api/index/v1/`
-    
+
     [Implementation Guide →](/api-info/indexing/authentication/overview)
   </Card>
 </CardGroup>
@@ -79,9 +79,9 @@ Glean offers two distinct APIs with different authentication capabilities. Choos
 
 **OAuth is the recommended method** for Client API integrations. It leverages your existing identity provider and provides seamless authentication without managing additional tokens.
 
-- Supported APIs: Client API only  
-- Providers: Google Workspace, Azure, Okta, OneLogin  
-- Benefits: No token management, leverages existing auth, full API access  
+- Supported APIs: Client API only
+- Providers: Google Workspace, Azure, Okta, OneLogin
+- Benefits: No token management, leverages existing auth, full API access
 
 ### Glean-Issued Tokens
 
@@ -89,9 +89,9 @@ Glean offers two distinct APIs with different authentication capabilities. Choos
 
 Glean-issued tokens are manually created through the admin console and offer granular control over permissions and access.
 
-- Supported APIs: Both Client API and Indexing API  
-- Types: User-scoped, Global (super admin only)  
-- Benefits: Granular scope control, works with both APIs  
+- Supported APIs: Both Client API and Indexing API
+- Types: User-scoped, Global (super admin only)
+- Benefits: Granular scope control, works with both APIs
 
 ---
 
@@ -101,10 +101,10 @@ Glean-issued tokens are manually created through the admin console and offer gra
   **For Client API integrations:**
   - **Choose OAuth** if you have existing identity provider infrastructure (Google, Azure, Okta, OneLogin)
   - **Choose Glean tokens** if you need granular scope control or don't have OAuth infrastructure
-  
+
   **For Indexing API operations:**
   - **Must use Glean tokens** (OAuth is not supported)
-  
+
   **For applications using both APIs:**
   - Use OAuth for Client API operations + separate Glean token for Indexing API operations
 </Card>
@@ -118,7 +118,7 @@ Understanding who can create what type of authentication tokens:
 | Role | Client API OAuth | Client API Tokens | Indexing API Tokens |
 |------|------------------|-------------------|---------------------|
 | **Super Admin** | Configure for all | Create any token | Create any token |
-| **Admin** | Configure for all | Create for any user | Cannot create |
+| **Admin** | Configure for all | Create for self only | Cannot create |
 | **API Token Creator** | Cannot configure | Create for self only | Cannot create |
 
 ---
@@ -149,4 +149,4 @@ Regardless of which authentication method you choose:
 1. **Determine your use case**: Client API, Indexing API, or both?
 2. **Choose authentication method**: OAuth (Client API) or Glean tokens
 3. **Follow the implementation guide**: Use the links above for detailed setup instructions
-4. **Test your integration**: Verify authentication works before building your application 
+4. **Test your integration**: Verify authentication works before building your application
