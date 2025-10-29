@@ -1041,23 +1041,6 @@ components:
         provisioningId:
           type: string
           description: identifier for greenlist provisioning, aka sciokey
-    PerAgentInsight:
-      properties:
-        agentId:
-          type: string
-          description: Agent ID
-        agentName:
-          type: string
-          description: Agent name
-        icon:
-          $ref: '#/components/schemas/IconConfig'
-          description: Agent icon configuration
-        userCount:
-          type: integer
-          description: Total number of users for this agent over the specified time period.
-        runCount:
-          type: integer
-          description: Total number of runs for this agent over the specified time period.
     AgentUsersInsight:
       properties:
         person:
@@ -1119,6 +1102,29 @@ components:
         numDaysActive:
           type: integer
           description: Total number of days this user was active over the specified time period.
+    PerAgentInsight:
+      properties:
+        agentId:
+          type: string
+          description: Agent ID
+        agentName:
+          type: string
+          description: Agent name
+        icon:
+          $ref: '#/components/schemas/IconConfig'
+          description: Agent icon configuration
+        userCount:
+          type: integer
+          description: Total number of users for this agent over the specified time period.
+        runCount:
+          type: integer
+          description: Total number of runs for this agent over the specified time period.
+        upvoteCount:
+          type: integer
+          description: Total number of upvotes for this agent over the specified time period.
+        downvoteCount:
+          type: integer
+          description: Total number of downvotes for this agent over the specified time period.
     Code:
       example: &ref_104
         repoName: scio
@@ -2287,6 +2293,10 @@ components:
               items:
                 $ref: '#/components/schemas/AgentUsersInsight'
             dailyAgentRunsTimeseries:
+              $ref: '#/components/schemas/LabeledCountInfo'
+            upvotesTimeseries:
+              $ref: '#/components/schemas/LabeledCountInfo'
+            downvotesTimeseries:
               $ref: '#/components/schemas/LabeledCountInfo'
     ShortcutMutableProperties:
       properties:
