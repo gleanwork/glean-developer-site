@@ -33,9 +33,7 @@ Glean's Java API client provides enterprise-ready integration for Java applicati
     ```
   </TabItem>
   <TabItem value="gradle" label="Gradle">
-    ```groovy
-    implementation 'com.glean.api-client:glean-api-client:0.x.x'
-    ```
+    ```groovy implementation 'com.glean.api-client:glean-api-client:0.x.x' ```
   </TabItem>
 </Tabs>
 
@@ -79,14 +77,14 @@ public class GleanExample {
 ```java
 public class ChatService {
   private final Glean client;
-  
+
   public ChatService(String apiToken, String instance) {
     this.client = Glean.builder()
         .apiToken(apiToken)
         .instance(instance)
         .build();
   }
-  
+
   public String sendMessage(String message) {
     var response = client.client().chat().create()
         .chatRequest(ChatRequest.builder()
@@ -99,7 +97,7 @@ public class ChatService {
                     .build()))
             .build())
         .call();
-        
+
     return response.chatResponse()
         .map(ChatResponse::text)
         .orElse("No response");
@@ -112,14 +110,14 @@ public class ChatService {
 ```java
 public class SearchService {
   private final Glean client;
-  
+
   public SearchService(String apiToken, String instance) {
     this.client = Glean.builder()
         .apiToken(apiToken)
         .instance(instance)
         .build();
   }
-  
+
   public List<SearchResult> search(String query) {
     var response = client.client().search().search()
         .searchRequest(SearchRequest.builder()
@@ -127,7 +125,7 @@ public class SearchService {
             .pageSize(10)
             .build())
         .call();
-        
+
     return response.searchResponse()
         .map(SearchResponse::results)
         .orElse(List.of());
@@ -145,11 +143,11 @@ public class SearchService {
 public class GleanConfig {
   private String apiToken;
   private String instance;
-  
+
   // Getters and setters
   public String getApiToken() { return apiToken; }
   public void setApiToken(String apiToken) { this.apiToken = apiToken; }
-  
+
   public String getInstance() { return instance; }
   public void setInstance(String instance) { this.instance = instance; }
 }
@@ -157,7 +155,7 @@ public class GleanConfig {
 @Configuration
 @EnableConfigurationProperties(GleanConfig.class)
 public class GleanAutoConfiguration {
-  
+
   @Bean
   public Glean gleanClient(GleanConfig config) {
     return Glean.builder()
@@ -174,18 +172,18 @@ public class GleanAutoConfiguration {
 @RestController
 @RequestMapping("/api")
 public class GleanController {
-  
+
   private final Glean gleanClient;
-  
+
   public GleanController(Glean gleanClient) {
     this.gleanClient = gleanClient;
   }
-  
+
   @PostMapping("/chat")
   public ResponseEntity<String> chat(@RequestBody Map<String, String> request) {
     try {
       String message = request.get("message");
-      
+
       var response = gleanClient.client().chat().create()
           .chatRequest(ChatRequest.builder()
               .messages(List.of(
@@ -197,11 +195,11 @@ public class GleanController {
                       .build()))
               .build())
           .call();
-          
+
       String responseText = response.chatResponse()
           .map(ChatResponse::text)
           .orElse("No response");
-          
+
       return ResponseEntity.ok(responseText);
     } catch (Exception e) {
       return ResponseEntity.status(500).body("Error: " + e.getMessage());
@@ -246,7 +244,7 @@ public String safeChat(Glean client, String message) {
                     .build()))
             .build())
         .call();
-        
+
     return response.chatResponse()
         .map(ChatResponse::text)
         .orElse("No response");
@@ -264,18 +262,18 @@ public String safeChat(Glean client, String message) {
 ```java
 @ExtendWith(MockitoExtension.class)
 class ChatServiceTest {
-  
+
   @Mock
   private Glean gleanClient;
-  
+
   @InjectMocks
   private ChatService chatService;
-  
+
   @Test
   void shouldSendMessageSuccessfully() {
     String message = "Test message";
     String expectedResponse = "Test response";
-    
+
     // Mock setup and test implementation
     assertNotNull(expectedResponse);
   }
@@ -285,35 +283,31 @@ class ChatServiceTest {
 ## Additional Resources
 
 <CardGroup cols={2}>
-  <Card 
+  <Card
     title="GitHub Repository"
     icon="GitHub"
     href="https://github.com/gleanwork/api-client-java"
   >
     Source code and examples
   </Card>
-  
-  <Card 
+
+  <Card
     title="API Reference"
     icon="Book"
     href="/api/client-api/activity/activity"
   >
     Complete endpoint documentation
   </Card>
-  
-  <Card 
+
+  <Card
     title="Authentication Guide"
     icon="Shield"
     href="/api-info/client/authentication/overview"
   >
     Token creation and management
   </Card>
-  
-  <Card 
-    title="Maven Central"
-    icon="Code"
-    href="https://central.sonatype.com/"
-  >
+
+  <Card title="Maven Central" icon="Code" href="https://central.sonatype.com/">
     Maven repository
   </Card>
-</CardGroup> 
+</CardGroup>

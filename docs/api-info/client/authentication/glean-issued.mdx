@@ -15,14 +15,14 @@ import TabItem from '@theme/TabItem';
 Glean-issued tokens provide an alternative to OAuth when you need granular scope control or don't have OAuth infrastructure. They're manually created through the admin console and offer fine-grained permissions.
 
 <Card title="Glean Token Benefits" icon="Key">
-  - **Granular scope control** - Limit access to specific API endpoints
-  - **User-scoped or global** - Choose appropriate permission level
-  - **No external dependencies** - Works without identity provider setup
-  - **Flexible expiration** - Set custom expiry dates
+  - **Granular scope control** - Limit access to specific API endpoints -
+  **User-scoped or global** - Choose appropriate permission level - **No
+  external dependencies** - Works without identity provider setup - **Flexible
+  expiration** - Set custom expiry dates
 </Card>
 
 :::warning
-  Glean tokens work with **both Client API and Indexing API**, but this guide focuses on Client API usage. For Indexing API, see the [Indexing API Authentication](/api-info/indexing/authentication/overview) guide.
+Glean tokens work with **both Client API and Indexing API**, but this guide focuses on Client API usage. For Indexing API, see the [Indexing API Authentication](/api-info/indexing/authentication/overview) guide.
 :::
 
 ---
@@ -51,10 +51,10 @@ X-Glean-ActAs: user@company.com
 
 ### Header Details
 
-| Header | Required For | Description | Example Value |
-|--------|--------------|-------------|---------------|
-| `Authorization` | All tokens | Bearer token authentication | `Bearer glean_XYZ123...` |
-| `X-Glean-ActAs` | Global tokens only | Email of user to impersonate | `user@company.com` |
+| Header          | Required For       | Description                  | Example Value            |
+| --------------- | ------------------ | ---------------------------- | ------------------------ |
+| `Authorization` | All tokens         | Bearer token authentication  | `Bearer glean_XYZ123...` |
+| `X-Glean-ActAs` | Global tokens only | Email of user to impersonate | `user@company.com`       |
 
 ---
 
@@ -98,7 +98,7 @@ curl -X POST https://instance-be.glean.com/rest/api/v1/search \
 ```
 
 :::warning
-  The `X-Glean-ActAs` header is **required** for global tokens. Requests without this header will fail.
+The `X-Glean-ActAs` header is **required** for global tokens. Requests without this header will fail.
 :::
 
 </TabItem>
@@ -115,15 +115,12 @@ Follow these steps to create Glean-issued tokens:
     Go to [Client API Token Settings](https://app.glean.com/admin/platform/tokenManagement?tab=client) (admin access required)
   </Step>
 
-  <Step title="Add New Token">
-    Click **Add New Token** and configure:
-    
-    - **Description**: Helpful name for tracking
-    - **Permissions**: USER (recommended) or GLOBAL
-    - **Scopes**: Select required API access scopes
-    - **Expires**: Optional expiration date
-    - **User Email**: Required for USER tokens
-  </Step>
+<Step title="Add New Token">
+  Click **Add New Token** and configure: - **Description**: Helpful name for
+  tracking - **Permissions**: USER (recommended) or GLOBAL - **Scopes**: Select
+  required API access scopes - **Expires**: Optional expiration date - **User
+  Email**: Required for USER tokens
+</Step>
 
   <Step title="Save Token Securely">
     :::warning
@@ -141,30 +138,30 @@ Scopes control which Client API endpoints your token can access:
 <details>
 <summary>Complete Scopes Reference</summary>
 
-| Scope | Description | Example Endpoints |
-|-------|-------------|-------------------|
-| `ACTIVITY` | User activity collection | Activity reporting APIs |
-| `AGENTS` | Glean Agents | Agent creation, execution |
-| `ANNOUNCEMENTS` | Company announcements | Create, update announcements |
-| `ANSWERS` | Glean Answers | Manage Q&A content |
-| `CHAT` | GleanChat functionality | Chat API, conversations |
-| `COLLECTIONS` | Content collections | Create, manage collections |
-| `DOCPERMISSIONS` | Document permissions | Access control management |
-| `DOCUMENTS` | Document operations | Document retrieval, metadata |
-| `ENTITIES` | Entity data | People, organizational data |
-| `FEEDBACK` | User feedback | Feedback collection |
-| `INSIGHTS` | Analytics insights | Usage analytics, reports |
-| `PEOPLE` | People directory | Employee information |
-| `PINS` | Pinned content | Content pinning features |
-| `SEARCH` | Search functionality | Search queries, autocomplete |
-| `SHORTCUTS` | GoLinks/shortcuts | Shortcut management |
-| `SUMMARIZE` | AI summarization | Document summarization |
-| `VERIFICATION` | Content verification | Document verification |
+| Scope            | Description              | Example Endpoints            |
+| ---------------- | ------------------------ | ---------------------------- |
+| `ACTIVITY`       | User activity collection | Activity reporting APIs      |
+| `AGENTS`         | Glean Agents             | Agent creation, execution    |
+| `ANNOUNCEMENTS`  | Company announcements    | Create, update announcements |
+| `ANSWERS`        | Glean Answers            | Manage Q&A content           |
+| `CHAT`           | GleanChat functionality  | Chat API, conversations      |
+| `COLLECTIONS`    | Content collections      | Create, manage collections   |
+| `DOCPERMISSIONS` | Document permissions     | Access control management    |
+| `DOCUMENTS`      | Document operations      | Document retrieval, metadata |
+| `ENTITIES`       | Entity data              | People, organizational data  |
+| `FEEDBACK`       | User feedback            | Feedback collection          |
+| `INSIGHTS`       | Analytics insights       | Usage analytics, reports     |
+| `PEOPLE`         | People directory         | Employee information         |
+| `PINS`           | Pinned content           | Content pinning features     |
+| `SEARCH`         | Search functionality     | Search queries, autocomplete |
+| `SHORTCUTS`      | GoLinks/shortcuts        | Shortcut management          |
+| `SUMMARIZE`      | AI summarization         | Document summarization       |
+| `VERIFICATION`   | Content verification     | Document verification        |
 
 </details>
 
 :::warning
-  Token permissions and scopes **cannot be changed** after creation. Plan carefully when creating tokens.
+Token permissions and scopes **cannot be changed** after creation. Plan carefully when creating tokens.
 :::
 
 ---
@@ -191,7 +188,7 @@ curl -X POST https://instance-be.glean.com/rest/api/v1/search \
   -H 'X-Glean-ActAs: user@company.com' \
   -H 'Content-Type: application/json' \
   -d '{
-    "query": "quarterly reports", 
+    "query": "quarterly reports",
     "pageSize": 10
   }'
 ```
@@ -256,12 +253,12 @@ Successful authentication returns a 200 status with search results:
 
 ### Common Token Errors
 
-| Error | Cause | Solution |
-|-------|-------|----------|
-| `401 Unauthorized` | Invalid or expired token | Verify token is correct and not expired |
-| `403 Forbidden` | Insufficient scopes | Add required scopes to token |
-| `400 Bad Request: Required header missing: X-Glean-ActAs` | Missing header for global token | Add `X-Glean-ActAs` header |
-| `401 Invalid identity` | Invalid email in `X-Glean-ActAs` | Verify email is valid and user exists |
+| Error                                                     | Cause                            | Solution                                |
+| --------------------------------------------------------- | -------------------------------- | --------------------------------------- |
+| `401 Unauthorized`                                        | Invalid or expired token         | Verify token is correct and not expired |
+| `403 Forbidden`                                           | Insufficient scopes              | Add required scopes to token            |
+| `400 Bad Request: Required header missing: X-Glean-ActAs` | Missing header for global token  | Add `X-Glean-ActAs` header              |
+| `401 Invalid identity`                                    | Invalid email in `X-Glean-ActAs` | Verify email is valid and user exists   |
 
 ### Debugging Steps
 
@@ -269,17 +266,16 @@ Successful authentication returns a 200 status with search results:
   <Step title="Verify token validity">
     Check that your token hasn't expired and is correctly formatted
   </Step>
-  
+
   <Step title="Confirm headers">
-    Ensure you have the correct headers for your token type:
-    - User token: `Authorization` only
-    - Global token: `Authorization` + `X-Glean-ActAs`
+    Ensure you have the correct headers for your token type: - User token:
+    `Authorization` only - Global token: `Authorization` + `X-Glean-ActAs`
   </Step>
-  
+
   <Step title="Check token scopes">
     Verify your token has the required scopes for the endpoint you're accessing
   </Step>
-  
+
   <Step title="Test with simple endpoint">
     Start with a basic search request before testing complex operations
   </Step>
@@ -319,13 +315,13 @@ Choose the right scopes for your application:
 
 ### Common Scope Combinations
 
-| Use Case | Recommended Scopes | Notes |
-|----------|-------------------|-------|
-| **Search Application** | `SEARCH`, `DOCUMENTS` | Basic search functionality |
-| **Chat Integration** | `CHAT`, `SEARCH` | Chat with search capabilities |
-| **Analytics Dashboard** | `INSIGHTS`, `ACTIVITY` | Usage analytics and reporting |
-| **Content Management** | `COLLECTIONS`, `PINS`, `SHORTCUTS` | Content organization features |
-| **Admin Tool** | Multiple scopes as needed | Consider global token for multi-user access |
+| Use Case                | Recommended Scopes                 | Notes                                       |
+| ----------------------- | ---------------------------------- | ------------------------------------------- |
+| **Search Application**  | `SEARCH`, `DOCUMENTS`              | Basic search functionality                  |
+| **Chat Integration**    | `CHAT`, `SEARCH`                   | Chat with search capabilities               |
+| **Analytics Dashboard** | `INSIGHTS`, `ACTIVITY`             | Usage analytics and reporting               |
+| **Content Management**  | `COLLECTIONS`, `PINS`, `SHORTCUTS` | Content organization features               |
+| **Admin Tool**          | Multiple scopes as needed          | Consider global token for multi-user access |
 
 ### Scope Selection Tips
 
@@ -339,10 +335,18 @@ Choose the right scopes for your application:
 ## Next Steps
 
 <CardGroup cols={2}>
-  <Card title="Client API Reference" href="/api/client-api/activity/overview" icon="Book">
+  <Card
+    title="Client API Reference"
+    href="/api/client-api/activity/overview"
+    icon="Book"
+  >
     Explore available Client API endpoints and their scope requirements
   </Card>
-  <Card title="Token Management" href="https://app.glean.com/admin/platform/tokenManagement?tab=client" icon="Settings">
+  <Card
+    title="Token Management"
+    href="https://app.glean.com/admin/platform/tokenManagement?tab=client"
+    icon="Settings"
+  >
     Manage your Glean tokens in the admin console
   </Card>
 </CardGroup>

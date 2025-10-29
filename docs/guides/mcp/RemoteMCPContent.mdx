@@ -5,7 +5,10 @@ import { Icon } from '@site/src/components/Icons';
 import MCPConfigurator from '@site/src/components/MCPConfigurator';
 import Card from '@site/src/components/Card';
 import Admonition from '@theme/Admonition';
-import { CLIENT, MCPConfigRegistry } from '@gleanwork/mcp-config-schema/browser';
+import {
+  CLIENT,
+  MCPConfigRegistry,
+} from '@gleanwork/mcp-config-schema/browser';
 import { clientNeedsMcpRemote } from '@gleanwork/mcp-config-schema';
 import { FeatureFlagsContext } from '@site/src/theme/Root';
 
@@ -14,8 +17,8 @@ export const CompatibilityTable = () => {
   const { isEnabled } = useContext(FeatureFlagsContext);
   const showClaudeTeams = isEnabled('show-claude-teams');
 
-  const compatibilityData = useMemo(() => {
-    if (!registry) return [];
+const compatibilityData = useMemo(() => {
+if (!registry) return [];
 
     const allClients = registry.getAllConfigs();
     return allClients
@@ -49,28 +52,29 @@ export const CompatibilityTable = () => {
         };
       })
       .sort((a, b) => a.name.localeCompare(b.name));
-  }, [registry, showClaudeTeams]);
 
-  return (
-    <table>
-      <thead>
-        <tr>
-          <th>MCP Host Application</th>
-          <th>Recommended OAuth Method</th>
-          <th>Configuration Method</th>
-        </tr>
-      </thead>
-      <tbody>
-        {compatibilityData.map((client, index) => (
-          <tr key={index}>
-            <td>{client.name}</td>
-            <td>{client.oauthMethod}</td>
-            <td>{client.configMethod}</td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  );
+}, [registry, showClaudeTeams]);
+
+return (
+<table>
+<thead>
+<tr>
+<th>MCP Host Application</th>
+<th>Recommended OAuth Method</th>
+<th>Configuration Method</th>
+</tr>
+</thead>
+<tbody>
+{compatibilityData.map((client, index) => (
+<tr key={index}>
+<td>{client.name}</td>
+<td>{client.oauthMethod}</td>
+<td>{client.configMethod}</td>
+</tr>
+))}
+</tbody>
+</table>
+);
 };
 
 # <Icon name="mcp" iconSet="glean" className="inline" height="1.4rem" /> Model Context Protocol (MCP) Remote Server
@@ -79,8 +83,8 @@ Connect your AI tools to Glean's enterprise knowledge base with zero setup requi
 
 <Admonition type="info" title="Public Beta">
   <p>
-    The Remote MCP Server is available to all Glean customers during the
-    public beta period.
+    The Remote MCP Server is available to all Glean customers during the public
+    beta period.
   </p>
   <p>
     <strong>General Availability:</strong> Targeting mid-late October 2025
@@ -90,37 +94,37 @@ Connect your AI tools to Glean's enterprise knowledge base with zero setup requi
 ## Install Now
 
 Get started in seconds with our quick installer. <a href="#mcp-configurator" onClick={(e) => {
-  e.preventDefault();
-  const element = document.getElementById('mcp-configurator');
-  if (element) {
-    element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    element.style.animation = 'none';
-    setTimeout(() => {
-      element.style.animation = '';
-    }, 10);
-    setTimeout(() => {
-      const firstSelect = element.querySelector('select');
-      if (firstSelect) {
-        firstSelect.focus();
-      }
-    }, 500);
-  }
+e.preventDefault();
+const element = document.getElementById('mcp-configurator');
+if (element) {
+element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+element.style.animation = 'none';
+setTimeout(() => {
+element.style.animation = '';
+}, 10);
+setTimeout(() => {
+const firstSelect = element.querySelector('select');
+if (firstSelect) {
+firstSelect.focus();
+}
+}, 500);
+}
 }} style={{ cursor: 'pointer', color: 'var(--ifm-color-primary)' }}>Click here to configure your setup</a> - select your host application and enter your Glean instance details below.
 
 <MCPConfigurator />
 
 <Admonition type="tip">
   <p>
-    For ChatGPT Connectors and Claude for Teams/Enterprise, administrator
-    setup is required. The configurator will provide instructions when you
-    select these hosts.
+    For ChatGPT Connectors and Claude for Teams/Enterprise, administrator setup
+    is required. The configurator will provide instructions when you select
+    these hosts.
   </p>
 </Admonition>
 
 <details>
   <summary>Host Compatibility</summary>
 
-  MCP host compatibility is evolving. The table below reflects validated support and our recommended OAuth method:
+MCP host compatibility is evolving. The table below reflects validated support and our recommended OAuth method:
 
   <CompatibilityTable />
 </details>
@@ -153,6 +157,7 @@ During the public beta, we're providing access to two specialized MCP servers:
       <li>Document retrieval and analysis</li>
       <li>People directory search</li>
     </ul>
+
   </TabItem>
 
   <TabItem value="chatgpt" label="ChatGPT Server">
@@ -183,6 +188,7 @@ During the public beta, we're providing access to two specialized MCP servers:
         instead of "read_document").
       </p>
     </Admonition>
+
   </TabItem>
 </Tabs>
 
@@ -212,16 +218,14 @@ The remote MCP server exposes a curated set of Glean capabilities as MCP tools. 
 
 #### Client Authentication Failed
 
-When repeatedly connecting and disconnecting, some host applications may end up using stale client ids.  If you see the message
+When repeatedly connecting and disconnecting, some host applications may end up using stale client ids. If you see the message
 
 > Client authentication failed (e.g., unknown client, no client authentication included, or unsupported authentication method). The requested OAuth 2.0 Client does not exist.
 
-while authenticating, you can clear your MCP credentials and re-authenticate.  Doing so is specific to the MCP host application.
+while authenticating, you can clear your MCP credentials and re-authenticate. Doing so is specific to the MCP host application.
 
-* **Visual Studio Code** - Run the command `Authentication: Remove Dynamic Authentication Providers`
-* **Cursor** - Run the command `Cursor: Clear All MCP Tokens`
-
-
+- **Visual Studio Code** - Run the command `Authentication: Remove Dynamic Authentication Providers`
+- **Cursor** - Run the command `Cursor: Clear All MCP Tokens`
 
 ## Local MCP Server
 
@@ -238,6 +242,7 @@ You can also use Glean's open-source stdio MCP server:
 </Card>
 
 The local server is ideal for:
+
 - Development and testing
 - Air-gapped environments
 - Custom tool development

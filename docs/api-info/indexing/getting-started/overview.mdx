@@ -18,13 +18,15 @@ The Glean Indexing API enables organizations to make their custom content search
     Index documents with full-text content, metadata, and permissions to make them searchable through Glean
   </Card>
 
-  <Card title="Custom Datasources" icon="Database">
-    Create and manage custom datasources to organize and categorize your indexed content
-  </Card>
+<Card title="Custom Datasources" icon="Database">
+  Create and manage custom datasources to organize and categorize your indexed
+  content
+</Card>
 
-  <Card title="Structured Entities" icon="Package">
-    Index structured key-value content for applications requiring schema-based data representation
-  </Card>
+<Card title="Structured Entities" icon="Package">
+  Index structured key-value content for applications requiring schema-based
+  data representation
+</Card>
 
   <Card title="Permission Management" icon="Shield">
     Enforce fine-grained access controls ensuring users only see content they're authorized to access
@@ -34,7 +36,7 @@ The Glean Indexing API enables organizations to make their custom content search
 ## Common Use Cases
 
 - **Internal Tool Integration**: Make content from proprietary or on-premises tools searchable in Glean
-- **Legacy System Modernization**: Bring content from older systems into modern search and AI workflows  
+- **Legacy System Modernization**: Bring content from older systems into modern search and AI workflows
 - **Custom Application Data**: Index structured data from internal applications and databases
 - **Document Repositories**: Make file servers, wikis, and document management systems searchable
 - **Organizational Data**: Push people information, team structures, and organizational knowledge into Glean
@@ -48,13 +50,15 @@ The Indexing API follows a straightforward workflow:
   Set up a custom datasource to hold your content. This defines how your content appears in search results and provides organizational structure.
   </Step>
 
-  <Step title="Index Content">
-  Push documents, structured data, and metadata to your datasource using the indexing endpoints. Content can be indexed individually or in bulk.
-  </Step>
+<Step title="Index Content">
+  Push documents, structured data, and metadata to your datasource using the
+  indexing endpoints. Content can be indexed individually or in bulk.
+</Step>
 
-  <Step title="Manage Permissions">
-  Configure access controls to ensure users only see content they're authorized to access, respecting your organization's security policies.
-  </Step>
+<Step title="Manage Permissions">
+  Configure access controls to ensure users only see content they're authorized
+  to access, respecting your organization's security policies.
+</Step>
 
   <Step title="Enable Discovery">
   Activate your datasource in Glean's admin console to make the indexed content discoverable through search and AI features.
@@ -78,42 +82,42 @@ Here's how to create a datasource and index your first document:
 <Tabs>
   <TabItem value="create-datasource" label="Create Datasource">
 
-  ```bash
-  curl -X POST https://customer-be.glean.com/api/index/v1/adddatasource \
-    -H 'Authorization: Bearer <your_indexing_token>' \
-    -d '{
-      "name": "internal-docs",
-      "displayName": "Internal Documentation",
-      "datasourceCategory": "PUBLISHED_CONTENT",
-      "urlRegex": "^https://internal.company.com/docs.*",
-      "isUserReferencedByEmail": true
-    }'
-  ```
+```bash
+curl -X POST https://customer-be.glean.com/api/index/v1/adddatasource \
+  -H 'Authorization: Bearer <your_indexing_token>' \
+  -d '{
+    "name": "internal-docs",
+    "displayName": "Internal Documentation",
+    "datasourceCategory": "PUBLISHED_CONTENT",
+    "urlRegex": "^https://internal.company.com/docs.*",
+    "isUserReferencedByEmail": true
+  }'
+```
 
   </TabItem>
   <TabItem value="index-document" label="Index Document">
 
-  ```bash
-  curl -X POST https://customer-be.glean.com/api/index/v1/indexdocument \
-    -H 'Authorization: Bearer <your_indexing_token>' \
-    -d '{
-      "document": {
-        "datasource": "internal-docs",
-        "objectType": "Document",
-        "id": "getting-started-guide",
-        "title": "Getting Started Guide",
-        "body": {
-          "mimeType": "text/plain",
-          "textContent": "This guide helps new employees get up to speed quickly..."
-        },
-        "permissions": {
-          "allowAnonymousAccess": false,
-          "allowedUsers": ["employee@company.com"]
-        },
-        "viewURL": "https://internal.company.com/docs/getting-started"
-      }
-    }'
-  ```
+```bash
+curl -X POST https://customer-be.glean.com/api/index/v1/indexdocument \
+  -H 'Authorization: Bearer <your_indexing_token>' \
+  -d '{
+    "document": {
+      "datasource": "internal-docs",
+      "objectType": "Document",
+      "id": "getting-started-guide",
+      "title": "Getting Started Guide",
+      "body": {
+        "mimeType": "text/plain",
+        "textContent": "This guide helps new employees get up to speed quickly..."
+      },
+      "permissions": {
+        "allowAnonymousAccess": false,
+        "allowedUsers": ["employee@company.com"]
+      },
+      "viewURL": "https://internal.company.com/docs/getting-started"
+    }
+  }'
+```
 
   </TabItem>
 </Tabs>
@@ -123,13 +127,13 @@ Here's how to create a datasource and index your first document:
 <ApiSupport
   clientApi={false}
   indexingApi={true}
-  authMethods={["Glean Tokens"]}
+  authMethods={['Glean Tokens']}
 />
 
 The Indexing API uses Glean-issued tokens for authentication. Only users with appropriate permissions can create and manage indexing tokens:
 
 - **Super Admins**: Can create all types of tokens
-- **Admins**: Can create user-scoped tokens  
+- **Admins**: Can create user-scoped tokens
 - **API Token Creators**: Can create user-scoped tokens
 
 Learn more in our [Authentication Guide](../authentication/overview).
@@ -141,13 +145,17 @@ Learn more in our [Authentication Guide](../authentication/overview).
     Learn how to create and configure a custom datasource for your content
   </Card>
 
-  <Card title="Index Your First Document" icon="FileText" href="index-documents">
-    Follow our step-by-step guide to index content and make it searchable
-  </Card>
+<Card title="Index Your First Document" icon="FileText" href="index-documents">
+  Follow our step-by-step guide to index content and make it searchable
+</Card>
 
-  <Card title="Manage Authentication" icon="Shield" href="../authentication/overview">
-    Set up indexing API tokens with proper permissions and security
-  </Card>
+<Card
+  title="Manage Authentication"
+  icon="Shield"
+  href="../authentication/overview"
+>
+  Set up indexing API tokens with proper permissions and security
+</Card>
 
   <Card title="API Reference" icon="Book" href="../../../api/indexing-api/documents-overview">
     Browse complete API documentation with all available endpoints
@@ -160,4 +168,4 @@ Learn more in our [Authentication Guide](../authentication/overview).
 - **Rate Limits**: Review our [rate limiting policies](../../../get-started/rate-limits) for bulk operations
 - **Data Freshness**: Content typically appears in search within a few minutes of indexing
 - **Backwards Compatibility**: Glean provides advance notice and deprecation periods for any breaking changes
-- **Testing**: Use test groups to validate content before making it visible to all users 
+- **Testing**: Use test groups to validate content before making it visible to all users

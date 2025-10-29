@@ -70,7 +70,7 @@ func main() {
 ```go
 func chatExample(client *glean.Client) error {
   ctx := context.Background()
-  
+
   response, err := client.Client.Chat.Create(ctx, &glean.ChatRequest{
     Messages: []glean.ChatMessage{{
       Fragments: []glean.ChatMessageFragment{{
@@ -78,11 +78,11 @@ func chatExample(client *glean.Client) error {
       }},
     }},
   })
-  
+
   if err != nil {
     return err
   }
-  
+
   fmt.Println(response.Text)
   return nil
 }
@@ -93,21 +93,21 @@ func chatExample(client *glean.Client) error {
 ```go
 func searchExample(client *glean.Client) error {
   ctx := context.Background()
-  
+
   results, err := client.Client.Search.Search(ctx, &glean.SearchRequest{
     Query: "quarterly business review",
     PageSize: glean.Int(10),
   })
-  
+
   if err != nil {
     return err
   }
-  
+
   for _, result := range results.Results {
     fmt.Printf("Title: %s\n", result.Title)
     fmt.Printf("URL: %s\n", result.URL)
   }
-  
+
   return nil
 }
 ```
@@ -131,14 +131,14 @@ type ChatRequest struct {
 
 func setupRoutes(client *glean.Client) *gin.Engine {
   r := gin.Default()
-  
+
   r.POST("/chat", func(c *gin.Context) {
     var req ChatRequest
     if err := c.ShouldBindJSON(&req); err != nil {
       c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
       return
     }
-    
+
     response, err := client.Client.Chat.Create(c.Request.Context(), &glean.ChatRequest{
       Messages: []glean.ChatMessage{{
         Fragments: []glean.ChatMessageFragment{{
@@ -146,15 +146,15 @@ func setupRoutes(client *glean.Client) *gin.Engine {
         }},
       }},
     })
-    
+
     if err != nil {
       c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
       return
     }
-    
+
     c.JSON(http.StatusOK, gin.H{"response": response.Text})
   })
-  
+
   return r
 }
 ```
@@ -174,7 +174,7 @@ func chatHandler(client *glean.Client) echo.HandlerFunc {
     if err := c.Bind(&req); err != nil {
       return echo.NewHTTPError(http.StatusBadRequest, err.Error())
     }
-    
+
     response, err := client.Client.Chat.Create(c.Request().Context(), &glean.ChatRequest{
       Messages: []glean.ChatMessage{{
         Fragments: []glean.ChatMessageFragment{{
@@ -182,11 +182,11 @@ func chatHandler(client *glean.Client) echo.HandlerFunc {
         }},
       }},
     })
-    
+
     if err != nil {
       return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
     }
-    
+
     return c.JSON(http.StatusOK, map[string]string{
       "response": response.Text,
     })
@@ -203,36 +203,36 @@ func batchSearch(client *glean.Client, queries []string) ([]glean.SearchResponse
   ctx := context.Background()
   results := make([]glean.SearchResponse, len(queries))
   errors := make([]error, len(queries))
-  
+
   var wg sync.WaitGroup
-  
+
   for i, query := range queries {
     wg.Add(1)
     go func(index int, q string) {
       defer wg.Done()
-      
+
       result, err := client.Client.Search.Search(ctx, &glean.SearchRequest{
         Query: q,
       })
-      
+
       if err != nil {
         errors[index] = err
         return
       }
-      
+
       results[index] = *result
     }(i, query)
   }
-  
+
   wg.Wait()
-  
+
   // Check for errors
   for _, err := range errors {
     if err != nil {
       return nil, err
     }
   }
-  
+
   return results, nil
 }
 ```
@@ -271,7 +271,7 @@ response, err := client.Client.Chat.Create(ctx, &glean.ChatRequest{
 func safeChat(client *glean.Client, message string) (string, error) {
   ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
   defer cancel()
-  
+
   response, err := client.Client.Chat.Create(ctx, &glean.ChatRequest{
     Messages: []glean.ChatMessage{{
       Fragments: []glean.ChatMessageFragment{{
@@ -279,11 +279,11 @@ func safeChat(client *glean.Client, message string) (string, error) {
       }},
     }},
   })
-  
+
   if err != nil {
     return "", fmt.Errorf("chat error: %w", err)
   }
-  
+
   return response.Text, nil
 }
 ```
@@ -301,13 +301,13 @@ import (
 func TestChatService(t *testing.T) {
   // Mock implementation
   mockClient := &MockGleanClient{}
-  
+
   expectedResponse := &glean.ChatResponse{
     Text: "Test response",
   }
-  
+
   mockClient.On("Create", mock.Anything, mock.Anything).Return(expectedResponse, nil)
-  
+
   // Test your service here
   assert.NotNil(t, expectedResponse)
 }
@@ -316,35 +316,35 @@ func TestChatService(t *testing.T) {
 ## Additional Resources
 
 <CardGroup cols={2}>
-  <Card 
+  <Card
     title="GitHub Repository"
     icon="GitHub"
     href="https://github.com/gleanwork/api-client-go"
   >
     Source code and examples
   </Card>
-  
-  <Card 
+
+  <Card
     title="API Reference"
     icon="Book"
     href="/api/client-api/activity/activity"
   >
     Complete endpoint documentation
   </Card>
-  
-  <Card 
+
+  <Card
     title="Authentication Guide"
     icon="Shield"
     href="/api-info/client/authentication/overview"
   >
     Token creation and management
   </Card>
-  
-  <Card 
+
+  <Card
     title="Go Documentation"
     icon="Code"
     href="https://pkg.go.dev/github.com/gleanwork/api-client-go"
   >
     Go package documentation
   </Card>
-</CardGroup> 
+</CardGroup>

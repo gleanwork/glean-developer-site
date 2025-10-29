@@ -21,31 +21,31 @@ Glean's Search API provides powerful enterprise search capabilities that you can
 ## Getting Started
 
 <CardGroup cols={2}>
-  <Card 
+  <Card
     title="Search API Overview"
     icon="Search"
     href="/api/client-api/search/overview"
   >
     Learn about the Search API endpoints and capabilities
   </Card>
-  
-  <Card 
+
+  <Card
     title="Filtering Results"
     icon="Filter"
     href="/guides/search/filtering-results"
   >
     Advanced filtering techniques and examples
   </Card>
-  
-  <Card 
+
+  <Card
     title="Datasource Filters"
     icon="Database"
     href="/guides/search/datasource-filters"
   >
     Filter search results by specific data sources
   </Card>
-  
-  <Card 
+
+  <Card
     title="Faceted Filtering"
     icon="Layers"
     href="/guides/search/faceted-filters"
@@ -57,20 +57,25 @@ Glean's Search API provides powerful enterprise search capabilities that you can
 ## Common Use Cases
 
 ### Knowledge Base Search
+
 Build a search interface for your internal documentation, wikis, and knowledge repositories.
 
 ### Code Search
+
 Search through your organization's source code, documentation, and development resources.
 
 ### Document Discovery
+
 Help users find relevant documents, presentations, and files across all connected systems.
 
 ### Expert Finding
+
 Locate subject matter experts and colleagues with specific knowledge or experience.
 
 ## Search Patterns
 
 ### Basic Search
+
 Simple text-based search across all available content:
 
 ```python
@@ -104,6 +109,7 @@ for result in results:
 ```
 
 ### Filtered Search
+
 Search with specific filters to narrow results:
 
 ```python
@@ -117,7 +123,7 @@ response = await client.search.search({
                 "values": ["confluence", "sharepoint"]
             },
             {
-                "facetName": "objectType", 
+                "facetName": "objectType",
                 "values": ["document"]
             }
         ]
@@ -126,6 +132,7 @@ response = await client.search.search({
 ```
 
 ### Search with Date Filters
+
 Find recent or time-specific content:
 
 ```python
@@ -149,6 +156,7 @@ response = await client.search.search({
 ## Advanced Features
 
 ### Autocomplete Search
+
 Implement search suggestions and autocomplete:
 
 ```python
@@ -162,6 +170,7 @@ for suggestion in autocomplete_response.suggestions:
 ```
 
 ### Search Analytics
+
 Track search performance and user behavior:
 
 ```python
@@ -182,16 +191,17 @@ await client.activity.activity({
 ```
 
 ### Federated Search
+
 Search across multiple instances or systems:
 
 ```python
 async def federated_search(query: str):
     # Search primary instance
     primary_results = await primary_client.search.search({"query": query})
-    
+
     # Search secondary instance
     secondary_results = await secondary_client.search.search({"query": query})
-    
+
     # Combine and rank results
     all_results = primary_results.results + secondary_results.results
     return sorted(all_results, key=lambda x: x.relevanceScore, reverse=True)
@@ -200,6 +210,7 @@ async def federated_search(query: str):
 ## Building Search Interfaces
 
 ### React Search Component
+
 ```typescript
 import { useState, useEffect } from 'react';
 import { Glean } from '@gleanwork/api-client';
@@ -208,15 +219,15 @@ const SearchComponent = () => {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
-  
+
   const client = new Glean({
     apiToken: process.env.REACT_APP_GLEAN_TOKEN,
     instance: process.env.REACT_APP_GLEAN_INSTANCE
   });
-  
+
   const handleSearch = async (searchQuery: string) => {
     if (!searchQuery.trim()) return;
-    
+
     setLoading(true);
     try {
       const response = await client.search.search({
@@ -230,7 +241,7 @@ const SearchComponent = () => {
       setLoading(false);
     }
   };
-  
+
   return (
     <div>
       <input
@@ -240,9 +251,9 @@ const SearchComponent = () => {
         onKeyPress={(e) => e.key === 'Enter' && handleSearch(query)}
         placeholder="Search your organization's knowledge..."
       />
-      
+
       {loading && <div>Searching...</div>}
-      
+
       <div>
         {results.map((result, index) => (
           <div key={index} className="search-result">
@@ -258,39 +269,40 @@ const SearchComponent = () => {
 ```
 
 ### Search with Filters UI
+
 ```typescript
 const FilteredSearchComponent = () => {
   const [filters, setFilters] = useState({
     datasources: [],
     dateRange: null,
-    objectTypes: []
+    objectTypes: [],
   });
-  
+
   const applyFilters = async (query: string) => {
     const facetFilters = [];
-    
+
     if (filters.datasources.length > 0) {
       facetFilters.push({
-        facetName: "datasource",
-        values: filters.datasources
+        facetName: 'datasource',
+        values: filters.datasources,
       });
     }
-    
+
     if (filters.objectTypes.length > 0) {
       facetFilters.push({
-        facetName: "objectType", 
-        values: filters.objectTypes
+        facetName: 'objectType',
+        values: filters.objectTypes,
       });
     }
-    
+
     const response = await client.search.search({
       query,
-      requestOptions: { facetFilters }
+      requestOptions: { facetFilters },
     });
-    
+
     return response.results;
   };
-  
+
   // UI implementation...
 };
 ```
@@ -298,6 +310,7 @@ const FilteredSearchComponent = () => {
 ## Performance Optimization
 
 ### Caching Search Results
+
 ```python
 import asyncio
 from functools import lru_cache
@@ -307,51 +320,52 @@ class CachedSearchClient:
     def __init__(self, client: Glean):
         self.client = client
         self._cache = {}
-    
+
     def _cache_key(self, query: str, filters: dict = None) -> str:
         key_data = f"{query}:{filters or {}}"
         return hashlib.md5(key_data.encode()).hexdigest()
-    
+
     async def search(self, query: str, filters: dict = None, cache_ttl: int = 300):
         cache_key = self._cache_key(query, filters)
-        
+
         if cache_key in self._cache:
             cached_result, timestamp = self._cache[cache_key]
             if time.time() - timestamp < cache_ttl:
                 return cached_result
-        
+
         result = await self.client.search.search({
             "query": query,
             "requestOptions": {"facetFilters": filters or []}
         })
-        
+
         self._cache[cache_key] = (result, time.time())
         return result
 ```
 
 ### Pagination and Infinite Scroll
+
 ```python
 async def paginated_search(client, query: str, page_size: int = 20):
     cursor = None
     all_results = []
-    
+
     while True:
         request = {
             "query": query,
             "pageSize": page_size
         }
-        
+
         if cursor:
             request["cursor"] = cursor
-        
+
         response = await client.search.search(request)
         all_results.extend(response.results or [])
-        
+
         if not response.hasMoreResults:
             break
-            
+
         cursor = response.cursor
-    
+
     return all_results
 ```
 
@@ -380,7 +394,7 @@ async def robust_search(client, query: str, max_retries: int = 3):
                 await asyncio.sleep(1)
                 continue
             raise e
-    
+
     raise Exception(f"Search failed after {max_retries} attempts")
 ```
 
@@ -396,4 +410,4 @@ async def robust_search(client, query: str, max_retries: int = 3):
 - [Search API Reference](/api/client-api/search/overview)
 - [Authentication Guide](/api-info/client/authentication/overview)
 - [Chat Integration](/guides/chat/overview) - Combine search with conversational AI
-- [Agent Examples](/guides/agents/overview) - Use search in intelligent agents 
+- [Agent Examples](/guides/agents/overview) - Use search in intelligent agents

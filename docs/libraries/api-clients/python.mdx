@@ -28,19 +28,13 @@ Glean's Python API client provides a Pythonic interface to Glean's Client API, m
 
 <Tabs>
   <TabItem value="pip" label="pip">
-    ```bash
-    pip install glean-api-client
-    ```
+    ```bash pip install glean-api-client ```
   </TabItem>
   <TabItem value="poetry" label="poetry">
-    ```bash
-    poetry add glean-api-client
-    ```
+    ```bash poetry add glean-api-client ```
   </TabItem>
   <TabItem value="uv" label="uv">
-    ```bash
-    uv add glean-api-client
-    ```
+    ```bash uv add glean-api-client ```
   </TabItem>
 </Tabs>
 
@@ -71,6 +65,7 @@ Glean's Python API client provides a Pythonic interface to Glean's Client API, m
         )
         print(response)
     ```
+
   </Step>
 </Steps>
 
@@ -155,7 +150,7 @@ import json
 def chat_view(request):
     data = json.loads(request.body)
     message = data.get('message')
-    
+
     with Glean(
         api_token=os.getenv("GLEAN_API_TOKEN"),
         instance=os.getenv("GLEAN_INSTANCE"),
@@ -163,7 +158,7 @@ def chat_view(request):
         response = client.client.chat.create(
             messages=[{"fragments": [{"text": message}]}]
         )
-        
+
     return JsonResponse({'response': response.text})
 ```
 
@@ -240,7 +235,7 @@ def test_chat_service(mock_glean_client):
     mock_response = MagicMock()
     mock_response.text = "Test response"
     mock_glean_client.client.chat.create.return_value = mock_response
-    
+
     result = send_message("Hello")
     assert result == "Test response"
 ```
@@ -248,31 +243,31 @@ def test_chat_service(mock_glean_client):
 ## Additional Resources
 
 <CardGroup cols={2}>
-  <Card 
+  <Card
     title="GitHub Repository"
     icon="GitHub"
     href="https://github.com/gleanwork/api-client-python"
   >
     Source code and examples
   </Card>
-  
-  <Card 
+
+  <Card
     title="API Reference"
     icon="Book"
     href="/api/client-api/activity/activity"
   >
     Complete endpoint documentation
   </Card>
-  
-  <Card 
+
+  <Card
     title="Authentication Guide"
     icon="Shield"
     href="/api-info/client/authentication/overview"
   >
     Token creation and management
   </Card>
-  
-  <Card 
+
+  <Card
     title="LangChain Integration"
     icon="langchain"
     iconSet="glean"
@@ -280,4 +275,4 @@ def test_chat_service(mock_glean_client):
   >
     Use with LangChain framework
   </Card>
-</CardGroup> 
+</CardGroup>

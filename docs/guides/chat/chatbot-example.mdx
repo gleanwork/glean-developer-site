@@ -1,5 +1,5 @@
 ---
-title: "Simple Chatbot Example"
+title: 'Simple Chatbot Example'
 description: "Build a basic chatbot using Glean's Chat API"
 ---
 
@@ -29,12 +29,12 @@ def send_chat_message(message_text):
     """Send a message to Glean Chat and get the response."""
     api_token = os.getenv("GLEAN_API_TOKEN")
     instance = os.getenv("GLEAN_INSTANCE")
-    
+
     if not api_token:
         raise ValueError("GLEAN_API_TOKEN environment variable is required")
     if not instance:
         raise ValueError("GLEAN_INSTANCE environment variable is required")
-    
+
     with Glean(api_token=api_token, instance=instance) as glean:
         try:
             response = glean.client.chat.create(
@@ -48,16 +48,16 @@ def send_chat_message(message_text):
                     },
                 ],
             )
-            
+
             if response.messages:
                 last_message = response.messages[-1]
                 if hasattr(last_message, 'fragments') and last_message.fragments:
                     for fragment in last_message.fragments:
                         if hasattr(fragment, 'text') and fragment.text:
                             return fragment.text
-            
+
             return "No response received"
-            
+
         except Exception as e:
             return f"Error: {str(e)}"
 
@@ -65,17 +65,17 @@ def main():
     """Simple interactive chatbot."""
     print("Glean Chatbot - Type 'quit' to exit")
     print("-" * 40)
-    
+
     while True:
         user_input = input("\nYou: ").strip()
-        
+
         if user_input.lower() in ['quit', 'exit', 'q']:
             print("Goodbye!")
             break
-        
+
         if not user_input:
             continue
-        
+
         print("Bot: ", end="", flush=True)
         try:
             response = send_chat_message(user_input)
@@ -100,21 +100,24 @@ GLEAN_INSTANCE=your_company_name
 ## Running the Example
 
 1. Set your environment variables:
+
    ```bash
    export GLEAN_API_TOKEN="your_chat_token_here"
    export GLEAN_INSTANCE="your_company_name"
    ```
 
 2. Run the chatbot:
+
    ```bash
    python chatbot.py
    ```
 
 3. Start asking questions:
+
    ```
    You: What is our vacation policy?
    Bot: Based on your company's HR documentation, here are the key points about vacation policy...
-   
+
    You: Who should I contact about benefits?
    Bot: For benefits questions, you should reach out to...
    ```
@@ -131,14 +134,14 @@ def stream_chat_response(message_text):
     """Stream chat response in real-time."""
     api_token = os.getenv("GLEAN_API_TOKEN")
     instance = os.getenv("GLEAN_INSTANCE")
-    
+
     if not api_token:
         print("Error: GLEAN_API_TOKEN environment variable required")
         return
     if not instance:
         print("Error: GLEAN_INSTANCE environment variable required")
         return
-    
+
     with Glean(api_token=api_token, instance=instance) as glean:
         try:
             response_stream = glean.client.chat.create_stream(
@@ -152,14 +155,14 @@ def stream_chat_response(message_text):
                     },
                 ],
             )
-            
+
             print("Bot: ", end="", flush=True)
-            
+
             for chunk in response_stream:
                 if chunk:
                     print(chunk, end="", flush=True)
             print()
-            
+
         except Exception as e:
             print(f"Error during streaming: {e}")
 
@@ -167,14 +170,14 @@ def main():
     """Interactive streaming chatbot."""
     print("Glean Streaming Chatbot - Type 'quit' to exit")
     print("-" * 45)
-    
+
     while True:
         user_input = input("\nYou: ").strip()
-        
+
         if user_input.lower() in ['quit', 'exit', 'q']:
             print("Goodbye!")
             break
-        
+
         if user_input:
             stream_chat_response(user_input)
 
@@ -195,12 +198,12 @@ class ConversationalChatbot:
         self.chat_id = None
         self.api_token = os.getenv("GLEAN_API_TOKEN")
         self.instance = os.getenv("GLEAN_INSTANCE")
-        
+
         if not self.api_token:
             raise ValueError("GLEAN_API_TOKEN environment variable is required")
         if not self.instance:
             raise ValueError("GLEAN_INSTANCE environment variable is required")
-    
+
     def send_message(self, user_message):
         """Send a message with conversation history."""
         with Glean(api_token=self.api_token, instance=self.instance) as glean:
@@ -218,22 +221,22 @@ class ConversationalChatbot:
                     chat_id=self.chat_id,
                     save_chat=True,
                 )
-                
+
                 if hasattr(response, 'chat_id') and response.chat_id:
                     self.chat_id = response.chat_id
-                
+
                 if response.messages:
                     last_message = response.messages[-1]
                     if hasattr(last_message, 'fragments') and last_message.fragments:
                         for fragment in last_message.fragments:
                             if hasattr(fragment, 'text') and fragment.text:
                                 return fragment.text
-                
+
                 return "No response received"
-                
+
             except Exception as e:
                 return f"Error: {str(e)}"
-    
+
     def reset_conversation(self):
         """Start a new conversation."""
         self.chat_id = None
@@ -243,16 +246,16 @@ def main():
     print("Glean Conversational Chatbot")
     print("Type 'quit' to exit, 'reset' to start new conversation")
     print("-" * 55)
-    
+
     try:
         chatbot = ConversationalChatbot()
     except ValueError as e:
         print(f"Setup error: {e}")
         return
-    
+
     while True:
         user_input = input("\nYou: ").strip()
-        
+
         if user_input.lower() in ['quit', 'exit', 'q']:
             print("Goodbye!")
             break
@@ -262,7 +265,7 @@ def main():
             continue
         elif not user_input:
             continue
-        
+
         print("Bot: ", end="", flush=True)
         response = chatbot.send_message(user_input)
         print(response)
@@ -287,12 +290,12 @@ def send_chat_message_with_retry(message_text, max_retries=3):
     """Send chat message with retry logic."""
     api_token = os.getenv("GLEAN_API_TOKEN")
     instance = os.getenv("GLEAN_INSTANCE")
-    
+
     if not api_token:
         return "Missing GLEAN_API_TOKEN"
     if not instance:
         return "Missing GLEAN_INSTANCE"
-    
+
     for attempt in range(max_retries):
         try:
             with Glean(api_token=api_token, instance=instance) as glean:
@@ -307,25 +310,25 @@ def send_chat_message_with_retry(message_text, max_retries=3):
                         },
                     ],
                 )
-                
+
                 if response.messages:
                     last_message = response.messages[-1]
                     if hasattr(last_message, 'fragments') and last_message.fragments:
                         for fragment in last_message.fragments:
                             if hasattr(fragment, 'text') and fragment.text:
                                 return fragment.text
-                
+
                 return "No response received"
-                
+
         except GleanError as e:
             logger.warning(f"Glean API error on attempt {attempt + 1}: {e}")
             if attempt == max_retries - 1:
                 return f"Failed after {max_retries} attempts: {e}"
-        
+
         except Exception as e:
             logger.error(f"Unexpected error: {e}")
             return f"Unexpected error: {e}"
-    
+
     return "Failed to get response"
 ```
 

@@ -17,18 +17,16 @@ import TabItem from '@theme/TabItem';
 This guide covers implementing authentication for Glean's **Indexing API**, which powers document indexing, datasource management, and administrative operations. The Indexing API **only supports Glean-issued tokens** - OAuth authentication is not available.
 
 :::warning
-  **Critical**: The Indexing API does **NOT support OAuth authentication**. You must use Glean-issued tokens for all Indexing API operations.
+**Critical**: The Indexing API does **NOT support OAuth authentication**. You must use Glean-issued tokens for all Indexing API operations.
 :::
 
 <CardGroup cols={1}>
   <Card title="Glean-Issued Tokens (Only Option)" icon="Key">
-    **Manually created through admin console**
-    
-    - **Authentication**: Glean tokens only (no OAuth support)
-    - **Permissions**: Global by default (no user-scoping)
-    - **Scopes**: Full indexing API access (no scope restrictions)
-    - **Advanced Features**: IP restrictions, token rotation, custom expiry
-    - **Use Cases**: Document indexing, datasource management, bulk operations
+    **Manually created through admin console** - **Authentication**: Glean
+    tokens only (no OAuth support) - **Permissions**: Global by default (no
+    user-scoping) - **Scopes**: Full indexing API access (no scope restrictions)
+    - **Advanced Features**: IP restrictions, token rotation, custom expiry -
+    **Use Cases**: Document indexing, datasource management, bulk operations
   </Card>
 </CardGroup>
 
@@ -44,12 +42,12 @@ Authorization: Bearer <indexing_api_token>
 
 ### Header Details
 
-| Header | Required | Description | Example Value |
-|--------|----------|-------------|---------------|
-| `Authorization` | Always | Bearer token with your Indexing API token | `Bearer glean_XYZ123...` |
+| Header          | Required | Description                               | Example Value            |
+| --------------- | -------- | ----------------------------------------- | ------------------------ |
+| `Authorization` | Always   | Bearer token with your Indexing API token | `Bearer glean_XYZ123...` |
 
 :::note
-  Unlike the Client API, Indexing API tokens do **not** require additional headers like `X-Glean-Auth-Type` or `X-Glean-ActAs`.
+Unlike the Client API, Indexing API tokens do **not** require additional headers like `X-Glean-Auth-Type` or `X-Glean-ActAs`.
 :::
 
 ---
@@ -91,25 +89,22 @@ Authorization: Bearer <indexing_api_token>
     Go to [Glean Admin Console](https://app.glean.com/admin/platform/tokenManagement?tab=indexing) → **Platform** → **API Tokens** → **Indexing Tokens** tab
   </Step>
 
-  <Step title="Add New Token">
-    Click **"Add API token"** and configure:
-    
-    <ThemedImage
-      alt="Add new Indexing API token"
-      width={600}
-      sources={{
-        light: useBaseUrl('img/authentication/add-indexing-api-token.png'),
-        dark: useBaseUrl('img/authentication/add-indexing-api-token-dark.png'),
-      }}
-    />
-    
-    - **Token Name**: Descriptive name for tracking
-    - **Global Permissions**: Full indexing API access
-    - **App Permissions**: Limit to specific datasources (optional)
-    - **Expires On**: Optional expiration date
-    - **IP Restrictions**: Optional IP range limitations
-    - **Rotation Settings**: Optional automated rotation
-  </Step>
+<Step title="Add New Token">
+  Click **"Add API token"** and configure:
+  <ThemedImage
+    alt="Add new Indexing API token"
+    width={600}
+    sources={{
+      light: useBaseUrl('img/authentication/add-indexing-api-token.png'),
+      dark: useBaseUrl('img/authentication/add-indexing-api-token-dark.png'),
+    }}
+  />
+  - **Token Name**: Descriptive name for tracking - **Global Permissions**: Full
+  indexing API access - **App Permissions**: Limit to specific datasources
+  (optional) - **Expires On**: Optional expiration date - **IP Restrictions**:
+  Optional IP range limitations - **Rotation Settings**: Optional automated
+  rotation
+</Step>
 
   <Step title="Save Token Securely">
     :::warning
@@ -163,13 +158,14 @@ Restrict token usage to specific IP ranges for enhanced security:
 
 **CIDR Format Examples**
 
-| CIDR Notation | Description | IP Range |
-|---------------|-------------|----------|
+| CIDR Notation    | Description   | IP Range                    |
+| ---------------- | ------------- | --------------------------- |
 | `192.168.1.0/24` | Single subnet | 192.168.1.1 - 192.168.1.254 |
-| `10.0.0.0/16` | Large network | 10.0.0.1 - 10.0.255.254 |
-| `203.0.113.5/32` | Single IP | 203.0.113.5 only |
+| `10.0.0.0/16`    | Large network | 10.0.0.1 - 10.0.255.254     |
+| `203.0.113.5/32` | Single IP     | 203.0.113.5 only            |
 
 **Benefits**
+
 - Restrict API access to known infrastructure
 - Prevent unauthorized usage if token is compromised
 - Meet compliance requirements for IP-based access control
@@ -210,6 +206,7 @@ curl -X POST https://instance-be.glean.com/api/index/v1/rotatetoken \
 ```
 
 **Response**
+
 ```json
 {
   "newToken": "new-rotated-token-value",
@@ -218,6 +215,7 @@ curl -X POST https://instance-be.glean.com/api/index/v1/rotatetoken \
 ```
 
 **Best Practices**
+
 - Implement rotation in your application logic
 - Store both old and new tokens during rotation period
 - Test rotation in development environment first
@@ -274,7 +272,7 @@ curl -X POST https://instance-be.glean.com/api/index/v1/bulkindexdocuments \
         "body": {"mimeType": "text/plain", "textContent": "Content 1"}
       },
       {
-        "id": "doc-2", 
+        "id": "doc-2",
         "title": "Second Document",
         "body": {"mimeType": "text/plain", "textContent": "Content 2"}
       }
@@ -337,7 +335,7 @@ Successful authentication returns document count data:
       "documentCount": 567
     },
     {
-      "datasource": "datasource-2", 
+      "datasource": "datasource-2",
       "documentCount": 667
     }
   ]
@@ -372,40 +370,36 @@ curl -X POST https://<instance>-be.glean.com/api/index/v1/indexdocument \
 
 ### Common Authentication Errors
 
-| Error | Cause | Solution |
-|-------|-------|----------|
-| `401 Unauthorized` | Invalid or expired token | Verify token is correct and not expired |
-| `403 Forbidden - IP not allowed` | Request from non-whitelisted IP | Add your IP to token's allowed IP ranges |
-| `400 Bad Request - Invalid datasource` | Datasource doesn't exist | Create datasource first or verify name |
-| `413 Request Entity Too Large` | Document/request too large | Split into smaller requests or use bulk operations |
-| `429 Too Many Requests` | Rate limit exceeded | Implement exponential backoff retry logic |
-| `500 Internal Server Error` | Glean service issue | Check Glean status page, retry with backoff |
+| Error                                  | Cause                           | Solution                                           |
+| -------------------------------------- | ------------------------------- | -------------------------------------------------- |
+| `401 Unauthorized`                     | Invalid or expired token        | Verify token is correct and not expired            |
+| `403 Forbidden - IP not allowed`       | Request from non-whitelisted IP | Add your IP to token's allowed IP ranges           |
+| `400 Bad Request - Invalid datasource` | Datasource doesn't exist        | Create datasource first or verify name             |
+| `413 Request Entity Too Large`         | Document/request too large      | Split into smaller requests or use bulk operations |
+| `429 Too Many Requests`                | Rate limit exceeded             | Implement exponential backoff retry logic          |
+| `500 Internal Server Error`            | Glean service issue             | Check Glean status page, retry with backoff        |
 
 ### Debugging Steps
 
 <Steps>
   <Step title="Verify token validity">
-    - Check that token hasn't expired
-    - Ensure token was created for Indexing API (not Client API)
-    - Test with simple endpoint like document count
+    - Check that token hasn't expired - Ensure token was created for Indexing
+    API (not Client API) - Test with simple endpoint like document count
   </Step>
-  
+
   <Step title="Check IP restrictions">
-    - Verify your IP is in allowed ranges (if IP restrictions enabled)
-    - Test from different IP if needed
-    - Check CIDR format in token configuration
+    - Verify your IP is in allowed ranges (if IP restrictions enabled) - Test
+    from different IP if needed - Check CIDR format in token configuration
   </Step>
-  
+
   <Step title="Validate request format">
-    - Ensure Content-Type header is set correctly
-    - Verify JSON payload is valid
+    - Ensure Content-Type header is set correctly - Verify JSON payload is valid
     - Check required fields are present
   </Step>
-  
+
   <Step title="Test with minimal request">
-    - Start with document count or datasource status endpoints
-    - Use minimal document for indexing tests
-    - Gradually add complexity once basic auth works
+    - Start with document count or datasource status endpoints - Use minimal
+    document for indexing tests - Gradually add complexity once basic auth works
   </Step>
 </Steps>
 
@@ -416,12 +410,12 @@ curl -X POST https://<instance>-be.glean.com/api/index/v1/indexdocument \
 
 **Common Document Indexing Issues**
 
-| Issue | Cause | Solution |
-|-------|-------|----------|
-| Document not appearing in search | Processing delay | Wait 5-10 minutes, check document status API |
-| Permissions error | User lacks access | Verify document permissions are set correctly |
-| Invalid MIME type | Unsupported file format | Check supported MIME types documentation |
-| Document too large | Size exceeds limits | Split document or compress content |
+| Issue                            | Cause                   | Solution                                      |
+| -------------------------------- | ----------------------- | --------------------------------------------- |
+| Document not appearing in search | Processing delay        | Wait 5-10 minutes, check document status API  |
+| Permissions error                | User lacks access       | Verify document permissions are set correctly |
+| Invalid MIME type                | Unsupported file format | Check supported MIME types documentation      |
+| Document too large               | Size exceeds limits     | Split document or compress content            |
 
 **Validation Steps**
 
@@ -474,13 +468,25 @@ curl -X POST https://<instance>-be.glean.com/api/index/v1/indexdocument \
 ## Next Steps
 
 <CardGroup cols={3}>
-  <Card title="Setup Datasource" href="/api-info/indexing/getting-started/setup-datasource" icon="Database">
+  <Card
+    title="Setup Datasource"
+    href="/api-info/indexing/getting-started/setup-datasource"
+    icon="Database"
+  >
     Configure your first datasource for document indexing
   </Card>
-  <Card title="Index Documents" href="/api-info/indexing/getting-started/index-documents" icon="FileText">
+  <Card
+    title="Index Documents"
+    href="/api-info/indexing/getting-started/index-documents"
+    icon="FileText"
+  >
     Learn document indexing best practices
   </Card>
-  <Card title="Indexing API Reference" href="/api/indexing-api/documents-overview" icon="Book">
+  <Card
+    title="Indexing API Reference"
+    href="/api/indexing-api/documents-overview"
+    icon="Book"
+  >
     Explore all Indexing API endpoints
   </Card>
 </CardGroup>

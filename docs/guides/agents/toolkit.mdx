@@ -11,29 +11,31 @@ import CardGroup from '@site/src/components/CardGroup';
 A Python toolkit that makes it easy to integrate Glean's powerful search and knowledge discovery capabilities into your AI agents. Use pre-built tools with popular agent frameworks or create your own custom tools that work across multiple platforms.
 
 ## When to Use
+
 - Working with multiple agent frameworks (OpenAI, LangChain, CrewAI, Google ADK)
 - Need production-ready Glean tools (search, employee lookup, calendar, etc.)
 - Want to define tools once and use across frameworks
 - Building agents that require enterprise knowledge access
 
-<Card 
+<Card
   title="glean-agent-toolkit"
   icon="GitHub"
   href="https://github.com/gleanwork/glean-agent-toolkit"
 >
-  Official Python toolkit for adapting Glean's enterprise tools across multiple agent frameworks
+  Official Python toolkit for adapting Glean's enterprise tools across multiple
+  agent frameworks
 </Card>
 
 ## Framework Support
 
 The toolkit provides adapters for major agent frameworks:
 
-| Framework | Installation | Use Case |
-|-----------|-------------|----------|
-| **OpenAI Assistants** | `pip install glean-agent-toolkit[openai]` | Direct API integration with OpenAI |
-| **LangChain** | `pip install glean-agent-toolkit[langchain]` | Rich Python agent ecosystem |
-| **CrewAI** | `pip install glean-agent-toolkit[crewai]` | Multi-agent collaboration |
-| **Google ADK** | `pip install glean-agent-toolkit[adk]` | Google's Agent Development Kit |
+| Framework             | Installation                                 | Use Case                           |
+| --------------------- | -------------------------------------------- | ---------------------------------- |
+| **OpenAI Assistants** | `pip install glean-agent-toolkit[openai]`    | Direct API integration with OpenAI |
+| **LangChain**         | `pip install glean-agent-toolkit[langchain]` | Rich Python agent ecosystem        |
+| **CrewAI**            | `pip install glean-agent-toolkit[crewai]`    | Multi-agent collaboration          |
+| **Google ADK**        | `pip install glean-agent-toolkit[adk]`       | Google's Agent Development Kit     |
 
 ## Available Tools
 
@@ -123,7 +125,7 @@ researcher = Agent(
 )
 
 hr_specialist = Agent(
-    role='HR Specialist', 
+    role='HR Specialist',
     goal='Find employee information and schedule meetings',
     backstory='Expert at employee relations and scheduling',
     tools=[
@@ -174,20 +176,20 @@ from glean.agent_toolkit import tool_spec
 )
 def research_and_contact(topic: str) -> dict:
     """Research a topic and find experts."""
-    
+
     # Search for documents
     search_results = glean_search.execute(topic)
-    
+
     # Extract mentioned people from results
     mentioned_people = extract_people_from_results(search_results)
-    
+
     # Find employee details
     experts = []
     for person_name in mentioned_people:
         employee_info = employee_search.execute(person_name)
         if employee_info:
             experts.append(employee_info)
-    
+
     return {
         "research_results": search_results,
         "experts": experts,
@@ -213,7 +215,7 @@ import time
 )
 def robust_search(query: str, max_retries: int = 3) -> dict:
     """Search with retry logic."""
-    
+
     for attempt in range(max_retries):
         try:
             return glean_search.execute(query)

@@ -9,12 +9,12 @@ Major browsers like Safari, Firefox, and Chrome (including Chromium-based browse
 ## Browser Cookie Policies
 
 :::info
-  Google Chrome has announced plans to move towards a more privacy-focused web
-  environment with initiatives like the Privacy Sandbox, which aims to provide
-  personalization while protecting user privacy. Google is planning to introduce
-  a new experience in Chrome that lets people make an informed choice that
-  applies across their web browsing, including (but not limited to) third-party
-  cookie usage.
+Google Chrome has announced plans to move towards a more privacy-focused web
+environment with initiatives like the Privacy Sandbox, which aims to provide
+personalization while protecting user privacy. Google is planning to introduce
+a new experience in Chrome that lets people make an informed choice that
+applies across their web browsing, including (but not limited to) third-party
+cookie usage.
 :::
 
 Mozilla Firefox and Apple's Safari have already implemented strict third-party cookie blocking by default:
@@ -26,11 +26,11 @@ Mozilla Firefox and Apple's Safari have already implemented strict third-party c
 ## Impact on Glean Functionality
 
 :::warning
-  Since Glean is embedded on customers' websites, it is classified as a
-  third-party and this change can have an impact on critical workflows. Glean's
-  embedded widgets and other functionalities rely on third-party cookies for
-  authenticating users and these would be affected if third-party cookies are
-  blocked.
+Since Glean is embedded on customers' websites, it is classified as a
+third-party and this change can have an impact on critical workflows. Glean's
+embedded widgets and other functionalities rely on third-party cookies for
+authenticating users and these would be affected if third-party cookies are
+blocked.
 :::
 
 ## Granting Cookie Access
@@ -79,11 +79,11 @@ This can occur in two scenarios:
 
 1. Access was previously denied or the prompt was dismissed multiple times (see solution above)
 2. The embedding `iframe` configuration needs to meet specific requirements:
-    - If the `iframe` is not sandboxed, there are no issues
-    - If sandboxed, it must include these sandbox attributes:
-      - `allow-storage-access-by-user-activation`
-      - `allow-scripts`
-      - `allow-same-origin`
+   - If the `iframe` is not sandboxed, there are no issues
+   - If sandboxed, it must include these sandbox attributes:
+     - `allow-storage-access-by-user-activation`
+     - `allow-scripts`
+     - `allow-same-origin`
 
 </details>
 

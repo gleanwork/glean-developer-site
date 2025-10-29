@@ -30,7 +30,7 @@ Before proceeding, ensure you have:
     <p>Navigate to <a href="https://app.glean.com/admin/platform/tools">Admin console > Platform > Actions</a> and create a new action from scratch.</p>
 
     <h4>Basic Information Configuration</h4>
-    
+
     ![Basic Info Dialog Box](./images/google-docs-update/basic_info.png)
 
     <p>Configure the following settings:</p>
@@ -42,7 +42,7 @@ Before proceeding, ensure you have:
     </ul>
 
     <h4>Trigger Condition Setup</h4>
-    
+
     ![Trigger Condition Dialog Box](./images/google-docs-update/trigger_condition.png)
 
     <p>In the trigger condition, provide comprehensive guidance for when Glean Assistant should use this action. Include:</p>
@@ -51,6 +51,7 @@ Before proceeding, ensure you have:
       <li>Examples of appropriate user queries</li>
       <li>Cases where the action should not be used</li>
     </ul>
+
   </Step>
 
   <Step title="API Specification Development">
@@ -68,117 +69,118 @@ Before proceeding, ensure you have:
       <summary>Click to expand the full OpenAPI specification</summary>
 
     <pre><code>{`openapi: 3.0.0
+
 servers:
-  - url: 'https://docs.googleapis.com/'
-info:
+
+- url: 'https://docs.googleapis.com/'
+  info:
   description: Writes Google Docs documents.
   title: Google Docs API
   version: v1
-paths:
+  paths:
   '/v1/documents/{documentId}:batchUpdate':
-    post:
-      description: >-
-        Applies one or more updates to the document. Each request is validated
-        before being applied. If any request is not valid, then the entire
-        request will fail and nothing will be applied. The updates in your request
-        are guaranteed to be applied together atomically.
-      operationId: docs.documents.batchUpdate
-      parameters:
-        - description: >-
-            The ID of the document to update. Use glean search to find
-            the relevant document. The documentId usually exists in the
-            url of the doc. The syntax of URL (with documentId) is like:
-            https://docs.google.com/document/d/<documentId>/edit
-            Extract out the documentId from the URL.
-          in: path
-          name: documentId
-          required: true
-          schema:
-            type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                requests:
-                  type: array
-                  maxItems: 2
-                  items:
-                    type: object
-                    properties:
-                      insertText:
-                        description: >-
-                          Inserts text at the specified location. Always use this
-                          operation except when text deletion or text replacement
-                          is required.
-                        type: object
-                        properties:
-                          location:
-                            type: object
-                            properties:
-                              index:
-                                description: >-
-                                  The zero-based index, in UTF-16 code units.
-                                  Strictly use a value of 1 and nothing else.
-                                format: int32
-                                type: integer
-                          text:
-                            description: >-
-                              The text to be inserted. This is the most important field
-                              for this text inserting operation. Insert a neatly
-                              formatted text consisting of multiple paragraphs. Whenever
-                              required, always start with a new line for paragraphs,
-                              tables, lists for neatness.
-                            type: string
-                      replaceAllText:
-                        description: >-
-                          Replaces all instances of the specified text.
-                          Always use this operation when text deletion
-                          or text replacement is required.
-                        type: object
-                        properties:
-                          containsText:
-                            type: object
-                            properties:
-                              matchCase:
-                                description: >-
-                                  Indicates whether the search should respect
-                                  case: - \`True\`: the search is case sensitive.
-                                  - \`False\`: the search is case insensitive.
-                                type: boolean
-                                title: Do you want to match case
-                              text:
-                                description: The text to search for in the document.
-                                type: string
-                          replaceText:
-                            description: >-
-                              The text that will replace the
-                              matched text. Keep empty for deletion.
-                            type: string
-      responses:
-        '200':
-          description: Successful response`}</code></pre>
+  post:
+  description: >-
+  Applies one or more updates to the document. Each request is validated
+  before being applied. If any request is not valid, then the entire
+  request will fail and nothing will be applied. The updates in your request
+  are guaranteed to be applied together atomically.
+  operationId: docs.documents.batchUpdate
+  parameters: - description: >-
+  The ID of the document to update. Use glean search to find
+  the relevant document. The documentId usually exists in the
+  url of the doc. The syntax of URL (with documentId) is like:
+  https://docs.google.com/document/d/<documentId>/edit
+  Extract out the documentId from the URL.
+  in: path
+  name: documentId
+  required: true
+  schema:
+  type: string
+  requestBody:
+  content:
+  application/json:
+  schema:
+  type: object
+  properties:
+  requests:
+  type: array
+  maxItems: 2
+  items:
+  type: object
+  properties:
+  insertText:
+  description: >-
+  Inserts text at the specified location. Always use this
+  operation except when text deletion or text replacement
+  is required.
+  type: object
+  properties:
+  location:
+  type: object
+  properties:
+  index:
+  description: >-
+  The zero-based index, in UTF-16 code units.
+  Strictly use a value of 1 and nothing else.
+  format: int32
+  type: integer
+  text:
+  description: >-
+  The text to be inserted. This is the most important field
+  for this text inserting operation. Insert a neatly
+  formatted text consisting of multiple paragraphs. Whenever
+  required, always start with a new line for paragraphs,
+  tables, lists for neatness.
+  type: string
+  replaceAllText:
+  description: >-
+  Replaces all instances of the specified text.
+  Always use this operation when text deletion
+  or text replacement is required.
+  type: object
+  properties:
+  containsText:
+  type: object
+  properties:
+  matchCase:
+  description: >-
+  Indicates whether the search should respect
+  case: - \`True\`: the search is case sensitive. - \`False\`: the search is case insensitive.
+  type: boolean
+  title: Do you want to match case
+  text:
+  description: The text to search for in the document.
+  type: string
+  replaceText:
+  description: >-
+  The text that will replace the
+  matched text. Keep empty for deletion.
+  type: string
+  responses:
+  '200':
+  description: Successful response`}</code></pre>
 
-    </details>
+      </details>
 
-    <h4>Functionality Configuration</h4>
-    
-    ![Functionality Dialog Box](./images/google-docs-update/functionality.png)
+      <h4>Functionality Configuration</h4>
 
-    <p>Paste the OpenAPI specification you prepared above. Since we're using Google's API directly, leave the "Use existing on-premise server" option unchecked.</p>
-  </Step>
+      ![Functionality Dialog Box](./images/google-docs-update/functionality.png)
+
+      <p>Paste the OpenAPI specification you prepared above. Since we're using Google's API directly, leave the "Use existing on-premise server" option unchecked.</p>
+
+    </Step>
 
   <Step title="Authentication Setup">
     <p>The action requires OAuth 2.0 authentication to interact with Google Docs securely.</p>
 
     <h4>Google Cloud Console Configuration</h4>
-    
+
     1. Visit the [Google Cloud Console Credentials page](https://console.cloud.google.com/apis/credentials)
     2. Create new OAuth 2.0 credentials:
 
        ![GCP Credentials Dialog Box](./images/google-docs-update/gcs_cloud_create_cred.png)
-    
+
     3. Select "Web Application" as the application type:
 
        ![Create OAuth Client](./images/google-docs-update/create_oauth_client.png)
@@ -194,28 +196,30 @@ paths:
     <h4>OAuth Settings in Glean</h4>
     <p>Configure these OAuth settings in the Authentication section:</p>
     <pre><code>{`Client URL: https://accounts.google.com/o/oauth2/auth?prompt=consent&access_type=offline
+
 Authorization URL: https://accounts.google.com/o/oauth2/token
 Scopes: https://www.googleapis.com/auth/documents`}</code></pre>
 
     <h4>Enable Google Docs API</h4>
-    
+
     1. Navigate to the Google Cloud Console
     2. Enable the Google Docs API for your project:
 
        ![GCP Google Docs API Settings](./images/google-docs-update/google_docs_api.png)
+
   </Step>
 
   <Step title="Testing and Deployment">
     <p>After configuration, thoroughly test the action before deployment.</p>
 
     <h4>Testing Process</h4>
-    
+
     1. Click the testing URL provided after saving the action
     2. Issue test queries to verify proper triggering
     3. Use the "Review and confirm" interface:
 
        ![Chat Execution Modal Form](./images/google-docs-update/fe_modal_form.png)
-    
+
     4. Verify document changes:
 
        Before changes:
@@ -226,7 +230,7 @@ Scopes: https://www.googleapis.com/auth/documents`}</code></pre>
 
     <h4>Deployment Configuration</h4>
     <p>Deploy the action through the deploy tab:</p>
-    
+
     ![Deploy Action View](./images/google-docs-update/deploy_window.png)
 
     <p>You can:</p>
@@ -235,6 +239,7 @@ Scopes: https://www.googleapis.com/auth/documents`}</code></pre>
       <li>Restrict access to specific teammates</li>
       <li>Configure deployment settings for Chat or AI Apps integration</li>
     </ul>
+
   </Step>
 </Steps>
 
@@ -252,6 +257,7 @@ When preparing your OpenAPI specification for Google Docs integration:
     - Include examples of valid values
     - Explain the business context of each field
     - Clarify relationships between fields
+
   </Card>
 
   <Card title="Schema Structure" icon="GitBranch">
@@ -261,6 +267,7 @@ When preparing your OpenAPI specification for Google Docs integration:
     - Use meaningful field names that reflect their purpose
     - Leverage built-in formats (like `date-time`) where applicable
     - Include proper type constraints and validations
+
   </Card>
 </CardGroup>
 
@@ -269,11 +276,11 @@ When preparing your OpenAPI specification for Google Docs integration:
 <Card title="OAuth Configuration" icon="Key">
   Important considerations for OAuth setup:
 
-  - Always use `access_type=offline` to enable refresh tokens
-  - Include appropriate error handling for token expiration
-  - Consider implementing token rotation for security
-  - Monitor token usage and implement proper logging
-</Card>
+- Always use `access_type=offline` to enable refresh tokens
+- Include appropriate error handling for token expiration
+- Consider implementing token rotation for security
+- Monitor token usage and implement proper logging
+  </Card>
 
 ### Performance Optimization
 
@@ -285,6 +292,7 @@ When preparing your OpenAPI specification for Google Docs integration:
     - Include meaningful error messages
     - Allow users to preview changes before applying them
     - Maintain consistent behavior across different document types
+
   </Card>
 
   <Card title="Efficient Operations" icon="Zap">
@@ -294,6 +302,7 @@ When preparing your OpenAPI specification for Google Docs integration:
     - Implement appropriate timeouts
     - Cache frequently used document metadata
     - Monitor action execution times
+
   </Card>
 </CardGroup>
 
@@ -309,6 +318,7 @@ When working with the Google Docs API:
     - Use `replaceAllText` when you need to modify existing content
     - Consider using `index: 1` for insertions to maintain consistent behavior
     - Handle formatting through plain text markers (like asterisks for bullets)
+
   </Card>
 
   <Card title="Common Issues" icon="AlertTriangle">
@@ -318,6 +328,7 @@ When working with the Google Docs API:
     - Rate limiting constraints
     - Invalid document IDs
     - Concurrent modification conflicts
+
   </Card>
 </CardGroup>
 
@@ -340,7 +351,7 @@ Watch out for these common implementation mistakes:
    - Ignoring existing document structure
    - Not handling special characters properly
    - Incorrect handling of line breaks and paragraphs
-:::
+     :::
 
 ## Troubleshooting
 
@@ -369,4 +380,4 @@ After successful implementation, consider:
 - **Monitoring**: Setting up monitoring for action usage
 - **Credentials**: Establishing a process for maintaining OAuth credentials
 - **Reviews**: Planning for periodic reviews of API specifications as the Google Docs API evolves
-- **Enhancements**: Expanding functionality based on user feedback 
+- **Enhancements**: Expanding functionality based on user feedback

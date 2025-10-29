@@ -1,10 +1,10 @@
 ---
-title: "{{TITLE}}"
-categories: [{{CATEGORIES}}]
+title: '{{TITLE}}'
+categories: [{ { CATEGORIES } }]
 ---
 
 {{SUMMARY}}
 
-{/* truncate */}
+{/_ truncate _/}
 
-{{DETAILED_CONTENT}} 
+{{DETAILED_CONTENT}}

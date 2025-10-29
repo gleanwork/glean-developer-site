@@ -79,8 +79,7 @@ FEATURE_FLAGS_JSON='{"new-api-docs":{"enabled":true}}' pnpm build
 
 ```jsx
 <FeatureFlag flag="new-feature">
-  ## This content is gated
-  Only shows when flag is enabled.
+  ## This content is gated Only shows when flag is enabled.
 </FeatureFlag>
 ```
 
@@ -92,7 +91,7 @@ import { FeatureFlagsContext } from '@site/src/theme/Root';
 
 function Component() {
   const { isEnabled } = useContext(FeatureFlagsContext);
-  
+
   if (isEnabled('new-ui')) {
     return <NewUI />;
   }
@@ -200,7 +199,9 @@ The `metadata` field can store arbitrary configuration values that can be access
 
 ```typescript
 const { flagConfigs } = useContext(FeatureFlagsContext);
-const version = flagConfigs['mcp-cli-version']?.metadata?.version as string | undefined;
+const version = flagConfigs['mcp-cli-version']?.metadata?.version as
+  | string
+  | undefined;
 ```
 
 ## Debug Mode
@@ -227,7 +228,7 @@ Our rollout system uses **deterministic bucketing** to ensure users get a consis
    - The same user always gets the same number for the same flag
    - Different flags produce different numbers for the same user
 
-3. **Rollout Decision**: 
+3. **Rollout Decision**:
    - If `rolloutPercentage: 25`, users with hash 0-24 see the feature
    - If `rolloutPercentage: 50`, users with hash 0-49 see the feature
    - This ensures a stable, random distribution
@@ -242,8 +243,9 @@ Our rollout system uses **deterministic bucketing** to ensure users get a consis
 ### Example Scenarios
 
 **User "alice@glean.com" with two flags:**
+
 ```
-Flag "new-search" (50% rollout): 
+Flag "new-search" (50% rollout):
   Hash("new-search:alice@glean.com") = 23 → ENABLED ✓
 
 Flag "beta-ui" (30% rollout):

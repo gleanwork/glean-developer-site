@@ -1,6 +1,6 @@
 ---
 title: Returning LLM Content Over Snippets
-description: Learn how to request LLM content over snippets using the search API. 
+description: Learn how to request LLM content over snippets using the search API.
 ---
 
 import Card from '@site/src/components/Card';
@@ -22,8 +22,8 @@ Sample request body (contains all required fields at minimum to get expanded con
 
 ```json
 {
-  "query": "mentions", 
-  "pageSize": 10, 
+  "query": "mentions",
+  "pageSize": 10,
   "maxSnippetSize": 4000,
   "requestOptions": {
     "returnLlmContentOverSnippets": true
@@ -38,6 +38,7 @@ The LLM content is formatted differently than the non-LLM content you get from a
 In the response, there is a top-level field `results`. `results` is an array of objects, each representing a search result. Each search result has a top-level field `snippets` which is an array of text content from the search result.
 
 ### Non-LLM Content
+
 The format of the content is different from LLM content in that the snippets are ordered by score, not in the order they appear in the document, and we include formatting instructions to bold terms in the content that match the query.
 
 - **mimeType**: The type of text
@@ -91,6 +92,7 @@ The format of the content is different from LLM content in that the snippets are
 ```
 
 ### LLM Content
+
 We do not bold hits for LLM content so we do not include the ranges field.
 
 - **mimeType** stays the same
@@ -124,15 +126,19 @@ We do not bold hits for LLM content so we do not include the ranges field.
 ## FAQ
 
 ### Will maxSnippetSize be honored when returnLlmContentOverSnippets is False?
+
 We will try to hit the `maxSnippetSize` passed in, it is not clamped at 255 characters. However this is still a "hint" number and we may not meet it exactly due to wanting to respect word boundaries, and also due to the number of matches to the query there are in the text content.
 
 ### Is text generated when using returnLlmContentOverSnippets?
+
 No text is generated, all text returned should be also present in the original doc. We might not return any snippet at all if there is not enough content to return.
 
 ### Is there a cap on the maximum number of snippets returned per document?
+
 Yes, there is a cap at 10,000 characters. We have found that for our LLM purposes that use snippets, we've never needed more than 5000 characters for snippets, so we introduced a cap on both character count and doc count as to prevent sending too large of a response back.
 
 ### Why do I see irrelevant content when using returnLlmContentOverSnippets?
+
 When we return snippets (`returnLlmContentOverSnippets = false`), snippets are limited to around 255 characters, so almost always, all the content returned is content related to or matching the search query.
 
 When you ask for LLM Content (`returnLlmContentOverSnippets = true`), you can request up to 10,000 characters using `maxSnippetSize`, and we will try to return as many characters as requested.
@@ -144,9 +150,9 @@ For example, if the query is "test" and the document contains:
 ```
 ...more text...
 
-My favorite fruit is apples. 
+My favorite fruit is apples.
 
-I don't like taking tests. 
+I don't like taking tests.
 
 Today is Monday.
 
@@ -170,15 +176,11 @@ We are constantly making improvements to our content retrieval, and have several
 ## Next Steps
 
 <CardGroup cols={2}>
-  <Card 
-    title="Search API"
-    icon="Search"
-    href="/api/client-api/search/overview"
-  >
+  <Card title="Search API" icon="Search" href="/api/client-api/search/overview">
     Explore the complete Search API documentation
   </Card>
-  
-  <Card 
+
+  <Card
     title="Filtering Results"
     icon="Filter"
     href="/guides/search/filtering-results"
