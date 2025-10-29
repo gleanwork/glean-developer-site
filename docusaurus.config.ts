@@ -34,7 +34,6 @@ const config: Config = {
   baseUrl: '/',
 
   onBrokenLinks: 'throw',
-  onBrokenMarkdownLinks: 'throw',
 
   // Even if you don't use internationalization, you can use this field to set
   // useful metadata like html lang. For example, if your site is Chinese, you
@@ -474,6 +473,9 @@ const config: Config = {
   themes: ['docusaurus-theme-openapi-docs', '@docusaurus/theme-mermaid'],
   markdown: {
     mermaid: true,
+    hooks: {
+      onBrokenMarkdownLinks: 'throw',
+    },
   },
   customFields: (() => {
     const raw = getBuildTimeFlags();
