@@ -5,8 +5,8 @@
   "scripts": {
     "docusaurus": "docusaurus",
     "start": "docusaurus start --host 127.0.0.1 --port 8888",
-    "build": "pnpm run generate:changelog && pnpm run generate:rss && docusaurus build",
-    "build:fast": "GENERATE_API_DOCS=false pnpm run generate:changelog && pnpm run generate:rss && docusaurus build",
+    "build": "pnpm run changelog:aggregate && pnpm run generate:rss && docusaurus build",
+    "build:fast": "GENERATE_API_DOCS=false pnpm run changelog:aggregate && pnpm run generate:rss && docusaurus build",
     "start:fast": "GENERATE_API_DOCS=false docusaurus start --host 127.0.0.1 --port 8889",
     "swizzle": "docusaurus swizzle",
     "deploy": "docusaurus deploy",
@@ -18,6 +18,11 @@
     "generate:changelog": "node scripts/generate-changelog-data.mjs",
     "generate:rss": "node scripts/generate-rss-feed.mjs",
     "generate:redirects": "tsx scripts/generate-redirects.ts",
+    "changelog:aggregate": "node scripts/generate-changelog-data.mjs",
+    "changelog:build": "pnpm -C packages/changelog-generator run build",
+    "changelog:analyze": "pnpm -C packages/changelog-generator run analyze",
+    "changelog:apply": "pnpm -C packages/changelog-generator run apply",
+    "changelog:run": "pnpm -C packages/changelog-generator run run",
     "typecheck": "tsc",
     "format": "prettier --write .",
     "test": "vitest run",
@@ -95,6 +100,7 @@
     "zod": "^4.1.11"
   },
   "devDependencies": {
+    "@types/node": "^22.9.0",
     "@docusaurus/faster": "^3.8.1",
     "@docusaurus/module-type-aliases": "^3.8.1",
     "@docusaurus/theme-mermaid": "^3.8.1",

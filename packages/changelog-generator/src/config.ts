@@ -1,0 +1,75 @@
+import * as fs from 'node:fs';
+import * as path from 'node:path';
+import yaml from 'js-yaml';
+
+export type RepoSpec = {
+  owner: string;
+  repo: string;
+  category: string;
+};
+
+export type GeneratorConfig = {
+  owner: string;
+  baseBranch: string;
+  repos: Array<RepoSpec>;
+  summarization: {
+    mode: 'off' | 'heuristic' | 'llm';
+    maxBullets: number;
+    maxChars: number;
+    model?: string;
+    categoryHints: Record<string, Array<string>>;
+  };
+};
+
+export function loadConfig(repoRoot: string): GeneratorConfig {
+  const envPath = process.env.CHANGELOG_CONFIG_PATH
+    ? path.resolve(process.env.CHANGELOG_CONFIG_PATH)
+    : path.join(repoRoot, 'packages', 'changelog-generator', 'config.yml');
+
+  if (!fs.existsSync(envPath)) {
+    throw new Error(`Config not found at ${envPath}. Set CHANGELOG_CONFIG_PATH or add config.yml.`);
+  }
+
+  const raw = fs.readFileSync(envPath, 'utf-8');
+  const data = yaml.load(raw) as any;
+
+  const owner = (data?.owner ? String(data.owner) : 'gleanwork').trim();
+  const baseBranch = (data?.baseBranch ? String(data.baseBranch) : 'main').trim();
+  const repos: Array<RepoSpec> = Array.isArray(data?.repos)
+    ? (data.repos as Array<any>).map((r) => ({
+        owner,
+        repo: String(r.repo),
+        category: String(r.category),
+      }))
+    : [];
+
+  if (repos.length === 0) {
+    throw new Error('Config repos is empty; add at least one repo entry.');
+  }
+
+  const s = data?.summarization || {};
+  const envSummarizeRaw = process.env.CHANGELOG_SUMMARIZE;
+  const envSummarize = typeof envSummarizeRaw === 'string'
+    ? /^(1|true|yes|on)$/i.test(envSummarizeRaw)
+    : undefined;
+  let mode: 'off' | 'heuristic' | 'llm';
+  const rawMode = s?.mode ? String(s.mode) : undefined;
+  if (envSummarize !== undefined) {
+    mode = envSummarize ? 'llm' : 'heuristic';
+  } else if (rawMode === 'off' || rawMode === 'heuristic' || rawMode === 'llm') {
+    mode = rawMode;
+  } else {
+    mode = 'heuristic';
+  }
+  const summarization = {
+    mode,
+    maxBullets: Number.isFinite(s.maxBullets) ? Number(s.maxBullets) : 3,
+    maxChars: Number.isFinite(s.maxChars) ? Number(s.maxChars) : 300,
+    model: process.env.CHANGELOG_OPENAI_MODEL || s.model || 'gpt-4o-mini',
+    categoryHints: (s.categoryHints as Record<string, Array<string>>) || {},
+  };
+
+  return { owner, baseBranch, repos, summarization };
+}
+
+
