@@ -112,14 +112,14 @@ If no truncate marker exists, the system will automatically truncate content usi
 
 The changelog system is integrated into the build process:
 
-1. **Development**: Run `pnpm generate:changelog` to process entries
+1. **Development**: Run `pnpm changelog:aggregate` to process entries
 2. **Production**: The `pnpm build` command automatically generates changelog data
 3. **Hot Reloading**: Changes to entries are reflected immediately during development
 
 ## Available Scripts
 
 - `pnpm changelog:new` - Create a new changelog entry interactively
-- `pnpm generate:changelog` - Process existing entries into JSON data
+- `pnpm changelog:aggregate` - Process existing entries into JSON data
 - `pnpm build` - Build the site (includes changelog generation)
 - `pnpm start` - Start development server
 

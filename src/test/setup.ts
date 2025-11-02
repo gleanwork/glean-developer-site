@@ -2,24 +2,27 @@ import '@testing-library/jest-dom';
 import { vi } from 'vitest';
 import './mocks/docusaurus';
 
-// Mock clipboard API - make it configurable so userEvent can override it
-if (!navigator.clipboard) {
-  Object.defineProperty(navigator, 'clipboard', {
-    value: {
-      writeText: vi.fn(() => Promise.resolve()),
-      readText: vi.fn(() => Promise.resolve('')),
-    },
-    configurable: true,
-    writable: true,
-  });
+// Only run browser-specific mocks in jsdom environment
+if (typeof window !== 'undefined') {
+  // Mock clipboard API - make it configurable so userEvent can override it
+  if (!(navigator as any).clipboard) {
+    Object.defineProperty(navigator, 'clipboard', {
+      value: {
+        writeText: vi.fn(() => Promise.resolve()),
+        readText: vi.fn(() => Promise.resolve('')),
+      },
+      configurable: true,
+      writable: true,
+    });
+  }
+
+  // Mock window.location
+  delete (window as any).location;
+  (window as any).location = { href: '' } as any;
+
+  // Mock window.open
+  ;(window as any).open = vi.fn();
 }
-
-// Mock window.location
-delete (window as any).location;
-window.location = { href: '' } as any;
-
-// Mock window.open
-window.open = vi.fn();
 
 // Mock ResizeObserver for react-tooltip
 global.ResizeObserver = class ResizeObserver {
