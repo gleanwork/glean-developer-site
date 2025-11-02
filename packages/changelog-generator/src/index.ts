@@ -431,7 +431,7 @@ async function main() {
 }
 
 main().catch((err) => {
-  console.error(err?.stack || err?.message || String(err));
+  console.error('[main]', err?.stack || err?.message || String(err));
   process.exit(1);
 });
 

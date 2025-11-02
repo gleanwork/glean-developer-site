@@ -29,10 +29,12 @@ export function renderChangelogEntry(opts: {
 
   let result = template;
 
+  const placeholderRegexes: Record<string, RegExp> = {};
+  for (const key of Object.keys(variables)) {
+    placeholderRegexes[key] = new RegExp(`\\{\\{${key}\\}\\}`, 'g');
+  }
   for (const [key, value] of Object.entries(variables)) {
-    const placeholder = new RegExp(`\\{\\{${key}\\}\\}`, 'g');
-  
-    result = result.replace(placeholder, value);
+    result = result.replace(placeholderRegexes[key], value);
   }
   return result;
 }

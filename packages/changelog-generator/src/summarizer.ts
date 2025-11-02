@@ -138,8 +138,8 @@ async function summarizeWithGlean(text: string, opts: { maxChars: number; catego
     if (!joined) return null;
     dbgSum('summarize:joined len=%d', joined.length);
     return joined.length <= opts.maxChars ? joined : joined.slice(0, opts.maxChars).replace(/\s+\S*$/, '').trim() + '...';
-  } catch {
-    dbgSum('summarize:error');
+  } catch (err) {
+    dbgSum('summarize:error %o', err);
     return null;
   }
 }
