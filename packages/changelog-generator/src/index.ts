@@ -3,6 +3,8 @@ import * as path from 'node:path';
 import * as dotenv from 'dotenv';
 import { findUp } from 'find-up';
 import { createRequire } from 'node:module';
+import { randomUUID } from 'node:crypto';
+import * as os from 'node:os';
 import { loadConfig } from './config.js';
 import { summarizeRelease } from './summarizer.js';
 import { getLatestChangelogEntryDate } from './latest-entry.js';
@@ -232,9 +234,12 @@ async function analyze(repoRoot: string): Promise<AnalyzeOutput> {
   return out;
 }
 
-function exec(cmd: string, cwd: string) {
-  const { execSync } = require('node:child_process');
-  execSync(cmd, { stdio: 'inherit', cwd });
+function runGit(args: Array<string>, cwd: string) {
+  const { spawnSync } = require('node:child_process');
+  const res = spawnSync('git', args, { stdio: 'inherit', cwd, shell: false });
+  if (typeof res.status === 'number' && res.status !== 0) {
+    throw new Error(`git ${args.join(' ')} failed with code ${res.status}`);
+  }
 }
 
 function getDefaultCloneUrl(): string {
@@ -246,14 +251,16 @@ function getDefaultCloneUrl(): string {
 }
 
 function isDirty(cwd: string): boolean {
-  const { execSync } = require('node:child_process');
+  const { spawnSync } = require('node:child_process');
   try {
-    const out: string = execSync('git status --porcelain', {
+    const res = spawnSync('git', ['status', '--porcelain'], {
       cwd,
       stdio: ['ignore', 'pipe', 'ignore'],
-    })
-      .toString()
-      .trim();
+      shell: false,
+      encoding: 'utf8',
+    });
+    if (typeof res.status === 'number' && res.status !== 0) return true;
+    const out = (res.stdout || '').toString().trim();
     return out.length > 0;
   } catch {
     return true;
@@ -261,10 +268,14 @@ function isDirty(cwd: string): boolean {
 }
 
 function isGitRepo(cwd: string): boolean {
-  const { execSync } = require('node:child_process');
+  const { spawnSync } = require('node:child_process');
   try {
-    execSync('git rev-parse --is-inside-work-tree', { cwd, stdio: 'ignore' });
-    return true;
+    const res = spawnSync('git', ['rev-parse', '--is-inside-work-tree'], {
+      cwd,
+      stdio: 'ignore',
+      shell: false,
+    });
+    return typeof res.status === 'number' ? res.status === 0 : false;
   } catch {
     return false;
   }
@@ -292,39 +303,44 @@ async function applyAction(repoRoot: string, inputPath?: string): Promise<void> 
     return;
   }
 
-  let workdir = process.env.CHANGELOG_WORKTREE
-    ? path.resolve(process.env.CHANGELOG_WORKTREE)
-    : repoRoot;
+  const providedWorktree = !!process.env.CHANGELOG_WORKTREE;
+  let workdir = providedWorktree ? path.resolve(process.env.CHANGELOG_WORKTREE as string) : repoRoot;
+  let createdTempDir: string | null = null;
   const repoPresent = isGitRepo(workdir);
-  if (!repoPresent) {
-    if (!process.env.CHANGELOG_WORKTREE) {
-      const os = await import('node:os');
+
+  if (providedWorktree) {
+    if (!repoPresent) {
+      fs.mkdirSync(workdir, { recursive: true });
+      runGit(['clone', getDefaultCloneUrl(), '.'], workdir);
+    } else if (isDirty(workdir)) {
+      logGit('Provided worktree is dirty; resetting and cleaning');
+      runGit(['reset', '--hard'], workdir);
+      runGit(['clean', '-fdx'], workdir);
+    }
+  } else {
+    if (!repoPresent) {
       const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'changelog-gen-'));
       workdir = tmp;
-    } else {
-      fs.mkdirSync(workdir, { recursive: true });
+      createdTempDir = tmp;
+      runGit(['clone', getDefaultCloneUrl(), '.'], workdir);
+    } else if (isDirty(workdir)) {
+      const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'changelog-gen-'));
+      workdir = tmp;
+      createdTempDir = tmp;
+      runGit(['clone', getDefaultCloneUrl(), '.'], workdir);
     }
-    exec(`git clone ${getDefaultCloneUrl()} .`, workdir);
-  } else if (!process.env.CHANGELOG_WORKTREE && isDirty(workdir)) {
-    const os = await import('node:os');
-    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'changelog-gen-'));
-    workdir = tmp;
-    exec(`git clone ${getDefaultCloneUrl()} .`, workdir);
   }
 
   logGit(`Using workdir: ${workdir}`);
-  exec(`git fetch origin ${data.pr.baseBranch}`, workdir);
-  exec(
-    `git checkout -B ${data.pr.baseBranch} origin/${data.pr.baseBranch}`,
-    workdir,
-  );
+  runGit(['fetch', 'origin', data.pr.baseBranch], workdir);
+  runGit(['checkout', '-B', data.pr.baseBranch, `origin/${data.pr.baseBranch}`], workdir);
 
   let branch = data.pr.branchName;
   try {
-    exec(`git checkout -b ${branch}`, workdir);
+    runGit(['checkout', '-b', branch], workdir);
   } catch {
-    branch = `${branch}-${Math.random().toString(36).slice(2, 6)}`;
-    exec(`git checkout -b ${branch}`, workdir);
+    branch = `${branch}-${randomUUID().slice(0, 8)}`;
+    runGit(['checkout', '-b', branch], workdir);
   }
 
   const written: Array<string> = [];
@@ -334,16 +350,16 @@ async function applyAction(repoRoot: string, inputPath?: string): Promise<void> 
     fs.mkdirSync(path.dirname(abs), { recursive: true });
     fs.writeFileSync(abs, f.content);
     try {
-      exec(`git add ${JSON.stringify(f.path)}`, workdir);
-      exec(`git commit -m ${JSON.stringify(f.commitMessage)}`, workdir);
+      runGit(['add', f.path], workdir);
+      runGit(['commit', '-m', f.commitMessage], workdir);
       written.push(f.path);
       commitCount += 1;
-    } catch {
-      // continue
+    } catch (err) {
+      logGit(`Failed to add/commit ${f.path}: ${err?.message || err}`);
     }
   }
 
-  exec(`git push -u origin ${branch}`, workdir);
+  runGit(['push', '-u', 'origin', branch], workdir);
 
   const octokit = createOctokit();
   const prRes = await octokit.rest.pulls.create({
@@ -368,6 +384,12 @@ async function applyAction(repoRoot: string, inputPath?: string): Promise<void> 
   } as const;
 
   process.stdout.write(JSON.stringify(summary, null, 2));
+
+  if (createdTempDir) {
+    try {
+      fs.rmSync(createdTempDir, { recursive: true, force: true });
+    } catch {}
+  }
 }
 
 async function main() {
