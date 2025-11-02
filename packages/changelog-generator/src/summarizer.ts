@@ -52,7 +52,7 @@ function normalizeText(text: string): string {
   return t.trim();
 }
 
-function heuristicSummarize(text: string, opts: { maxChars: number }): string {
+function heuristicSummarize(text: string, opts: { maxChars: number; maxBullets: number }): string {
   const cleaned = normalizeText(stripBoilerplate(text));
   const lines = cleaned.split(/\n+/).map((l) => l.trim()).filter(Boolean);
 
@@ -71,17 +71,20 @@ function heuristicSummarize(text: string, opts: { maxChars: number }): string {
   }
 
   const bullets: Array<string> = [];
-  for (const l of lines) {
-    if (l.startsWith('- ')) {
-      const b = l.slice(2).trim();
-      if (b && /[a-zA-Z]/.test(b)) bullets.push(b);
+  const maxBullets = Math.max(0, Math.min(10, opts.maxBullets || 0));
+  if (maxBullets > 0) {
+    for (const l of lines) {
+      if (l.startsWith('- ')) {
+        const b = l.slice(2).trim();
+        if (b && /[a-zA-Z]/.test(b)) bullets.push(b);
+      }
+      if (bullets.length >= maxBullets) break;
     }
-    if (bullets.length >= 3) break;
-  }
 
-  if (bullets.length === 0) {
-    const sentences = cleaned.split(/[.!?]\s+/).map((s) => s.trim()).filter((s) => s.length > 20 && /[a-zA-Z]/.test(s));
-    for (const s of sentences.slice(0, 3)) bullets.push(s + '.');
+    if (bullets.length === 0) {
+      const sentences = cleaned.split(/[.!?]\s+/).map((s) => s.trim()).filter((s) => s.length > 20 && /[a-zA-Z]/.test(s));
+      for (const s of sentences.slice(0, maxBullets)) bullets.push(s + '.');
+    }
   }
 
   return bullets.length > 0 ? [intro, ...bullets.map((b) => `- ${b}`)].join('\n') : intro;
@@ -150,7 +153,7 @@ export async function summarizeRelease(text: string, opts: { mode: 'off'|'heuris
     if (llm) return llm;
   }
   dbgSum('summarize:fallback heuristic');
-  return heuristicSummarize(text, { maxChars: opts.maxChars });
+  return heuristicSummarize(text, { maxChars: opts.maxChars, maxBullets: opts.maxBullets });
 }
 
 

@@ -10,8 +10,9 @@ import { summarizeRelease } from './summarizer.js';
 import { getLatestChangelogEntryDate } from './latest-entry.js';
 import { createOctokit, listReleases } from './octo.js';
 import type { RepoReleases } from './octo.js';
-import type { AnalyzeOutput } from './contracts.js';
+import type { AnalyzeOutput } from './schemas.js';
 import { renderChangelogEntry } from './template.js';
+import { ingestOpenApiCommits } from './openapi.js';
 
 const require = createRequire(import.meta.url);
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -33,6 +34,14 @@ const logGit = (...args: Array<any>) => {
     console.log('[changelog:git]', ...args);
   }
 };
+
+function toErrorMessage(err: unknown): string {
+  if (err && typeof err === 'object' && 'message' in err) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return String((err as any).message);
+  }
+  return String(err);
+}
 
 function usage(): never {
   console.error(
@@ -184,11 +193,64 @@ async function analyze(repoRoot: string): Promise<AnalyzeOutput> {
     }
   }
 
+  // OpenAPI-derived entries (API category)
+  let openapiLatestSha: string | null = null;
+  try {
+    const openapiCfg = (cfg as any).openapi as {
+      enabled?: boolean;
+      repo?: { owner: string; repo: string };
+      paths?: Array<string>;
+      lookbackDays?: number;
+    };
+    if (openapiCfg?.enabled && openapiCfg.repo && Array.isArray(openapiCfg.paths) && openapiCfg.paths.length > 0) {
+      const res = await ingestOpenApiCommits({
+        octokit,
+        cfg: {
+          enabled: true,
+          repo: { owner: openapiCfg.repo.owner, repo: openapiCfg.repo.repo },
+          paths: openapiCfg.paths,
+          lookbackDays: Number(openapiCfg.lookbackDays || 30),
+        },
+        latestLocalEntryDate: latestDate,
+        cachedSha: null,
+        buildEntry: (day, commits) => {
+          const title = `REST API: updates (open-api) ${day}`;
+          const lines: Array<string> = [];
+          for (const c of commits) {
+            const short = c.sha.slice(0, 7);
+            lines.push(`- ${short}: ${c.message} (${c.files.join(', ')})`);
+          }
+          const details = lines.join('\n');
+          const content = renderChangelogEntry({
+            repoRoot,
+            title,
+            categories: ['API'],
+            summary: lines[0] || 'Updates to the REST API specifications.',
+            detailedContent: details,
+          });
+          const filename = `${day}-rest-api-updates-open-api.md`;
+          return {
+            path: path.join('changelog', 'entries', filename),
+            content,
+            commitMessage: `chore(changelog): add REST API updates ${day}`,
+          };
+        },
+      });
+      includedFiles.push(...res.files);
+      openapiLatestSha = res.latestSha;
+      if (res.files.length === 0) {
+        skipped.push({ owner: openapiCfg.repo.owner, repo: openapiCfg.repo.repo, decision: 'skip', reason: 'no new open-api commits' });
+      }
+    }
+  } catch (e: any) {
+    errors.push({ owner: 'gleanwork', repo: 'open-api', reason: e?.message || 'error' });
+  }
+
   const bundleDate = today();
   const pr = {
     targetRepo: { owner: cfg.owner, repo: 'glean-developer-site' },
     baseBranch: cfg.baseBranch,
-    branchName: `chore/changelog-${bundleDate}-${Math.random().toString(36).slice(2, 8)}`,
+    branchName: `chore/changelog-${bundleDate}-${randomUUID().slice(0, 8)}`,
     title: `chore(changelog): ${bundleDate}`,
     body:
       includedFiles.length === 0
@@ -216,6 +278,7 @@ async function analyze(repoRoot: string): Promise<AnalyzeOutput> {
     latestChangelogEntryDate: latestDate,
     pr,
     files: includedFiles,
+    openapi: { latestProcessedSha: openapiLatestSha },
     report: {
       stats: {
         totalProcessed: cfg.repos.length,
@@ -355,7 +418,23 @@ async function applyAction(repoRoot: string, inputPath?: string): Promise<void> 
       written.push(f.path);
       commitCount += 1;
     } catch (err) {
-      logGit(`Failed to add/commit ${f.path}: ${err?.message || err}`);
+      logGit(`Failed to add/commit ${f.path}: ${toErrorMessage(err)}`);
+    }
+  }
+
+  // If we processed OpenAPI entries, persist the latest processed SHA into the repo (not in dry-run)
+  if (data.openapi && data.openapi.latestProcessedSha) {
+    const cacheRel = path.join('packages', 'changelog-generator', '.gleanwork-open-api-last-changed');
+    const cacheAbs = path.join(workdir, cacheRel);
+    fs.mkdirSync(path.dirname(cacheAbs), { recursive: true });
+    fs.writeFileSync(cacheAbs, data.openapi.latestProcessedSha + '\n');
+    try {
+      runGit(['add', cacheRel], workdir);
+      runGit(['commit', '-m', 'chore(changelog): update open-api baseline'], workdir);
+      commitCount += 1;
+      written.push(cacheRel);
+    } catch (err) {
+      logGit(`Failed to persist open-api baseline: ${toErrorMessage(err)}`);
     }
   }
 
