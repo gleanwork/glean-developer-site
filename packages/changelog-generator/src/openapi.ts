@@ -99,6 +99,51 @@ function hasMeaningfulChanges(diff: any): boolean {
 	return keys.length > 0;
 }
 
+function extractBulletsFromPb33f(diff: any): Array<string> {
+    const bullets: Array<string> = [];
+    if (!diff || typeof diff !== 'object') return bullets;
+
+    const methodKeys = ['get','post','put','delete','patch','head','options','trace'];
+
+    const pathsNode: any = diff.paths || diff.changedPaths || diff.addedPaths || {};
+    const pathNames: Array<string> = Array.isArray(pathsNode) ? pathsNode : Object.keys(pathsNode);
+    for (const pathName of pathNames) {
+        const pEntry = Array.isArray(pathsNode) ? undefined : pathsNode[pathName];
+        const opsContainer = pEntry && typeof pEntry === 'object' ? (pEntry.operations || pEntry.changed || pEntry.added || pEntry) : {};
+        for (const m of methodKeys) {
+            const op = opsContainer?.[m] || opsContainer?.[m.toUpperCase()];
+            if (!op) continue;
+            const changed = typeof op === 'boolean' ? op : Object.keys(op).length > 0;
+            if (changed) bullets.push(`Added/Changed ${m.toUpperCase()} ${pathName}`);
+        }
+    }
+
+    const paramsNode: any = diff.parameters || {};
+    const paramsAdded: Array<any> = paramsNode.added || [];
+    for (const par of paramsAdded) {
+        const name = typeof par === 'string' ? par : (par?.name || 'parameter');
+        bullets.push(`Added parameter ${name}`);
+    }
+
+    const responsesNode: any = diff.responses || {};
+    const respChanged = responsesNode.changed || {};
+    for (const code of Object.keys(respChanged)) bullets.push(`Changed response ${code}`);
+
+    const componentsNode: any = diff.components || {};
+    const schemasNode: any = componentsNode.schemas || diff.schemas || {};
+    const schemasAdded: Array<string> = schemasNode.added || [];
+    for (const s of schemasAdded) bullets.push(`Schema ${s}: added`);
+    const schemasChanged = schemasNode.changed || {};
+    for (const sName of Object.keys(schemasChanged)) {
+        const sDiff = schemasChanged[sName] || {};
+        const props = sDiff.properties || {};
+        const propsAdded: Array<string> = props.added || [];
+        for (const prop of propsAdded) bullets.push(`Schema ${sName}: added property ${prop}`);
+    }
+
+    return bullets;
+}
+
 export async function ingestOpenApiCommits(opts: {
 	octokit: Octokit;
 	cfg: OpenApiConfig;
@@ -182,38 +227,15 @@ export async function ingestOpenApiCommits(opts: {
                         meaningful = true;
                         // fallthrough to YAML extraction
 					}
-					// If diff is null (binary missing or failed), keep commit non-fatally
-                    if (diff == null || hasMeaningfulChanges(diff)) {
+                    if (diff != null) {
+                        if (hasMeaningfulChanges(diff)) {
+                            meaningful = true;
+                            const pb = extractBulletsFromPb33f(diff);
+                            if (pb.length > 0) bullets.push(...pb);
+                        }
+                    } else {
+                        // If diff is null (binary missing or failed), keep commit non-fatally without heuristic bullets
                         meaningful = true;
-                        // Extract bullets via YAML compare
-                        try {
-                            const baseDoc: any = yaml.load(baseContent);
-                            const headDoc: any = yaml.load(headContent);
-                            // operations added
-                            const baseOps = new Set<string>();
-                            const headOps = new Set<string>();
-                            const basePaths = (baseDoc?.paths || {}) as Record<string, any>;
-                            const headPaths = (headDoc?.paths || {}) as Record<string, any>;
-                            for (const p of Object.keys(basePaths)) {
-                                const obj = basePaths[p] || {};
-                                for (const m of Object.keys(obj)) if (typeof obj[m] === 'object') baseOps.add(`${m.toUpperCase()} ${p}`);
-                            }
-                            for (const p of Object.keys(headPaths)) {
-                                const obj = headPaths[p] || {};
-                                for (const m of Object.keys(obj)) if (typeof obj[m] === 'object') headOps.add(`${m.toUpperCase()} ${p}`);
-                            }
-                            for (const op of headOps) if (!baseOps.has(op)) bullets.push(`Added ${op}`);
-                            // schema properties added
-                            const baseSchemas = (baseDoc?.components?.schemas || {}) as Record<string, any>;
-                            const headSchemas = (headDoc?.components?.schemas || {}) as Record<string, any>;
-                            for (const schemaName of Object.keys(headSchemas)) {
-                                const headProps = headSchemas[schemaName]?.properties || {};
-                                const baseProps = baseSchemas[schemaName]?.properties || {};
-                                for (const propName of Object.keys(headProps)) {
-                                    if (!(propName in baseProps)) bullets.push(`Schema ${schemaName}: added property ${propName}`);
-                                }
-                            }
-                        } catch {}
                     }
 				}
                 if (!meaningful) commitMap.delete(sha);
