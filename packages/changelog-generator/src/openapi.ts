@@ -6,8 +6,6 @@ import { createRequire } from 'node:module';
 import yaml from 'js-yaml';
 import { runOpenApiChanges } from './openapi-changes-runner.js';
 
-const OPENAPI_BASELINE_CACHE_PATH = path.join('packages', 'changelog-generator', '.gleanwork-open-api-last-changed');
-
 const require = createRequire(import.meta.url);
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const dbg: any = require('debug');
@@ -25,7 +23,6 @@ export type OpenApiConfig = {
 
 export type OpenApiIngestResult = {
 	files: Array<{ path: string; content: string; commitMessage: string }>;
-	latestSha: string | null;
 	report: { days: number; commits: number; diffToolFailures: number };
 };
 
@@ -201,43 +198,19 @@ export async function ingestOpenApiCommits(opts: {
 	octokit: Octokit;
 	cfg: OpenApiConfig;
 	latestLocalEntryDate: string | null;
-	cachedSha: string | null;
 	buildEntry: (day: string, commits: Array<{ sha: string; message: string; files: Array<string>; diffs?: Array<{ baseYaml: string; headYaml: string; diff: any }> }>) => Promise<{ path: string; content: string; commitMessage: string } | null>;
 }): Promise<OpenApiIngestResult> {
-	if (!opts.cfg.enabled) return { files: [], latestSha: null, report: { days: 0, commits: 0, diffToolFailures: 0 } };
+	if (!opts.cfg.enabled) return { files: [], report: { days: 0, commits: 0, diffToolFailures: 0 } };
 
 	const { owner, repo } = opts.cfg.repo;
 
     let sinceIso: string | undefined = undefined;
-    let currentCachedSha: string | null = opts.cachedSha;
 
-	const cacheFilePath = path.join(process.cwd(), OPENAPI_BASELINE_CACHE_PATH);
-	if (fs.existsSync(cacheFilePath)) {
-		try {
-			currentCachedSha = fs.readFileSync(cacheFilePath, 'utf-8').trim();
-			dbgOpenApi('ingest: cached sha %s', currentCachedSha);
-		} catch {}
-	}
-
-    // Primary: anchor to latest local changelog entry date
     if (opts.latestLocalEntryDate) {
         const d = new Date(opts.latestLocalEntryDate + 'T00:00:00Z');
         const next = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() + 1));
         sinceIso = toIsoStartOfDay(next);
-    } else if (currentCachedSha) {
-        // Secondary: fallback to last processed baseline SHA date
-        try {
-            const detail = await getCommitDetails(opts.octokit, owner, repo, currentCachedSha);
-            const dateStr = detail.commit?.committer?.date || detail.commit?.author?.date;
-            if (dateStr) {
-                const d = new Date(dateStr);
-                const next = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() + 1));
-                sinceIso = toIsoStartOfDay(next);
-            }
-        } catch {}
-    }
-    if (!sinceIso) {
-        // Final fallback: lookback window
+    } else {
         sinceIso = toIsoStartOfDay(minusDaysUtc(opts.cfg.lookbackDays));
     }
 
@@ -318,12 +291,10 @@ export async function ingestOpenApiCommits(opts: {
 
 	const days = Array.from(dayBuckets.keys()).sort();
 	const files: Array<{ path: string; content: string; commitMessage: string }> = [];
-	let latestSha: string | null = currentCachedSha;
 	let totalCommits = 0;
 	for (const day of days) {
 		const entries = dayBuckets.get(day)!;
 		entries.sort((a, b) => (a.sha < b.sha ? -1 : 1));
-		for (const e of entries) latestSha = e.sha;
 		const entry = await opts.buildEntry(day, entries);
 		if (entry !== null) {
 			files.push(entry);
@@ -332,7 +303,7 @@ export async function ingestOpenApiCommits(opts: {
 		dbgOpenApi('day %s: %d meaningful commits', day, entries.length);
 	}
 
-	return { files, latestSha, report: { days: days.length, commits: totalCommits, diffToolFailures } };
+	return { files, report: { days: days.length, commits: totalCommits, diffToolFailures } };
 }
 
 

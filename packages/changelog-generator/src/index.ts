@@ -17,7 +17,6 @@ import { analyzeOpenApiChangesWithContext, formatChangeCategories } from './open
 import { enrichChangesWithContext } from './openapi-context.js';
 
 const OPENAPI_ENTRY_FILENAME_PATTERN = /rest-api-(updates|changes)-open-api\.md$/;
-const OPENAPI_BASELINE_CACHE_PATH = path.join('packages', 'changelog-generator', '.gleanwork-open-api-last-changed');
 const DEFAULT_OWNER = 'gleanwork';
 const DEFAULT_REPO = 'glean-developer-site';
 const DEFAULT_OPENAPI_REPO = 'open-api';
@@ -141,9 +140,12 @@ async function analyze(repoRoot: string): Promise<AnalyzeOutput> {
         continue;
       }
 
-      const latestRelease = candidates[0];
-      const relDate = latestRelease.published_at!.slice(0, 10);
-      if (relDate <= cutoff) {
+      const newReleases = candidates.filter((r: RepoReleases[number]) => {
+        const relDate = r.published_at!.slice(0, 10);
+        return relDate > cutoff;
+      });
+
+      if (newReleases.length === 0) {
         skipped.push({
           owner: spec.owner,
           repo: spec.repo,
@@ -154,45 +156,50 @@ async function analyze(repoRoot: string): Promise<AnalyzeOutput> {
         continue;
       }
 
-      const tag = latestRelease.tag_name || 'unknown';
-      const url = latestRelease.html_url || latestRelease.url || '';
-      const normalized = normalizeTag(tag);
-      const title = `${spec.repo} ${tag}`;
+      log(`${spec.repo}: processing ${newReleases.length} release(s) after ${cutoff}`);
 
-      const body = latestRelease.body?.trim() ?? '';
-      const summaryText = await summarizeRelease(body || title, {
-        mode: cfg.summarization.mode,
-        maxBullets: cfg.summarization.maxBullets,
-        maxChars: cfg.summarization.maxChars,
-        model: cfg.summarization.model,
-        category: spec.category,
-        hints: cfg.summarization.categoryHints?.[spec.category] || [],
-      });
-      const summary = summaryText;
+      for (const release of newReleases) {
+        const relDate = release.published_at!.slice(0, 10);
+        const tag = release.tag_name || 'unknown';
+        const url = release.html_url || release.url || '';
+        const normalized = normalizeTag(tag);
+        const title = `${spec.repo} ${tag}`;
 
-      const details = `Full release notes: ${url}`;
-      const datePrefix = relDate;
-      const slug = `${safeSlug(spec.repo)}-${safeSlug(normalized)}`;
+        const body = release.body?.trim() ?? '';
+        const summaryText = await summarizeRelease(body || title, {
+          mode: cfg.summarization.mode,
+          maxBullets: cfg.summarization.maxBullets,
+          maxChars: cfg.summarization.maxChars,
+          model: cfg.summarization.model,
+          category: spec.category,
+          hints: cfg.summarization.categoryHints?.[spec.category] || [],
+        });
+        const summary = summaryText;
 
-      let filename = `${datePrefix}-${slug}.md`;
-      const entriesDir = path.join(repoRoot, 'changelog', 'entries');
-      let counter = 1;
-      while (fs.existsSync(path.join(entriesDir, filename))) {
-        filename = `${datePrefix}-${slug}-${counter}.md`;
-        counter += 1;
+        const details = `Full release notes: ${url}`;
+        const datePrefix = relDate;
+        const slug = `${safeSlug(spec.repo)}-${safeSlug(normalized)}`;
+
+        let filename = `${datePrefix}-${slug}.md`;
+        const entriesDir = path.join(repoRoot, 'changelog', 'entries');
+        let counter = 1;
+        while (fs.existsSync(path.join(entriesDir, filename))) {
+          filename = `${datePrefix}-${slug}-${counter}.md`;
+          counter += 1;
+        }
+
+        const filePath = path.join('changelog', 'entries', filename);
+        const content = renderChangelogEntry({
+          repoRoot,
+          title,
+          categories: [spec.category],
+          summary,
+          detailedContent: details,
+        });
+        const commitMessage = `chore(changelog): add ${spec.repo} ${tag}`;
+        includedFiles.push({ path: filePath, content, commitMessage });
+        log(`${spec.repo}: queued ${filePath}`);
       }
-
-      const filePath = path.join('changelog', 'entries', filename);
-      const content = renderChangelogEntry({
-        repoRoot,
-        title,
-        categories: [spec.category],
-        summary,
-        detailedContent: details,
-      });
-      const commitMessage = `chore(changelog): add ${spec.repo} ${tag}`;
-      includedFiles.push({ path: filePath, content, commitMessage });
-      log(`${spec.repo}: queued ${filePath}`);
     } catch (e: any) {
       errors.push({
         owner: spec.owner,
@@ -204,7 +211,6 @@ async function analyze(repoRoot: string): Promise<AnalyzeOutput> {
   }
 
   // OpenAPI-derived entries (API category)
-  let openapiLatestSha: string | null = null;
   try {
     const openapiCfg = cfg.openapi;
     if (openapiCfg && openapiCfg.enabled && openapiCfg.repo && Array.isArray(openapiCfg.paths) && openapiCfg.paths.length > 0) {
@@ -220,7 +226,6 @@ async function analyze(repoRoot: string): Promise<AnalyzeOutput> {
           diffBin: (openapiCfg as any).diffBin,
         },
         latestLocalEntryDate: latestDate,
-        cachedSha: null,
         buildEntry: async (day, commits) => {
           const allChanges: Array<any> = [];
           let baseYaml = '';
@@ -254,23 +259,14 @@ async function analyze(repoRoot: string): Promise<AnalyzeOutput> {
           const changeTypes = formatChangeCategories(analyzed.categories);
           const title = `REST API: changes (${changeTypes}) ${day}`;
           
-          const detailLines: Array<string> = [];
-          if (analyzed.summary) {
-            detailLines.push(analyzed.summary);
-          }
-          if (analyzed.details.length > 0) {
-            detailLines.push('');
-            for (const detail of analyzed.details) {
-              detailLines.push(detail);
-            }
-          }
+          const detailedContent = analyzed.details.join('\n');
           
           const content = renderChangelogEntry({
             repoRoot,
             title,
             categories: ['API'],
             summary: analyzed.summary,
-            detailedContent: detailLines.join('\n'),
+            detailedContent,
           });
           const filename = `${day}-rest-api-changes-open-api.md`;
           return {
@@ -281,7 +277,6 @@ async function analyze(repoRoot: string): Promise<AnalyzeOutput> {
         },
       });
       includedFiles.push(...res.files);
-      openapiLatestSha = res.latestSha;
       log(`OpenAPI ingest: days=${res.report.days} commits=${res.report.commits} files=${res.files.length} diffToolFailures=${res.report.diffToolFailures}`);
       if (res.report.diffToolFailures > 0) {
         log(`Warning: ${res.report.diffToolFailures} OpenAPI diff tool failures occurred`);
@@ -326,7 +321,6 @@ async function analyze(repoRoot: string): Promise<AnalyzeOutput> {
     latestChangelogEntryDate: latestDate,
     pr,
     files: includedFiles,
-    openapi: { latestProcessedSha: openapiLatestSha },
     report: {
       stats: {
         totalProcessed: cfg.repos.length,
@@ -478,21 +472,6 @@ async function applyAction(repoRoot: string, inputPath?: string): Promise<void> 
       }
     }
 
-    const wroteOpenApiEntry = data.files.some((f) => OPENAPI_ENTRY_FILENAME_PATTERN.test(f.path));
-    if (wroteOpenApiEntry && data.openapi && data.openapi.latestProcessedSha) {
-      const cacheRel = OPENAPI_BASELINE_CACHE_PATH;
-      const cacheAbs = path.join(workdir, cacheRel);
-      fs.mkdirSync(path.dirname(cacheAbs), { recursive: true });
-      fs.writeFileSync(cacheAbs, data.openapi.latestProcessedSha + '\n');
-      try {
-        runGit(['add', cacheRel], workdir);
-        runGit(['commit', '-m', 'chore(changelog): update open-api baseline'], workdir);
-        commitCount += 1;
-        written.push(cacheRel);
-      } catch (err) {
-        logGit(`Failed to persist open-api baseline: ${toErrorMessage(err)}`);
-      }
-    }
 
     if (commitCount === 0) {
       const summary = {

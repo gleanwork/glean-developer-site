@@ -8,9 +8,6 @@ export type AnalyzeOutput = {
     body: string;
   };
   files: Array<{ path: string; content: string; commitMessage: string }>;
-  openapi?: {
-    latestProcessedSha: string | null;
-  };
   report: {
     stats: {
       totalProcessed: number;
