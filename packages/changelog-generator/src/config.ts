@@ -19,6 +19,15 @@ export type GeneratorConfig = {
     model?: string;
     categoryHints: Record<string, Array<string>>;
   };
+  openapi?: {
+    enabled: boolean;
+    repo: { owner: string; repo: string };
+    paths: Array<string>;
+    lookbackDays: number;
+    diffEnabled?: boolean;
+    diffBin?: string;
+    diffEngine?: 'pb33f' | 'none';
+  };
 };
 
 export function loadConfig(repoRoot: string): GeneratorConfig {
@@ -69,7 +78,35 @@ export function loadConfig(repoRoot: string): GeneratorConfig {
     categoryHints: (s.categoryHints as Record<string, Array<string>>) || {},
   };
 
-  return { owner, baseBranch, repos, summarization };
+  // openapi block (optional)
+  let openapi: GeneratorConfig['openapi'] | undefined = undefined;
+  const ocfg = (data as any)?.openapi;
+  if (ocfg && typeof ocfg === 'object') {
+    const enabled = Boolean(ocfg.enabled);
+    if (enabled) {
+      const repoObj = ocfg.repo || {};
+      const repoOwner = String(repoObj.owner || owner);
+      const repoName = String(repoObj.repo || 'open-api');
+      const paths = Array.isArray(ocfg.paths) ? ocfg.paths.map((p: any) => String(p)) : [];
+      const lookbackDays = Number.isFinite(ocfg.lookbackDays) ? Number(ocfg.lookbackDays) : 30;
+      const diffEnabled = typeof ocfg.diffEnabled === 'boolean' ? ocfg.diffEnabled : undefined;
+      const diffBin = typeof ocfg.diffBin === 'string' ? String(ocfg.diffBin) : undefined;
+      const diffEngine = ocfg.diffEngine === 'none' ? 'none' : (ocfg.diffEngine === 'pb33f' ? 'pb33f' : undefined);
+      if (paths.length > 0) {
+        openapi = {
+          enabled: true,
+          repo: { owner: repoOwner, repo: repoName },
+          paths,
+          lookbackDays,
+          diffEnabled,
+          diffBin,
+          diffEngine,
+        };
+      }
+    }
+  }
+
+  return { owner, baseBranch, repos, summarization, openapi };
 }
 
 

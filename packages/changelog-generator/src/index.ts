@@ -196,20 +196,18 @@ async function analyze(repoRoot: string): Promise<AnalyzeOutput> {
   // OpenAPI-derived entries (API category)
   let openapiLatestSha: string | null = null;
   try {
-    const openapiCfg = (cfg as any).openapi as {
-      enabled?: boolean;
-      repo?: { owner: string; repo: string };
-      paths?: Array<string>;
-      lookbackDays?: number;
-    };
-    if (openapiCfg?.enabled && openapiCfg.repo && Array.isArray(openapiCfg.paths) && openapiCfg.paths.length > 0) {
-      const res = await ingestOpenApiCommits({
+    const openapiCfg = cfg.openapi;
+    if (openapiCfg && openapiCfg.enabled && openapiCfg.repo && Array.isArray(openapiCfg.paths) && openapiCfg.paths.length > 0) {
+        const res = await ingestOpenApiCommits({
         octokit,
         cfg: {
           enabled: true,
           repo: { owner: openapiCfg.repo.owner, repo: openapiCfg.repo.repo },
           paths: openapiCfg.paths,
           lookbackDays: Number(openapiCfg.lookbackDays || 30),
+          diffEnabled: openapiCfg.diffEnabled,
+          diffEngine: openapiCfg.diffEngine,
+          diffBin: (openapiCfg as any).diffBin,
         },
         latestLocalEntryDate: latestDate,
         cachedSha: null,
@@ -217,8 +215,8 @@ async function analyze(repoRoot: string): Promise<AnalyzeOutput> {
           const title = `REST API: updates (open-api) ${day}`;
           const lines: Array<string> = [];
           for (const c of commits) {
-            const short = c.sha.slice(0, 7);
-            lines.push(`- ${short}: ${c.message} (${c.files.join(', ')})`);
+            const bullet = c.message.trim();
+            lines.push(`- ${bullet}`);
           }
           const details = lines.join('\n');
           const content = renderChangelogEntry({
@@ -238,6 +236,7 @@ async function analyze(repoRoot: string): Promise<AnalyzeOutput> {
       });
       includedFiles.push(...res.files);
       openapiLatestSha = res.latestSha;
+      log(`OpenAPI ingest: days=${res.report.days} commits=${res.report.commits} files=${res.files.length}`);
       if (res.files.length === 0) {
         skipped.push({ owner: openapiCfg.repo.owner, repo: openapiCfg.repo.repo, decision: 'skip', reason: 'no new open-api commits' });
       }
@@ -398,6 +397,14 @@ async function applyAction(repoRoot: string, inputPath?: string): Promise<void> 
   runGit(['fetch', 'origin', data.pr.baseBranch], workdir);
   runGit(['checkout', '-B', data.pr.baseBranch, `origin/${data.pr.baseBranch}`], workdir);
 
+  // Ensure git identity is configured in the target workdir (local scope)
+  try {
+    runGit(['config', 'user.name', process.env.GIT_AUTHOR_NAME || 'github-actions[bot]'], workdir);
+    runGit(['config', 'user.email', process.env.GIT_AUTHOR_EMAIL || '41898282+github-actions[bot]@users.noreply.github.com'], workdir);
+  } catch (err) {
+    logGit(`Failed to set git config: ${toErrorMessage(err)}`);
+  }
+
   let branch = data.pr.branchName;
   try {
     runGit(['checkout', '-b', branch], workdir);
@@ -436,6 +443,28 @@ async function applyAction(repoRoot: string, inputPath?: string): Promise<void> 
     } catch (err) {
       logGit(`Failed to persist open-api baseline: ${toErrorMessage(err)}`);
     }
+  }
+
+  // If nothing was committed, do not push or open a PR
+  if (commitCount === 0) {
+    const summary = {
+      owner: data.pr.targetRepo.owner,
+      repo: data.pr.targetRepo.repo,
+      baseBranch: data.pr.baseBranch,
+      branchName: branch,
+      filesWritten: written,
+      commitCount,
+      prUrl: null,
+      prNumber: null,
+      status: 'no_changes',
+    } as const;
+    process.stdout.write(JSON.stringify(summary, null, 2));
+    if (createdTempDir) {
+      try {
+        fs.rmSync(createdTempDir, { recursive: true, force: true });
+      } catch {}
+    }
+    return;
   }
 
   runGit(['push', '-u', 'origin', branch], workdir);
