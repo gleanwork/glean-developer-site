@@ -19,7 +19,7 @@ export function runOpenApiChanges(
     fs.writeFileSync(headFile, headSpecYaml);
 
     try {
-        const res = spawnSync(bin, ['--format=json', baseFile, headFile], {
+    const res = spawnSync(bin, ['diff', '--format', 'json', baseFile, headFile], {
             stdio: ['ignore', 'pipe', 'pipe'],
             shell: false,
             encoding: 'utf8',
