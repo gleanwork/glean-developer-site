@@ -2,11 +2,11 @@
 
 This package analyzes releases and OpenAPI spec changes and opens PRs with rendered changelog entries.
 
-## OpenAPI diffs (pb33f/openapi-changes)
+## OpenAPI diffs (openapi-changes)
 
 - Install the `openapi-changes` binary on your PATH (Linux/macOS):
   - Linux (GitHub Actions): the workflow installs the latest release automatically.
-  - macOS: download a release from `pb33f/openapi-changes` and place it in `/usr/local/bin`.
+  - macOS: download a release from [pb33f/openapi-changes](https://github.com/pb33f/openapi-changes) and place it in `/usr/local/bin`.
 - Optionally override the binary path with `CHANGELOG_OPENAPI_DIFF_BIN`.
 
 ## Environment

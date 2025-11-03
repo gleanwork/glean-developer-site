@@ -6,6 +6,8 @@ import { createRequire } from 'node:module';
 import yaml from 'js-yaml';
 import { runOpenApiChanges } from './openapi-changes-runner.js';
 
+const OPENAPI_BASELINE_CACHE_PATH = path.join('packages', 'changelog-generator', '.gleanwork-open-api-last-changed');
+
 const require = createRequire(import.meta.url);
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const dbg: any = require('debug');
@@ -18,13 +20,13 @@ export type OpenApiConfig = {
 	lookbackDays: number;
 	diffEnabled?: boolean;
 	diffBin?: string;
-	diffEngine?: 'pb33f' | 'none';
+	diffEngine?: 'openapi-changes' | 'none';
 };
 
 export type OpenApiIngestResult = {
 	files: Array<{ path: string; content: string; commitMessage: string }>;
 	latestSha: string | null;
-	report: { days: number; commits: number };
+	report: { days: number; commits: number; diffToolFailures: number };
 };
 
 type CommitDetail = {
@@ -32,6 +34,7 @@ type CommitDetail = {
 	message: string;
 	date: string;
 	files: Set<string>;
+	diffs?: Array<{ baseYaml: string; headYaml: string; diff: any }>;
 };
 
 function toIsoStartOfDay(date: Date): string {
@@ -58,8 +61,22 @@ export async function listCommitsForPath(
 	path: string,
 	sinceIso?: string,
 ): Promise<Endpoints['GET /repos/{owner}/{repo}/commits']['response']['data']> {
-	const res = await octokit.rest.repos.listCommits({ owner, repo, path, since: sinceIso, per_page: 100 });
-	return res.data;
+	const commits: Endpoints['GET /repos/{owner}/{repo}/commits']['response']['data'] = [];
+	
+	for await (const response of octokit.paginate.iterator(
+		octokit.rest.repos.listCommits,
+		{
+			owner,
+			repo,
+			path,
+			since: sinceIso,
+			per_page: 100,
+		}
+	)) {
+		commits.push(...response.data);
+		if (commits.length >= 200) break;
+	}
+	return commits;
 }
 
 async function getCommitDetails(
@@ -99,49 +116,85 @@ function hasMeaningfulChanges(diff: any): boolean {
 	return keys.length > 0;
 }
 
-function extractBulletsFromPb33f(diff: any): Array<string> {
+function extractBulletsFromDiff(diff: any): Array<string> {
     const bullets: Array<string> = [];
     if (!diff || typeof diff !== 'object') return bullets;
 
-    const methodKeys = ['get','post','put','delete','patch','head','options','trace'];
-
-    const pathsNode: any = diff.paths || diff.changedPaths || diff.addedPaths || {};
-    const pathNames: Array<string> = Array.isArray(pathsNode) ? pathsNode : Object.keys(pathsNode);
-    for (const pathName of pathNames) {
-        const pEntry = Array.isArray(pathsNode) ? undefined : pathsNode[pathName];
-        const opsContainer = pEntry && typeof pEntry === 'object' ? (pEntry.operations || pEntry.changed || pEntry.added || pEntry) : {};
-        for (const m of methodKeys) {
-            const op = opsContainer?.[m] || opsContainer?.[m.toUpperCase()];
-            if (!op) continue;
-            const changed = typeof op === 'boolean' ? op : Object.keys(op).length > 0;
-            if (changed) bullets.push(`Added/Changed ${m.toUpperCase()} ${pathName}`);
+    // Shape 1: flat arrays of items with type and value (openapi-changes JSON)
+    const arrays = ['added', 'changed', 'removed'] as const;
+    for (const key of arrays) {
+        const arr: Array<any> = Array.isArray(diff[key]) ? diff[key] : [];
+        for (const item of arr) {
+            const type = (item?.type || item?.kind || '').toString();
+            const v = item?.value || {};
+            const path = v.path || v.url || v.name || v.id || '';
+            const method = (v.method || v.verb || '').toString().toUpperCase();
+            if (type === 'PathItem' && path) bullets.push(`${capitalize(key)} path: ${path}`);
+            else if (type === 'Operation' && method && path) bullets.push(`${capitalize(key)} operation: ${method} ${path}`);
+            else if (type === 'Schema' && v.name) bullets.push(`${capitalize(key)} schema: ${v.name}`);
+            else if (type === 'Parameter' && v.name && v.in) bullets.push(`${capitalize(key)} parameter: ${v.name} (${v.in})`);
+            else if (type === 'Response' && v.code) bullets.push(`${capitalize(key)} response: ${v.code}`);
         }
     }
 
-    const paramsNode: any = diff.parameters || {};
-    const paramsAdded: Array<any> = paramsNode.added || [];
-    for (const par of paramsAdded) {
-        const name = typeof par === 'string' ? par : (par?.name || 'parameter');
-        bullets.push(`Added parameter ${name}`);
+    // Shape 2: nested objects for paths/operations/components
+    const methodKeys = ['get','post','put','delete','patch','head','options','trace'];
+    const pathsNode: any = diff.paths || diff.changedPaths || {};
+    if (pathsNode && typeof pathsNode === 'object') {
+        for (const pathName of Object.keys(pathsNode)) {
+            const pEntry = pathsNode[pathName] || {};
+            const opsContainer = pEntry.operations || pEntry.changed || pEntry.added || pEntry;
+            for (const m of methodKeys) {
+                const op = opsContainer?.[m] || opsContainer?.[m.toUpperCase()];
+                if (!op) continue;
+                const isChanged = typeof op === 'boolean' ? op : Object.keys(op).length > 0;
+                if (isChanged) bullets.push(`Changed operation: ${m.toUpperCase()} ${pathName}`);
+            }
+        }
     }
-
-    const responsesNode: any = diff.responses || {};
-    const respChanged = responsesNode.changed || {};
-    for (const code of Object.keys(respChanged)) bullets.push(`Changed response ${code}`);
 
     const componentsNode: any = diff.components || {};
     const schemasNode: any = componentsNode.schemas || diff.schemas || {};
-    const schemasAdded: Array<string> = schemasNode.added || [];
-    for (const s of schemasAdded) bullets.push(`Schema ${s}: added`);
-    const schemasChanged = schemasNode.changed || {};
-    for (const sName of Object.keys(schemasChanged)) {
-        const sDiff = schemasChanged[sName] || {};
-        const props = sDiff.properties || {};
-        const propsAdded: Array<string> = props.added || [];
-        for (const prop of propsAdded) bullets.push(`Schema ${sName}: added property ${prop}`);
+    if (Array.isArray(schemasNode.added)) {
+        for (const s of schemasNode.added) bullets.push(`Added schema: ${String(s)}`);
+    }
+    if (schemasNode.changed && typeof schemasNode.changed === 'object') {
+        for (const sName of Object.keys(schemasNode.changed)) {
+            const sDiff = schemasNode.changed[sName] || {};
+            const props = sDiff.properties || {};
+            const propsAdded: Array<string> = props.added || [];
+            for (const prop of propsAdded) bullets.push(`Schema ${sName}: added property ${String(prop)}`);
+        }
+    }
+
+    // Fallback summary when structure differs but we still know there are changes
+    if (bullets.length === 0 && hasMeaningfulChanges(diff)) {
+        const pathAdded = countArrayLen(diff.added, (i: any) => i?.type === 'PathItem');
+        const opAdded = countArrayLen(diff.added, (i: any) => i?.type === 'Operation');
+        const schemaAdded = countArrayLen(diff.added, (i: any) => i?.type === 'Schema');
+        const opChanged = countArrayLen(diff.changed, (i: any) => i?.type === 'Operation');
+        const schemaChanged = countArrayLen(diff.changed, (i: any) => i?.type === 'Schema');
+        const parts: Array<string> = [];
+        if (pathAdded) parts.push(`paths added: ${pathAdded}`);
+        if (opAdded) parts.push(`operations added: ${opAdded}`);
+        if (opChanged) parts.push(`operations changed: ${opChanged}`);
+        if (schemaAdded) parts.push(`schemas added: ${schemaAdded}`);
+        if (schemaChanged) parts.push(`schemas changed: ${schemaChanged}`);
+        if (parts.length > 0) bullets.push(parts.join(', '));
     }
 
     return bullets;
+}
+
+function countArrayLen(arr: any, pred: (v: any) => boolean): number {
+    if (!Array.isArray(arr)) return 0;
+    let n = 0;
+    for (const v of arr) if (pred(v)) n += 1;
+    return n;
+}
+
+function capitalize(s: string): string {
+    return s && s.length > 0 ? s[0].toUpperCase() + s.slice(1) : s;
 }
 
 export async function ingestOpenApiCommits(opts: {
@@ -149,16 +202,16 @@ export async function ingestOpenApiCommits(opts: {
 	cfg: OpenApiConfig;
 	latestLocalEntryDate: string | null;
 	cachedSha: string | null;
-	buildEntry: (day: string, commits: Array<{ sha: string; message: string; files: Array<string> }>) => { path: string; content: string; commitMessage: string };
+	buildEntry: (day: string, commits: Array<{ sha: string; message: string; files: Array<string>; diffs?: Array<{ baseYaml: string; headYaml: string; diff: any }> }>) => Promise<{ path: string; content: string; commitMessage: string } | null>;
 }): Promise<OpenApiIngestResult> {
-	if (!opts.cfg.enabled) return { files: [], latestSha: null, report: { days: 0, commits: 0 } };
+	if (!opts.cfg.enabled) return { files: [], latestSha: null, report: { days: 0, commits: 0, diffToolFailures: 0 } };
 
 	const { owner, repo } = opts.cfg.repo;
 
-	let sinceIso: string | undefined = undefined;
-	let currentCachedSha: string | null = opts.cachedSha;
+    let sinceIso: string | undefined = undefined;
+    let currentCachedSha: string | null = opts.cachedSha;
 
-	const cacheFilePath = path.join(process.cwd(), 'packages', 'changelog-generator', '.gleanwork-open-api-last-changed');
+	const cacheFilePath = path.join(process.cwd(), OPENAPI_BASELINE_CACHE_PATH);
 	if (fs.existsSync(cacheFilePath)) {
 		try {
 			currentCachedSha = fs.readFileSync(cacheFilePath, 'utf-8').trim();
@@ -166,30 +219,33 @@ export async function ingestOpenApiCommits(opts: {
 		} catch {}
 	}
 
-	if (currentCachedSha) {
-		try {
-			const detail = await getCommitDetails(opts.octokit, owner, repo, currentCachedSha);
-			const dateStr = detail.commit?.committer?.date || detail.commit?.author?.date;
-			if (dateStr) {
-				const d = new Date(dateStr);
-				const next = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() + 1));
-				sinceIso = toIsoStartOfDay(next);
-			}
-		} catch {}
-	}
-	if (!sinceIso) {
-		if (opts.latestLocalEntryDate) {
-			const d = new Date(opts.latestLocalEntryDate + 'T00:00:00Z');
-			const next = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() + 1));
-			sinceIso = toIsoStartOfDay(next);
-		} else {
-			sinceIso = toIsoStartOfDay(minusDaysUtc(opts.cfg.lookbackDays));
-		}
-	}
+    // Primary: anchor to latest local changelog entry date
+    if (opts.latestLocalEntryDate) {
+        const d = new Date(opts.latestLocalEntryDate + 'T00:00:00Z');
+        const next = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() + 1));
+        sinceIso = toIsoStartOfDay(next);
+    } else if (currentCachedSha) {
+        // Secondary: fallback to last processed baseline SHA date
+        try {
+            const detail = await getCommitDetails(opts.octokit, owner, repo, currentCachedSha);
+            const dateStr = detail.commit?.committer?.date || detail.commit?.author?.date;
+            if (dateStr) {
+                const d = new Date(dateStr);
+                const next = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() + 1));
+                sinceIso = toIsoStartOfDay(next);
+            }
+        } catch {}
+    }
+    if (!sinceIso) {
+        // Final fallback: lookback window
+        sinceIso = toIsoStartOfDay(minusDaysUtc(opts.cfg.lookbackDays));
+    }
 
     const commitMap = new Map<string, CommitDetail>();
     const commitBullets = new Map<string, Array<string>>();
+    const commitDiffs = new Map<string, Array<any>>();
 	for (const p of opts.cfg.paths) {
+		dbgOpenApi('list: %s/%s path=%s since=%s', owner, repo, p, sinceIso || 'none');
 		const commits = await listCommitsForPath(opts.octokit, owner, repo, p, sinceIso);
 		for (const c of commits) {
 			const sha = c.sha;
@@ -203,9 +259,11 @@ export async function ingestOpenApiCommits(opts: {
 		}
 	}
 
-	const engine = opts.cfg.diffEngine ?? 'pb33f';
+	const engine = opts.cfg.diffEngine ?? 'openapi-changes';
 	const isVitest = !!process.env.VITEST_WORKER_ID;
-	const useDiff = opts.cfg.diffEnabled !== false && engine === 'pb33f' && !isVitest;
+	const useDiff = opts.cfg.diffEnabled !== false && engine === 'openapi-changes' && !isVitest;
+	let diffToolFailures = 0;
+	
     if (useDiff) {
 		for (const [sha, rec] of Array.from(commitMap.entries())) {
 			try {
@@ -222,37 +280,40 @@ export async function ingestOpenApiCommits(opts: {
 					try {
 						diff = runOpenApiChanges(baseContent, headContent, opts.cfg.diffBin);
 					} catch (e) {
+						diffToolFailures++;
 						dbgOpenApi('diff: runner error for %s file %s %o', sha.slice(0, 7), f, e);
-						// Non-fatal: treat as meaningful to avoid dropping commits due to tooling issues
-                        meaningful = true;
-                        // fallthrough to YAML extraction
 					}
-                    if (diff != null) {
-                        if (hasMeaningfulChanges(diff)) {
-                            meaningful = true;
-                            const pb = extractBulletsFromPb33f(diff);
-                            if (pb.length > 0) bullets.push(...pb);
-                        }
-                    } else {
-                        // If diff is null (binary missing or failed), keep commit non-fatally without heuristic bullets
-                        meaningful = true;
-                    }
+					if (diff != null) {
+						if (hasMeaningfulChanges(diff)) {
+							meaningful = true;
+							const diffBullets = extractBulletsFromDiff(diff);
+							if (diffBullets.length > 0) bullets.push(...diffBullets);
+							
+							if (!commitDiffs.has(sha)) {
+								commitDiffs.set(sha, []);
+							}
+							commitDiffs.get(sha)!.push({ baseYaml: baseContent, headYaml: headContent, diff });
+						}
+					}
 				}
-                if (!meaningful) commitMap.delete(sha);
-                else if (bullets.length > 0) commitBullets.set(sha, bullets);
+				if (!meaningful) {
+					commitMap.delete(sha);
+				} else if (bullets.length > 0) {
+					commitBullets.set(sha, bullets);
+				}
 			} catch (err) {
 				dbgOpenApi('diff: error for %s %o', sha.slice(0, 7), err);
-				// Non-fatal
 			}
 		}
 	}
 
-	const dayBuckets = new Map<string, Array<{ sha: string; message: string; files: Array<string> }>>();
+	const dayBuckets = new Map<string, Array<{ sha: string; message: string; files: Array<string>; diffs?: Array<{ baseYaml: string; headYaml: string; diff: any }> }>>();
     for (const { sha, message, date, files } of commitMap.values()) {
 		if (!dayBuckets.has(date)) dayBuckets.set(date, []);
         const bullets = commitBullets.get(sha) || [];
         const msg = bullets.length > 0 ? bullets.slice(0, 5).join('; ') : message;
-        dayBuckets.get(date)!.push({ sha, message: msg, files: Array.from(files).sort() });
+        const diffs = commitDiffs.get(sha);
+        dayBuckets.get(date)!.push({ sha, message: msg, files: Array.from(files).sort(), diffs });
 	}
 
 	const days = Array.from(dayBuckets.keys()).sort();
@@ -263,12 +324,15 @@ export async function ingestOpenApiCommits(opts: {
 		const entries = dayBuckets.get(day)!;
 		entries.sort((a, b) => (a.sha < b.sha ? -1 : 1));
 		for (const e of entries) latestSha = e.sha;
-		files.push(opts.buildEntry(day, entries));
+		const entry = await opts.buildEntry(day, entries);
+		if (entry !== null) {
+			files.push(entry);
+		}
 		totalCommits += entries.length;
 		dbgOpenApi('day %s: %d meaningful commits', day, entries.length);
 	}
 
-	return { files, latestSha, report: { days: days.length, commits: totalCommits } };
+	return { files, latestSha, report: { days: days.length, commits: totalCommits, diffToolFailures } };
 }
 
 

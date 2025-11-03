@@ -2,6 +2,10 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import yaml from 'js-yaml';
 
+const DEFAULT_OWNER = 'gleanwork';
+const DEFAULT_BASE_BRANCH = 'main';
+const DEFAULT_OPENAPI_REPO = 'open-api';
+
 export type RepoSpec = {
   owner: string;
   repo: string;
@@ -26,7 +30,7 @@ export type GeneratorConfig = {
     lookbackDays: number;
     diffEnabled?: boolean;
     diffBin?: string;
-    diffEngine?: 'pb33f' | 'none';
+    diffEngine?: 'openapi-changes' | 'none';
   };
 };
 
@@ -42,14 +46,22 @@ export function loadConfig(repoRoot: string): GeneratorConfig {
   const raw = fs.readFileSync(envPath, 'utf-8');
   const data = yaml.load(raw) as any;
 
-  const owner = (data?.owner ? String(data.owner) : 'gleanwork').trim();
-  const baseBranch = (data?.baseBranch ? String(data.baseBranch) : 'main').trim();
+  const owner = (data?.owner ? String(data.owner) : DEFAULT_OWNER).trim();
+  const baseBranch = (data?.baseBranch ? String(data.baseBranch) : DEFAULT_BASE_BRANCH).trim();
   const repos: Array<RepoSpec> = Array.isArray(data?.repos)
-    ? (data.repos as Array<any>).map((r) => ({
-        owner,
-        repo: String(r.repo),
-        category: String(r.category),
-      }))
+    ? (data.repos as Array<any>).map((r, idx) => {
+        if (!r.repo) {
+          throw new Error(`Config repos[${idx}] missing required 'repo' field: ${JSON.stringify(r)}`);
+        }
+        if (!r.category) {
+          throw new Error(`Config repos[${idx}] missing required 'category' field: ${JSON.stringify(r)}`);
+        }
+        return {
+          owner,
+          repo: String(r.repo),
+          category: String(r.category),
+        };
+      })
     : [];
 
   if (repos.length === 0) {
@@ -86,12 +98,12 @@ export function loadConfig(repoRoot: string): GeneratorConfig {
     if (enabled) {
       const repoObj = ocfg.repo || {};
       const repoOwner = String(repoObj.owner || owner);
-      const repoName = String(repoObj.repo || 'open-api');
+      const repoName = String(repoObj.repo || DEFAULT_OPENAPI_REPO);
       const paths = Array.isArray(ocfg.paths) ? ocfg.paths.map((p: any) => String(p)) : [];
       const lookbackDays = Number.isFinite(ocfg.lookbackDays) ? Number(ocfg.lookbackDays) : 30;
       const diffEnabled = typeof ocfg.diffEnabled === 'boolean' ? ocfg.diffEnabled : undefined;
       const diffBin = typeof ocfg.diffBin === 'string' ? String(ocfg.diffBin) : undefined;
-      const diffEngine = ocfg.diffEngine === 'none' ? 'none' : (ocfg.diffEngine === 'pb33f' ? 'pb33f' : undefined);
+      const diffEngine = ocfg.diffEngine === 'none' ? 'none' : (ocfg.diffEngine === 'openapi-changes' ? 'openapi-changes' : undefined);
       if (paths.length > 0) {
         openapi = {
           enabled: true,

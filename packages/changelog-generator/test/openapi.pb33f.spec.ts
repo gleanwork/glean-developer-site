@@ -8,8 +8,8 @@ vi.mock('../src/openapi-changes-runner.js', () => ({
 
 import { ingestOpenApiCommits } from '../src/openapi.js';
 
-describe('openapi ingest via pb33f runner (mocked)', () => {
-  it('includes a day entry when pb33f reports changes', async () => {
+describe('openapi ingest via openapi-changes runner (mocked)', () => {
+  it('includes a day entry when openapi-changes reports changes', async () => {
     const fakeCommitSha = 'abcdef1234567890';
     const fakeParentSha = '123456abcdef0000';
 
@@ -35,6 +35,19 @@ describe('openapi ingest via pb33f runner (mocked)', () => {
           }),
         },
       },
+      paginate: {
+        iterator: vi.fn().mockImplementation(function* (fn: any, params: any) {
+          const result = {
+            data: [
+              {
+                sha: fakeCommitSha,
+                commit: { message: 'Add GET /v1/widgets', committer: { date: '2025-01-02T04:05:06Z' } },
+              },
+            ],
+          };
+          yield result;
+        }),
+      },
     };
 
     const res = await ingestOpenApiCommits({
@@ -45,11 +58,11 @@ describe('openapi ingest via pb33f runner (mocked)', () => {
         paths: ['final_specs/client_rest.yaml'],
         lookbackDays: 7,
         diffEnabled: true,
-        diffEngine: 'pb33f',
+        diffEngine: 'openapi-changes',
       },
       latestLocalEntryDate: null,
       cachedSha: null,
-      buildEntry: (day, commits) => {
+      buildEntry: async (day, commits) => {
         const content = `# ${day}\n` + commits.map((c) => `${c.sha.slice(0, 7)} ${c.message}`).join('\n');
         return {
           path: path.join('changelog', 'entries', `${day}-rest-api-updates-open-api.md`),

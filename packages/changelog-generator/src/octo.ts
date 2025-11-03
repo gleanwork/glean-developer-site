@@ -13,13 +13,21 @@ export async function listReleases(
   octokit: Octokit,
   params: { owner: string; repo: string },
 ): Promise<RepoReleases> {
-  const res = await octokit.rest.repos.listReleases({
-    owner: params.owner,
-    repo: params.repo,
-    per_page: 50,
-  });
+  const releases: RepoReleases = [];
   
-  return res.data;
+  for await (const response of octokit.paginate.iterator(
+    octokit.rest.repos.listReleases,
+    {
+      owner: params.owner,
+      repo: params.repo,
+      per_page: 100,
+    }
+  )) {
+    releases.push(...response.data);
+    if (releases.length >= 100) break;
+  }
+  
+  return releases;
 }
 
 

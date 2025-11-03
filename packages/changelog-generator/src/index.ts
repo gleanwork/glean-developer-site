@@ -13,6 +13,16 @@ import type { RepoReleases } from './octo.js';
 import type { AnalyzeOutput } from './schemas.js';
 import { renderChangelogEntry } from './template.js';
 import { ingestOpenApiCommits } from './openapi.js';
+import { analyzeOpenApiChangesWithContext, formatChangeCategories } from './openapi-summary.js';
+import { enrichChangesWithContext } from './openapi-context.js';
+
+const OPENAPI_ENTRY_FILENAME_PATTERN = /rest-api-(updates|changes)-open-api\.md$/;
+const OPENAPI_BASELINE_CACHE_PATH = path.join('packages', 'changelog-generator', '.gleanwork-open-api-last-changed');
+const DEFAULT_OWNER = 'gleanwork';
+const DEFAULT_REPO = 'glean-developer-site';
+const DEFAULT_OPENAPI_REPO = 'open-api';
+const GITHUB_RELEASES_LIMIT = 100;
+const GITHUB_COMMITS_LIMIT = 200;
 
 const require = createRequire(import.meta.url);
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -211,43 +221,82 @@ async function analyze(repoRoot: string): Promise<AnalyzeOutput> {
         },
         latestLocalEntryDate: latestDate,
         cachedSha: null,
-        buildEntry: (day, commits) => {
-          const title = `REST API: updates (open-api) ${day}`;
-          const lines: Array<string> = [];
+        buildEntry: async (day, commits) => {
+          const allChanges: Array<any> = [];
+          let baseYaml = '';
+          let headYaml = '';
+          
           for (const c of commits) {
-            const bullet = c.message.trim();
-            lines.push(`- ${bullet}`);
+            if (c.diffs) {
+              for (const diffData of c.diffs) {
+                if (diffData.baseYaml) baseYaml = diffData.baseYaml;
+                if (diffData.headYaml) headYaml = diffData.headYaml;
+                if (diffData.diff?.changes) {
+                  allChanges.push(...diffData.diff.changes);
+                }
+              }
+            }
           }
-          const details = lines.join('\n');
+          
+          if (allChanges.length === 0) {
+            log(`Skipping OpenAPI entry for ${day}: no changes found`);
+            return null;
+          }
+          
+          const contextualChanges = enrichChangesWithContext(allChanges, baseYaml, headYaml);
+          const analyzed = analyzeOpenApiChangesWithContext(contextualChanges);
+          
+          if (analyzed.categories.size === 0) {
+            log(`Skipping OpenAPI entry for ${day}: no meaningful changes detected`);
+            return null;
+          }
+          
+          const changeTypes = formatChangeCategories(analyzed.categories);
+          const title = `REST API: changes (${changeTypes}) ${day}`;
+          
+          const detailLines: Array<string> = [];
+          if (analyzed.summary) {
+            detailLines.push(analyzed.summary);
+          }
+          if (analyzed.details.length > 0) {
+            detailLines.push('');
+            for (const detail of analyzed.details) {
+              detailLines.push(detail);
+            }
+          }
+          
           const content = renderChangelogEntry({
             repoRoot,
             title,
             categories: ['API'],
-            summary: lines[0] || 'Updates to the REST API specifications.',
-            detailedContent: details,
+            summary: analyzed.summary,
+            detailedContent: detailLines.join('\n'),
           });
-          const filename = `${day}-rest-api-updates-open-api.md`;
+          const filename = `${day}-rest-api-changes-open-api.md`;
           return {
             path: path.join('changelog', 'entries', filename),
             content,
-            commitMessage: `chore(changelog): add REST API updates ${day}`,
+            commitMessage: `chore(changelog): add REST API changes ${day}`,
           };
         },
       });
       includedFiles.push(...res.files);
       openapiLatestSha = res.latestSha;
-      log(`OpenAPI ingest: days=${res.report.days} commits=${res.report.commits} files=${res.files.length}`);
+      log(`OpenAPI ingest: days=${res.report.days} commits=${res.report.commits} files=${res.files.length} diffToolFailures=${res.report.diffToolFailures}`);
+      if (res.report.diffToolFailures > 0) {
+        log(`Warning: ${res.report.diffToolFailures} OpenAPI diff tool failures occurred`);
+      }
       if (res.files.length === 0) {
         skipped.push({ owner: openapiCfg.repo.owner, repo: openapiCfg.repo.repo, decision: 'skip', reason: 'no new open-api commits' });
       }
     }
   } catch (e: any) {
-    errors.push({ owner: 'gleanwork', repo: 'open-api', reason: e?.message || 'error' });
+    errors.push({ owner: DEFAULT_OWNER, repo: DEFAULT_OPENAPI_REPO, reason: e?.message || 'error' });
   }
 
   const bundleDate = today();
   const pr = {
-    targetRepo: { owner: cfg.owner, repo: 'glean-developer-site' },
+    targetRepo: { owner: cfg.owner, repo: DEFAULT_REPO },
     baseBranch: cfg.baseBranch,
     branchName: `chore/changelog-${bundleDate}-${randomUUID().slice(0, 8)}`,
     title: `chore(changelog): ${bundleDate}`,
@@ -306,10 +355,10 @@ function runGit(args: Array<string>, cwd: string) {
 
 function getDefaultCloneUrl(): string {
   const token = process.env.GITHUB_TOKEN;
-  const base = 'github.com/gleanwork/glean-developer-site.git';
+  const base = `github.com/${DEFAULT_OWNER}/${DEFAULT_REPO}.git`;
   return token
     ? `https://x-access-token:${token}@${base}`
-    : `https://github.com/gleanwork/glean-developer-site.git`;
+    : `https://${base}`;
 }
 
 function isDirty(cwd: string): boolean {
@@ -393,60 +442,86 @@ async function applyAction(repoRoot: string, inputPath?: string): Promise<void> 
     }
   }
 
-  logGit(`Using workdir: ${workdir}`);
-  runGit(['fetch', 'origin', data.pr.baseBranch], workdir);
-  runGit(['checkout', '-B', data.pr.baseBranch, `origin/${data.pr.baseBranch}`], workdir);
-
-  // Ensure git identity is configured in the target workdir (local scope)
   try {
-    runGit(['config', 'user.name', process.env.GIT_AUTHOR_NAME || 'github-actions[bot]'], workdir);
-    runGit(['config', 'user.email', process.env.GIT_AUTHOR_EMAIL || '41898282+github-actions[bot]@users.noreply.github.com'], workdir);
-  } catch (err) {
-    logGit(`Failed to set git config: ${toErrorMessage(err)}`);
-  }
+    logGit(`Using workdir: ${workdir}`);
+    runGit(['fetch', 'origin', data.pr.baseBranch], workdir);
+    runGit(['checkout', '-B', data.pr.baseBranch, `origin/${data.pr.baseBranch}`], workdir);
 
-  let branch = data.pr.branchName;
-  try {
-    runGit(['checkout', '-b', branch], workdir);
-  } catch {
-    branch = `${branch}-${randomUUID().slice(0, 8)}`;
-    runGit(['checkout', '-b', branch], workdir);
-  }
-
-  const written: Array<string> = [];
-  let commitCount = 0;
-  for (const f of data.files) {
-    const abs = path.join(workdir, f.path);
-    fs.mkdirSync(path.dirname(abs), { recursive: true });
-    fs.writeFileSync(abs, f.content);
     try {
-      runGit(['add', f.path], workdir);
-      runGit(['commit', '-m', f.commitMessage], workdir);
-      written.push(f.path);
-      commitCount += 1;
+      runGit(['config', '--local', 'user.name', process.env.GIT_AUTHOR_NAME || 'github-actions[bot]'], workdir);
+      runGit(['config', '--local', 'user.email', process.env.GIT_AUTHOR_EMAIL || '41898282+github-actions[bot]@users.noreply.github.com'], workdir);
     } catch (err) {
-      logGit(`Failed to add/commit ${f.path}: ${toErrorMessage(err)}`);
+      logGit(`Failed to set git config: ${toErrorMessage(err)}`);
     }
-  }
 
-  // If we processed OpenAPI entries, persist the latest processed SHA into the repo (not in dry-run)
-  if (data.openapi && data.openapi.latestProcessedSha) {
-    const cacheRel = path.join('packages', 'changelog-generator', '.gleanwork-open-api-last-changed');
-    const cacheAbs = path.join(workdir, cacheRel);
-    fs.mkdirSync(path.dirname(cacheAbs), { recursive: true });
-    fs.writeFileSync(cacheAbs, data.openapi.latestProcessedSha + '\n');
+    let branch = data.pr.branchName;
     try {
-      runGit(['add', cacheRel], workdir);
-      runGit(['commit', '-m', 'chore(changelog): update open-api baseline'], workdir);
-      commitCount += 1;
-      written.push(cacheRel);
-    } catch (err) {
-      logGit(`Failed to persist open-api baseline: ${toErrorMessage(err)}`);
+      runGit(['checkout', '-b', branch], workdir);
+    } catch {
+      branch = `${branch}-${randomUUID().slice(0, 8)}`;
+      runGit(['checkout', '-b', branch], workdir);
     }
-  }
 
-  // If nothing was committed, do not push or open a PR
-  if (commitCount === 0) {
+    const written: Array<string> = [];
+    let commitCount = 0;
+    for (const f of data.files) {
+      const abs = path.join(workdir, f.path);
+      fs.mkdirSync(path.dirname(abs), { recursive: true });
+      fs.writeFileSync(abs, f.content);
+      try {
+        runGit(['add', f.path], workdir);
+        runGit(['commit', '-m', f.commitMessage], workdir);
+        written.push(f.path);
+        commitCount += 1;
+      } catch (err) {
+        logGit(`Failed to add/commit ${f.path}: ${toErrorMessage(err)}`);
+      }
+    }
+
+    const wroteOpenApiEntry = data.files.some((f) => OPENAPI_ENTRY_FILENAME_PATTERN.test(f.path));
+    if (wroteOpenApiEntry && data.openapi && data.openapi.latestProcessedSha) {
+      const cacheRel = OPENAPI_BASELINE_CACHE_PATH;
+      const cacheAbs = path.join(workdir, cacheRel);
+      fs.mkdirSync(path.dirname(cacheAbs), { recursive: true });
+      fs.writeFileSync(cacheAbs, data.openapi.latestProcessedSha + '\n');
+      try {
+        runGit(['add', cacheRel], workdir);
+        runGit(['commit', '-m', 'chore(changelog): update open-api baseline'], workdir);
+        commitCount += 1;
+        written.push(cacheRel);
+      } catch (err) {
+        logGit(`Failed to persist open-api baseline: ${toErrorMessage(err)}`);
+      }
+    }
+
+    if (commitCount === 0) {
+      const summary = {
+        owner: data.pr.targetRepo.owner,
+        repo: data.pr.targetRepo.repo,
+        baseBranch: data.pr.baseBranch,
+        branchName: branch,
+        filesWritten: written,
+        commitCount,
+        prUrl: null,
+        prNumber: null,
+        status: 'no_changes',
+      } as const;
+      process.stdout.write(JSON.stringify(summary, null, 2));
+      return;
+    }
+
+    runGit(['push', '-u', 'origin', branch], workdir);
+
+    const octokit = createOctokit();
+    const prRes = await octokit.rest.pulls.create({
+      owner: data.pr.targetRepo.owner,
+      repo: data.pr.targetRepo.repo,
+      head: branch,
+      base: data.pr.baseBranch,
+      title: data.pr.title,
+      body: data.pr.body,
+    });
+
     const summary = {
       owner: data.pr.targetRepo.owner,
       repo: data.pr.targetRepo.repo,
@@ -454,49 +529,18 @@ async function applyAction(repoRoot: string, inputPath?: string): Promise<void> 
       branchName: branch,
       filesWritten: written,
       commitCount,
-      prUrl: null,
-      prNumber: null,
-      status: 'no_changes',
+      prUrl: prRes.data.html_url,
+      prNumber: prRes.data.number,
+      status: 'created',
     } as const;
+
     process.stdout.write(JSON.stringify(summary, null, 2));
+  } finally {
     if (createdTempDir) {
       try {
         fs.rmSync(createdTempDir, { recursive: true, force: true });
       } catch {}
     }
-    return;
-  }
-
-  runGit(['push', '-u', 'origin', branch], workdir);
-
-  const octokit = createOctokit();
-  const prRes = await octokit.rest.pulls.create({
-    owner: data.pr.targetRepo.owner,
-    repo: data.pr.targetRepo.repo,
-    head: branch,
-    base: data.pr.baseBranch,
-    title: data.pr.title,
-    body: data.pr.body,
-  });
-
-  const summary = {
-    owner: data.pr.targetRepo.owner,
-    repo: data.pr.targetRepo.repo,
-    baseBranch: data.pr.baseBranch,
-    branchName: branch,
-    filesWritten: written,
-    commitCount,
-    prUrl: prRes.data.html_url,
-    prNumber: prRes.data.number,
-    status: 'created',
-  } as const;
-
-  process.stdout.write(JSON.stringify(summary, null, 2));
-
-  if (createdTempDir) {
-    try {
-      fs.rmSync(createdTempDir, { recursive: true, force: true });
-    } catch {}
   }
 }
 
