@@ -1,6 +1,6 @@
 ---
-title: 'Updates to API Reference Code Snippets'
-categories: ['Documentation']
+title: "Updates to API Reference Code Snippets"
+categories: ["Documentation"]
 ---
 
 Update the generated code snippets that are displayed throughout the [Client

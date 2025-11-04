@@ -1,6 +1,6 @@
 ---
-title: 'Official API Clients Release'
-categories: ['SDK']
+title: "Official API Clients Release"
+categories: ["SDK"]
 ---
 
 - Released official API clients for Glean in multiple languages, replacing the
@@ -15,4 +15,4 @@ categories: ['SDK']
   - [Go](https://github.com/gleanwork/api-client-go)
   - [Java](https://github.com/gleanwork/api-client-java)
 - Updated documentation with new installation instructions and usage examples
-- Visit the [API Clients](../libraries/api-clients) page for more information
+- Visit the [API Clients](../libraries/api-clients) page for more information 

@@ -188,6 +188,12 @@ async function summarizeWithGlean(
 
     const res = await client.client.chat.create({
       messages: [{ fragments: [{ text: prompt }] }],
+      agentConfig: {
+        toolSets: {
+          enableCompanyTools: false,
+          enableWebSearch: false,
+        }
+      },
     });
     dbgSum('summarize:response received');
     const parts: Array<string> = [];

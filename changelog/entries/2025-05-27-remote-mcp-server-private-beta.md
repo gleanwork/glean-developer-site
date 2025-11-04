@@ -1,6 +1,6 @@
 ---
-title: 'Remote MCP Server (private beta)'
-categories: ['MCP']
+title: "Remote MCP Server (private beta)"
+categories: ["MCP"]
 ---
 
 With Glean’s [remote MCP server](https://docs.anthropic.com/en/docs/agents-and-tools/remote-mcp-servers),

@@ -1,6 +1,6 @@
 ---
-title: 'New Indexing API Endpoints for Documents and Troubleshooting'
-categories: ['API']
+title: "New Indexing API Endpoints for Documents and Troubleshooting"
+categories: ["API"]
 ---
 
 - [/updatepermissions](../api/indexing-api/update-document-permissions) Endpoint to update document permissions: Generally available

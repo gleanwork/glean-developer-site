@@ -1,6 +1,6 @@
 ---
-title: 'New Features for Tools and Agents API, API Clients, MCP'
-categories: ['API']
+title: "New Features for Tools and Agents API, API Clients, MCP"
+categories: ["API"]
 ---
 
 - New Features:
@@ -18,4 +18,4 @@ categories: ['API']
     provided. This affects the following API endpoints: - `/rest/api/v1/search` - `/rest/api/v1/recommendations` - `rest/api/v1/adminsearch`
 - Breaking Changes: - Python API client: the request body OpenAPI spec change resulted in a
   breaking change due to language semantics. This aligns search method
-  parameters with other methods in the API.
+  parameters with other methods in the API. 
