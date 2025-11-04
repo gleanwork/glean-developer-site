@@ -3,7 +3,7 @@ title: 'api-client-typescript v0.11.1'
 categories: ['API Clients']
 ---
 
-Summarizing the provided release notes into a concise user-facing summary This release adds a new parameters field to followupActions.generatedQna objects across many API endpoints, enhancing the structure and detail of follow-up actions in responses. - The parameters field is now included in...
+Summarizing the release notes to highlight new parameters fields and their impact This release adds a new 'parameters' field to followupActions.generatedQna objects in many request and response payloads across numerous endpoints, enabling richer action customization. - The 'parameters' field is now...
 
 {/* truncate */}
 
