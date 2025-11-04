@@ -3,7 +3,7 @@ title: 'mcp-config-schema v0.8.0'
 categories: ['MCP']
 ---
 
-Native HTTP support has been added to Goose, improving protocol compatibility and integration options. - Goose now supports native HTTP, enabling broader protocol-level interoperability. - Internal documentation (CLIENTS.md) has been updated to reflect recent configuration changes.
+Goose now supports native HTTP, improving protocol compatibility and integration options. - Native HTTP support added to Goose for enhanced protocol-level flexibility. - Internal documentation (CLIENTS.md) updated to reflect recent config changes.
 
 {/* truncate */}
 
