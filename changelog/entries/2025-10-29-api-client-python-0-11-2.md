@@ -3,7 +3,7 @@ title: 'api-client-python v0.11.2'
 categories: ['API Clients']
 ---
 
-The 0.11.2 release updates the API client with a change to the response structure for insights retrieval. - The response from glean.client.insights.retrieve() has a changed agents_response field. - Review integrations using this method for compatibility with the updated response structure. - No new...
+The 0.11.2 release updates the response structure for the insights retrieval API, which may affect integrations relying on this data. - The response field agents_response in glean.client.insights.retrieve() has changed. - Review and update any code that parses or depends on agents_response to...
 
 {/* truncate */}
 
