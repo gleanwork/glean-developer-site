@@ -3,7 +3,7 @@ title: 'configure-mcp-server v1.0.0'
 categories: ['MCP']
 ---
 
-Initial release of the MCP server configurator CLI enables streamlined setup and integration for Glean users. - Provides essential configuration flows for integrating with the MCP Server. - Simplifies protocol-level setup for new MCP deployments. - Lays the foundation for future enhancements and...
+Initial release of the MCP server configurator CLI enables streamlined setup and integration for Glean users. - Provides essential configuration flows for connecting and managing MCP Server. - Simplifies protocol-level integration with MCP infrastructure. - Lays the foundation for future...
 
 {/* truncate */}
 
