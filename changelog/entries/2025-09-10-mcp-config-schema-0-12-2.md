@@ -3,7 +3,7 @@ title: 'mcp-config-schema v0.12.2'
 categories: ['MCP']
 ---
 
-This update improves the reliability of the one-click URL generator in browser environments. - The one-click URL generator no longer relies on Buffer, ensuring better compatibility in browsers. - No protocol-level or config schema changes were introduced. - Users should experience fewer issues...
+A fix improves the reliability of the one-click URL generator in browser environments. - The one-click URL generator no longer relies on Buffer, ensuring compatibility in browsers. - Users should experience fewer issues generating URLs in web-based workflows.
 
 {/* truncate */}
 
