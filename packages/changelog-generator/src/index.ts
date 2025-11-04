@@ -8,8 +8,8 @@ import * as os from 'node:os';
 import { loadConfig } from './config.js';
 import { summarizeRelease } from './summarizer.js';
 import { getLatestChangelogEntryDate } from './latest-entry.js';
-import { createOctokit, listReleases } from './octo.js';
-import type { RepoReleases } from './octo.js';
+import { createOctokit, listReleases, findExistingChangelogPR } from './octo.js';
+import type { RepoReleases, PullRequest } from './octo.js';
 import type { AnalyzeOutput } from './schemas.js';
 import { renderChangelogEntry } from './template.js';
 import { ingestOpenApiCommits } from './openapi.js';
@@ -448,12 +448,50 @@ async function applyAction(repoRoot: string, inputPath?: string): Promise<void> 
       logGit(`Failed to set git config: ${toErrorMessage(err)}`);
     }
 
+    const octokit = createOctokit();
+    const bundleDate = today();
+    const branchPrefix = `chore/changelog-${bundleDate}`;
+    
+    let existingPR: PullRequest | null = null;
     let branch = data.pr.branchName;
+    let isUpdatingExistingPR = false;
+
     try {
-      runGit(['checkout', '-b', branch], workdir);
-    } catch {
-      branch = `${branch}-${randomUUID().slice(0, 8)}`;
-      runGit(['checkout', '-b', branch], workdir);
+      existingPR = await findExistingChangelogPR(octokit, {
+        owner: data.pr.targetRepo.owner,
+        repo: data.pr.targetRepo.repo,
+        branchPrefix,
+        baseBranch: data.pr.baseBranch,
+      });
+    } catch (err) {
+      logGit(`Failed to check for existing PR: ${toErrorMessage(err)}`);
+    }
+
+    if (existingPR) {
+      branch = existingPR.head.ref;
+      isUpdatingExistingPR = true;
+      logGit(`Found existing PR #${existingPR.number} with branch ${branch}, will update it`);
+      try {
+        runGit(['fetch', 'origin', branch], workdir);
+        runGit(['checkout', branch], workdir);
+      } catch (err) {
+        logGit(`Failed to checkout existing branch ${branch}, creating new branch: ${toErrorMessage(err)}`);
+        isUpdatingExistingPR = false;
+        try {
+          runGit(['checkout', '-b', branch], workdir);
+        } catch {
+          branch = `${branch}-${randomUUID().slice(0, 8)}`;
+          runGit(['checkout', '-b', branch], workdir);
+        }
+      }
+    } else {
+      logGit(`No existing PR found for ${branchPrefix}, creating new branch`);
+      try {
+        runGit(['checkout', '-b', branch], workdir);
+      } catch {
+        branch = `${branch}-${randomUUID().slice(0, 8)}`;
+        runGit(['checkout', '-b', branch], workdir);
+      }
     }
 
     const written: Array<string> = [];
@@ -491,15 +529,53 @@ async function applyAction(repoRoot: string, inputPath?: string): Promise<void> 
 
     runGit(['push', '-u', 'origin', branch], workdir);
 
-    const octokit = createOctokit();
-    const prRes = await octokit.rest.pulls.create({
-      owner: data.pr.targetRepo.owner,
-      repo: data.pr.targetRepo.repo,
-      head: branch,
-      base: data.pr.baseBranch,
-      title: data.pr.title,
-      body: data.pr.body,
-    });
+    let prUrl: string | null = null;
+    let prNumber: number | null = null;
+    let status: 'created' | 'updated' = 'created';
+
+    if (isUpdatingExistingPR && existingPR) {
+      logGit(`Updating existing PR #${existingPR.number}`);
+      
+      const newBody = [
+        existingPR.body || '',
+        '',
+        `---`,
+        `**Updated**: Added ${written.length} new changelog entries in ${commitCount} commit(s).`,
+        '',
+        'New files:',
+        ...written.map((f) => `- ${f}`),
+      ].join('\n');
+
+      try {
+        await octokit.rest.pulls.update({
+          owner: data.pr.targetRepo.owner,
+          repo: data.pr.targetRepo.repo,
+          pull_number: existingPR.number,
+          body: newBody,
+        });
+        prUrl = existingPR.html_url;
+        prNumber = existingPR.number;
+        status = 'updated';
+      } catch (err) {
+        logGit(`Failed to update PR body: ${toErrorMessage(err)}`);
+        prUrl = existingPR.html_url;
+        prNumber = existingPR.number;
+        status = 'updated';
+      }
+    } else {
+      logGit(`Creating new PR`);
+      const prRes = await octokit.rest.pulls.create({
+        owner: data.pr.targetRepo.owner,
+        repo: data.pr.targetRepo.repo,
+        head: branch,
+        base: data.pr.baseBranch,
+        title: data.pr.title,
+        body: data.pr.body,
+      });
+      prUrl = prRes.data.html_url;
+      prNumber = prRes.data.number;
+      status = 'created';
+    }
 
     const summary = {
       owner: data.pr.targetRepo.owner,
@@ -508,9 +584,9 @@ async function applyAction(repoRoot: string, inputPath?: string): Promise<void> 
       branchName: branch,
       filesWritten: written,
       commitCount,
-      prUrl: prRes.data.html_url,
-      prNumber: prRes.data.number,
-      status: 'created',
+      prUrl,
+      prNumber,
+      status,
     } as const;
 
     process.stdout.write(JSON.stringify(summary, null, 2));

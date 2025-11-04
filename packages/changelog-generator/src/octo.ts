@@ -9,6 +9,9 @@ export function createOctokit(): Octokit {
 export type RepoReleases =
   Endpoints['GET /repos/{owner}/{repo}/releases']['response']['data'];
 
+export type PullRequest =
+  Endpoints['GET /repos/{owner}/{repo}/pulls']['response']['data'][number];
+
 export async function listReleases(
   octokit: Octokit,
   params: { owner: string; repo: string },
@@ -28,6 +31,29 @@ export async function listReleases(
   }
   
   return releases;
+}
+
+export async function findExistingChangelogPR(
+  octokit: Octokit,
+  params: { owner: string; repo: string; branchPrefix: string; baseBranch: string },
+): Promise<PullRequest | null> {
+  try {
+    const response = await octokit.rest.pulls.list({
+      owner: params.owner,
+      repo: params.repo,
+      state: 'open',
+      base: params.baseBranch,
+      per_page: 100,
+    });
+
+    const matchingPR = response.data.find((pr) =>
+      pr.head.ref.startsWith(params.branchPrefix)
+    );
+
+    return matchingPR || null;
+  } catch (e) {
+    return null;
+  }
 }
 
 
