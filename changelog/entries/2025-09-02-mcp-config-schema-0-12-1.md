@@ -3,7 +3,7 @@ title: 'mcp-config-schema v0.12.1'
 categories: ['MCP']
 ---
 
-This release fixes an issue with the browser bundle by ensuring server name utilities are properly exported. - Server name utilities are now accessible in the browser bundle. - Resolves previous import issues for browser-based integrations. - No protocol-level or config schema changes.
+This release fixes an issue with the browser bundle by ensuring server name utilities are properly exported. - Server name utilities are now available in the browser bundle. - Resolves previous issues where these utilities were missing for browser-based usage.
 
 {/* truncate */}
 
