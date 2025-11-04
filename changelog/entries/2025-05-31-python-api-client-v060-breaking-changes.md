@@ -1,6 +1,6 @@
 ---
-title: "Python API Client v0.6.0 - Breaking Changes"
-categories: ["SDK"]
+title: 'Python API Client v0.6.0 - Breaking Changes'
+categories: ['SDK']
 ---
 
 The Python API client now uses a namespaced package structure. All imports must be updated from `glean` to `glean.api_client`.
@@ -70,4 +70,4 @@ If you prefer to update manually, search for all instances of:
 
 - This change affects all Python API client users
 - No functional changes to the API itself - only import paths
-- Ensure you're using the latest version of the Python API client package 
+- Ensure you're using the latest version of the Python API client package

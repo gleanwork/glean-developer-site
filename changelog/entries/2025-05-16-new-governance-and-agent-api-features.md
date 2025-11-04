@@ -1,6 +1,6 @@
 ---
-title: "New Governance and Agent API Features"
-categories: ["API"]
+title: 'New Governance and Agent API Features'
+categories: ['API']
 ---
 
 - New Features:
@@ -29,4 +29,4 @@ categories: ["API"]
     - Python 0.4.1 uploaded to PyPI, requires 3.8+.
     - TypeScript 0.4.1 published, ESM, bundled types.
     - Go module path `github.com/gleaninc/glean-sdk-go/v4.1.0`.
-    - Java 0.4.1 available on Maven Central (`com.glean:glean-sdk:0.4.1`). 
+    - Java 0.4.1 available on Maven Central (`com.glean:glean-sdk:0.4.1`).
