@@ -3,7 +3,7 @@ title: 'api-client-python v0.10.0'
 categories: ['API Clients']
 ---
 
-The 0.10.0 release introduces a breaking change to the response structure of the glean.client.insights.retrieve() API client method. - The response format for glean.client.insights.retrieve() has changed; review and update your code to handle the new structure. - This may impact integrations or...
+The 0.10.0 release introduces a breaking change to the response format of the insights retrieval API client. - The response from glean.client.insights.retrieve() has changed; review your code for compatibility. - Update any parsing logic or integrations that depend on the previous response...
 
 {/* truncate */}
 
