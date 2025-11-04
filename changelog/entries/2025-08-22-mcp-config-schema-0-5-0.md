@@ -3,7 +3,7 @@ title: 'mcp-config-schema v0.5.0'
 categories: ['MCP']
 ---
 
-This release introduces updates to the MCP config schema, impacting how protocol-level configurations are defined and managed. - Added new fields to support advanced protocol customization. - Improved validation rules for existing configuration options. - Enhanced schema documentation for easier...
+This release introduces updates to the MCP config schema, impacting how configurations are defined and validated. - Added new fields and validation rules to the MCP configuration schema. - Improved protocol-level support for advanced configuration scenarios. - Enhanced error messaging for invalid...
 
 {/* truncate */}
 
