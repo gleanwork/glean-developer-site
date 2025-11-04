@@ -3,7 +3,7 @@ title: 'mcp-config-schema v0.13.1'
 categories: ['MCP']
 ---
 
-This release fixes compatibility for ChatGPT/Claude Enterprise and updates internal linting configuration. - Resolved an issue requiring "mcp-remote" for ChatGPT/Claude Enterprise integrations. - Upgraded to ESLint 9 with flat config for improved code quality.
+This release fixes compatibility issues with ChatGPT/Claude Enterprise and updates internal tooling. - Resolved a requirement issue for "mcp-remote" affecting ChatGPT/Claude Enterprise integrations. - Upgraded internal linting to ESLint 9 with flat config for improved code quality.
 
 {/* truncate */}
 
