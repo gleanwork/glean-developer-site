@@ -3,7 +3,7 @@ title: 'api-client-typescript v0.7.1'
 categories: ['API Clients']
 ---
 
-Reading full documents for key details **Reading:** Summarizing the provided release notes for breaking API changes and new features This release updates the TypeScript SDK to align with OpenAPI Doc 0.9.0, but the notes do not specify any breaking API changes, new endpoints, or changes to...
+Reading full documents for key details **Reading:** Summarizing the provided release notes for the Glean TypeScript API client This release updates the Glean TypeScript API client to align with OpenAPI Doc 0.9.0 and Speakeasy CLI 1.551.0, but no user-facing API changes, new endpoints, or breaking...
 
 {/* truncate */}
 
