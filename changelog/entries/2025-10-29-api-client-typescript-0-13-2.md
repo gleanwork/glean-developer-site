@@ -3,7 +3,7 @@ title: 'api-client-typescript v0.13.2'
 categories: ['API Clients']
 ---
 
-The 0.13.2 release updates the response structure for the insights retrieval API, which may affect integrations relying on agent data. - The glean.client.insights.retrieve() method has a changed response.agentsresponse field. - Review and update any code that parses or depends on the agentsresponse...
+The 0.13.2 release updates the response structure for the insights retrieval API, which may affect integrations parsing agent data. - The response field agentsresponse in glean.client.insights.retrieve() has changed. - Review and update any code that processes this field to ensure compatibility. -...
 
 {/* truncate */}
 
