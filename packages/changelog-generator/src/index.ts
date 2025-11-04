@@ -8,15 +8,23 @@ import * as os from 'node:os';
 import { loadConfig } from './config.js';
 import { summarizeRelease } from './summarizer.js';
 import { getLatestChangelogEntryDate } from './latest-entry.js';
-import { createOctokit, listReleases, findExistingChangelogPR } from './octo.js';
+import {
+  createOctokit,
+  listReleases,
+  findExistingChangelogPR,
+} from './octo.js';
 import type { RepoReleases, PullRequest } from './octo.js';
 import type { AnalyzeOutput } from './schemas.js';
 import { renderChangelogEntry } from './template.js';
 import { ingestOpenApiCommits } from './openapi.js';
-import { analyzeOpenApiChangesWithContext, formatChangeCategories } from './openapi-summary.js';
+import {
+  analyzeOpenApiChangesWithContext,
+  formatChangeCategories,
+} from './openapi-summary.js';
 import { enrichChangesWithContext } from './openapi-context.js';
 
-const OPENAPI_ENTRY_FILENAME_PATTERN = /rest-api-(updates|changes)-open-api\.md$/;
+const OPENAPI_ENTRY_FILENAME_PATTERN =
+  /rest-api-(updates|changes)-open-api\.md$/;
 const DEFAULT_OWNER = 'gleanwork';
 const DEFAULT_REPO = 'glean-developer-site';
 const DEFAULT_OPENAPI_REPO = 'open-api';
@@ -28,7 +36,8 @@ const require = createRequire(import.meta.url);
 const dbg: any = require('debug');
 const dbgBase = dbg('changelog');
 const dbgGitBase = dbg('changelog:git');
-const useDebug = typeof dbgBase?.enabled === 'boolean' ? dbgBase.enabled : !!process.env.DEBUG;
+const useDebug =
+  typeof dbgBase?.enabled === 'boolean' ? dbgBase.enabled : !!process.env.DEBUG;
 const log = (...args: Array<any>) => {
   if (useDebug) {
     dbgBase(...args);
@@ -91,10 +100,13 @@ function writePreview(analyzed: AnalyzeOutput, repoRoot: string): string {
 }
 
 async function findRepoRoot(startDir: string): Promise<string> {
-  const templateFile = await findUp((dir: string) => {
-    const p = path.join(dir, 'scripts', 'templates', 'changelog-entry.md');
-    return fs.existsSync(p) ? p : undefined;
-  }, { cwd: startDir });
+  const templateFile = await findUp(
+    (dir: string) => {
+      const p = path.join(dir, 'scripts', 'templates', 'changelog-entry.md');
+      return fs.existsSync(p) ? p : undefined;
+    },
+    { cwd: startDir },
+  );
   if (!templateFile) return startDir;
   return path.resolve(path.dirname(templateFile), '..', '..');
 }
@@ -156,7 +168,9 @@ async function analyze(repoRoot: string): Promise<AnalyzeOutput> {
         continue;
       }
 
-      log(`${spec.repo}: processing ${newReleases.length} release(s) after ${cutoff}`);
+      log(
+        `${spec.repo}: processing ${newReleases.length} release(s) after ${cutoff}`,
+      );
 
       for (const release of newReleases) {
         const relDate = release.published_at!.slice(0, 10);
@@ -213,8 +227,14 @@ async function analyze(repoRoot: string): Promise<AnalyzeOutput> {
   // OpenAPI-derived entries (API category)
   try {
     const openapiCfg = cfg.openapi;
-    if (openapiCfg && openapiCfg.enabled && openapiCfg.repo && Array.isArray(openapiCfg.paths) && openapiCfg.paths.length > 0) {
-        const res = await ingestOpenApiCommits({
+    if (
+      openapiCfg &&
+      openapiCfg.enabled &&
+      openapiCfg.repo &&
+      Array.isArray(openapiCfg.paths) &&
+      openapiCfg.paths.length > 0
+    ) {
+      const res = await ingestOpenApiCommits({
         octokit,
         cfg: {
           enabled: true,
@@ -230,7 +250,7 @@ async function analyze(repoRoot: string): Promise<AnalyzeOutput> {
           const allChanges: Array<any> = [];
           let baseYaml = '';
           let headYaml = '';
-          
+
           for (const c of commits) {
             if (c.diffs) {
               for (const diffData of c.diffs) {
@@ -242,25 +262,31 @@ async function analyze(repoRoot: string): Promise<AnalyzeOutput> {
               }
             }
           }
-          
+
           if (allChanges.length === 0) {
             log(`Skipping OpenAPI entry for ${day}: no changes found`);
             return null;
           }
-          
-          const contextualChanges = enrichChangesWithContext(allChanges, baseYaml, headYaml);
+
+          const contextualChanges = enrichChangesWithContext(
+            allChanges,
+            baseYaml,
+            headYaml,
+          );
           const analyzed = analyzeOpenApiChangesWithContext(contextualChanges);
-          
+
           if (analyzed.categories.size === 0) {
-            log(`Skipping OpenAPI entry for ${day}: no meaningful changes detected`);
+            log(
+              `Skipping OpenAPI entry for ${day}: no meaningful changes detected`,
+            );
             return null;
           }
-          
+
           const changeTypes = formatChangeCategories(analyzed.categories);
           const title = `REST API: changes (${changeTypes}) ${day}`;
-          
+
           const detailedContent = analyzed.details.join('\n');
-          
+
           const content = renderChangelogEntry({
             repoRoot,
             title,
@@ -277,16 +303,29 @@ async function analyze(repoRoot: string): Promise<AnalyzeOutput> {
         },
       });
       includedFiles.push(...res.files);
-      log(`OpenAPI ingest: days=${res.report.days} commits=${res.report.commits} files=${res.files.length} diffToolFailures=${res.report.diffToolFailures}`);
+      log(
+        `OpenAPI ingest: days=${res.report.days} commits=${res.report.commits} files=${res.files.length} diffToolFailures=${res.report.diffToolFailures}`,
+      );
       if (res.report.diffToolFailures > 0) {
-        log(`Warning: ${res.report.diffToolFailures} OpenAPI diff tool failures occurred`);
+        log(
+          `Warning: ${res.report.diffToolFailures} OpenAPI diff tool failures occurred`,
+        );
       }
       if (res.files.length === 0) {
-        skipped.push({ owner: openapiCfg.repo.owner, repo: openapiCfg.repo.repo, decision: 'skip', reason: 'no new open-api commits' });
+        skipped.push({
+          owner: openapiCfg.repo.owner,
+          repo: openapiCfg.repo.repo,
+          decision: 'skip',
+          reason: 'no new open-api commits',
+        });
       }
     }
   } catch (e: any) {
-    errors.push({ owner: DEFAULT_OWNER, repo: DEFAULT_OPENAPI_REPO, reason: e?.message || 'error' });
+    errors.push({
+      owner: DEFAULT_OWNER,
+      repo: DEFAULT_OPENAPI_REPO,
+      reason: e?.message || 'error',
+    });
   }
 
   const bundleDate = today();
@@ -311,7 +350,10 @@ async function analyze(repoRoot: string): Promise<AnalyzeOutput> {
             ),
             errors.length > 0 ? '' : null,
             errors.length > 0 ? 'Errors:' : null,
-            ...errors.map((er: AnalyzeOutput['report']['errors'][number]) => `- {repo: ${er.repo}, reason: ${er.reason}}`),
+            ...errors.map(
+              (er: AnalyzeOutput['report']['errors'][number]) =>
+                `- {repo: ${er.repo}, reason: ${er.reason}}`,
+            ),
           ]
             .filter((v) => v !== null)
             .join('\n'),
@@ -350,9 +392,7 @@ function runGit(args: Array<string>, cwd: string) {
 function getDefaultCloneUrl(): string {
   const token = process.env.GITHUB_TOKEN;
   const base = `github.com/${DEFAULT_OWNER}/${DEFAULT_REPO}.git`;
-  return token
-    ? `https://x-access-token:${token}@${base}`
-    : `https://${base}`;
+  return token ? `https://x-access-token:${token}@${base}` : `https://${base}`;
 }
 
 function isDirty(cwd: string): boolean {
@@ -386,7 +426,30 @@ function isGitRepo(cwd: string): boolean {
   }
 }
 
-async function applyAction(repoRoot: string, inputPath?: string): Promise<void> {
+function runPrettier(filePath: string, cwd: string) {
+  const { spawnSync } = require('node:child_process');
+  const res = spawnSync(
+    'pnpm',
+    [
+      'prettier',
+      '--write',
+      '--ignore-path',
+      '/dev/null',
+      '--parser',
+      'mdx',
+      filePath,
+    ],
+    { stdio: 'inherit', cwd, shell: false },
+  );
+  if (typeof res.status === 'number' && res.status !== 0) {
+    logGit(`Warning: prettier failed for ${filePath} with code ${res.status}`);
+  }
+}
+
+async function applyAction(
+  repoRoot: string,
+  inputPath?: string,
+): Promise<void> {
   const inputStr = inputPath
     ? fs.readFileSync(inputPath, 'utf-8')
     : fs.readFileSync(0, 'utf-8');
@@ -409,7 +472,9 @@ async function applyAction(repoRoot: string, inputPath?: string): Promise<void> 
   }
 
   const providedWorktree = !!process.env.CHANGELOG_WORKTREE;
-  let workdir = providedWorktree ? path.resolve(process.env.CHANGELOG_WORKTREE as string) : repoRoot;
+  let workdir = providedWorktree
+    ? path.resolve(process.env.CHANGELOG_WORKTREE as string)
+    : repoRoot;
   let createdTempDir: string | null = null;
   const repoPresent = isGitRepo(workdir);
 
@@ -439,11 +504,31 @@ async function applyAction(repoRoot: string, inputPath?: string): Promise<void> 
   try {
     logGit(`Using workdir: ${workdir}`);
     runGit(['fetch', 'origin', data.pr.baseBranch], workdir);
-    runGit(['checkout', '-B', data.pr.baseBranch, `origin/${data.pr.baseBranch}`], workdir);
+    runGit(
+      ['checkout', '-B', data.pr.baseBranch, `origin/${data.pr.baseBranch}`],
+      workdir,
+    );
 
     try {
-      runGit(['config', '--local', 'user.name', process.env.GIT_AUTHOR_NAME || 'github-actions[bot]'], workdir);
-      runGit(['config', '--local', 'user.email', process.env.GIT_AUTHOR_EMAIL || '41898282+github-actions[bot]@users.noreply.github.com'], workdir);
+      runGit(
+        [
+          'config',
+          '--local',
+          'user.name',
+          process.env.GIT_AUTHOR_NAME || 'github-actions[bot]',
+        ],
+        workdir,
+      );
+      runGit(
+        [
+          'config',
+          '--local',
+          'user.email',
+          process.env.GIT_AUTHOR_EMAIL ||
+            '41898282+github-actions[bot]@users.noreply.github.com',
+        ],
+        workdir,
+      );
     } catch (err) {
       logGit(`Failed to set git config: ${toErrorMessage(err)}`);
     }
@@ -451,7 +536,7 @@ async function applyAction(repoRoot: string, inputPath?: string): Promise<void> 
     const octokit = createOctokit();
     const bundleDate = today();
     const branchPrefix = `chore/changelog-${bundleDate}`;
-    
+
     let existingPR: PullRequest | null = null;
     let branch = data.pr.branchName;
     let isUpdatingExistingPR = false;
@@ -470,12 +555,16 @@ async function applyAction(repoRoot: string, inputPath?: string): Promise<void> 
     if (existingPR) {
       branch = existingPR.head.ref;
       isUpdatingExistingPR = true;
-      logGit(`Found existing PR #${existingPR.number} with branch ${branch}, will update it`);
+      logGit(
+        `Found existing PR #${existingPR.number} with branch ${branch}, will update it`,
+      );
       try {
         runGit(['fetch', 'origin', branch], workdir);
         runGit(['checkout', branch], workdir);
       } catch (err) {
-        logGit(`Failed to checkout existing branch ${branch}, creating new branch: ${toErrorMessage(err)}`);
+        logGit(
+          `Failed to checkout existing branch ${branch}, creating new branch: ${toErrorMessage(err)}`,
+        );
         isUpdatingExistingPR = false;
         try {
           runGit(['checkout', '-b', branch], workdir);
@@ -500,6 +589,15 @@ async function applyAction(repoRoot: string, inputPath?: string): Promise<void> 
       const abs = path.join(workdir, f.path);
       fs.mkdirSync(path.dirname(abs), { recursive: true });
       fs.writeFileSync(abs, f.content);
+
+      if (f.path.endsWith('.md')) {
+        try {
+          runPrettier(f.path, workdir);
+        } catch (err) {
+          logGit(`Failed to format ${f.path}: ${toErrorMessage(err)}`);
+        }
+      }
+
       try {
         runGit(['add', f.path], workdir);
         runGit(['commit', '-m', f.commitMessage], workdir);
@@ -509,7 +607,6 @@ async function applyAction(repoRoot: string, inputPath?: string): Promise<void> 
         logGit(`Failed to add/commit ${f.path}: ${toErrorMessage(err)}`);
       }
     }
-
 
     if (commitCount === 0) {
       const summary = {
@@ -535,7 +632,7 @@ async function applyAction(repoRoot: string, inputPath?: string): Promise<void> 
 
     if (isUpdatingExistingPR && existingPR) {
       logGit(`Updating existing PR #${existingPR.number}`);
-      
+
       const newBody = [
         existingPR.body || '',
         '',
@@ -604,7 +701,12 @@ async function main() {
   // Load env from repo root explicitly so workspace runs see root .env
   try {
     const rootEnvPath = path.join(repoRoot, '.env');
-    const pkgEnvPath = path.join(repoRoot, 'packages', 'changelog-generator', '.env');
+    const pkgEnvPath = path.join(
+      repoRoot,
+      'packages',
+      'changelog-generator',
+      '.env',
+    );
     if (fs.existsSync(rootEnvPath)) dotenv.config({ path: rootEnvPath });
     if (fs.existsSync(pkgEnvPath)) dotenv.config({ path: pkgEnvPath });
   } catch {
@@ -663,6 +765,3 @@ main().catch((err) => {
   console.error('[main]', err?.stack || err?.message || String(err));
   process.exit(1);
 });
-
-
-
