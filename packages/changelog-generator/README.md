@@ -19,6 +19,6 @@ This package analyzes releases and OpenAPI spec changes and opens PRs with rende
 ```bash
 pnpm -C packages/changelog-generator run run -- --dry-run
 ```
-
 This writes preview files under `.changelog-preview-<timestamp>` and logs entries in debug mode when `DEBUG=changelog*`.
+
 

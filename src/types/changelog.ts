@@ -25,7 +25,7 @@ export const TAG_TO_CATEGORY_MAP: Record<string, string> = {
   'Client API': 'API',
   'Indexing API': 'API',
   'API Clients': 'SDK',
-  'Agent Interop Toolkit': 'SDK',
+  'Glean Agent Toolkit': 'SDK',
   'Glean Indexing SDK': 'SDK',
   'langchain-glean': 'SDK',
   MCP: 'SDK',

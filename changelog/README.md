@@ -68,7 +68,7 @@ Choose **one** primary component that this change affects:
 - **Client API** - REST API for search, chat, etc.
 - **Indexing API** - REST API for document indexing  
 - **API Clients** - Official SDKs for various languages
-- **Agent Interop Toolkit** - Tools for building AI agents
+- **Glean Agent Toolkit** - Tools for building AI agents
 - **Glean Indexing SDK** - SDK for custom indexing solutions
 - **langchain-glean** - LangChain integration package
 - **MCP** - Model Context Protocol server
@@ -90,7 +90,7 @@ Add **one or more** change type tags as needed:
 Tags are automatically mapped to semantic categories for filtering:
 
 - **API** ← Client API, Indexing API
-- **SDK** ← API Clients, Agent Interop Toolkit, Glean Indexing SDK, langchain-glean, MCP
+- **SDK** ← API Clients, Glean Agent Toolkit, Glean Indexing SDK, langchain-glean, MCP
 - **Feature/Enhancement/Bug Fix/etc.** ← Change type tags
 
 ## Truncation

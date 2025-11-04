@@ -18,5 +18,3 @@ describe('template rendering', () => {
     expect(out).toContain('Details here');
   });
 });
-
-

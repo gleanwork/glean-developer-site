@@ -38,5 +38,3 @@ export function renderChangelogEntry(opts: {
   }
   return result;
 }
-
-

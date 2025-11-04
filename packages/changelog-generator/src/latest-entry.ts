@@ -31,5 +31,3 @@ export function getLatestChangelogEntryDate(repoRoot: string): string | null {
 
   return latestDate;
 }
-
-
