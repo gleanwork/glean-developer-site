@@ -3,7 +3,7 @@ title: 'api-client-java v0.10.4'
 categories: ['API Clients']
 ---
 
-The 0.10.4 release introduces a breaking change to the response structure of the glean.client.insights.retrieve() API method. - The response format for glean.client.insights.retrieve() has changed; review and update your code to handle the new structure. - This may impact integrations relying on...
+The 0.10.4 release updates the response structure for the insights retrieval API, which may affect integrations relying on previous response formats. - The response from glean.client.insights.retrieve() has changed—review and update any code that parses this response. - No new endpoints,...
 
 {/* truncate */}
 
