@@ -3,7 +3,7 @@ title: 'api-client-python v0.9.2'
 categories: ['API Clients']
 ---
 
-Generating a response based on the results This release adds a new parameters field to followup_actions in many API endpoints, enhancing the structure and detail of follow-up actions across announcements, answers, chat, collections, documents, search, and more. - The parameters field is now...
+Summarizing the changes in the glean 0.9.2 API client This release adds a new "parameters" field to many request and response objects across the API, enhancing the structure of follow-up actions in generated Q&A results. - The "parameters" field is now included in followup_actions for generated Q&A...
 
 {/* truncate */}
 
