@@ -3,7 +3,7 @@ title: 'mcp-config-schema v0.4.2'
 categories: ['MCP']
 ---
 
-Cursor handling now uses HTTP native protocol, improving reliability and compatibility. - Protocol-level update: cursor operations now leverage HTTP native protocol. - Internal scripts and documentation updated for maintainability. - No changes required to existing configuration schemas.
+Cursor handling has been updated to use HTTP native, improving protocol compatibility. - Protocol-level change: Cursor now uses HTTP native, which may affect integrations relying on previous cursor behavior. - No config schema updates in this release. - Internal maintenance and documentation...
 
 {/* truncate */}
 
