@@ -3,7 +3,7 @@ title: 'api-client-java v0.11.0'
 categories: ['API Clients']
 ---
 
-Image generation support has been added to chat API endpoints, enabling new capabilities for chat messages. - New useImageGeneration parameter added to chat creation and streaming requests and responses. - Responses now indicate if image generation was used in agent configuration. - No breaking...
+Image generation support has been added to chat API endpoints, enabling new capabilities for chat messages. - New useImageGeneration parameter is now available in chat creation and streaming requests and responses. - The retrieve chat endpoint now includes useImageGeneration in message agent...
 
 {/* truncate */}
 
