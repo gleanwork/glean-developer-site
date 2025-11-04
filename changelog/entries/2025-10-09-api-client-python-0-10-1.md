@@ -1,10 +1,10 @@
 ---
-title: 'api-client-python v0.10.1'
-categories: ['API Clients']
+title: "api-client-python v0.10.1"
+categories: ["API Clients"]
 ---
 
-A new field has been added to the API client, enhancing the insights retrieval response with agent icon data. - The field is now included in when using . - No breaking changes or changes to authentication, pagination, or endpoints. - Existing integrations remain compatible; the new field is...
+Summarizing the addition of the 'icon' field to 'response.agents_response.top_agents_insights' in 'glean.client.insights.retrieve The icon field was added to response.agents_response.top_agents_insights in glean.client.insights.retrieve(). - New icon field now available in each top_agents_insights...
 
 {/* truncate */}
 
-Full release notes: https://github.com/gleanwork/api-client-python/releases/tag/v0.10.1
+Full release notes: https://github.com/gleanwork/api-client-python/releases/tag/v0.10.1 

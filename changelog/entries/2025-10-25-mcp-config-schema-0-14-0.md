@@ -1,10 +1,10 @@
 ---
-title: 'mcp-config-schema v0.14.0'
-categories: ['MCP']
+title: "mcp-config-schema v0.14.0"
+categories: ["MCP"]
 ---
 
-MCP users must now install their own compatible version of zod, as it has been moved to peerDependencies. - Protocol-level: No protocol or config schema changes. - Breaking: zod is no longer bundled; users must manage zod v3 or v4 themselves. - Docs: Updated documentation links for supported hosts.
+- Breaking change: consumers must now install zod as a peer dependency - No protocol-level or config schema changes beyond dependency update - Documentation links for supported hosts updated
 
 {/* truncate */}
 
-Full release notes: https://github.com/gleanwork/mcp-config-schema/releases/tag/v0.14.0
+Full release notes: https://github.com/gleanwork/mcp-config-schema/releases/tag/v0.14.0 

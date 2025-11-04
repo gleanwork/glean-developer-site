@@ -1,10 +1,10 @@
 ---
-title: 'api-client-python v0.11.1'
-categories: ['API Clients']
+title: "api-client-python v0.11.1"
+categories: ["API Clients"]
 ---
 
-Summarizing the provided glean 0.11.1 API client release notes This release adds a new "chat" field to many API request and response objects, expanding structured results across announcements, answers, chat, collections, documents, search, and more. - The "chat" field is now included in...
+11.1 API client changes Added support for the chat field in structured_results for related_documents across multiple API client endpoints, and changed the response structure for glean.client.documents.retrieve(). - chat field now available in structured_results for related_documents in...
 
 {/* truncate */}
 
-Full release notes: https://github.com/gleanwork/api-client-python/releases/tag/v0.11.1
+Full release notes: https://github.com/gleanwork/api-client-python/releases/tag/v0.11.1 

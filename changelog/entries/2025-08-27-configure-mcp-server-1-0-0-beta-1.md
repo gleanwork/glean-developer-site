@@ -1,10 +1,10 @@
 ---
-title: 'configure-mcp-server v1.0.0-beta.1'
-categories: ['MCP']
+title: "configure-mcp-server v1.0.0-beta.1"
+categories: ["MCP"]
 ---
 
-Scoped package publishing is now fixed, and a new bin script has been added for improved usability. - Scoped packages can now be published without errors. - A bin script is now included for easier command-line access.
+- Scoped package publishing now works as expected - Bin script is included in the package
 
 {/* truncate */}
 
-Full release notes: https://github.com/gleanwork/configure-mcp-server/releases/tag/v1.0.0-beta.1
+Full release notes: https://github.com/gleanwork/configure-mcp-server/releases/tag/v1.0.0-beta.1 

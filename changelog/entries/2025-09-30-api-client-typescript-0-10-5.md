@@ -1,10 +1,10 @@
 ---
-title: 'api-client-typescript v0.10.5'
-categories: ['API Clients']
+title: "api-client-typescript v0.10.5"
+categories: ["API Clients"]
 ---
 
-The 0.10.5 release introduces a change to the request structure for the glean.client.insights.retrieve() API method, which may affect integrations. - The request format for glean.client.insights.retrieve() has changed; review and update your usage to ensure compatibility. - This update may require...
+Summarizing the changes for the changelog entry The request structure for glean.client.insights.retrieve() was changed. - This update may affect integrations relying on the previous request format. - Review your usage of glean.client.insights.retrieve() to ensure compatibility.
 
 {/* truncate */}
 
-Full release notes: https://github.com/gleanwork/api-client-typescript/releases/tag/v0.10.5
+Full release notes: https://github.com/gleanwork/api-client-typescript/releases/tag/v0.10.5 

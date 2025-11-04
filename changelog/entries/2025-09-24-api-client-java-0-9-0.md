@@ -1,10 +1,10 @@
 ---
-title: 'api-client-java v0.9.0'
-categories: ['API Clients']
+title: "api-client-java v0.9.0"
+categories: ["API Clients"]
 ---
 
-Summarizing the provided release notes into a concise user-facing summary This release introduces multiple breaking changes to request and response fields across key API endpoints, including documents, answers, shortcuts, chat, search, announcements, and collections. - Breaking changes to request...
+- Breaking changes to request/response fields in documents, answers, shortcuts, chat, search, announcements, and collections APIs - relatedDocuments and addedRoles fields updated in several endpoints - chatId parameter added to glean.client.chat.retrieveFiles() requests
 
 {/* truncate */}
 
-Full release notes: https://github.com/gleanwork/api-client-java/releases/tag/v0.9.0
+Full release notes: https://github.com/gleanwork/api-client-java/releases/tag/v0.9.0 

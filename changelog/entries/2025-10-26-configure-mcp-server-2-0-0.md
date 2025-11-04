@@ -1,10 +1,13 @@
 ---
-title: 'configure-mcp-server v2.0.0'
-categories: ['MCP']
+title: "configure-mcp-server v2.0.0"
+categories: ["MCP"]
 ---
 
-The CLI now uses commander.js instead of meow, improving subcommand support and potentially affecting CLI usage. - Protocol-level breaking change: CLI refactored to use commander.js, which may alter command syntax or behavior. - Documentation updated for accuracy, including README and init help. -...
+####:boom: Breaking Change.
+- #39 refactor(cli): Converts from meow to commander.js for better subcommand support ####:memo: Documentation
+- #38 docs(readme): Updates README.md to ensure accurate info - #22 docs(init): update init help to reflect current Claude output #### Committers: 5
+- Chris Freeman - David J. Hamilton - Robert Jackson - Steve Calvert - きわみざむらい
 
 {/* truncate */}
 
-Full release notes: https://github.com/gleanwork/configure-mcp-server/releases/tag/v2.0.0
+Full release notes: https://github.com/gleanwork/configure-mcp-server/releases/tag/v2.0.0 

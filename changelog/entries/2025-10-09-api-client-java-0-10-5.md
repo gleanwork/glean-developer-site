@@ -1,10 +1,10 @@
 ---
-title: 'api-client-java v0.10.5'
-categories: ['API Clients']
+title: "api-client-java v0.10.5"
+categories: ["API Clients"]
 ---
 
-A new field has been added to the insights API client, enhancing agent insights data. - The field is now included in within the response of . - No breaking changes or changes to authentication or pagination. - Existing integrations remain compatible; new data is available for enhanced UI or...
+agentsresponse.topAgentsInsights.[].icon field was added to glean.client.insights.retrieve(). - New icon field now available in topAgentsInsights response array - No breaking changes introduced - No changes to pagination or auth scopes
 
 {/* truncate */}
 
-Full release notes: https://github.com/gleanwork/api-client-java/releases/tag/v0.10.5
+Full release notes: https://github.com/gleanwork/api-client-java/releases/tag/v0.10.5 

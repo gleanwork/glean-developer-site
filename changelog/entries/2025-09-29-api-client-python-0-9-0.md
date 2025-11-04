@@ -1,10 +1,10 @@
 ---
-title: 'api-client-python v0.9.0'
-categories: ['API Clients']
+title: "api-client-python v0.9.0"
+categories: ["API Clients"]
 ---
 
-The 0.9.0 release introduces a breaking change to the glean client API for insights retrieval. - The signature of glean.client.insights.retrieve() has changed, which may require updates to existing code. - Review and update any usage of this method to ensure compatibility with the new request...
+Summarizing the provided release note to draft the changelog entry The request object for glean.client.insights.retrieve() was changed in this release. - Breaking change: review usage of glean.client.insights.retrieve() for compatibility - No additional details provided in the release notes
 
 {/* truncate */}
 
-Full release notes: https://github.com/gleanwork/api-client-python/releases/tag/v0.9.0
+Full release notes: https://github.com/gleanwork/api-client-python/releases/tag/v0.9.0 

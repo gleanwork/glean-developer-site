@@ -1,10 +1,10 @@
 ---
-title: 'api-client-python v0.8.1'
-categories: ['API Clients']
+title: "api-client-python v0.8.1"
+categories: ["API Clients"]
 ---
 
-Summarizing the provided glean 0.8.1 release notes into a concise changelog entry A new response field has been added to the search feed API, enabling more detailed information in results. - Added response field: response.results.[].primary_entry.digest.sections.[].channel_type in...
+results.[].primary_entry.digest.sections in glean.client.search.retrieve_feed(). - New response field: channel_type in digest.sections - No breaking changes or pagination/auth scope changes noted - Applies to glean 0.8.1 API client release
 
 {/* truncate */}
 
-Full release notes: https://github.com/gleanwork/api-client-python/releases/tag/v0.8.1
+Full release notes: https://github.com/gleanwork/api-client-python/releases/tag/v0.8.1 

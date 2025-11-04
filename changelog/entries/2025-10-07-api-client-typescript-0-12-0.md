@@ -1,10 +1,10 @@
 ---
-title: 'api-client-typescript v0.12.0'
-categories: ['API Clients']
+title: "api-client-typescript v0.12.0"
+categories: ["API Clients"]
 ---
 
-The 0.12.0 release introduces a breaking change to the response structure of the insights retrieval API. - The response format for glean.client.insights.retrieve() has changed; review your integration for compatibility. - Update your code to handle the new response structure to avoid runtime...
+Summarizing the changes to glean.client.insights.retrieve() response in the release notes The response format for glean.client.insights.retrieve() was changed in @gleanwork/api-client 0.12.0. - This may affect integrations relying on the previous response structure. - Review and update any code...
 
 {/* truncate */}
 
-Full release notes: https://github.com/gleanwork/api-client-typescript/releases/tag/v0.12.0
+Full release notes: https://github.com/gleanwork/api-client-typescript/releases/tag/v0.12.0 

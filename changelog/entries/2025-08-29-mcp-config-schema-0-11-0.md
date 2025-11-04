@@ -1,10 +1,10 @@
 ---
-title: 'mcp-config-schema v0.11.0'
-categories: ['MCP']
+title: "mcp-config-schema v0.11.0"
+categories: ["MCP"]
 ---
 
-Expanded configuration support improves flexibility and compatibility for MCP users. - Broader config schema coverage allows for more diverse and complex configurations. - Enhancements may require users to review and update their existing config files for compatibility. - No protocol-level changes...
+Generating a response based on the results Expanded configuration support coverage for MCP protocol and schema. - Enhanced protocol-level handling to accommodate broader configuration scenarios - Improved config schema flexibility for diverse use cases
 
 {/* truncate */}
 
-Full release notes: https://github.com/gleanwork/mcp-config-schema/releases/tag/v0.11.0
+Full release notes: https://github.com/gleanwork/mcp-config-schema/releases/tag/v0.11.0 

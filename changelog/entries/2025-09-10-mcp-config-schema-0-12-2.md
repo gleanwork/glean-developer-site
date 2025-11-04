@@ -1,10 +1,10 @@
 ---
-title: 'mcp-config-schema v0.12.2'
-categories: ['MCP']
+title: "mcp-config-schema v0.12.2"
+categories: ["MCP"]
 ---
 
-A fix improves the reliability of the one-click URL generator in browser environments. - The one-click URL generator no longer relies on Buffer, ensuring compatibility in browsers. - Users should experience fewer issues generating URLs in web-based workflows.
+- Improved compatibility for browser-based usage - Eliminates dependency on Node.js-specific Buffer module - Resolves issues with URL generation in web contexts
 
 {/* truncate */}
 
-Full release notes: https://github.com/gleanwork/mcp-config-schema/releases/tag/v0.12.2
+Full release notes: https://github.com/gleanwork/mcp-config-schema/releases/tag/v0.12.2 

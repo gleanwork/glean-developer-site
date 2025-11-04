@@ -1,10 +1,10 @@
 ---
-title: 'mcp-config-schema v0.10.0'
-categories: ['MCP']
+title: "mcp-config-schema v0.10.0"
+categories: ["MCP"]
 ---
 
-This release introduces a builder pattern for more standardized config generation and adds one-click support for VSCode. - Protocol-level: Config generation is now standardized via a builder pattern. - One-click integration for VSCode is now supported. - Internal refactoring improves...
+- Standardizes configuration generation with builder pattern refactor - Adds one-click setup support for VS Code - Focuses on protocol-level and config schema improvements
 
 {/* truncate */}
 
-Full release notes: https://github.com/gleanwork/mcp-config-schema/releases/tag/v0.10.0
+Full release notes: https://github.com/gleanwork/mcp-config-schema/releases/tag/v0.10.0 

@@ -1,10 +1,10 @@
 ---
-title: 'langchain-glean v0.3.3'
-categories: ['langchain-glean']
+title: "langchain-glean v0.3.3"
+categories: ["langchain-glean"]
 ---
 
-This update improves reliability by ensuring correct propagation of user context and updates test imports for compatibility. - Fixed propagation of and to maintain accurate user context. - Updated tests to use the new SDK import path for better maintainability.
+Summarizing the key developer changes from the provided release notes Propagation of the act_as and GLEAN_ACT_AS settings has been fixed, and tests now use the updated SDK import path. - Fixed propagation of act_as and GLEAN_ACT_AS variables - Updated tests to use the new SDK import path
 
 {/* truncate */}
 
-Full release notes: https://github.com/gleanwork/langchain-glean/releases/tag/v0.3.3
+Full release notes: https://github.com/gleanwork/langchain-glean/releases/tag/v0.3.3 

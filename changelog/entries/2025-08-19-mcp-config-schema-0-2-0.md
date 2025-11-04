@@ -1,10 +1,10 @@
 ---
-title: 'mcp-config-schema v0.2.0'
-categories: ['MCP']
+title: "mcp-config-schema v0.2.0"
+categories: ["MCP"]
 ---
 
-This release introduces updates to the MCP config schema, impacting how configurations are defined and validated. - Adds new fields and validation rules to the MCP configuration schema. - Updates existing protocol-level definitions for improved compatibility. - May require users to review and...
+Summarizing the mcp-config-schema v0.2.0 release notes for the changelog entry mcp-config-schema updated to v0.2.0 with protocol-level or config schema changes. - No further details provided in the release notes for this version.
 
 {/* truncate */}
 
-Full release notes: https://github.com/gleanwork/mcp-config-schema/releases/tag/v0.2.0
+Full release notes: https://github.com/gleanwork/mcp-config-schema/releases/tag/v0.2.0 

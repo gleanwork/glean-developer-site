@@ -1,10 +1,10 @@
 ---
-title: 'api-client-typescript v0.11.0'
-categories: ['API Clients']
+title: "api-client-typescript v0.11.0"
+categories: ["API Clients"]
 ---
 
-I couldn't access: These websites need authentication. I couldn't access: These websites need authentication. Reading full documents for key details **Reading:** I couldn't access: These websites need authentication. Summarizing the provided release notes for clarity and conciseness This release...
+Reading full documents for key details **Reading:** Summarizing the provided release notes to draft the changelog entry Updated TypeScript API client to version 0.11.0, generated from OpenAPI Doc 0.9.0 using Speakeasy CLI 1.631.5. - Combines Client and Indexing API namespaces into a unified SDK...
 
 {/* truncate */}
 
-Full release notes: https://github.com/gleanwork/api-client-typescript/releases/tag/v0.11.0
+Full release notes: https://github.com/gleanwork/api-client-typescript/releases/tag/v0.11.0 

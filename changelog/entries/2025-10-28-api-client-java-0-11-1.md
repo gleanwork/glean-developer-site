@@ -1,10 +1,10 @@
 ---
-title: 'api-client-java v0.11.1'
-categories: ['API Clients']
+title: "api-client-java v0.11.1"
+categories: ["API Clients"]
 ---
 
-Summarizing the provided release notes into a concise changelog summary This release adds a new "chat" field to many request and response objects across the API, enhancing related document and structured result data; one response structure for document retrieval was changed. - New "chat" fields are...
+- chat field added to announcements, answers, chat, collections, entities, insights, messages, pins, search, shortcuts, and verification endpoints - response.documents structure changed in documents.retrieve() - no breaking changes or pagination/auth scope changes noted
 
 {/* truncate */}
 
-Full release notes: https://github.com/gleanwork/api-client-java/releases/tag/v0.11.1
+Full release notes: https://github.com/gleanwork/api-client-java/releases/tag/v0.11.1 

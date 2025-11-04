@@ -1,10 +1,10 @@
 ---
-title: 'api-client-python v0.7.3'
-categories: ['API Clients']
+title: "api-client-python v0.7.3"
+categories: ["API Clients"]
 ---
 
-Summarizing the release notes for the glean 0.7.3 API client This release adds the group.datasource_instance field to many request and response objects, enhancing role and collection metadata across announcements, answers, chat, collections, documents, search, and more. - New...
+Summarizing the release notes for glean 0.7.3 API clients Added group.datasource_instance field to multiple request and response objects across announcements, answers, chat, collections, documents, insights, messages, pins, search, entities, shortcuts, and verification API clients. - New...
 
 {/* truncate */}
 
-Full release notes: https://github.com/gleanwork/api-client-python/releases/tag/v0.7.3
+Full release notes: https://github.com/gleanwork/api-client-python/releases/tag/v0.7.3 

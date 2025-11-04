@@ -1,10 +1,10 @@
 ---
-title: 'api-client-python v0.10.3'
-categories: ['API Clients']
+title: "api-client-python v0.10.3"
+categories: ["API Clients"]
 ---
 
-Breaking change: The retrieve() method in glean.client.messages now requires a different or updated request.datasource parameter. - The request.datasource parameter for glean.client.messages.retrieve() has changed, which may require updates to existing code. - This is a breaking change and could...
+Summarizing the breaking change to 'request.datasource' in 'glean.client.messages.retrieve() Breaking change: The request.datasource parameter in glean.client.messages.retrieve() has been modified. - This update introduces a breaking change to the API client. - Review usage of request.datasource in...
 
 {/* truncate */}
 
-Full release notes: https://github.com/gleanwork/api-client-python/releases/tag/v0.10.3
+Full release notes: https://github.com/gleanwork/api-client-python/releases/tag/v0.10.3 
