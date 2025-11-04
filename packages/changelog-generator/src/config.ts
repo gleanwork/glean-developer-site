@@ -40,21 +40,29 @@ export function loadConfig(repoRoot: string): GeneratorConfig {
     : path.join(repoRoot, 'packages', 'changelog-generator', 'config.yml');
 
   if (!fs.existsSync(envPath)) {
-    throw new Error(`Config not found at ${envPath}. Set CHANGELOG_CONFIG_PATH or add config.yml.`);
+    throw new Error(
+      `Config not found at ${envPath}. Set CHANGELOG_CONFIG_PATH or add config.yml.`,
+    );
   }
 
   const raw = fs.readFileSync(envPath, 'utf-8');
   const data = yaml.load(raw) as any;
 
   const owner = (data?.owner ? String(data.owner) : DEFAULT_OWNER).trim();
-  const baseBranch = (data?.baseBranch ? String(data.baseBranch) : DEFAULT_BASE_BRANCH).trim();
+  const baseBranch = (
+    data?.baseBranch ? String(data.baseBranch) : DEFAULT_BASE_BRANCH
+  ).trim();
   const repos: Array<RepoSpec> = Array.isArray(data?.repos)
     ? (data.repos as Array<any>).map((r, idx) => {
         if (!r.repo) {
-          throw new Error(`Config repos[${idx}] missing required 'repo' field: ${JSON.stringify(r)}`);
+          throw new Error(
+            `Config repos[${idx}] missing required 'repo' field: ${JSON.stringify(r)}`,
+          );
         }
         if (!r.category) {
-          throw new Error(`Config repos[${idx}] missing required 'category' field: ${JSON.stringify(r)}`);
+          throw new Error(
+            `Config repos[${idx}] missing required 'category' field: ${JSON.stringify(r)}`,
+          );
         }
         return {
           owner,
@@ -70,14 +78,19 @@ export function loadConfig(repoRoot: string): GeneratorConfig {
 
   const s = data?.summarization || {};
   const envSummarizeRaw = process.env.CHANGELOG_SUMMARIZE;
-  const envSummarize = typeof envSummarizeRaw === 'string'
-    ? /^(1|true|yes|on)$/i.test(envSummarizeRaw)
-    : undefined;
+  const envSummarize =
+    typeof envSummarizeRaw === 'string'
+      ? /^(1|true|yes|on)$/i.test(envSummarizeRaw)
+      : undefined;
   let mode: 'off' | 'heuristic' | 'llm';
   const rawMode = s?.mode ? String(s.mode) : undefined;
   if (envSummarize !== undefined) {
     mode = envSummarize ? 'llm' : 'heuristic';
-  } else if (rawMode === 'off' || rawMode === 'heuristic' || rawMode === 'llm') {
+  } else if (
+    rawMode === 'off' ||
+    rawMode === 'heuristic' ||
+    rawMode === 'llm'
+  ) {
     mode = rawMode;
   } else {
     mode = 'heuristic';
@@ -99,11 +112,22 @@ export function loadConfig(repoRoot: string): GeneratorConfig {
       const repoObj = ocfg.repo || {};
       const repoOwner = String(repoObj.owner || owner);
       const repoName = String(repoObj.repo || DEFAULT_OPENAPI_REPO);
-      const paths = Array.isArray(ocfg.paths) ? ocfg.paths.map((p: any) => String(p)) : [];
-      const lookbackDays = Number.isFinite(ocfg.lookbackDays) ? Number(ocfg.lookbackDays) : 30;
-      const diffEnabled = typeof ocfg.diffEnabled === 'boolean' ? ocfg.diffEnabled : undefined;
-      const diffBin = typeof ocfg.diffBin === 'string' ? String(ocfg.diffBin) : undefined;
-      const diffEngine = ocfg.diffEngine === 'none' ? 'none' : (ocfg.diffEngine === 'openapi-changes' ? 'openapi-changes' : undefined);
+      const paths = Array.isArray(ocfg.paths)
+        ? ocfg.paths.map((p: any) => String(p))
+        : [];
+      const lookbackDays = Number.isFinite(ocfg.lookbackDays)
+        ? Number(ocfg.lookbackDays)
+        : 30;
+      const diffEnabled =
+        typeof ocfg.diffEnabled === 'boolean' ? ocfg.diffEnabled : undefined;
+      const diffBin =
+        typeof ocfg.diffBin === 'string' ? String(ocfg.diffBin) : undefined;
+      const diffEngine =
+        ocfg.diffEngine === 'none'
+          ? 'none'
+          : ocfg.diffEngine === 'openapi-changes'
+            ? 'openapi-changes'
+            : undefined;
       if (paths.length > 0) {
         openapi = {
           enabled: true,
@@ -120,5 +144,3 @@ export function loadConfig(repoRoot: string): GeneratorConfig {
 
   return { owner, baseBranch, repos, summarization, openapi };
 }
-
-

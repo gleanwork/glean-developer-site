@@ -31,5 +31,3 @@ export type ReleaseInfo = {
   publishedAt: string;
   normalizedVersion?: string;
 };
-
-

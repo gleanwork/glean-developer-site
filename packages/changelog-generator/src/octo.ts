@@ -17,25 +17,30 @@ export async function listReleases(
   params: { owner: string; repo: string },
 ): Promise<RepoReleases> {
   const releases: RepoReleases = [];
-  
+
   for await (const response of octokit.paginate.iterator(
     octokit.rest.repos.listReleases,
     {
       owner: params.owner,
       repo: params.repo,
       per_page: 100,
-    }
+    },
   )) {
     releases.push(...response.data);
     if (releases.length >= 100) break;
   }
-  
+
   return releases;
 }
 
 export async function findExistingChangelogPR(
   octokit: Octokit,
-  params: { owner: string; repo: string; branchPrefix: string; baseBranch: string },
+  params: {
+    owner: string;
+    repo: string;
+    branchPrefix: string;
+    baseBranch: string;
+  },
 ): Promise<PullRequest | null> {
   try {
     const response = await octokit.rest.pulls.list({
@@ -47,7 +52,7 @@ export async function findExistingChangelogPR(
     });
 
     const matchingPR = response.data.find((pr) =>
-      pr.head.ref.startsWith(params.branchPrefix)
+      pr.head.ref.startsWith(params.branchPrefix),
     );
 
     return matchingPR || null;
@@ -55,5 +60,3 @@ export async function findExistingChangelogPR(
     return null;
   }
 }
-
-

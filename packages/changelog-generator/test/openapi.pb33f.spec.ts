@@ -20,18 +20,30 @@ describe('openapi ingest via openapi-changes runner (mocked)', () => {
             data: [
               {
                 sha: fakeCommitSha,
-                commit: { message: 'Add GET /v1/widgets', committer: { date: '2025-01-02T04:05:06Z' } },
+                commit: {
+                  message: 'Add GET /v1/widgets',
+                  committer: { date: '2025-01-02T04:05:06Z' },
+                },
               },
             ],
           }),
           getCommit: vi.fn().mockResolvedValue({
-            data: { parents: [{ sha: fakeParentSha }], files: [{ filename: 'final_specs/client_rest.yaml' }] },
+            data: {
+              parents: [{ sha: fakeParentSha }],
+              files: [{ filename: 'final_specs/client_rest.yaml' }],
+            },
           }),
           getContent: vi.fn().mockImplementation(({ path: p, ref }: any) => {
-            const content = ref === fakeParentSha
-              ? 'openapi: 3.0.0\npaths:\n  /v1/widgets: {}\n'
-              : 'openapi: 3.0.0\npaths:\n  /v1/widgets:\n    get: {}\n';
-            return Promise.resolve({ data: { type: 'file', content: Buffer.from(content).toString('base64') } });
+            const content =
+              ref === fakeParentSha
+                ? 'openapi: 3.0.0\npaths:\n  /v1/widgets: {}\n'
+                : 'openapi: 3.0.0\npaths:\n  /v1/widgets:\n    get: {}\n';
+            return Promise.resolve({
+              data: {
+                type: 'file',
+                content: Buffer.from(content).toString('base64'),
+              },
+            });
           }),
         },
       },
@@ -41,7 +53,10 @@ describe('openapi ingest via openapi-changes runner (mocked)', () => {
             data: [
               {
                 sha: fakeCommitSha,
-                commit: { message: 'Add GET /v1/widgets', committer: { date: '2025-01-02T04:05:06Z' } },
+                commit: {
+                  message: 'Add GET /v1/widgets',
+                  committer: { date: '2025-01-02T04:05:06Z' },
+                },
               },
             ],
           };
@@ -63,9 +78,15 @@ describe('openapi ingest via openapi-changes runner (mocked)', () => {
       latestLocalEntryDate: null,
       cachedSha: null,
       buildEntry: async (day, commits) => {
-        const content = `# ${day}\n` + commits.map((c) => `${c.sha.slice(0, 7)} ${c.message}`).join('\n');
+        const content =
+          `# ${day}\n` +
+          commits.map((c) => `${c.sha.slice(0, 7)} ${c.message}`).join('\n');
         return {
-          path: path.join('changelog', 'entries', `${day}-rest-api-updates-open-api.md`),
+          path: path.join(
+            'changelog',
+            'entries',
+            `${day}-rest-api-updates-open-api.md`,
+          ),
           content,
           commitMessage: `chore: ${day}`,
         };
@@ -76,5 +97,3 @@ describe('openapi ingest via openapi-changes runner (mocked)', () => {
     expect(res.files[0].path).toMatch(/rest-api-updates-open-api\.md$/);
   });
 });
-
-
