@@ -47,7 +47,7 @@ Before publishing, authenticate using DNS-based verification:
 ```bash
 mcp-publisher login dns \
   --domain glean.com \
-  --private-key (openssl pkey -in key.pem -noout -text | grep -A3 "priv:" | tail -n +2 | tr -d ' :\n')
+  --private-key $(openssl pkey -in key.pem -noout -text | grep -A3 "priv:" | tail -n +2 | tr -d ' :\n')
 ```
 
 **Security Notes:**
