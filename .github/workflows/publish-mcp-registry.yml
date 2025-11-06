@@ -22,7 +22,17 @@ jobs:
               run: |
                   echo "${{ secrets.MCP_PRIVATE_KEY }}" > key.pem
                   chmod 600 key.pem
+
+                  echo "Checking PEM file format..."
+                  head -1 key.pem
+
+                  echo "Extracting private key..."
+                  openssl pkey -in key.pem -noout -text | head -10
+
                   EXTRACTED_KEY=$(openssl pkey -in key.pem -noout -text | grep -A3 "priv:" | tail -n +2 | tr -d ' :\n')
+
+                  echo "Extracted key length: ${#EXTRACTED_KEY}"
+
                   ./mcp-publisher login dns --domain glean.com --private-key "$EXTRACTED_KEY"
                   rm key.pem
 
