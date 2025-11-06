@@ -14,31 +14,20 @@ jobs:
         steps:
             - uses: actions/checkout@v4
 
-            - name: Set up Node.js
-              uses: actions/setup-node@v4
-              with:
-                  node-version: "20"
-
-            - name: Install MCP Publisher CLI
-              run: npm install -g @modelcontextprotocol/mcp-publisher
-
-            - name: Authenticate with MCP Registry
-              env:
-                  MCP_PRIVATE_KEY: ${{ secrets.MCP_PRIVATE_KEY }}
+            - name: Install MCP Publisher
               run: |
-                  echo "$MCP_PRIVATE_KEY" > key.pem
+                  curl -L "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_$(uname -s | tr '[:upper:]' '[:lower:]')_$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/').tar.gz" | tar xz mcp-publisher
+
+            - name: Login to MCP Registry
+              run: |
+                  echo "${{ secrets.MCP_PRIVATE_KEY }}" > key.pem
                   chmod 600 key.pem
-
                   EXTRACTED_KEY=$(openssl pkey -in key.pem -noout -text | grep -A3 "priv:" | tail -n +2 | tr -d ' :\n')
-
-                  mcp-publisher login dns \
-                    --domain glean.com \
-                    --private-key "$EXTRACTED_KEY"
-
+                  ./mcp-publisher login dns --domain glean.com --private-key "$EXTRACTED_KEY"
                   rm key.pem
 
             - name: Publish to Registry
-              run: mcp-publisher publish
+              run: ./mcp-publisher publish
 
             - name: Report Success
               if: success()
