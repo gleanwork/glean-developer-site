@@ -1,0 +1,47 @@
+name: Publish to MCP Registry
+
+on:
+    push:
+        branches: [main]
+        paths:
+            - "server.json"
+    workflow_dispatch:
+
+jobs:
+    publish:
+        name: Publish to MCP Registry
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Set up Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: "20"
+
+            - name: Install MCP Publisher CLI
+              run: npm install -g @modelcontextprotocol/mcp-publisher
+
+            - name: Authenticate with MCP Registry
+              env:
+                  MCP_PRIVATE_KEY: ${{ secrets.MCP_PRIVATE_KEY }}
+              run: |
+                  echo "$MCP_PRIVATE_KEY" > key.pem
+                  chmod 600 key.pem
+
+                  EXTRACTED_KEY=$(openssl pkey -in key.pem -noout -text | grep -A3 "priv:" | tail -n +2 | tr -d ' :\n')
+
+                  mcp-publisher login dns \
+                    --domain glean.com \
+                    --private-key "$EXTRACTED_KEY"
+
+                  rm key.pem
+
+            - name: Publish to Registry
+              run: mcp-publisher publish
+
+            - name: Report Success
+              if: success()
+              run: |
+                  VERSION=$(jq -r '.version' server.json)
+                  echo "Successfully published Glean MCP Server version $VERSION to the registry"
