@@ -545,7 +545,7 @@ async function applyAction(
       existingPR = await findExistingChangelogPR(octokit, {
         owner: data.pr.targetRepo.owner,
         repo: data.pr.targetRepo.repo,
-        branchPrefix,
+        branchPrefix: 'chore/changelog-',
         baseBranch: data.pr.baseBranch,
       });
     } catch (err) {
