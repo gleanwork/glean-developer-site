@@ -31,6 +31,26 @@ type CarouselSlide = {
 
 const slides: CarouselSlide[] = [
   {
+    title: 'Enterprise-Grade Context for Your AI Tools',
+    description:
+      'Connect Claude Desktop, Cursor, and other MCP-compatible clients directly to your Glean instance. Access enterprise search, chat, and knowledge through the Model Context Protocol with zero custom development.',
+    bullets: [
+      '<strong>One connection, universal access</strong> – Works with Claude Desktop, Cursor, VS Code, Windsurf, ChatGPT, and more',
+      "<strong>Permission-aware by default</strong> – Respects your company's access controls automatically",
+      '<strong>Zero integration code</strong> – Configure once, access enterprise knowledge everywhere',
+      '<strong>Search, chat, and agents</strong> – Full Glean capabilities through the standardized MCP interface',
+    ],
+    ctaText: 'Get Started with MCP',
+    ctaHref: '/guides/mcp',
+    ctaIcon: 'mcp',
+    ctaIconSet: 'glean',
+    imageUrl: {
+      light: '/img/mcp-ga.png',
+      dark: '/img/mcp-ga.png',
+    },
+    imageAlt: 'Screenshot showing MCP server integration with AI clients',
+  },
+  {
     title: 'Search and Chat with Your Data',
     description:
       "Connect your company data and ship AI-powered chat in minutes. Glean's APIs are permission-aware from day one and scale with your security requirements.",
@@ -127,25 +147,6 @@ with Glean(
     
     g.indexing.index_document(document=document)`,
   },
-  {
-    title: 'Instantly connect your MCP clients to Glean',
-    description:
-      'Connect Claude Desktop, Cursor, and other MCP-compatible clients directly to your Glean instance. Access enterprise search, chat, and knowledge through the Model Context Protocol with zero custom development.',
-    bullets: [
-      'Connect to Claude Desktop, Cursor, and other MCP hosts',
-      'Access enterprise search and chat through MCP',
-      'Level up your AI assistants with Glean tools',
-    ],
-    ctaText: 'Get Started with MCP',
-    ctaHref: '/guides/mcp',
-    ctaIcon: 'mcp',
-    ctaIconSet: 'glean',
-    imageUrl: {
-      light: '/img/mcp-usage-light.png',
-      dark: '/img/mcp-usage-dark.png',
-    },
-    imageAlt: 'Screenshot showing MCP server integration with AI clients',
-  },
 ];
 
 export default function CarouselSection() {
@@ -177,7 +178,10 @@ export default function CarouselSection() {
                 <p>{slide.description}</p>
                 <ul>
                   {slide.bullets.map((bullet, bulletIndex) => (
-                    <li key={bulletIndex}>{bullet}</li>
+                    <li
+                      key={bulletIndex}
+                      dangerouslySetInnerHTML={{ __html: bullet }}
+                    />
                   ))}
                 </ul>
                 <Link
