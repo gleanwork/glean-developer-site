@@ -11,7 +11,13 @@ export default defineConfig({
   
   workers: process.env.CI ? 1 : undefined,
   
-  reporter: 'html',
+  reporter: process.env.CI 
+    ? [
+        ['github'],
+        ['html'],
+        ['list', { printSteps: false }],
+      ]
+    : 'html',
   
   use: {
     baseURL: 'http://localhost:3000',

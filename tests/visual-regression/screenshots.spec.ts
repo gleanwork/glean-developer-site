@@ -27,7 +27,6 @@ function screenshotPathname(pathname: string) {
 
 test.describe('Visual regression tests', () => {
   const pathnames = extractSitemapPathnames(sitemapPath);
-  console.log(`Screenshotting ${pathnames.length} pathnames from sitemap`);
   pathnames.forEach(screenshotPathname);
 });
 
