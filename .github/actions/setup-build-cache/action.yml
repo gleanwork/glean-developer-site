@@ -1,0 +1,14 @@
+name: Setup Build Cache
+description: Restores the build cache from GitHub Actions cache
+
+runs:
+  using: composite
+  steps:
+    - name: Restore build cache
+      uses: actions/cache@v4
+      with:
+        path: .build-cache
+        key: build-cache-v1-${{ runner.os }}-${{ hashFiles('openapi/**/*.yaml', 'changelog/entries/**/*.md', 'package.json', 'pnpm-lock.yaml', 'scripts/**/*.{mjs,ts}', 'docs/**/*.{md,mdx}', 'src/**/*.{ts,tsx,js,jsx}', 'docusaurus.config.ts', 'sidebars.ts') }}
+        restore-keys: |
+          build-cache-v1-${{ runner.os }}-
+
