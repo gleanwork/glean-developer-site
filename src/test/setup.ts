@@ -21,7 +21,7 @@ if (typeof window !== 'undefined') {
   (window as any).location = { href: '' } as any;
 
   // Mock window.open
-  ;(window as any).open = vi.fn();
+  (window as any).open = vi.fn();
 }
 
 // Mock ResizeObserver for react-tooltip
