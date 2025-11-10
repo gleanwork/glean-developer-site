@@ -129,7 +129,6 @@ function hasPlaceholderText(text: string): boolean {
   return placeholderPatterns.some((pattern) => pattern.test(text));
 }
 
-
 async function summarizeWithGlean(
   text: string,
   opts: { maxChars: number; category?: string; hints?: Array<string> },
@@ -153,7 +152,7 @@ async function summarizeWithGlean(
       cleaned.length,
     );
     const client = new Glean({ apiToken, instance });
-    
+
     const systemInstructions = [
       `You are a changelog entry generator. Output ONLY the changelog content.`,
       ``,
@@ -202,7 +201,7 @@ async function summarizeWithGlean(
         dbgSum('summarize:skip message type=%s', m.messageType);
         continue;
       }
-      
+
       const frs = m?.fragments || [];
       for (const f of frs) {
         if (f?.text) parts.push(String(f.text));
