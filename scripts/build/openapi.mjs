@@ -42,7 +42,8 @@ async function buildClientTransformIfNeeded(cache) {
   
   const capitalizeOutputs = ['openapi/client/client-capitalized.yaml'];
   
-  let needsCapitalize = cache.shouldRebuild(capitalizeTarget, capitalizeInputs);
+  const capitalizeCheck = cache.shouldRebuild(capitalizeTarget, capitalizeInputs);
+  let needsCapitalize = capitalizeCheck.shouldRebuild;
   
   if (needsCapitalize) {
     cache.log('Capitalizing client OpenAPI spec...', 'info');
@@ -68,7 +69,8 @@ async function buildClientTransformIfNeeded(cache) {
     splitScript: hashFile(path.join(ROOT_DIR, 'scripts', 'openapi-split-break-circular.mjs'))
   };
   
-  let needsSplit = cache.shouldRebuild(splitTarget, splitInputs) || needsCapitalize;
+  const splitCheck = cache.shouldRebuild(splitTarget, splitInputs);
+  let needsSplit = splitCheck.shouldRebuild || needsCapitalize;
   
   if (needsSplit) {
     cache.log('Splitting client OpenAPI spec...', 'info');
@@ -109,7 +111,9 @@ async function buildIndexingTransformIfNeeded(cache) {
   
   const outputs = ['openapi/indexing/indexing-capitalized.yaml'];
   
-  if (cache.shouldRebuild(target, inputs)) {
+  const cacheCheck = cache.shouldRebuild(target, inputs);
+  
+  if (cacheCheck.shouldRebuild) {
     cache.log('Capitalizing indexing OpenAPI spec...', 'info');
     
     try {
@@ -152,7 +156,9 @@ export async function buildAPIIfNeeded(apiName, cache) {
   
   const overviewPattern = isIndexing ? '*-overview.mdx' : 'overview.mdx';
   
-  if (cache.shouldRebuild(target, inputs)) {
+  const cacheCheck = cache.shouldRebuild(target, inputs);
+  
+  if (cacheCheck.shouldRebuild) {
     cache.log(`Generating ${apiName} API documentation...`, 'info');
     
     preserveOverviewFiles(outputDir, overviewPattern);
