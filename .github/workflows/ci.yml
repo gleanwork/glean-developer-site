@@ -8,11 +8,12 @@ on:
   workflow_dispatch:
 
 jobs:
-  test:
-    name: Test Build
+  lint:
+    name: Lint & Checks
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -45,5 +46,41 @@ jobs:
             echo "No usage of support@glean.com found"
           fi
 
-      - name: Test build website
-        run: pnpm build 
+  build:
+    name: Build Site
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up mise
+        uses: jdx/mise-action@v2
+        with:
+          cache: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build website
+        run: pnpm build
+
+      - name: Upload build artifact
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: build
+          path: build/
+          retention-days: 1
+
+  visual-regression:
+    name: Visual Regression Tests
+    needs: build
+    if: github.event_name == 'pull_request'
+    uses: ./.github/workflows/visual-regression.yml
+    with:
+      pr-number: ${{ github.event.pull_request.number }}
+      commit-sha: ${{ github.event.pull_request.head.sha }}

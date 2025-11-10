@@ -1,29 +1,55 @@
 name: Visual Regression Testing
 
 on:
-  pull_request:
-    branches: [main]
-    paths:
-      - 'src/**'
-      - 'docs/**'
-      - 'static/**'
-      - 'docusaurus.config.ts'
-      - 'sidebars.ts'
-      - 'tests/visual-regression/**'
-      - 'playwright.config.ts'
-      - '.github/workflows/visual-regression.yml'
-      - 'pnpm-lock.yaml'
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      pr-number:
+        description: "Pull request number"
+        type: number
+        required: false
+      commit-sha:
+        description: "Commit SHA"
+        type: string
+        required: false
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 
 jobs:
+  check-paths:
+    name: Check Visual File Changes
+    runs-on: ubuntu-latest
+    outputs:
+      should-run: ${{ steps.filter.outputs.visual == 'true' || github.event_name != 'workflow_call' }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check if visual files changed
+        if: github.event_name == 'workflow_call'
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            visual:
+              - 'src/**'
+              - 'docs/**'
+              - 'static/**'
+              - 'docusaurus.config.ts'
+              - 'sidebars.ts'
+              - 'tests/visual-regression/**'
+              - 'playwright.config.ts'
+              - '.github/workflows/visual-regression.yml'
+
   visual-regression:
     name: Visual Regression Tests
     runs-on: ubuntu-latest
     timeout-minutes: 60
-    
+    needs: [check-paths]
+    if: needs.check-paths.outputs.should-run == 'true'
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -40,11 +66,26 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Install Playwright browsers
-        run: pnpm exec playwright install --with-deps chromium
+      - name: Try to download build artifact from CI
+        id: download-artifact
+        if: inputs.pr-number || github.event.pull_request.number
+        continue-on-error: true
+        uses: dawidd6/action-download-artifact@v6
+        with:
+          workflow: ci.yml
+          name: build
+          path: build/
+          pr: ${{ inputs.pr-number || github.event.pull_request.number }}
+          commit: ${{ inputs.commit-sha || github.event.pull_request.head.sha }}
+          search_artifacts: true
+          if_no_artifact_found: warn
 
       - name: Build the website
+        if: steps.download-artifact.outcome != 'success'
         run: pnpm build
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps chromium
 
       - name: Run visual regression tests
         run: pnpm test:visual
@@ -58,4 +99,3 @@ jobs:
             playwright-report/
             test-results/
           retention-days: 7
-

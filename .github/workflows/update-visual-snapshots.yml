@@ -1,0 +1,47 @@
+name: Update Visual Snapshots
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update-snapshots:
+    name: Update Visual Regression Snapshots
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up mise
+        uses: jdx/mise-action@v2
+        with:
+          cache: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Build the website
+        run: pnpm build
+
+      - name: Update snapshots
+        run: pnpm test:visual:update
+
+      - name: Commit snapshots
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add tests/visual-regression/__snapshots__/
+          git diff --staged --quiet || git commit -m "Update visual regression snapshots [skip ci]"
+          git push origin HEAD:${{ github.ref_name }}
+
