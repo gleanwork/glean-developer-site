@@ -4,10 +4,6 @@ on:
   workflow_dispatch:
   workflow_call:
     inputs:
-      pr-number:
-        description: "Pull request number"
-        type: number
-        required: false
       commit-sha:
         description: "Commit SHA"
         type: string
@@ -66,16 +62,23 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Restore build cache from CI
+        uses: actions/cache/restore@v4
+        with:
+          path: .build-cache
+          key: build-cache-v2-${{ runner.os }}-${{ inputs.commit-sha || github.event.pull_request.head.sha || github.sha }}
+          restore-keys: |
+            build-cache-v2-${{ runner.os }}-
+
       - name: Try to download build artifact from CI
         id: download-artifact
-        if: inputs.pr-number || github.event.pull_request.number
+        if: inputs.commit-sha || github.event.pull_request.head.sha
         continue-on-error: true
         uses: dawidd6/action-download-artifact@v6
         with:
           workflow: ci.yml
           name: build
           path: build/
-          pr: ${{ inputs.pr-number || github.event.pull_request.number }}
           commit: ${{ inputs.commit-sha || github.event.pull_request.head.sha }}
           search_artifacts: true
           if_no_artifact_found: warn
