@@ -1,0 +1,14 @@
+name: Setup Build Cache
+description: Restores the build cache from GitHub Actions cache
+
+runs:
+  using: composite
+  steps:
+    - name: Restore build cache
+      uses: actions/cache@v4
+      with:
+        path: .build-cache
+        key: build-cache-v2-${{ runner.os }}-${{ github.sha }}
+        restore-keys: |
+          build-cache-v2-${{ runner.os }}-
+

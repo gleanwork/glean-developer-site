@@ -76,19 +76,21 @@ export class BuildCache {
 
   shouldRebuild(targetName, currentInputs) {
     if (this.disabled) {
-      return true;
+      return { shouldRebuild: true, reason: 'Cache disabled' };
     }
 
     const target = this.lockfile.targets[targetName];
     
     if (!target) {
+      const reason = 'No cache entry found (first build or cache cleared)';
       this.log(`Cache miss: ${targetName} (not in lockfile)`);
-      return true;
+      return { shouldRebuild: true, reason };
     }
 
     if (!target.inputs) {
+      const reason = 'Cache entry corrupted (no inputs recorded)';
       this.log(`Cache miss: ${targetName} (no inputs recorded)`);
-      return true;
+      return { shouldRebuild: true, reason };
     }
 
     const inputKeys = Object.keys(currentInputs).sort();
@@ -96,16 +98,18 @@ export class BuildCache {
     
     if (inputKeys.length !== cachedInputKeys.length || 
         !inputKeys.every((key, index) => key === cachedInputKeys[index])) {
+      const reason = 'Input keys changed (build configuration modified)';
       this.log(`Cache miss: ${targetName} (input keys changed)`);
-      return true;
+      return { shouldRebuild: true, reason };
     }
 
     for (const key of inputKeys) {
       if (currentInputs[key] !== target.inputs[key]) {
+        const reason = `${key} changed`;
         this.log(`Cache miss: ${targetName} (${key} changed)`);
         this.log(`  Expected: ${target.inputs[key]?.substring(0, 12)}...`);
         this.log(`  Got: ${currentInputs[key]?.substring(0, 12)}...`);
-        return true;
+        return { shouldRebuild: true, reason };
       }
     }
 
@@ -113,14 +117,15 @@ export class BuildCache {
       for (const outputPath of target.outputs) {
         const fullPath = path.join(ROOT_DIR, outputPath);
         if (!fs.existsSync(fullPath)) {
+          const reason = `Output missing: ${outputPath}`;
           this.log(`Cache miss: ${targetName} (output ${outputPath} missing)`);
-          return true;
+          return { shouldRebuild: true, reason };
         }
       }
     }
 
     this.log(`Cache hit: ${targetName}`);
-    return false;
+    return { shouldRebuild: false, reason: null };
   }
 
   markBuilt(targetName, inputs, outputs = []) {
@@ -273,6 +278,72 @@ export class BuildCache {
     }
   }
 
+  getCacheSize() {
+    if (!fs.existsSync(CACHE_DIR)) {
+      return 0;
+    }
+
+    let totalSize = 0;
+
+    function calculateDirSize(dirPath) {
+      const entries = fs.readdirSync(dirPath, { withFileTypes: true });
+      
+      for (const entry of entries) {
+        const fullPath = path.join(dirPath, entry.name);
+        
+        if (entry.isDirectory()) {
+          calculateDirSize(fullPath);
+        } else if (entry.isFile()) {
+          totalSize += fs.statSync(fullPath).size;
+        }
+      }
+    }
+
+    calculateDirSize(CACHE_DIR);
+    return totalSize;
+  }
+
+  pruneStaleEntries(maxAgeDays = 7) {
+    if (this.disabled || !this.lockfile) {
+      return { removed: 0, freedBytes: 0 };
+    }
+
+    const now = new Date();
+    const maxAgeMs = maxAgeDays * 24 * 60 * 60 * 1000;
+    const removed = [];
+    let freedBytes = 0;
+
+    for (const [targetName, target] of Object.entries(this.lockfile.targets)) {
+      if (!target.lastBuilt) {
+        continue;
+      }
+
+      const lastBuilt = new Date(target.lastBuilt);
+      const age = now - lastBuilt;
+
+      if (age > maxAgeMs) {
+        const cacheTargetDir = path.join(CACHE_DIR, 'builds', targetName);
+        
+        if (fs.existsSync(cacheTargetDir)) {
+          const sizeBefore = this.getCacheSize();
+          fs.rmSync(cacheTargetDir, { recursive: true, force: true });
+          const sizeAfter = this.getCacheSize();
+          freedBytes += sizeBefore - sizeAfter;
+        }
+
+        delete this.lockfile.targets[targetName];
+        removed.push(targetName);
+      }
+    }
+
+    if (removed.length > 0) {
+      this.saveLockfile();
+      this.log(`Pruned ${removed.length} stale cache entries (freed ${(freedBytes / 1024 / 1024).toFixed(2)} MB)`);
+    }
+
+    return { removed: removed.length, freedBytes };
+  }
+
   clear(targetName = null) {
     if (targetName) {
       this.invalidate(targetName);
@@ -311,9 +382,20 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   switch (command) {
     case 'stats':
       cache.printStats();
+      const size = cache.getCacheSize();
+      console.log(`\nCache size: ${(size / 1024 / 1024).toFixed(2)} MB`);
       break;
     case 'clear':
       cache.clear(arg);
+      break;
+    case 'prune':
+      const maxAge = arg ? parseInt(arg, 10) : 7;
+      const result = cache.pruneStaleEntries(maxAge);
+      console.log(`Pruned ${result.removed} entries, freed ${(result.freedBytes / 1024 / 1024).toFixed(2)} MB`);
+      break;
+    case 'size':
+      const cacheSize = cache.getCacheSize();
+      console.log(`Cache size: ${(cacheSize / 1024 / 1024).toFixed(2)} MB (${cacheSize} bytes)`);
       break;
     case 'validate':
       const stats = cache.getStats();
@@ -321,7 +403,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
       process.exit(stats.totalTargets === stats.validTargets ? 0 : 1);
       break;
     default:
-      console.log('Usage: cache.mjs [stats|clear [target]|validate]');
+      console.log('Usage: cache.mjs [stats|clear [target]|prune [days]|size|validate]');
       break;
   }
 }

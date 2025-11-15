@@ -1,0 +1,104 @@
+name: Visual Regression Testing
+
+on:
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      commit-sha:
+        description: "Commit SHA"
+        type: string
+        required: false
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  check-paths:
+    name: Check Visual File Changes
+    runs-on: ubuntu-latest
+    outputs:
+      should-run: ${{ steps.filter.outputs.visual == 'true' || github.event_name != 'workflow_call' }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check if visual files changed
+        if: github.event_name == 'workflow_call'
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            visual:
+              - 'src/**'
+              - 'docs/**'
+              - 'static/**'
+              - 'docusaurus.config.ts'
+              - 'sidebars.ts'
+              - 'tests/visual-regression/**'
+              - 'playwright.config.ts'
+              - '.github/workflows/visual-regression.yml'
+
+  visual-regression:
+    name: Visual Regression Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    needs: [check-paths]
+    if: needs.check-paths.outputs.should-run == 'true'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up mise
+        uses: jdx/mise-action@v2
+        with:
+          cache: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Restore build cache from CI
+        uses: actions/cache/restore@v4
+        with:
+          path: .build-cache
+          key: build-cache-v2-${{ runner.os }}-${{ inputs.commit-sha || github.event.pull_request.head.sha || github.sha }}
+          restore-keys: |
+            build-cache-v2-${{ runner.os }}-
+
+      - name: Try to download build artifact from CI
+        id: download-artifact
+        if: inputs.commit-sha || github.event.pull_request.head.sha
+        continue-on-error: true
+        uses: dawidd6/action-download-artifact@v6
+        with:
+          workflow: ci.yml
+          name: build
+          path: build/
+          commit: ${{ inputs.commit-sha || github.event.pull_request.head.sha }}
+          search_artifacts: true
+          if_no_artifact_found: warn
+
+      - name: Build the website
+        if: steps.download-artifact.outcome != 'success'
+        run: pnpm build
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Run visual regression tests
+        run: pnpm test:visual
+
+      - name: Upload test results on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-test-results
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7

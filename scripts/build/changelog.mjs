@@ -26,7 +26,9 @@ export async function buildChangelogIfNeeded(cache) {
     'static/changelog.xml'
   ];
 
-  if (cache.shouldRebuild(targetName, inputs)) {
+  const cacheCheck = cache.shouldRebuild(targetName, inputs);
+  
+  if (cacheCheck.shouldRebuild) {
     cache.log('Building changelog and RSS feed...', 'info');
     
     try {

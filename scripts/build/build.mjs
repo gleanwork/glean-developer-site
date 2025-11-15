@@ -57,8 +57,10 @@ async function buildWithCache() {
     const buildTarget = 'docusaurus:build';
     const buildDir = path.join(ROOT_DIR, 'build');
     
-    if (!cache.shouldRebuild(buildTarget, buildInputs)) {
-      console.log('Restoring from cache...');
+    const cacheCheck = cache.shouldRebuild(buildTarget, buildInputs);
+    
+    if (!cacheCheck.shouldRebuild) {
+      console.log('✓ Cache valid, restoring from cache...');
       
       if (cache.restoreBuildOutput(buildTarget, buildDir)) {
         const endTime = Date.now();
@@ -72,10 +74,11 @@ async function buildWithCache() {
         
         process.exit(0);
       } else {
-        console.log('Cache restore failed, rebuilding...');
+        console.log('✗ Cache restore failed, rebuilding...');
       }
     } else {
-      console.log('Cache invalid, rebuilding...');
+      console.log(`⚠ Cache invalid: ${cacheCheck.reason}`);
+      console.log('Building from scratch...');
     }
     
     console.log('Building site...');
@@ -92,10 +95,15 @@ async function buildWithCache() {
     console.log('Caching build output...');
     cache.storeBuildOutput(buildTarget, buildDir, buildInputs);
     
+    console.log('Pruning stale cache entries...');
+    cache.pruneStaleEntries(7);
+    
     const endTime = Date.now();
     const duration = ((endTime - startTime) / 1000).toFixed(2);
+    const cacheSize = cache.getCacheSize();
+    const cacheSizeMB = (cacheSize / 1024 / 1024).toFixed(2);
     
-    console.log(`✓ Build completed in ${duration}s`);
+    console.log(`✓ Build completed in ${duration}s (cache size: ${cacheSizeMB} MB)`);
     
     if (verbose) {
       cache.printStats();

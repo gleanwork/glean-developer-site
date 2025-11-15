@@ -8,11 +8,12 @@ on:
   workflow_dispatch:
 
 jobs:
-  test:
-    name: Test Build
+  lint:
+    name: Lint & Checks
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -23,13 +24,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Restore build cache
-        uses: actions/cache@v4
-        with:
-          path: .build-cache
-          key: build-cache-v1-${{ runner.os }}-${{ hashFiles('openapi/**/*.yaml', 'changelog/entries/**/*.md', 'package.json', 'pnpm-lock.yaml', 'scripts/**/*.{mjs,ts}', 'docs/**/*.{md,mdx}', 'src/**/*.{ts,tsx,js,jsx}', 'docusaurus.config.ts', 'sidebars.ts') }}
-          restore-keys: |
-            build-cache-v1-${{ runner.os }}-
+      - name: Setup build cache
+        uses: ./.github/actions/setup-build-cache
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -45,5 +41,45 @@ jobs:
             echo "No usage of support@glean.com found"
           fi
 
-      - name: Test build website
-        run: pnpm build 
+  build:
+    name: Build Site
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up mise
+        uses: jdx/mise-action@v2
+        with:
+          cache: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup build cache
+        uses: ./.github/actions/setup-build-cache
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build website
+        run: pnpm build
+        env:
+          VERBOSE: "true"
+
+      - name: Upload build artifact
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: build
+          path: build/
+          retention-days: 1
+
+  visual-regression:
+    name: Visual Regression Tests
+    needs: build
+    if: github.event_name == 'pull_request'
+    uses: ./.github/workflows/visual-regression.yml
+    with:
+      commit-sha: ${{ github.event.pull_request.head.sha }}
