@@ -20,12 +20,16 @@ export async function syncAllCommand(
   repoRoot: string,
   options: { dryRun?: boolean },
 ): Promise<void> {
+  log('DRY-RUN: No commits or PRs will be created');
   const analyzed = await analyze(repoRoot);
 
   if (options.dryRun) {
     const previewDir = writePreview(analyzed, repoRoot);
+
     process.stdout.write(JSON.stringify(analyzed, null, 2));
+
     log(`Preview written to: ${previewDir}`);
+
     if (analyzed.files.length > 0) {
       log('Files:');
       for (const f of analyzed.files) {

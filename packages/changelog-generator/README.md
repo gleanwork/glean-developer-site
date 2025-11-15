@@ -17,7 +17,7 @@ This package analyzes releases and OpenAPI spec changes and opens PRs with rende
 ## Local usage
 
 ```bash
-pnpm changelog:sync:all -- --dry-run
+pnpm changelog:sync:all --dry-run
 ```
 This writes preview files under `.changelog-preview-<timestamp>` and logs entries in debug mode when `DEBUG=changelog*`.
 
@@ -28,7 +28,7 @@ This writes preview files under `.changelog-preview-<timestamp>` and logs entrie
 
 ### For CI/Automation
 - `pnpm changelog:sync:all` - Sync from all configured GitHub repos
-- `pnpm changelog:sync:all -- --dry-run` - Preview sync without creating PR
+- `pnpm changelog:sync:all --dry-run` - Preview sync without creating PR
 
 ### For Build System
 - `pnpm changelog:compile:json` - Compile .md entries → changelog.json
