@@ -1,57 +1,51 @@
-#!/usr/bin/env node
-
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 import { Feed } from 'feed';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const CHANGELOG_DATA_FILE = path.join(
-  __dirname,
-  '..',
-  'src',
-  'data',
-  'changelog.json',
-);
-const RSS_OUTPUT_DIR = path.join(__dirname, '..', 'static');
-const RSS_OUTPUT_FILE = path.join(RSS_OUTPUT_DIR, 'changelog.xml');
-
-function needsRegeneration() {
-  if (!fs.existsSync(RSS_OUTPUT_FILE)) {
+function needsRegeneration(
+  changelogDataFile: string,
+  rssOutputFile: string,
+): boolean {
+  if (!fs.existsSync(rssOutputFile)) {
     return true;
   }
 
-  if (!fs.existsSync(CHANGELOG_DATA_FILE)) {
+  if (!fs.existsSync(changelogDataFile)) {
     return true;
   }
 
-  const changelogStats = fs.statSync(CHANGELOG_DATA_FILE);
-  const rssStats = fs.statSync(RSS_OUTPUT_FILE);
+  const changelogStats = fs.statSync(changelogDataFile);
+  const rssStats = fs.statSync(rssOutputFile);
 
   return changelogStats.mtime > rssStats.mtime;
 }
 
-function generateRSSFeed() {
-  if (!fs.existsSync(CHANGELOG_DATA_FILE)) {
-    console.error('Changelog data file does not exist:', CHANGELOG_DATA_FILE);
+export function rssCommand(repoRoot: string): void {
+  const changelogDataFile = path.join(
+    repoRoot,
+    'src',
+    'data',
+    'changelog.json',
+  );
+  const rssOutputDir = path.join(repoRoot, 'static');
+  const rssOutputFile = path.join(rssOutputDir, 'changelog.xml');
+
+  if (!fs.existsSync(changelogDataFile)) {
+    console.error('Changelog data file does not exist:', changelogDataFile);
     process.exit(1);
   }
 
-  if (!needsRegeneration()) {
+  if (!needsRegeneration(changelogDataFile, rssOutputFile)) {
     console.log(
       'No changes detected in changelog data, skipping RSS generation',
     );
     return;
   }
 
-  const changelogData = JSON.parse(
-    fs.readFileSync(CHANGELOG_DATA_FILE, 'utf-8'),
-  );
+  const changelogData = JSON.parse(fs.readFileSync(changelogDataFile, 'utf-8'));
   const { entries } = changelogData;
 
-  const siteUrl = 'https://glean-developer-site.vercel.app';
+  const siteUrl = 'https://developers.glean.com';
   const changelogUrl = `${siteUrl}/changelog`;
 
   const feed = new Feed({
@@ -74,7 +68,7 @@ function generateRSSFeed() {
     updated: new Date(changelogData.generatedAt),
   });
 
-  entries.forEach((entry) => {
+  entries.forEach((entry: any) => {
     const entryUrl = `${changelogUrl}#${entry.slug}`;
     const pubDate = new Date(entry.date);
 
@@ -91,18 +85,16 @@ function generateRSSFeed() {
         },
       ],
       date: pubDate,
-      category: entry.categories.map((cat) => ({ name: cat })),
+      category: entry.categories.map((cat: string) => ({ name: cat })),
     });
   });
 
-  fs.mkdirSync(RSS_OUTPUT_DIR, { recursive: true });
+  fs.mkdirSync(rssOutputDir, { recursive: true });
 
   const rssXml = feed.rss2();
-  fs.writeFileSync(RSS_OUTPUT_FILE, rssXml);
+  fs.writeFileSync(rssOutputFile, rssXml);
 
   console.log(
-    `Generated RSS feed with ${entries.length} entries at ${RSS_OUTPUT_FILE}`,
+    `Generated RSS feed with ${entries.length} entries at ${rssOutputFile}`,
   );
 }
-
-generateRSSFeed();

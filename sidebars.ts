@@ -1306,8 +1306,7 @@ const baseSidebars: SidebarsConfig = {
             {
               type: 'doc',
               id: 'api/indexing-api/schedules-the-processing-of-uploaded-employees-and-teams',
-              label:
-                'Schedules the processing of uploaded employees and teams',
+              label: 'Schedules the processing of uploaded employees and teams',
               className: 'api-method post',
             },
             {

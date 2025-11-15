@@ -48,8 +48,7 @@ The system uses a make-style dependency tracking approach with three caching pha
     "changelog": {
       "inputs": {
         "entries": "sha256:abc...",
-        "dataGenerator": "sha256:def...",
-        "rssGenerator": "sha256:789..."
+        "changelogGenerator": "sha256:def..."
       },
       "outputs": [
         "src/data/changelog.json",
@@ -107,8 +106,7 @@ Each target has inputs that determine its cache key:
 
 #### Changelog
 - All `changelog/entries/*.md` files
-- `scripts/generate-changelog-data.mjs`
-- `scripts/generate-rss-feed.mjs`
+- All `packages/changelog-generator/src/**/*.ts` files
 
 #### OpenAPI Transformations
 - Source spec URL or file

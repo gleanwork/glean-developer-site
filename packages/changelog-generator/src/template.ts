@@ -1,8 +1,29 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { formatCategories } from './shared/categories.js';
 
-function formatCategories(categories: Array<string>): string {
-  return categories.map((c) => `"${c}"`).join(', ');
+function getTemplatePath(repoRoot: string): string {
+  const __filename = fileURLToPath(import.meta.url);
+  const __dirname = path.dirname(__filename);
+
+  const pkgTemplatePath = path.join(
+    __dirname,
+    '..',
+    'templates',
+    'changelog-entry.md',
+  );
+  if (fs.existsSync(pkgTemplatePath)) {
+    return pkgTemplatePath;
+  }
+
+  const repoTemplatePath = path.join(
+    repoRoot,
+    'scripts',
+    'templates',
+    'changelog-entry.md',
+  );
+  return repoTemplatePath;
 }
 
 export function renderChangelogEntry(opts: {
@@ -12,12 +33,7 @@ export function renderChangelogEntry(opts: {
   summary: string;
   detailedContent: string;
 }): string {
-  const templatePath = path.join(
-    opts.repoRoot,
-    'scripts',
-    'templates',
-    'changelog-entry.md',
-  );
+  const templatePath = getTemplatePath(opts.repoRoot);
   const template = fs.readFileSync(templatePath, 'utf-8');
 
   const variables: Record<string, string> = {

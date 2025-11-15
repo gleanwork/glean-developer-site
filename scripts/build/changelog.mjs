@@ -17,8 +17,9 @@ export async function buildChangelogIfNeeded(cache) {
     entries: hashDirectory(path.join(ROOT_DIR, 'changelog', 'entries'), {
       include: ['.md']
     }),
-    dataGenerator: hashFile(path.join(ROOT_DIR, 'scripts', 'generate-changelog-data.mjs')),
-    rssGenerator: hashFile(path.join(ROOT_DIR, 'scripts', 'generate-rss-feed.mjs'))
+    changelogGenerator: hashDirectory(path.join(ROOT_DIR, 'packages', 'changelog-generator', 'src'), {
+      include: ['.ts']
+    })
   };
 
   const outputs = [
@@ -30,12 +31,12 @@ export async function buildChangelogIfNeeded(cache) {
     cache.log('Building changelog and RSS feed...', 'info');
     
     try {
-      execSync('node scripts/generate-changelog-data.mjs', {
+      execSync('pnpm -C packages/changelog-generator run build:data', {
         cwd: ROOT_DIR,
         stdio: cache.verbose ? 'inherit' : 'pipe'
       });
       
-      execSync('node scripts/generate-rss-feed.mjs', {
+      execSync('pnpm -C packages/changelog-generator run build:rss', {
         cwd: ROOT_DIR,
         stdio: cache.verbose ? 'inherit' : 'pipe'
       });
