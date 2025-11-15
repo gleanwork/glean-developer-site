@@ -5,14 +5,12 @@ import * as path from 'node:path';
 import * as dotenv from 'dotenv';
 import { findUp } from 'find-up';
 import { Command } from 'commander';
-import { createCommand } from './commands/create.js';
-import { buildCommand } from './commands/build.js';
-import { rssCommand } from './commands/rss.js';
-import {
-  generateCommand,
-  analyzeCommand,
-  applyCommand,
-} from './commands/generate.js';
+import { createCommand } from './commands/entry-new.js';
+import { buildCommand } from './commands/compile-json.js';
+import { rssCommand } from './commands/compile-rss.js';
+import { syncAllCommand } from './commands/sync-all.js';
+import { previewCommand } from './commands/preview.js';
+import { publishCommand } from './commands/publish.js';
 
 async function findRepoRoot(startDir: string): Promise<string> {
   const pkgJsonFile = await findUp('package.json', { cwd: startDir });
@@ -105,14 +103,14 @@ async function main() {
     .description('Generate entries from GitHub releases')
     .option('--dry-run', 'Preview without creating PR')
     .action(async (options) => {
-      await generateCommand(repoRoot, { dryRun: options.dryRun });
+      await syncAllCommand(repoRoot, { dryRun: options.dryRun });
     });
 
   program
     .command('preview')
     .description('Analyze releases and output JSON')
     .action(async () => {
-      await analyzeCommand(repoRoot);
+      await previewCommand(repoRoot);
     });
 
   program
@@ -120,7 +118,7 @@ async function main() {
     .description('Apply analyzed changelog from JSON')
     .option('--input <path>', 'Path to JSON input')
     .action(async (options) => {
-      await applyCommand(repoRoot, { input: options.input });
+      await publishCommand(repoRoot, { input: options.input });
     });
 
   await program.parseAsync(process.argv);

@@ -2,6 +2,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as os from 'node:os';
 import { randomUUID } from 'node:crypto';
+import { createRequire } from 'node:module';
 import { loadConfig } from '../config.js';
 import { summarizeRelease } from '../summarizer.js';
 import { getLatestChangelogEntryDate } from '../latest-entry.js';
@@ -19,7 +20,6 @@ import {
   formatChangeCategories,
 } from '../openapi-summary.js';
 import { enrichChangesWithContext } from '../openapi-context.js';
-import { createRequire } from 'node:module';
 
 const DEFAULT_OWNER = 'gleanwork';
 const DEFAULT_REPO = 'glean-developer-site';
@@ -72,7 +72,10 @@ function normalizeTag(tag: string): string {
   return tag.replace(/^v/i, '').replace(/\./g, '-');
 }
 
-function writePreview(analyzed: AnalyzeOutput, repoRoot: string): string {
+export function writePreview(
+  analyzed: AnalyzeOutput,
+  repoRoot: string,
+): string {
   const ts = new Date().toISOString().replace(/[:.]/g, '-');
   const previewDir = path.join(repoRoot, `.changelog-preview-${ts}`);
   fs.mkdirSync(previewDir, { recursive: true });
@@ -666,45 +669,4 @@ export async function apply(
       } catch {}
     }
   }
-}
-
-export async function generateCommand(
-  repoRoot: string,
-  options: { dryRun?: boolean },
-): Promise<void> {
-  const analyzed = await analyze(repoRoot);
-
-  if (options.dryRun) {
-    const previewDir = writePreview(analyzed, repoRoot);
-    process.stdout.write(JSON.stringify(analyzed, null, 2));
-    log(`Preview written to: ${previewDir}`);
-    if (analyzed.files.length > 0) {
-      log('Files:');
-      for (const f of analyzed.files) {
-        log(`- ${f.path} (${Buffer.byteLength(f.content, 'utf8')} bytes)`);
-      }
-      for (const f of analyzed.files) {
-        log(`===== ${f.path} =====`);
-        log('```md\n' + f.content + '\n```');
-      }
-    }
-    return;
-  }
-
-  const tmpPath = path.join(repoRoot, '.changelog-generator-output.json');
-  fs.writeFileSync(tmpPath, JSON.stringify(analyzed, null, 2));
-  await apply(repoRoot, tmpPath);
-  fs.rmSync(tmpPath, { force: true });
-}
-
-export async function analyzeCommand(repoRoot: string): Promise<void> {
-  const result = await analyze(repoRoot);
-  process.stdout.write(JSON.stringify(result, null, 2));
-}
-
-export async function applyCommand(
-  repoRoot: string,
-  options: { input?: string },
-): Promise<void> {
-  await apply(repoRoot, options.input);
 }
