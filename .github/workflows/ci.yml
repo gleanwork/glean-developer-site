@@ -23,14 +23,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Restore build cache
-        uses: actions/cache@v4
-        with:
-          path: .build-cache
-          key: build-cache-v1-${{ runner.os }}-${{ hashFiles('openapi/**/*.yaml', 'changelog/entries/**/*.md', 'package.json', 'pnpm-lock.yaml', 'scripts/**/*.{mjs,ts}', 'docs/**/*.{md,mdx}', 'src/**/*.{ts,tsx,js,jsx}', 'docusaurus.config.ts', 'sidebars.ts') }}
-          restore-keys: |
-            build-cache-v1-${{ runner.os }}-
-
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
@@ -45,5 +37,8 @@ jobs:
             echo "No usage of support@glean.com found"
           fi
 
-      - name: Test build website
-        run: pnpm build 
+      - name: Build website
+        run: pnpm build
+        env:
+          TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+          TURBO_TEAM: ${{ vars.TURBO_TEAM }}
