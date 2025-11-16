@@ -8,7 +8,6 @@ import { Command } from 'commander';
 import { createCommand } from './commands/entry-new.js';
 import { buildCommand } from './commands/compile-json.js';
 import { rssCommand } from './commands/compile-rss.js';
-import { syncAllCommand } from './commands/sync-all.js';
 import { previewCommand } from './commands/preview.js';
 import { publishCommand } from './commands/publish.js';
 
@@ -99,14 +98,6 @@ async function main() {
     });
 
   program
-    .command('sync-all')
-    .description('Generate entries from GitHub releases')
-    .option('--dry-run', 'Preview without creating PR')
-    .action(async (options) => {
-      await syncAllCommand(repoRoot, { dryRun: options.dryRun });
-    });
-
-  program
     .command('preview')
     .description('Analyze releases and output JSON')
     .action(async () => {
@@ -115,10 +106,10 @@ async function main() {
 
   program
     .command('publish')
-    .description('Apply analyzed changelog from JSON')
-    .option('--input <path>', 'Path to JSON input')
+    .description('Create changelog entries and open PR')
+    .option('--dry-run', 'Preview without creating commits/PR')
     .action(async (options) => {
-      await publishCommand(repoRoot, { input: options.input });
+      await publishCommand(repoRoot, { dryRun: options.dryRun });
     });
 
   await program.parseAsync(process.argv);

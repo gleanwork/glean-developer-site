@@ -79,6 +79,12 @@ function hasChanges(
   return !outputExists || cache.directoryHash !== currentHash;
 }
 
+/**
+ * Compiles all changelog entry markdown files into a single JSON file.
+ * Reads all .md files from changelog/entries/, parses their frontmatter and content,
+ * processes markdown to HTML, and outputs to src/data/changelog.json.
+ * Uses caching to skip regeneration if entries haven't changed.
+ */
 export function buildCommand(repoRoot: string): void {
   const changelogDir = path.join(repoRoot, 'changelog', 'entries');
   const outputFile = path.join(repoRoot, 'src', 'data', 'changelog.json');

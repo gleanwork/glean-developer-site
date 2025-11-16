@@ -100,6 +100,11 @@ Add more detailed information here, such as:
   return { ...answers, detailedContent };
 }
 
+/**
+ * Creates a new changelog entry interactively.
+ * Prompts the user for title, categories, summary, and detailed content,
+ * then generates a markdown file in changelog/entries/.
+ */
 export async function createCommand(repoRoot: string): Promise<void> {
   try {
     const changelogDir = path.join(repoRoot, 'changelog', 'entries');

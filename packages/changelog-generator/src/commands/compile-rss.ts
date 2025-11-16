@@ -20,6 +20,11 @@ function needsRegeneration(
   return changelogStats.mtime > rssStats.mtime;
 }
 
+/**
+ * Generates an RSS feed from the changelog JSON data.
+ * Reads src/data/changelog.json and creates an RSS 2.0 feed at static/changelog.xml.
+ * Uses file modification times to skip regeneration if changelog.json hasn't changed.
+ */
 export function rssCommand(repoRoot: string): void {
   const changelogDataFile = path.join(
     repoRoot,

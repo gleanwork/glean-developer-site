@@ -1,8 +1,63 @@
-import { apply } from '../shared/github.js';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
+import { analyze, apply, writePreview } from '../shared/github.js';
+import { createRequire } from 'node:module';
 
+const require = createRequire(import.meta.url);
+const dbg: any = require('debug');
+const dbgBase = dbg('changelog');
+const useDebug =
+  typeof dbgBase?.enabled === 'boolean' ? dbgBase.enabled : !!process.env.DEBUG;
+const log = (...args: Array<any>) => {
+  if (useDebug) {
+    dbgBase(...args);
+  } else {
+    console.log('[changelog]', ...args);
+  }
+};
+
+/**
+ * Publishes changelog entries from GitHub releases to a PR.
+ * Analyzes GitHub releases, creates .md entry files, commits them to a branch,
+ * and opens or updates a pull request.
+ *
+ * With --dry-run: Writes preview files to .changelog-preview-<timestamp>/,
+ * displays full file content, and outputs JSON. No commits or PRs are created.
+ *
+ * Without --dry-run: Creates commits and opens/updates a PR on GitHub.
+ */
 export async function publishCommand(
   repoRoot: string,
-  options: { input?: string },
+  options: { dryRun?: boolean },
 ): Promise<void> {
-  await apply(repoRoot, options.input);
+  if (options.dryRun) {
+    log('DRY-RUN: No commits or PRs will be created');
+  }
+
+  const analyzed = await analyze(repoRoot);
+
+  if (options.dryRun) {
+    const previewDir = writePreview(analyzed, repoRoot);
+
+    process.stdout.write(JSON.stringify(analyzed, null, 2));
+
+    log(`Preview written to: ${previewDir}`);
+
+    if (analyzed.files.length > 0) {
+      log('Files:');
+      for (const f of analyzed.files) {
+        log(`- ${f.path} (${Buffer.byteLength(f.content, 'utf8')} bytes)`);
+      }
+      for (const f of analyzed.files) {
+        log(`===== ${f.path} =====`);
+        log('```md\n' + f.content + '\n```');
+      }
+    }
+    return;
+  }
+
+  const tmpPath = path.join(repoRoot, '.changelog-generator-output.json');
+  fs.writeFileSync(tmpPath, JSON.stringify(analyzed, null, 2));
+  await apply(repoRoot, tmpPath);
+  fs.rmSync(tmpPath, { force: true });
 }
