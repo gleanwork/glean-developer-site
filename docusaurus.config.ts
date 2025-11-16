@@ -184,6 +184,8 @@ const config: Config = {
       return {
         name: 'webpack-config',
         configureWebpack(config, isServer) {
+          const isDev = process.env.NODE_ENV === 'development';
+          
           return {
             resolve: {
               fallback: {
@@ -197,6 +199,22 @@ const config: Config = {
                 ),
               },
             },
+            ...(isDev && !isServer ? {
+              cache: true,
+              optimization: {
+                removeAvailableModules: false,
+                removeEmptyChunks: false,
+                splitChunks: false,
+                runtimeChunk: true,
+              },
+              experiments: {
+                lazyCompilation: {
+                  entries: false,
+                  imports: true,
+                  test: /\.mdx?$/,
+                },
+              },
+            } : {}),
           };
         },
       };

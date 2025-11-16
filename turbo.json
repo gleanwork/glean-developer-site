@@ -1,0 +1,302 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "tasks": {
+    "//#changelog:aggregate": {
+      "inputs": [
+        "changelog/entries/**/*.md",
+        "packages/changelog-generator/src/**/*.ts"
+      ],
+      "outputs": ["src/data/changelog.json"],
+      "cache": true
+    },
+    "//#generate:rss": {
+      "dependsOn": ["//#changelog:aggregate"],
+      "inputs": [
+        "src/data/changelog.json",
+        "packages/changelog-generator/src/**/*.ts"
+      ],
+      "outputs": ["static/changelog.xml"],
+      "cache": true
+    },
+    "//#openapi:capitalize:client": {
+      "inputs": ["scripts/openapi-capitalize-language.mjs"],
+      "outputs": ["openapi/client/client-capitalized.yaml"],
+      "env": ["GITHUB_TOKEN"],
+      "cache": true
+    },
+    "//#openapi:break:client": {
+      "dependsOn": ["//#openapi:capitalize:client"],
+      "inputs": [
+        "openapi/client/client-capitalized.yaml",
+        "scripts/openapi-split-break-circular.mjs"
+      ],
+      "outputs": ["openapi/client/split-apis/**"],
+      "cache": true
+    },
+    "//#openapi:transform:indexing": {
+      "inputs": ["scripts/openapi-capitalize-language.mjs"],
+      "outputs": ["openapi/indexing/indexing-capitalized.yaml"],
+      "env": ["GITHUB_TOKEN"],
+      "cache": true
+    },
+    "//#openapi:generate:client:activity": {
+      "dependsOn": ["//#openapi:break:client"],
+      "inputs": [
+        "openapi/client/split-apis/activity-api.yaml",
+        "scripts/generator/**",
+        "docusaurus.config.ts"
+      ],
+      "outputs": ["docs/api/client-api/activity/**"],
+      "cache": true
+    },
+    "//#openapi:generate:client:announcements": {
+      "dependsOn": ["//#openapi:break:client"],
+      "inputs": [
+        "openapi/client/split-apis/announcements-api.yaml",
+        "scripts/generator/**",
+        "docusaurus.config.ts"
+      ],
+      "outputs": ["docs/api/client-api/announcements/**"],
+      "cache": true
+    },
+    "//#openapi:generate:client:answers": {
+      "dependsOn": ["//#openapi:break:client"],
+      "inputs": [
+        "openapi/client/split-apis/answers-api.yaml",
+        "scripts/generator/**",
+        "docusaurus.config.ts"
+      ],
+      "outputs": ["docs/api/client-api/answers/**"],
+      "cache": true
+    },
+    "//#openapi:generate:client:authentication": {
+      "dependsOn": ["//#openapi:break:client"],
+      "inputs": [
+        "openapi/client/split-apis/authentication-api.yaml",
+        "scripts/generator/**",
+        "docusaurus.config.ts"
+      ],
+      "outputs": ["docs/api/client-api/authentication/**"],
+      "cache": true
+    },
+    "//#openapi:generate:client:chat": {
+      "dependsOn": ["//#openapi:break:client"],
+      "inputs": [
+        "openapi/client/split-apis/chat-api.yaml",
+        "scripts/generator/**",
+        "docusaurus.config.ts"
+      ],
+      "outputs": ["docs/api/client-api/chat/**"],
+      "cache": true
+    },
+    "//#openapi:generate:client:agents": {
+      "dependsOn": ["//#openapi:break:client"],
+      "inputs": [
+        "openapi/client/split-apis/agents-api.yaml",
+        "scripts/generator/**",
+        "docusaurus.config.ts"
+      ],
+      "outputs": ["docs/api/client-api/agents/**"],
+      "cache": true
+    },
+    "//#openapi:generate:client:collections": {
+      "dependsOn": ["//#openapi:break:client"],
+      "inputs": [
+        "openapi/client/split-apis/collections-api.yaml",
+        "scripts/generator/**",
+        "docusaurus.config.ts"
+      ],
+      "outputs": ["docs/api/client-api/collections/**"],
+      "cache": true
+    },
+    "//#openapi:generate:client:documents": {
+      "dependsOn": ["//#openapi:break:client"],
+      "inputs": [
+        "openapi/client/split-apis/documents-api.yaml",
+        "scripts/generator/**",
+        "docusaurus.config.ts"
+      ],
+      "outputs": ["docs/api/client-api/documents/**"],
+      "cache": true
+    },
+    "//#openapi:generate:client:insights": {
+      "dependsOn": ["//#openapi:break:client"],
+      "inputs": [
+        "openapi/client/split-apis/insights-api.yaml",
+        "scripts/generator/**",
+        "docusaurus.config.ts"
+      ],
+      "outputs": ["docs/api/client-api/insights/**"],
+      "cache": true
+    },
+    "//#openapi:generate:client:messages": {
+      "dependsOn": ["//#openapi:break:client"],
+      "inputs": [
+        "openapi/client/split-apis/messages-api.yaml",
+        "scripts/generator/**",
+        "docusaurus.config.ts"
+      ],
+      "outputs": ["docs/api/client-api/messages/**"],
+      "cache": true
+    },
+    "//#openapi:generate:client:pins": {
+      "dependsOn": ["//#openapi:break:client"],
+      "inputs": [
+        "openapi/client/split-apis/pins-api.yaml",
+        "scripts/generator/**",
+        "docusaurus.config.ts"
+      ],
+      "outputs": ["docs/api/client-api/pins/**"],
+      "cache": true
+    },
+    "//#openapi:generate:client:search": {
+      "dependsOn": ["//#openapi:break:client"],
+      "inputs": [
+        "openapi/client/split-apis/search-api.yaml",
+        "scripts/generator/**",
+        "docusaurus.config.ts"
+      ],
+      "outputs": ["docs/api/client-api/search/**"],
+      "cache": true
+    },
+    "//#openapi:generate:client:entities": {
+      "dependsOn": ["//#openapi:break:client"],
+      "inputs": [
+        "openapi/client/split-apis/entities-api.yaml",
+        "scripts/generator/**",
+        "docusaurus.config.ts"
+      ],
+      "outputs": ["docs/api/client-api/entities/**"],
+      "cache": true
+    },
+    "//#openapi:generate:client:shortcuts": {
+      "dependsOn": ["//#openapi:break:client"],
+      "inputs": [
+        "openapi/client/split-apis/shortcuts-api.yaml",
+        "scripts/generator/**",
+        "docusaurus.config.ts"
+      ],
+      "outputs": ["docs/api/client-api/shortcuts/**"],
+      "cache": true
+    },
+    "//#openapi:generate:client:summarize": {
+      "dependsOn": ["//#openapi:break:client"],
+      "inputs": [
+        "openapi/client/split-apis/summarize-api.yaml",
+        "scripts/generator/**",
+        "docusaurus.config.ts"
+      ],
+      "outputs": ["docs/api/client-api/summarize/**"],
+      "cache": true
+    },
+    "//#openapi:generate:client:verification": {
+      "dependsOn": ["//#openapi:break:client"],
+      "inputs": [
+        "openapi/client/split-apis/verification-api.yaml",
+        "scripts/generator/**",
+        "docusaurus.config.ts"
+      ],
+      "outputs": ["docs/api/client-api/verification/**"],
+      "cache": true
+    },
+    "//#openapi:generate:client:tools": {
+      "dependsOn": ["//#openapi:break:client"],
+      "inputs": [
+        "openapi/client/split-apis/tools-api.yaml",
+        "scripts/generator/**",
+        "docusaurus.config.ts"
+      ],
+      "outputs": ["docs/api/client-api/tools/**"],
+      "cache": true
+    },
+    "//#openapi:generate:client:governance": {
+      "dependsOn": ["//#openapi:break:client"],
+      "inputs": [
+        "openapi/client/split-apis/governance-api.yaml",
+        "scripts/generator/**",
+        "docusaurus.config.ts"
+      ],
+      "outputs": ["docs/api/client-api/governance/**"],
+      "cache": true
+    },
+    "//#openapi:generate:indexing": {
+      "dependsOn": ["//#openapi:transform:indexing"],
+      "inputs": [
+        "openapi/indexing/indexing-capitalized.yaml",
+        "scripts/generator/**",
+        "docusaurus.config.ts"
+      ],
+      "outputs": ["docs/api/indexing-api/**"],
+      "cache": true
+    },
+    "//#openapi:clean:after:indexing": {
+      "dependsOn": ["//#openapi:generate:indexing"],
+      "cache": false
+    },
+    "//#openapi:clean:after:client": {
+      "dependsOn": [
+        "//#openapi:generate:client:activity",
+        "//#openapi:generate:client:announcements",
+        "//#openapi:generate:client:answers",
+        "//#openapi:generate:client:authentication",
+        "//#openapi:generate:client:chat",
+        "//#openapi:generate:client:agents",
+        "//#openapi:generate:client:collections",
+        "//#openapi:generate:client:documents",
+        "//#openapi:generate:client:insights",
+        "//#openapi:generate:client:messages",
+        "//#openapi:generate:client:pins",
+        "//#openapi:generate:client:search",
+        "//#openapi:generate:client:entities",
+        "//#openapi:generate:client:shortcuts",
+        "//#openapi:generate:client:summarize",
+        "//#openapi:generate:client:verification",
+        "//#openapi:generate:client:tools",
+        "//#openapi:generate:client:governance"
+      ],
+      "cache": false
+    },
+    "//#docusaurus:build": {
+      "dependsOn": [
+        "//#changelog:aggregate",
+        "//#generate:rss",
+        "//#openapi:clean:after:client",
+        "//#openapi:clean:after:indexing"
+      ],
+      "inputs": [
+        "docs/**",
+        "src/**",
+        "static/**",
+        "openapi/**",
+        "docusaurus.config.ts",
+        "sidebars.ts",
+        "package.json"
+      ],
+      "outputs": ["build/**"],
+      "cache": true
+    },
+    "//#test": {
+      "outputs": [],
+      "cache": true
+    },
+    "//#prepare-dev": {
+      "dependsOn": [
+        "//#changelog:aggregate",
+        "//#generate:rss",
+        "//#openapi:clean:after:client",
+        "//#openapi:clean:after:indexing"
+      ],
+      "outputs": [
+        "src/data/changelog.json",
+        "static/changelog.xml",
+        "docs/api/**"
+      ],
+      "cache": true
+    },
+    "//#dev": {
+      "dependsOn": ["//#prepare-dev"],
+      "cache": false,
+      "persistent": true
+    }
+  }
+}

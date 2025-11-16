@@ -23,13 +23,13 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Restore build cache
+      - name: Setup Turborepo cache
         uses: actions/cache@v4
         with:
-          path: .build-cache
-          key: build-cache-v1-${{ runner.os }}-${{ hashFiles('openapi/**/*.yaml', 'changelog/entries/**/*.md', 'package.json', 'pnpm-lock.yaml', 'scripts/**/*.{mjs,ts}', 'docs/**/*.{md,mdx}', 'src/**/*.{ts,tsx,js,jsx}', 'docusaurus.config.ts', 'sidebars.ts') }}
+          path: .turbo
+          key: turbo-${{ runner.os }}-${{ github.sha }}
           restore-keys: |
-            build-cache-v1-${{ runner.os }}-
+            turbo-${{ runner.os }}-
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -46,4 +46,7 @@ jobs:
           fi
 
       - name: Test build website
-        run: pnpm build 
+        run: pnpm build
+        env:
+          TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+          TURBO_TEAM: ${{ vars.TURBO_TEAM }}
