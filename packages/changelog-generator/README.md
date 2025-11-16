@@ -17,8 +17,22 @@ This package analyzes releases and OpenAPI spec changes and opens PRs with rende
 ## Local usage
 
 ```bash
-pnpm -C packages/changelog-generator run run -- --dry-run
+pnpm changelog:publish --dry-run
 ```
 This writes preview files under `.changelog-preview-<timestamp>` and logs entries in debug mode when `DEBUG=changelog*`.
+
+## Available Commands
+
+### For Developers
+- `pnpm changelog:entry:new` - Manually create a changelog entry (interactive)
+
+### For CI/Automation
+- `pnpm changelog:preview` - Analyze GitHub releases → output JSON
+- `pnpm changelog:publish --dry-run` - Full preview (saves files + shows content)
+- `pnpm changelog:publish` - Publish entries from GitHub (creates PR)
+
+### For Build System
+- `pnpm changelog:compile:json` - Compile .md entries → changelog.json
+- `pnpm changelog:compile:rss` - Generate RSS feed from JSON
 
 

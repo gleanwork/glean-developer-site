@@ -47,9 +47,6 @@ jobs:
               # Fixing to the version used during development in order to avoid breaking changes
               run: npm i -g @pb33f/openapi-changes@0.0.80
 
-            - name: Build changelog generator
-              run: pnpm changelog:build
-
             - name: Configure git
               run: |
                   git config user.name "github-actions[bot]"
@@ -65,7 +62,7 @@ jobs:
                   DEBUG: ${{ inputs.debug == 'true' && 'changelog*' || '' }}
               run: |
                   if [ "${{ inputs.dry_run }}" = "true" ]; then
-                      pnpm -C packages/changelog-generator run run -- --dry-run
+                      pnpm changelog:publish --dry-run
                   else
-                      pnpm -C packages/changelog-generator run run
+                      pnpm changelog:publish
                   fi
