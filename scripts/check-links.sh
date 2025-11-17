@@ -20,7 +20,14 @@
 # EXAMPLES:
 #   ./check-links.sh                                    # Check production site (quick)
 #   ./check-links.sh https://developers.glean.com true  # Deep check of production
-#   ./check-links.sh http://localhost:3000             # Check local build
+#   
+#   # For local checking, you MUST build the site first:
+#   pnpm build && pnpm serve                           # Build and serve on port 3000
+#   ./check-links.sh http://localhost:8888             # Check local build
+#
+# IMPORTANT: This script requires sitemap.xml which is ONLY generated during
+#            production builds (pnpm build). The dev server (pnpm start) does
+#            NOT generate a sitemap, so the script won't work with the dev server.
 #
 # HOW IT WORKS:
 #   1. SITEMAP FETCHING:
@@ -75,6 +82,22 @@ url_list="${tmp_dir}/urls.txt"
 
 echo "Fetching sitemap from: $SITEMAP_URL"
 echo "Base URL: $BASE_URL"
+
+# ── Check if sitemap exists (fail early with helpful message) ─────────────────
+if ! curl -sSLf --head "$SITEMAP_URL" >/dev/null 2>&1; then
+  echo ""
+  echo "❌ ERROR: Could not fetch sitemap at $SITEMAP_URL"
+  echo ""
+  echo "This script requires a sitemap.xml which is only generated during production builds."
+  echo ""
+  echo "If checking locally, you must:"
+  echo "  1. Build the site:  pnpm build"
+  echo "  2. Serve it:        pnpm serve"
+  echo "  3. Then run:        $0 http://localhost:8888"
+  echo ""
+  echo "Note: The dev server (pnpm start) does NOT generate a sitemap.xml"
+  exit 1
+fi
 
 # ── Fetch sitemap and extract all <loc> elements, namespace‑agnostic ──────────
 if command -v xmllint >/dev/null 2>&1; then

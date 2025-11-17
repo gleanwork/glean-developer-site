@@ -36,7 +36,7 @@
     "test:coverage": "vitest run --coverage",
     "format:check": "prettier --check .",
     "links:check": "scripts/check-links.sh https://developers.glean.com true",
-    "links:check:local": "scripts/check-links.sh http://localhost:8888 true",
+    "links:check:local": "pnpm build && (pnpm serve --port 8888 & SERVER_PID=$!; sleep 5; scripts/check-links.sh http://localhost:8888 true; RESULT=$?; kill $SERVER_PID 2>/dev/null || true; exit $RESULT)",
     "openapi:regenerate:all": "pnpm run openapi:clean:before:all && pnpm run openapi:transform:all && pnpm run openapi:generate:all && pnpm run openapi:clean:after:all",
     "openapi:regenerate:client": "pnpm run openapi:clean:before:client && pnpm run openapi:transform:client && pnpm run openapi:generate:client && pnpm run openapi:clean:after:client",
     "openapi:regenerate:indexing": "pnpm run openapi:clean:before:indexing && pnpm run openapi:transform:indexing && pnpm run openapi:generate:indexing && pnpm run openapi:clean:after:indexing",
