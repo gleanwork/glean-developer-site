@@ -96,13 +96,19 @@ jobs:
         id: parse-results
         run: |
           if [ -f link-check-results.txt ]; then
-            total_links=$(grep -o "Total: [0-9,]*" link-check-results.txt | tail -1 | grep -o "[0-9,]*" | tr -d ',')
-            errors=$(grep -o "Errors: [0-9,]*" link-check-results.txt | tail -1 | grep -o "[0-9,]*" | tr -d ',')
-            excluded=$(grep -o "Excluded: [0-9,]*" link-check-results.txt | tail -1 | grep -o "[0-9,]*" | tr -d ',')
+            # Use more robust pattern matching with fallback to 0 if pattern doesn't match
+            total_links=$(grep -o "Total: [0-9,]*" link-check-results.txt 2>/dev/null | tail -1 | grep -o "[0-9,]*" 2>/dev/null | tr -d ',' || echo "0")
+            errors=$(grep -o "Errors: [0-9,]*" link-check-results.txt 2>/dev/null | tail -1 | grep -o "[0-9,]*" 2>/dev/null | tr -d ',' || echo "0")
+            excluded=$(grep -o "Excluded: [0-9,]*" link-check-results.txt 2>/dev/null | tail -1 | grep -o "[0-9,]*" 2>/dev/null | tr -d ',' || echo "0")
             
-            echo "total_links=${total_links:-0}" >> $GITHUB_OUTPUT
-            echo "errors=${errors:-0}" >> $GITHUB_OUTPUT
-            echo "excluded=${excluded:-0}" >> $GITHUB_OUTPUT
+            # Ensure values are not empty, default to 0
+            total_links="${total_links:-0}"
+            errors="${errors:-0}"
+            excluded="${excluded:-0}"
+            
+            echo "total_links=$total_links" >> $GITHUB_OUTPUT
+            echo "errors=$errors" >> $GITHUB_OUTPUT
+            echo "excluded=$excluded" >> $GITHUB_OUTPUT
             
             echo "Results Summary:"
             echo "Total links checked: ${total_links:-0}"
