@@ -87,6 +87,7 @@ jobs:
           
           echo "🔍 Running $check_type link check on $base_url"
           
+          # Run the check and capture human-readable output
           if [ "$check_type" = "deep" ]; then
             echo "deep_check=true" >> $GITHUB_OUTPUT
             ./scripts/check-links.sh "$base_url" true > link-check-results.txt 2>&1
@@ -97,6 +98,12 @@ jobs:
           
           exit_code=$?
           echo "exit_code=$exit_code" >> $GITHUB_OUTPUT
+          
+          # Also get the lychee summary from the last line of output for quick parsing
+          if [ -f link-check-results.txt ]; then
+            summary_line=$(tail -n 1 link-check-results.txt)
+            echo "summary_line=$summary_line" >> $GITHUB_OUTPUT
+          fi
           
           if [ $exit_code -eq 0 ]; then
             echo "✅ Link check passed!"
@@ -109,25 +116,49 @@ jobs:
       - name: Parse results
         id: parse-results
         run: |
-          if [ -f link-check-results.txt ]; then
-            # Use more robust pattern matching with fallback to 0 if pattern doesn't match
-            total_links=$(grep -o "Total: [0-9,]*" link-check-results.txt 2>/dev/null | tail -1 | grep -o "[0-9,]*" 2>/dev/null | tr -d ',' || echo "0")
-            errors=$(grep -o "Errors: [0-9,]*" link-check-results.txt 2>/dev/null | tail -1 | grep -o "[0-9,]*" 2>/dev/null | tr -d ',' || echo "0")
-            excluded=$(grep -o "Excluded: [0-9,]*" link-check-results.txt 2>/dev/null | tail -1 | grep -o "[0-9,]*" 2>/dev/null | tr -d ',' || echo "0")
+          # Use the summary line that was already extracted
+          summary_line="${{ steps.link-check.outputs.summary_line }}"
+          
+          if [ -n "$summary_line" ]; then
+            # Parse the emoji-formatted summary line from lychee output
+            # Format: 🔍 15518 Total (in 20s) ✅ 13867 OK 🚫 0 Errors 👻 1644 Excluded 🔀 7 Redirects
+            
+            # Extract numbers before specific keywords
+            total_links=$(echo "$summary_line" | grep -o "[0-9,]* Total" | grep -o "[0-9,]*" | tr -d ',' || echo "0")
+            ok_links=$(echo "$summary_line" | grep -o "[0-9,]* OK" | grep -o "[0-9,]*" | tr -d ',' || echo "0")
+            errors=$(echo "$summary_line" | grep -o "[0-9,]* Errors" | grep -o "[0-9,]*" | tr -d ',' || echo "0")
+            excluded=$(echo "$summary_line" | grep -o "[0-9,]* Excluded" | grep -o "[0-9,]*" | tr -d ',' || echo "0")
+            redirects=$(echo "$summary_line" | grep -o "[0-9,]* Redirects" | grep -o "[0-9,]*" | tr -d ',' || echo "0")
             
             # Ensure values are not empty, default to 0
             total_links="${total_links:-0}"
+            ok_links="${ok_links:-0}"
             errors="${errors:-0}"
             excluded="${excluded:-0}"
+            redirects="${redirects:-0}"
             
             echo "total_links=$total_links" >> $GITHUB_OUTPUT
+            echo "ok_links=$ok_links" >> $GITHUB_OUTPUT
             echo "errors=$errors" >> $GITHUB_OUTPUT
             echo "excluded=$excluded" >> $GITHUB_OUTPUT
+            echo "redirects=$redirects" >> $GITHUB_OUTPUT
             
             echo "Results Summary:"
-            echo "Total links checked: ${total_links:-0}"
-            echo "Errors found: ${errors:-0}"
-            echo "Links excluded: ${excluded:-0}"
+            echo "Total links checked: ${total_links}"
+            echo "OK links: ${ok_links}"
+            echo "Errors found: ${errors}"
+            echo "Links excluded: ${excluded}"
+            echo "Redirects followed: ${redirects}"
+            echo ""
+            echo "Lychee Summary: $summary_line"
+          else
+            # Fallback to zeros if no summary found
+            echo "total_links=0" >> $GITHUB_OUTPUT
+            echo "ok_links=0" >> $GITHUB_OUTPUT
+            echo "errors=0" >> $GITHUB_OUTPUT
+            echo "excluded=0" >> $GITHUB_OUTPUT
+            echo "redirects=0" >> $GITHUB_OUTPUT
+            echo "Warning: Could not parse lychee summary"
           fi
 
       - name: Upload results
@@ -147,10 +178,22 @@ jobs:
           echo "**Base URL:** ${{ steps.params.outputs.base_url }}" >> $GITHUB_STEP_SUMMARY
           echo "**Status:** ${{ steps.link-check.outputs.status }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "## Summary" >> $GITHUB_STEP_SUMMARY
+          
+          # Display the lychee summary directly for visual appeal
+          if [ -n "${{ steps.link-check.outputs.summary_line }}" ]; then
+            echo "## Lychee Summary" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+            echo "${{ steps.link-check.outputs.summary_line }}" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "## Detailed Metrics" >> $GITHUB_STEP_SUMMARY
           echo "- **Total Links:** ${{ steps.parse-results.outputs.total_links }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **OK Links:** ${{ steps.parse-results.outputs.ok_links }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Errors:** ${{ steps.parse-results.outputs.errors }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Excluded:** ${{ steps.parse-results.outputs.excluded }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Redirects:** ${{ steps.parse-results.outputs.redirects }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           
           if [ "${{ steps.link-check.outputs.status }}" = "failure" ]; then
@@ -185,8 +228,10 @@ jobs:
             
             ## Summary
             - **Total Links Checked:** ${{ steps.parse-results.outputs.total_links }}
+            - **OK Links:** ${{ steps.parse-results.outputs.ok_links }}
             - **Errors Found:** ${{ steps.parse-results.outputs.errors }}
             - **Links Excluded:** ${{ steps.parse-results.outputs.excluded }}
+            - **Redirects Followed:** ${{ steps.parse-results.outputs.redirects }}
             - **Check Type:** ${{ steps.params.outputs.check_type }}
             - **Base URL:** ${{ steps.params.outputs.base_url }}
             
