@@ -34,19 +34,19 @@ If you would like to curl to get the facets, you can use a /search request to ge
 }
 ```
 
-This will return a top-level field, [`facetResults`](/api/client-api/search/search#response-facetresults). 
+This will return a top-level field, [`facetResults`](/api/client-api/search/search#responses). 
 facetResults has the following relevant fields:
 
-1. [`sourceName`](/api/client-api/search/search#response-facetresults-sourcename) - same as the facet `fieldName` in the `facetFilter`s object
-2. [`operatorName`](/api/client-api/search/search#response-facetresults-operatorname) - not relevant
-3. [`buckets`](/api/client-api/search/search#response-facetresults-buckets) - a list of facet bucket objects corresponding to a facet value
+1. [`sourceName`](/api/client-api/search/search#responses) - same as the facet `fieldName` in the `facetFilter`s object
+2. [`operatorName`](/api/client-api/search/search#responses) - not relevant
+3. [`buckets`](/api/client-api/search/search#responses) - a list of facet bucket objects corresponding to a facet value
    1. The facet bucket object has the following relevant fields:
-      1. [`count`](/api/client-api/search/search#response-facetresults-buckets-count) - the number of search results that would be returned if filtering by the facet value
-      2. [`value`](/api/client-api/search/search#response-facetresults-buckets-value) - the facet value (ie “engineering” for the space facet)
-         1. [`stringValue`](/api/client-api/search/search#response-facetresults-buckets-value-stringvalue) - the string value
-         2. [`intValue`](/api/client-api/search/search#response-facetresults-buckets-value-integervalue) - the integer value (not common)
-         3. [`displayLabel`](/api/client-api/search/search#response-facetresults-buckets-value-displaylabel) - alternative value used for display in the UI
-         4. [`iconConfig`](/api/client-api/search/search#response-facetresults-buckets-value-iconconfig) - optional image used to represent the facet value, such as a profile picture for people facet values.
+      1. [`count`](/api/client-api/search/search#responses) - the number of search results that would be returned if filtering by the facet value
+      2. [`value`](/api/client-api/search/search#responses) - the facet value (ie “engineering” for the space facet)
+         1. [`stringValue`](/api/client-api/search/search#responses) - the string value
+         2. [`intValue`](/api/client-api/search/search#responses) - the integer value (not common)
+         3. [`displayLabel`](/api/client-api/search/search#responses) - alternative value used for display in the UI
+         4. [`iconConfig`](/api/client-api/search/search#responses) - optional image used to represent the facet value, such as a profile picture for people facet values.
 
 ```json
 {
@@ -65,7 +65,7 @@ facetResults has the following relevant fields:
 
 To get all of the facets you can use with a particular datasource, you can look at all of the `sourceName`s in the `facetsResult`s returned.
 
-If latency is a concern, and you only want to receive `facetResults`, you can send a request with [`pageSize`](/api/client-api/search/search#request-pagesize) = 0, and add "FACET_RESULTS" within the [`responseHints`](/api/client-api/search/search#request-requestoptions-responsehints) field in [`requestOptions`](/api/client-api/search/search#request-requestoptions) to not retrieve any documents and only retrieve facetResults. See sample request body below, which would gather `facetResults` for all confluence specific facets:
+If latency is a concern, and you only want to receive `facetResults`, you can send a request with [`pageSize`](/api/client-api/search/search#request) = 0, and add "FACET_RESULTS" within the [`responseHints`](/api/client-api/search/search#request) field in [`requestOptions`](/api/client-api/search/search#request) to not retrieve any documents and only retrieve facetResults. See sample request body below, which would gather `facetResults` for all confluence specific facets:
 
 ```json
 {

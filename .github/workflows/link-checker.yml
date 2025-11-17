@@ -1,0 +1,218 @@
+name: Link Checker
+# 
+# This workflow checks for broken links in the documentation site.
+# It can be triggered manually or runs on a schedule.
+#
+# NOTE: For local link checking, simply run:
+#   pnpm links:check:local
+#
+# This automatically builds, serves on port 8888, and checks links.
+# The dev server (pnpm start) does NOT generate sitemap.xml, which this checker requires.
+
+on:
+  schedule:
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      check_type:
+        description: 'Type of link check to perform'
+        required: true
+        default: 'deep'
+        type: choice
+        options:
+          - 'quick'
+          - 'deep'
+      base_url:
+        description: 'Base URL to check'
+        required: false
+        default: 'https://developers.glean.com'
+        type: string
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  link-check:
+    name: Check Links
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            scripts/check-links.sh
+          sparse-checkout-cone-mode: false
+
+      - name: Cache lychee
+        id: cache-lychee
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/bin/lychee
+          key: lychee-${{ runner.os }}-v1
+
+      - name: Install lychee
+        if: steps.cache-lychee.outputs.cache-hit != 'true'
+        run: |
+          curl -sSL https://github.com/lycheeverse/lychee/releases/latest/download/lychee-x86_64-unknown-linux-gnu.tar.gz | tar -xz
+          mkdir -p ~/.cargo/bin
+          mv lychee ~/.cargo/bin/
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Verify lychee installation
+        run: lychee --version
+
+      - name: Set check parameters
+        id: params
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "check_type=${{ github.event.inputs.check_type }}" >> $GITHUB_OUTPUT
+            echo "base_url=${{ github.event.inputs.base_url }}" >> $GITHUB_OUTPUT
+          else
+            echo "check_type=deep" >> $GITHUB_OUTPUT
+            echo "base_url=https://developers.glean.com" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Run link check
+        id: link-check
+        run: |
+          base_url="${{ steps.params.outputs.base_url }}"
+          check_type="${{ steps.params.outputs.check_type }}"
+          
+          echo "🔍 Running $check_type link check on $base_url"
+          
+          if [ "$check_type" = "deep" ]; then
+            echo "deep_check=true" >> $GITHUB_OUTPUT
+            ./scripts/check-links.sh "$base_url" true > link-check-results.txt 2>&1
+          else
+            echo "deep_check=false" >> $GITHUB_OUTPUT
+            ./scripts/check-links.sh "$base_url" false > link-check-results.txt 2>&1
+          fi
+          
+          exit_code=$?
+          echo "exit_code=$exit_code" >> $GITHUB_OUTPUT
+          
+          if [ $exit_code -eq 0 ]; then
+            echo "✅ Link check passed!"
+            echo "status=success" >> $GITHUB_OUTPUT
+          else
+            echo "❌ Link check failed with errors"
+            echo "status=failure" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Parse results
+        id: parse-results
+        run: |
+          if [ -f link-check-results.txt ]; then
+            # Use more robust pattern matching with fallback to 0 if pattern doesn't match
+            total_links=$(grep -o "Total: [0-9,]*" link-check-results.txt 2>/dev/null | tail -1 | grep -o "[0-9,]*" 2>/dev/null | tr -d ',' || echo "0")
+            errors=$(grep -o "Errors: [0-9,]*" link-check-results.txt 2>/dev/null | tail -1 | grep -o "[0-9,]*" 2>/dev/null | tr -d ',' || echo "0")
+            excluded=$(grep -o "Excluded: [0-9,]*" link-check-results.txt 2>/dev/null | tail -1 | grep -o "[0-9,]*" 2>/dev/null | tr -d ',' || echo "0")
+            
+            # Ensure values are not empty, default to 0
+            total_links="${total_links:-0}"
+            errors="${errors:-0}"
+            excluded="${excluded:-0}"
+            
+            echo "total_links=$total_links" >> $GITHUB_OUTPUT
+            echo "errors=$errors" >> $GITHUB_OUTPUT
+            echo "excluded=$excluded" >> $GITHUB_OUTPUT
+            
+            echo "Results Summary:"
+            echo "Total links checked: ${total_links:-0}"
+            echo "Errors found: ${errors:-0}"
+            echo "Links excluded: ${excluded:-0}"
+          fi
+
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: link-check-results-${{ steps.params.outputs.check_type }}
+          path: link-check-results.txt
+          retention-days: 30
+
+      - name: Create job summary
+        if: always()
+        run: |
+          echo "# Link Check Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Check Type:** ${{ steps.params.outputs.check_type }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Base URL:** ${{ steps.params.outputs.base_url }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Status:** ${{ steps.link-check.outputs.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- **Total Links:** ${{ steps.parse-results.outputs.total_links }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Errors:** ${{ steps.parse-results.outputs.errors }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Excluded:** ${{ steps.parse-results.outputs.excluded }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ steps.link-check.outputs.status }}" = "failure" ]; then
+            echo "## ❌ Broken Links Found" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "The following errors were detected:" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+            grep -E "(ERROR|FAILED)" link-check-results.txt | head -20 >> $GITHUB_STEP_SUMMARY || true
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "📄 Full results are available in the uploaded artifact." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "## ✅ All Links Working" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "No broken links were found! 🎉" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Create GitHub issue for broken links
+        if: failure() && steps.link-check.outputs.status == 'failure' && github.event_name == 'schedule'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const results = fs.readFileSync('link-check-results.txt', 'utf8');
+            const errors = results.split('\n').filter(line => line.includes('ERROR') || line.includes('FAILED'));
+            
+            const issueBody = `
+            # 🔗 Broken Links Detected
+            
+            The nightly link check found **${{ steps.parse-results.outputs.errors }}** broken links on the site.
+            
+            ## Summary
+            - **Total Links Checked:** ${{ steps.parse-results.outputs.total_links }}
+            - **Errors Found:** ${{ steps.parse-results.outputs.errors }}
+            - **Links Excluded:** ${{ steps.parse-results.outputs.excluded }}
+            - **Check Type:** ${{ steps.params.outputs.check_type }}
+            - **Base URL:** ${{ steps.params.outputs.base_url }}
+            
+            ## ❌ Broken Links
+            
+            \`\`\`
+            ${errors.slice(0, 30).join('\n')}
+            ${errors.length > 30 ? '\n... and ' + (errors.length - 30) + ' more errors' : ''}
+            \`\`\`
+            
+            ## Next Steps
+            
+            1. Review the full results in the [workflow run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            2. Fix or exclude the broken links
+            3. Run \`pnpm links:check:deep\` locally to verify fixes
+            
+            ---
+            
+            *This issue was automatically created by the nightly link checker.*
+            `;
+            
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `Broken Links Detected (${{ steps.parse-results.outputs.errors }} errors)`,
+              body: issueBody,
+              labels: ['bug', 'documentation', 'automated']
+            });
+
+      - name: Fail workflow if links are broken
+        if: steps.link-check.outputs.status == 'failure'
+        run: |
+          echo "❌ Link check failed with ${{ steps.parse-results.outputs.errors }} broken links"
+          exit 1 

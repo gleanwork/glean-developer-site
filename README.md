@@ -50,6 +50,34 @@ This command starts a local development server and opens your browser to `http:/
 - `pnpm serve` - Serve the built site locally
 - `pnpm clear` - Clear Docusaurus cache
 
+### Link Checking
+
+The project includes automated link checking to ensure all documentation links are valid:
+
+**Check production site:**
+```bash
+pnpm links:check
+```
+
+**Check local build:**
+```bash
+# Automatically builds, serves on port 8888, and checks links
+pnpm links:check:local
+```
+
+This command automatically builds the site, starts a server on port 8888, runs the link checker, and cleans up when done.
+
+**Note:** Link checking requires `lychee`. Install it with:
+```bash
+brew install lychee  # macOS
+# or see https://github.com/lycheeverse/lychee for other platforms
+```
+
+The link checker validates all links in the site by:
+- Fetching the sitemap.xml (only available in production builds)
+- Crawling each page to find and validate all links
+- Excluding known problematic URLs (auth-required sites, placeholders, etc.)
+
 ## Project Structure
 
 ```tree

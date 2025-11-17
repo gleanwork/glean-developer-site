@@ -3,7 +3,7 @@ title: Permissions
 icon: shield-check
 ---
 
-The content in Glean is highly customizable in terms of configuring visibility of documents, which can be noted while [indexing documents](/api/indexing-api/index-document#request-document-permissions) using Indexing API endpoints. Glean may require some more information to manage users, groups and group memberships to enable the full power of customized permissions. This can be done using [Permissions API endpoints](/api/indexing-api/permissions-overview).
+The content in Glean is highly customizable in terms of configuring visibility of documents, which can be noted while [indexing documents](/api/indexing-api/index-document#request) using Indexing API endpoints. Glean may require some more information to manage users, groups and group memberships to enable the full power of customized permissions. This can be done using [Permissions API endpoints](/api/indexing-api/permissions-overview).
 
 This tutorial assumes that you have followed the documentation / other tutorials to [set up a custom datasource](/api/indexing-api/add-or-update-datasource) and know how to use the Indexing API to [index documents](/api-info/indexing/getting-started/index-documents). If not, check out the documentation and other tutorials available.
 
@@ -13,7 +13,7 @@ We shall consider various scenarios with increasing complexity of permissions us
 
 ---
 
-The most basic way to configure permissions for a document is to allow <ins>**any**</ins> Glean user within the organization to be able to search for a document. This can be accomplished by setting the [`allowAnonymousAccess`](/api/indexing-api/index-document#request-document-permissions-allowanonymousaccess) field to be **true** while setting up permissions for a document.
+The most basic way to configure permissions for a document is to allow <ins>**any**</ins> Glean user within the organization to be able to search for a document. This can be accomplished by setting the [`allowAnonymousAccess`](/api/indexing-api/index-document#request) field to be **true** while setting up permissions for a document.
 
 For example, the following request to index a document would lead to the document being visible to all Glean users:
 
@@ -36,7 +36,7 @@ There are two steps required to achieve the above use-case:
 
 1. Index users into Glean: When using non-anonymous permissions, users need to be indexed before being referenced. This is an important step to let Glean know about the users that use a particular datasource before being referenced elsewhere (for example: while defining group memberships, document permissions).
 
-2. Add user-specific permissions to the document: While indexing a documemt, set the corresponding [`allowedUsers`](/api/indexing-api/index-document#request-document-permissions-allowedusers) field to capture users that can search for it.
+2. Add user-specific permissions to the document: While indexing a documemt, set the corresponding [`allowedUsers`](/api/indexing-api/index-document#request) field to capture users that can search for it.
 
 ### Step 1.1: Index users into Glean
 
@@ -67,15 +67,15 @@ curl -X POST https://customer-be.glean.com/api/index/v1/indexuser \
 
 ---
 
-Once the users are indexed, we can create a document with its [`allowedUsers`](/api/indexing-api/index-document#request-document-permissions-allowedusers) field set appropriately to capture users that can search for it.
+Once the users are indexed, we can create a document with its [`allowedUsers`](/api/indexing-api/index-document#request) field set appropriately to capture users that can search for it.
 
-Based on the [`isUserReferencedByEmail`](/api/indexing-api/add-or-update-datasource#request-isuserreferencedbyemail) field set to **true** or **false** in the datasource config, we can follow one of the two scenarious below:
+Based on the [`isUserReferencedByEmail`](/api/indexing-api/add-or-update-datasource#request) field set to **true** or **false** in the datasource config, we can follow one of the two scenarious below:
 
-#### Scenario 1.2-A: [`isUserReferencedByEmail`](/api/indexing-api/add-or-update-datasource#request-isuserreferencedbyemail) field set to <ins>**true**</ins> in the datasource config {#scenario-1a}
+#### Scenario 1.2-A: [`isUserReferencedByEmail`](/api/indexing-api/add-or-update-datasource#request) field set to <ins>**true**</ins> in the datasource config {#scenario-1a}
 
 ---
 
-In case [`isUserReferencedByEmail`](/api/indexing-api/add-or-update-datasource#request-isuserreferencedbyemail) is set to **true**, users should be referenced by their email when adding permissions to a document. This can be done by setting [`email`](/api/indexing-api/index-document#request-document-permissions-allowedusers-email) under the [`allowedUsers`](/api/indexing-api/index-document#request-document-permissions-allowedusers) field for each user that we want to give permissions to.
+In case [`isUserReferencedByEmail`](/api/indexing-api/add-or-update-datasource#request) is set to **true**, users should be referenced by their email when adding permissions to a document. This can be done by setting [`email`](/api/indexing-api/index-document#request) under the [`allowedUsers`](/api/indexing-api/index-document#request) field for each user that we want to give permissions to.
 
 The following sample creates a document, giving permissions to only `user1@test.com` (**assuming a user with this email has been indexed**) to search for this document:
 
@@ -92,11 +92,11 @@ curl -X POST https://customer-be.glean.com/api/index/v1/indexdocument \
 # ... Rest of the document
 ```
 
-#### Scenario 1.2-B: [`isUserReferencedByEmail`](/api/indexing-api/add-or-update-datasource#request-isuserreferencedbyemail) field set to <ins>**false**</ins> in the datasource config {#scenario-1b}
+#### Scenario 1.2-B: [`isUserReferencedByEmail`](/api/indexing-api/add-or-update-datasource#request) field set to <ins>**false**</ins> in the datasource config {#scenario-1b}
 
 ---
 
-In case [`isUserReferencedByEmail`](/api/indexing-api/add-or-update-datasource#request-isuserreferencedbyemail) is set to **false**, users should be referenced by their datasourceUserId when adding permissions to a document. This can be done by setting [`datasourceUserId`](/api/indexing-api/index-document#request-document-permissions-allowedusers-datasourceuserid) under the [`allowedUsers`](/api/indexing-api/index-document#request-document-permissions-allowedusers) field for each user that we want to give permissions to.
+In case [`isUserReferencedByEmail`](/api/indexing-api/add-or-update-datasource#request) is set to **false**, users should be referenced by their datasourceUserId when adding permissions to a document. This can be done by setting [`datasourceUserId`](/api/indexing-api/index-document#request) under the [`allowedUsers`](/api/indexing-api/index-document#request) field for each user that we want to give permissions to.
 
 The following sample creates a document, giving permissions to only `gleantest_user_1` (**assuming a user with this userId has been indexed**) to search for this document:
 
@@ -137,7 +137,7 @@ curl -X POST https://customer-be.glean.com/api/index/v1/indexuser \
 }'
 ```
 
-Next, we should set the [`allowAllDatasourceUsersAccess`](/api/indexing-api/index-document#request-document-permissions-allowalldatasourceusersaccess) field set to **true** to allow all datasource users to be able to search for the particular document. The following sample request creates a document that is accessible to all datasource users (i.e. only `user1@test.com` in this case) using Glean.
+Next, we should set the [`allowAllDatasourceUsersAccess`](/api/indexing-api/index-document#request) field set to **true** to allow all datasource users to be able to search for the particular document. The following sample request creates a document that is accessible to all datasource users (i.e. only `user1@test.com` in this case) using Glean.
 
 ```bash
 curl -X POST https://customer-be.glean.com/api/index/v1/indexdocument \
@@ -154,7 +154,7 @@ curl -X POST https://customer-be.glean.com/api/index/v1/indexdocument \
 
 For this scenario, we want to pre-define specific **groups** of users which are all to be given access to a document. For instance, a specific team within the organization may have access to a chunk of documents within the datasource. This can be achieved by indexing a group with all members of that team and allowing this group to access each relevant document. We shall learn more about this using an example.
 
-Let us assume that we have two users `user1@test.com` and `user2@test.com` and the datasource is configured to have the [`isUserReferencedByEmail`](/api/indexing-api/add-or-update-datasource#request-isuserreferencedbyemail) field set to **true**.
+Let us assume that we have two users `user1@test.com` and `user2@test.com` and the datasource is configured to have the [`isUserReferencedByEmail`](/api/indexing-api/add-or-update-datasource#request) field set to **true**.
 We shall index a group `gleantest_group_1` with the two users as their members, and then create a document that allows `gleantest_group_1` to access it. This should implicitly allow `user1@test.com` and `user2@test.com` to search for the document using Glean.
 
 The following sequence of steps (with sample API calls) should help us reproduce the above mentioned situation:
@@ -179,7 +179,7 @@ The following sequence of steps (with sample API calls) should help us reproduce
 
 Some key points about fields in the request body:
 
-- [`name`](/api/indexing-api/index-group#request-group-name): It is the identifying key for a group within a datasource. There are a few considerations while defining the name of the group:
+- [`name`](/api/indexing-api/index-group#request): It is the identifying key for a group within a datasource. There are a few considerations while defining the name of the group:
   - Cannot contain any whitespaces
   - Cannot be empty
   - Cannot start with the prefix “scio”
@@ -217,16 +217,16 @@ curl -X POST https://customer-be.glean.com/api/index/v1/indexmembership \
 
 - Some key points about fields in the request body:
   - `groupName`: A group with this particular groupName must be indexed before indexing memberships for it.
-  - `memberUserId`: This identifies a particular user as a member of the group. This must be the email ID of the user if [`isUserReferencedByEmail`](/api/indexing-api/add-or-update-datasource#request-isuserreferencedbyemail) is set to true. In the other case, this field must be the userId specified while indexing the user.
+  - `memberUserId`: This identifies a particular user as a member of the group. This must be the email ID of the user if [`isUserReferencedByEmail`](/api/indexing-api/add-or-update-datasource#request) is set to true. In the other case, this field must be the userId specified while indexing the user.
   - <ins>Note</ins>: In case a group needs to be added as a member of another
     group, that can be done by using the
-    [`memberGroupName`](/api/indexing-api/index-membership#request-membership-membergroupname)
+    [`memberGroupName`](/api/indexing-api/index-membership#request)
     field in place of the `memberUserId` field (Exactly one of the two fields
     must be present).
 
 <br />
 
-4. Create a document with the [allowedGroups](/api/indexing-api/index-document#request-document-permissions-allowedgroups) field to include `gleantest_group_1`. This would allow members of the group to search for the document using Glean.
+4. Create a document with the [allowedGroups](/api/indexing-api/index-document#request) field to include `gleantest_group_1`. This would allow members of the group to search for the document using Glean.
 
 ```bash
 curl -X POST https://customer-be.glean.com/api/index/v1/indexdocument \
