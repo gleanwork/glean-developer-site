@@ -1,8 +1,6 @@
 import React from 'react';
-import Link from '@docusaurus/Link';
 import clsx from 'clsx';
 import styles from './index.module.css';
-import { Icon } from '../Icons';
 import Card from '../Card';
 import CarouselSection from './CarouselSection';
 import { GLEAN_BRAND_COLORS } from '../../utils/brandColors';
@@ -71,50 +69,6 @@ export default function Home() {
               </div>
             </div>
           ))}
-        </div>
-      </section>
-
-      {/* MCP highlight */}
-      <section className={clsx('margin-vert--l', styles.mcpSection)}>
-        <div className={clsx('container', styles.wideContainer)}>
-          <div className="row">
-            <div className="col col--6">
-              <h2>Model Context Protocol (MCP)</h2>
-
-              <p>
-                Secure, two‑way connections between AI models and enterprise
-                data.
-              </p>
-
-              <ul>
-                <li>
-                  Expose Glean search capabilities directly to AI assistants.
-                </li>
-                <li>
-                  Build agents that can safely reason over your organization's
-                  knowledge.
-                </li>
-                <li>
-                  Create seamless workflows between Glean and other
-                  MCP‑compatible tools.
-                </li>
-              </ul>
-
-              <Link
-                className={clsx(
-                  'button button--primary button--lg',
-                  styles.mcpButton,
-                )}
-                to="guides/mcp"
-              >
-                Learn more about Glean's MCP integration
-              </Link>
-            </div>
-
-            <div className={clsx('col col--6', styles.mcpIconContainer)}>
-              <Icon name="mcp" iconSet="glean" width={128} height={128} />
-            </div>
-          </div>
         </div>
       </section>
     </>

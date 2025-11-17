@@ -3,10 +3,11 @@ import Link from '@docusaurus/Link';
 import useBaseUrl from '@docusaurus/useBaseUrl';
 import clsx from 'clsx';
 import CodeBlock from '@theme/CodeBlock';
+import ThemedImage from '@theme/ThemedImage';
+import Frame from '../Frame';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, Pagination } from 'swiper/modules';
 import styles from './CarouselSection.module.css';
-import ThemedImage from '@theme/ThemedImage';
 import { Icon } from '../Icons';
 
 import 'swiper/css';
@@ -31,13 +32,32 @@ type CarouselSlide = {
 
 const slides: CarouselSlide[] = [
   {
+    title: 'MCP Remote Server: Now Generally Available',
+    description:
+      'Connect Claude Desktop, Cursor, Windsurf, and 20+ AI tools to your secure enterprise data in 5 minutes. One server URL unlocks your entire knowledge base — no code required.',
+    bullets: [
+      '<strong>One connection, universal access</strong> – Works with Claude Desktop, Cursor, VS Code, Windsurf, ChatGPT, and more',
+      "<strong>Enterprise-grade security</strong> – Respects your company's access controls automatically",
+      '<strong>5-minute setup</strong> – Just add server URL to any MCP client',
+    ],
+    ctaText: 'Get Started with MCP',
+    ctaHref: '/guides/mcp',
+    ctaIcon: 'mcp',
+    ctaIconSet: 'glean',
+    imageUrl: {
+      light: '/img/mcp-ga.png',
+      dark: '/img/mcp-ga.png',
+    },
+    imageAlt: 'Screenshot showing MCP server integration with AI clients',
+  },
+  {
     title: 'Search and Chat with Your Data',
     description:
       "Connect your company data and ship AI-powered chat in minutes. Glean's APIs are permission-aware from day one and scale with your security requirements.",
     bullets: [
-      'Search, chat, and automate with Work AI',
-      'Permission-aware by default',
-      'API Clients for Python, TypeScript, Go, and Java',
+      '<strong>Instant answers from everywhere</strong> – Query docs, messages, tickets, and wikis in one API call',
+      '<strong>Your permissions, preserved</strong> – Automatic access control based on user identity',
+      '<strong>Deploy anywhere</strong> – Power chatbots, search bars, or AI assistants in any app',
     ],
     ctaText: 'Learn about the Chat API',
     ctaHref: '/guides/chat/overview',
@@ -68,9 +88,9 @@ with Glean(
     description:
       'Run intelligent agents that orchestrate workflows, reason over your enterprise knowledge, and automate complex tasks across your organization.',
     bullets: [
-      'Orchestrate multi-step workflows',
-      'Reason over enterprise knowledge',
-      'Automate complex business processes',
+      '<strong>Multi-step reasoning</strong> – Agents that plan, execute, and iterate on complex workflows',
+      '<strong>Enterprise knowledge at their fingertips</strong> – Full access to your organization\'s data and context',
+      '<strong>Automate anything</strong> – From sales reports to IT tickets to HR processes',
     ],
     ctaText: 'Explore Agent APIs',
     ctaHref: '/guides/agents/overview',
@@ -102,9 +122,9 @@ with Glean(
     description:
       'Bring any data source into Glean with our powerful indexing APIs. Bulk upload documents, sync in real-time, and define custom properties.',
     bullets: [
-      'Bulk document upload and indexing',
-      'Real-time data synchronization',
-      'Custom properties and metadata',
+      '<strong>Bulk or streaming, your choice</strong> – Upload millions of documents or sync in real-time',
+      '<strong>Your schema, your way</strong> – Define custom properties, relationships, and metadata',
+      '<strong>Battle-tested at scale</strong> – Powers search across 100+ data sources for Fortune 500 companies',
     ],
     ctaText: 'View Indexing APIs',
     ctaHref: '/api-info/indexing/getting-started/overview',
@@ -127,25 +147,6 @@ with Glean(
     
     g.indexing.index_document(document=document)`,
   },
-  {
-    title: 'Instantly connect your MCP clients to Glean',
-    description:
-      'Connect Claude Desktop, Cursor, and other MCP-compatible clients directly to your Glean instance. Access enterprise search, chat, and knowledge through the Model Context Protocol with zero custom development.',
-    bullets: [
-      'Connect to Claude Desktop, Cursor, and other MCP hosts',
-      'Access enterprise search and chat through MCP',
-      'Level up your AI assistants with Glean tools',
-    ],
-    ctaText: 'Get Started with MCP',
-    ctaHref: '/guides/mcp',
-    ctaIcon: 'mcp',
-    ctaIconSet: 'glean',
-    imageUrl: {
-      light: '/img/mcp-usage-light.png',
-      dark: '/img/mcp-usage-dark.png',
-    },
-    imageAlt: 'Screenshot showing MCP server integration with AI clients',
-  },
 ];
 
 export default function CarouselSection() {
@@ -158,7 +159,7 @@ export default function CarouselSection() {
         spaceBetween={0}
         slidesPerView={1}
         autoplay={{
-          delay: 6000,
+          delay: 8000,
           disableOnInteraction: false,
           pauseOnMouseEnter: true,
         }}
@@ -177,7 +178,10 @@ export default function CarouselSection() {
                 <p>{slide.description}</p>
                 <ul>
                   {slide.bullets.map((bullet, bulletIndex) => (
-                    <li key={bulletIndex}>{bullet}</li>
+                    <li
+                      key={bulletIndex}
+                      dangerouslySetInnerHTML={{ __html: bullet }}
+                    />
                   ))}
                 </ul>
                 <Link
@@ -211,9 +215,9 @@ export default function CarouselSection() {
                   </div>
                 ) : (
                   <div className={styles.codeWrap}>
-                    <CodeBlock language={slide.codeLanguage}>
-                      {slide.codeContent}
-                    </CodeBlock>
+                      <CodeBlock language={slide.codeLanguage} showLineNumbers>
+                        {slide.codeContent}
+                      </CodeBlock>
                   </div>
                 )}
               </div>
