@@ -179,22 +179,14 @@ jobs:
           echo "**Status:** ${{ steps.link-check.outputs.status }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           
-          # Display the lychee summary directly for visual appeal
+          # Display the lychee summary with all metrics
           if [ -n "${{ steps.link-check.outputs.summary_line }}" ]; then
-            echo "## Lychee Summary" >> $GITHUB_STEP_SUMMARY
+            echo "## Summary" >> $GITHUB_STEP_SUMMARY
             echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
             echo "${{ steps.link-check.outputs.summary_line }}" >> $GITHUB_STEP_SUMMARY
             echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
           fi
-          
-          echo "## Detailed Metrics" >> $GITHUB_STEP_SUMMARY
-          echo "- **Total Links:** ${{ steps.parse-results.outputs.total_links }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **OK Links:** ${{ steps.parse-results.outputs.ok_links }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Errors:** ${{ steps.parse-results.outputs.errors }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Excluded:** ${{ steps.parse-results.outputs.excluded }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Redirects:** ${{ steps.parse-results.outputs.redirects }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
           
           if [ "${{ steps.link-check.outputs.status }}" = "failure" ]; then
             echo "## ❌ Broken Links Found" >> $GITHUB_STEP_SUMMARY
