@@ -13,6 +13,7 @@ import type {
 import { flagsSnapshotToBooleans } from '@site/src/lib/featureFlags';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import KeyboardShortcuts from './KeyboardShortcuts';
+import Intercom from '@intercom/messenger-js-sdk';
 
 type FeatureFlagsState = {
   flagConfigs: FeatureFlagsMap;
@@ -90,6 +91,10 @@ export default function Root({ children }: { children: ReactNode }) {
     ((siteConfig?.customFields as any)?.__BUILD_FLAGS__ as FeatureFlagsMap) ||
     {};
   const [flagConfigs, setFlagConfigs] = useState<FeatureFlagsMap>(initial);
+
+  Intercom({
+    app_id: 'a3ow6qrr',
+  });
 
   const visitorId = getLocalVisitorId();
 
