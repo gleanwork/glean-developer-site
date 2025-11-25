@@ -22,7 +22,7 @@ You can streamline the authentication process in two ways:
 
 1. **Skip Email Entry**: Implement the [backend](https://app.glean.com/meta/browser_api/interfaces/SearchOptions.html#backend) parameter to bypass the email entry step.
 
-2. **Skip SSO Authentication**: Configure a [server-to-server handshake](https://docs.google.com/document/d/12q1oQWwhkLQyIHXKE7OF6XtvJZ5av50Wd_NKUbRh5u4/edit) and provide the user's auth token via [Options.authToken](https://app.glean.com/meta/browser_api/interfaces/Options.html#authToken).
+2. **Skip SSO Authentication**: Configure [server-to-server authentication](./server-to-server-auth) and provide the user's auth token via [Options.authToken](https://app.glean.com/meta/browser_api/interfaces/Options.html#authToken). Your server can obtain tokens using the [Create Authentication Token API](/api/client-api/authentication/createauthtoken).
 
 :::warning
   When implementing auth token authentication:
