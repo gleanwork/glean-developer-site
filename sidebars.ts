@@ -257,6 +257,11 @@ const baseSidebars: SidebarsConfig = {
               label: 'Authentication',
             },
             {
+              type: 'doc',
+              id: 'libraries/web-sdk/server-to-server-auth',
+              label: 'Server-to-Server Auth',
+            },
+            {
               type: 'category',
               label: 'Components',
               items: [
