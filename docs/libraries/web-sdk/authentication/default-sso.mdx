@@ -1,0 +1,104 @@
+---
+title: Default SSO Authentication
+description: Cookie-based authentication using existing Glean sessions
+icon: shield
+---
+
+# Default SSO Authentication
+
+Default SSO authentication is the simplest way to integrate Glean's Web SDK into your application. The SDK automatically reuses your users' existing Glean session cookies, providing seamless access without requiring additional authentication configuration.
+
+## How It Works
+
+When a user accesses your embedded Glean implementation:
+
+1. **Session Detection:** The Web SDK checks for an existing Glean authentication cookie in the user's browser
+2. **Cookie Reuse:** If a valid session is found, the SDK automatically authenticates the user
+3. **Seamless Access:** The user gains immediate access to search and chat functionality without additional login steps
+
+This approach leverages the browser's existing session management, making it the lowest-friction option for enterprise deployments where users already have Glean accounts.
+
+## Default Authentication Flow
+
+:::note
+The default authentication flow involves two steps that users must complete upon first usage. However, both steps can be optimized for a smoother user experience.
+:::
+
+### Standard Flow
+
+1. **Email Address Entry** - User enters their work email address
+2. **SSO Authentication** - User completes your organization's SSO flow
+
+### Optimizing the Flow
+
+You can streamline the authentication process by implementing the [`backend`](https://app.glean.com/meta/browser_api/interfaces/SearchOptions.html#backend) parameter to bypass the email entry step:
+
+```javascript
+glean.initialize({
+  backend: 'https://{your}-be.glean.com/'
+});
+```
+
+When you specify the backend, users skip directly to SSO authentication, reducing friction.
+
+## When to Use Default SSO
+
+Default SSO authentication is ideal when:
+
+- **Users Have Glean Accounts:** Your audience consists of employees or members who are provisioned in your Glean instance
+- **Enterprise Deployments:** You're building internal applications, intranets, or employee-facing tools
+- **SSO is Required:** Your security policies require users to authenticate through your SSO provider
+- **Minimal Setup:** You want the quickest path to integration without managing authentication tokens
+
+## Prerequisites
+
+Before implementing default SSO authentication:
+
+- [ ] **Users are provisioned** in your Glean instance with active accounts
+- [ ] **SSO is configured** for your Glean deployment
+- [ ] **Third-party cookies are enabled** in users' browsers (or you have a fallback plan - see below)
+
+## Third-Party Cookie Requirements
+
+:::warning
+Default SSO authentication relies on browser cookies. If third-party cookies are blocked, you must implement [Server-to-Server Authentication](./server-to-server) instead.
+
+See [Third-Party Cookie Management](../3rd-party-cookies) for details on handling cookie restrictions.
+:::
+
+## Implementation Example
+
+Here's a basic example of implementing the Web SDK with default SSO authentication:
+
+```javascript
+// Initialize the Web SDK with backend parameter
+glean.initialize({
+  backend: 'https://{your}-be.glean.com/',
+  // Additional configuration options
+});
+
+// Render a search component
+glean.renderSearchBox(document.getElementById('search-container'), {
+  backend: 'https://{your}-be.glean.com/',
+  placeholderText: 'Search for anything...'
+});
+```
+
+## Troubleshooting
+
+**Users are being prompted to sign in repeatedly:**
+- Check that third-party cookies are enabled in the browser
+- Verify that your Glean backend URL is correct
+- Consider implementing [Server-to-Server Authentication](./server-to-server) for better cross-browser compatibility
+
+**Users see "Unauthorized" errors:**
+- Confirm users are provisioned in your Glean instance
+- Verify SSO is configured correctly
+- Check that users have active Glean sessions
+
+## Related Documentation
+
+- [Authentication Overview](./overview)
+- [Server-to-Server Authentication](./server-to-server)
+- [Third-Party Cookie Management](../3rd-party-cookies)
+- [Web SDK Options Reference](https://app.glean.com/meta/browser_api/interfaces/Options.html)
