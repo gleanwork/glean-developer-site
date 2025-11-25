@@ -1,0 +1,106 @@
+---
+title: 'Server-to-Server Authentication'
+description: 'Seamless authentication for embedded Glean search using server-driven tokens.'
+icon: server
+---
+
+# Server-to-Server Authentication
+
+This guide explains how to implement seamless authentication when Glean is embedded in your intranet or application where user identity is already established through SSO or other means.
+
+## Overview
+
+Server-to-server authentication allows your backend to obtain short-lived authentication tokens on behalf of authenticated users, eliminating the need for users to re-authenticate with Glean directly.
+
+## Setup Process
+
+### 1. Obtain API Key
+
+An admin with sufficient access needs to generate a bearer key from Glean:
+
+1. Navigate to the [Token Management page](https://app.glean.com/admin/setup/tokenManagement?tab=auth)
+2. Generate a new API key
+3. Store this key securely on your server
+4. Optionally set an expiration date or rotate the key as needed
+
+:::warning
+The API key must be stored very securely and never exposed to client-side code.
+:::
+
+### 2. Request Authentication Tokens
+
+After a user authenticates with your application, your server makes a REST API call to obtain a short-lived auth token:
+
+```bash
+curl -X POST "https://<deployment-backend>.glean.com/rest/api/v1/createauthtoken" \
+  -H "Authorization: Bearer <api-key>" \
+  -H "X-Scio-ActAs: <user-email>"
+```
+
+Replace:
+- `<deployment-backend>` with your deployment's subdomain (contact Glean support if unknown)
+- `<api-key>` with the bearer key from step 1
+- `<user-email>` with the authenticated user's email address
+
+:::tip
+The default TTL for these tokens is 2 hours, but this is configurable. Contact your Glean administrator to adjust this setting.
+:::
+
+For more details on this endpoint, see the [Create Authentication Token API](/api/client-api/authentication/createauthtoken).
+
+### 3. Token Response
+
+The Glean server creates a token payload containing:
+- Issuance time
+- User email
+- Salt value
+
+This payload is encrypted using GCP Key Management Service (KMS) and returned in the format:
+
+```
+GLEAN_AUTH_TOKEN_...
+```
+
+### 4. Send Token to Client
+
+Your server sends the token back to the client-side JavaScript.
+
+### 5. Initialize Web SDK
+
+Pass the token to the Glean Web SDK using the `authToken` option:
+
+```javascript
+glean.initialize({
+  authToken: 'GLEAN_AUTH_TOKEN_...',
+  onAuthTokenRequired: async () => {
+    const response = await fetch('/api/get-glean-token');
+    const { token } = await response.json();
+    return token;
+  }
+});
+```
+
+### 6. Handle Token Refresh
+
+The Web SDK provides an `authorizationNeeded` event that fires when the token is approaching expiration. Your implementation must:
+
+1. Listen for this event
+2. Contact your server to fetch a fresh token
+3. Return the new token to the SDK
+
+The `onAuthTokenRequired` callback shown above handles this automatically.
+
+## Implementation Checklist
+
+- [ ] Generate and securely store API key from Glean
+- [ ] Implement server endpoint to request tokens from Glean
+- [ ] Configure token TTL if default 2 hours is insufficient
+- [ ] Pass tokens to Web SDK via `authToken` option
+- [ ] Implement `onAuthTokenRequired` callback for token refresh
+- [ ] Test token expiration and refresh flow
+
+## Related Documentation
+
+- [Web SDK Authentication Overview](./authentication)
+- [Create Authentication Token API](/api/client-api/authentication/createauthtoken)
+- [Web SDK Options Reference](https://app.glean.com/meta/browser_api/interfaces/Options.html)
