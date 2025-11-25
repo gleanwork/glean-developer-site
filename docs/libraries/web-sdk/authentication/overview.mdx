@@ -1,0 +1,73 @@
+---
+title: Web SDK Authentication
+sidebar_label: Overview
+description: Choose the right authentication method for embedding Glean in your application
+icon: lock
+---
+
+# Web SDK Authentication
+
+The Web SDK provides two authentication paradigms for integrating Glean's search and chat capabilities into your application. Understanding these approaches will help you choose the right method for your deployment scenario.
+
+## Authentication Paradigms
+
+### Default SSO Authentication (Cookie-Based)
+
+The Web SDK automatically reuses your users' existing Glean session cookies. When users visit your embedded Glean implementation, the SDK detects their active Glean session and seamlessly provides access without additional authentication steps.
+
+**Best for:**
+- Enterprise deployments where users already have Glean accounts
+- Internal applications and intranets
+- Scenarios where users are expected to have SSO access to Glean
+
+[Learn more about Default SSO Authentication →](./default-sso)
+
+### Server-to-Server Authentication (Token-Based)
+
+Your server obtains authentication tokens from Glean's API and provides them to the Web SDK, bypassing the need for users to authenticate directly with Glean. This enables seamless authentication for users who may not have Glean accounts or for anonymous access scenarios.
+
+**Best for:**
+- Public-facing applications where users don't have Glean accounts
+- Seamless authentication without user interaction
+- Anonymous or guest access to search functionality
+- Documentation sites and marketing pages
+
+[Learn more about Server-to-Server Authentication →](./server-to-server)
+
+## Quick Decision Guide
+
+Choose your authentication method based on your deployment scenario:
+
+| Question | Answer | Recommended Method |
+|----------|--------|-------------------|
+| Do your users have Glean accounts? | Yes | [Default SSO Authentication](./default-sso) |
+| Do users need to sign in to access search? | No preference | [Default SSO Authentication](./default-sso) |
+| Do you want anonymous/guest access? | Yes | [Server-to-Server Authentication](./server-to-server) |
+| Are you building a public documentation site? | Yes | [Server-to-Server Authentication](./server-to-server) |
+| Do you need seamless auth without user interaction? | Yes | [Server-to-Server Authentication](./server-to-server) |
+
+## Authentication Options Comparison
+
+| Method | User Type | Setup Complexity | Use Case |
+|--------|-----------|-----------------|----------|
+| **Default SSO** | Authenticated | Minimal | Standard enterprise deployments |
+| **Server-to-Server (Manual)** | Authenticated | Medium | Full control over auth lifecycle |
+| **Server-to-Server (Guest)** | Anonymous | Low | Public sites, no user login needed |
+
+## Third-Party Cookie Considerations
+
+:::warning
+When third-party cookies are blocked in the user's browser, server-to-server authentication becomes mandatory for the Web SDK to function properly. See [Third-Party Cookie Management](../3rd-party-cookies) for details.
+:::
+
+## Next Steps
+
+1. **For standard enterprise deployments:** Start with [Default SSO Authentication](./default-sso) to leverage your existing Glean SSO setup
+2. **For public-facing sites:** Explore [Server-to-Server Authentication](./server-to-server) to provide seamless access without requiring user accounts
+3. **Not sure which to choose?** Review the detailed guides for each method to understand the implementation requirements
+
+## Related Documentation
+
+- [Third-Party Cookie Management](../3rd-party-cookies)
+- [Web SDK Overview](../overview)
+- [Web SDK Options Reference](https://app.glean.com/meta/browser_api/interfaces/Options.html)
