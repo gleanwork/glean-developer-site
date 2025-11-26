@@ -4,9 +4,12 @@ description: 'Bypass user authentication with token-based authentication'
 icon: server
 ---
 
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
 # Server-to-Server Authentication
 
-Server-to-server authentication enables your backend to provide authentication tokens to the Web SDK, bypassing the need for users to authenticate directly with Glean. This approach is essential for scenarios where users don't have Glean accounts or where you want to provide seamless, frictionless access to search and chat functionality.
+Server-to-server authentication enables your backend to provide authentication tokens to the Web SDK, bypassing the need for users to log in through Glean's SSO flow. This approach is essential for scenarios where users don't have Glean accounts or where you want to provide seamless, frictionless access to search and chat functionality.
 
 The Web SDK supports two implementation approaches for server-to-server authentication:
 
@@ -15,7 +18,7 @@ The Web SDK supports two implementation approaches for server-to-server authenti
 
 ## Overview
 
-Unlike [Default SSO Authentication](./default-sso) which relies on users' existing Glean cookies, server-to-server authentication allows your backend to obtain short-lived authentication tokens on behalf of users. This eliminates the need for users to sign in to Glean directly and enables use cases where users may not even have Glean accounts.
+Unlike [Default SSO Authentication](./default-sso) where users see a login button and complete an SSO flow, server-to-server authentication (token-based) allows your backend to obtain short-lived authentication tokens on behalf of users. This eliminates the SSO login popup and enables use cases where users may not even have Glean accounts.
 
 ## When to Use Server-to-Server Authentication
 
@@ -34,6 +37,40 @@ Choose your implementation approach:
 ## Approach 1: Manual Token Management
 
 This approach gives you complete control over token generation and refresh. Your application manages user authentication and fetches tokens from Glean's API.
+
+### Installation
+
+First, install the Web SDK:
+
+<Tabs>
+<TabItem value="npm" label="NPM">
+
+```bash
+npm install @gleanwork/web-sdk
+```
+
+Import in your application:
+
+```typescript
+import GleanWebSDK from '@gleanwork/web-sdk';
+```
+
+</TabItem>
+<TabItem value="script" label="Script Tag">
+
+Add to your page's `<head>`:
+
+```html
+<script
+  defer
+  src="https://{GLEAN_APP_DOMAIN}/embedded-search-latest.min.js"
+></script>
+```
+
+The SDK will be available globally as `GleanWebSDK`.
+
+</TabItem>
+</Tabs>
 
 ### Setup Process
 
@@ -88,13 +125,15 @@ GLEAN_AUTH_TOKEN_...
 
 Your server sends the token back to the client-side JavaScript.
 
-#### 5. Initialize Web SDK
+#### 5. Use Token with Web SDK
 
-Pass the token to the Glean Web SDK using the `authToken` option:
+Pass the token to the Glean Web SDK when rendering components:
 
 ```javascript
-glean.initialize({
+GleanWebSDK.renderSearchBox(document.getElementById('search-container'), {
+  authMethod: 'token',
   authToken: 'GLEAN_AUTH_TOKEN_...',
+  backend: 'https://{your}-be.glean.com/',
   onAuthTokenRequired: async () => {
     const response = await fetch('/api/get-glean-token');
     const { token } = await response.json();
@@ -102,6 +141,8 @@ glean.initialize({
   }
 });
 ```
+
+You can use this pattern with any Web SDK component: `renderSearchBox()`, `renderChat()`, `renderSearchResults()`, `attach()`, etc.
 
 #### 6. Handle Token Refresh
 
@@ -160,8 +201,9 @@ The `backend` parameter should match your Glean external search deployment URL.
 // Get the auth token
 const token = await authProvider.getAuthToken();
 
-// Initialize the SDK with the token
-glean.initialize({
+// Render a component with the token
+GleanWebSDK.renderSearchBox(document.getElementById('search-container'), {
+  authMethod: 'token',
   authToken: token,
   backend: 'https://{your}-be.glean.com/',
   onAuthTokenRequired: async () => {
@@ -250,13 +292,18 @@ export function useGuestAuth() {
 #### 4. Apply to Glean Components
 
 ```tsx
+import { useEffect, useRef } from 'react';
+import GleanWebSDK from '@gleanwork/web-sdk';
+
 function SearchComponent() {
   const { token, loading } = useGuestAuth();
+  const searchRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!token || loading) return;
+    if (!token || loading || !searchRef.current) return;
 
-    glean.initialize({
+    GleanWebSDK.renderSearchBox(searchRef.current, {
+      authMethod: 'token',
       authToken: token,
       backend: 'https://{your}-be.glean.com/',
       onAuthTokenRequired: async () => {
@@ -270,7 +317,7 @@ function SearchComponent() {
 
   if (loading) return <div>Loading...</div>;
 
-  return <div id="glean-search" />;
+  return <div ref={searchRef} />;
 }
 ```
 
