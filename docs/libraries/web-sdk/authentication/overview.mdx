@@ -5,26 +5,36 @@ description: Choose the right authentication method for embedding Glean in your 
 icon: lock
 ---
 
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
 # Web SDK Authentication
 
-The Web SDK provides two authentication paradigms for integrating Glean's search and chat capabilities into your application. Understanding these approaches will help you choose the right method for your deployment scenario.
+The Web SDK provides two authentication methods for integrating Glean's search and chat capabilities into your application. Choose the method that best fits your deployment scenario and user requirements.
 
-## Authentication Paradigms
+## Authentication Methods
 
-### Default SSO Authentication (Cookie-Based)
+### SSO Authentication (Default)
 
-The Web SDK automatically reuses your users' existing Glean session cookies. When users visit your embedded Glean implementation, the SDK detects their active Glean session and seamlessly provides access without additional authentication steps.
+The default authentication method where users complete your organization's SSO login flow. When a user interacts with Glean components, they'll see a login button that opens an SSO authentication flow in a popup window.
 
 **Best for:**
-- Enterprise deployments where users already have Glean accounts
+- Enterprise deployments where users have Glean accounts
 - Internal applications and intranets
-- Scenarios where users are expected to have SSO access to Glean
+- Scenarios requiring SSO compliance
 
-[Learn more about Default SSO Authentication →](./default-sso)
+**Configuration:**
+```typescript
+{
+  authMethod: "sso"  // This is the default
+}
+```
 
-### Server-to-Server Authentication (Token-Based)
+[Learn more about SSO Authentication →](./default-sso)
 
-Your server obtains authentication tokens from Glean's API and provides them to the Web SDK, bypassing the need for users to authenticate directly with Glean. This enables seamless authentication for users who may not have Glean accounts or for anonymous access scenarios.
+### Token-Based Authentication
+
+Your server obtains authentication tokens from Glean's API and provides them to the Web SDK, eliminating the need for users to log in through the SSO flow. This enables seamless authentication for users who may not have Glean accounts or for anonymous access scenarios.
 
 **Best for:**
 - Public-facing applications where users don't have Glean accounts
@@ -32,38 +42,116 @@ Your server obtains authentication tokens from Glean's API and provides them to 
 - Anonymous or guest access to search functionality
 - Documentation sites and marketing pages
 
+**Configuration:**
+```typescript
+{
+  authMethod: "token",
+  authToken: "GLEAN_AUTH_TOKEN_...",
+  onAuthTokenRequired: async () => {
+    // Fetch new token when current one expires
+    return newToken;
+  }
+}
+```
+
 [Learn more about Server-to-Server Authentication →](./server-to-server)
 
 ## Quick Decision Guide
 
-Choose your authentication method based on your deployment scenario:
-
 | Question | Answer | Recommended Method |
 |----------|--------|-------------------|
-| Do your users have Glean accounts? | Yes | [Default SSO Authentication](./default-sso) |
-| Do users need to sign in to access search? | No preference | [Default SSO Authentication](./default-sso) |
-| Do you want anonymous/guest access? | Yes | [Server-to-Server Authentication](./server-to-server) |
-| Are you building a public documentation site? | Yes | [Server-to-Server Authentication](./server-to-server) |
-| Do you need seamless auth without user interaction? | Yes | [Server-to-Server Authentication](./server-to-server) |
+| Do your users have Glean accounts? | Yes | [SSO Authentication](./default-sso) |
+| Do you want users to log in via SSO? | Yes | [SSO Authentication](./default-sso) |
+| Do you need anonymous/guest access? | Yes | [Token-Based Authentication](./server-to-server) |
+| Are you building a public documentation site? | Yes | [Token-Based Authentication](./server-to-server) |
+| Do third-party cookies get blocked? | Yes | [Token-Based Authentication](./server-to-server) (required) |
 
-## Authentication Options Comparison
+## Getting Started
 
-| Method | User Type | Setup Complexity | Use Case |
-|--------|-----------|-----------------|----------|
-| **Default SSO** | Authenticated | Minimal | Standard enterprise deployments |
-| **Server-to-Server (Manual)** | Authenticated | Medium | Full control over auth lifecycle |
-| **Server-to-Server (Guest)** | Anonymous | Low | Public sites, no user login needed |
+### Installation
+
+Choose your preferred installation method:
+
+<Tabs>
+<TabItem value="npm" label="NPM">
+
+```bash
+npm install @gleanwork/web-sdk
+```
+
+Then import in your application:
+
+```typescript
+import GleanWebSDK from '@gleanwork/web-sdk';
+
+// Or import specific methods
+import { attach, renderSearchBox } from '@gleanwork/web-sdk';
+```
+
+</TabItem>
+<TabItem value="script" label="Script Tag">
+
+Add the Web SDK script to your page's `<head>`:
+
+```html
+<script
+  defer
+  src="https://{GLEAN_APP_DOMAIN}/embedded-search-latest.min.js"
+></script>
+```
+
+The SDK will be available globally as `window.GleanWebSDK` or just `GleanWebSDK`.
+
+Replace `{GLEAN_APP_DOMAIN}` with your Glean web app domain (typically `app.glean.com` or `your-company.glean.com`).
+
+</TabItem>
+</Tabs>
+
+### Basic Usage
+
+Once installed, you can render Glean components with your chosen authentication method:
+
+<Tabs>
+<TabItem value="sso" label="SSO Auth">
+
+```javascript
+// No auth configuration needed - SSO is default
+GleanWebSDK.renderSearchBox(document.getElementById('search-container'), {
+  backend: 'https://{your}-be.glean.com/'
+});
+```
+
+</TabItem>
+<TabItem value="token" label="Token Auth">
+
+```javascript
+GleanWebSDK.renderSearchBox(document.getElementById('search-container'), {
+  authMethod: 'token',
+  authToken: yourAuthToken,
+  backend: 'https://{your}-be.glean.com/',
+  onAuthTokenRequired: async () => {
+    const response = await fetch('/api/get-glean-token');
+    const { token } = await response.json();
+    return token;
+  }
+});
+```
+
+</TabItem>
+</Tabs>
 
 ## Third-Party Cookie Considerations
 
 :::warning
-When third-party cookies are blocked in the user's browser, server-to-server authentication becomes mandatory for the Web SDK to function properly. See [Third-Party Cookie Management](../3rd-party-cookies) for details.
+When third-party cookies are blocked in the user's browser, SSO authentication may not work reliably. In these cases, token-based authentication is required for the Web SDK to function properly.
+
+See [Third-Party Cookie Management](../3rd-party-cookies) for details.
 :::
 
 ## Next Steps
 
-1. **For standard enterprise deployments:** Start with [Default SSO Authentication](./default-sso) to leverage your existing Glean SSO setup
-2. **For public-facing sites:** Explore [Server-to-Server Authentication](./server-to-server) to provide seamless access without requiring user accounts
+1. **For standard enterprise deployments:** Start with [SSO Authentication](./default-sso) to leverage your existing Glean SSO setup
+2. **For public-facing sites:** Explore [Server-to-Server Authentication](./server-to-server) to provide seamless access without requiring user login
 3. **Not sure which to choose?** Review the detailed guides for each method to understand the implementation requirements
 
 ## Related Documentation
@@ -71,3 +159,9 @@ When third-party cookies are blocked in the user's browser, server-to-server aut
 - [Third-Party Cookie Management](../3rd-party-cookies)
 - [Web SDK Overview](../overview)
 - [Web SDK Options Reference](https://app.glean.com/meta/browser_api/interfaces/Options.html)
+
+---
+
+**Sources:**
+- [@gleanwork/web-sdk on npm](https://www.npmjs.com/package/@gleanwork/web-sdk)
+- [Web SDK API Documentation](https://app.glean.com/meta/browser_api/)
