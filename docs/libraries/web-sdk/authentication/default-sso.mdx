@@ -6,6 +6,7 @@ icon: shield
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+import { Steps, Step } from '@site/src/components/Steps';
 
 # SSO Authentication
 
@@ -24,71 +25,73 @@ The SSO authentication flow follows these steps:
 
 ## Installation & Setup
 
-### 1. Install the Web SDK
+<Steps>
+  <Step title="Install the Web SDK">
+    <Tabs>
+    <TabItem value="npm" label="NPM">
 
-<Tabs>
-<TabItem value="npm" label="NPM">
+    ```bash
+    npm install @gleanwork/web-sdk
+    ```
 
-```bash
-npm install @gleanwork/web-sdk
-```
+    Import in your application:
 
-Import in your application:
+    ```typescript
+    import GleanWebSDK from '@gleanwork/web-sdk';
+    ```
 
-```typescript
-import GleanWebSDK from '@gleanwork/web-sdk';
-```
+    </TabItem>
+    <TabItem value="script" label="Script Tag">
 
-</TabItem>
-<TabItem value="script" label="Script Tag">
+    Add to your page's `<head>`:
 
-Add to your page's `<head>`:
+    ```html
+    <script
+      defer
+      src="https://{GLEAN_APP_DOMAIN}/embedded-search-latest.min.js"
+    ></script>
+    ```
 
-```html
-<script
-  defer
-  src="https://{GLEAN_APP_DOMAIN}/embedded-search-latest.min.js"
-></script>
-```
+    Replace `{GLEAN_APP_DOMAIN}` with your Glean web app domain (e.g., `app.glean.com`).
 
-Replace `{GLEAN_APP_DOMAIN}` with your Glean web app domain (e.g., `app.glean.com`).
+    </TabItem>
+    </Tabs>
+  </Step>
 
-</TabItem>
-</Tabs>
+  <Step title="Render a Component">
+    SSO authentication is the default - no auth configuration is required:
 
-### 2. Render a Component
+    <Tabs>
+    <TabItem value="searchbox" label="Search Box">
 
-SSO authentication is the default - no auth configuration is required:
+    ```javascript
+    GleanWebSDK.renderSearchBox(document.getElementById('search-container'), {
+      backend: 'https://{your}-be.glean.com/'
+    });
+    ```
 
-<Tabs>
-<TabItem value="searchbox" label="Search Box">
+    </TabItem>
+    <TabItem value="modal" label="Modal Search">
 
-```javascript
-GleanWebSDK.renderSearchBox(document.getElementById('search-container'), {
-  backend: 'https://{your}-be.glean.com/'
-});
-```
+    ```javascript
+    GleanWebSDK.attach(document.getElementById('search-input'), {
+      backend: 'https://{your}-be.glean.com/'
+    });
+    ```
 
-</TabItem>
-<TabItem value="modal" label="Modal Search">
+    </TabItem>
+    <TabItem value="chat" label="Chat">
 
-```javascript
-GleanWebSDK.attach(document.getElementById('search-input'), {
-  backend: 'https://{your}-be.glean.com/'
-});
-```
+    ```javascript
+    GleanWebSDK.renderChat(document.getElementById('chat-container'), {
+      backend: 'https://{your}-be.glean.com/'
+    });
+    ```
 
-</TabItem>
-<TabItem value="chat" label="Chat">
-
-```javascript
-GleanWebSDK.renderChat(document.getElementById('chat-container'), {
-  backend: 'https://{your}-be.glean.com/'
-});
-```
-
-</TabItem>
-</Tabs>
+    </TabItem>
+    </Tabs>
+  </Step>
+</Steps>
 
 ## Optimizing the Authentication Flow
 

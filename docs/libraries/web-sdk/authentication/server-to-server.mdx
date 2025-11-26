@@ -6,6 +6,7 @@ icon: server
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+import { Steps, Step } from '@site/src/components/Steps';
 
 # Server-to-Server Authentication
 
@@ -74,85 +75,87 @@ The SDK will be available globally as `GleanWebSDK`.
 
 ### Setup Process
 
-#### 1. Obtain API Key
+<Steps>
+  <Step title="Obtain API Key">
+    An admin with sufficient access needs to generate a bearer key from Glean:
 
-An admin with sufficient access needs to generate a bearer key from Glean:
+    1. Navigate to the [Token Management page](https://app.glean.com/admin/setup/tokenManagement?tab=auth)
+    2. Generate a new API key
+    3. Store this key securely on your server
+    4. Optionally set an expiration date or rotate the key as needed
 
-1. Navigate to the [Token Management page](https://app.glean.com/admin/setup/tokenManagement?tab=auth)
-2. Generate a new API key
-3. Store this key securely on your server
-4. Optionally set an expiration date or rotate the key as needed
+    :::warning
+    The API key must be stored very securely and never exposed to client-side code.
+    :::
+  </Step>
 
-:::warning
-The API key must be stored very securely and never exposed to client-side code.
-:::
+  <Step title="Request Authentication Tokens">
+    After a user authenticates with your application, your server makes a REST API call to obtain a short-lived auth token:
 
-#### 2. Request Authentication Tokens
+    ```bash
+    curl -X POST "https://<deployment-backend>.glean.com/rest/api/v1/createauthtoken" \
+      -H "Authorization: Bearer <api-key>" \
+      -H "X-Scio-ActAs: <user-email>"
+    ```
 
-After a user authenticates with your application, your server makes a REST API call to obtain a short-lived auth token:
+    Replace:
+    - `<deployment-backend>` with your deployment's subdomain (contact Glean support if unknown)
+    - `<api-key>` with the bearer key from step 1
+    - `<user-email>` with the authenticated user's email address
 
-```bash
-curl -X POST "https://<deployment-backend>.glean.com/rest/api/v1/createauthtoken" \
-  -H "Authorization: Bearer <api-key>" \
-  -H "X-Scio-ActAs: <user-email>"
-```
+    :::tip
+    The default TTL for these tokens is 2 hours, but this is configurable. Contact your Glean administrator to adjust this setting.
+    :::
 
-Replace:
-- `<deployment-backend>` with your deployment's subdomain (contact Glean support if unknown)
-- `<api-key>` with the bearer key from step 1
-- `<user-email>` with the authenticated user's email address
+    For more details on this endpoint, see the [Create Authentication Token API](/api/client-api/authentication/createauthtoken).
+  </Step>
 
-:::tip
-The default TTL for these tokens is 2 hours, but this is configurable. Contact your Glean administrator to adjust this setting.
-:::
+  <Step title="Token Response">
+    The Glean server creates a token payload containing:
+    - Issuance time
+    - User email
+    - Salt value
 
-For more details on this endpoint, see the [Create Authentication Token API](/api/client-api/authentication/createauthtoken).
+    This payload is encrypted using GCP Key Management Service (KMS) and returned in the format:
 
-#### 3. Token Response
+    ```
+    GLEAN_AUTH_TOKEN_...
+    ```
+  </Step>
 
-The Glean server creates a token payload containing:
-- Issuance time
-- User email
-- Salt value
+  <Step title="Send Token to Client">
+    Your server sends the token back to the client-side JavaScript.
+  </Step>
 
-This payload is encrypted using GCP Key Management Service (KMS) and returned in the format:
+  <Step title="Use Token with Web SDK">
+    Pass the token to the Glean Web SDK when rendering components:
 
-```
-GLEAN_AUTH_TOKEN_...
-```
+    ```javascript
+    GleanWebSDK.renderSearchBox(document.getElementById('search-container'), {
+      authMethod: 'token',
+      authToken: 'GLEAN_AUTH_TOKEN_...',
+      backend: 'https://{your}-be.glean.com/',
+      onAuthTokenRequired: async () => {
+        const response = await fetch('/api/get-glean-token');
+        const { token } = await response.json();
+        return token;
+      }
+    });
+    ```
 
-#### 4. Send Token to Client
+    You can use this pattern with any Web SDK component: `renderSearchBox()`, `renderChat()`, `renderSearchResults()`, `attach()`, etc.
+  </Step>
 
-Your server sends the token back to the client-side JavaScript.
+  <Step title="Handle Token Refresh">
+    The Web SDK provides an `authorizationNeeded` event that fires when the token is approaching expiration. Your implementation must:
 
-#### 5. Use Token with Web SDK
+    1. Listen for this event
+    2. Contact your server to fetch a fresh token
+    3. Return the new token to the SDK
 
-Pass the token to the Glean Web SDK when rendering components:
-
-```javascript
-GleanWebSDK.renderSearchBox(document.getElementById('search-container'), {
-  authMethod: 'token',
-  authToken: 'GLEAN_AUTH_TOKEN_...',
-  backend: 'https://{your}-be.glean.com/',
-  onAuthTokenRequired: async () => {
-    const response = await fetch('/api/get-glean-token');
-    const { token } = await response.json();
-    return token;
-  }
-});
-```
-
-You can use this pattern with any Web SDK component: `renderSearchBox()`, `renderChat()`, `renderSearchResults()`, `attach()`, etc.
-
-#### 6. Handle Token Refresh
-
-The Web SDK provides an `authorizationNeeded` event that fires when the token is approaching expiration. Your implementation must:
-
-1. Listen for this event
-2. Contact your server to fetch a fresh token
-3. Return the new token to the SDK
-
-The `onAuthTokenRequired` callback shown above handles this automatically.
+    The `onAuthTokenRequired` callback shown above handles this automatically.
+  </Step>
+</Steps>
 
 ### Implementation Checklist
 
@@ -177,149 +180,151 @@ The Guest Auth Provider:
 
 ### Setup Process
 
-#### 1. Import the Guest Auth Provider
+<Steps>
+  <Step title="Import the Guest Auth Provider">
+    ```typescript
+    import { createGuestAuthProvider } from '@gleanwork/web-sdk';
+    ```
+  </Step>
 
-```typescript
-import { createGuestAuthProvider } from '@gleanwork/web-sdk';
-```
+  <Step title="Create the Provider">
+    ```typescript
+    const authProvider = createGuestAuthProvider({
+      backend: 'https://{your}-be.glean.com/'
+    });
+    ```
 
-#### 2. Create the Provider
+    The `backend` parameter should match your Glean external search deployment URL.
+  </Step>
 
-```typescript
-const authProvider = createGuestAuthProvider({
-  backend: 'https://{your}-be.glean.com/'
-});
-```
+  <Step title="Use with Web SDK">
+    ##### Option A: Direct Token Usage
 
-The `backend` parameter should match your Glean external search deployment URL.
+    ```typescript
+    // Get the auth token
+    const token = await authProvider.getAuthToken();
 
-#### 3. Use with Web SDK
-
-##### Option A: Direct Token Usage
-
-```typescript
-// Get the auth token
-const token = await authProvider.getAuthToken();
-
-// Render a component with the token
-GleanWebSDK.renderSearchBox(document.getElementById('search-container'), {
-  authMethod: 'token',
-  authToken: token,
-  backend: 'https://{your}-be.glean.com/',
-  onAuthTokenRequired: async () => {
-    return await authProvider.getAuthToken();
-  }
-});
-```
-
-##### Option B: React Integration
-
-Here's a complete example using React context for guest authentication:
-
-```tsx
-import { createContext, useContext, useEffect, useState } from 'react';
-import { createGuestAuthProvider } from '@gleanwork/web-sdk';
-
-interface GuestAuthContextType {
-  token: string | null;
-  loading: boolean;
-  error: Error | null;
-  refreshToken: () => Promise<void>;
-}
-
-const GuestAuthContext = createContext<GuestAuthContextType | null>(null);
-
-export function GuestAuthProvider({
-  children,
-  backend
-}: {
-  children: React.ReactNode;
-  backend: string;
-}) {
-  const [token, setToken] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
-  const [provider, setProvider] = useState<any>(null);
-
-  useEffect(() => {
-    const initProvider = async () => {
-      try {
-        const authProvider = createGuestAuthProvider({ backend });
-        setProvider(authProvider);
-        const authToken = await authProvider.getAuthToken();
-        setToken(authToken);
-      } catch (err) {
-        setError(err as Error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    initProvider();
-  }, [backend]);
-
-  const refreshToken = async () => {
-    if (!provider) return;
-
-    try {
-      setLoading(true);
-      const newToken = await provider.createAuthToken();
-      setToken(newToken);
-      setError(null);
-    } catch (err) {
-      setError(err as Error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <GuestAuthContext.Provider value={{ token, loading, error, refreshToken }}>
-      {children}
-    </GuestAuthContext.Provider>
-  );
-}
-
-export function useGuestAuth() {
-  const context = useContext(GuestAuthContext);
-  if (!context) {
-    throw new Error('useGuestAuth must be used within GuestAuthProvider');
-  }
-  return context;
-}
-```
-
-#### 4. Apply to Glean Components
-
-```tsx
-import { useEffect, useRef } from 'react';
-import GleanWebSDK from '@gleanwork/web-sdk';
-
-function SearchComponent() {
-  const { token, loading } = useGuestAuth();
-  const searchRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!token || loading || !searchRef.current) return;
-
-    GleanWebSDK.renderSearchBox(searchRef.current, {
+    // Render a component with the token
+    GleanWebSDK.renderSearchBox(document.getElementById('search-container'), {
       authMethod: 'token',
       authToken: token,
       backend: 'https://{your}-be.glean.com/',
       onAuthTokenRequired: async () => {
-        const authProvider = createGuestAuthProvider({
-          backend: 'https://{your}-be.glean.com/'
-        });
         return await authProvider.getAuthToken();
       }
     });
-  }, [token, loading]);
+    ```
 
-  if (loading) return <div>Loading...</div>;
+    ##### Option B: React Integration
 
-  return <div ref={searchRef} />;
-}
-```
+    Here's a complete example using React context for guest authentication:
+
+    ```tsx
+    import { createContext, useContext, useEffect, useState } from 'react';
+    import { createGuestAuthProvider } from '@gleanwork/web-sdk';
+
+    interface GuestAuthContextType {
+      token: string | null;
+      loading: boolean;
+      error: Error | null;
+      refreshToken: () => Promise<void>;
+    }
+
+    const GuestAuthContext = createContext<GuestAuthContextType | null>(null);
+
+    export function GuestAuthProvider({
+      children,
+      backend
+    }: {
+      children: React.ReactNode;
+      backend: string;
+    }) {
+      const [token, setToken] = useState<string | null>(null);
+      const [loading, setLoading] = useState(true);
+      const [error, setError] = useState<Error | null>(null);
+      const [provider, setProvider] = useState<any>(null);
+
+      useEffect(() => {
+        const initProvider = async () => {
+          try {
+            const authProvider = createGuestAuthProvider({ backend });
+            setProvider(authProvider);
+            const authToken = await authProvider.getAuthToken();
+            setToken(authToken);
+          } catch (err) {
+            setError(err as Error);
+          } finally {
+            setLoading(false);
+          }
+        };
+
+        initProvider();
+      }, [backend]);
+
+      const refreshToken = async () => {
+        if (!provider) return;
+
+        try {
+          setLoading(true);
+          const newToken = await provider.createAuthToken();
+          setToken(newToken);
+          setError(null);
+        } catch (err) {
+          setError(err as Error);
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      return (
+        <GuestAuthContext.Provider value={{ token, loading, error, refreshToken }}>
+          {children}
+        </GuestAuthContext.Provider>
+      );
+    }
+
+    export function useGuestAuth() {
+      const context = useContext(GuestAuthContext);
+      if (!context) {
+        throw new Error('useGuestAuth must be used within GuestAuthProvider');
+      }
+      return context;
+    }
+    ```
+  </Step>
+
+  <Step title="Apply to Glean Components">
+    ```tsx
+    import { useEffect, useRef } from 'react';
+    import GleanWebSDK from '@gleanwork/web-sdk';
+
+    function SearchComponent() {
+      const { token, loading } = useGuestAuth();
+      const searchRef = useRef<HTMLDivElement>(null);
+
+      useEffect(() => {
+        if (!token || loading || !searchRef.current) return;
+
+        GleanWebSDK.renderSearchBox(searchRef.current, {
+          authMethod: 'token',
+          authToken: token,
+          backend: 'https://{your}-be.glean.com/',
+          onAuthTokenRequired: async () => {
+            const authProvider = createGuestAuthProvider({
+              backend: 'https://{your}-be.glean.com/'
+            });
+            return await authProvider.getAuthToken();
+          }
+        });
+      }, [token, loading]);
+
+      if (loading) return <div>Loading...</div>;
+
+      return <div ref={searchRef} />;
+    }
+    ```
+  </Step>
+</Steps>
 
 ### Guest Auth Provider API
 
