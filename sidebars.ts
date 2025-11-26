@@ -254,10 +254,6 @@ const baseSidebars: SidebarsConfig = {
             {
               type: 'category',
               label: 'Authentication',
-              customProps: {
-                icon: 'Lock',
-                iconSet: 'feather',
-              },
               items: [
                 {
                   type: 'doc',
