@@ -252,9 +252,25 @@ const baseSidebars: SidebarsConfig = {
               label: 'Third-Party Cookie Management',
             },
             {
-              type: 'doc',
-              id: 'libraries/web-sdk/authentication',
+              type: 'category',
               label: 'Authentication',
+              items: [
+                {
+                  type: 'doc',
+                  id: 'libraries/web-sdk/authentication/overview',
+                  label: 'Overview',
+                },
+                {
+                  type: 'doc',
+                  id: 'libraries/web-sdk/authentication/default-sso',
+                  label: 'Default SSO',
+                },
+                {
+                  type: 'doc',
+                  id: 'libraries/web-sdk/authentication/server-to-server',
+                  label: 'Server-to-Server',
+                },
+              ],
             },
             {
               type: 'category',
