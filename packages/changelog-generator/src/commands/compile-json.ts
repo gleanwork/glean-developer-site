@@ -31,12 +31,10 @@ function getDirectoryHash(dirPath: string): string | null {
 
   const fileHashes = files.map((file) => {
     const filePath = path.join(dirPath, file);
-    const stats = fs.statSync(filePath);
     const content = fs.readFileSync(filePath, 'utf-8');
     return {
       file,
       hash: crypto.createHash('md5').update(content).digest('hex'),
-      mtime: stats.mtime.toISOString(),
     };
   });
 
