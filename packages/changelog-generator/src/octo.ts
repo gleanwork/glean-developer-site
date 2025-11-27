@@ -38,7 +38,7 @@ export async function findExistingChangelogPR(
   params: {
     owner: string;
     repo: string;
-    branchPrefix: string;
+    branchName: string;
     baseBranch: string;
   },
 ): Promise<PullRequest | null> {
@@ -51,8 +51,8 @@ export async function findExistingChangelogPR(
       per_page: 100,
     });
 
-    const matchingPR = response.data.find((pr) =>
-      pr.head.ref.startsWith(params.branchPrefix),
+    const matchingPR = response.data.find(
+      (pr) => pr.head.ref === params.branchName,
     );
 
     return matchingPR || null;

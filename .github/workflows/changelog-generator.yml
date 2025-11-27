@@ -31,6 +31,7 @@ jobs:
               with:
                   fetch-depth: 0
                   path: pr-worktree
+                  token: ${{ secrets.CHANGELOG_PAT }}
 
             - name: Set up mise
               uses: jdx/mise-action@v2
@@ -54,7 +55,7 @@ jobs:
 
             - name: Run changelog generator
               env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  GITHUB_TOKEN: ${{ secrets.CHANGELOG_PAT }}
                   CHANGELOG_WORKTREE: pr-worktree
                   GLEAN_API_TOKEN: ${{ secrets.CHANGELOG_GLEAN_API_TOKEN }}
                   GLEAN_INSTANCE: ${{ secrets.CHANGELOG_GLEAN_INSTANCE }}
