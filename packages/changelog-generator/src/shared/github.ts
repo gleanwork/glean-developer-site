@@ -1,7 +1,6 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as os from 'node:os';
-import { randomUUID } from 'node:crypto';
 import { createRequire } from 'node:module';
 import { loadConfig } from '../config.js';
 import { summarizeRelease } from '../summarizer.js';
@@ -307,7 +306,7 @@ export async function analyze(repoRoot: string): Promise<AnalyzeOutput> {
   const pr = {
     targetRepo: { owner: cfg.owner, repo: DEFAULT_REPO },
     baseBranch: cfg.baseBranch,
-    branchName: `chore/changelog-${bundleDate}-${randomUUID().slice(0, 8)}`,
+    branchName: `chore/changelog`,
     title: `chore(changelog): ${bundleDate}`,
     body:
       includedFiles.length === 0
@@ -510,7 +509,7 @@ export async function apply(
 
     const octokit = createOctokit();
     const bundleDate = today();
-    const branchPrefix = `chore/changelog-${bundleDate}`;
+    const branchName = `chore/changelog`;
 
     let existingPR: PullRequest | null = null;
     let branch = data.pr.branchName;
@@ -520,42 +519,32 @@ export async function apply(
       existingPR = await findExistingChangelogPR(octokit, {
         owner: data.pr.targetRepo.owner,
         repo: data.pr.targetRepo.repo,
-        branchPrefix,
+        branchName,
         baseBranch: data.pr.baseBranch,
       });
     } catch (err) {
       logGit(`Failed to check for existing PR: ${toErrorMessage(err)}`);
     }
 
+    // Always use the fixed branch name
+    branch = branchName;
+
     if (existingPR) {
-      branch = existingPR.head.ref;
       isUpdatingExistingPR = true;
       logGit(
-        `Found existing PR #${existingPR.number} with branch ${branch}, will update it`,
+        `Found existing PR #${existingPR.number} on branch ${branch}, will force-push to update it`,
       );
-      try {
-        runGit(['fetch', 'origin', branch], workdir);
-        runGit(['checkout', branch], workdir);
-      } catch (err) {
-        logGit(
-          `Failed to checkout existing branch ${branch}, creating new branch: ${toErrorMessage(err)}`,
-        );
-        isUpdatingExistingPR = false;
-        try {
-          runGit(['checkout', '-b', branch], workdir);
-        } catch {
-          branch = `${branch}-${randomUUID().slice(0, 8)}`;
-          runGit(['checkout', '-b', branch], workdir);
-        }
-      }
     } else {
-      logGit(`No existing PR found for ${branchPrefix}, creating new branch`);
-      try {
-        runGit(['checkout', '-b', branch], workdir);
-      } catch {
-        branch = `${branch}-${randomUUID().slice(0, 8)}`;
-        runGit(['checkout', '-b', branch], workdir);
-      }
+      logGit(`No existing PR found for ${branchName}, creating new branch`);
+    }
+
+    // Always create a fresh branch from the base branch
+    // This ensures we start clean and will force-push if the branch exists
+    try {
+      runGit(['checkout', '-B', branch], workdir);
+    } catch (err) {
+      logGit(`Failed to create branch ${branch}: ${toErrorMessage(err)}`);
+      throw err;
     }
 
     const written: Array<string> = [];
@@ -599,7 +588,8 @@ export async function apply(
       return;
     }
 
-    runGit(['push', '-u', 'origin', branch], workdir);
+    // Force push to overwrite the branch (handles both new and existing branches)
+    runGit(['push', '-f', '-u', 'origin', branch], workdir);
 
     let prUrl: string | null = null;
     let prNumber: number | null = null;
@@ -608,31 +598,42 @@ export async function apply(
     if (isUpdatingExistingPR && existingPR) {
       logGit(`Updating existing PR #${existingPR.number}`);
 
-      const newBody = [
-        existingPR.body || '',
-        '',
-        `---`,
-        `**Updated**: Added ${written.length} new changelog entries in ${commitCount} commit(s).`,
-        '',
-        'New files:',
-        ...written.map((f) => `- ${f}`),
-      ].join('\n');
-
       try {
         await octokit.rest.pulls.update({
           owner: data.pr.targetRepo.owner,
           repo: data.pr.targetRepo.repo,
           pull_number: existingPR.number,
-          body: newBody,
+          title: data.pr.title,
+          body: data.pr.body,
         });
         prUrl = existingPR.html_url;
         prNumber = existingPR.number;
         status = 'updated';
       } catch (err) {
-        logGit(`Failed to update PR body: ${toErrorMessage(err)}`);
+        logGit(`Failed to update PR: ${toErrorMessage(err)}`);
         prUrl = existingPR.html_url;
         prNumber = existingPR.number;
         status = 'updated';
+      }
+
+      // Re-enable auto-merge in case it was disabled
+      try {
+        await octokit.graphql(
+          `
+          mutation EnableAutoMerge($pullRequestId: ID!) {
+            enablePullRequestAutoMerge(input: {
+              pullRequestId: $pullRequestId,
+              mergeMethod: SQUASH
+            }) {
+              pullRequest { id }
+            }
+          }
+        `,
+          { pullRequestId: existingPR.node_id },
+        );
+        logGit(`Enabled auto-merge for PR #${prNumber}`);
+      } catch (err) {
+        logGit(`Failed to enable auto-merge: ${toErrorMessage(err)}`);
       }
     } else {
       logGit(`Creating new PR`);
@@ -647,6 +648,26 @@ export async function apply(
       prUrl = prRes.data.html_url;
       prNumber = prRes.data.number;
       status = 'created';
+
+      // Enable auto-merge with squash strategy for new PRs
+      try {
+        await octokit.graphql(
+          `
+          mutation EnableAutoMerge($pullRequestId: ID!) {
+            enablePullRequestAutoMerge(input: {
+              pullRequestId: $pullRequestId,
+              mergeMethod: SQUASH
+            }) {
+              pullRequest { id }
+            }
+          }
+        `,
+          { pullRequestId: prRes.data.node_id },
+        );
+        logGit(`Enabled auto-merge for PR #${prNumber}`);
+      } catch (err) {
+        logGit(`Failed to enable auto-merge: ${toErrorMessage(err)}`);
+      }
     }
 
     const summary = {
