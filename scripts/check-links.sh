@@ -175,6 +175,7 @@ lychee_cmd+=(
   --exclude "^https://langchain-ai\.github\.io/"   # LangChain docs (flaky)
   --exclude "^https://picsum\.photos/"             # Random image service
   --exclude "^https://docs\.lumapps\.com/"        # LumApps docs (auth)
+  --exclude "^https://www\.npmjs\.com/"           # npm.com blocks automated requests (403)
 )
 
 # Add exclusions for GitHub URLs (will be handled separately if needed)
