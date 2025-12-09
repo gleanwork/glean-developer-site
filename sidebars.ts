@@ -61,6 +61,27 @@ const baseSidebars: SidebarsConfig = {
             iconSet: 'feather',
           },
         },
+        {
+          type: 'category',
+          label: 'Deprecations',
+          customProps: {
+            icon: 'AlertTriangle',
+            iconSet: 'feather',
+            flag: 'x-glean-deprecated',
+          },
+          items: [
+            {
+              type: 'doc',
+              id: 'deprecations/overview',
+              label: 'Overview',
+            },
+            {
+              type: 'doc',
+              id: 'deprecations/index',
+              label: 'Deprecation List',
+            },
+          ],
+        },
       ],
     },
     {

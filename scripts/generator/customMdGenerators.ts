@@ -1,3 +1,5 @@
+import fs from 'fs';
+import path from 'path';
 import { createAuthorization } from 'docusaurus-plugin-openapi-docs/lib/markdown/createAuthorization';
 import { createCallbacks } from 'docusaurus-plugin-openapi-docs/lib/markdown/createCallbacks';
 import { createDeprecationNotice } from 'docusaurus-plugin-openapi-docs/lib/markdown/createDeprecationNotice';
@@ -16,6 +18,63 @@ import {
   Props,
 } from 'docusaurus-plugin-openapi-docs/lib/markdown/utils';
 import type { ApiPageMetadata } from 'docusaurus-plugin-openapi-docs/lib/types';
+import type {
+  DeprecationItem,
+  EndpointGroup,
+  DeprecationsData,
+} from '../../src/types/deprecations';
+
+function loadDeprecationsData(): DeprecationsData {
+  const deprecationsPath = path.resolve(
+    __dirname,
+    '../../src/data/deprecations.json',
+  );
+  try {
+    const content = fs.readFileSync(deprecationsPath, 'utf8');
+    return JSON.parse(content);
+  } catch {
+    return { endpoints: [], generatedAt: '', totalCount: 0 };
+  }
+}
+
+function normalizePath(p: string): string {
+  let normalized = p.replace(/\/+$/, '');
+  normalized = normalized.replace(/^\/rest/, '');
+  return normalized.toLowerCase();
+}
+
+function isDeprecationActive(deprecation: DeprecationItem): boolean {
+  const [year, month, day] = deprecation.removal.split('-').map(Number);
+  const removalDate = new Date(year, month - 1, day);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return removalDate >= today;
+}
+
+function getActiveDeprecationsForEndpoint(
+  method: string,
+  endpointPath: string,
+  data: DeprecationsData,
+): DeprecationItem[] {
+  const normalizedInputPath = normalizePath(endpointPath);
+  const normalizedInputMethod = method.toUpperCase();
+
+  for (const endpoint of data.endpoints) {
+    const normalizedEndpointPath = normalizePath(endpoint.path);
+    const normalizedEndpointMethod = endpoint.method.toUpperCase();
+
+    if (
+      normalizedEndpointMethod === normalizedInputMethod &&
+      normalizedEndpointPath === normalizedInputPath
+    ) {
+      return endpoint.deprecations.filter(isDeprecationActive);
+    }
+  }
+
+  return [];
+}
+
+const deprecationsData = loadDeprecationsData();
 
 interface RequestBodyProps {
   title: string;
@@ -53,6 +112,26 @@ function createPreviewNotice({
   );
 }
 
+function createApiDeprecations(
+  method: string,
+  endpointPath: string,
+): string | undefined {
+  const activeDeprecations = getActiveDeprecationsForEndpoint(
+    method,
+    endpointPath,
+    deprecationsData,
+  );
+
+  if (activeDeprecations.length === 0) {
+    return undefined;
+  }
+
+  // Serialize deprecations as JSON for the component
+  const deprecationsJson = JSON.stringify(activeDeprecations);
+
+  return `\n<ApiDeprecations deprecations={${deprecationsJson}} />\n`;
+}
+
 export function customApiMdGenerator({
   title,
   api,
@@ -66,13 +145,16 @@ export function customApiMdGenerator({
     'x-beta': xBeta,
     description,
     method,
-    path,
+    path: endpointPath,
     extensions,
     parameters,
     requestBody,
     responses,
     callbacks,
   } = api as any; // Type assertion to access extension properties
+
+  const deprecationsMarkdown = createApiDeprecations(method, endpointPath);
+  const hasDeprecations = deprecationsMarkdown !== undefined;
 
   return render([
     `import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";\n`,
@@ -81,9 +163,13 @@ export function customApiMdGenerator({
     `import StatusCodes from "@theme/StatusCodes";\n`,
     `import OperationTabs from "@theme/OperationTabs";\n`,
     `import TabItem from "@theme/TabItem";\n`,
-    `import Heading from "@theme/Heading";\n\n`,
+    `import Heading from "@theme/Heading";\n`,
+    hasDeprecations
+      ? `import ApiDeprecations from "@site/src/theme/ApiDeprecations";\n\n`
+      : '\n',
     createHeading(title),
-    createMethodEndpoint(method, path),
+    createMethodEndpoint(method, endpointPath),
+    deprecationsMarkdown,
     infoPath && createAuthorization(infoPath),
     frontMatter.show_extensions
       ? createVendorExtensions(extensions)

@@ -18,7 +18,8 @@ export function getBuildTimeFlags(): FeatureFlagsMap {
 
   for (const [key, value] of Object.entries(process.env)) {
     if (!key.startsWith('FF_')) continue;
-    const slug = key.replace(/^FF_/, '').toLowerCase().replace(/__/g, '-');
+    // converts FF_FOO_BAZ_BAR to foo-baz-bar
+    const slug = key.replace(/^FF_/, '').toLowerCase().replace(/_/g, '-');
     flags[slug] = { enabled: value === 'true' };
   }
 

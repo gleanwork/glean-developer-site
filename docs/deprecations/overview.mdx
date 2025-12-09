@@ -1,0 +1,135 @@
+---
+title: API Evolution & Deprecations
+description: How Glean evolves its REST API through additive changes and predictable deprecations
+---
+
+import CardGroup from '@site/src/components/CardGroup';
+import Card from '@site/src/components/Card';
+import { Steps, Step } from '@site/src/components/Steps';
+
+# API Evolution & Deprecations
+
+We evolve our API through additive changes and predictable deprecations — not versioned URLs. This ensures your integrations remain stable while allowing us to improve the API.
+
+---
+
+## What's a Breaking Change?
+
+<CardGroup cols={2}>
+  <Card title="Breaking Changes" icon="AlertTriangle" color="#dc2626">
+    Require your code to be updated:
+
+    - Removing or renaming endpoints, fields, or parameters
+    - Changing data types or formats
+    - Making optional fields required
+    - Tightening validation rules
+  </Card>
+  <Card title="Non-Breaking Changes" icon="CheckCircle" color="#16a34a">
+    Work with your existing code:
+
+    - Adding new endpoints or fields
+    - Adding optional parameters
+    - Loosening validation
+    - Performance improvements
+  </Card>
+</CardGroup>
+
+---
+
+## The Deprecation Timeline
+
+When we need to make a breaking change, we follow a predictable process:
+
+<Steps titleSize="h3">
+  <Step title="Announce Deprecation">
+    We mark the feature as deprecated in our API responses and in our documentation. Your code continues to work normally.
+  </Step>
+  <Step title="Migration Period (6+ months)">
+    Both old and new approaches work side-by-side. We provide migration guides and send email notifications.
+  </Step>
+  <Step title="Removal at Fixed Date">
+    The deprecated feature is removed only on a fixed date: **Jan 15**, **Apr 15**, **Jul 15**, or **Oct 15** (23:59:59 UTC). This gives you a predictable timeline to plan for a migration.
+  </Step>
+</Steps>
+
+#### Example:
+
+Consider a field deprecated on **2026-01-01**. The field will be removed on **2026-07-15** (6 months + rounded to the next allowed removal date)
+
+```
+        2026-01-01                                                    2026-07-15
+            │                                                              │
+            ▼                                                              ▼
+────────────●━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━●────────────
+            │                                                              │
+ Deprecation Introduced                                         Deprecation Removed
+
+            ├──────────────────── Migration Period ────────────────────────┤
+```
+
+---
+
+## How You'll Know About Changes
+
+<CardGroup cols={2}>
+  <Card title="API Headers" icon="Code" color="#3b82f6">
+    Every response using deprecated features includes an `X-Glean-Deprecated` header with full details.
+  </Card>
+  <Card title="Documentation" icon="FileText" color="#06b6d4">
+    Inline warnings on API pages, migration guides, and a complete [deprecation schedule](/deprecations).
+  </Card>
+</CardGroup>
+
+When you use a deprecated feature, the API response includes an `X-Glean-Deprecated` header:
+
+```http
+X-Glean-Deprecated: kind=field;name=snippetText;introduced=2026-01-01;removal=2026-07-15;docs=https://developers.glean.com/deprecations
+```
+
+The header contains:
+
+| Field | Description |
+|-------|-------------|
+| `kind` | Type of deprecation: `endpoint`, `field`, or `parameter` |
+| `name` | Name of the deprecated item |
+| `introduced` | Date the deprecation was announced (ISO-8601) |
+| `removal` | Date the item will be removed (ISO-8601) |
+| `docs` | Link to migration documentation |
+
+:::tip Automated Monitoring
+Parse this header in your integration tests or monitoring to catch deprecations early.
+:::
+
+---
+
+## Testing Future Changes
+
+Validate your integration before deprecated features are removed by including the `X-Glean-Exclude-Deprecated-After` header:
+
+```http
+X-Glean-Exclude-Deprecated-After: 2027-01-15
+```
+
+This header simulates how the API will behave after the deprecation date, helping you verify your code handles the changes correctly.
+
+---
+
+## After Removal
+
+When deprecated items are removed, the API provides clear error responses:
+
+| Item Type | Response |
+|-----------|----------|
+| **Endpoints** | `410 Gone` with migration instructions |
+| **Request fields** | `400 Bad Request` with details |
+| **Response fields** | Simply omitted from the response |
+
+```json title="Example error response"
+{
+  "error": {
+    "code": "deprecated_field_removed",
+    "message": "Field 'userId' was removed on 2027-01-15. Use 'userIdentifier' instead.",
+    "docs": "https://developers.glean.com/docs/migrations/2027-01-15"
+  }
+}
+```
