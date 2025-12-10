@@ -2,6 +2,7 @@ openapi: 3.0.0
 info:
   version: 0.9.0
   title: Glean API
+  x-source-commit-sha: e98f46531ea7973d89d5976390f4fe210f2e4c16
   description: |
     # Introduction
     In addition to the data sources that Glean has built-in support for, Glean also provides a REST API that enables customers to put arbitrary content in the search index. This is useful, for example, for doing permissions-aware search over content in internal tools that reside on-prem as well as for searching over applications that Glean does not currently support first class. In addition these APIs allow the customer to push organization data (people info, organization structure etc) into Glean.
@@ -21,6 +22,7 @@ info:
     These API clients provide type-safe, idiomatic interfaces for working with Glean IndexingAPIs in your language of choice.
   x-logo:
     url: https://app.glean.com/images/glean-text2.svg
+  x-open-api-commit-sha: 3cec64c96d952d84c0420ef0ec8ad4558bedd984
   x-speakeasy-name: Glean API
 servers:
   - url: https://{instance}-be.glean.com
@@ -15691,6 +15693,350 @@ paths:
                     }
                 }
             }
+  /rest/api/v1/governance/data/findings/exports:
+    post:
+      description: Creates a new DLP findings export job.
+      summary: Creates findings export
+      operationId: createfindingsexport
+      x-visibility: Private
+      tags:
+        - Governance
+      requestBody:
+        content:
+          application/json; charset=UTF-8:
+            schema:
+              $ref: '#/components/schemas/DlpExportFindingsRequest'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExportInfo'
+        '403':
+          description: Permissions error
+        '500':
+          description: Internal error
+      x-codeSamples:
+        - lang: Python
+          label: Python (API Client)
+          source: |-
+            from glean.api_client import Glean
+            import os
+
+
+            with Glean(
+                api_token=os.getenv("GLEAN_API_TOKEN", ""),
+                instance=os.getenv("GLEAN_INSTANCE", ""),
+            ) as glean:
+
+                res = glean.governance.createfindingsexport()
+
+                # Handle response
+                print(res)
+        - lang: JavaScript
+          label: Typescript (API Client)
+          source: |-
+            import { Glean } from "@gleanwork/api-client";
+
+            const glean = new Glean({
+              apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
+              instance: process.env["GLEAN_INSTANCE"] ?? "",
+            });
+
+            async function run() {
+              const result = await glean.governance.createfindingsexport({});
+
+              console.log(result);
+            }
+
+            run();
+        - lang: Go
+          label: Go (API Client)
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithInstance(os.Getenv(\"GLEAN_INSTANCE\")),\n    )\n\n    res, err := s.Governance.Createfindingsexport(ctx, components.DlpExportFindingsRequest{})\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.ExportInfo != nil {\n        // handle response\n    }\n}"
+        - lang: Java
+          label: Java (API Client)
+          source: |-
+            package hello.world;
+
+            import java.lang.Exception;
+            import org.openapis.openapi.Glean;
+            import org.openapis.openapi.models.components.DlpExportFindingsRequest;
+            import org.openapis.openapi.models.operations.CreatefindingsexportResponse;
+
+            public class Application {
+
+                public static void main(String[] args) throws Exception {
+
+                    Glean sdk = Glean.builder()
+                            .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
+                        .build();
+
+                    DlpExportFindingsRequest req = DlpExportFindingsRequest.builder()
+                            .build();
+
+                    CreatefindingsexportResponse res = sdk.governance().createfindingsexport()
+                            .request(req)
+                            .call();
+
+                    if (res.exportInfo().isPresent()) {
+                        // handle response
+                    }
+                }
+            }
+    get:
+      description: Lists all DLP findings exports.
+      summary: Lists findings exports
+      operationId: listfindingsexports
+      x-visibility: Private
+      tags:
+        - Governance
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListDlpFindingsExportsResponse'
+        '403':
+          description: Permissions error
+        '500':
+          description: Internal error
+      x-codeSamples:
+        - lang: Python
+          label: Python (API Client)
+          source: |-
+            from glean.api_client import Glean
+            import os
+
+
+            with Glean(
+                api_token=os.getenv("GLEAN_API_TOKEN", ""),
+                instance=os.getenv("GLEAN_INSTANCE", ""),
+            ) as glean:
+
+                res = glean.governance.listfindingsexports()
+
+                # Handle response
+                print(res)
+        - lang: JavaScript
+          label: Typescript (API Client)
+          source: |-
+            import { Glean } from "@gleanwork/api-client";
+
+            const glean = new Glean({
+              apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
+              instance: process.env["GLEAN_INSTANCE"] ?? "",
+            });
+
+            async function run() {
+              const result = await glean.governance.listfindingsexports();
+
+              console.log(result);
+            }
+
+            run();
+        - lang: Go
+          label: Go (API Client)
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithInstance(os.Getenv(\"GLEAN_INSTANCE\")),\n    )\n\n    res, err := s.Governance.Listfindingsexports(ctx)\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.ListDlpFindingsExportsResponse != nil {\n        // handle response\n    }\n}"
+        - lang: Java
+          label: Java (API Client)
+          source: |-
+            package hello.world;
+
+            import java.lang.Exception;
+            import org.openapis.openapi.Glean;
+            import org.openapis.openapi.models.operations.ListfindingsexportsResponse;
+
+            public class Application {
+
+                public static void main(String[] args) throws Exception {
+
+                    Glean sdk = Glean.builder()
+                            .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
+                        .build();
+
+                    ListfindingsexportsResponse res = sdk.governance().listfindingsexports()
+                            .call();
+
+                    if (res.listDlpFindingsExportsResponse().isPresent()) {
+                        // handle response
+                    }
+                }
+            }
+  /rest/api/v1/governance/data/findings/exports/{id}:
+    get:
+      description: Downloads a DLP findings export as a CSV file.
+      summary: Downloads findings export
+      operationId: downloadfindingsexport
+      x-visibility: Private
+      tags:
+        - Governance
+      parameters:
+        - name: id
+          in: path
+          description: The ID of the export to download.
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Downloads CSV of exported findings.
+          content:
+            text/csv; charset=UTF-8:
+              schema:
+                description: CSV of all the exported findings.
+                type: string
+        '403':
+          description: Permissions error
+        '500':
+          description: Internal error
+      x-codeSamples:
+        - lang: Python
+          label: Python (API Client)
+          source: |-
+            from glean.api_client import Glean
+            import os
+
+
+            with Glean(
+                api_token=os.getenv("GLEAN_API_TOKEN", ""),
+                instance=os.getenv("GLEAN_INSTANCE", ""),
+            ) as glean:
+
+                res = glean.governance.downloadfindingsexport(id="<id>")
+
+                # Handle response
+                print(res)
+        - lang: JavaScript
+          label: Typescript (API Client)
+          source: |-
+            import { Glean } from "@gleanwork/api-client";
+
+            const glean = new Glean({
+              apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
+              instance: process.env["GLEAN_INSTANCE"] ?? "",
+            });
+
+            async function run() {
+              const result = await glean.governance.downloadfindingsexport("<id>");
+
+              console.log(result);
+            }
+
+            run();
+        - lang: Go
+          label: Go (API Client)
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithInstance(os.Getenv(\"GLEAN_INSTANCE\")),\n    )\n\n    res, err := s.Governance.Downloadfindingsexport(ctx, \"<id>\")\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.Res != nil {\n        // handle response\n    }\n}"
+        - lang: Java
+          label: Java (API Client)
+          source: |-
+            package hello.world;
+
+            import java.lang.Exception;
+            import org.openapis.openapi.Glean;
+            import org.openapis.openapi.models.operations.DownloadfindingsexportResponse;
+
+            public class Application {
+
+                public static void main(String[] args) throws Exception {
+
+                    Glean sdk = Glean.builder()
+                            .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
+                        .build();
+
+                    DownloadfindingsexportResponse res = sdk.governance().downloadfindingsexport()
+                            .id("<id>")
+                            .call();
+
+                    if (res.res().isPresent()) {
+                        // handle response
+                    }
+                }
+            }
+    delete:
+      description: Deletes a DLP findings export.
+      summary: Deletes findings export
+      operationId: deletefindingsexport
+      x-visibility: Private
+      tags:
+        - Governance
+      parameters:
+        - name: id
+          in: path
+          description: The ID of the export to delete.
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: OK
+        '403':
+          description: Permissions error
+        '500':
+          description: Internal error
+      x-codeSamples:
+        - lang: Python
+          label: Python (API Client)
+          source: |-
+            from glean.api_client import Glean
+            import os
+
+
+            with Glean(
+                api_token=os.getenv("GLEAN_API_TOKEN", ""),
+                instance=os.getenv("GLEAN_INSTANCE", ""),
+            ) as glean:
+
+                glean.governance.deletefindingsexport(id=741945)
+
+                # Use the SDK ...
+        - lang: JavaScript
+          label: Typescript (API Client)
+          source: |-
+            import { Glean } from "@gleanwork/api-client";
+
+            const glean = new Glean({
+              apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
+              instance: process.env["GLEAN_INSTANCE"] ?? "",
+            });
+
+            async function run() {
+              await glean.governance.deletefindingsexport(741945);
+
+
+            }
+
+            run();
+        - lang: Go
+          label: Go (API Client)
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithInstance(os.Getenv(\"GLEAN_INSTANCE\")),\n    )\n\n    res, err := s.Governance.Deletefindingsexport(ctx, 741945)\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res != nil {\n        // handle response\n    }\n}"
+        - lang: Java
+          label: Java (API Client)
+          source: |-
+            package hello.world;
+
+            import java.lang.Exception;
+            import org.openapis.openapi.Glean;
+            import org.openapis.openapi.models.operations.DeletefindingsexportResponse;
+
+            public class Application {
+
+                public static void main(String[] args) throws Exception {
+
+                    Glean sdk = Glean.builder()
+                            .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
+                        .build();
+
+                    DeletefindingsexportResponse res = sdk.governance().deletefindingsexport()
+                            .id(741945L)
+                            .call();
+
+                    // handle response
+                }
+            }
   /rest/api/v1/chat#stream:
     post:
       tags:
@@ -16097,6 +16443,7 @@ components:
             - SIDEBAR
             - SUMMARY
             - TASKS
+            - TASK_EXECUTION
         issue:
           type: string
           description: The issue the user indicated in the feedback.
@@ -16482,6 +16829,20 @@ components:
         name: Google
         logo: https://app.glean.com/images/feather/globe.svg
         searchLinkUrlTemplate: https://www.google.com/search?q={query}&hl=en
+    ResultTab:
+      properties:
+        id:
+          type: string
+          description: The unique ID of the tab. Can be passed in a search request to get results for that tab.
+        count:
+          type: integer
+          description: The number of results in this tab for the current query.
+        datasource:
+          type: string
+          description: The datasource associated with the tab, if any.
+        datasourceInstance:
+          type: string
+          description: The datasource instance associated with the tab, if any.
     FacetFilterValue:
       properties:
         value:
@@ -16779,6 +17140,9 @@ components:
         datasource:
           type: string
           description: The datasource associated with the suggestion.
+        resultTab:
+          $ref: '#/components/schemas/ResultTab'
+          description: The result tab associated with the suggestion.
         requestOptions:
           $ref: '#/components/schemas/SearchRequestOptions'
         ranges:
@@ -18762,6 +19126,9 @@ components:
           type: integer
           format: int64
           description: The offset of the person's timezone in seconds from UTC.
+        timezoneIANA:
+          type: string
+          description: The IANA timezone identifier, e.g. "America/Los_Angeles".
         photoUrl:
           type: string
           format: url
@@ -20358,6 +20725,7 @@ components:
               - VISITORS_COUNT
               - RECENT_SHARES
               - DOCUMENT_CONTENT
+              - CUSTOM_METADATA
     DocumentOrError:
       oneOf:
         - $ref: '#/components/schemas/Document'
@@ -20851,6 +21219,24 @@ components:
         numChats:
           type: integer
           description: Total number of chats by this user over the specified time period.
+        numActiveSessions:
+          type: integer
+          description: Total number of active sessions by this user in a Glean client over the specified time period.
+        numGleanbotUsefulResponses:
+          type: integer
+          description: Total number of Gleanbot responses marked useful by this user over the specified time period.
+        numDaysActive:
+          type: integer
+          description: Total number of days this user was an Active User over the specified time period.
+        numSummarizations:
+          type: integer
+          description: Total number of summarized items by this user over the specified time period.
+        numAiAnswers:
+          type: integer
+          description: Total number of AI Answers interacted with by this user over the specified time period.
+        numAgentRuns:
+          type: integer
+          description: Total number of agent runs for this user over the specified time period.
     InsightsOverviewResponse:
       allOf:
         - $ref: '#/components/schemas/InsightsDepartmentsSummary'
@@ -20883,22 +21269,7 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/PerUserInsight'
-              description: Top power users, over the specified time period in the specified departments.
-            engagementBreakdown:
-              type: object
-              properties:
-                nonUsers:
-                  type: integer
-                  description: Number of non-user employees in the specified departments.
-                dormantUsers:
-                  type: integer
-                  description: Number of currently dormant users in the specified departments.
-                regularUsers:
-                  type: integer
-                  description: Number of currently regular users in the specified departments.
-                powerUsers:
-                  type: integer
-                  description: Number of currently power users in the specified departments.
+              description: Per-user insights, over the specified time period in the specified departments. All current users in the organization who have signed into Glean at least once are included.
     PerUserAssistantInsight:
       properties:
         person:
@@ -20914,10 +21285,10 @@ components:
           description: Total number of AI Answers interacted with by this user over the specified time period.
         numGleanbotInteractions:
           type: integer
-          description: Total number of Gleanbot interacted with by this user over the specified time period.
+          description: Total number of Gleanbot responses marked useful by this user over the specified time period.
         numDaysActive:
           type: integer
-          description: Total number of days this user was active over the specified time period.
+          description: Total number of days this user was active on the Assistant over the specified time period.
     AssistantInsightsResponse:
       allOf:
         - $ref: '#/components/schemas/CurrentActiveUsers'
@@ -20962,6 +21333,9 @@ components:
         icon:
           $ref: '#/components/schemas/IconConfig'
           description: Agent icon configuration
+        isDeleted:
+          type: boolean
+          description: Indicates whether the agent has been deleted
         userCount:
           type: integer
           description: Total number of users for this agent over the specified time period.
@@ -20995,6 +21369,12 @@ components:
         agentName:
           type: string
           description: Name of the agent to be shown in the agent column in this department over the specified time period.
+        icon:
+          $ref: '#/components/schemas/IconConfig'
+          description: Agent icon configuration
+        isDeleted:
+          type: boolean
+          description: Indicates whether the agent has been deleted
     AgentUsersInsight:
       properties:
         person:
@@ -21337,20 +21717,6 @@ components:
           type: string
           description: For most facets this will be the empty string, meaning the facet is high-level and applies to all documents for the datasource. When non-empty, this is used to group facets together (i.e. group facets for each doctype for a certain datasource)
           example: Service Cloud
-    ResultTab:
-      properties:
-        id:
-          type: string
-          description: The unique ID of the tab. Can be passed in a search request to get results for that tab.
-        count:
-          type: integer
-          description: The number of results in this tab for the current query.
-        datasource:
-          type: string
-          description: The datasource associated with the tab, if any.
-        datasourceInstance:
-          type: string
-          description: The datasource instance associated with the tab, if any.
     ResultsDescription:
       properties:
         text:
@@ -22998,6 +23364,9 @@ components:
           enum:
             - LIKELY
             - VERY_LIKELY
+            - POSSIBLE
+            - UNLIKELY
+            - VERY_UNLIKELY
         infoType:
           description: Text representation of an info-type to scan for.
           type: string
@@ -23112,24 +23481,69 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Hotword'
+    CustomSensitiveRuleType:
+      type: string
+      description: Type of the custom sensitive rule.
+      enum:
+        - REGEX
+        - TERM
+        - INFO_TYPE
+    CustomSensitiveRule:
+      properties:
+        id:
+          description: Identifier for the custom sensitive expression.
+          type: string
+        value:
+          type: string
+          description: The value of the custom sensitive rule. For REGEX type, this is the regex pattern; for TERM type, it is the term to match; and for INFO_TYPE type, it refers to predefined categories of sensitive content. See https://cloud.google.com/dlp/docs/infotypes-reference for available options.
+        type:
+          $ref: '#/components/schemas/CustomSensitiveRuleType'
+        likelihoodThreshold:
+          description: Likelihood threshold for BUILT_IN infotypes (e.g., LIKELY, VERY_LIKELY). Only applicable for BUILT_IN type.
+          type: string
+          enum:
+            - LIKELY
+            - VERY_LIKELY
+            - POSSIBLE
+            - UNLIKELY
+            - VERY_UNLIKELY
+    CustomSensitiveExpression:
+      properties:
+        id:
+          description: Identifier for the custom sensitive expression.
+          type: string
+        keyword:
+          description: The keyword to match against.
+          $ref: '#/components/schemas/CustomSensitiveRule'
+        evaluationExpression:
+          description: The expression to evaluate the keyword match.
+          type: string
     SensitiveContentOptions:
       description: Options for defining sensitive content within scanned documents.
       properties:
         sensitiveInfoTypes:
-          description: Predefined categories of terms to consider as sensitive content. See https://cloud.google.com/dlp/docs/infotypes-reference for available types.
+          deprecated: true
+          description: DEPRECATED - use 'customSensitiveExpressions' instead.
           type: array
           items:
             $ref: '#/components/schemas/SensitiveInfoType'
         sensitiveTerms:
-          description: list of words and phrases to consider as sensitive content
+          deprecated: true
+          description: DEPRECATED - use 'customSensitiveExpressions' instead.
           type: array
           items:
             $ref: '#/components/schemas/SensitiveExpression'
         sensitiveRegexes:
-          description: list of regular expressions to consider as sensitive content
+          deprecated: true
+          description: DEPRECATED - use 'customSensitiveExpressions' instead.
           type: array
           items:
             $ref: '#/components/schemas/SensitiveExpression'
+        customSensitiveExpressions:
+          description: list of custom sensitive expressions to consider as sensitive content
+          type: array
+          items:
+            $ref: '#/components/schemas/CustomSensitiveExpression'
     DlpPersonMetadata:
       properties:
         firstName:
@@ -23394,6 +23808,112 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/DocumentVisibilityUpdateResult'
+    DlpSeverity:
+      type: string
+      description: Severity levels for DLP findings and analyses.
+      x-include-enum-class-prefix: true
+      enum:
+        - UNSPECIFIED
+        - LOW
+        - MEDIUM
+        - HIGH
+    TimeRangeFilter:
+      properties:
+        timePeriodType:
+          type: string
+          description: The type of time period for which to filter findings.
+          enum:
+            - PAST_DAY
+            - PAST_WEEK
+            - PAST_MONTH
+            - PAST_YEAR
+            - CUSTOM
+        customTimeRange:
+          $ref: '#/components/schemas/TimeRange'
+    DlpFindingFilter:
+      properties:
+        infoType:
+          type: string
+        regexId:
+          type: string
+        reportId:
+          type: string
+        datasource:
+          type: string
+        visibility:
+          type: string
+        documentIds:
+          type: array
+          items:
+            type: string
+        severity:
+          $ref: '#/components/schemas/DlpSeverity'
+        documentSeverity:
+          type: array
+          items:
+            $ref: '#/components/schemas/DlpSeverity'
+        timeRange:
+          $ref: '#/components/schemas/TimeRangeFilter'
+    ExportInfo:
+      properties:
+        createdBy:
+          description: person who triggered this export
+          $ref: '#/components/schemas/DlpPerson'
+        startTime:
+          description: Timestamp at which this export started.
+          type: string
+          format: iso-date-time
+        endTime:
+          description: Timestamp at which this export completed.
+          type: string
+          format: iso-date-time
+        exportId:
+          type: string
+          description: The ID of the export
+        fileName:
+          type: string
+          description: The name of the file to export the findings to
+        filter:
+          $ref: '#/components/schemas/DlpFindingFilter'
+          description: The filters used to export the findings
+        status:
+          type: string
+          description: The status of the export
+          enum:
+            - PENDING
+            - COMPLETED
+            - FAILED
+    ListDlpFindingsExportsResponse:
+      properties:
+        exports:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExportInfo'
+    DlpExportFindingsRequest:
+      properties:
+        exportType:
+          type: string
+          description: The type of export to perform
+          enum:
+            - FINDINGS
+            - DOCUMENTS
+        filter:
+          $ref: '#/components/schemas/DlpFindingFilter'
+        fileName:
+          type: string
+          description: The name of the file to export the findings to
+        fieldScope:
+          type: string
+          description: Controls which fields to include in the export
+          enum:
+            - ALL
+            - EXCLUDE_SENSITIVE
+            - CUSTOM
+        fieldsToExclude:
+          type: array
+          items:
+            type: string
+          description: List of field names to exclude from the export
     ChatRequestStream:
       required:
         - messages
