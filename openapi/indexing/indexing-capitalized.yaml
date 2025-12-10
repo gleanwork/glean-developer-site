@@ -2,6 +2,7 @@ openapi: 3.0.0
 info:
   version: 0.9.0
   title: Glean API
+  x-source-commit-sha: e98f46531ea7973d89d5976390f4fe210f2e4c16
   description: |
     # Introduction
     In addition to the data sources that Glean has built-in support for, Glean also provides a REST API that enables customers to put arbitrary content in the search index. This is useful, for example, for doing permissions-aware search over content in internal tools that reside on-prem as well as for searching over applications that Glean does not currently support first class. In addition these APIs allow the customer to push organization data (people info, organization structure etc) into Glean.
@@ -21,6 +22,7 @@ info:
     These API clients provide type-safe, idiomatic interfaces for working with Glean IndexingAPIs in your language of choice.
   x-logo:
     url: https://app.glean.com/images/glean-text2.svg
+  x-open-api-commit-sha: 3cec64c96d952d84c0420ef0ec8ad4558bedd984
   x-speakeasy-name: Glean API
 servers:
   - url: https://{instance}-be.glean.com
@@ -3650,6 +3652,43 @@ components:
     APIToken:
       scheme: bearer
       type: http
+  responses:
+    SuccessResponse:
+      description: OK
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SuccessResponse'
+    BadRequestError:
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorInfoResponse'
+    UnauthorizedError:
+      description: Not Authorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorInfoResponse'
+    NotFoundError:
+      description: Not Found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorInfoResponse'
+    TooManyRequestsError:
+      description: Too Many Requests
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorInfoResponse'
+    InternalServerError:
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorInfoResponse'
   schemas:
     IndexDocumentRequest:
       type: object
@@ -4190,7 +4229,8 @@ components:
             The permalink for viewing the document. **Note: viewURL is a required field for non-entity datasources, but not required if the datasource is used to push custom entities (ie. datasources where isEntityDatasource is false).**'
         id:
           type: string
-          description: The datasource specific id for the document. This field is case insensitive and should not be more than 200 characters in length.
+          description: |
+            The datasource specific id for the document. This field is case insensitive and should not be more than 200 characters in length. Note: id is a required field for datasources created after 1st March 2025
         summary:
           $ref: '#/components/schemas/ContentDefinition'
         body:
@@ -5084,6 +5124,26 @@ components:
           description: List of lifecycle events corresponding to the document
           items:
             $ref: '#/components/schemas/LifeCycleEvent'
+    SuccessResponse:
+      type: object
+      description: Success response for custom metadata operations
+      properties:
+        success:
+          type: boolean
+          description: Indicates if the operation was successful
+          default: true
+    ErrorInfoResponse:
+      type: object
+      description: Error response for custom metadata operations
+      properties:
+        error:
+          type: string
+          description: Error message describing what went wrong
+        message:
+          type: string
+          description: Additional details about the error
+      required:
+        - error
     PropertyDefinition:
       properties:
         name:

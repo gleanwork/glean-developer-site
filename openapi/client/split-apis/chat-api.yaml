@@ -2,9 +2,11 @@ openapi: 3.0.0
 info:
   version: 0.9.0
   title: Glean API - Chat
+  x-source-commit-sha: e98f46531ea7973d89d5976390f4fe210f2e4c16
   description: API endpoints for Chat
   x-logo:
     url: https://app.glean.com/images/glean-text2.svg
+  x-open-api-commit-sha: 3cec64c96d952d84c0420ef0ec8ad4558bedd984
   x-speakeasy-name: Glean API
 servers:
   - url: https://{instance}-be.glean.com
@@ -1930,6 +1932,20 @@ components:
         iconUrl:
           type: string
           description: If there is available icon URL.
+    ResultTab:
+      properties:
+        id:
+          type: string
+          description: The unique ID of the tab. Can be passed in a search request to get results for that tab.
+        count:
+          type: integer
+          description: The number of results in this tab for the current query.
+        datasource:
+          type: string
+          description: The datasource associated with the tab, if any.
+        datasourceInstance:
+          type: string
+          description: The datasource instance associated with the tab, if any.
     Company:
       required:
         - name
@@ -2333,7 +2349,7 @@ components:
           type: string
           description: identifier for greenlist provisioning, aka sciokey
     Code:
-      example: &ref_99
+      example: &ref_100
         repoName: scio
         fileName: README.md
         matches:
@@ -2369,7 +2385,7 @@ components:
               ranges:
                 description: Index ranges depicting matched sections of the line
                 type: array
-                items: &ref_71
+                items: &ref_78
                   type: object
                   properties:
                     TextRange:
@@ -2405,7 +2421,7 @@ components:
         customData:
           $ref: '#/components/schemas/CustomData'
     AnswerLikes:
-      required: &ref_162
+      required: &ref_163
         - likedBy
         - likedByUser
         - numLikes
@@ -2746,7 +2762,7 @@ components:
         people:
           description: Full details of some of the attendees of this event
           type: array
-          items: &ref_69
+          items: &ref_70
             required: *ref_1
             properties:
               groupAttendees:
@@ -3069,7 +3085,7 @@ components:
         id:
           description: Unique identifier.
           type: string
-        metadata: &ref_102
+        metadata: &ref_103
           $ref: '#/components/schemas/CustomEntityMetadata'
         objectType:
           description: The type of the entity. Interpretation is specific to each datasource
@@ -3122,7 +3138,7 @@ components:
           type: array
           items: &ref_9
             description: A subsection of a given string to which some special formatting should be applied.
-            required: &ref_63
+            required: &ref_50
               - startIndex
             properties:
               document: &ref_24
@@ -3143,7 +3159,7 @@ components:
                   id:
                     description: The Glean Document ID.
                     type: string
-                  metadata: &ref_123
+                  metadata: &ref_124
                     type: object
                     description: DocumentMetadata object
                   parentDocument: *ref_8
@@ -3166,7 +3182,7 @@ components:
                 description: The inclusive start index of the range.
                 type: integer
               type:
-                enum: &ref_65
+                enum: &ref_52
                   - BOLD
                   - CITATION
                   - HIGHLIGHT
@@ -3191,10 +3207,10 @@ components:
           items: *ref_9
       type: object
     SearchResultSnippet:
-      example: &ref_140
+      example: &ref_141
         snippet: snippet
         mimeType: mimeType
-      required: &ref_141
+      required: &ref_142
         - snippet
       properties:
         mimeType:
@@ -3376,7 +3392,7 @@ components:
         datasourceProfiles:
           description: The datasource profiles of the team
           type: array
-          items: &ref_108
+          items: &ref_109
             $ref: '#/components/schemas/DatasourceProfile'
         department:
           description: An organizational unit where everyone has a similar task, e.g. `Engineering`.
@@ -3387,7 +3403,7 @@ components:
         emails:
           description: The emails for this team
           type: array
-          items: &ref_109
+          items: &ref_110
             $ref: '#/components/schemas/TeamEmail'
         externalLink:
           description: Link to a team page on the internet or your company's intranet
@@ -3411,7 +3427,7 @@ components:
           type: array
           items:
             description: Metadata about the relationship of a person to a team.
-            required: &ref_67
+            required: &ref_68
               - person
             type: object
             properties:
@@ -3426,7 +3442,7 @@ components:
               relationship:
                 default: MEMBER
                 description: The team member's relationship to the team. This defaults to MEMBER if not set.
-                enum: &ref_68
+                enum: &ref_69
                   - MEMBER
                   - MANAGER
                   - LEAD
@@ -3443,7 +3459,7 @@ components:
         status:
           default: PROCESSED
           description: whether this team is fully processed or there are still unprocessed operations that'll affect it
-          enum: &ref_110
+          enum: &ref_111
             - PROCESSED
             - QUEUED_FOR_CREATION
             - QUEUED_FOR_DELETION
@@ -3503,7 +3519,7 @@ components:
         followupActions:
           description: List of follow-up actions generated for the given query or the generated question.
           type: array
-          items: &ref_103
+          items: &ref_104
             $ref: '#/components/schemas/FollowupAction'
         question:
           description: Search query rephrased into a question.
@@ -3514,7 +3530,7 @@ components:
           items: *ref_9
         status:
           description: Status of backend generating the answer
-          enum: &ref_105
+          enum: &ref_106
             - COMPUTING
             - DISABLED
             - FAILED
@@ -3548,7 +3564,7 @@ components:
         parentId:
           description: The parent of this Collection, or 0 if it's a top-level Collection.
           type: integer
-        thumbnail: &ref_116
+        thumbnail: &ref_117
           $ref: '#/components/schemas/Thumbnail'
       required:
         - name
@@ -3645,38 +3661,6 @@ components:
             values:
               - fieldValues
               - fieldValues
-    QuerySuggestion:
-      example: &ref_42
-        query: app:github type:pull author:mortimer
-        label: Mortimer's PRs
-        datasource: github
-      required: &ref_43
-        - query
-      properties:
-        datasource:
-          description: The datasource associated with the suggestion.
-          type: string
-        inputDetails: &ref_44
-          $ref: '#/components/schemas/SearchRequestInputDetails'
-        label:
-          description: A user-facing description to display for the suggestion.
-          type: string
-        missingTerm:
-          description: A query term missing from the original query on which this suggestion is based.
-          type: string
-        query:
-          description: The query being suggested (e.g. enforcing the missing term from the original query).
-          type: string
-        ranges:
-          description: The bolded ranges within the query of the QuerySuggestion.
-          type: array
-          items: *ref_9
-        requestOptions: &ref_45
-          $ref: '#/components/schemas/SearchRequestOptions'
-        searchProviderInfo: &ref_46
-          $ref: '#/components/schemas/SearchProviderInfo'
-          description: Information about the search provider that generated this suggestion.
-      type: object
     CollectionBaseMutableProperties:
       required:
         - name
@@ -3699,6 +3683,41 @@ components:
           description: A list of removed user roles for the Collection.
           type: array
           items: *ref_17
+      type: object
+    QuerySuggestion:
+      example: &ref_43
+        query: app:github type:pull author:mortimer
+        label: Mortimer's PRs
+        datasource: github
+      required: &ref_44
+        - query
+      properties:
+        datasource:
+          description: The datasource associated with the suggestion.
+          type: string
+        inputDetails: &ref_45
+          $ref: '#/components/schemas/SearchRequestInputDetails'
+        label:
+          description: A user-facing description to display for the suggestion.
+          type: string
+        missingTerm:
+          description: A query term missing from the original query on which this suggestion is based.
+          type: string
+        query:
+          description: The query being suggested (e.g. enforcing the missing term from the original query).
+          type: string
+        ranges:
+          description: The bolded ranges within the query of the QuerySuggestion.
+          type: array
+          items: *ref_9
+        requestOptions: &ref_46
+          $ref: '#/components/schemas/SearchRequestOptions'
+        resultTab: &ref_47
+          $ref: '#/components/schemas/ResultTab'
+          description: The result tab associated with the suggestion.
+        searchProviderInfo: &ref_48
+          $ref: '#/components/schemas/SearchProviderInfo'
+          description: Information about the search provider that generated this suggestion.
       type: object
     DocumentInteractions:
       properties:
@@ -3740,7 +3759,7 @@ components:
           type: array
           items:
             description: Search endpoint will only fill out numDays ago since that's all we need to display shared badge; docmetadata endpoint will fill out all the fields so that we can display shared badge tooltip
-            required: &ref_95
+            required: &ref_96
               - numDaysAgo
             properties:
               numDaysAgo:
@@ -3749,20 +3768,20 @@ components:
               sharer: *ref_2
               sharingDocument: *ref_24
             type: object
-        visitorCount: &ref_125
+        visitorCount: &ref_126
           $ref: '#/components/schemas/CountInfo'
       type: object
     ClusterGroup:
-      required: &ref_148
+      required: &ref_149
         - visibleCountHint
       properties:
-        clusterType: &ref_149
+        clusterType: &ref_150
           $ref: '#/components/schemas/ClusterTypeEnum'
         clusteredResults:
           description: A list of results that should be displayed as associated with this result.
           type: array
-          items: &ref_94
-            example: &ref_37
+          items: &ref_95
+            example: &ref_38
               snippets:
                 - snippet: snippet
                   mimeType: mimeType
@@ -3782,7 +3801,7 @@ components:
               mustIncludeSuggestions:
                 - missingTerm: container
                   query: container
-            required: &ref_38
+            required: &ref_39
               - url
             type: object
             properties:
@@ -3826,7 +3845,7 @@ components:
                 description: A list of results that should be displayed as backlinks of this result in reverse chronological order.
                 type: array
                 items: *ref_25
-              clusterType: &ref_40
+              clusterType: &ref_41
                 $ref: '#/components/schemas/ClusterTypeEnum'
               clusteredResults:
                 description: A list of results that should be displayed as associated with this result.
@@ -3841,7 +3860,7 @@ components:
                 type: array
                 items:
                   type: string
-              mustIncludeSuggestions: &ref_56
+              mustIncludeSuggestions: &ref_61
                 type: object
                 description: QuerySuggestionList object
               nativeAppUrl:
@@ -3850,15 +3869,15 @@ components:
               pins:
                 description: A list of pins associated with this search result.
                 type: array
-                items: &ref_64
+                items: &ref_51
                   type: object
                   properties:
                     PinDocument:
                       type: object
                       description: PinDocument object
-              prominence: &ref_41
+              prominence: &ref_42
                 $ref: '#/components/schemas/SearchResultProminenceEnum'
-              querySuggestion: &ref_157
+              querySuggestion: &ref_158
                 type: object
                 description: QuerySuggestion object
               relatedResults:
@@ -3883,17 +3902,17 @@ components:
           type: integer
       type: object
     Verification:
-      required: &ref_127
+      required: &ref_128
         - state
       properties:
         metadata:
-          required: &ref_129
+          required: &ref_130
             - documentId
           properties:
             candidateVerifiers:
               description: List of potential verifiers for the document e.g. old verifiers and/or users with view/edit permissions.
               type: array
-              items: &ref_78
+              items: &ref_79
                 example: *ref_6
                 required: *ref_7
                 properties:
@@ -3983,12 +4002,12 @@ components:
             visitorCount:
               description: Number of visitors to the document during included time periods.
               type: array
-              items: &ref_130
+              items: &ref_131
                 $ref: '#/components/schemas/CountInfo'
           type: object
         state:
           description: The verification state for the document.
-          enum: &ref_128
+          enum: &ref_129
             - UNVERIFIED
             - VERIFIED
             - DEPRECATED
@@ -4003,7 +4022,7 @@ components:
         audienceFilters:
           description: Filters which restrict who should see the answer. Values are taken from the corresponding filters in people search.
           type: array
-          items: &ref_158
+          items: &ref_159
             $ref: '#/components/schemas/FacetFilter'
         boardId:
           deprecated: true
@@ -4029,10 +4048,10 @@ components:
           description: A list of roles for this answer explicitly granted by an owner, editor, or admin.
           type: array
           items: *ref_17
-        sourceDocumentSpec: &ref_159
+        sourceDocumentSpec: &ref_160
           $ref: '#/components/schemas/DocumentSpec'
         sourceType:
-          enum: &ref_160
+          enum: &ref_161
             - DOCUMENT
             - ASSISTANT
           type: string
@@ -4101,150 +4120,6 @@ components:
           type: string
       required:
         - inputAlias
-    ExtractedQnA:
-      properties:
-        heading:
-          description: Heading text that was matched to produce this result.
-          type: string
-        question:
-          description: Question text that was matched to produce this result.
-          type: string
-        questionResult:
-          example: *ref_37
-          required: *ref_38
-          type: object
-          properties:
-            structuredResults:
-              description: An array of entities in the work graph retrieved via a data request.
-              type: array
-              items:
-                type: object
-                properties:
-                  StructuredResult:
-                    type: object
-                    description: StructuredResult object
-            trackingToken:
-              description: An opaque token that represents this particular result in this particular query. To be used for /feedback reporting.
-              type: string
-            allClusteredResults:
-              description: A list of results that should be displayed as associated with this result.
-              type: array
-              items:
-                type: object
-                properties:
-                  ClusterGroup:
-                    type: object
-                    description: ClusterGroup object
-            attachmentContext:
-              description: Additional context for the relationship between the result and the document it's attached to.
-              type: string
-            attachmentCount:
-              description: The total number of attachments.
-              type: integer
-            attachments:
-              description: A (potentially partial) list of results representing documents attached to the main result document.
-              type: array
-              items: &ref_39
-                type: object
-                properties:
-                  SearchResult:
-                    type: object
-                    description: SearchResult object
-            backlinkResults:
-              description: A list of results that should be displayed as backlinks of this result in reverse chronological order.
-              type: array
-              items: *ref_39
-            clusterType: *ref_40
-            clusteredResults:
-              description: A list of results that should be displayed as associated with this result.
-              type: array
-              items: *ref_39
-            document: *ref_24
-            fullText:
-              description: The full body text of the result if not already contained in the snippets. Only populated for conversation results (e.g. results from a messaging app such as Slack).
-              type: string
-            fullTextList:
-              description: The full body text of the result if not already contained in the snippets; each item in the array represents a separate line in the original text. Only populated for conversation results (e.g. results from a messaging app such as Slack).
-              type: array
-              items:
-                type: string
-            mustIncludeSuggestions: &ref_106
-              properties:
-                person: *ref_0
-                suggestions:
-                  type: array
-                  items:
-                    type: object
-                    properties:
-                      QuerySuggestion:
-                        type: object
-                        description: QuerySuggestion object
-              type: object
-            nativeAppUrl:
-              description: A deep link, if available, into the datasource's native application for the user's platform (e.g. slack://...).
-              type: string
-            pins:
-              description: A list of pins associated with this search result.
-              type: array
-              items:
-                type: object
-                properties:
-                  PinDocument:
-                    type: object
-                    description: PinDocument object
-            prominence: *ref_41
-            querySuggestion: &ref_79
-              example: *ref_42
-              required: *ref_43
-              properties:
-                datasource:
-                  description: The datasource associated with the suggestion.
-                  type: string
-                inputDetails: *ref_44
-                label:
-                  description: A user-facing description to display for the suggestion.
-                  type: string
-                missingTerm:
-                  description: A query term missing from the original query on which this suggestion is based.
-                  type: string
-                query:
-                  description: The query being suggested (e.g. enforcing the missing term from the original query).
-                  type: string
-                ranges:
-                  description: The bolded ranges within the query of the QuerySuggestion.
-                  type: array
-                  items: &ref_104
-                    type: object
-                    properties:
-                      TextRange:
-                        type: object
-                        description: TextRange object
-                requestOptions: *ref_45
-                searchProviderInfo: *ref_46
-              type: object
-            relatedResults:
-              description: A list of results related to this search result. Eg. for conversation results it contains individual messages from the conversation document which will be shown on SERP.
-              type: array
-              items: &ref_48
-                type: object
-                properties:
-                  RelatedDocuments:
-                    type: object
-                    description: RelatedDocuments object
-            snippets:
-              description: Text content from the result document which contains search query terms, if available.
-              type: array
-              items: &ref_107
-                type: object
-                properties:
-                  SearchResultSnippet:
-                    type: object
-                    description: SearchResultSnippet object
-            title:
-              type: string
-            url:
-              type: string
-      type: object
     Reaction:
       properties:
         count:
@@ -4259,8 +4134,8 @@ components:
             example: *ref_6
             required: *ref_7
             properties:
-              metadata: &ref_82
-                example: &ref_49
+              metadata: &ref_83
+                example: &ref_53
                   department: Movies
                   email: george@example.com
                   location: Hollywood, CA
@@ -4277,7 +4152,7 @@ components:
                   badges:
                     description: The badges that a user has earned over their lifetime.
                     type: array
-                    items: &ref_50
+                    items: &ref_54
                       $ref: '#/components/schemas/Badge'
                   bannerUrl:
                     description: The URL of the person's banner photo.
@@ -4292,12 +4167,12 @@ components:
                   busyEvents:
                     description: Intervals of busy time for this person, along with the type of event they're busy with.
                     type: array
-                    items: &ref_51
+                    items: &ref_55
                       $ref: '#/components/schemas/AnonymousEvent'
                   customFields:
                     description: User customizable fields for additional people information.
                     type: array
-                    items: &ref_143
+                    items: &ref_144
                       type: object
                       properties:
                         CustomFieldData:
@@ -4306,7 +4181,7 @@ components:
                   datasourceProfile:
                     description: List of profiles this user has in different datasources / tools that they use.
                     type: array
-                    items: &ref_52
+                    items: &ref_56
                       $ref: '#/components/schemas/DatasourceProfile'
                   department:
                     description: An organizational unit where everyone has a similar task, e.g. `Engineering`.
@@ -4355,7 +4230,7 @@ components:
                   managementChain:
                     description: The chain of reporting in the company as far up as it goes. The last entry is this person's direct manager.
                     type: array
-                    items: &ref_47
+                    items: &ref_37
                       type: object
                       properties:
                         Person:
@@ -4368,9 +4243,9 @@ components:
                   peopleDistance:
                     description: List of people and distances to those people from this person. Optionally with metadata.
                     type: array
-                    items: &ref_53
+                    items: &ref_58
                       $ref: '#/components/schemas/PersonDistance'
-                  permissions: &ref_54
+                  permissions: &ref_59
                     $ref: '#/components/schemas/Permissions'
                   phone:
                     description: Phone number as a number string.
@@ -4383,23 +4258,23 @@ components:
                     description: The preferred name of the person, or a nickname.
                     type: string
                   profileBoolSettings:
-                    additionalProperties: &ref_55
+                    additionalProperties: &ref_60
                       type: boolean
                     description: flag settings to indicate user profile settings for certain items
                     type: object
                   pronoun:
                     description: She/her, He/his or other pronoun.
                     type: string
-                  querySuggestions: &ref_146
+                  querySuggestions: &ref_147
                     type: object
                     description: QuerySuggestionList object
                   reports:
                     type: array
-                    items: *ref_47
+                    items: *ref_37
                   socialNetwork:
                     description: List of social network profiles.
                     type: array
-                    items: &ref_58
+                    items: &ref_62
                       $ref: '#/components/schemas/SocialNetwork'
                   startDate:
                     description: The date when the employee started.
@@ -4409,15 +4284,18 @@ components:
                     description: Percentage of the company that started strictly after this person. Between [0,100).
                     format: float
                     type: number
-                  structuredLocation: &ref_59
+                  structuredLocation: &ref_63
                     $ref: '#/components/schemas/StructuredLocation'
                   teams:
                     description: Info about the employee's team(s).
                     type: array
-                    items: &ref_60
+                    items: &ref_64
                       $ref: '#/components/schemas/PersonTeam'
                   timezone:
                     description: The timezone of the person. E.g. "Pacific Daylight Time".
+                    type: string
+                  timezoneIANA:
+                    description: The IANA timezone identifier, e.g. "America/Los_Angeles".
                     type: string
                   timezoneOffset:
                     description: The offset of the person's timezone in seconds from UTC.
@@ -4427,14 +4305,14 @@ components:
                     description: Job title.
                     type: string
                   type:
-                    enum: &ref_61
+                    enum: &ref_65
                       - FULL_TIME
                       - CONTRACTOR
                       - NON_EMPLOYEE
                       - FORMER_EMPLOYEE
                     example: FULL_TIME
                     type: string
-                    x-speakeasy-enum-descriptions: &ref_62
+                    x-speakeasy-enum-descriptions: &ref_66
                       FULL_TIME: The person is a current full-time employee of the company.
                       CONTRACTOR: The person is a current contractor of the company.
                       NON_EMPLOYEE: The person object represents a non-human actor such as a service or admin account.
@@ -4453,19 +4331,359 @@ components:
               relatedDocuments:
                 description: A list of documents related to this person.
                 type: array
-                items: *ref_48
+                items: &ref_49
+                  type: object
+                  properties:
+                    RelatedDocuments:
+                      type: object
+                      description: RelatedDocuments object
             type: object
         type:
           type: string
       type: object
+    ExtractedQnA:
+      properties:
+        heading:
+          description: Heading text that was matched to produce this result.
+          type: string
+        question:
+          description: Question text that was matched to produce this result.
+          type: string
+        questionResult:
+          example: *ref_38
+          required: *ref_39
+          type: object
+          properties:
+            structuredResults:
+              description: An array of entities in the work graph retrieved via a data request.
+              type: array
+              items:
+                type: object
+                properties:
+                  StructuredResult:
+                    type: object
+                    description: StructuredResult object
+            trackingToken:
+              description: An opaque token that represents this particular result in this particular query. To be used for /feedback reporting.
+              type: string
+            allClusteredResults:
+              description: A list of results that should be displayed as associated with this result.
+              type: array
+              items:
+                type: object
+                properties:
+                  ClusterGroup:
+                    type: object
+                    description: ClusterGroup object
+            attachmentContext:
+              description: Additional context for the relationship between the result and the document it's attached to.
+              type: string
+            attachmentCount:
+              description: The total number of attachments.
+              type: integer
+            attachments:
+              description: A (potentially partial) list of results representing documents attached to the main result document.
+              type: array
+              items: &ref_40
+                type: object
+                properties:
+                  SearchResult:
+                    type: object
+                    description: SearchResult object
+            backlinkResults:
+              description: A list of results that should be displayed as backlinks of this result in reverse chronological order.
+              type: array
+              items: *ref_40
+            clusterType: *ref_41
+            clusteredResults:
+              description: A list of results that should be displayed as associated with this result.
+              type: array
+              items: *ref_40
+            document: *ref_24
+            fullText:
+              description: The full body text of the result if not already contained in the snippets. Only populated for conversation results (e.g. results from a messaging app such as Slack).
+              type: string
+            fullTextList:
+              description: The full body text of the result if not already contained in the snippets; each item in the array represents a separate line in the original text. Only populated for conversation results (e.g. results from a messaging app such as Slack).
+              type: array
+              items:
+                type: string
+            mustIncludeSuggestions: &ref_107
+              properties:
+                person: *ref_0
+                suggestions:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      QuerySuggestion:
+                        type: object
+                        description: QuerySuggestion object
+              type: object
+            nativeAppUrl:
+              description: A deep link, if available, into the datasource's native application for the user's platform (e.g. slack://...).
+              type: string
+            pins:
+              description: A list of pins associated with this search result.
+              type: array
+              items:
+                type: object
+                properties:
+                  PinDocument:
+                    type: object
+                    description: PinDocument object
+            prominence: *ref_42
+            querySuggestion: &ref_80
+              example: *ref_43
+              required: *ref_44
+              properties:
+                datasource:
+                  description: The datasource associated with the suggestion.
+                  type: string
+                inputDetails: *ref_45
+                label:
+                  description: A user-facing description to display for the suggestion.
+                  type: string
+                missingTerm:
+                  description: A query term missing from the original query on which this suggestion is based.
+                  type: string
+                query:
+                  description: The query being suggested (e.g. enforcing the missing term from the original query).
+                  type: string
+                ranges:
+                  description: The bolded ranges within the query of the QuerySuggestion.
+                  type: array
+                  items: &ref_105
+                    type: object
+                    properties:
+                      TextRange:
+                        type: object
+                        description: TextRange object
+                requestOptions: *ref_46
+                resultTab: *ref_47
+                searchProviderInfo: *ref_48
+              type: object
+            relatedResults:
+              description: A list of results related to this search result. Eg. for conversation results it contains individual messages from the conversation document which will be shown on SERP.
+              type: array
+              items: *ref_49
+            snippets:
+              description: Text content from the result document which contains search query terms, if available.
+              type: array
+              items: &ref_108
+                type: object
+                properties:
+                  SearchResultSnippet:
+                    type: object
+                    description: SearchResultSnippet object
+            title:
+              type: string
+            url:
+              type: string
+      type: object
+    TextRange:
+      description: A subsection of a given string to which some special formatting should be applied.
+      required: *ref_50
+      properties:
+        document: &ref_97
+          properties:
+            connectorType: *ref_30
+            containerDocument: *ref_35
+            content: *ref_31
+            datasource:
+              description: The app or other repository type from which the document was extracted
+              type: string
+            docType:
+              description: The datasource-specific type of the document (e.g. for Jira issues, this is the issue type such as Bug or Feature Request).
+              type: string
+            id:
+              description: The Glean Document ID.
+              type: string
+            metadata:
+              example: &ref_86
+                container: container
+                parentId: JIRA_EN-1337
+                createTime: '2000-01-23T04:56:07.000Z'
+                datasource: datasource
+                author:
+                  name: name
+                documentId: documentId
+                updateTime: '2000-01-23T04:56:07.000Z'
+                mimeType: mimeType
+                objectType: Feature Request
+                components:
+                  - Backend
+                  - Networking
+                status:
+                  - Done
+                customData:
+                  someCustomField: someCustomValue
+              properties:
+                ancestors:
+                  description: A list of documents that are ancestors of this document in the hierarchy of the document's datasource, for example parent folders or containers. Ancestors can be of different types and some may not be indexed. Higher level ancestors appear earlier in the list.
+                  type: array
+                  items: &ref_157
+                    type: object
+                    properties:
+                      Document:
+                        type: object
+                        description: Document object
+                assignedTo: *ref_16
+                author: *ref_16
+                collections:
+                  description: A list of collections that the document belongs to.
+                  type: array
+                  items: &ref_120
+                    type: object
+                    properties:
+                      Collection:
+                        type: object
+                        description: Collection object
+                components:
+                  description: A list of components this result is associated with. Interpretation is specific to each datasource. (e.g. for Jira issues, these are [components](https://confluence.atlassian.com/jirasoftwarecloud/organizing-work-with-components-764478279.html).)
+                  type: array
+                  items:
+                    type: string
+                contactPerson: *ref_16
+                container:
+                  description: The name of the container (higher level parent, not direct parent) of the result. Interpretation is specific to each datasource (e.g. Channels for Slack, Project for Jira). cf. parentId
+                  type: string
+                containerId:
+                  description: The Glean Document ID of the container. Uniquely identifies the container.
+                  type: string
+                createTime:
+                  format: date-time
+                  type: string
+                customData: &ref_88
+                  $ref: '#/components/schemas/CustomData'
+                datasource:
+                  type: string
+                datasourceId:
+                  description: The user-visible datasource specific id (e.g. Salesforce case number for example, GitHub PR number).
+                  type: string
+                datasourceInstance:
+                  description: The datasource instance from which the document was extracted.
+                  type: string
+                documentCategory:
+                  description: The document's document_category(.proto).
+                  type: string
+                documentId:
+                  description: The index-wide unique identifier.
+                  type: string
+                documentIdHash:
+                  description: Hash of the Glean Document ID.
+                  type: string
+                indexStatus: &ref_89
+                  $ref: '#/components/schemas/IndexStatus'
+                interactions:
+                  type: object
+                  description: DocumentInteractions object
+                labels:
+                  description: A list of tags for the document. Interpretation is datasource specific.
+                  type: array
+                  items:
+                    type: string
+                loggingId:
+                  description: A unique identifier used to represent the document in any logging or feedback requests in place of documentId.
+                  type: string
+                mentionedPeople:
+                  description: A list of people mentioned in the document.
+                  type: array
+                  items: &ref_57
+                    type: object
+                    properties:
+                      Person:
+                        type: object
+                        description: Person object
+                mimeType:
+                  type: string
+                objectType:
+                  description: The type of the result. Interpretation is specific to each datasource. (e.g. for Jira issues, this is the issue type such as Bug or Feature Request).
+                  type: string
+                owner: *ref_16
+                parentId:
+                  description: The id of the direct parent of the result. Interpretation is specific to each datasource (e.g. parent issue for Jira). cf. container
+                  type: string
+                path:
+                  description: For file datasources like onedrive/github etc this has the path to the file
+                  type: string
+                permissions: &ref_90
+                  $ref: '#/components/schemas/ObjectPermissions'
+                pins:
+                  description: A list of stars associated with this result.  "Pin" is an older name.
+                  type: array
+                  items: *ref_51
+                priority:
+                  description: The document priority. Interpretation is datasource specific.
+                  type: string
+                shortcuts:
+                  description: A list of shortcuts of which destination URL is for the document.
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      Shortcut:
+                        type: object
+                        description: Shortcut object
+                status:
+                  description: The status or disposition of the result. Interpretation is specific to each datasource. (e.g. for Jira issues, this is the issue status such as Done, In Progress or Will Not Fix).
+                  type: string
+                statusCategory:
+                  description: The status category of the result. Meant to be more general than status. Interpretation is specific to each datasource.
+                  type: string
+                superContainerId:
+                  description: The Glean Document ID of the super container. Super container represents a broader abstraction that contains many containers. For example, whereas container might refer to a folder, super container would refer to a drive.
+                  type: string
+                thumbnail: &ref_91
+                  $ref: '#/components/schemas/Thumbnail'
+                  description: A thumbnail image representing this document.
+                updateTime:
+                  format: date-time
+                  type: string
+                updatedBy: *ref_16
+                verification:
+                  type: object
+                  description: Verification object
+                viewerInfo: &ref_92
+                  $ref: '#/components/schemas/ViewerInfo'
+                visibility: &ref_93
+                  $ref: '#/components/schemas/DocumentVisibility'
+                visitCount: &ref_94
+                  $ref: '#/components/schemas/CountInfo'
+              type: object
+            parentDocument: *ref_35
+            sections:
+              description: A list of content sub-sections in the document, e.g. text blocks with different headings in a Drive doc or Confluence page.
+              type: array
+              items: *ref_32
+            title:
+              description: The title of the document.
+              type: string
+            url:
+              description: A permalink for the document.
+              type: string
+          type: object
+        endIndex:
+          description: The exclusive end index of the range.
+          type: integer
+        startIndex:
+          description: The inclusive start index of the range.
+          type: integer
+        type:
+          enum: *ref_52
+          type: string
+        url:
+          description: The URL associated with the range, if applicable. For example, the linked URL for a LINK range.
+          type: string
+      type: object
     CustomFieldValuePerson:
       properties:
-        person: &ref_66
+        person: &ref_67
           example: *ref_6
           required: *ref_7
           properties:
             metadata:
-              example: *ref_49
+              example: *ref_53
               properties:
                 aliasEmails:
                   description: Additional email addresses of this user beyond the primary, if any.
@@ -4475,7 +4693,7 @@ components:
                 badges:
                   description: The badges that a user has earned over their lifetime.
                   type: array
-                  items: *ref_50
+                  items: *ref_54
                 bannerUrl:
                   description: The URL of the person's banner photo.
                   format: url
@@ -4489,7 +4707,7 @@ components:
                 busyEvents:
                   description: Intervals of busy time for this person, along with the type of event they're busy with.
                   type: array
-                  items: *ref_51
+                  items: *ref_55
                 customFields:
                   description: User customizable fields for additional people information.
                   type: array
@@ -4502,7 +4720,7 @@ components:
                 datasourceProfile:
                   description: List of profiles this user has in different datasources / tools that they use.
                   type: array
-                  items: *ref_52
+                  items: *ref_56
                 department:
                   description: An organizational unit where everyone has a similar task, e.g. `Engineering`.
                   type: string
@@ -4550,12 +4768,7 @@ components:
                 managementChain:
                   description: The chain of reporting in the company as far up as it goes. The last entry is this person's direct manager.
                   type: array
-                  items: &ref_57
-                    type: object
-                    properties:
-                      Person:
-                        type: object
-                        description: Person object
+                  items: *ref_57
                 manager: *ref_16
                 orgSizeCount:
                   description: The total recursive size of the people reporting to this person, or 1
@@ -4563,8 +4776,8 @@ components:
                 peopleDistance:
                   description: List of people and distances to those people from this person. Optionally with metadata.
                   type: array
-                  items: *ref_53
-                permissions: *ref_54
+                  items: *ref_58
+                permissions: *ref_59
                 phone:
                   description: Phone number as a number string.
                   type: string
@@ -4576,20 +4789,20 @@ components:
                   description: The preferred name of the person, or a nickname.
                   type: string
                 profileBoolSettings:
-                  additionalProperties: *ref_55
+                  additionalProperties: *ref_60
                   description: flag settings to indicate user profile settings for certain items
                   type: object
                 pronoun:
                   description: She/her, He/his or other pronoun.
                   type: string
-                querySuggestions: *ref_56
+                querySuggestions: *ref_61
                 reports:
                   type: array
                   items: *ref_57
                 socialNetwork:
                   description: List of social network profiles.
                   type: array
-                  items: *ref_58
+                  items: *ref_62
                 startDate:
                   description: The date when the employee started.
                   format: date
@@ -4598,13 +4811,16 @@ components:
                   description: Percentage of the company that started strictly after this person. Between [0,100).
                   format: float
                   type: number
-                structuredLocation: *ref_59
+                structuredLocation: *ref_63
                 teams:
                   description: Info about the employee's team(s).
                   type: array
-                  items: *ref_60
+                  items: *ref_64
                 timezone:
                   description: The timezone of the person. E.g. "Pacific Daylight Time".
+                  type: string
+                timezoneIANA:
+                  description: The IANA timezone identifier, e.g. "America/Los_Angeles".
                   type: string
                 timezoneOffset:
                   description: The offset of the person's timezone in seconds from UTC.
@@ -4614,10 +4830,10 @@ components:
                   description: Job title.
                   type: string
                 type:
-                  enum: *ref_61
+                  enum: *ref_65
                   example: FULL_TIME
                   type: string
-                  x-speakeasy-enum-descriptions: *ref_62
+                  x-speakeasy-enum-descriptions: *ref_66
                 uneditedPhotoUrl:
                   description: The original photo URL of the person's avatar before any edits they made are applied
                   format: url
@@ -4632,7 +4848,7 @@ components:
             relatedDocuments:
               description: A list of documents related to this person.
               type: array
-              items: &ref_138
+              items: &ref_139
                 properties:
                   associatedEntityId:
                     description: Which entity in the response that this entity relates to. Relevant when there are multiple entities associated with the response (such as merged customers)
@@ -4641,18 +4857,18 @@ components:
                     deprecated: true
                     description: A truncated list of documents with this relation. TO BE DEPRECATED.
                     type: array
-                    items: &ref_86
+                    items: &ref_87
                       type: object
                       properties:
                         Document:
                           type: object
                           description: Document object
-                  querySuggestion: &ref_152
+                  querySuggestion: &ref_153
                     type: object
                     description: QuerySuggestion object
                   relation:
                     description: How this document relates to the including entity.
-                    enum: &ref_80
+                    enum: &ref_81
                       - ATTACHMENT
                       - CANONICAL
                       - CASE
@@ -4670,12 +4886,12 @@ components:
                       - TRANSCRIPT
                       - WITH
                     type: string
-                    x-speakeasy-enum-descriptions: &ref_81
+                    x-speakeasy-enum-descriptions: &ref_82
                       CANONICAL: Canonical documents for the entity, such as overview docs, architecture docs elastic.
                   results:
                     description: A truncated list of documents associated with this relation. To be used in favor of `documents` because it contains a trackingToken.
                     type: array
-                    items: &ref_150
+                    items: &ref_151
                       type: object
                       properties:
                         SearchResult:
@@ -4684,207 +4900,17 @@ components:
                 type: object
           type: object
       type: object
-    TextRange:
-      description: A subsection of a given string to which some special formatting should be applied.
-      required: *ref_63
-      properties:
-        document: &ref_96
-          properties:
-            connectorType: *ref_30
-            containerDocument: *ref_35
-            content: *ref_31
-            datasource:
-              description: The app or other repository type from which the document was extracted
-              type: string
-            docType:
-              description: The datasource-specific type of the document (e.g. for Jira issues, this is the issue type such as Bug or Feature Request).
-              type: string
-            id:
-              description: The Glean Document ID.
-              type: string
-            metadata:
-              example: &ref_85
-                container: container
-                parentId: JIRA_EN-1337
-                createTime: '2000-01-23T04:56:07.000Z'
-                datasource: datasource
-                author:
-                  name: name
-                documentId: documentId
-                updateTime: '2000-01-23T04:56:07.000Z'
-                mimeType: mimeType
-                objectType: Feature Request
-                components:
-                  - Backend
-                  - Networking
-                status:
-                  - Done
-                customData:
-                  someCustomField: someCustomValue
-              properties:
-                ancestors:
-                  description: A list of documents that are ancestors of this document in the hierarchy of the document's datasource, for example parent folders or containers. Ancestors can be of different types and some may not be indexed. Higher level ancestors appear earlier in the list.
-                  type: array
-                  items: &ref_156
-                    type: object
-                    properties:
-                      Document:
-                        type: object
-                        description: Document object
-                assignedTo: *ref_16
-                author: *ref_16
-                collections:
-                  description: A list of collections that the document belongs to.
-                  type: array
-                  items: &ref_119
-                    type: object
-                    properties:
-                      Collection:
-                        type: object
-                        description: Collection object
-                components:
-                  description: A list of components this result is associated with. Interpretation is specific to each datasource. (e.g. for Jira issues, these are [components](https://confluence.atlassian.com/jirasoftwarecloud/organizing-work-with-components-764478279.html).)
-                  type: array
-                  items:
-                    type: string
-                contactPerson: *ref_16
-                container:
-                  description: The name of the container (higher level parent, not direct parent) of the result. Interpretation is specific to each datasource (e.g. Channels for Slack, Project for Jira). cf. parentId
-                  type: string
-                containerId:
-                  description: The Glean Document ID of the container. Uniquely identifies the container.
-                  type: string
-                createTime:
-                  format: date-time
-                  type: string
-                customData: &ref_87
-                  $ref: '#/components/schemas/CustomData'
-                datasource:
-                  type: string
-                datasourceId:
-                  description: The user-visible datasource specific id (e.g. Salesforce case number for example, GitHub PR number).
-                  type: string
-                datasourceInstance:
-                  description: The datasource instance from which the document was extracted.
-                  type: string
-                documentCategory:
-                  description: The document's document_category(.proto).
-                  type: string
-                documentId:
-                  description: The index-wide unique identifier.
-                  type: string
-                documentIdHash:
-                  description: Hash of the Glean Document ID.
-                  type: string
-                indexStatus: &ref_88
-                  $ref: '#/components/schemas/IndexStatus'
-                interactions:
-                  type: object
-                  description: DocumentInteractions object
-                labels:
-                  description: A list of tags for the document. Interpretation is datasource specific.
-                  type: array
-                  items:
-                    type: string
-                loggingId:
-                  description: A unique identifier used to represent the document in any logging or feedback requests in place of documentId.
-                  type: string
-                mentionedPeople:
-                  description: A list of people mentioned in the document.
-                  type: array
-                  items: *ref_57
-                mimeType:
-                  type: string
-                objectType:
-                  description: The type of the result. Interpretation is specific to each datasource. (e.g. for Jira issues, this is the issue type such as Bug or Feature Request).
-                  type: string
-                owner: *ref_16
-                parentId:
-                  description: The id of the direct parent of the result. Interpretation is specific to each datasource (e.g. parent issue for Jira). cf. container
-                  type: string
-                path:
-                  description: For file datasources like onedrive/github etc this has the path to the file
-                  type: string
-                permissions: &ref_89
-                  $ref: '#/components/schemas/ObjectPermissions'
-                pins:
-                  description: A list of stars associated with this result.  "Pin" is an older name.
-                  type: array
-                  items: *ref_64
-                priority:
-                  description: The document priority. Interpretation is datasource specific.
-                  type: string
-                shortcuts:
-                  description: A list of shortcuts of which destination URL is for the document.
-                  type: array
-                  items:
-                    type: object
-                    properties:
-                      Shortcut:
-                        type: object
-                        description: Shortcut object
-                status:
-                  description: The status or disposition of the result. Interpretation is specific to each datasource. (e.g. for Jira issues, this is the issue status such as Done, In Progress or Will Not Fix).
-                  type: string
-                statusCategory:
-                  description: The status category of the result. Meant to be more general than status. Interpretation is specific to each datasource.
-                  type: string
-                superContainerId:
-                  description: The Glean Document ID of the super container. Super container represents a broader abstraction that contains many containers. For example, whereas container might refer to a folder, super container would refer to a drive.
-                  type: string
-                thumbnail: &ref_90
-                  $ref: '#/components/schemas/Thumbnail'
-                  description: A thumbnail image representing this document.
-                updateTime:
-                  format: date-time
-                  type: string
-                updatedBy: *ref_16
-                verification:
-                  type: object
-                  description: Verification object
-                viewerInfo: &ref_91
-                  $ref: '#/components/schemas/ViewerInfo'
-                visibility: &ref_92
-                  $ref: '#/components/schemas/DocumentVisibility'
-                visitCount: &ref_93
-                  $ref: '#/components/schemas/CountInfo'
-              type: object
-            parentDocument: *ref_35
-            sections:
-              description: A list of content sub-sections in the document, e.g. text blocks with different headings in a Drive doc or Confluence page.
-              type: array
-              items: *ref_32
-            title:
-              description: The title of the document.
-              type: string
-            url:
-              description: A permalink for the document.
-              type: string
-          type: object
-        endIndex:
-          description: The exclusive end index of the range.
-          type: integer
-        startIndex:
-          description: The inclusive start index of the range.
-          type: integer
-        type:
-          enum: *ref_65
-          type: string
-        url:
-          description: The URL associated with the range, if applicable. For example, the linked URL for a LINK range.
-          type: string
-      type: object
     AnswerLike:
       properties:
         createTime:
           description: The time the user liked the answer in ISO format (ISO 8601).
           format: date-time
           type: string
-        user: *ref_66
+        user: *ref_67
       type: object
     PersonToTeamRelationship:
       description: Metadata about the relationship of a person to a team.
-      required: *ref_67
+      required: *ref_68
       type: object
       properties:
         customRelationshipStr:
@@ -4894,23 +4920,23 @@ components:
           description: The team member's start date
           format: date-time
           type: string
-        person: *ref_66
+        person: *ref_67
         relationship:
           default: MEMBER
           description: The team member's relationship to the team. This defaults to MEMBER if not set.
-          enum: *ref_68
+          enum: *ref_69
           type: string
     ChannelInviteInfo:
       description: Information regarding the invite status of a person for a particular channel.
       properties:
-        channel: &ref_70
+        channel: &ref_71
           description: Channel through which the invite was sent
           $ref: '#/components/schemas/CommunicationChannel'
         inviteTime:
           description: The time this person was invited in ISO format (ISO 8601).
           format: date-time
           type: string
-        inviter: *ref_66
+        inviter: *ref_67
         isAutoInvite:
           description: Bit that tracks if this invite was automatically sent or user-sent
           type: boolean
@@ -4931,8 +4957,8 @@ components:
         createTime:
           description: Server Unix timestamp of the creation time (in seconds since epoch UTC).
           type: integer
-        createdBy: *ref_66
-        icon: &ref_98
+        createdBy: *ref_67
+        icon: &ref_99
           $ref: '#/components/schemas/IconConfig'
         id:
           description: The opaque id of the Chat.
@@ -4950,14 +4976,14 @@ components:
         groupAttendees:
           description: If this attendee is a group, represents the list of individual attendees in the group.
           type: array
-          items: *ref_69
+          items: *ref_70
         isInGroup:
           description: Whether or not this attendee is in a group. Needed temporarily at least to support both flat attendees and tree for compatibility.
           type: boolean
         isOrganizer:
           description: Whether or not this attendee is an organizer.
           type: boolean
-        person: *ref_66
+        person: *ref_67
         responseStatus:
           enum: *ref_3
           type: string
@@ -4966,7 +4992,7 @@ components:
       required: *ref_10
       properties:
         group: *ref_11
-        person: *ref_66
+        person: *ref_67
         role: *ref_12
         sourceDocumentSpec: *ref_13
       type: object
@@ -4978,14 +5004,14 @@ components:
           description: The time this person was invited in ISO format (ISO 8601).
           format: date-time
           type: string
-        inviter: *ref_66
+        inviter: *ref_67
         invites:
           description: Latest invites received by the user for each channel
           type: array
           items:
             description: Information regarding the invite status of a person for a particular channel.
             properties:
-              channel: *ref_70
+              channel: *ref_71
               inviteTime:
                 description: The time this person was invited in ISO format (ISO 8601).
                 format: date-time
@@ -5008,36 +5034,6 @@ components:
           description: The time this person signed up in ISO format (ISO 8601).
           format: date-time
           type: string
-      type: object
-    QuerySuggestionList:
-      properties:
-        person: *ref_66
-        suggestions:
-          type: array
-          items:
-            example: *ref_42
-            required: *ref_43
-            properties:
-              datasource:
-                description: The datasource associated with the suggestion.
-                type: string
-              inputDetails: *ref_44
-              label:
-                description: A user-facing description to display for the suggestion.
-                type: string
-              missingTerm:
-                description: A query term missing from the original query on which this suggestion is based.
-                type: string
-              query:
-                description: The query being suggested (e.g. enforcing the missing term from the original query).
-                type: string
-              ranges:
-                description: The bolded ranges within the query of the QuerySuggestion.
-                type: array
-                items: *ref_71
-              requestOptions: *ref_45
-              searchProviderInfo: *ref_46
-            type: object
       type: object
     Customer:
       required: &ref_72
@@ -5118,12 +5114,43 @@ components:
           format: date
           type: string
       type: object
+    QuerySuggestionList:
+      properties:
+        person: *ref_67
+        suggestions:
+          type: array
+          items:
+            example: *ref_43
+            required: *ref_44
+            properties:
+              datasource:
+                description: The datasource associated with the suggestion.
+                type: string
+              inputDetails: *ref_45
+              label:
+                description: A user-facing description to display for the suggestion.
+                type: string
+              missingTerm:
+                description: A query term missing from the original query on which this suggestion is based.
+                type: string
+              query:
+                description: The query being suggested (e.g. enforcing the missing term from the original query).
+                type: string
+              ranges:
+                description: The bolded ranges within the query of the QuerySuggestion.
+                type: array
+                items: *ref_78
+              requestOptions: *ref_46
+              resultTab: *ref_47
+              searchProviderInfo: *ref_48
+            type: object
+      type: object
     Person:
       example: *ref_6
       required: *ref_7
       properties:
         metadata:
-          example: *ref_49
+          example: *ref_53
           properties:
             aliasEmails:
               description: Additional email addresses of this user beyond the primary, if any.
@@ -5133,7 +5160,7 @@ components:
             badges:
               description: The badges that a user has earned over their lifetime.
               type: array
-              items: *ref_50
+              items: *ref_54
             bannerUrl:
               description: The URL of the person's banner photo.
               format: url
@@ -5147,7 +5174,7 @@ components:
             busyEvents:
               description: Intervals of busy time for this person, along with the type of event they're busy with.
               type: array
-              items: *ref_51
+              items: *ref_55
             customFields:
               description: User customizable fields for additional people information.
               type: array
@@ -5173,7 +5200,7 @@ components:
             datasourceProfile:
               description: List of profiles this user has in different datasources / tools that they use.
               type: array
-              items: *ref_52
+              items: *ref_56
             department:
               description: An organizational unit where everyone has a similar task, e.g. `Engineering`.
               type: string
@@ -5246,7 +5273,7 @@ components:
             managementChain:
               description: The chain of reporting in the company as far up as it goes. The last entry is this person's direct manager.
               type: array
-              items: *ref_78
+              items: *ref_79
             manager: *ref_33
             orgSizeCount:
               description: The total recursive size of the people reporting to this person, or 1
@@ -5254,8 +5281,8 @@ components:
             peopleDistance:
               description: List of people and distances to those people from this person. Optionally with metadata.
               type: array
-              items: *ref_53
-            permissions: *ref_54
+              items: *ref_58
+            permissions: *ref_59
             phone:
               description: Phone number as a number string.
               type: string
@@ -5267,13 +5294,13 @@ components:
               description: The preferred name of the person, or a nickname.
               type: string
             profileBoolSettings:
-              additionalProperties: *ref_55
+              additionalProperties: *ref_60
               description: flag settings to indicate user profile settings for certain items
               type: object
             pronoun:
               description: She/her, He/his or other pronoun.
               type: string
-            querySuggestions: &ref_137
+            querySuggestions: &ref_138
               properties:
                 person: *ref_16
                 suggestions:
@@ -5287,11 +5314,11 @@ components:
               type: object
             reports:
               type: array
-              items: *ref_78
+              items: *ref_79
             socialNetwork:
               description: List of social network profiles.
               type: array
-              items: *ref_58
+              items: *ref_62
             startDate:
               description: The date when the employee started.
               format: date
@@ -5300,13 +5327,16 @@ components:
               description: Percentage of the company that started strictly after this person. Between [0,100).
               format: float
               type: number
-            structuredLocation: *ref_59
+            structuredLocation: *ref_63
             teams:
               description: Info about the employee's team(s).
               type: array
-              items: *ref_60
+              items: *ref_64
             timezone:
               description: The timezone of the person. E.g. "Pacific Daylight Time".
+              type: string
+            timezoneIANA:
+              description: The IANA timezone identifier, e.g. "America/Los_Angeles".
               type: string
             timezoneOffset:
               description: The offset of the person's timezone in seconds from UTC.
@@ -5316,10 +5346,10 @@ components:
               description: Job title.
               type: string
             type:
-              enum: *ref_61
+              enum: *ref_65
               example: FULL_TIME
               type: string
-              x-speakeasy-enum-descriptions: *ref_62
+              x-speakeasy-enum-descriptions: *ref_66
             uneditedPhotoUrl:
               description: The original photo URL of the person's avatar before any edits they made are applied
               format: url
@@ -5334,7 +5364,7 @@ components:
         relatedDocuments:
           description: A list of documents related to this person.
           type: array
-          items: &ref_170
+          items: &ref_171
             properties:
               associatedEntityId:
                 description: Which entity in the response that this entity relates to. Relevant when there are multiple entities associated with the response (such as merged customers)
@@ -5349,26 +5379,26 @@ components:
                     Document:
                       type: object
                       description: Document object
-              querySuggestion: *ref_79
+              querySuggestion: *ref_80
               relation:
                 description: How this document relates to the including entity.
-                enum: *ref_80
+                enum: *ref_81
                 type: string
-                x-speakeasy-enum-descriptions: *ref_81
+                x-speakeasy-enum-descriptions: *ref_82
               results:
                 description: A truncated list of documents associated with this relation. To be used in favor of `documents` because it contains a trackingToken.
                 type: array
-                items: *ref_39
+                items: *ref_40
             type: object
       type: object
     PinDocument:
       type: object
       properties:
-        attribution: &ref_83
+        attribution: &ref_84
           example: *ref_6
           required: *ref_7
           properties:
-            metadata: *ref_82
+            metadata: *ref_83
             name:
               description: The display name.
               type: string
@@ -5378,12 +5408,12 @@ components:
             relatedDocuments:
               description: A list of documents related to this person.
               type: array
-              items: *ref_48
+              items: *ref_49
           type: object
         audienceFilters:
           description: Filters which restrict who should see the pinned document. Values are taken from the corresponding filters in people search.
           type: array
-          items: &ref_126
+          items: &ref_127
             $ref: '#/components/schemas/FacetFilter'
         createTime:
           format: date-time
@@ -5397,13 +5427,13 @@ components:
         updateTime:
           format: date-time
           type: string
-        updatedBy: *ref_83
+        updatedBy: *ref_84
       required:
         - documentId
     Reminder:
       required: *ref_34
       properties:
-        assignee: *ref_66
+        assignee: *ref_67
         createdAt:
           description: Unix timestamp for when the reminder was first created (in seconds since epoch UTC).
           type: integer
@@ -5413,38 +5443,38 @@ components:
         remindAt:
           description: Unix timestamp for when the reminder should trigger (in seconds since epoch UTC).
           type: integer
-        requestor: *ref_66
+        requestor: *ref_67
       type: object
     AnswerBoard:
       type: object
       properties:
-        addedRoles: &ref_111
+        addedRoles: &ref_112
           description: A list of added user roles for the Collection.
           type: array
-          items: &ref_84
+          items: &ref_85
             type: object
             properties:
               UserRoleSpecification:
                 type: object
                 description: UserRoleSpecification object
-        audienceFilters: &ref_112
+        audienceFilters: &ref_113
           description: Filters which restrict who should see this Collection. Values are taken from the corresponding filters in people search.
           type: array
           items: *ref_23
-        description: &ref_113
+        description: &ref_114
           description: A brief summary of the Collection's contents.
           type: string
-        name: &ref_114
+        name: &ref_115
           description: The unique name of the Collection.
           type: string
-        removedRoles: &ref_115
+        removedRoles: &ref_116
           description: A list of removed user roles for the Collection.
           type: array
-          items: *ref_84
+          items: *ref_85
         createTime:
           format: date-time
           type: string
-        creator: *ref_83
+        creator: *ref_84
         id:
           description: The unique ID of the Answer Board.
           type: integer
@@ -5458,7 +5488,7 @@ components:
         updateTime:
           format: date-time
           type: string
-        updatedBy: *ref_83
+        updatedBy: *ref_84
       required:
         - name
         - id
@@ -5472,7 +5502,7 @@ components:
           deprecated: true
           description: A truncated list of documents with this relation. TO BE DEPRECATED.
           type: array
-          items: &ref_171
+          items: &ref_172
             properties:
               connectorType: *ref_30
               containerDocument: *ref_24
@@ -5486,19 +5516,19 @@ components:
               id:
                 description: The Glean Document ID.
                 type: string
-              metadata: &ref_120
-                example: *ref_85
+              metadata: &ref_121
+                example: *ref_86
                 properties:
                   ancestors:
                     description: A list of documents that are ancestors of this document in the hierarchy of the document's datasource, for example parent folders or containers. Ancestors can be of different types and some may not be indexed. Higher level ancestors appear earlier in the list.
                     type: array
-                    items: *ref_86
+                    items: *ref_87
                   assignedTo: *ref_0
                   author: *ref_0
                   collections:
                     description: A list of collections that the document belongs to.
                     type: array
-                    items: &ref_117
+                    items: &ref_118
                       type: object
                       properties:
                         Collection:
@@ -5519,7 +5549,7 @@ components:
                   createTime:
                     format: date-time
                     type: string
-                  customData: *ref_87
+                  customData: *ref_88
                   datasource:
                     type: string
                   datasourceId:
@@ -5537,7 +5567,7 @@ components:
                   documentIdHash:
                     description: Hash of the Glean Document ID.
                     type: string
-                  indexStatus: *ref_88
+                  indexStatus: *ref_89
                   interactions:
                     type: object
                     description: DocumentInteractions object
@@ -5552,7 +5582,7 @@ components:
                   mentionedPeople:
                     description: A list of people mentioned in the document.
                     type: array
-                    items: *ref_47
+                    items: *ref_37
                   mimeType:
                     type: string
                   objectType:
@@ -5565,11 +5595,11 @@ components:
                   path:
                     description: For file datasources like onedrive/github etc this has the path to the file
                     type: string
-                  permissions: *ref_89
+                  permissions: *ref_90
                   pins:
                     description: A list of stars associated with this result.  "Pin" is an older name.
                     type: array
-                    items: &ref_151
+                    items: &ref_152
                       type: object
                       properties:
                         PinDocument:
@@ -5596,17 +5626,17 @@ components:
                   superContainerId:
                     description: The Glean Document ID of the super container. Super container represents a broader abstraction that contains many containers. For example, whereas container might refer to a folder, super container would refer to a drive.
                     type: string
-                  thumbnail: *ref_90
+                  thumbnail: *ref_91
                   updateTime:
                     format: date-time
                     type: string
                   updatedBy: *ref_0
-                  verification: &ref_131
+                  verification: &ref_132
                     type: object
                     description: Verification object
-                  viewerInfo: *ref_91
-                  visibility: *ref_92
-                  visitCount: *ref_93
+                  viewerInfo: *ref_92
+                  visibility: *ref_93
+                  visitCount: *ref_94
                 type: object
               parentDocument: *ref_24
               sections:
@@ -5621,13 +5651,13 @@ components:
                 type: string
             type: object
         querySuggestion:
-          example: *ref_42
-          required: *ref_43
+          example: *ref_43
+          required: *ref_44
           properties:
             datasource:
               description: The datasource associated with the suggestion.
               type: string
-            inputDetails: *ref_44
+            inputDetails: *ref_45
             label:
               description: A user-facing description to display for the suggestion.
               type: string
@@ -5640,9 +5670,9 @@ components:
             ranges:
               description: The bolded ranges within the query of the QuerySuggestion.
               type: array
-              items: &ref_168
+              items: &ref_169
                 description: A subsection of a given string to which some special formatting should be applied.
-                required: *ref_63
+                required: *ref_50
                 properties:
                   document: *ref_8
                   endIndex:
@@ -5652,34 +5682,35 @@ components:
                     description: The inclusive start index of the range.
                     type: integer
                   type:
-                    enum: *ref_65
+                    enum: *ref_52
                     type: string
                   url:
                     description: The URL associated with the range, if applicable. For example, the linked URL for a LINK range.
                     type: string
                 type: object
-            requestOptions: *ref_45
-            searchProviderInfo: *ref_46
+            requestOptions: *ref_46
+            resultTab: *ref_47
+            searchProviderInfo: *ref_48
           type: object
         relation:
           description: How this document relates to the including entity.
-          enum: *ref_80
+          enum: *ref_81
           type: string
-          x-speakeasy-enum-descriptions: *ref_81
+          x-speakeasy-enum-descriptions: *ref_82
         results:
           description: A truncated list of documents associated with this relation. To be used in favor of `documents` because it contains a trackingToken.
           type: array
-          items: *ref_94
+          items: *ref_95
       type: object
     Share:
       description: Search endpoint will only fill out numDays ago since that's all we need to display shared badge; docmetadata endpoint will fill out all the fields so that we can display shared badge tooltip
-      required: *ref_95
+      required: *ref_96
       properties:
         numDaysAgo:
           description: The number of days that has passed since the share happened
           type: integer
-        sharer: *ref_66
-        sharingDocument: *ref_96
+        sharer: *ref_67
+        sharingDocument: *ref_97
       type: object
     Result:
       properties:
@@ -5693,7 +5724,7 @@ components:
                 description: AnswerMutableProperties object
                 type: object
                 properties:
-                  author: &ref_97
+                  author: &ref_98
                     type: object
                     description: Person object
                   board:
@@ -5702,7 +5733,7 @@ components:
                   collections:
                     description: The collections to which the answer belongs.
                     type: array
-                    items: &ref_100
+                    items: &ref_101
                       type: object
                       properties:
                         Collection:
@@ -5728,20 +5759,20 @@ components:
                     description: The time the answer was last updated in ISO format (ISO 8601).
                     format: date-time
                     type: string
-                  updatedBy: *ref_97
+                  updatedBy: *ref_98
                   verification:
                     type: object
                     description: Verification object
                 required:
                   - id
-              answerBoard: &ref_163
+              answerBoard: &ref_164
                 description: AnswerBoardMutableProperties object
                 type: object
                 properties:
                   createTime:
                     format: date-time
                     type: string
-                  creator: *ref_97
+                  creator: *ref_98
                   id:
                     description: The unique ID of the Answer Board.
                     type: integer
@@ -5751,7 +5782,7 @@ components:
                   roles:
                     description: A list of user roles for the Answer Board.
                     type: array
-                    items: &ref_101
+                    items: &ref_102
                       type: object
                       properties:
                         UserRoleSpecification:
@@ -5760,11 +5791,11 @@ components:
                   updateTime:
                     format: date-time
                     type: string
-                  updatedBy: *ref_97
+                  updatedBy: *ref_98
                 required:
                   - id
                   - description
-              app: &ref_132
+              app: &ref_133
                 $ref: '#/components/schemas/AppResult'
               chat:
                 description: Metadata of a Chat a user had with Glean Assistant. This contains no actual conversational content.
@@ -5779,7 +5810,7 @@ components:
                     description: Server Unix timestamp of the creation time (in seconds since epoch UTC).
                     type: integer
                   createdBy: *ref_0
-                  icon: *ref_98
+                  icon: *ref_99
                   id:
                     description: The opaque id of the Chat.
                     type: string
@@ -5791,7 +5822,7 @@ components:
                     type: integer
                 type: object
               code:
-                example: *ref_99
+                example: *ref_100
                 properties:
                   fileName:
                     type: string
@@ -5821,11 +5852,11 @@ components:
                   children:
                     description: The children Collections of this Collection.
                     type: array
-                    items: *ref_100
+                    items: *ref_101
                   createTime:
                     format: date-time
                     type: string
-                  creator: *ref_97
+                  creator: *ref_98
                   id:
                     description: The unique ID of the Collection.
                     type: integer
@@ -5835,19 +5866,19 @@ components:
                   items:
                     description: The items in this Collection.
                     type: array
-                    items: &ref_124
+                    items: &ref_125
                       type: object
                       properties:
                         CollectionItem:
                           type: object
                           description: CollectionItem object
-                  pinMetadata: &ref_118
+                  pinMetadata: &ref_119
                     $ref: '#/components/schemas/CollectionPinnedMetadata'
                     description: Metadata having what categories this Collection is pinned to and the eligible categories to pin to
                   roles:
                     description: A list of user roles for the Collection.
                     type: array
-                    items: *ref_101
+                    items: *ref_102
                   shortcuts:
                     description: The names of the shortcuts (Go Links) that point to this Collection.
                     type: array
@@ -5856,7 +5887,7 @@ components:
                   updateTime:
                     format: date-time
                     type: string
-                  updatedBy: *ref_97
+                  updatedBy: *ref_98
                 required:
                   - id
                   - description
@@ -5869,14 +5900,14 @@ components:
                   id:
                     description: Unique identifier.
                     type: string
-                  metadata: *ref_102
+                  metadata: *ref_103
                   objectType:
                     description: The type of the entity. Interpretation is specific to each datasource
                     type: string
                   roles:
                     description: A list of user roles for the custom entity explicitly granted by the owner.
                     type: array
-                    items: *ref_101
+                    items: *ref_102
                   title:
                     description: Title or name of the custom entity.
                     type: string
@@ -5900,7 +5931,7 @@ components:
                   mergedCustomers:
                     description: A list of Customers.
                     type: array
-                    items: &ref_166
+                    items: &ref_167
                       type: object
                       properties:
                         Customer:
@@ -5914,13 +5945,13 @@ components:
                   poc:
                     description: A list of POC for company.
                     type: array
-                    items: *ref_47
+                    items: *ref_37
                   startDate:
                     description: The date when the interaction with customer started.
                     format: date
                     type: string
                 type: object
-              disambiguation: &ref_134
+              disambiguation: &ref_135
                 $ref: '#/components/schemas/Disambiguation'
               document: *ref_24
               extractedQnA:
@@ -5951,17 +5982,17 @@ components:
                   followupActions:
                     description: List of follow-up actions generated for the given query or the generated question.
                     type: array
-                    items: *ref_103
+                    items: *ref_104
                   question:
                     description: Search query rephrased into a question.
                     type: string
                   ranges:
                     description: Answer subsections to mark with special formatting (citations, bolding etc)
                     type: array
-                    items: *ref_104
+                    items: *ref_105
                   status:
                     description: Status of backend generating the answer
-                    enum: *ref_105
+                    enum: *ref_106
                     type: string
                   trackingToken:
                     description: An opaque token that represents this particular result in this particular query. To be used for /feedback reporting.
@@ -5990,20 +6021,20 @@ components:
               person: *ref_2
               prominence:
                 description: The level of visual distinction that should be given to a result.
-                enum: &ref_135
+                enum: &ref_136
                   - HERO
                   - PROMOTED
                   - STANDARD
                 type: string
-                x-speakeasy-enum-descriptions: &ref_136
+                x-speakeasy-enum-descriptions: &ref_137
                   HERO: A high-confidence result that should feature prominently on the page.
                   PROMOTED: May not be the best result but should be given additional visual distinction.
                   STANDARD: Should not be distinct from any other results.
-              querySuggestions: *ref_106
+              querySuggestions: *ref_107
               relatedDocuments:
                 description: A list of documents related to this structured result.
                 type: array
-                items: *ref_48
+                items: *ref_49
               relatedQuestion:
                 properties:
                   answer:
@@ -6015,7 +6046,7 @@ components:
                   ranges:
                     description: Subsections of the answer string to which some special formatting should be applied (eg. bold)
                     type: array
-                    items: *ref_104
+                    items: *ref_105
                 type: object
               shortcut:
                 description: ShortcutMutableProperties object
@@ -6027,7 +6058,7 @@ components:
                   roles:
                     description: A list of user roles for the Go Link.
                     type: array
-                    items: *ref_101
+                    items: *ref_102
                   title:
                     description: Title for the Go Link
                     type: string
@@ -6036,10 +6067,10 @@ components:
               snippets:
                 description: Any snippets associated to the populated object.
                 type: array
-                items: *ref_107
+                items: *ref_108
               source:
                 description: Source context for this result. Possible values depend on the result type.
-                enum: &ref_142
+                enum: &ref_143
                   - EXPERT_DETECTION
                   - ENTITY_NLQ
                 type: string
@@ -6075,7 +6106,7 @@ components:
                   datasourceProfiles:
                     description: The datasource profiles of the team
                     type: array
-                    items: *ref_108
+                    items: *ref_109
                   department:
                     description: An organizational unit where everyone has a similar task, e.g. `Engineering`.
                     type: string
@@ -6085,7 +6116,7 @@ components:
                   emails:
                     description: The emails for this team
                     type: array
-                    items: *ref_109
+                    items: *ref_110
                   externalLink:
                     description: Link to a team page on the internet or your company's intranet
                     format: uri
@@ -6122,7 +6153,7 @@ components:
                   status:
                     default: PROCESSED
                     description: whether this team is fully processed or there are still unprocessed operations that'll affect it
-                    enum: *ref_110
+                    enum: *ref_111
                     type: string
                 required:
                   - id
@@ -6138,11 +6169,11 @@ components:
     Collection:
       type: object
       properties:
-        addedRoles: *ref_111
-        audienceFilters: *ref_112
-        description: *ref_113
-        name: *ref_114
-        removedRoles: *ref_115
+        addedRoles: *ref_112
+        audienceFilters: *ref_113
+        description: *ref_114
+        name: *ref_115
+        removedRoles: *ref_116
         adminLocked:
           description: Indicates whether edits are allowed for everyone or only admins.
           type: boolean
@@ -6155,14 +6186,14 @@ components:
         parentId:
           description: The parent of this Collection, or 0 if it's a top-level Collection.
           type: integer
-        thumbnail: *ref_116
+        thumbnail: *ref_117
         childCount:
           description: The number of children Collections. Separated from the actual children so we can grab the count without children.
           type: integer
         children:
           description: The children Collections of this Collection.
           type: array
-          items: &ref_161
+          items: &ref_162
             description: CollectionMutableProperties object
             type: object
             properties:
@@ -6172,7 +6203,7 @@ components:
               children:
                 description: The children Collections of this Collection.
                 type: array
-                items: *ref_117
+                items: *ref_118
               createTime:
                 format: date-time
                 type: string
@@ -6186,17 +6217,17 @@ components:
               items:
                 description: The items in this Collection.
                 type: array
-                items: &ref_133
+                items: &ref_134
                   type: object
                   properties:
                     CollectionItem:
                       type: object
                       description: CollectionItem object
-              pinMetadata: *ref_118
+              pinMetadata: *ref_119
               roles:
                 description: A list of user roles for the Collection.
                 type: array
-                items: &ref_122
+                items: &ref_123
                   type: object
                   properties:
                     UserRoleSpecification:
@@ -6217,7 +6248,7 @@ components:
         createTime:
           format: date-time
           type: string
-        creator: *ref_83
+        creator: *ref_84
         id:
           description: The unique ID of the Collection.
           type: integer
@@ -6230,7 +6261,7 @@ components:
           items:
             type: object
             properties:
-              collection: &ref_145
+              collection: &ref_146
                 type: object
                 description: Collection object
               collectionId:
@@ -6249,13 +6280,13 @@ components:
                 description: Unique identifier for the item within the Collection it belongs to.
                 type: string
               itemType:
-                enum: &ref_121
+                enum: &ref_122
                   - DOCUMENT
                   - TEXT
                   - URL
                   - COLLECTION
                 type: string
-              shortcut: &ref_147
+              shortcut: &ref_148
                 type: object
                 description: Shortcut object
               url:
@@ -6264,7 +6295,7 @@ components:
             required:
               - collectionId
               - itemType
-        pinMetadata: *ref_118
+        pinMetadata: *ref_119
         roles:
           description: A list of user roles for the Collection.
           type: array
@@ -6277,7 +6308,7 @@ components:
         updateTime:
           format: date-time
           type: string
-        updatedBy: *ref_83
+        updatedBy: *ref_84
       required:
         - name
         - id
@@ -6289,26 +6320,26 @@ components:
           description: CollectionBaseMutableProperties object
           type: object
           properties:
-            adminLocked: &ref_172
+            adminLocked: &ref_173
               description: Indicates whether edits are allowed for everyone or only admins.
               type: boolean
-            allowedDatasource: &ref_173
+            allowedDatasource: &ref_174
               description: The datasource type this Collection can hold.
               type: string
-            icon: &ref_174
+            icon: &ref_175
               description: The emoji icon of this Collection.
               type: string
-            parentId: &ref_175
+            parentId: &ref_176
               description: The parent of this Collection, or 0 if it's a top-level Collection.
               type: integer
-            thumbnail: *ref_116
+            thumbnail: *ref_117
             childCount:
               description: The number of children Collections. Separated from the actual children so we can grab the count without children.
               type: integer
             children:
               description: The children Collections of this Collection.
               type: array
-              items: *ref_119
+              items: *ref_120
             createTime:
               format: date-time
               type: string
@@ -6322,17 +6353,17 @@ components:
             items:
               description: The items in this Collection.
               type: array
-              items: &ref_176
+              items: &ref_177
                 type: object
                 properties:
                   CollectionItem:
                     type: object
                     description: CollectionItem object
-            pinMetadata: *ref_118
+            pinMetadata: *ref_119
             roles:
               description: A list of user roles for the Collection.
               type: array
-              items: *ref_84
+              items: *ref_85
             shortcuts:
               description: The names of the shortcuts (Go Links) that point to this Collection.
               type: array
@@ -6353,8 +6384,8 @@ components:
           description: Unix timestamp for when the item was first added (in seconds since epoch UTC).
           format: date-time
           type: string
-        createdBy: *ref_83
-        document: &ref_155
+        createdBy: *ref_84
+        document: &ref_156
           properties:
             connectorType: *ref_30
             containerDocument: *ref_24
@@ -6368,7 +6399,7 @@ components:
             id:
               description: The Glean Document ID.
               type: string
-            metadata: *ref_120
+            metadata: *ref_121
             parentDocument: *ref_24
             sections:
               description: A list of content sub-sections in the document, e.g. text blocks with different headings in a Drive doc or Confluence page.
@@ -6388,58 +6419,58 @@ components:
           description: Unique identifier for the item within the Collection it belongs to.
           type: string
         itemType:
-          enum: *ref_121
+          enum: *ref_122
           type: string
         shortcut:
           type: object
           properties:
-            addedRoles: &ref_177
+            addedRoles: &ref_178
               description: A list of user roles added for the Shortcut.
               type: array
-              items: *ref_122
-            description: &ref_178
+              items: *ref_123
+            description: &ref_179
               description: A short, plain text blurb to help people understand the intent of the shortcut.
               type: string
-            destinationDocumentId: &ref_179
+            destinationDocumentId: &ref_180
               description: Glean Document ID for the URL, if known.
               type: string
-            destinationUrl: &ref_180
+            destinationUrl: &ref_181
               description: Destination URL for the shortcut.
               type: string
-            inputAlias: &ref_181
+            inputAlias: &ref_182
               description: Link text following go/ prefix as entered by the user.
               type: string
-            removedRoles: &ref_182
+            removedRoles: &ref_183
               description: A list of user roles removed for the Shortcut.
               type: array
-              items: *ref_122
-            unlisted: &ref_183
+              items: *ref_123
+            unlisted: &ref_184
               description: Whether this shortcut is unlisted or not. Unlisted shortcuts are visible to author + admins only.
               type: boolean
-            urlTemplate: &ref_184
+            urlTemplate: &ref_185
               description: For variable shortcuts, contains the URL template; note, `destinationUrl` contains default URL.
               type: string
-            createTime: &ref_185
+            createTime: &ref_186
               description: The time the shortcut was created in ISO format (ISO 8601).
               format: date-time
               type: string
             createdBy: *ref_0
             destinationDocument: *ref_8
-            editUrl: &ref_186
+            editUrl: &ref_187
               description: The URL using which the user can access the edit page of the shortcut.
               type: string
-            intermediateUrl: &ref_187
+            intermediateUrl: &ref_188
               description: The URL from which the user is then redirected to the destination URL. Full replacement for https://go/<inputAlias>.
               type: string
-            isExternal: &ref_188
+            isExternal: &ref_189
               description: Indicates whether a shortcut is native or external.
               type: boolean
-            updateTime: &ref_189
+            updateTime: &ref_190
               description: The time the shortcut was updated in ISO format (ISO 8601).
               format: date-time
               type: string
             updatedBy: *ref_0
-            viewPrefix: &ref_190
+            viewPrefix: &ref_191
               description: The part of the shortcut preceding the input alias when used for showing shortcuts to users. Should end with "/". e.g. "go/" for native shortcuts.
               type: string
             alias:
@@ -6448,7 +6479,7 @@ components:
             roles:
               description: A list of user roles for the Go Link.
               type: array
-              items: *ref_84
+              items: *ref_85
             title:
               description: Title for the Go Link
               type: string
@@ -6466,8 +6497,8 @@ components:
           description: The time the shortcut was created in ISO format (ISO 8601).
           format: date-time
           type: string
-        createdBy: *ref_66
-        destinationDocument: *ref_96
+        createdBy: *ref_67
+        destinationDocument: *ref_97
         editUrl:
           description: The URL using which the user can access the edit page of the shortcut.
           type: string
@@ -6481,7 +6512,7 @@ components:
           description: The time the shortcut was updated in ISO format (ISO 8601).
           format: date-time
           type: string
-        updatedBy: *ref_66
+        updatedBy: *ref_67
         viewPrefix:
           description: The part of the shortcut preceding the input alias when used for showing shortcuts to users. Should end with "/". e.g. "go/" for native shortcuts.
           type: string
@@ -6489,7 +6520,7 @@ components:
     Document:
       properties:
         connectorType: *ref_30
-        containerDocument: *ref_96
+        containerDocument: *ref_97
         content: *ref_31
         datasource:
           description: The app or other repository type from which the document was extracted
@@ -6501,7 +6532,7 @@ components:
           description: The Glean Document ID.
           type: string
         metadata:
-          example: *ref_85
+          example: *ref_86
           properties:
             ancestors:
               description: A list of documents that are ancestors of this document in the hierarchy of the document's datasource, for example parent folders or containers. Ancestors can be of different types and some may not be indexed. Higher level ancestors appear earlier in the list.
@@ -6520,7 +6551,7 @@ components:
                   id:
                     description: The Glean Document ID.
                     type: string
-                  metadata: *ref_123
+                  metadata: *ref_124
                   parentDocument: *ref_8
                   sections:
                     description: A list of content sub-sections in the document, e.g. text blocks with different headings in a Drive doc or Confluence page.
@@ -6548,11 +6579,11 @@ components:
                   children:
                     description: The children Collections of this Collection.
                     type: array
-                    items: *ref_100
+                    items: *ref_101
                   createTime:
                     format: date-time
                     type: string
-                  creator: *ref_97
+                  creator: *ref_98
                   id:
                     description: The unique ID of the Collection.
                     type: integer
@@ -6562,12 +6593,12 @@ components:
                   items:
                     description: The items in this Collection.
                     type: array
-                    items: *ref_124
-                  pinMetadata: *ref_118
+                    items: *ref_125
+                  pinMetadata: *ref_119
                   roles:
                     description: A list of user roles for the Collection.
                     type: array
-                    items: *ref_101
+                    items: *ref_102
                   shortcuts:
                     description: The names of the shortcuts (Go Links) that point to this Collection.
                     type: array
@@ -6576,7 +6607,7 @@ components:
                   updateTime:
                     format: date-time
                     type: string
-                  updatedBy: *ref_97
+                  updatedBy: *ref_98
                 required:
                   - id
                   - description
@@ -6595,7 +6626,7 @@ components:
             createTime:
               format: date-time
               type: string
-            customData: *ref_87
+            customData: *ref_88
             datasource:
               type: string
             datasourceId:
@@ -6613,7 +6644,7 @@ components:
             documentIdHash:
               description: Hash of the Glean Document ID.
               type: string
-            indexStatus: *ref_88
+            indexStatus: *ref_89
             interactions:
               properties:
                 numComments:
@@ -6645,7 +6676,7 @@ components:
                       Share:
                         type: object
                         description: Share object
-                visitorCount: *ref_125
+                visitorCount: *ref_126
               type: object
             labels:
               description: A list of tags for the document. Interpretation is datasource specific.
@@ -6658,7 +6689,7 @@ components:
             mentionedPeople:
               description: A list of people mentioned in the document.
               type: array
-              items: *ref_78
+              items: *ref_79
             mimeType:
               type: string
             objectType:
@@ -6671,18 +6702,18 @@ components:
             path:
               description: For file datasources like onedrive/github etc this has the path to the file
               type: string
-            permissions: *ref_89
+            permissions: *ref_90
             pins:
               description: A list of stars associated with this result.  "Pin" is an older name.
               type: array
               items:
                 type: object
                 properties:
-                  attribution: *ref_97
+                  attribution: *ref_98
                   audienceFilters:
                     description: Filters which restrict who should see the pinned document. Values are taken from the corresponding filters in people search.
                     type: array
-                    items: *ref_126
+                    items: *ref_127
                   createTime:
                     format: date-time
                     type: string
@@ -6695,7 +6726,7 @@ components:
                   updateTime:
                     format: date-time
                     type: string
-                  updatedBy: *ref_97
+                  updatedBy: *ref_98
                 required:
                   - documentId
             priority:
@@ -6714,7 +6745,7 @@ components:
                   roles:
                     description: A list of user roles for the Go Link.
                     type: array
-                    items: *ref_101
+                    items: *ref_102
                   title:
                     description: Title for the Go Link
                     type: string
@@ -6729,27 +6760,27 @@ components:
             superContainerId:
               description: The Glean Document ID of the super container. Super container represents a broader abstraction that contains many containers. For example, whereas container might refer to a folder, super container would refer to a drive.
               type: string
-            thumbnail: *ref_90
+            thumbnail: *ref_91
             updateTime:
               format: date-time
               type: string
             updatedBy: *ref_33
             verification:
-              required: *ref_127
+              required: *ref_128
               properties:
                 metadata:
                   type: object
                   description: VerificationMetadata object
                 state:
                   description: The verification state for the document.
-                  enum: *ref_128
+                  enum: *ref_129
                   type: string
               type: object
-            viewerInfo: *ref_91
-            visibility: *ref_92
-            visitCount: *ref_93
+            viewerInfo: *ref_92
+            visibility: *ref_93
+            visitCount: *ref_94
           type: object
-        parentDocument: *ref_96
+        parentDocument: *ref_97
         sections:
           description: A list of content sub-sections in the document, e.g. text blocks with different headings in a Drive doc or Confluence page.
           type: array
@@ -6762,13 +6793,13 @@ components:
           type: string
       type: object
     VerificationMetadata:
-      required: *ref_129
+      required: *ref_130
       properties:
         candidateVerifiers:
           description: List of potential verifiers for the document e.g. old verifiers and/or users with view/edit permissions.
           type: array
           items: *ref_77
-        document: *ref_96
+        document: *ref_97
         expirationTs:
           description: The unix timestamp of the verification expiration if applicable (in seconds since epoch UTC).
           type: integer
@@ -6790,7 +6821,7 @@ components:
         lastVerificationTs:
           description: The unix timestamp of the verification (in seconds since epoch UTC).
           type: integer
-        lastVerifier: *ref_66
+        lastVerifier: *ref_67
         reminders:
           description: Info about all outstanding verification reminders for the document if exists.
           type: array
@@ -6812,11 +6843,11 @@ components:
         visitorCount:
           description: Number of visitors to the document during included time periods.
           type: array
-          items: *ref_130
+          items: *ref_131
       type: object
     StructuredTextItem:
       properties:
-        document: *ref_96
+        document: *ref_97
         link:
           example: https://en.wikipedia.org/wiki/Diffuse_sky_radiation
           type: string
@@ -6828,13 +6859,13 @@ components:
               type: object
               properties:
                 author: *ref_0
-                board: &ref_144
+                board: &ref_145
                   type: object
                   description: AnswerBoard object
                 collections:
                   description: The collections to which the answer belongs.
                   type: array
-                  items: *ref_117
+                  items: *ref_118
                 combinedAnswerText:
                   type: object
                   description: StructuredText object
@@ -6854,7 +6885,7 @@ components:
                   format: date-time
                   type: string
                 updatedBy: *ref_0
-                verification: *ref_131
+                verification: *ref_132
               required:
                 - id
             answerBoard:
@@ -6874,7 +6905,7 @@ components:
                 roles:
                   description: A list of user roles for the Answer Board.
                   type: array
-                  items: *ref_122
+                  items: *ref_123
                 updateTime:
                   format: date-time
                   type: string
@@ -6882,7 +6913,7 @@ components:
               required:
                 - id
                 - description
-            app: *ref_132
+            app: *ref_133
             chat:
               description: Metadata of a Chat a user had with Glean Assistant. This contains no actual conversational content.
               properties:
@@ -6896,7 +6927,7 @@ components:
                   description: Server Unix timestamp of the creation time (in seconds since epoch UTC).
                   type: integer
                 createdBy: *ref_16
-                icon: *ref_98
+                icon: *ref_99
                 id:
                   description: The opaque id of the Chat.
                   type: string
@@ -6908,7 +6939,7 @@ components:
                   type: integer
               type: object
             code:
-              example: *ref_99
+              example: *ref_100
               properties:
                 fileName:
                   type: string
@@ -6938,7 +6969,7 @@ components:
                 children:
                   description: The children Collections of this Collection.
                   type: array
-                  items: *ref_117
+                  items: *ref_118
                 createTime:
                   format: date-time
                   type: string
@@ -6952,12 +6983,12 @@ components:
                 items:
                   description: The items in this Collection.
                   type: array
-                  items: *ref_133
-                pinMetadata: *ref_118
+                  items: *ref_134
+                pinMetadata: *ref_119
                 roles:
                   description: A list of user roles for the Collection.
                   type: array
-                  items: *ref_122
+                  items: *ref_123
                 shortcuts:
                   description: The names of the shortcuts (Go Links) that point to this Collection.
                   type: array
@@ -6979,14 +7010,14 @@ components:
                 id:
                   description: Unique identifier.
                   type: string
-                metadata: *ref_102
+                metadata: *ref_103
                 objectType:
                   description: The type of the entity. Interpretation is specific to each datasource
                   type: string
                 roles:
                   description: A list of user roles for the custom entity explicitly granted by the owner.
                   type: array
-                  items: *ref_122
+                  items: *ref_123
                 title:
                   description: Title or name of the custom entity.
                   type: string
@@ -7030,7 +7061,7 @@ components:
                   format: date
                   type: string
               type: object
-            disambiguation: *ref_134
+            disambiguation: *ref_135
             document: *ref_35
             extractedQnA:
               properties:
@@ -7060,14 +7091,14 @@ components:
                 followupActions:
                   description: List of follow-up actions generated for the given query or the generated question.
                   type: array
-                  items: *ref_103
+                  items: *ref_104
                 question:
                   description: Search query rephrased into a question.
                   type: string
                 ranges:
                   description: Answer subsections to mark with special formatting (citations, bolding etc)
                   type: array
-                  items: &ref_139
+                  items: &ref_140
                     type: object
                     properties:
                       TextRange:
@@ -7075,7 +7106,7 @@ components:
                         description: TextRange object
                 status:
                   description: Status of backend generating the answer
-                  enum: *ref_105
+                  enum: *ref_106
                   type: string
                 trackingToken:
                   description: An opaque token that represents this particular result in this particular query. To be used for /feedback reporting.
@@ -7104,14 +7135,14 @@ components:
             person: *ref_33
             prominence:
               description: The level of visual distinction that should be given to a result.
-              enum: *ref_135
+              enum: *ref_136
               type: string
-              x-speakeasy-enum-descriptions: *ref_136
-            querySuggestions: *ref_137
+              x-speakeasy-enum-descriptions: *ref_137
+            querySuggestions: *ref_138
             relatedDocuments:
               description: A list of documents related to this structured result.
               type: array
-              items: *ref_138
+              items: *ref_139
             relatedQuestion:
               properties:
                 answer:
@@ -7123,7 +7154,7 @@ components:
                 ranges:
                   description: Subsections of the answer string to which some special formatting should be applied (eg. bold)
                   type: array
-                  items: *ref_139
+                  items: *ref_140
               type: object
             shortcut:
               description: ShortcutMutableProperties object
@@ -7135,7 +7166,7 @@ components:
                 roles:
                   description: A list of user roles for the Go Link.
                   type: array
-                  items: *ref_122
+                  items: *ref_123
                 title:
                   description: Title for the Go Link
                   type: string
@@ -7145,8 +7176,8 @@ components:
               description: Any snippets associated to the populated object.
               type: array
               items:
-                example: *ref_140
-                required: *ref_141
+                example: *ref_141
+                required: *ref_142
                 properties:
                   mimeType:
                     description: The mime type of the snippets, currently either text/plain or text/html.
@@ -7154,7 +7185,7 @@ components:
                   ranges:
                     description: The bolded ranges within text.
                     type: array
-                    items: *ref_104
+                    items: *ref_105
                   snippet:
                     deprecated: true
                     description: A matching snippet from the document. Query term matches are marked by the unicode characters uE006 and uE007. Use 'text' field instead.
@@ -7171,7 +7202,7 @@ components:
                 type: object
             source:
               description: Source context for this result. Possible values depend on the result type.
-              enum: *ref_142
+              enum: *ref_143
               type: string
             team:
               type: object
@@ -7193,14 +7224,14 @@ components:
                 customFields:
                   description: Customizable fields for additional team information.
                   type: array
-                  items: *ref_143
+                  items: *ref_144
                 datasource:
                   description: the data source of the team, e.g. GDRIVE
                   type: string
                 datasourceProfiles:
                   description: The datasource profiles of the team
                   type: array
-                  items: *ref_108
+                  items: *ref_109
                 department:
                   description: An organizational unit where everyone has a similar task, e.g. `Engineering`.
                   type: string
@@ -7210,7 +7241,7 @@ components:
                 emails:
                   description: The emails for this team
                   type: array
-                  items: *ref_109
+                  items: *ref_110
                 externalLink:
                   description: Link to a team page on the internet or your company's intranet
                   format: uri
@@ -7247,7 +7278,7 @@ components:
                 status:
                   default: PROCESSED
                   description: whether this team is fully processed or there are still unprocessed operations that'll affect it
-                  enum: *ref_110
+                  enum: *ref_111
                   type: string
               required:
                 - id
@@ -7261,7 +7292,7 @@ components:
           type: string
       type: object
     PersonMetadata:
-      example: *ref_49
+      example: *ref_53
       properties:
         aliasEmails:
           description: Additional email addresses of this user beyond the primary, if any.
@@ -7271,7 +7302,7 @@ components:
         badges:
           description: The badges that a user has earned over their lifetime.
           type: array
-          items: *ref_50
+          items: *ref_54
         bannerUrl:
           description: The URL of the person's banner photo.
           format: url
@@ -7285,7 +7316,7 @@ components:
         busyEvents:
           description: Intervals of busy time for this person, along with the type of event they're busy with.
           type: array
-          items: *ref_51
+          items: *ref_55
         customFields:
           description: User customizable fields for additional people information.
           type: array
@@ -7311,7 +7342,7 @@ components:
         datasourceProfile:
           description: List of profiles this user has in different datasources / tools that they use.
           type: array
-          items: *ref_52
+          items: *ref_56
         department:
           description: An organizational unit where everyone has a similar task, e.g. `Engineering`.
           type: string
@@ -7349,7 +7380,7 @@ components:
               items:
                 description: Information regarding the invite status of a person for a particular channel.
                 properties:
-                  channel: *ref_70
+                  channel: *ref_71
                   inviteTime:
                     description: The time this person was invited in ISO format (ISO 8601).
                     format: date-time
@@ -7396,15 +7427,15 @@ components:
           description: The chain of reporting in the company as far up as it goes. The last entry is this person's direct manager.
           type: array
           items: *ref_77
-        manager: *ref_66
+        manager: *ref_67
         orgSizeCount:
           description: The total recursive size of the people reporting to this person, or 1
           type: integer
         peopleDistance:
           description: List of people and distances to those people from this person. Optionally with metadata.
           type: array
-          items: *ref_53
-        permissions: *ref_54
+          items: *ref_58
+        permissions: *ref_59
         phone:
           description: Phone number as a number string.
           type: string
@@ -7416,25 +7447,25 @@ components:
           description: The preferred name of the person, or a nickname.
           type: string
         profileBoolSettings:
-          additionalProperties: *ref_55
+          additionalProperties: *ref_60
           description: flag settings to indicate user profile settings for certain items
           type: object
         pronoun:
           description: She/her, He/his or other pronoun.
           type: string
-        querySuggestions: &ref_169
+        querySuggestions: &ref_170
           properties:
             person: *ref_33
             suggestions:
               type: array
               items:
-                example: *ref_42
-                required: *ref_43
+                example: *ref_43
+                required: *ref_44
                 properties:
                   datasource:
                     description: The datasource associated with the suggestion.
                     type: string
-                  inputDetails: *ref_44
+                  inputDetails: *ref_45
                   label:
                     description: A user-facing description to display for the suggestion.
                     type: string
@@ -7447,9 +7478,10 @@ components:
                   ranges:
                     description: The bolded ranges within the query of the QuerySuggestion.
                     type: array
-                    items: *ref_104
-                  requestOptions: *ref_45
-                  searchProviderInfo: *ref_46
+                    items: *ref_105
+                  requestOptions: *ref_46
+                  resultTab: *ref_47
+                  searchProviderInfo: *ref_48
                 type: object
           type: object
         reports:
@@ -7458,7 +7490,7 @@ components:
         socialNetwork:
           description: List of social network profiles.
           type: array
-          items: *ref_58
+          items: *ref_62
         startDate:
           description: The date when the employee started.
           format: date
@@ -7467,13 +7499,16 @@ components:
           description: Percentage of the company that started strictly after this person. Between [0,100).
           format: float
           type: number
-        structuredLocation: *ref_59
+        structuredLocation: *ref_63
         teams:
           description: Info about the employee's team(s).
           type: array
-          items: *ref_60
+          items: *ref_64
         timezone:
           description: The timezone of the person. E.g. "Pacific Daylight Time".
+          type: string
+        timezoneIANA:
+          description: The IANA timezone identifier, e.g. "America/Los_Angeles".
           type: string
         timezoneOffset:
           description: The offset of the person's timezone in seconds from UTC.
@@ -7483,18 +7518,18 @@ components:
           description: Job title.
           type: string
         type:
-          enum: *ref_61
+          enum: *ref_65
           example: FULL_TIME
           type: string
-          x-speakeasy-enum-descriptions: *ref_62
+          x-speakeasy-enum-descriptions: *ref_66
         uneditedPhotoUrl:
           description: The original photo URL of the person's avatar before any edits they made are applied
           format: url
           type: string
       type: object
     SearchResult:
-      example: *ref_37
-      required: *ref_38
+      example: *ref_38
+      required: *ref_39
       type: object
       properties:
         structuredResults:
@@ -7506,22 +7541,22 @@ components:
               answer:
                 type: object
                 description: Answer object
-              answerBoard: *ref_144
-              app: *ref_132
+              answerBoard: *ref_145
+              app: *ref_133
               chat:
                 type: object
                 description: ChatMetadata object
               code:
                 type: object
                 description: Code object
-              collection: *ref_145
+              collection: *ref_146
               customEntity:
                 type: object
                 description: CustomEntity object
               customer:
                 type: object
                 description: Customer object
-              disambiguation: *ref_134
+              disambiguation: *ref_135
               document: *ref_8
               extractedQnA:
                 type: object
@@ -7535,10 +7570,10 @@ components:
               person: *ref_0
               prominence:
                 description: The level of visual distinction that should be given to a result.
-                enum: *ref_135
+                enum: *ref_136
                 type: string
-                x-speakeasy-enum-descriptions: *ref_136
-              querySuggestions: *ref_146
+                x-speakeasy-enum-descriptions: *ref_137
+              querySuggestions: *ref_147
               relatedDocuments:
                 description: A list of documents related to this structured result.
                 type: array
@@ -7546,11 +7581,11 @@ components:
               relatedQuestion:
                 type: object
                 description: RelatedQuestion object
-              shortcut: *ref_147
+              shortcut: *ref_148
               snippets:
                 description: Any snippets associated to the populated object.
                 type: array
-                items: &ref_153
+                items: &ref_154
                   type: object
                   properties:
                     SearchResultSnippet:
@@ -7558,7 +7593,7 @@ components:
                       description: SearchResultSnippet object
               source:
                 description: Source context for this result. Possible values depend on the result type.
-                enum: *ref_142
+                enum: *ref_143
                 type: string
               team:
                 type: object
@@ -7574,9 +7609,9 @@ components:
           description: A list of results that should be displayed as associated with this result.
           type: array
           items:
-            required: *ref_148
+            required: *ref_149
             properties:
-              clusterType: *ref_149
+              clusterType: *ref_150
               clusteredResults:
                 description: A list of results that should be displayed as associated with this result.
                 type: array
@@ -7594,16 +7629,16 @@ components:
         attachments:
           description: A (potentially partial) list of results representing documents attached to the main result document.
           type: array
-          items: &ref_154
-            example: *ref_37
-            required: *ref_38
+          items: &ref_155
+            example: *ref_38
+            required: *ref_39
             description: Result object
             type: object
             properties:
               allClusteredResults:
                 description: A list of results that should be displayed as associated with this result.
                 type: array
-                items: &ref_167
+                items: &ref_168
                   type: object
                   properties:
                     ClusterGroup:
@@ -7618,16 +7653,16 @@ components:
               attachments:
                 description: A (potentially partial) list of results representing documents attached to the main result document.
                 type: array
-                items: *ref_150
+                items: *ref_151
               backlinkResults:
                 description: A list of results that should be displayed as backlinks of this result in reverse chronological order.
                 type: array
-                items: *ref_150
-              clusterType: *ref_40
+                items: *ref_151
+              clusterType: *ref_41
               clusteredResults:
                 description: A list of results that should be displayed as associated with this result.
                 type: array
-                items: *ref_150
+                items: *ref_151
               document: *ref_8
               fullText:
                 description: The full body text of the result if not already contained in the snippets. Only populated for conversation results (e.g. results from a messaging app such as Slack).
@@ -7637,16 +7672,16 @@ components:
                 type: array
                 items:
                   type: string
-              mustIncludeSuggestions: *ref_146
+              mustIncludeSuggestions: *ref_147
               nativeAppUrl:
                 description: A deep link, if available, into the datasource's native application for the user's platform (e.g. slack://...).
                 type: string
               pins:
                 description: A list of pins associated with this search result.
                 type: array
-                items: *ref_151
-              prominence: *ref_41
-              querySuggestion: *ref_152
+                items: *ref_152
+              prominence: *ref_42
+              querySuggestion: *ref_153
               relatedResults:
                 description: A list of results related to this search result. Eg. for conversation results it contains individual messages from the conversation document which will be shown on SERP.
                 type: array
@@ -7654,7 +7689,7 @@ components:
               snippets:
                 description: Text content from the result document which contains search query terms, if available.
                 type: array
-                items: *ref_153
+                items: *ref_154
               title:
                 type: string
               url:
@@ -7662,13 +7697,13 @@ components:
         backlinkResults:
           description: A list of results that should be displayed as backlinks of this result in reverse chronological order.
           type: array
-          items: *ref_154
-        clusterType: *ref_40
+          items: *ref_155
+        clusterType: *ref_41
         clusteredResults:
           description: A list of results that should be displayed as associated with this result.
           type: array
-          items: *ref_154
-        document: *ref_155
+          items: *ref_155
+        document: *ref_156
         fullText:
           description: The full body text of the result if not already contained in the snippets. Only populated for conversation results (e.g. results from a messaging app such as Slack).
           type: string
@@ -7702,7 +7737,7 @@ components:
               audienceFilters:
                 description: Filters which restrict who should see the pinned document. Values are taken from the corresponding filters in people search.
                 type: array
-                items: *ref_126
+                items: *ref_127
               createTime:
                 format: date-time
                 type: string
@@ -7718,15 +7753,15 @@ components:
               updatedBy: *ref_0
             required:
               - documentId
-        prominence: *ref_41
+        prominence: *ref_42
         querySuggestion:
-          example: *ref_42
-          required: *ref_43
+          example: *ref_43
+          required: *ref_44
           properties:
             datasource:
               description: The datasource associated with the suggestion.
               type: string
-            inputDetails: *ref_44
+            inputDetails: *ref_45
             label:
               description: A user-facing description to display for the suggestion.
               type: string
@@ -7739,9 +7774,10 @@ components:
             ranges:
               description: The bolded ranges within the query of the QuerySuggestion.
               type: array
-              items: *ref_71
-            requestOptions: *ref_45
-            searchProviderInfo: *ref_46
+              items: *ref_78
+            requestOptions: *ref_46
+            resultTab: *ref_47
+            searchProviderInfo: *ref_48
           type: object
         relatedResults:
           description: A list of results related to this search result. Eg. for conversation results it contains individual messages from the conversation document which will be shown on SERP.
@@ -7755,13 +7791,13 @@ components:
                 deprecated: true
                 description: A truncated list of documents with this relation. TO BE DEPRECATED.
                 type: array
-                items: *ref_156
-              querySuggestion: *ref_157
+                items: *ref_157
+              querySuggestion: *ref_158
               relation:
                 description: How this document relates to the including entity.
-                enum: *ref_80
+                enum: *ref_81
                 type: string
-                x-speakeasy-enum-descriptions: *ref_81
+                x-speakeasy-enum-descriptions: *ref_82
               results:
                 description: A truncated list of documents associated with this relation. To be used in favor of `documents` because it contains a trackingToken.
                 type: array
@@ -7771,8 +7807,8 @@ components:
           description: Text content from the result document which contains search query terms, if available.
           type: array
           items:
-            example: *ref_140
-            required: *ref_141
+            example: *ref_141
+            required: *ref_142
             properties:
               mimeType:
                 description: The mime type of the snippets, currently either text/plain or text/html.
@@ -7780,7 +7816,7 @@ components:
               ranges:
                 description: The bolded ranges within text.
                 type: array
-                items: *ref_139
+                items: *ref_140
               snippet:
                 deprecated: true
                 description: A matching snippet from the document. Query term matches are marked by the unicode characters uE006 and uE007. Use 'text' field instead.
@@ -7809,7 +7845,7 @@ components:
         audienceFilters:
           description: Filters which restrict who should see the answer. Values are taken from the corresponding filters in people search.
           type: array
-          items: *ref_158
+          items: *ref_159
         boardId:
           deprecated: true
           description: The parent board ID of this Answer, or 0 if it's a floating Answer. Adding Answers to Answer Boards is no longer permitted.
@@ -7834,11 +7870,11 @@ components:
           description: A list of roles for this answer explicitly granted by an owner, editor, or admin.
           type: array
           items: *ref_14
-        sourceDocumentSpec: *ref_159
+        sourceDocumentSpec: *ref_160
         sourceType:
-          enum: *ref_160
+          enum: *ref_161
           type: string
-        author: *ref_83
+        author: *ref_84
         board:
           description: CollectionBaseMutableProperties object
           type: object
@@ -7856,7 +7892,7 @@ components:
             roles:
               description: A list of user roles for the Answer Board.
               type: array
-              items: *ref_84
+              items: *ref_85
             updateTime:
               format: date-time
               type: string
@@ -7867,7 +7903,7 @@ components:
         collections:
           description: The collections to which the answer belongs.
           type: array
-          items: *ref_161
+          items: *ref_162
         combinedAnswerText:
           type: object
           properties:
@@ -7888,7 +7924,7 @@ components:
           description: The document's document_category(.proto).
           type: string
         likes:
-          required: *ref_162
+          required: *ref_163
           properties:
             likedBy:
               type: array
@@ -7905,22 +7941,22 @@ components:
               description: The total number of likes for the answer.
               type: integer
           type: object
-        sourceDocument: *ref_155
+        sourceDocument: *ref_156
         updateTime:
           description: The time the answer was last updated in ISO format (ISO 8601).
           format: date-time
           type: string
-        updatedBy: *ref_83
+        updatedBy: *ref_84
         verification:
-          required: *ref_127
+          required: *ref_128
           properties:
             metadata:
-              required: *ref_129
+              required: *ref_130
               properties:
                 candidateVerifiers:
                   description: List of potential verifiers for the document e.g. old verifiers and/or users with view/edit permissions.
                   type: array
-                  items: *ref_47
+                  items: *ref_37
                 document: *ref_8
                 expirationTs:
                   description: The unix timestamp of the verification expiration if applicable (in seconds since epoch UTC).
@@ -7944,11 +7980,11 @@ components:
                 visitorCount:
                   description: Number of visitors to the document during included time periods.
                   type: array
-                  items: *ref_130
+                  items: *ref_131
               type: object
             state:
               description: The verification state for the document.
-              enum: *ref_128
+              enum: *ref_129
               type: string
           type: object
       required:
@@ -7962,11 +7998,11 @@ components:
             addedRoles:
               description: A list of user roles for the answer added by the owner.
               type: array
-              items: *ref_84
+              items: *ref_85
             audienceFilters:
               description: Filters which restrict who should see the answer. Values are taken from the corresponding filters in people search.
               type: array
-              items: *ref_158
+              items: *ref_159
             boardId:
               deprecated: true
               description: The parent board ID of this Answer, or 0 if it's a floating Answer. Adding Answers to Answer Boards is no longer permitted.
@@ -7986,21 +8022,21 @@ components:
             removedRoles:
               description: A list of user roles for the answer removed by the owner.
               type: array
-              items: *ref_84
+              items: *ref_85
             roles:
               description: A list of roles for this answer explicitly granted by an owner, editor, or admin.
               type: array
-              items: *ref_84
-            sourceDocumentSpec: *ref_159
+              items: *ref_85
+            sourceDocumentSpec: *ref_160
             sourceType:
-              enum: *ref_160
+              enum: *ref_161
               type: string
             author: *ref_2
-            board: *ref_163
+            board: *ref_164
             collections:
               description: The collections to which the answer belongs.
               type: array
-              items: &ref_164
+              items: &ref_165
                 type: object
                 properties:
                   Collection:
@@ -8026,7 +8062,7 @@ components:
               description: The document's document_category(.proto).
               type: string
             likes:
-              required: *ref_162
+              required: *ref_163
               properties:
                 likedBy:
                   type: array
@@ -8050,14 +8086,14 @@ components:
               type: string
             updatedBy: *ref_2
             verification:
-              required: *ref_127
+              required: *ref_128
               properties:
                 metadata:
                   type: object
                   description: VerificationMetadata object
                 state:
                   description: The verification state for the document.
-                  enum: *ref_128
+                  enum: *ref_129
                   type: string
               type: object
           required:
@@ -8079,7 +8115,7 @@ components:
             roles:
               description: A list of user roles for the Answer Board.
               type: array
-              items: &ref_165
+              items: &ref_166
                 type: object
                 properties:
                   UserRoleSpecification:
@@ -8092,7 +8128,7 @@ components:
           required:
             - id
             - description
-        app: *ref_132
+        app: *ref_133
         chat:
           description: Metadata of a Chat a user had with Glean Assistant. This contains no actual conversational content.
           properties:
@@ -8106,7 +8142,7 @@ components:
               description: Server Unix timestamp of the creation time (in seconds since epoch UTC).
               type: integer
             createdBy: *ref_33
-            icon: *ref_98
+            icon: *ref_99
             id:
               description: The opaque id of the Chat.
               type: string
@@ -8118,7 +8154,7 @@ components:
               type: integer
           type: object
         code:
-          example: *ref_99
+          example: *ref_100
           properties:
             fileName:
               type: string
@@ -8138,7 +8174,7 @@ components:
                   ranges:
                     description: Index ranges depicting matched sections of the line
                     type: array
-                    items: *ref_104
+                    items: *ref_105
                 type: object
             repoName:
               type: string
@@ -8159,14 +8195,14 @@ components:
             parentId:
               description: The parent of this Collection, or 0 if it's a top-level Collection.
               type: integer
-            thumbnail: *ref_116
+            thumbnail: *ref_117
             childCount:
               description: The number of children Collections. Separated from the actual children so we can grab the count without children.
               type: integer
             children:
               description: The children Collections of this Collection.
               type: array
-              items: *ref_164
+              items: *ref_165
             createTime:
               format: date-time
               type: string
@@ -8186,11 +8222,11 @@ components:
                   CollectionItem:
                     type: object
                     description: CollectionItem object
-            pinMetadata: *ref_118
+            pinMetadata: *ref_119
             roles:
               description: A list of user roles for the Collection.
               type: array
-              items: *ref_165
+              items: *ref_166
             shortcuts:
               description: The names of the shortcuts (Go Links) that point to this Collection.
               type: array
@@ -8213,14 +8249,14 @@ components:
             id:
               description: Unique identifier.
               type: string
-            metadata: *ref_102
+            metadata: *ref_103
             objectType:
               description: The type of the entity. Interpretation is specific to each datasource
               type: string
             roles:
               description: A list of user roles for the custom entity explicitly granted by the owner.
               type: array
-              items: *ref_165
+              items: *ref_166
             title:
               description: Title or name of the custom entity.
               type: string
@@ -8264,7 +8300,7 @@ components:
                   mergedCustomers:
                     description: A list of Customers.
                     type: array
-                    items: *ref_166
+                    items: *ref_167
                   metadata: *ref_76
                   notes:
                     description: User facing (potentially generated) notes about company.
@@ -8273,7 +8309,7 @@ components:
                   poc:
                     description: A list of POC for company.
                     type: array
-                    items: *ref_47
+                    items: *ref_37
                   startDate:
                     description: The date when the interaction with customer started.
                     format: date
@@ -8287,14 +8323,14 @@ components:
             poc:
               description: A list of POC for company.
               type: array
-              items: *ref_78
+              items: *ref_79
             startDate:
               description: The date when the interaction with customer started.
               format: date
               type: string
           type: object
-        disambiguation: *ref_134
-        document: *ref_96
+        disambiguation: *ref_135
+        document: *ref_97
         extractedQnA:
           properties:
             heading:
@@ -8304,15 +8340,15 @@ components:
               description: Question text that was matched to produce this result.
               type: string
             questionResult:
-              example: *ref_37
-              required: *ref_38
+              example: *ref_38
+              required: *ref_39
               description: Result object
               type: object
               properties:
                 allClusteredResults:
                   description: A list of results that should be displayed as associated with this result.
                   type: array
-                  items: *ref_167
+                  items: *ref_168
                 attachmentContext:
                   description: Additional context for the relationship between the result and the document it's attached to.
                   type: string
@@ -8322,16 +8358,16 @@ components:
                 attachments:
                   description: A (potentially partial) list of results representing documents attached to the main result document.
                   type: array
-                  items: *ref_150
+                  items: *ref_151
                 backlinkResults:
                   description: A list of results that should be displayed as backlinks of this result in reverse chronological order.
                   type: array
-                  items: *ref_150
-                clusterType: *ref_40
+                  items: *ref_151
+                clusterType: *ref_41
                 clusteredResults:
                   description: A list of results that should be displayed as associated with this result.
                   type: array
-                  items: *ref_150
+                  items: *ref_151
                 document: *ref_8
                 fullText:
                   description: The full body text of the result if not already contained in the snippets. Only populated for conversation results (e.g. results from a messaging app such as Slack).
@@ -8341,16 +8377,16 @@ components:
                   type: array
                   items:
                     type: string
-                mustIncludeSuggestions: *ref_146
+                mustIncludeSuggestions: *ref_147
                 nativeAppUrl:
                   description: A deep link, if available, into the datasource's native application for the user's platform (e.g. slack://...).
                   type: string
                 pins:
                   description: A list of pins associated with this search result.
                   type: array
-                  items: *ref_151
-                prominence: *ref_41
-                querySuggestion: *ref_152
+                  items: *ref_152
+                prominence: *ref_42
+                querySuggestion: *ref_153
                 relatedResults:
                   description: A list of results related to this search result. Eg. for conversation results it contains individual messages from the conversation document which will be shown on SERP.
                   type: array
@@ -8358,7 +8394,7 @@ components:
                 snippets:
                   description: Text content from the result document which contains search query terms, if available.
                   type: array
-                  items: *ref_153
+                  items: *ref_154
                 title:
                   type: string
                 url:
@@ -8380,17 +8416,17 @@ components:
             followupActions:
               description: List of follow-up actions generated for the given query or the generated question.
               type: array
-              items: *ref_103
+              items: *ref_104
             question:
               description: Search query rephrased into a question.
               type: string
             ranges:
               description: Answer subsections to mark with special formatting (citations, bolding etc)
               type: array
-              items: *ref_168
+              items: *ref_169
             status:
               description: Status of backend generating the answer
-              enum: *ref_105
+              enum: *ref_106
               type: string
             trackingToken:
               description: An opaque token that represents this particular result in this particular query. To be used for /feedback reporting.
@@ -8443,17 +8479,17 @@ components:
             url:
               type: string
           type: object
-        person: *ref_66
+        person: *ref_67
         prominence:
           description: The level of visual distinction that should be given to a result.
-          enum: *ref_135
+          enum: *ref_136
           type: string
-          x-speakeasy-enum-descriptions: *ref_136
-        querySuggestions: *ref_169
+          x-speakeasy-enum-descriptions: *ref_137
+        querySuggestions: *ref_170
         relatedDocuments:
           description: A list of documents related to this structured result.
           type: array
-          items: *ref_170
+          items: *ref_171
         relatedQuestion:
           properties:
             answer:
@@ -8465,7 +8501,7 @@ components:
             ranges:
               description: Subsections of the answer string to which some special formatting should be applied (eg. bold)
               type: array
-              items: *ref_168
+              items: *ref_169
           type: object
         shortcut:
           type: object
@@ -8473,7 +8509,7 @@ components:
             addedRoles:
               description: A list of user roles added for the Shortcut.
               type: array
-              items: *ref_84
+              items: *ref_85
             description:
               description: A short, plain text blurb to help people understand the intent of the shortcut.
               type: string
@@ -8489,7 +8525,7 @@ components:
             removedRoles:
               description: A list of user roles removed for the Shortcut.
               type: array
-              items: *ref_84
+              items: *ref_85
             unlisted:
               description: Whether this shortcut is unlisted or not. Unlisted shortcuts are visible to author + admins only.
               type: boolean
@@ -8525,7 +8561,7 @@ components:
             roles:
               description: A list of user roles for the Go Link.
               type: array
-              items: *ref_165
+              items: *ref_166
             title:
               description: Title for the Go Link
               type: string
@@ -8535,8 +8571,8 @@ components:
           description: Any snippets associated to the populated object.
           type: array
           items:
-            example: *ref_140
-            required: *ref_141
+            example: *ref_141
+            required: *ref_142
             properties:
               mimeType:
                 description: The mime type of the snippets, currently either text/plain or text/html.
@@ -8544,7 +8580,7 @@ components:
               ranges:
                 description: The bolded ranges within text.
                 type: array
-                items: *ref_71
+                items: *ref_78
               snippet:
                 deprecated: true
                 description: A matching snippet from the document. Query term matches are marked by the unicode characters uE006 and uE007. Use 'text' field instead.
@@ -8561,7 +8597,7 @@ components:
             type: object
         source:
           description: Source context for this result. Possible values depend on the result type.
-          enum: *ref_142
+          enum: *ref_143
           type: string
         team:
           type: object
@@ -8595,7 +8631,7 @@ components:
             datasourceProfiles:
               description: The datasource profiles of the team
               type: array
-              items: *ref_108
+              items: *ref_109
             department:
               description: An organizational unit where everyone has a similar task, e.g. `Engineering`.
               type: string
@@ -8605,7 +8641,7 @@ components:
             emails:
               description: The emails for this team
               type: array
-              items: *ref_109
+              items: *ref_110
             externalLink:
               description: Link to a team page on the internet or your company's intranet
               format: uri
@@ -8642,7 +8678,7 @@ components:
             status:
               default: PROCESSED
               description: whether this team is fully processed or there are still unprocessed operations that'll affect it
-              enum: *ref_110
+              enum: *ref_111
               type: string
           required:
             - id
@@ -8652,14 +8688,14 @@ components:
           type: string
       type: object
     DocumentMetadata:
-      example: *ref_85
+      example: *ref_86
       properties:
         ancestors:
           description: A list of documents that are ancestors of this document in the hierarchy of the document's datasource, for example parent folders or containers. Ancestors can be of different types and some may not be indexed. Higher level ancestors appear earlier in the list.
           type: array
-          items: *ref_171
-        assignedTo: *ref_66
-        author: *ref_66
+          items: *ref_172
+        assignedTo: *ref_67
+        author: *ref_67
         collections:
           description: A list of collections that the document belongs to.
           type: array
@@ -8667,18 +8703,18 @@ components:
             description: CollectionBaseMutableProperties object
             type: object
             properties:
-              adminLocked: *ref_172
-              allowedDatasource: *ref_173
-              icon: *ref_174
-              parentId: *ref_175
-              thumbnail: *ref_116
+              adminLocked: *ref_173
+              allowedDatasource: *ref_174
+              icon: *ref_175
+              parentId: *ref_176
+              thumbnail: *ref_117
               childCount:
                 description: The number of children Collections. Separated from the actual children so we can grab the count without children.
                 type: integer
               children:
                 description: The children Collections of this Collection.
                 type: array
-                items: *ref_119
+                items: *ref_120
               createTime:
                 format: date-time
                 type: string
@@ -8692,12 +8728,12 @@ components:
               items:
                 description: The items in this Collection.
                 type: array
-                items: *ref_176
-              pinMetadata: *ref_118
+                items: *ref_177
+              pinMetadata: *ref_119
               roles:
                 description: A list of user roles for the Collection.
                 type: array
-                items: *ref_84
+                items: *ref_85
               shortcuts:
                 description: The names of the shortcuts (Go Links) that point to this Collection.
                 type: array
@@ -8716,7 +8752,7 @@ components:
           type: array
           items:
             type: string
-        contactPerson: *ref_66
+        contactPerson: *ref_67
         container:
           description: The name of the container (higher level parent, not direct parent) of the result. Interpretation is specific to each datasource (e.g. Channels for Slack, Project for Jira). cf. parentId
           type: string
@@ -8726,7 +8762,7 @@ components:
         createTime:
           format: date-time
           type: string
-        customData: *ref_87
+        customData: *ref_88
         datasource:
           type: string
         datasourceId:
@@ -8744,7 +8780,7 @@ components:
         documentIdHash:
           description: Hash of the Glean Document ID.
           type: string
-        indexStatus: *ref_88
+        indexStatus: *ref_89
         interactions:
           properties:
             numComments:
@@ -8771,7 +8807,7 @@ components:
                     type: boolean
                   reactors:
                     type: array
-                    items: *ref_47
+                    items: *ref_37
                   type:
                     type: string
                 type: object
@@ -8780,7 +8816,7 @@ components:
               type: array
               items:
                 description: Search endpoint will only fill out numDays ago since that's all we need to display shared badge; docmetadata endpoint will fill out all the fields so that we can display shared badge tooltip
-                required: *ref_95
+                required: *ref_96
                 properties:
                   numDaysAgo:
                     description: The number of days that has passed since the share happened
@@ -8788,7 +8824,7 @@ components:
                   sharer: *ref_0
                   sharingDocument: *ref_8
                 type: object
-            visitorCount: *ref_125
+            visitorCount: *ref_126
           type: object
         labels:
           description: A list of tags for the document. Interpretation is datasource specific.
@@ -8807,14 +8843,14 @@ components:
         objectType:
           description: The type of the result. Interpretation is specific to each datasource. (e.g. for Jira issues, this is the issue type such as Bug or Feature Request).
           type: string
-        owner: *ref_66
+        owner: *ref_67
         parentId:
           description: The id of the direct parent of the result. Interpretation is specific to each datasource (e.g. parent issue for Jira). cf. container
           type: string
         path:
           description: For file datasources like onedrive/github etc this has the path to the file
           type: string
-        permissions: *ref_89
+        permissions: *ref_90
         pins:
           description: A list of stars associated with this result.  "Pin" is an older name.
           type: array
@@ -8825,7 +8861,7 @@ components:
               audienceFilters:
                 description: Filters which restrict who should see the pinned document. Values are taken from the corresponding filters in people search.
                 type: array
-                items: *ref_126
+                items: *ref_127
               createTime:
                 format: date-time
                 type: string
@@ -8850,30 +8886,30 @@ components:
           items:
             type: object
             properties:
-              addedRoles: *ref_177
-              description: *ref_178
-              destinationDocumentId: *ref_179
-              destinationUrl: *ref_180
-              inputAlias: *ref_181
-              removedRoles: *ref_182
-              unlisted: *ref_183
-              urlTemplate: *ref_184
-              createTime: *ref_185
+              addedRoles: *ref_178
+              description: *ref_179
+              destinationDocumentId: *ref_180
+              destinationUrl: *ref_181
+              inputAlias: *ref_182
+              removedRoles: *ref_183
+              unlisted: *ref_184
+              urlTemplate: *ref_185
+              createTime: *ref_186
               createdBy: *ref_0
               destinationDocument: *ref_8
-              editUrl: *ref_186
-              intermediateUrl: *ref_187
-              isExternal: *ref_188
-              updateTime: *ref_189
+              editUrl: *ref_187
+              intermediateUrl: *ref_188
+              isExternal: *ref_189
+              updateTime: *ref_190
               updatedBy: *ref_0
-              viewPrefix: *ref_190
+              viewPrefix: *ref_191
               alias:
                 description: canonical link text following go/ prefix where hyphen/underscore is removed.
                 type: string
               roles:
                 description: A list of user roles for the Go Link.
                 type: array
-                items: *ref_84
+                items: *ref_85
               title:
                 description: Title for the Go Link
                 type: string
@@ -8888,16 +8924,16 @@ components:
         superContainerId:
           description: The Glean Document ID of the super container. Super container represents a broader abstraction that contains many containers. For example, whereas container might refer to a folder, super container would refer to a drive.
           type: string
-        thumbnail: *ref_90
+        thumbnail: *ref_91
         updateTime:
           format: date-time
           type: string
-        updatedBy: *ref_66
+        updatedBy: *ref_67
         verification:
-          required: *ref_127
+          required: *ref_128
           properties:
             metadata:
-              required: *ref_129
+              required: *ref_130
               properties:
                 candidateVerifiers:
                   description: List of potential verifiers for the document e.g. old verifiers and/or users with view/edit permissions.
@@ -8926,16 +8962,16 @@ components:
                 visitorCount:
                   description: Number of visitors to the document during included time periods.
                   type: array
-                  items: *ref_130
+                  items: *ref_131
               type: object
             state:
               description: The verification state for the document.
-              enum: *ref_128
+              enum: *ref_129
               type: string
           type: object
-        viewerInfo: *ref_91
-        visibility: *ref_92
-        visitCount: *ref_93
+        viewerInfo: *ref_92
+        visibility: *ref_93
+        visitCount: *ref_94
       type: object
   securitySchemes:
     APIToken:
