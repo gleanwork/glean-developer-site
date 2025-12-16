@@ -76,6 +76,29 @@ function parseDateString(dateStr: string): {
   return { year, month: month - 1, day }; // month is 0-indexed
 }
 
+/** Get all unique future removal dates from the deprecation data */
+function getAllFutureRemovalDates(endpoints: EndpointGroupType[]): Date[] {
+  const now = new Date();
+  const dateSet = new Set<string>();
+
+  for (const group of endpoints) {
+    for (const dep of group.deprecations) {
+      const depDate = parseDateString(dep.removal);
+      const removalDate = new Date(depDate.year, depDate.month, depDate.day);
+      if (removalDate > now) {
+        dateSet.add(dep.removal);
+      }
+    }
+  }
+
+  return Array.from(dateSet)
+    .map((dateStr) => {
+      const { year, month, day } = parseDateString(dateStr);
+      return new Date(year, month, day);
+    })
+    .sort((a, b) => a.getTime() - b.getTime());
+}
+
 /** Group deprecations by removal date, then by endpoint */
 function groupDeprecationsByDate(
   endpoints: EndpointGroupType[],
@@ -109,10 +132,11 @@ function groupDeprecationsByDate(
     return sections;
   }
 
-  // For specific date filter or "all"
+  // For "all", use all unique future removal dates from the data
+  // For specific date filter, use the matching date from the dropdown options
   const datesToShow =
     filter === 'all'
-      ? removalDates
+      ? getAllFutureRemovalDates(endpoints)
       : removalDates.filter((d) => formatDateAsIso(d) === filter);
 
   for (const removalDate of datesToShow) {
