@@ -17,4 +17,4 @@ The guide covers:
 
 The change is additive and backward compatible—no action required unless you want to render the richer citation experience.
 
-Visit the [Deep Linked Citations guide](/docs/guides/chat/deep-linked-citations) for more information.
+Visit the [Deep Linked Citations guide](../guides/chat/deep-linked-citations) for more information.
