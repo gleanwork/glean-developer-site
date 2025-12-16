@@ -1,0 +1,313 @@
+---
+title: "Deep-Linked Citations"
+description: "Display direct quotes with context in your custom Chat UI"
+---
+
+# Deep-Linked Citations
+
+Deep-linked citations enhance the standard citation experience by providing **direct quotes** from source documents that support the AI's response, along with surrounding context and (where available) page numbers.
+
+When enabled, users can:
+- See the **exact text** from a source document that supports each statement
+- View **surrounding context** to better understand the quote
+- Navigate to the **specific location** in the source document (when supported)
+
+## Prerequisites
+
+- Your Chat integration uses the `/chat` API endpoint
+- Your deployment has deep-linked citations enabled (contact your Glean administrator)
+- Supported model configurations (GPT or Claude-based Agentic Loop)
+
+## How It Works
+
+Deep-linked citations augment the standard citation response with additional snippet information:
+
+1. Each citation in the Chat response may include a `snippets` array
+2. Each snippet contains the direct quote text and optional metadata like page number
+3. To display context around snippets, fetch the full document content via `/getdocuments`
+4. Locate the snippet text within the document content to render highlighted quotes with context
+
+## Response Structure
+
+The `/chat` response includes citations attached to message fragments. When deep-linked citations are available, each citation may include snippet information:
+
+```json
+{
+  "messages": [
+    {
+      "author": "GLEAN_AI",
+      "fragments": [
+        { "text": "Based on our policy, employees receive 20 days of PTO annually. " },
+        {
+          "citation": {
+            "sourceDocument": {
+              "id": "GDRIVE_abc123",
+              "datasource": "gdrive",
+              "title": "Employee Handbook 2024",
+              "url": "https://docs.google.com/document/d/abc123"
+            },
+            "snippets": [
+              {
+                "text": "All full-time employees are entitled to 20 days of paid time off per calendar year",
+                "pageNumber": 12
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
+```
+
+### Key Fields
+
+| Field | Description |
+|-------|-------------|
+| `citation.sourceDocument` | The document being cited (always present) |
+| `citation.snippets` | Array of direct quote snippets (optional, present when deep-linking is available) |
+| `snippets[].text` | The exact quoted text from the source document |
+| `snippets[].pageNumber` | Page number where the quote appears (optional, datasource-dependent) |
+
+## Implementation Guide
+
+### Step 1: Parse Citation Snippets
+
+Update your citation parsing to handle the new `snippets` field:
+
+```typescript
+interface Snippet {
+  text: string;
+  pageNumber?: number;
+}
+
+interface Citation {
+  sourceDocument: {
+    id: string;
+    datasource: string;
+    title: string;
+    url: string;
+  };
+  snippets?: Snippet[];
+}
+
+function hasDeepLinkedSnippets(citation: Citation): boolean {
+  return Boolean(citation.snippets && citation.snippets.length > 0);
+}
+```
+
+### Step 2: Fetch Document Content
+
+To display contextual previews around snippets, fetch the full document text using the `/getdocuments` endpoint with `includeFields: ["DOCUMENT_CONTENT"]`:
+
+```typescript
+async function fetchDocumentContent(documentId: string): Promise<string> {
+  const response = await fetch('/rest/api/v1/getdocuments', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      documentSpecs: [{ id: documentId }],
+      includeFields: ['DOCUMENT_CONTENT'],
+    }),
+  });
+
+  const data = await response.json();
+  const doc = data.documents?.[documentId];
+
+  if (!doc || doc.error) {
+    return '';
+  }
+
+  // Join the full text list into a single string
+  const fullTextList = doc.content?.fullTextList || [];
+  return fullTextList.join('\n\n');
+}
+```
+
+### Step 3: Find Surrounding Context
+
+Locate each snippet within the document content and extract surrounding text:
+
+```typescript
+interface ContextualSnippet {
+  precedingText: string;
+  citedText: string;
+  followingText: string;
+  pageNumber?: number;
+}
+
+function findSurroundingContext(
+  documentContent: string,
+  snippetText: string,
+  contextLength: number = 200
+): { preceding: string; following: string } | null {
+  const index = documentContent.indexOf(snippetText);
+
+  if (index === -1) {
+    return null;
+  }
+
+  const start = Math.max(0, index - contextLength);
+  const end = Math.min(
+    documentContent.length,
+    index + snippetText.length + contextLength
+  );
+
+  return {
+    preceding: documentContent.slice(start, index),
+    following: documentContent.slice(index + snippetText.length, end),
+  };
+}
+
+function buildContextualSnippets(
+  documentContent: string,
+  snippets: Snippet[]
+): ContextualSnippet[] {
+  return snippets.map((snippet) => {
+    const context = findSurroundingContext(documentContent, snippet.text);
+
+    return {
+      precedingText: context?.preceding || '',
+      citedText: snippet.text,
+      followingText: context?.following || '',
+      pageNumber: snippet.pageNumber,
+    };
+  });
+}
+```
+
+### Step 4: Render the Citation Card
+
+Display the citation with highlighted quotes and context:
+
+```tsx
+function CitationCard({ citation }: { citation: Citation }) {
+  const [documentContent, setDocumentContent] = useState<string>('');
+  const [loading, setLoading] = useState(false);
+
+  const hasSnippets = hasDeepLinkedSnippets(citation);
+  const pageNumber = citation.snippets?.find(s => s.pageNumber)?.pageNumber;
+
+  // Lazy-load document content on hover or expand
+  const loadContent = async () => {
+    if (documentContent || loading) return;
+    setLoading(true);
+    const content = await fetchDocumentContent(citation.sourceDocument.id);
+    setDocumentContent(content);
+    setLoading(false);
+  };
+
+  const contextualSnippets = documentContent && hasSnippets
+    ? buildContextualSnippets(documentContent, citation.snippets!)
+    : [];
+
+  return (
+    <div className="citation-card" onMouseEnter={loadContent}>
+      {/* Document header */}
+      <div className="citation-header">
+        <a href={citation.sourceDocument.url} target="_blank" rel="noopener">
+          <strong>{citation.sourceDocument.title}</strong>
+        </a>
+        {pageNumber && <span className="page-number">Page {pageNumber}</span>}
+      </div>
+
+      {/* Contextual snippets */}
+      {hasSnippets && contextualSnippets.length > 0 ? (
+        <div className="snippet-preview">
+          {contextualSnippets.map((snippet, index) => (
+            <div key={index} className="contextualized-snippet">
+              {snippet.precedingText && (
+                <span className="context">...{snippet.precedingText}</span>
+              )}
+              <mark className="cited-text">{snippet.citedText}</mark>
+              {snippet.followingText && (
+                <span className="context">{snippet.followingText}...</span>
+              )}
+            </div>
+          ))}
+        </div>
+      ) : hasSnippets ? (
+        // Snippets available but no context match - show raw snippets
+        <div className="snippet-preview">
+          {citation.snippets!.map((snippet, index) => (
+            <div key={index} className="snippet">
+              {snippet.text}
+            </div>
+          ))}
+        </div>
+      ) : (
+        // No deep-linked snippets - fallback to document-level citation
+        <div className="document-preview">
+          Click to view document
+        </div>
+      )}
+    </div>
+  );
+}
+```
+
+## Best Practices
+
+### Lazy Loading
+
+Fetch document content only when needed (on hover or expand) to minimize API calls:
+
+```typescript
+const contentCache = new Map<string, string>();
+
+async function getCachedContent(documentId: string): Promise<string> {
+  if (contentCache.has(documentId)) {
+    return contentCache.get(documentId)!;
+  }
+
+  const content = await fetchDocumentContent(documentId);
+  contentCache.set(documentId, content);
+  return content;
+}
+```
+
+### Graceful Fallback
+
+Always handle cases where deep-linked snippets are not available:
+
+```typescript
+function renderCitation(citation: Citation) {
+  if (hasDeepLinkedSnippets(citation)) {
+    // Render with snippet preview
+    return renderWithSnippets(citation);
+  }
+
+  // Fall back to document-level citation
+  return renderDocumentCitation(citation);
+}
+```
+
+### Text Cleanup
+
+Clean up the surrounding context for better readability:
+
+```typescript
+function cleanupContext(text: string): string {
+  return text
+    // Collapse multiple whitespace/newlines
+    .replace(/\s+/g, ' ')
+    // Trim leading/trailing whitespace
+    .trim();
+}
+```
+
+## Limitations
+
+- **Availability**: Deep-linked citations are only provided for enterprise content, not for world-knowledge or web search results
+- **Model Support**: Currently available with GPT and Claude-based configurations in Agentic Loop mode
+- **Page Numbers**: Page number support varies by datasource (PDFs, presentations) and may not be available for all document types
+- **Complex Formatting**: Tables, code blocks, and heavily formatted content may render as plain text in previews
+
+## Related Documentation
+
+- [Chat API Reference](/api/client-api/chat/overview)
+- [Read Documents API](/api/client-api/documents/getdocuments)
+- [Building Chat Applications](/guides/chat/overview)
