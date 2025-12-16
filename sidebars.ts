@@ -108,11 +108,6 @@ const baseSidebars: SidebarsConfig = {
               id: 'guides/chat/chatbot-example',
               label: 'Chatbot Example',
             },
-            {
-              type: 'doc',
-              id: 'guides/chat/deep-linked-citations',
-              label: 'Deep Linked Citations',
-            },
           ],
         },
         {
@@ -254,6 +249,21 @@ const baseSidebars: SidebarsConfig = {
             icon: 'mcp',
             iconSet: 'glean',
           },
+        },
+        {
+          type: 'category',
+          label: 'Migration Guides',
+          customProps: {
+            icon: 'RefreshCw',
+            iconSet: 'feather',
+          },
+          items: [
+            {
+              type: 'doc',
+              id: 'guides/chat/deep-linked-citations',
+              label: 'Deep Linked Citations',
+            },
+          ],
         },
       ],
     },
