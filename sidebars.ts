@@ -108,6 +108,11 @@ const baseSidebars: SidebarsConfig = {
               id: 'guides/chat/chatbot-example',
               label: 'Chatbot Example',
             },
+            {
+              type: 'doc',
+              id: 'guides/chat/deep-linked-citations',
+              label: 'Deep Linked Citations',
+            },
           ],
         },
         {
