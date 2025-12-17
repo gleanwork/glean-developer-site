@@ -13,6 +13,8 @@ import TabItem from '@theme/TabItem';
 
 This guide explains how to update a custom chat frontend that uses Glean's `/chat` REST API to take advantage of **deep-linked (direct-quote) citations**, while remaining backward compatible with existing responses.
 
+Deep-linked citations are available starting Q4 2025. REST API support is currently in Beta.
+
 ## Overview
 
 Deep-linked citations upgrade Glean Chat's citations from **document-level** to **text-level**:
@@ -30,10 +32,12 @@ Deep-linked citations are available when all of the following are true:
 
 <CardGroup cols={2}>
   <Card title="Agentic Loop Runtime" icon="Cpu">
-    The `/chat` request must be running on Agentic Loop (the same runtime used by the Glean UI)
+    Your `/chat` request must use Agentic Loop. Set `agentConfig.agent` to `"FAST"` or `"ADVANCED"` in your request.
+    If omitted, requests default to Chat V2 which does not support deep-linked citations.
   </Card>
-  <Card title="Supported LLM Configuration" icon="Brain">
-    The deployment must use a supported LLM configuration for Agentic Loop
+  <Card title="Supported LLM Models" icon="Brain">
+    Deep-linked citations are supported with OpenAI (GPT) and Anthropic (Claude) models.
+    Gemini is not currently supported.
   </Card>
 </CardGroup>
 
@@ -84,33 +88,40 @@ When deep-linked citations are available for a given citation, the fragment's `c
 
 ```json
 {
-  "citation": {
-    "sourceDocument": {
-      "id": "GMAILNATIVE_THREAD_197cc5e9c51a13e1",
-      "datasource": "gmailnative",
-      "connectorType": "FEDERATED_SEARCH",
-      "title": "Request to get added to ChatGPT Teams to try Codex",
-      "url": "https://mail.google.com/mail/u/#inbox/197cc5e9c51a13e1"
-    },
-    "referenceRanges": [
-      {
-        "textRange": {
-          "startIndex": 50,
-          "endIndex": 120,
-          "type": "LINK"
-        },
-        "snippets": [
-          {
-            "text": "I'd like to try out Codex for engineering tasks — is it possible to get added",
-            "pageNumber": 1
-          },
-          {
-            "text": "to the ChatGPT Teams account?"
+  "messages": [
+    {
+      // ...
+      "fragments": [
+        // ...
+        {
+          "citation": {
+            "sourceDocument": { /* ... */ },
+            // highlight-start
+            "referenceRanges": [
+              {
+                "textRange": {
+                  "startIndex": 50,
+                  "endIndex": 120,
+                  "type": "LINK"
+                },
+                "snippets": [
+                  {
+                    "text": "I'd like to try out Codex for engineering tasks...",
+                    "pageNumber": 1
+                  },
+                  {
+                    "text": "to the ChatGPT Teams account?"
+                  }
+                ]
+              }
+            ]
+            // highlight-end
           }
-        ]
-      }
-    ]
-  }
+        }
+      ],
+      "citations": [ /* ... */ ]
+    }
+  ]
 }
 ```
 
@@ -119,10 +130,10 @@ When deep-linked citations are available for a given citation, the fragment's `c
 | Field | Description |
 |-------|-------------|
 | `referenceRanges[]` | Optional array. Many citations will continue to be document-level only. |
-| `textRange` | Describes which part of the assistant response the citation is attached to (existing behavior). |
-| `snippets[]` | **New**: An array of direct-quote snippets from the source document that support the statement. |
-| `snippet.text` | The quoted text from the source document. |
-| `snippet.pageNumber` | Optional page number where the snippet appears. |
+| `referenceRanges[].textRange` | Describes which part of the assistant response the citation is attached to (existing behavior). |
+| `referenceRanges[].snippets[]` | **New**: An array of direct-quote snippets from the source document that support the statement. |
+| `referenceRanges[].snippets[].text` | The quoted text from the source document. |
+| `referenceRanges[].snippets[].pageNumber` | Optional page number where the snippet appears. |
 
 Each `snippet` is a `SearchResultSnippet` object from the public search/documents API, shared with other Glean surfaces. At minimum it has `text: string`, but may also include `pageNumber: number` and other metadata such as snippet identifiers.
 
@@ -153,7 +164,7 @@ If you only want to stay compatible without changing your UI:
 
 ### Full Migration
 
-The goal is to mirror the Glean UI behavior: hovering a citation shows the **direct quote** that backs the statement, plus surrounding context and (where available) a **page number** and preview.
+If your goal is to mirror the Glean UI behavior, you'll render hover cards that show the **direct quote** backing each statement, plus surrounding context and (where available) a **page number** and preview.
 
 **High-level flow for each assistant message:**
 
@@ -321,23 +332,6 @@ function CitationPopover({ citation }: { citation: any }) {
 | **Coverage** | Deep-linked citations are not provided for world-knowledge or web-search-only answers. Some citations may intentionally fall back to document-level when matching is uncertain, to avoid misleading users |
 
 Design your UI to gracefully fall back to document-level behavior when no `referenceRanges` / `snippets` are present.
-
-## Backward Compatibility
-
-The `/chat` response format change is **additive**:
-
-- No existing fields are removed or renamed
-- New fields are optional and can be ignored safely
-
-:::note
-The migration from Chat V2 to Agentic Loop for the REST API is logically separate from deep-linked citations. However, deep-linked citations are only available on Agentic Loop. Customers may notice response quality differences when switching from Chat V2 to Agentic Loop, independent of citation changes.
-:::
-
-**Key points for API clients:**
-
-- **No immediate changes are required**—you only need to update your UI if you want to surface direct-quote snippets
-- Regenerate from the latest OpenAPI spec for `/chat` and `/getdocuments`
-- Handle unknown/extra fields defensively to accommodate future enhancements (e.g., more snippet metadata, richer deep-link URLs)
 
 ## Migration Checklist
 
