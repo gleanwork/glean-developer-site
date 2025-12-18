@@ -250,6 +250,21 @@ const baseSidebars: SidebarsConfig = {
             iconSet: 'glean',
           },
         },
+        {
+          type: 'category',
+          label: 'Migration Guides',
+          customProps: {
+            icon: 'RefreshCw',
+            iconSet: 'feather',
+          },
+          items: [
+            {
+              type: 'doc',
+              id: 'guides/chat/deep-linked-citations',
+              label: 'Deep Linked Citations',
+            },
+          ],
+        },
       ],
     },
     {
