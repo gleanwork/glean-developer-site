@@ -265,6 +265,110 @@ response, err := client.Client.Chat.Create(ctx, &glean.ChatRequest{
 })
 ```
 
+### OAuth Authentication
+
+OAuth allows you to use access tokens from your identity provider (Google, Azure, Okta, etc.) instead of Glean-issued tokens.
+
+:::info Prerequisites
+- OAuth enabled in [Glean Admin > Third-Party OAuth](https://app.glean.com/admin/setup/third-party-oauth)
+- Your OAuth Client ID registered with Glean
+- See [OAuth Setup Guide](https://docs.glean.com/administration/oauth/oauth-idp) for admin configuration
+:::
+
+OAuth requests require these headers:
+
+| Header | Value |
+|--------|-------|
+| `Authorization` | `Bearer <oauth_access_token>` |
+| `X-Glean-Auth-Type` | `OAUTH` |
+
+#### Example: Authorization Code Flow
+
+This example uses [golang.org/x/oauth2](https://pkg.go.dev/golang.org/x/oauth2):
+
+```go
+package main
+
+import (
+  "context"
+  "encoding/json"
+  "net/http"
+  "os"
+
+  "golang.org/x/oauth2"
+  glean "github.com/gleanwork/api-client-go"
+)
+
+var oauthConfig = &oauth2.Config{
+  ClientID:     os.Getenv("OAUTH_CLIENT_ID"),
+  ClientSecret: os.Getenv("OAUTH_CLIENT_SECRET"),
+  RedirectURL:  "http://localhost:8080/callback",
+  Scopes:       []string{"openid", "email"},
+  Endpoint: oauth2.Endpoint{
+    AuthURL:  os.Getenv("OAUTH_AUTH_URL"),
+    TokenURL: os.Getenv("OAUTH_TOKEN_URL"),
+  },
+}
+
+// oauthTransport adds OAuth headers to all requests
+type oauthTransport struct {
+  token     string
+  transport http.RoundTripper
+}
+
+func (t *oauthTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+  req.Header.Set("Authorization", "Bearer "+t.token)
+  req.Header.Set("X-Glean-Auth-Type", "OAUTH")
+  return t.transport.RoundTrip(req)
+}
+
+func main() {
+  http.HandleFunc("/login", handleLogin)
+  http.HandleFunc("/callback", handleCallback)
+  http.ListenAndServe(":8080", nil)
+}
+
+func handleLogin(w http.ResponseWriter, r *http.Request) {
+  url := oauthConfig.AuthCodeURL("state")
+  http.Redirect(w, r, url, http.StatusTemporaryRedirect)
+}
+
+func handleCallback(w http.ResponseWriter, r *http.Request) {
+  code := r.URL.Query().Get("code")
+  token, err := oauthConfig.Exchange(context.Background(), code)
+  if err != nil {
+    http.Error(w, err.Error(), http.StatusInternalServerError)
+    return
+  }
+
+  // Create HTTP client with OAuth headers
+  httpClient := &http.Client{
+    Transport: &oauthTransport{
+      token:     token.AccessToken,
+      transport: http.DefaultTransport,
+    },
+  }
+
+  // Create Glean client with custom HTTP client
+  client := glean.New(
+    glean.WithInstance(os.Getenv("GLEAN_INSTANCE")),
+    glean.WithClient(httpClient),
+  )
+
+  results, err := client.Client.Search.Query(r.Context(), "quarterly reports", nil)
+  if err != nil {
+    http.Error(w, err.Error(), http.StatusInternalServerError)
+    return
+  }
+
+  json.NewEncoder(w).Encode(results)
+}
+```
+
+:::tip
+Access tokens typically expire after ~1 hour. For production use, use `oauth2.Config.TokenSource` for automatic refresh.
+:::
+
 ## Error Handling
 
 ```go
