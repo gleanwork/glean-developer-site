@@ -273,12 +273,54 @@ glean:
 ```
 
 ```java
+// SecurityConfig.java - Enable PKCE for confidential clients
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
+import org.springframework.security.oauth2.client.web.DefaultOAuth2AuthorizationRequestResolver;
+import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestCustomizers;
+import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestResolver;
+import org.springframework.security.web.SecurityFilterChain;
+
+@Configuration
+public class SecurityConfig {
+
+  @Bean
+  public SecurityFilterChain securityFilterChain(HttpSecurity http,
+      ClientRegistrationRepository clientRegistrationRepository) throws Exception {
+
+    // Create resolver with PKCE enabled
+    OAuth2AuthorizationRequestResolver pkceResolver =
+        pkceAuthorizationRequestResolver(clientRegistrationRepository);
+
+    http.oauth2Login(oauth2 -> oauth2
+        .authorizationEndpoint(auth -> auth
+            .authorizationRequestResolver(pkceResolver)));
+
+    return http.build();
+  }
+
+  private OAuth2AuthorizationRequestResolver pkceAuthorizationRequestResolver(
+      ClientRegistrationRepository repo) {
+    var resolver = new DefaultOAuth2AuthorizationRequestResolver(repo, "/oauth2/authorization");
+    resolver.setAuthorizationRequestCustomizer(OAuth2AuthorizationRequestCustomizers.withPkce());
+    return resolver;
+  }
+}
+```
+
+```java
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.annotation.RegisteredOAuth2AuthorizedClient;
 import org.springframework.web.bind.annotation.*;
 import com.glean.api_client.glean_api_client.Glean;
 import com.glean.api_client.glean_api_client.models.components.*;
+import com.glean.api_client.glean_api_client.utils.HTTPClient;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.util.List;
 import java.util.Map;
 
@@ -295,20 +337,33 @@ public class GleanOAuthController {
 
     String accessToken = oauthClient.getAccessToken().getTokenValue();
 
-    // Create Glean client and pass OAuth headers per-request
+    // Create custom HTTP client that adds OAuth headers
+    HTTPClient oauthHttpClient = new HTTPClient() {
+      private final HttpClient client = HttpClient.newHttpClient();
+
+      @Override
+      public HttpResponse<java.io.InputStream> send(HttpRequest request)
+          throws java.io.IOException, InterruptedException {
+        HttpRequest oauthRequest = HttpRequest.newBuilder(request, (n, v) -> true)
+            .header("Authorization", "Bearer " + accessToken)
+            .header("X-Glean-Auth-Type", "OAUTH")
+            .build();
+        return client.send(oauthRequest, HttpResponse.BodyHandlers.ofInputStream());
+      }
+    };
+
+    // Create Glean client with custom HTTP client
     Glean glean = Glean.builder()
         .instance(gleanInstance)
+        .client(oauthHttpClient)
         .build();
 
     var response = glean.client().search().query()
-        .query(query)
-        .pageSize(10)
-        .call(new com.glean.api_client.glean_api_client.utils.Options() {{
-          headers(Map.of(
-              "Authorization", "Bearer " + accessToken,
-              "X-Glean-Auth-Type", "OAUTH"
-          ));
-        }});
+        .searchRequest(SearchRequest.builder()
+            .query(query)
+            .pageSize(10)
+            .build())
+        .call();
 
     return Map.of("results", response.searchResponse()
         .map(SearchResponse::results)

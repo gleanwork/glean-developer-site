@@ -235,6 +235,7 @@ import httpx
 from flask import Flask, redirect, request, jsonify
 from authlib.integrations.flask_client import OAuth
 from glean.api_client import Glean
+from glean.api_client import models
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
@@ -246,6 +247,7 @@ oauth.register(
     client_secret=os.getenv('OAUTH_CLIENT_SECRET'),
     server_metadata_url=os.getenv('OAUTH_ISSUER') + '/.well-known/openid-configuration',
     client_kwargs={'scope': 'openid email'},
+    code_challenge_method='S256',  # Enable PKCE
 )
 
 @app.route('/login')
@@ -269,8 +271,10 @@ def callback():
         client=http_client,
     ) as glean:
         results = glean.client.search.query(
-            query='quarterly reports',
-            page_size=10,
+            search_request=models.SearchRequest(
+                query='quarterly reports',
+                page_size=10,
+            )
         )
 
     return jsonify(results.to_dict())

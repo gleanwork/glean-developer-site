@@ -300,6 +300,7 @@ import (
 
   "golang.org/x/oauth2"
   glean "github.com/gleanwork/api-client-go"
+  "github.com/gleanwork/api-client-go/models/components"
 )
 
 var oauthConfig = &oauth2.Config{
@@ -313,10 +314,10 @@ var oauthConfig = &oauth2.Config{
   },
 }
 
-// In-memory state store (use Redis/database in production)
+// In-memory store for state and PKCE verifier (use Redis/database in production)
 var (
-  stateStore = make(map[string]bool)
-  stateMu    sync.Mutex
+  authStore = make(map[string]string) // state -> verifier
+  authMu    sync.Mutex
 )
 
 func generateState() (string, error) {
@@ -352,30 +353,35 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
     return
   }
 
-  // Store state for CSRF validation
-  stateMu.Lock()
-  stateStore[state] = true
-  stateMu.Unlock()
+  // Generate PKCE code verifier
+  verifier := oauth2.GenerateVerifier()
 
-  url := oauthConfig.AuthCodeURL(state)
+  // Store state and verifier for callback validation
+  authMu.Lock()
+  authStore[state] = verifier
+  authMu.Unlock()
+
+  // Include PKCE challenge in authorization URL
+  url := oauthConfig.AuthCodeURL(state, oauth2.S256ChallengeOption(verifier))
   http.Redirect(w, r, url, http.StatusTemporaryRedirect)
 }
 
 func handleCallback(w http.ResponseWriter, r *http.Request) {
-  // Validate state to prevent CSRF attacks
+  // Validate state and retrieve PKCE verifier
   state := r.URL.Query().Get("state")
-  stateMu.Lock()
-  valid := stateStore[state]
-  delete(stateStore, state)
-  stateMu.Unlock()
+  authMu.Lock()
+  verifier, valid := authStore[state]
+  delete(authStore, state)
+  authMu.Unlock()
 
   if !valid {
     http.Error(w, "Invalid state parameter", http.StatusBadRequest)
     return
   }
 
+  // Exchange code for token with PKCE verifier
   code := r.URL.Query().Get("code")
-  token, err := oauthConfig.Exchange(context.Background(), code)
+  token, err := oauthConfig.Exchange(context.Background(), code, oauth2.VerifierOption(verifier))
   if err != nil {
     http.Error(w, err.Error(), http.StatusInternalServerError)
     return
@@ -395,7 +401,9 @@ func handleCallback(w http.ResponseWriter, r *http.Request) {
     glean.WithClient(httpClient),
   )
 
-  results, err := client.Client.Search.Query(r.Context(), "quarterly reports", nil)
+  results, err := client.Client.Search.Query(r.Context(), components.SearchRequest{
+    Query: "quarterly reports",
+  })
   if err != nil {
     http.Error(w, err.Error(), http.StatusInternalServerError)
     return
