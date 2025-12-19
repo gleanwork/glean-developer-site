@@ -291,9 +291,12 @@ package main
 
 import (
   "context"
+  "crypto/rand"
+  "encoding/base64"
   "encoding/json"
   "net/http"
   "os"
+  "sync"
 
   "golang.org/x/oauth2"
   glean "github.com/gleanwork/api-client-go"
@@ -308,6 +311,20 @@ var oauthConfig = &oauth2.Config{
     AuthURL:  os.Getenv("OAUTH_AUTH_URL"),
     TokenURL: os.Getenv("OAUTH_TOKEN_URL"),
   },
+}
+
+// In-memory state store (use Redis/database in production)
+var (
+  stateStore = make(map[string]bool)
+  stateMu    sync.Mutex
+)
+
+func generateState() (string, error) {
+  b := make([]byte, 32)
+  if _, err := rand.Read(b); err != nil {
+    return "", err
+  }
+  return base64.URLEncoding.EncodeToString(b), nil
 }
 
 // oauthTransport adds OAuth headers to all requests
@@ -329,11 +346,34 @@ func main() {
 }
 
 func handleLogin(w http.ResponseWriter, r *http.Request) {
-  url := oauthConfig.AuthCodeURL("state")
+  state, err := generateState()
+  if err != nil {
+    http.Error(w, "Failed to generate state", http.StatusInternalServerError)
+    return
+  }
+
+  // Store state for CSRF validation
+  stateMu.Lock()
+  stateStore[state] = true
+  stateMu.Unlock()
+
+  url := oauthConfig.AuthCodeURL(state)
   http.Redirect(w, r, url, http.StatusTemporaryRedirect)
 }
 
 func handleCallback(w http.ResponseWriter, r *http.Request) {
+  // Validate state to prevent CSRF attacks
+  state := r.URL.Query().Get("state")
+  stateMu.Lock()
+  valid := stateStore[state]
+  delete(stateStore, state)
+  stateMu.Unlock()
+
+  if !valid {
+    http.Error(w, "Invalid state parameter", http.StatusBadRequest)
+    return
+  }
+
   code := r.URL.Query().Get("code")
   token, err := oauthConfig.Exchange(context.Background(), code)
   if err != nil {

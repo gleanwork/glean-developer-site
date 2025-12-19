@@ -258,12 +258,14 @@ spring:
     oauth2:
       client:
         registration:
-          provider:
+          glean:
+            provider: glean
             client-id: ${OAUTH_CLIENT_ID}
             client-secret: ${OAUTH_CLIENT_SECRET}
             scope: openid,email
+            authorization-grant-type: authorization_code
         provider:
-          provider:
+          glean:
             issuer-uri: ${OAUTH_ISSUER}
 
 glean:
@@ -277,10 +279,6 @@ import org.springframework.security.oauth2.client.annotation.RegisteredOAuth2Aut
 import org.springframework.web.bind.annotation.*;
 import com.glean.api_client.glean_api_client.Glean;
 import com.glean.api_client.glean_api_client.models.components.*;
-import com.glean.api_client.glean_api_client.utils.HTTPClient;
-import com.glean.api_client.glean_api_client.utils.Utils;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.util.List;
 import java.util.Map;
 
@@ -292,36 +290,25 @@ public class GleanOAuthController {
 
   @GetMapping("/search")
   public Map<String, Object> search(
-      @RegisteredOAuth2AuthorizedClient("provider") OAuth2AuthorizedClient oauthClient,
+      @RegisteredOAuth2AuthorizedClient("glean") OAuth2AuthorizedClient oauthClient,
       @RequestParam String query) throws Exception {
 
     String accessToken = oauthClient.getAccessToken().getTokenValue();
 
-    // Create HTTP client that adds OAuth headers
-    HTTPClient httpClient = new HTTPClient() {
-      private final HTTPClient defaultClient = new HTTPClient();
-
-      @Override
-      public HttpResponse<java.io.InputStream> send(HttpRequest request)
-          throws java.io.IOException, InterruptedException, java.net.URISyntaxException {
-        HttpRequest modifiedRequest = Utils.copy(request)
-            .header("Authorization", "Bearer " + accessToken)
-            .header("X-Glean-Auth-Type", "OAUTH")
-            .build();
-        return defaultClient.send(modifiedRequest);
-      }
-    };
-
-    // Create Glean client with custom HTTP client
+    // Create Glean client and pass OAuth headers per-request
     Glean glean = Glean.builder()
         .instance(gleanInstance)
-        .client(httpClient)
         .build();
 
     var response = glean.client().search().query()
         .query(query)
         .pageSize(10)
-        .call();
+        .call(new com.glean.api_client.glean_api_client.utils.Options() {{
+          headers(Map.of(
+              "Authorization", "Bearer " + accessToken,
+              "X-Glean-Auth-Type", "OAUTH"
+          ));
+        }});
 
     return Map.of("results", response.searchResponse()
         .map(SearchResponse::results)

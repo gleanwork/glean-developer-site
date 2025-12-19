@@ -215,10 +215,11 @@ OAuth requests require these headers:
 
 #### Example: Authorization Code Flow
 
-This example uses [openid-client](https://www.npmjs.com/package/openid-client) with Express:
+This example uses [openid-client](https://github.com/panva/openid-client) (v6+) with Express:
 
 ```typescript
 import express from 'express';
+import session from 'express-session';
 import * as client from 'openid-client';
 import { Glean } from '@gleanwork/api-client';
 
@@ -230,9 +231,11 @@ const config = {
 };
 
 const app = express();
+app.use(session({ secret: 'session-secret', resave: false, saveUninitialized: false }));
+
 let oidcConfig: client.Configuration;
 
-// Initialize OIDC client
+// Initialize OIDC client on startup
 async function init() {
   oidcConfig = await client.discovery(
     new URL(config.issuer),
@@ -241,18 +244,34 @@ async function init() {
   );
 }
 
-app.get('/login', (req, res) => {
+app.get('/login', async (req, res) => {
+  // Generate PKCE code verifier and state for security
+  const codeVerifier = client.randomPKCECodeVerifier();
+  const codeChallenge = await client.calculatePKCECodeChallenge(codeVerifier);
+  const state = client.randomState();
+
+  // Store in session for verification on callback
+  req.session.codeVerifier = codeVerifier;
+  req.session.state = state;
+
   const authUrl = client.buildAuthorizationUrl(oidcConfig, {
     redirect_uri: config.redirectUri,
     scope: 'openid email',
+    code_challenge: codeChallenge,
+    code_challenge_method: 'S256',
+    state,
   });
   res.redirect(authUrl.href);
 });
 
 app.get('/callback', async (req, res) => {
+  const { codeVerifier, state } = req.session;
   const callbackUrl = new URL(req.url, `http://${req.headers.host}`);
+
+  // Exchange code for tokens with PKCE and state verification
   const tokens = await client.authorizationCodeGrant(oidcConfig, callbackUrl, {
-    expectedState: client.skipStateCheck,
+    pkceCodeVerifier: codeVerifier,
+    expectedState: state,
   });
 
   // Use OAuth token with Glean
