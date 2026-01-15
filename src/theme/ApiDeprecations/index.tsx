@@ -1,7 +1,5 @@
 import type React from 'react';
-import { useContext } from 'react';
 import Link from '@docusaurus/Link';
-import { FeatureFlagsContext } from '../Root';
 import type { DeprecationItem } from '../../types/deprecations';
 import DeprecationEntry from '../../components/Deprecations/DeprecationEntry';
 import styles from './styles.module.css';
@@ -13,12 +11,6 @@ interface ApiDeprecationsProps {
 export default function ApiDeprecations({
   deprecations,
 }: ApiDeprecationsProps): React.ReactElement | null {
-  const { isEnabled } = useContext(FeatureFlagsContext);
-
-  if (!isEnabled('x-glean-deprecated')) {
-    return null;
-  }
-
   if (!deprecations || deprecations.length === 0) {
     return null;
   }

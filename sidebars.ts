@@ -67,7 +67,6 @@ const baseSidebars: SidebarsConfig = {
           customProps: {
             icon: 'AlertTriangle',
             iconSet: 'feather',
-            flag: 'x-glean-deprecated',
           },
           items: [
             {
