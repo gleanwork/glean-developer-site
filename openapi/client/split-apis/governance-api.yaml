@@ -2,11 +2,11 @@ openapi: 3.0.0
 info:
   version: 0.9.0
   title: Glean API - Governance
-  x-source-commit-sha: e98f46531ea7973d89d5976390f4fe210f2e4c16
+  x-source-commit-sha: 73720c10eb41436b03f8f69b30c5f1eaebe83136
   description: API endpoints for Governance
   x-logo:
     url: https://app.glean.com/images/glean-text2.svg
-  x-open-api-commit-sha: 3cec64c96d952d84c0420ef0ec8ad4558bedd984
+  x-open-api-commit-sha: ef6741a4fcd031636396dc0ab0e89af1f1fba258
   x-speakeasy-name: Glean API
 servers:
   - url: https://{instance}-be.glean.com
@@ -425,6 +425,8 @@ paths:
               schema:
                 description: CSV of all the violations found for this policy.
                 type: string
+        '400':
+          description: Bad request error (e.g., continuous policies are not supported).
         '403':
           description: Permissions error
         '500':
@@ -1651,6 +1653,12 @@ components:
         autoHideDocs:
           description: Controls whether the policy should hide documents with violations.
           type: boolean
+    UpdateDocumentVisibilityOverridesRequest:
+      properties:
+        visibilityOverrides:
+          type: array
+          items:
+            $ref: '#/components/schemas/DocumentVisibilityOverride'
     ExportInfo:
       properties:
         createdBy:
@@ -1680,12 +1688,10 @@ components:
             - PENDING
             - COMPLETED
             - FAILED
-    UpdateDocumentVisibilityOverridesRequest:
-      properties:
-        visibilityOverrides:
-          type: array
-          items:
-            $ref: '#/components/schemas/DocumentVisibilityOverride'
+        exportSize:
+          type: integer
+          format: int64
+          description: The size of the exported file in bytes
     GetDocumentVisibilityOverridesResponse:
       properties:
         visibilityOverrides:
@@ -1740,6 +1746,8 @@ components:
             $ref: '#/components/schemas/DlpSeverity'
         timeRange:
           $ref: '#/components/schemas/TimeRangeFilter'
+        archived:
+          type: boolean
     DlpReport:
       description: Full policy information that will be used for scans.
       properties:
