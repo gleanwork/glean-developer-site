@@ -67,7 +67,8 @@ Before proceeding, ensure you have:
     <details>
       <summary>Click to expand the full OpenAPI specification</summary>
 
-    <pre><code>{`openapi: 3.0.0
+```yaml
+openapi: 3.0.0
 servers:
   - url: 'https://docs.googleapis.com/'
 info:
@@ -158,8 +159,8 @@ paths:
                             type: string
       responses:
         '200':
-          description: Successful response`}</code></pre>
-
+          description: Successful response
+```
     </details>
 
     <h4>Functionality Configuration</h4>
@@ -170,36 +171,41 @@ paths:
   </Step>
 
   <Step title="Authentication Setup">
-    <p>The action requires OAuth 2.0 authentication to interact with Google Docs securely.</p>
+    This action requires OAuth User authentication to access individual users' calendar data.
 
-    <h4>Google Cloud Console Configuration</h4>
+    #### Google Cloud Console Setup
     
-    1. Visit the [Google Cloud Console Credentials page](https://console.cloud.google.com/apis/credentials)
-    2. Create new OAuth 2.0 credentials:
+    1. Access the [Google Cloud Console Credentials page](https://console.cloud.google.com/apis/credentials)
+    2. Create OAuth credentials:
 
-       ![GCP Credentials Dialog Box](./images/google-docs-update/gcs_cloud_create_cred.png)
+       [![GCP Credentials Dialog Box](./images/google-calendar-events/calendar_action_gcs_cloud_create_cred.png)](./images/google-calendar-events/calendar_action_gcs_cloud_create_cred.png)
     
-    3. Select "Web Application" as the application type:
+    3. Configure as a web application:
 
-       ![Create OAuth Client](./images/google-docs-update/create_oauth_client.png)
+       [![Create OAuth Client](./images/google-calendar-events/calendar_action_create_oauth_client.png)](./images/google-calendar-events/calendar_action_create_oauth_client.png)
 
-    <h4>Redirect URI Configuration</h4>
-    <p>Add the following redirect URI to your OAuth client configuration (Note your instance name is typically the email domain without the TLD):</p>
-    <pre><code>https://{`{instance-name}-be.glean.com/tools/oauth/verify_code/{your-action-unique-identifier-name}`}</code></pre>
+    #### Redirect URI Configuration
+    Add this URI to your OAuth client (Note your instance name is typically the email domain without the TLD):
+    ```
+    https://{instance-name}-be.glean.com/tools/oauth/verify_code
+    ```
 
-    <div className="admonition admonition-warning">
-      <p>The unique identifier in the redirect URI must match exactly with the identifier you set when creating the action, including case sensitivity.</p>
-    </div>
+    This URL can be copied from the `Callback URL` field in your action's `Authentication` section.
 
-    <h4>OAuth Settings in Glean</h4>
-    <p>Configure these OAuth settings in the Authentication section:</p>
-    <pre><code>{`Client URL: https://accounts.google.com/o/oauth2/auth?prompt=consent&access_type=offline
-Authorization URL: https://accounts.google.com/o/oauth2/token
-Scopes: https://www.googleapis.com/auth/documents`}</code></pre>
+    #### OAuth Settings in Glean
+    Configure these parameters in Glean:
+    ```
+    Client URL: https://accounts.google.com/o/oauth2/auth?prompt=consent&access_type=offline
+    Authorization URL: https://accounts.google.com/o/oauth2/auth
+    Token URL: https://accounts.google.com/o/oauth2/token
+    Scopes: https://www.googleapis.com/auth/documents
+    ```
 
-    <h4>Enable Google Docs API</h4>
+    [![Authentication Dialogue Box](./images/google-calendar-events/calendar_action_authentication.png)](./images/google-calendar-events/calendar_action_authentication.png)
+
+    #### Enable Google Docs API
     
-    1. Navigate to the Google Cloud Console
+    1. Access your Google Cloud Console
     2. Enable the Google Docs API for your project:
 
        ![GCP Google Docs API Settings](./images/google-docs-update/google_docs_api.png)
