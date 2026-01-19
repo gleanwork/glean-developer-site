@@ -2,11 +2,11 @@ openapi: 3.0.0
 info:
   version: 0.9.0
   title: Glean API - Search
-  x-source-commit-sha: 73720c10eb41436b03f8f69b30c5f1eaebe83136
+  x-source-commit-sha: d4f2fa72a23a5da96d1ac7baaee268890c9e5b22
   description: API endpoints for Search
   x-logo:
     url: https://app.glean.com/images/glean-text2.svg
-  x-open-api-commit-sha: ef6741a4fcd031636396dc0ab0e89af1f1fba258
+  x-open-api-commit-sha: 45b2188fe1c63b00dea76e7623d58f7a3b89bbf2
   x-speakeasy-name: Glean API
 servers:
   - url: https://{instance}-be.glean.com
@@ -3385,6 +3385,18 @@ components:
               values:
                 - value: engineering
                   relationType: EQUALS
+    PromptTemplateResult:
+      properties:
+        promptTemplate:
+          $ref: '#/components/schemas/PromptTemplate'
+        trackingToken:
+          type: string
+          description: An opaque token that represents this prompt template
+        favoriteInfo:
+          $ref: '#/components/schemas/FavoriteInfo'
+        runCount:
+          $ref: '#/components/schemas/CountInfo'
+          description: This tracks how many times this prompt template was run. If user runs a prompt template after modifying the original one, it still counts as a run for the original template.
     ErrorInfo:
       properties:
         badGmailToken:
@@ -3402,19 +3414,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ErrorMessage'
+        federatedSearchRateLimitError:
+          type: boolean
+          description: Indicates the federated search results could not be fetched due to rate limiting.
       x-speakeasy-name-override: GleanDataError
-    PromptTemplateResult:
-      properties:
-        promptTemplate:
-          $ref: '#/components/schemas/PromptTemplate'
-        trackingToken:
-          type: string
-          description: An opaque token that represents this prompt template
-        favoriteInfo:
-          $ref: '#/components/schemas/FavoriteInfo'
-        runCount:
-          $ref: '#/components/schemas/CountInfo'
-          description: This tracks how many times this prompt template was run. If user runs a prompt template after modifying the original one, it still counts as a run for the original template.
     PromptTemplateMutableProperties:
       required:
         - template
