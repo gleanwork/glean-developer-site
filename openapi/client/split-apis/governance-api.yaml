@@ -2,11 +2,11 @@ openapi: 3.0.0
 info:
   version: 0.9.0
   title: Glean API - Governance
-  x-source-commit-sha: d4f2fa72a23a5da96d1ac7baaee268890c9e5b22
+  x-source-commit-sha: c781b892ed396d6a0aee04a9e85097ebaa81ae76
   description: API endpoints for Governance
   x-logo:
     url: https://app.glean.com/images/glean-text2.svg
-  x-open-api-commit-sha: 45b2188fe1c63b00dea76e7623d58f7a3b89bbf2
+  x-open-api-commit-sha: 6953a9517f6f59a9eb9c7857521819a2298dabee
   x-speakeasy-name: Glean API
 servers:
   - url: https://{instance}-be.glean.com
@@ -19,10 +19,9 @@ security:
 paths:
   /rest/api/v1/governance/data/policies/{id}:
     get:
-      description: Fetches the specified policy version, or the latest if no version is provided.
-      summary: Gets specified policy
       operationId: getpolicy
-      x-visibility: Public
+      summary: Gets specified policy
+      description: Fetches the specified policy version, or the latest if no version is provided.
       tags:
         - Governance
       parameters:
@@ -50,6 +49,7 @@ paths:
           description: Permissions error
         '500':
           description: Internal error
+      x-visibility: Public
       x-speakeasy-group: client.governance.data.policies
       x-speakeasy-name-override: retrieve
       x-codeSamples:
@@ -116,9 +116,9 @@ paths:
                 }
             }
     post:
-      description: Updates an existing policy.
-      summary: Updates an existing policy
       operationId: updatepolicy
+      summary: Updates an existing policy
+      description: Updates an existing policy.
       tags:
         - Governance
       parameters:
@@ -215,10 +215,9 @@ paths:
             }
   /rest/api/v1/governance/data/policies:
     get:
-      description: Lists policies with filtering.
-      summary: Lists policies
       operationId: listpolicies
-      x-visibility: Public
+      summary: Lists policies
+      description: Lists policies with filtering.
       tags:
         - Governance
       parameters:
@@ -245,6 +244,7 @@ paths:
           description: Permissions error
         '500':
           description: Internal error
+      x-visibility: Public
       x-speakeasy-group: client.governance.data.policies
       x-speakeasy-name-override: list
       x-codeSamples:
@@ -310,10 +310,9 @@ paths:
                 }
             }
     post:
-      description: Creates a new policy with specified specifications and returns its id.
-      summary: Creates new policy
       operationId: createpolicy
-      x-visibility: Public
+      summary: Creates new policy
+      description: Creates a new policy with specified specifications and returns its id.
       tags:
         - Governance
       requestBody:
@@ -333,6 +332,7 @@ paths:
           description: Permissions error
         '500':
           description: Internal error
+      x-visibility: Public
       x-speakeasy-group: client.governance.data.policies
       x-speakeasy-name-override: create
       x-codeSamples:
@@ -404,10 +404,9 @@ paths:
             }
   /rest/api/v1/governance/data/policies/{id}/download:
     get:
-      description: Downloads CSV violations report for a specific policy id. This does not support continuous policies.
-      summary: Downloads violations CSV for policy
       operationId: downloadpolicycsv
-      x-visibility: Public
+      summary: Downloads violations CSV for policy
+      description: Downloads CSV violations report for a specific policy id. This does not support continuous policies.
       tags:
         - Governance
       parameters:
@@ -423,14 +422,15 @@ paths:
           content:
             text/csv; charset=UTF-8:
               schema:
-                description: CSV of all the violations found for this policy.
                 type: string
+                description: CSV of all the violations found for this policy.
         '400':
           description: Bad request error (e.g., continuous policies are not supported).
         '403':
           description: Permissions error
         '500':
           description: Internal error
+      x-visibility: Public
       x-speakeasy-group: client.governance.data.policies
       x-speakeasy-name-override: download
       x-codeSamples:
@@ -498,10 +498,9 @@ paths:
             }
   /rest/api/v1/governance/data/reports:
     post:
-      description: Creates a new one-time report and executes its batch job.
-      summary: Creates new one-time report
       operationId: createreport
-      x-visibility: Public
+      summary: Creates new one-time report
+      description: Creates a new one-time report and executes its batch job.
       tags:
         - Governance
       requestBody:
@@ -521,6 +520,7 @@ paths:
           description: Permissions error
         '500':
           description: Internal error
+      x-visibility: Public
       x-speakeasy-group: client.governance.data.reports
       x-speakeasy-name-override: create
       x-codeSamples:
@@ -592,10 +592,9 @@ paths:
             }
   /rest/api/v1/governance/data/reports/{id}/download:
     get:
-      description: Downloads CSV violations report for a specific report id.
-      summary: Downloads violations CSV for report
       operationId: downloadreportcsv
-      x-visibility: Public
+      summary: Downloads violations CSV for report
+      description: Downloads CSV violations report for a specific report id.
       tags:
         - Governance
       parameters:
@@ -611,12 +610,13 @@ paths:
           content:
             text/csv; charset=UTF-8:
               schema:
-                description: CSV of all the violations found for this report.
                 type: string
+                description: CSV of all the violations found for this report.
         '403':
           description: Permissions error
         '500':
           description: Internal error
+      x-visibility: Public
       x-speakeasy-group: client.governance.data.reports
       x-speakeasy-name-override: download
       x-codeSamples:
@@ -684,10 +684,9 @@ paths:
             }
   /rest/api/v1/governance/data/reports/{id}/status:
     get:
-      description: Fetches the status of the run corresponding to the report-id.
-      summary: Fetches report run status
       operationId: getreportstatus
-      x-visibility: Public
+      summary: Fetches report run status
+      description: Fetches the status of the run corresponding to the report-id.
       tags:
         - Governance
       parameters:
@@ -708,6 +707,7 @@ paths:
           description: Permissions error
         '500':
           description: Internal error
+      x-visibility: Public
       x-speakeasy-group: client.governance.data.reports
       x-speakeasy-name-override: status
       x-codeSamples:
@@ -775,10 +775,9 @@ paths:
             }
   /rest/api/v1/governance/documents/visibilityoverrides:
     get:
-      description: Fetches the visibility override status of the documents passed.
-      summary: Fetches documents visibility
       operationId: getdocvisibility
-      x-visibility: Public
+      summary: Fetches documents visibility
+      description: Fetches the visibility override status of the documents passed.
       tags:
         - Governance
       parameters:
@@ -800,6 +799,7 @@ paths:
           description: Permissions error
         '500':
           description: Internal error
+      x-visibility: Public
       x-speakeasy-group: client.governance.documents.visibilityoverrides
       x-speakeasy-name-override: list
       x-codeSamples:
@@ -865,10 +865,9 @@ paths:
                 }
             }
     post:
-      description: Sets the visibility-override state of the documents specified, effectively hiding or un-hiding documents.
-      summary: Hide or unhide docs
       operationId: setdocvisibility
-      x-visibility: Public
+      summary: Hide or unhide docs
+      description: Sets the visibility-override state of the documents specified, effectively hiding or un-hiding documents.
       tags:
         - Governance
       requestBody:
@@ -888,6 +887,7 @@ paths:
           description: Permissions error
         '500':
           description: Internal error
+      x-visibility: Public
       x-speakeasy-group: client.governance.documents.visibilityoverrides
       x-speakeasy-name-override: create
       x-codeSamples:
@@ -959,10 +959,9 @@ paths:
             }
   /rest/api/v1/governance/data/findings/exports:
     post:
-      description: Creates a new DLP findings export job.
-      summary: Creates findings export
       operationId: createfindingsexport
-      x-visibility: Private
+      summary: Creates findings export
+      description: Creates a new DLP findings export job.
       tags:
         - Governance
       requestBody:
@@ -982,6 +981,7 @@ paths:
           description: Permissions error
         '500':
           description: Internal error
+      x-visibility: Private
       x-codeSamples:
         - lang: Python
           label: Python (API Client)
@@ -1050,10 +1050,9 @@ paths:
                 }
             }
     get:
-      description: Lists all DLP findings exports.
-      summary: Lists findings exports
       operationId: listfindingsexports
-      x-visibility: Private
+      summary: Lists findings exports
+      description: Lists all DLP findings exports.
       tags:
         - Governance
       responses:
@@ -1067,6 +1066,7 @@ paths:
           description: Permissions error
         '500':
           description: Internal error
+      x-visibility: Private
       x-codeSamples:
         - lang: Python
           label: Python (API Client)
@@ -1131,10 +1131,9 @@ paths:
             }
   /rest/api/v1/governance/data/findings/exports/{id}:
     get:
-      description: Downloads a DLP findings export as a CSV file.
-      summary: Downloads findings export
       operationId: downloadfindingsexport
-      x-visibility: Private
+      summary: Downloads findings export
+      description: Downloads a DLP findings export as a CSV file.
       tags:
         - Governance
       parameters:
@@ -1150,12 +1149,13 @@ paths:
           content:
             text/csv; charset=UTF-8:
               schema:
-                description: CSV of all the exported findings.
                 type: string
+                description: CSV of all the exported findings.
         '403':
           description: Permissions error
         '500':
           description: Internal error
+      x-visibility: Private
       x-codeSamples:
         - lang: Python
           label: Python (API Client)
@@ -1220,10 +1220,9 @@ paths:
                 }
             }
     delete:
-      description: Deletes a DLP findings export.
-      summary: Deletes findings export
       operationId: deletefindingsexport
-      x-visibility: Private
+      summary: Deletes findings export
+      description: Deletes a DLP findings export.
       tags:
         - Governance
       parameters:
@@ -1241,6 +1240,7 @@ paths:
           description: Permissions error
         '500':
           description: Internal error
+      x-visibility: Private
       x-codeSamples:
         - lang: Python
           label: Python (API Client)
@@ -1305,39 +1305,39 @@ components:
   schemas:
     CustomSensitiveRuleType:
       type: string
-      description: Type of the custom sensitive rule.
       enum:
         - REGEX
         - TERM
         - INFO_TYPE
+      description: Type of the custom sensitive rule.
     DlpFrequency:
       type: string
-      description: Interval between scans. DAILY is deprecated.
-      x-include-enum-class-prefix: true
       enum:
         - ONCE
         - DAILY
         - WEEKLY
         - CONTINUOUS
         - NONE
+      description: Interval between scans. DAILY is deprecated.
+      x-include-enum-class-prefix: true
     DlpReportStatus:
       type: string
-      description: The status of the policy/report. Only ACTIVE status will be picked for scans.
-      x-include-enum-class-prefix: true
       enum:
         - ACTIVE
         - INACTIVE
         - CANCELLED
         - NONE
+      description: The status of the policy/report. Only ACTIVE status will be picked for scans.
+      x-include-enum-class-prefix: true
     DlpSeverity:
       type: string
-      description: Severity levels for DLP findings and analyses.
-      x-include-enum-class-prefix: true
       enum:
         - UNSPECIFIED
         - LOW
         - MEDIUM
         - HIGH
+      description: Severity levels for DLP findings and analyses.
+      x-include-enum-class-prefix: true
     DlpSimpleResult:
       type: string
       enum:
@@ -1361,13 +1361,12 @@ components:
             - CANCELLING
             - ACTIVE
         startTime:
-          description: The timestamp at which the report's run/scan began.
           type: string
           format: iso-date-time
+          description: The timestamp at which the report's run/scan began.
     SensitiveInfoType:
       properties:
         likelihoodThreshold:
-          deprecated: true
           type: string
           enum:
             - LIKELY
@@ -1375,60 +1374,61 @@ components:
             - POSSIBLE
             - UNLIKELY
             - VERY_UNLIKELY
+          deprecated: true
         infoType:
-          description: Text representation of an info-type to scan for.
           type: string
+          description: Text representation of an info-type to scan for.
     TimeRange:
       properties:
         startTime:
           type: string
-          description: start time of the time range, applicable for the CUSTOM type.
           format: date-time
+          description: start time of the time range, applicable for the CUSTOM type.
         endTime:
           type: string
-          description: end time of the time range, applicable for the CUSTOM type.
           format: date-time
+          description: end time of the time range, applicable for the CUSTOM type.
         lastNDaysValue:
           type: integer
-          description: The number of days to look back from the current time, applicable for the LAST_N_DAYS type.
           format: int64
+          description: The number of days to look back from the current time, applicable for the LAST_N_DAYS type.
     AllowlistOptions:
-      description: Terms that are allow-listed during the scans. If any finding picked up by a rule exactly matches a term in the allow-list, it will not be counted as a violation.
       properties:
         terms:
           type: array
-          description: list of words and phrases to consider as whitelisted content
           items:
             type: string
+          description: list of words and phrases to consider as whitelisted content
+      description: Terms that are allow-listed during the scans. If any finding picked up by a rule exactly matches a term in the allow-list, it will not be counted as a violation.
     SharingOptions:
-      description: Controls how "shared" a document must be to get picked for scans.
       properties:
         enabled:
-          deprecated: true
           type: boolean
+          deprecated: true
         threshold:
-          description: The minimum number of users the document is shared with.
           type: integer
+          description: The minimum number of users the document is shared with.
         thresholdEnabled:
+          type: boolean
           description: Documents will be filtered based on how many people have access to it.
-          type: boolean
         anyoneWithLinkEnabled:
+          type: boolean
           deprecated: true
-          type: boolean
         anyoneInternalEnabled:
+          type: boolean
           description: Only users within the organization can access the document.
-          type: boolean
         anonymousAccessEnabled:
+          type: boolean
           description: Anyone on the internet can access the document.
-          type: boolean
         userAccessEnabled:
-          description: Enable user access check
           type: boolean
+          description: Enable user access check
         userIds:
           type: array
-          description: Any one of the specified users can access the document.
           items:
             type: string
+          description: Any one of the specified users can access the document.
+      description: Controls how "shared" a document must be to get picked for scans.
     DlpPersonMetadata:
       properties:
         firstName:
@@ -1442,20 +1442,20 @@ components:
         docId:
           type: string
         override:
-          description: The visibility-override state of the document.
           type: string
           enum:
             - NONE
             - HIDE_FROM_ALL
             - HIDE_FROM_GROUPS
             - HIDE_FROM_ALL_EXCEPT_OWNER
+          description: The visibility-override state of the document.
     UpdateDlpConfigRequest:
       properties:
         config:
           $ref: '#/components/schemas/DlpConfig'
         frequency:
-          description: Only "ONCE" is supported for reports.
           type: string
+          description: Only "ONCE" is supported for reports.
     CreateDlpReportResponse:
       properties:
         report:
@@ -1478,13 +1478,13 @@ components:
       properties:
         timePeriodType:
           type: string
-          description: The type of time period for which to filter findings.
           enum:
             - PAST_DAY
             - PAST_WEEK
             - PAST_MONTH
             - PAST_YEAR
             - CUSTOM
+          description: The type of time period for which to filter findings.
         customTimeRange:
           $ref: '#/components/schemas/TimeRange'
     UpdateDlpConfigResponse:
@@ -1492,27 +1492,27 @@ components:
         result:
           $ref: '#/components/schemas/DlpSimpleResult'
         reportId:
-          description: The id of the report that was just created and run.
           type: string
+          description: The id of the report that was just created and run.
     CustomSensitiveExpression:
       properties:
         id:
+          type: string
           description: Identifier for the custom sensitive expression.
-          type: string
         keyword:
-          description: The keyword to match against.
           $ref: '#/components/schemas/CustomSensitiveRule'
+          description: The keyword to match against.
         evaluationExpression:
-          description: The expression to evaluate the keyword match.
           type: string
+          description: The expression to evaluate the keyword match.
     DlpExportFindingsRequest:
       properties:
         exportType:
           type: string
-          description: The type of export to perform
           enum:
             - FINDINGS
             - DOCUMENTS
+          description: The type of export to perform
         filter:
           $ref: '#/components/schemas/DlpFindingFilter'
         fileName:
@@ -1520,21 +1520,17 @@ components:
           description: The name of the file to export the findings to
         fieldScope:
           type: string
-          description: Controls which fields to include in the export
           enum:
             - ALL
             - EXCLUDE_SENSITIVE
             - CUSTOM
+          description: Controls which fields to include in the export
         fieldsToExclude:
           type: array
           items:
             type: string
           description: List of field names to exclude from the export
     DlpPerson:
-      description: Details about the person who created this report/policy.
-      required:
-        - name
-        - obfuscatedId
       properties:
         name:
           type: string
@@ -1544,18 +1540,21 @@ components:
           description: An opaque identifier that can be used to request metadata for a Person.
         metadata:
           $ref: '#/components/schemas/DlpPersonMetadata'
+      required:
+        - name
+        - obfuscatedId
+      description: Details about the person who created this report/policy.
     CustomSensitiveRule:
       properties:
         id:
-          description: Identifier for the custom sensitive expression.
           type: string
+          description: Identifier for the custom sensitive expression.
         value:
           type: string
           description: The value of the custom sensitive rule. For REGEX type, this is the regex pattern; for TERM type, it is the term to match; and for INFO_TYPE type, it refers to predefined categories of sensitive content. See https://cloud.google.com/dlp/docs/infotypes-reference for available options.
         type:
           $ref: '#/components/schemas/CustomSensitiveRuleType'
         likelihoodThreshold:
-          description: Likelihood threshold for BUILT_IN infotypes (e.g., LIKELY, VERY_LIKELY). Only applicable for BUILT_IN type.
           type: string
           enum:
             - LIKELY
@@ -1563,8 +1562,8 @@ components:
             - POSSIBLE
             - UNLIKELY
             - VERY_UNLIKELY
+          description: Likelihood threshold for BUILT_IN infotypes (e.g., LIKELY, VERY_LIKELY). Only applicable for BUILT_IN type.
     ExternalSharingOptions:
-      deprecated: true
       allOf:
         - description: DEPRECATED - use `broadSharingOptions` instead.
         - $ref: '#/components/schemas/SharingOptions'
@@ -1572,14 +1571,15 @@ components:
           properties:
             domainAccessEnabled:
               type: boolean
+      deprecated: true
     DocumentVisibilityUpdateResult:
       allOf:
         - $ref: '#/components/schemas/DocumentVisibilityOverride'
         - type: object
           properties:
             success:
-              description: Whether this document was successfully set to its desired visibility state.
               type: boolean
+              description: Whether this document was successfully set to its desired visibility state.
     ListDlpFindingsExportsResponse:
       properties:
         exports:
@@ -1593,66 +1593,66 @@ components:
           items:
             $ref: '#/components/schemas/DlpReport'
     InputOptions:
-      description: Controls which data-sources and what time-range to include in scans.
       properties:
         urlGreenlist:
-          deprecated: true
           type: array
-          description: list of url regex matching documents excluded from report
           items:
             type: string
+          description: list of url regex matching documents excluded from report
+          deprecated: true
         datasourcesType:
           type: string
-          description: The types of datasource for which to run the report/policy.
           enum:
             - ALL
             - CUSTOM
+          description: The types of datasource for which to run the report/policy.
         datasources:
-          deprecated: true
           type: array
-          description: List of datasources to consider for report. DEPRECATED - use datasourceInstances instead.
           items:
             type: string
+          description: List of datasources to consider for report. DEPRECATED - use datasourceInstances instead.
+          deprecated: true
         datasourceInstances:
           type: array
-          description: List of datasource instances to consider for report/policy.
           items:
             type: string
+          description: List of datasource instances to consider for report/policy.
         timePeriodType:
           type: string
-          description: Type of time period for which to run the report/policy. PAST_DAY is deprecated.
           enum:
             - ALL_TIME
             - PAST_YEAR
             - PAST_DAY
             - CUSTOM
             - LAST_N_DAYS
+          description: Type of time period for which to run the report/policy. PAST_DAY is deprecated.
         customTimeRange:
           $ref: '#/components/schemas/TimeRange'
+      description: Controls which data-sources and what time-range to include in scans.
     SensitiveExpression:
       properties:
         expression:
-          description: Sensitive word, phrase, or regular expression.
           type: string
+          description: Sensitive word, phrase, or regular expression.
         hotwords:
-          description: Zero to three proximate regular expressions necessary to consider an expression as sensitive content.
           type: array
           items:
             $ref: '#/components/schemas/Hotword'
+          description: Zero to three proximate regular expressions necessary to consider an expression as sensitive content.
     CreateDlpReportRequest:
       properties:
         name:
-          description: Name of the policy being created.
           type: string
+          description: Name of the policy being created.
         config:
-          description: Details on the configuration used in the scans.
           $ref: '#/components/schemas/DlpConfig'
+          description: Details on the configuration used in the scans.
         frequency:
-          description: Interval between scans.
           $ref: '#/components/schemas/DlpFrequency'
+          description: Interval between scans.
         autoHideDocs:
-          description: Controls whether the policy should hide documents with violations.
           type: boolean
+          description: Controls whether the policy should hide documents with violations.
     UpdateDocumentVisibilityOverridesRequest:
       properties:
         visibilityOverrides:
@@ -1662,16 +1662,16 @@ components:
     ExportInfo:
       properties:
         createdBy:
-          description: person who triggered this export
           $ref: '#/components/schemas/DlpPerson'
+          description: person who triggered this export
         startTime:
+          type: string
+          format: iso-date-time
           description: Timestamp at which this export started.
-          type: string
-          format: iso-date-time
         endTime:
-          description: Timestamp at which this export completed.
           type: string
           format: iso-date-time
+          description: Timestamp at which this export completed.
         exportId:
           type: string
           description: The ID of the export
@@ -1683,11 +1683,11 @@ components:
           description: The filters used to export the findings
         status:
           type: string
-          description: The status of the export
           enum:
             - PENDING
             - COMPLETED
             - FAILED
+          description: The status of the export
         exportSize:
           type: integer
           format: int64
@@ -1701,27 +1701,27 @@ components:
     UpdateDocumentVisibilityOverridesResponse:
       properties:
         results:
-          description: The documents and whether their visibility was successfully updated.
           type: array
           items:
             $ref: '#/components/schemas/DocumentVisibilityUpdateResult'
+          description: The documents and whether their visibility was successfully updated.
     UpdateDlpReportRequest:
       properties:
         config:
-          description: The new configuration the policy will follow if provided.
           $ref: '#/components/schemas/DlpConfig'
+          description: The new configuration the policy will follow if provided.
         frequency:
-          description: The new frequency the policy will follow if provided.
           $ref: '#/components/schemas/DlpFrequency'
+          description: The new frequency the policy will follow if provided.
         status:
-          description: The new status the policy will be updated to if provided.
           $ref: '#/components/schemas/DlpReportStatus'
+          description: The new status the policy will be updated to if provided.
         autoHideDocs:
-          description: The new autoHideDoc boolean the policy will be updated to if provided.
           type: boolean
+          description: The new autoHideDoc boolean the policy will be updated to if provided.
         reportName:
-          description: The new name of the policy if provided.
           type: string
+          description: The new name of the policy if provided.
     DlpFindingFilter:
       properties:
         infoType:
@@ -1749,35 +1749,34 @@ components:
         archived:
           type: boolean
     DlpReport:
-      description: Full policy information that will be used for scans.
       properties:
         id:
           type: string
         name:
           type: string
         config:
-          description: All details of the policy that is needed for a scan.
           $ref: '#/components/schemas/DlpConfig'
+          description: All details of the policy that is needed for a scan.
         frequency:
-          description: The interval between scans.
           $ref: '#/components/schemas/DlpFrequency'
+          description: The interval between scans.
         status:
-          description: The status of the policy.
           $ref: '#/components/schemas/DlpReportStatus'
+          description: The status of the policy.
         createdBy:
-          description: Person who created this report.
           $ref: '#/components/schemas/DlpPerson'
+          description: Person who created this report.
         createdAt:
+          type: string
+          format: iso-date-time
           description: Timestamp at which the policy was created.
-          type: string
-          format: iso-date-time
         lastUpdatedAt:
-          description: Timestamp at which the policy was last updated.
           type: string
           format: iso-date-time
+          description: Timestamp at which the policy was last updated.
         autoHideDocs:
-          description: Auto hide documents with findings in the policy.
           type: boolean
+          description: Auto hide documents with findings in the policy.
         lastScanStatus:
           type: string
           enum:
@@ -1788,85 +1787,86 @@ components:
             - CANCELLING
             - ACTIVE
         lastScanStartTime:
-          description: The timestamp at which the report's last run/scan began.
           type: string
           format: iso-date-time
+          description: The timestamp at which the report's last run/scan began.
         updatedBy:
-          description: Person who last updated this report.
           $ref: '#/components/schemas/DlpPerson'
+          description: Person who last updated this report.
+      description: Full policy information that will be used for scans.
     SensitiveContentOptions:
-      description: Options for defining sensitive content within scanned documents.
       properties:
         sensitiveInfoTypes:
-          deprecated: true
-          description: DEPRECATED - use 'customSensitiveExpressions' instead.
           type: array
           items:
             $ref: '#/components/schemas/SensitiveInfoType'
+          description: DEPRECATED - use 'customSensitiveExpressions' instead.
+          deprecated: true
         sensitiveTerms:
-          deprecated: true
-          description: DEPRECATED - use 'customSensitiveExpressions' instead.
           type: array
           items:
             $ref: '#/components/schemas/SensitiveExpression'
+          description: DEPRECATED - use 'customSensitiveExpressions' instead.
+          deprecated: true
         sensitiveRegexes:
-          deprecated: true
-          description: DEPRECATED - use 'customSensitiveExpressions' instead.
           type: array
           items:
             $ref: '#/components/schemas/SensitiveExpression'
+          description: DEPRECATED - use 'customSensitiveExpressions' instead.
+          deprecated: true
         customSensitiveExpressions:
-          description: list of custom sensitive expressions to consider as sensitive content
           type: array
           items:
             $ref: '#/components/schemas/CustomSensitiveExpression'
+          description: list of custom sensitive expressions to consider as sensitive content
+      description: Options for defining sensitive content within scanned documents.
     DlpConfig:
-      description: Detailed configuration of what documents and sensitive content will be scanned.
       properties:
         version:
-          description: Synonymous with report/policy id.
           type: integer
           format: int64
+          description: Synonymous with report/policy id.
         sensitiveInfoTypes:
-          deprecated: true
-          description: DEPRECATED - use `sensitiveContentOptions` instead.
           type: array
           items:
             $ref: '#/components/schemas/SensitiveInfoType'
-        inputOptions:
-          description: Options for documents to include or exclude in a report
-          $ref: '#/components/schemas/InputOptions'
-        externalSharingOptions:
+          description: DEPRECATED - use `sensitiveContentOptions` instead.
           deprecated: true
-          description: DEPRECATED - use `broadSharingOptions` instead.
+        inputOptions:
+          $ref: '#/components/schemas/InputOptions'
+          description: Options for documents to include or exclude in a report
+        externalSharingOptions:
           $ref: '#/components/schemas/ExternalSharingOptions'
+          description: DEPRECATED - use `broadSharingOptions` instead.
+          deprecated: true
         broadSharingOptions:
-          description: Options for defining documents to scan for sensitive content.
           $ref: '#/components/schemas/SharingOptions'
+          description: Options for defining documents to scan for sensitive content.
         sensitiveContentOptions:
-          description: Options for defining sensitive content within scanned documents.
           $ref: '#/components/schemas/SensitiveContentOptions'
+          description: Options for defining sensitive content within scanned documents.
         reportName:
           type: string
         frequency:
-          description: Interval between scans.
           type: string
+          description: Interval between scans.
         createdBy:
-          description: Person who created this report/policy.
           $ref: '#/components/schemas/DlpPerson'
+          description: Person who created this report/policy.
         createdAt:
-          description: Timestamp at which this configuration was created.
           type: string
           format: iso-date-time
+          description: Timestamp at which this configuration was created.
         redactQuote:
+          type: boolean
           description: redact quote in findings of the report
-          type: boolean
         autoHideDocs:
-          description: auto hide documents with findings in the report
           type: boolean
+          description: auto hide documents with findings in the report
         allowlistOptions:
-          description: Options for defining whitelisting content within scanned documents
           $ref: '#/components/schemas/AllowlistOptions'
+          description: Options for defining whitelisting content within scanned documents
+      description: Detailed configuration of what documents and sensitive content will be scanned.
   securitySchemes:
     APIToken:
       scheme: bearer
