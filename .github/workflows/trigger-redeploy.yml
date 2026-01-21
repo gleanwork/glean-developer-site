@@ -59,7 +59,10 @@ jobs:
       - name: Check for generated changes
         id: check-generated
         run: |
-          if [[ -n $(git status --porcelain) ]]; then
+          # Ignore src/data and static/deprecations because they will both
+          # include timestamps that generate false positives to the question:
+          # "are there differences to deploy".
+          if [[ -n $(git status --porcelain -- ':!src/data/**' ':!static/deprecations.xml') ]]; then
             echo "has_changes=true" >> $GITHUB_OUTPUT
             echo "📝 Changes detected in generated documentation"
           else
