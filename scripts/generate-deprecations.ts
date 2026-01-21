@@ -142,7 +142,7 @@ async function main() {
       './openapi/indexing/indexing-capitalized.yaml',
     ],
     './src/data/deprecations.json',
-    testExtraEndpoints,
+    [], // pass in testExtraEndpoints for example deprecations
   );
 }
 
