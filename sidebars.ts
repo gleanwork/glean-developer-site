@@ -1,12 +1,6 @@
 import type { SidebarsConfig } from '@docusaurus/plugin-content-docs';
-import { getBuildTimeFlags } from './src/utils/buildTimeFlags';
-import { flagsSnapshotToBooleans } from './src/lib/featureFlags';
-import { filterByFeatureFlags } from './src/utils/filtering';
 
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
-
-const rawFlags = getBuildTimeFlags();
-const boolFlags = flagsSnapshotToBooleans(rawFlags, {});
 
 const baseSidebars: SidebarsConfig = {
   docSidebar: [
@@ -67,6 +61,7 @@ const baseSidebars: SidebarsConfig = {
           customProps: {
             icon: 'AlertTriangle',
             iconSet: 'feather',
+            flag: 'x-glean-deprecated',
           },
           items: [
             {
@@ -1555,6 +1550,4 @@ const baseSidebars: SidebarsConfig = {
   ],
 };
 
-const sidebars = filterByFeatureFlags(baseSidebars, boolFlags);
-
-export default sidebars;
+export default baseSidebars;
