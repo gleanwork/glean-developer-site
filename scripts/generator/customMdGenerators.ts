@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { createAuthorization } from 'docusaurus-plugin-openapi-docs/lib/markdown/createAuthorization';
 import { createCallbacks } from 'docusaurus-plugin-openapi-docs/lib/markdown/createCallbacks';
+import { createDeprecationNotice } from 'docusaurus-plugin-openapi-docs/lib/markdown/createDeprecationNotice';
 import { createDescription } from 'docusaurus-plugin-openapi-docs/lib/markdown/createDescription';
 import { createHeading } from 'docusaurus-plugin-openapi-docs/lib/markdown/createHeading';
 import { createMethodEndpoint } from 'docusaurus-plugin-openapi-docs/lib/markdown/createMethodEndpoint';
@@ -137,6 +138,7 @@ export function customApiMdGenerator({
   frontMatter,
 }: ApiPageMetadata) {
   const {
+    deprecated,
     'x-deprecated-description': deprecatedDescription,
     'x-visibility': xVisibility,
     'x-beta': xBeta,
@@ -170,7 +172,12 @@ export function customApiMdGenerator({
     frontMatter.show_extensions
       ? createVendorExtensions(extensions)
       : undefined,
-    deprecationsMarkdown,
+    hasDeprecations
+      ? deprecationsMarkdown
+      : createDeprecationNotice({
+          deprecated,
+          description: deprecatedDescription,
+        }),
     createPreviewNotice({ xVisibility, xBeta }),
     createDescription(description),
     requestBody || parameters ? createRequestHeader('Request') : undefined,
