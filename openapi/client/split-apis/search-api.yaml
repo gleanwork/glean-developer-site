@@ -2,11 +2,11 @@ openapi: 3.0.0
 info:
   version: 0.9.0
   title: Glean API - Search
-  x-source-commit-sha: ef516436a6f2f6812cc04caebe003109a36085fa
+  x-source-commit-sha: a9cf4ddf30f3d5876a2474eefd93030ad295e367
   description: API endpoints for Search
   x-logo:
     url: https://app.glean.com/images/glean-text2.svg
-  x-open-api-commit-sha: c7b0e281f255a11307263789bd538cb75621ece3
+  x-open-api-commit-sha: ba82696cfa8da48fca01c92d5eedbccd9e27b158
   x-speakeasy-name: Glean API
 servers:
   - url: https://{instance}-be.glean.com
@@ -26,7 +26,8 @@ paths:
       operationId: adminsearch
       x-visibility: Preview
       x-codegen-request-body-name: payload
-      parameters: []
+      parameters:
+        - $ref: '#/components/parameters/locale'
       requestBody:
         content:
           application/json:
@@ -250,38 +251,36 @@ paths:
                             .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
                         .build();
 
-                    SearchRequest req = SearchRequest.builder()
-                            .query("vacation policy")
-                            .trackingToken("trackingToken")
-                            .pageSize(10L)
-                            .requestOptions(SearchRequestOptions.builder()
-                                .facetBucketSize(723824L)
-                                .facetFilters(List.of(
-                                    FacetFilter.builder()
-                                        .fieldName("type")
-                                        .values(List.of(
-                                            FacetFilterValue.builder()
-                                                .value("article")
-                                                .relationType(RelationType.EQUALS)
-                                                .build(),
-                                            FacetFilterValue.builder()
-                                                .value("document")
-                                                .relationType(RelationType.EQUALS)
-                                                .build()))
-                                        .build(),
-                                    FacetFilter.builder()
-                                        .fieldName("department")
-                                        .values(List.of(
-                                            FacetFilterValue.builder()
-                                                .value("engineering")
-                                                .relationType(RelationType.EQUALS)
-                                                .build()))
-                                        .build()))
-                                .build())
-                            .build();
-
                     AdminsearchResponse res = sdk.client().search().queryAsAdmin()
-                            .request(req)
+                            .searchRequest(SearchRequest.builder()
+                                .query("vacation policy")
+                                .trackingToken("trackingToken")
+                                .pageSize(10L)
+                                .requestOptions(SearchRequestOptions.builder()
+                                    .facetBucketSize(723824L)
+                                    .facetFilters(List.of(
+                                        FacetFilter.builder()
+                                            .fieldName("type")
+                                            .values(List.of(
+                                                FacetFilterValue.builder()
+                                                    .value("article")
+                                                    .relationType(RelationType.EQUALS)
+                                                    .build(),
+                                                FacetFilterValue.builder()
+                                                    .value("document")
+                                                    .relationType(RelationType.EQUALS)
+                                                    .build()))
+                                            .build(),
+                                        FacetFilter.builder()
+                                            .fieldName("department")
+                                            .values(List.of(
+                                                FacetFilterValue.builder()
+                                                    .value("engineering")
+                                                    .relationType(RelationType.EQUALS)
+                                                    .build()))
+                                            .build()))
+                                    .build())
+                                .build())
                             .call();
 
                     if (res.searchResponse().isPresent()) {
@@ -298,7 +297,8 @@ paths:
       operationId: autocomplete
       x-visibility: Public
       x-codegen-request-body-name: payload
-      parameters: []
+      parameters:
+        - $ref: '#/components/parameters/locale'
       requestBody:
         content:
           application/json:
@@ -390,15 +390,13 @@ paths:
                             .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
                         .build();
 
-                    AutocompleteRequest req = AutocompleteRequest.builder()
-                            .trackingToken("trackingToken")
-                            .query("what is a que")
-                            .datasource("GDRIVE")
-                            .resultSize(10L)
-                            .build();
-
                     AutocompleteResponse res = sdk.client().search().autocomplete()
-                            .request(req)
+                            .autocompleteRequest(AutocompleteRequest.builder()
+                                .trackingToken("trackingToken")
+                                .query("what is a que")
+                                .datasource("GDRIVE")
+                                .resultSize(10L)
+                                .build())
                             .call();
 
                     if (res.autocompleteResponse().isPresent()) {
@@ -415,7 +413,8 @@ paths:
       operationId: feed
       x-visibility: Public
       x-codegen-request-body-name: payload
-      parameters: []
+      parameters:
+        - $ref: '#/components/parameters/locale'
       requestBody:
         content:
           application/json:
@@ -498,12 +497,10 @@ paths:
                             .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
                         .build();
 
-                    FeedRequest req = FeedRequest.builder()
-                            .timeoutMillis(5000L)
-                            .build();
-
                     FeedResponse res = sdk.client().search().retrieveFeed()
-                            .request(req)
+                            .feedRequest(FeedRequest.builder()
+                                .timeoutMillis(5000L)
+                                .build())
                             .call();
 
                     if (res.feedResponse().isPresent()) {
@@ -520,7 +517,8 @@ paths:
       operationId: recommendations
       x-visibility: Preview
       x-codegen-request-body-name: payload
-      parameters: []
+      parameters:
+        - $ref: '#/components/parameters/locale'
       requestBody:
         content:
           application/json:
@@ -942,96 +940,9 @@ paths:
                             .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
                         .build();
 
-                    RecommendationsRequest req = RecommendationsRequest.builder()
-                            .sourceDocument(Document.builder()
-                                .containerDocument(Document.builder()
-                                    .metadata(DocumentMetadata.builder()
-                                        .datasource("datasource")
-                                        .objectType("Feature Request")
-                                        .container("container")
-                                        .parentId("JIRA_EN-1337")
-                                        .mimeType("mimeType")
-                                        .documentId("documentId")
-                                        .createTime(OffsetDateTime.parse("2000-01-23T04:56:07.000Z"))
-                                        .updateTime(OffsetDateTime.parse("2000-01-23T04:56:07.000Z"))
-                                        .author(Person.builder()
-                                            .name("name")
-                                            .obfuscatedId("<id>")
-                                            .build())
-                                        .components(List.of(
-                                            "Backend",
-                                            "Networking"))
-                                        .status("[\"Done\"]")
-                                        .customData(Map.ofEntries(
-                                            Map.entry("someCustomField", CustomDataValue.builder()
-                                                .build())))
-                                        .build())
-                                    .build())
-                                .parentDocument(Document.builder()
-                                    .metadata(DocumentMetadata.builder()
-                                        .datasource("datasource")
-                                        .objectType("Feature Request")
-                                        .container("container")
-                                        .parentId("JIRA_EN-1337")
-                                        .mimeType("mimeType")
-                                        .documentId("documentId")
-                                        .createTime(OffsetDateTime.parse("2000-01-23T04:56:07.000Z"))
-                                        .updateTime(OffsetDateTime.parse("2000-01-23T04:56:07.000Z"))
-                                        .author(Person.builder()
-                                            .name("name")
-                                            .obfuscatedId("<id>")
-                                            .build())
-                                        .components(List.of(
-                                            "Backend",
-                                            "Networking"))
-                                        .status("[\"Done\"]")
-                                        .customData(Map.ofEntries(
-                                            Map.entry("someCustomField", CustomDataValue.builder()
-                                                .build())))
-                                        .build())
-                                    .build())
-                                .metadata(DocumentMetadata.builder()
-                                    .datasource("datasource")
-                                    .objectType("Feature Request")
-                                    .container("container")
-                                    .parentId("JIRA_EN-1337")
-                                    .mimeType("mimeType")
-                                    .documentId("documentId")
-                                    .createTime(OffsetDateTime.parse("2000-01-23T04:56:07.000Z"))
-                                    .updateTime(OffsetDateTime.parse("2000-01-23T04:56:07.000Z"))
-                                    .author(Person.builder()
-                                        .name("name")
-                                        .obfuscatedId("<id>")
-                                        .build())
-                                    .components(List.of(
-                                        "Backend",
-                                        "Networking"))
-                                    .status("[\"Done\"]")
-                                    .customData(Map.ofEntries(
-                                        Map.entry("someCustomField", CustomDataValue.builder()
-                                            .build())))
-                                    .build())
-                                .build())
-                            .pageSize(100L)
-                            .maxSnippetSize(400L)
-                            .requestOptions(RecommendationsRequestOptions.builder()
-                                .facetFilterSets(List.of(
-                                    FacetFilterSet.builder()
-                                        .filters(List.of(
-                                            FacetFilter.builder()
-                                                .fieldName("type")
-                                                .values(List.of(
-                                                    FacetFilterValue.builder()
-                                                        .value("Spreadsheet")
-                                                        .relationType(RelationType.EQUALS)
-                                                        .build(),
-                                                    FacetFilterValue.builder()
-                                                        .value("Presentation")
-                                                        .relationType(RelationType.EQUALS)
-                                                        .build()))
-                                                .build()))
-                                        .build()))
-                                .context(Document.builder()
+                    RecommendationsResponse res = sdk.client().search().recommendations()
+                            .recommendationsRequest(RecommendationsRequest.builder()
+                                .sourceDocument(Document.builder()
                                     .containerDocument(Document.builder()
                                         .metadata(DocumentMetadata.builder()
                                             .datasource("datasource")
@@ -1100,11 +1011,96 @@ paths:
                                                 .build())))
                                         .build())
                                     .build())
+                                .pageSize(100L)
+                                .maxSnippetSize(400L)
+                                .requestOptions(RecommendationsRequestOptions.builder()
+                                    .facetFilterSets(List.of(
+                                        FacetFilterSet.builder()
+                                            .filters(List.of(
+                                                FacetFilter.builder()
+                                                    .fieldName("type")
+                                                    .values(List.of(
+                                                        FacetFilterValue.builder()
+                                                            .value("Spreadsheet")
+                                                            .relationType(RelationType.EQUALS)
+                                                            .build(),
+                                                        FacetFilterValue.builder()
+                                                            .value("Presentation")
+                                                            .relationType(RelationType.EQUALS)
+                                                            .build()))
+                                                    .build()))
+                                            .build()))
+                                    .context(Document.builder()
+                                        .containerDocument(Document.builder()
+                                            .metadata(DocumentMetadata.builder()
+                                                .datasource("datasource")
+                                                .objectType("Feature Request")
+                                                .container("container")
+                                                .parentId("JIRA_EN-1337")
+                                                .mimeType("mimeType")
+                                                .documentId("documentId")
+                                                .createTime(OffsetDateTime.parse("2000-01-23T04:56:07.000Z"))
+                                                .updateTime(OffsetDateTime.parse("2000-01-23T04:56:07.000Z"))
+                                                .author(Person.builder()
+                                                    .name("name")
+                                                    .obfuscatedId("<id>")
+                                                    .build())
+                                                .components(List.of(
+                                                    "Backend",
+                                                    "Networking"))
+                                                .status("[\"Done\"]")
+                                                .customData(Map.ofEntries(
+                                                    Map.entry("someCustomField", CustomDataValue.builder()
+                                                        .build())))
+                                                .build())
+                                            .build())
+                                        .parentDocument(Document.builder()
+                                            .metadata(DocumentMetadata.builder()
+                                                .datasource("datasource")
+                                                .objectType("Feature Request")
+                                                .container("container")
+                                                .parentId("JIRA_EN-1337")
+                                                .mimeType("mimeType")
+                                                .documentId("documentId")
+                                                .createTime(OffsetDateTime.parse("2000-01-23T04:56:07.000Z"))
+                                                .updateTime(OffsetDateTime.parse("2000-01-23T04:56:07.000Z"))
+                                                .author(Person.builder()
+                                                    .name("name")
+                                                    .obfuscatedId("<id>")
+                                                    .build())
+                                                .components(List.of(
+                                                    "Backend",
+                                                    "Networking"))
+                                                .status("[\"Done\"]")
+                                                .customData(Map.ofEntries(
+                                                    Map.entry("someCustomField", CustomDataValue.builder()
+                                                        .build())))
+                                                .build())
+                                            .build())
+                                        .metadata(DocumentMetadata.builder()
+                                            .datasource("datasource")
+                                            .objectType("Feature Request")
+                                            .container("container")
+                                            .parentId("JIRA_EN-1337")
+                                            .mimeType("mimeType")
+                                            .documentId("documentId")
+                                            .createTime(OffsetDateTime.parse("2000-01-23T04:56:07.000Z"))
+                                            .updateTime(OffsetDateTime.parse("2000-01-23T04:56:07.000Z"))
+                                            .author(Person.builder()
+                                                .name("name")
+                                                .obfuscatedId("<id>")
+                                                .build())
+                                            .components(List.of(
+                                                "Backend",
+                                                "Networking"))
+                                            .status("[\"Done\"]")
+                                            .customData(Map.ofEntries(
+                                                Map.entry("someCustomField", CustomDataValue.builder()
+                                                    .build())))
+                                            .build())
+                                        .build())
+                                    .build())
                                 .build())
-                            .build();
-
-                    RecommendationsResponse res = sdk.client().search().recommendations()
-                            .request(req)
                             .call();
 
                     if (res.resultsResponse().isPresent()) {
@@ -1121,7 +1117,8 @@ paths:
       operationId: search
       x-visibility: Public
       x-codegen-request-body-name: payload
-      parameters: []
+      parameters:
+        - $ref: '#/components/parameters/locale'
       requestBody:
         content:
           application/json:
@@ -1347,38 +1344,36 @@ paths:
                             .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
                         .build();
 
-                    SearchRequest req = SearchRequest.builder()
-                            .query("vacation policy")
-                            .trackingToken("trackingToken")
-                            .pageSize(10L)
-                            .requestOptions(SearchRequestOptions.builder()
-                                .facetBucketSize(939520L)
-                                .facetFilters(List.of(
-                                    FacetFilter.builder()
-                                        .fieldName("type")
-                                        .values(List.of(
-                                            FacetFilterValue.builder()
-                                                .value("article")
-                                                .relationType(RelationType.EQUALS)
-                                                .build(),
-                                            FacetFilterValue.builder()
-                                                .value("document")
-                                                .relationType(RelationType.EQUALS)
-                                                .build()))
-                                        .build(),
-                                    FacetFilter.builder()
-                                        .fieldName("department")
-                                        .values(List.of(
-                                            FacetFilterValue.builder()
-                                                .value("engineering")
-                                                .relationType(RelationType.EQUALS)
-                                                .build()))
-                                        .build()))
-                                .build())
-                            .build();
-
                     SearchResponse res = sdk.client().search().query()
-                            .request(req)
+                            .searchRequest(SearchRequest.builder()
+                                .query("vacation policy")
+                                .trackingToken("trackingToken")
+                                .pageSize(10L)
+                                .requestOptions(SearchRequestOptions.builder()
+                                    .facetBucketSize(939520L)
+                                    .facetFilters(List.of(
+                                        FacetFilter.builder()
+                                            .fieldName("type")
+                                            .values(List.of(
+                                                FacetFilterValue.builder()
+                                                    .value("article")
+                                                    .relationType(RelationType.EQUALS)
+                                                    .build(),
+                                                FacetFilterValue.builder()
+                                                    .value("document")
+                                                    .relationType(RelationType.EQUALS)
+                                                    .build()))
+                                            .build(),
+                                        FacetFilter.builder()
+                                            .fieldName("department")
+                                            .values(List.of(
+                                                FacetFilterValue.builder()
+                                                    .value("engineering")
+                                                    .relationType(RelationType.EQUALS)
+                                                    .build()))
+                                            .build()))
+                                    .build())
+                                .build())
                             .call();
 
                     if (res.searchResponse().isPresent()) {
@@ -9770,3 +9765,11 @@ components:
     APIToken:
       scheme: bearer
       type: http
+  parameters:
+    locale:
+      name: locale
+      in: query
+      description: The client's preferred locale in rfc5646 format (e.g. `en`, `ja`, `pt-BR`). If omitted, the `Accept-Language` will be used. If not present or not supported, defaults to the closest match or `en`.
+      required: false
+      schema:
+        type: string

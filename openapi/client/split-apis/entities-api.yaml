@@ -2,11 +2,11 @@ openapi: 3.0.0
 info:
   version: 0.9.0
   title: Glean API - Entities
-  x-source-commit-sha: ef516436a6f2f6812cc04caebe003109a36085fa
+  x-source-commit-sha: a9cf4ddf30f3d5876a2474eefd93030ad295e367
   description: API endpoints for Entities
   x-logo:
     url: https://app.glean.com/images/glean-text2.svg
-  x-open-api-commit-sha: c7b0e281f255a11307263789bd538cb75621ece3
+  x-open-api-commit-sha: ba82696cfa8da48fca01c92d5eedbccd9e27b158
   x-speakeasy-name: Glean API
 servers:
   - url: https://{instance}-be.glean.com
@@ -26,7 +26,8 @@ paths:
       operationId: listentities
       x-visibility: Public
       x-codegen-request-body-name: payload
-      parameters: []
+      parameters:
+        - $ref: '#/components/parameters/locale'
       requestBody:
         content:
           application/json:
@@ -137,25 +138,23 @@ paths:
                             .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
                         .build();
 
-                    ListEntitiesRequest req = ListEntitiesRequest.builder()
-                            .filter(List.of(
-                                FacetFilter.builder()
-                                    .fieldName("type")
-                                    .values(List.of(
-                                        FacetFilterValue.builder()
-                                            .value("Spreadsheet")
-                                            .relationType(RelationType.EQUALS)
-                                            .build(),
-                                        FacetFilterValue.builder()
-                                            .value("Presentation")
-                                            .relationType(RelationType.EQUALS)
-                                            .build()))
-                                    .build()))
-                            .pageSize(100L)
-                            .build();
-
                     ListentitiesResponse res = sdk.client().entities().list()
-                            .request(req)
+                            .listEntitiesRequest(ListEntitiesRequest.builder()
+                                .filter(List.of(
+                                    FacetFilter.builder()
+                                        .fieldName("type")
+                                        .values(List.of(
+                                            FacetFilterValue.builder()
+                                                .value("Spreadsheet")
+                                                .relationType(RelationType.EQUALS)
+                                                .build(),
+                                            FacetFilterValue.builder()
+                                                .value("Presentation")
+                                                .relationType(RelationType.EQUALS)
+                                                .build()))
+                                        .build()))
+                                .pageSize(100L)
+                                .build())
                             .call();
 
                     if (res.listEntitiesResponse().isPresent()) {
@@ -172,7 +171,8 @@ paths:
       operationId: people
       x-visibility: Public
       x-codegen-request-body-name: payload
-      parameters: []
+      parameters:
+        - $ref: '#/components/parameters/locale'
       requestBody:
         content:
           application/json:
@@ -260,14 +260,12 @@ paths:
                             .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
                         .build();
 
-                    PeopleRequest req = PeopleRequest.builder()
-                            .obfuscatedIds(List.of(
-                                "abc123",
-                                "abc456"))
-                            .build();
-
                     PeopleResponse res = sdk.client().entities().readPeople()
-                            .request(req)
+                            .peopleRequest(PeopleRequest.builder()
+                                .obfuscatedIds(List.of(
+                                    "abc123",
+                                    "abc456"))
+                                .build())
                             .call();
 
                     if (res.peopleResponse().isPresent()) {
@@ -7481,3 +7479,11 @@ components:
     APIToken:
       scheme: bearer
       type: http
+  parameters:
+    locale:
+      name: locale
+      in: query
+      description: The client's preferred locale in rfc5646 format (e.g. `en`, `ja`, `pt-BR`). If omitted, the `Accept-Language` will be used. If not present or not supported, defaults to the closest match or `en`.
+      required: false
+      schema:
+        type: string
