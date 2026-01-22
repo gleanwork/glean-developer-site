@@ -7,39 +7,7 @@ The deprecation system displays warnings on API documentation pages when fields,
 1. **OpenAPI specs** contain `x-glean-deprecated` extensions on deprecated fields
 2. **`generate-deprecations.ts`** extracts these deprecations and outputs `deprecations.json`
 3. **`customMdGenerators.ts`** injects the `<ApiDeprecations>` component into generated API docs
-4. **`ApiDeprecations`** component renders the deprecation warnings (when feature flag is enabled)
-
-## Feature Flag: `x-glean-deprecated`
-
-The deprecation UI is behind a feature flag. To see deprecations locally, you need to enable it.
-
-### Enable via URL Parameter
-
-Add `?ff_x-glean-deprecated=true` to any page URL:
-
-```
-http://localhost:8888/docs/client_api/chat?ff_x-glean-deprecated=true
-```
-
-### Enable for Current Session
-
-Open the browser console and run:
-
-```javascript
-// Enable the flag
-localStorage.setItem('ff:cache', JSON.stringify({
-  ts: Date.now(),
-  data: { 'x-glean-deprecated': { enabled: true } }
-}));
-location.reload();
-```
-
-To disable:
-
-```javascript
-localStorage.removeItem('ff:cache');
-location.reload();
-```
+4. **`ApiDeprecations`** component renders the deprecation warnings
 
 ## Adding Local Test Deprecations
 
@@ -100,9 +68,9 @@ pnpm run openapi:regenerate:all
    pnpm run dev
    ```
 
-2. Navigate to your API endpoint page with the feature flag:
+2. Navigate to your API endpoint page:
    ```
-   http://localhost:8888/docs/client_api/your-endpoint?ff_x-glean-deprecated=true
+   http://localhost:8888/docs/client_api/your-endpoint
    ```
 
 3. You should see a collapsible deprecation notice on the page.
@@ -202,17 +170,16 @@ components:
 
 The deprecations page at `/deprecations` shows all active deprecations. To view it:
 
-1. Navigate to `http://localhost:8888/deprecations?ff_x-glean-deprecated=true`
+1. Navigate to `http://localhost:8888/deprecations`
 2. The page lists all deprecations grouped by endpoint
 
 ## Troubleshooting
 
 ### Deprecations not showing up
 
-1. **Feature flag not enabled**: Add `?ff_x-glean-deprecated=true` to the URL
-2. **Files not regenerated**: Run `pnpm run openapi:regenerate:client`
-3. **Deprecation expired**: Check the `removal` date - past dates are filtered out
-4. **Path mismatch**: Ensure the path in `deprecations.json` matches (without `/rest` prefix)
+1. **Files not regenerated**: Run `pnpm run openapi:regenerate:client`
+2. **Deprecation expired**: Check the `removal` date - past dates are filtered out
+3. **Path mismatch**: Ensure the path in `deprecations.json` matches (without `/rest` prefix)
 
 ### Verify deprecations.json was updated
 
