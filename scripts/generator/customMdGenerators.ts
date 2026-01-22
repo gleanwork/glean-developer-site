@@ -2,7 +2,6 @@ import fs from 'fs';
 import path from 'path';
 import { createAuthorization } from 'docusaurus-plugin-openapi-docs/lib/markdown/createAuthorization';
 import { createCallbacks } from 'docusaurus-plugin-openapi-docs/lib/markdown/createCallbacks';
-import { createDeprecationNotice } from 'docusaurus-plugin-openapi-docs/lib/markdown/createDeprecationNotice';
 import { createDescription } from 'docusaurus-plugin-openapi-docs/lib/markdown/createDescription';
 import { createHeading } from 'docusaurus-plugin-openapi-docs/lib/markdown/createHeading';
 import { createMethodEndpoint } from 'docusaurus-plugin-openapi-docs/lib/markdown/createMethodEndpoint';
@@ -20,7 +19,6 @@ import {
 import type { ApiPageMetadata } from 'docusaurus-plugin-openapi-docs/lib/types';
 import type {
   DeprecationItem,
-  EndpointGroup,
   DeprecationsData,
 } from '../../src/types/deprecations';
 
@@ -139,7 +137,6 @@ export function customApiMdGenerator({
   frontMatter,
 }: ApiPageMetadata) {
   const {
-    deprecated,
     'x-deprecated-description': deprecatedDescription,
     'x-visibility': xVisibility,
     'x-beta': xBeta,
@@ -169,12 +166,11 @@ export function customApiMdGenerator({
       : '\n',
     createHeading(title),
     createMethodEndpoint(method, endpointPath),
-    deprecationsMarkdown,
     infoPath && createAuthorization(infoPath),
     frontMatter.show_extensions
       ? createVendorExtensions(extensions)
       : undefined,
-    createDeprecationNotice({ deprecated, description: deprecatedDescription }),
+    deprecationsMarkdown,
     createPreviewNotice({ xVisibility, xBeta }),
     createDescription(description),
     requestBody || parameters ? createRequestHeader('Request') : undefined,

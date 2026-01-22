@@ -58,7 +58,7 @@ export default function DeprecationEntry({
             <>
               <span className={styles.dateSeparator}>|</span>
               <span className={styles.dateLabel}>
-                {isPast ? 'Removed on' : 'Will be removed on'}{' '}
+                {isPast ? 'Removed on' : 'Will be removed after'}{' '}
                 <time className={styles.removalDate}>{entry.removal}</time>
               </span>
             </>
