@@ -2,11 +2,11 @@ openapi: 3.0.0
 info:
   version: 0.9.0
   title: Glean API - Governance
-  x-source-commit-sha: fbe07efa69fe3d2aef0668a8f0c2197cf5b3c446
+  x-source-commit-sha: ef516436a6f2f6812cc04caebe003109a36085fa
   description: API endpoints for Governance
   x-logo:
     url: https://app.glean.com/images/glean-text2.svg
-  x-open-api-commit-sha: 3c68c105de7984675175aaa6975257db11549248
+  x-open-api-commit-sha: c7b0e281f255a11307263789bd538cb75621ece3
   x-speakeasy-name: Glean API
 servers:
   - url: https://{instance}-be.glean.com
@@ -1592,6 +1592,30 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/DlpReport'
+    SensitiveExpression:
+      properties:
+        expression:
+          type: string
+          description: Sensitive word, phrase, or regular expression.
+        hotwords:
+          type: array
+          items:
+            $ref: '#/components/schemas/Hotword'
+          description: Zero to three proximate regular expressions necessary to consider an expression as sensitive content.
+    CreateDlpReportRequest:
+      properties:
+        name:
+          type: string
+          description: Name of the policy being created.
+        config:
+          $ref: '#/components/schemas/DlpConfig'
+          description: Details on the configuration used in the scans.
+        frequency:
+          $ref: '#/components/schemas/DlpFrequency'
+          description: Interval between scans.
+        autoHideDocs:
+          type: boolean
+          description: Controls whether the policy should hide documents with violations.
     InputOptions:
       properties:
         urlGreenlist:
@@ -1628,31 +1652,12 @@ components:
           description: Type of time period for which to run the report/policy. PAST_DAY is deprecated.
         customTimeRange:
           $ref: '#/components/schemas/TimeRange'
-      description: Controls which data-sources and what time-range to include in scans.
-    SensitiveExpression:
-      properties:
-        expression:
-          type: string
-          description: Sensitive word, phrase, or regular expression.
-        hotwords:
+        subsetDocIdsToScan:
           type: array
           items:
-            $ref: '#/components/schemas/Hotword'
-          description: Zero to three proximate regular expressions necessary to consider an expression as sensitive content.
-    CreateDlpReportRequest:
-      properties:
-        name:
-          type: string
-          description: Name of the policy being created.
-        config:
-          $ref: '#/components/schemas/DlpConfig'
-          description: Details on the configuration used in the scans.
-        frequency:
-          $ref: '#/components/schemas/DlpFrequency'
-          description: Interval between scans.
-        autoHideDocs:
-          type: boolean
-          description: Controls whether the policy should hide documents with violations.
+            type: string
+          description: Subset of document IDs to scan. If empty, all documents matching other scope criteria will be scanned.
+      description: Controls which data-sources and what time-range to include in scans.
     UpdateDocumentVisibilityOverridesRequest:
       properties:
         visibilityOverrides:
