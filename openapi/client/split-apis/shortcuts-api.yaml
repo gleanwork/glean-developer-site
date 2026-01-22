@@ -2,11 +2,11 @@ openapi: 3.0.0
 info:
   version: 0.9.0
   title: Glean API - Shortcuts
-  x-source-commit-sha: ef516436a6f2f6812cc04caebe003109a36085fa
+  x-source-commit-sha: a9cf4ddf30f3d5876a2474eefd93030ad295e367
   description: API endpoints for Shortcuts
   x-logo:
     url: https://app.glean.com/images/glean-text2.svg
-  x-open-api-commit-sha: c7b0e281f255a11307263789bd538cb75621ece3
+  x-open-api-commit-sha: ba82696cfa8da48fca01c92d5eedbccd9e27b158
   x-speakeasy-name: Glean API
 servers:
   - url: https://{instance}-be.glean.com
@@ -26,7 +26,8 @@ paths:
       operationId: createshortcut
       x-visibility: Public
       x-codegen-request-body-name: payload
-      parameters: []
+      parameters:
+        - $ref: '#/components/parameters/locale'
       requestBody:
         content:
           application/json:
@@ -146,29 +147,27 @@ paths:
                             .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
                         .build();
 
-                    CreateShortcutRequest req = CreateShortcutRequest.builder()
-                            .data(ShortcutMutableProperties.builder()
-                                .addedRoles(List.of(
-                                    UserRoleSpecification.builder()
-                                        .role(UserRole.VERIFIER)
-                                        .person(Person.builder()
-                                            .name("George Clooney")
-                                            .obfuscatedId("abc123")
-                                            .build())
-                                        .build()))
-                                .removedRoles(List.of(
-                                    UserRoleSpecification.builder()
-                                        .role(UserRole.VIEWER)
-                                        .person(Person.builder()
-                                            .name("George Clooney")
-                                            .obfuscatedId("abc123")
-                                            .build())
-                                        .build()))
-                                .build())
-                            .build();
-
                     CreateshortcutResponse res = sdk.client().shortcuts().create()
-                            .request(req)
+                            .createShortcutRequest(CreateShortcutRequest.builder()
+                                .data(ShortcutMutableProperties.builder()
+                                    .addedRoles(List.of(
+                                        UserRoleSpecification.builder()
+                                            .role(UserRole.VERIFIER)
+                                            .person(Person.builder()
+                                                .name("George Clooney")
+                                                .obfuscatedId("abc123")
+                                                .build())
+                                            .build()))
+                                    .removedRoles(List.of(
+                                        UserRoleSpecification.builder()
+                                            .role(UserRole.VIEWER)
+                                            .person(Person.builder()
+                                                .name("George Clooney")
+                                                .obfuscatedId("abc123")
+                                                .build())
+                                            .build()))
+                                    .build())
+                                .build())
                             .call();
 
                     if (res.createShortcutResponse().isPresent()) {
@@ -185,7 +184,8 @@ paths:
       operationId: deleteshortcut
       x-visibility: Public
       x-codegen-request-body-name: payload
-      parameters: []
+      parameters:
+        - $ref: '#/components/parameters/locale'
       requestBody:
         content:
           application/json:
@@ -261,12 +261,10 @@ paths:
                             .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
                         .build();
 
-                    DeleteShortcutRequest req = DeleteShortcutRequest.builder()
-                            .id(975862L)
-                            .build();
-
                     DeleteshortcutResponse res = sdk.client().shortcuts().delete()
-                            .request(req)
+                            .deleteShortcutRequest(DeleteShortcutRequest.builder()
+                                .id(975862L)
+                                .build())
                             .call();
 
                     // handle response
@@ -281,7 +279,8 @@ paths:
       operationId: getshortcut
       x-visibility: Public
       x-codegen-request-body-name: payload
-      parameters: []
+      parameters:
+        - $ref: '#/components/parameters/locale'
       requestBody:
         content:
           application/json:
@@ -318,7 +317,7 @@ paths:
                 instance=os.getenv("GLEAN_INSTANCE", ""),
             ) as glean:
 
-                res = glean.client.shortcuts.retrieve(request={
+                res = glean.client.shortcuts.retrieve(get_shortcut_request={
                     "alias": "<value>",
                 })
 
@@ -365,12 +364,10 @@ paths:
                             .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
                         .build();
 
-                    GetShortcutRequestUnion req = GetShortcutRequestUnion.of(GetShortcutRequest.builder()
-                            .alias("<value>")
-                            .build());
-
                     GetshortcutResponse res = sdk.client().shortcuts().retrieve()
-                            .request(req)
+                            .getShortcutRequest(GetShortcutRequestUnion.of(GetShortcutRequest.builder()
+                                .alias("<value>")
+                                .build()))
                             .call();
 
                     if (res.getShortcutResponse().isPresent()) {
@@ -387,7 +384,8 @@ paths:
       operationId: listshortcuts
       x-visibility: Public
       x-codegen-request-body-name: payload
-      parameters: []
+      parameters:
+        - $ref: '#/components/parameters/locale'
       requestBody:
         content:
           application/json:
@@ -498,25 +496,23 @@ paths:
                             .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
                         .build();
 
-                    ListShortcutsPaginatedRequest req = ListShortcutsPaginatedRequest.builder()
-                            .pageSize(10L)
-                            .filters(List.of(
-                                FacetFilter.builder()
-                                    .fieldName("type")
-                                    .values(List.of(
-                                        FacetFilterValue.builder()
-                                            .value("Spreadsheet")
-                                            .relationType(RelationType.EQUALS)
-                                            .build(),
-                                        FacetFilterValue.builder()
-                                            .value("Presentation")
-                                            .relationType(RelationType.EQUALS)
-                                            .build()))
-                                    .build()))
-                            .build();
-
                     ListshortcutsResponse res = sdk.client().shortcuts().list()
-                            .request(req)
+                            .listShortcutsPaginatedRequest(ListShortcutsPaginatedRequest.builder()
+                                .pageSize(10L)
+                                .filters(List.of(
+                                    FacetFilter.builder()
+                                        .fieldName("type")
+                                        .values(List.of(
+                                            FacetFilterValue.builder()
+                                                .value("Spreadsheet")
+                                                .relationType(RelationType.EQUALS)
+                                                .build(),
+                                            FacetFilterValue.builder()
+                                                .value("Presentation")
+                                                .relationType(RelationType.EQUALS)
+                                                .build()))
+                                        .build()))
+                                .build())
                             .call();
 
                     if (res.listShortcutsPaginatedResponse().isPresent()) {
@@ -533,7 +529,8 @@ paths:
       operationId: updateshortcut
       x-visibility: Public
       x-codegen-request-body-name: payload
-      parameters: []
+      parameters:
+        - $ref: '#/components/parameters/locale'
       requestBody:
         content:
           application/json:
@@ -649,28 +646,26 @@ paths:
                             .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
                         .build();
 
-                    UpdateShortcutRequest req = UpdateShortcutRequest.builder()
-                            .id(268238L)
-                            .addedRoles(List.of(
-                                UserRoleSpecification.builder()
-                                    .role(UserRole.ANSWER_MODERATOR)
-                                    .person(Person.builder()
-                                        .name("George Clooney")
-                                        .obfuscatedId("abc123")
-                                        .build())
-                                    .build()))
-                            .removedRoles(List.of(
-                                UserRoleSpecification.builder()
-                                    .role(UserRole.ANSWER_MODERATOR)
-                                    .person(Person.builder()
-                                        .name("George Clooney")
-                                        .obfuscatedId("abc123")
-                                        .build())
-                                    .build()))
-                            .build();
-
                     UpdateshortcutResponse res = sdk.client().shortcuts().update()
-                            .request(req)
+                            .updateShortcutRequest(UpdateShortcutRequest.builder()
+                                .id(268238L)
+                                .addedRoles(List.of(
+                                    UserRoleSpecification.builder()
+                                        .role(UserRole.ANSWER_MODERATOR)
+                                        .person(Person.builder()
+                                            .name("George Clooney")
+                                            .obfuscatedId("abc123")
+                                            .build())
+                                        .build()))
+                                .removedRoles(List.of(
+                                    UserRoleSpecification.builder()
+                                        .role(UserRole.ANSWER_MODERATOR)
+                                        .person(Person.builder()
+                                            .name("George Clooney")
+                                            .obfuscatedId("abc123")
+                                            .build())
+                                        .build()))
+                                .build())
                             .call();
 
                     if (res.updateShortcutResponse().isPresent()) {
@@ -7820,3 +7815,11 @@ components:
     APIToken:
       scheme: bearer
       type: http
+  parameters:
+    locale:
+      name: locale
+      in: query
+      description: The client's preferred locale in rfc5646 format (e.g. `en`, `ja`, `pt-BR`). If omitted, the `Accept-Language` will be used. If not present or not supported, defaults to the closest match or `en`.
+      required: false
+      schema:
+        type: string

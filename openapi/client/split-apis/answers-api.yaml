@@ -2,11 +2,11 @@ openapi: 3.0.0
 info:
   version: 0.9.0
   title: Glean API - Answers
-  x-source-commit-sha: ef516436a6f2f6812cc04caebe003109a36085fa
+  x-source-commit-sha: a9cf4ddf30f3d5876a2474eefd93030ad295e367
   description: API endpoints for Answers
   x-logo:
     url: https://app.glean.com/images/glean-text2.svg
-  x-open-api-commit-sha: c7b0e281f255a11307263789bd538cb75621ece3
+  x-open-api-commit-sha: ba82696cfa8da48fca01c92d5eedbccd9e27b158
   x-speakeasy-name: Glean API
 servers:
   - url: https://{instance}-be.glean.com
@@ -26,7 +26,8 @@ paths:
       operationId: createanswer
       x-visibility: Public
       x-codegen-request-body-name: payload
-      parameters: []
+      parameters:
+        - $ref: '#/components/parameters/locale'
       requestBody:
         content:
           application/json:
@@ -204,55 +205,53 @@ paths:
                             .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
                         .build();
 
-                    CreateAnswerRequest req = CreateAnswerRequest.builder()
-                            .data(AnswerCreationData.builder()
-                                .question("Why is the sky blue?")
-                                .bodyText("From https://en.wikipedia.org/wiki/Diffuse_sky_radiation, the sky is blue because blue light is more strongly scattered than longer-wavelength light.")
-                                .audienceFilters(List.of(
-                                    FacetFilter.builder()
-                                        .fieldName("type")
-                                        .values(List.of(
-                                            FacetFilterValue.builder()
-                                                .value("Spreadsheet")
-                                                .relationType(RelationType.EQUALS)
-                                                .build(),
-                                            FacetFilterValue.builder()
-                                                .value("Presentation")
-                                                .relationType(RelationType.EQUALS)
-                                                .build()))
-                                        .build()))
-                                .addedRoles(List.of(
-                                    UserRoleSpecification.builder()
-                                        .role(UserRole.VIEWER)
-                                        .person(Person.builder()
-                                            .name("George Clooney")
-                                            .obfuscatedId("abc123")
-                                            .build())
-                                        .build()))
-                                .removedRoles(List.of(
-                                    UserRoleSpecification.builder()
-                                        .role(UserRole.ANSWER_MODERATOR)
-                                        .person(Person.builder()
-                                            .name("George Clooney")
-                                            .obfuscatedId("abc123")
-                                            .build())
-                                        .build()))
-                                .roles(List.of(
-                                    UserRoleSpecification.builder()
-                                        .role(UserRole.OWNER)
-                                        .person(Person.builder()
-                                            .name("George Clooney")
-                                            .obfuscatedId("abc123")
-                                            .build())
-                                        .build()))
-                                .combinedAnswerText(StructuredTextMutableProperties.builder()
-                                    .text("From https://en.wikipedia.org/wiki/Diffuse_sky_radiation, the sky is blue because blue light is more strongly scattered than longer-wavelength light.")
+                    CreateanswerResponse res = sdk.client().answers().create()
+                            .createAnswerRequest(CreateAnswerRequest.builder()
+                                .data(AnswerCreationData.builder()
+                                    .question("Why is the sky blue?")
+                                    .bodyText("From https://en.wikipedia.org/wiki/Diffuse_sky_radiation, the sky is blue because blue light is more strongly scattered than longer-wavelength light.")
+                                    .audienceFilters(List.of(
+                                        FacetFilter.builder()
+                                            .fieldName("type")
+                                            .values(List.of(
+                                                FacetFilterValue.builder()
+                                                    .value("Spreadsheet")
+                                                    .relationType(RelationType.EQUALS)
+                                                    .build(),
+                                                FacetFilterValue.builder()
+                                                    .value("Presentation")
+                                                    .relationType(RelationType.EQUALS)
+                                                    .build()))
+                                            .build()))
+                                    .addedRoles(List.of(
+                                        UserRoleSpecification.builder()
+                                            .role(UserRole.VIEWER)
+                                            .person(Person.builder()
+                                                .name("George Clooney")
+                                                .obfuscatedId("abc123")
+                                                .build())
+                                            .build()))
+                                    .removedRoles(List.of(
+                                        UserRoleSpecification.builder()
+                                            .role(UserRole.ANSWER_MODERATOR)
+                                            .person(Person.builder()
+                                                .name("George Clooney")
+                                                .obfuscatedId("abc123")
+                                                .build())
+                                            .build()))
+                                    .roles(List.of(
+                                        UserRoleSpecification.builder()
+                                            .role(UserRole.OWNER)
+                                            .person(Person.builder()
+                                                .name("George Clooney")
+                                                .obfuscatedId("abc123")
+                                                .build())
+                                            .build()))
+                                    .combinedAnswerText(StructuredTextMutableProperties.builder()
+                                        .text("From https://en.wikipedia.org/wiki/Diffuse_sky_radiation, the sky is blue because blue light is more strongly scattered than longer-wavelength light.")
+                                        .build())
                                     .build())
                                 .build())
-                            .build();
-
-                    CreateanswerResponse res = sdk.client().answers().create()
-                            .request(req)
                             .call();
 
                     if (res.answer().isPresent()) {
@@ -269,7 +268,8 @@ paths:
       operationId: deleteanswer
       x-visibility: Public
       x-codegen-request-body-name: payload
-      parameters: []
+      parameters:
+        - $ref: '#/components/parameters/locale'
       requestBody:
         content:
           application/json:
@@ -346,13 +346,11 @@ paths:
                             .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
                         .build();
 
-                    DeleteAnswerRequest req = DeleteAnswerRequest.builder()
-                            .id(3L)
-                            .docId("ANSWERS_answer_3")
-                            .build();
-
                     DeleteanswerResponse res = sdk.client().answers().delete()
-                            .request(req)
+                            .deleteAnswerRequest(DeleteAnswerRequest.builder()
+                                .id(3L)
+                                .docId("ANSWERS_answer_3")
+                                .build())
                             .call();
 
                     // handle response
@@ -367,7 +365,8 @@ paths:
       operationId: editanswer
       x-visibility: Public
       x-codegen-request-body-name: payload
-      parameters: []
+      parameters:
+        - $ref: '#/components/parameters/locale'
       requestBody:
         content:
           application/json:
@@ -537,55 +536,53 @@ paths:
                             .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
                         .build();
 
-                    EditAnswerRequest req = EditAnswerRequest.builder()
-                            .id(3L)
-                            .docId("ANSWERS_answer_3")
-                            .question("Why is the sky blue?")
-                            .bodyText("From https://en.wikipedia.org/wiki/Diffuse_sky_radiation, the sky is blue because blue light is more strongly scattered than longer-wavelength light.")
-                            .audienceFilters(List.of(
-                                FacetFilter.builder()
-                                    .fieldName("type")
-                                    .values(List.of(
-                                        FacetFilterValue.builder()
-                                            .value("Spreadsheet")
-                                            .relationType(RelationType.EQUALS)
-                                            .build(),
-                                        FacetFilterValue.builder()
-                                            .value("Presentation")
-                                            .relationType(RelationType.EQUALS)
-                                            .build()))
-                                    .build()))
-                            .addedRoles(List.of(
-                                UserRoleSpecification.builder()
-                                    .role(UserRole.EDITOR)
-                                    .person(Person.builder()
-                                        .name("George Clooney")
-                                        .obfuscatedId("abc123")
-                                        .build())
-                                    .build()))
-                            .removedRoles(List.of(
-                                UserRoleSpecification.builder()
-                                    .role(UserRole.OWNER)
-                                    .person(Person.builder()
-                                        .name("George Clooney")
-                                        .obfuscatedId("abc123")
-                                        .build())
-                                    .build()))
-                            .roles(List.of(
-                                UserRoleSpecification.builder()
-                                    .role(UserRole.EDITOR)
-                                    .person(Person.builder()
-                                        .name("George Clooney")
-                                        .obfuscatedId("abc123")
-                                        .build())
-                                    .build()))
-                            .combinedAnswerText(StructuredTextMutableProperties.builder()
-                                .text("From https://en.wikipedia.org/wiki/Diffuse_sky_radiation, the sky is blue because blue light is more strongly scattered than longer-wavelength light.")
-                                .build())
-                            .build();
-
                     EditanswerResponse res = sdk.client().answers().update()
-                            .request(req)
+                            .editAnswerRequest(EditAnswerRequest.builder()
+                                .id(3L)
+                                .docId("ANSWERS_answer_3")
+                                .question("Why is the sky blue?")
+                                .bodyText("From https://en.wikipedia.org/wiki/Diffuse_sky_radiation, the sky is blue because blue light is more strongly scattered than longer-wavelength light.")
+                                .audienceFilters(List.of(
+                                    FacetFilter.builder()
+                                        .fieldName("type")
+                                        .values(List.of(
+                                            FacetFilterValue.builder()
+                                                .value("Spreadsheet")
+                                                .relationType(RelationType.EQUALS)
+                                                .build(),
+                                            FacetFilterValue.builder()
+                                                .value("Presentation")
+                                                .relationType(RelationType.EQUALS)
+                                                .build()))
+                                        .build()))
+                                .addedRoles(List.of(
+                                    UserRoleSpecification.builder()
+                                        .role(UserRole.EDITOR)
+                                        .person(Person.builder()
+                                            .name("George Clooney")
+                                            .obfuscatedId("abc123")
+                                            .build())
+                                        .build()))
+                                .removedRoles(List.of(
+                                    UserRoleSpecification.builder()
+                                        .role(UserRole.OWNER)
+                                        .person(Person.builder()
+                                            .name("George Clooney")
+                                            .obfuscatedId("abc123")
+                                            .build())
+                                        .build()))
+                                .roles(List.of(
+                                    UserRoleSpecification.builder()
+                                        .role(UserRole.EDITOR)
+                                        .person(Person.builder()
+                                            .name("George Clooney")
+                                            .obfuscatedId("abc123")
+                                            .build())
+                                        .build()))
+                                .combinedAnswerText(StructuredTextMutableProperties.builder()
+                                    .text("From https://en.wikipedia.org/wiki/Diffuse_sky_radiation, the sky is blue because blue light is more strongly scattered than longer-wavelength light.")
+                                    .build())
+                                .build())
                             .call();
 
                     if (res.answer().isPresent()) {
@@ -602,7 +599,8 @@ paths:
       operationId: getanswer
       x-visibility: Public
       x-codegen-request-body-name: payload
-      parameters: []
+      parameters:
+        - $ref: '#/components/parameters/locale'
       requestBody:
         content:
           application/json:
@@ -684,13 +682,11 @@ paths:
                             .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
                         .build();
 
-                    GetAnswerRequest req = GetAnswerRequest.builder()
-                            .id(3L)
-                            .docId("ANSWERS_answer_3")
-                            .build();
-
                     GetanswerResponse res = sdk.client().answers().retrieve()
-                            .request(req)
+                            .getAnswerRequest(GetAnswerRequest.builder()
+                                .id(3L)
+                                .docId("ANSWERS_answer_3")
+                                .build())
                             .call();
 
                     if (res.getAnswerResponse().isPresent()) {
@@ -708,7 +704,8 @@ paths:
       deprecated: true
       x-visibility: Public
       x-codegen-request-body-name: payload
-      parameters: []
+      parameters:
+        - $ref: '#/components/parameters/locale'
       requestBody:
         content:
           application/json:
@@ -7795,3 +7792,11 @@ components:
     APIToken:
       scheme: bearer
       type: http
+  parameters:
+    locale:
+      name: locale
+      in: query
+      description: The client's preferred locale in rfc5646 format (e.g. `en`, `ja`, `pt-BR`). If omitted, the `Accept-Language` will be used. If not present or not supported, defaults to the closest match or `en`.
+      required: false
+      schema:
+        type: string

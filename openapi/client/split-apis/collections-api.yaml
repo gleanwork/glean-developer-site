@@ -2,11 +2,11 @@ openapi: 3.0.0
 info:
   version: 0.9.0
   title: Glean API - Collections
-  x-source-commit-sha: ef516436a6f2f6812cc04caebe003109a36085fa
+  x-source-commit-sha: a9cf4ddf30f3d5876a2474eefd93030ad295e367
   description: API endpoints for Collections
   x-logo:
     url: https://app.glean.com/images/glean-text2.svg
-  x-open-api-commit-sha: c7b0e281f255a11307263789bd538cb75621ece3
+  x-open-api-commit-sha: ba82696cfa8da48fca01c92d5eedbccd9e27b158
   x-speakeasy-name: Glean API
 servers:
   - url: https://{instance}-be.glean.com
@@ -26,7 +26,8 @@ paths:
       operationId: addcollectionitems
       x-visibility: Public
       x-codegen-request-body-name: payload
-      parameters: []
+      parameters:
+        - $ref: '#/components/parameters/locale'
       requestBody:
         content:
           application/json:
@@ -107,12 +108,10 @@ paths:
                             .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
                         .build();
 
-                    AddCollectionItemsRequest req = AddCollectionItemsRequest.builder()
-                            .collectionId(7742.68)
-                            .build();
-
                     AddcollectionitemsResponse res = sdk.client().collections().addItems()
-                            .request(req)
+                            .addCollectionItemsRequest(AddCollectionItemsRequest.builder()
+                                .collectionId(7742.68)
+                                .build())
                             .call();
 
                     if (res.addCollectionItemsResponse().isPresent()) {
@@ -129,7 +128,8 @@ paths:
       operationId: createcollection
       x-visibility: Public
       x-codegen-request-body-name: payload
-      parameters: []
+      parameters:
+        - $ref: '#/components/parameters/locale'
       requestBody:
         content:
           application/json:
@@ -281,41 +281,39 @@ paths:
                             .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
                         .build();
 
-                    CreateCollectionRequest req = CreateCollectionRequest.builder()
-                            .name("<value>")
-                            .addedRoles(List.of(
-                                UserRoleSpecification.builder()
-                                    .role(UserRole.OWNER)
-                                    .person(Person.builder()
-                                        .name("George Clooney")
-                                        .obfuscatedId("abc123")
-                                        .build())
-                                    .build()))
-                            .removedRoles(List.of(
-                                UserRoleSpecification.builder()
-                                    .role(UserRole.ANSWER_MODERATOR)
-                                    .person(Person.builder()
-                                        .name("George Clooney")
-                                        .obfuscatedId("abc123")
-                                        .build())
-                                    .build()))
-                            .audienceFilters(List.of(
-                                FacetFilter.builder()
-                                    .fieldName("type")
-                                    .values(List.of(
-                                        FacetFilterValue.builder()
-                                            .value("Spreadsheet")
-                                            .relationType(RelationType.EQUALS)
-                                            .build(),
-                                        FacetFilterValue.builder()
-                                            .value("Presentation")
-                                            .relationType(RelationType.EQUALS)
-                                            .build()))
-                                    .build()))
-                            .build();
-
                     CreatecollectionResponse res = sdk.client().collections().create()
-                            .request(req)
+                            .createCollectionRequest(CreateCollectionRequest.builder()
+                                .name("<value>")
+                                .addedRoles(List.of(
+                                    UserRoleSpecification.builder()
+                                        .role(UserRole.OWNER)
+                                        .person(Person.builder()
+                                            .name("George Clooney")
+                                            .obfuscatedId("abc123")
+                                            .build())
+                                        .build()))
+                                .removedRoles(List.of(
+                                    UserRoleSpecification.builder()
+                                        .role(UserRole.ANSWER_MODERATOR)
+                                        .person(Person.builder()
+                                            .name("George Clooney")
+                                            .obfuscatedId("abc123")
+                                            .build())
+                                        .build()))
+                                .audienceFilters(List.of(
+                                    FacetFilter.builder()
+                                        .fieldName("type")
+                                        .values(List.of(
+                                            FacetFilterValue.builder()
+                                                .value("Spreadsheet")
+                                                .relationType(RelationType.EQUALS)
+                                                .build(),
+                                            FacetFilterValue.builder()
+                                                .value("Presentation")
+                                                .relationType(RelationType.EQUALS)
+                                                .build()))
+                                        .build()))
+                                .build())
                             .call();
 
                     if (res.oneOf().isPresent()) {
@@ -332,7 +330,8 @@ paths:
       operationId: deletecollection
       x-visibility: Public
       x-codegen-request-body-name: payload
-      parameters: []
+      parameters:
+        - $ref: '#/components/parameters/locale'
       requestBody:
         content:
           application/json:
@@ -424,15 +423,13 @@ paths:
                             .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
                         .build();
 
-                    DeleteCollectionRequest req = DeleteCollectionRequest.builder()
-                            .ids(List.of(
-                                930352L,
-                                156719L,
-                                25102L))
-                            .build();
-
                     DeletecollectionResponse res = sdk.client().collections().delete()
-                            .request(req)
+                            .deleteCollectionRequest(DeleteCollectionRequest.builder()
+                                .ids(List.of(
+                                    930352L,
+                                    156719L,
+                                    25102L))
+                                .build())
                             .call();
 
                     // handle response
@@ -447,7 +444,8 @@ paths:
       operationId: deletecollectionitem
       x-visibility: Public
       x-codegen-request-body-name: payload
-      parameters: []
+      parameters:
+        - $ref: '#/components/parameters/locale'
       requestBody:
         content:
           application/json:
@@ -531,13 +529,11 @@ paths:
                             .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
                         .build();
 
-                    DeleteCollectionItemRequest req = DeleteCollectionItemRequest.builder()
-                            .collectionId(6980.49)
-                            .itemId("<id>")
-                            .build();
-
                     DeletecollectionitemResponse res = sdk.client().collections().deleteItem()
-                            .request(req)
+                            .deleteCollectionItemRequest(DeleteCollectionItemRequest.builder()
+                                .collectionId(6980.49)
+                                .itemId("<id>")
+                                .build())
                             .call();
 
                     if (res.deleteCollectionItemResponse().isPresent()) {
@@ -554,7 +550,8 @@ paths:
       operationId: editcollection
       x-visibility: Public
       x-codegen-request-body-name: payload
-      parameters: []
+      parameters:
+        - $ref: '#/components/parameters/locale'
       requestBody:
         content:
           application/json:
@@ -707,42 +704,40 @@ paths:
                             .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
                         .build();
 
-                    EditCollectionRequest req = EditCollectionRequest.builder()
-                            .name("<value>")
-                            .id(347152L)
-                            .addedRoles(List.of(
-                                UserRoleSpecification.builder()
-                                    .role(UserRole.VIEWER)
-                                    .person(Person.builder()
-                                        .name("George Clooney")
-                                        .obfuscatedId("abc123")
-                                        .build())
-                                    .build()))
-                            .removedRoles(List.of(
-                                UserRoleSpecification.builder()
-                                    .role(UserRole.VERIFIER)
-                                    .person(Person.builder()
-                                        .name("George Clooney")
-                                        .obfuscatedId("abc123")
-                                        .build())
-                                    .build()))
-                            .audienceFilters(List.of(
-                                FacetFilter.builder()
-                                    .fieldName("type")
-                                    .values(List.of(
-                                        FacetFilterValue.builder()
-                                            .value("Spreadsheet")
-                                            .relationType(RelationType.EQUALS)
-                                            .build(),
-                                        FacetFilterValue.builder()
-                                            .value("Presentation")
-                                            .relationType(RelationType.EQUALS)
-                                            .build()))
-                                    .build()))
-                            .build();
-
                     EditcollectionResponse res = sdk.client().collections().update()
-                            .request(req)
+                            .editCollectionRequest(EditCollectionRequest.builder()
+                                .name("<value>")
+                                .id(347152L)
+                                .addedRoles(List.of(
+                                    UserRoleSpecification.builder()
+                                        .role(UserRole.VIEWER)
+                                        .person(Person.builder()
+                                            .name("George Clooney")
+                                            .obfuscatedId("abc123")
+                                            .build())
+                                        .build()))
+                                .removedRoles(List.of(
+                                    UserRoleSpecification.builder()
+                                        .role(UserRole.VERIFIER)
+                                        .person(Person.builder()
+                                            .name("George Clooney")
+                                            .obfuscatedId("abc123")
+                                            .build())
+                                        .build()))
+                                .audienceFilters(List.of(
+                                    FacetFilter.builder()
+                                        .fieldName("type")
+                                        .values(List.of(
+                                            FacetFilterValue.builder()
+                                                .value("Spreadsheet")
+                                                .relationType(RelationType.EQUALS)
+                                                .build(),
+                                            FacetFilterValue.builder()
+                                                .value("Presentation")
+                                                .relationType(RelationType.EQUALS)
+                                                .build()))
+                                        .build()))
+                                .build())
                             .call();
 
                     if (res.editCollectionResponse().isPresent()) {
@@ -759,7 +754,8 @@ paths:
       operationId: editcollectionitem
       x-visibility: Public
       x-codegen-request-body-name: payload
-      parameters: []
+      parameters:
+        - $ref: '#/components/parameters/locale'
       requestBody:
         content:
           application/json:
@@ -841,13 +837,11 @@ paths:
                             .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
                         .build();
 
-                    EditCollectionItemRequest req = EditCollectionItemRequest.builder()
-                            .collectionId(142375L)
-                            .itemId("<id>")
-                            .build();
-
                     EditcollectionitemResponse res = sdk.client().collections().updateItem()
-                            .request(req)
+                            .editCollectionItemRequest(EditCollectionItemRequest.builder()
+                                .collectionId(142375L)
+                                .itemId("<id>")
+                                .build())
                             .call();
 
                     if (res.editCollectionItemResponse().isPresent()) {
@@ -864,7 +858,8 @@ paths:
       operationId: getcollection
       x-visibility: Preview
       x-codegen-request-body-name: payload
-      parameters: []
+      parameters:
+        - $ref: '#/components/parameters/locale'
       requestBody:
         content:
           application/json:
@@ -945,12 +940,10 @@ paths:
                             .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
                         .build();
 
-                    GetCollectionRequest req = GetCollectionRequest.builder()
-                            .id(425335L)
-                            .build();
-
                     GetcollectionResponse res = sdk.client().collections().retrieve()
-                            .request(req)
+                            .getCollectionRequest(GetCollectionRequest.builder()
+                                .id(425335L)
+                                .build())
                             .call();
 
                     if (res.getCollectionResponse().isPresent()) {
@@ -967,7 +960,8 @@ paths:
       operationId: listcollections
       x-visibility: Public
       x-codegen-request-body-name: payload
-      parameters: []
+      parameters:
+        - $ref: '#/components/parameters/locale'
       requestBody:
         content:
           application/json:
@@ -1046,11 +1040,9 @@ paths:
                             .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
                         .build();
 
-                    ListCollectionsRequest req = ListCollectionsRequest.builder()
-                            .build();
-
                     ListcollectionsResponse res = sdk.client().collections().list()
-                            .request(req)
+                            .listCollectionsRequest(ListCollectionsRequest.builder()
+                                .build())
                             .call();
 
                     if (res.listCollectionsResponse().isPresent()) {
@@ -8222,3 +8214,11 @@ components:
     APIToken:
       scheme: bearer
       type: http
+  parameters:
+    locale:
+      name: locale
+      in: query
+      description: The client's preferred locale in rfc5646 format (e.g. `en`, `ja`, `pt-BR`). If omitted, the `Accept-Language` will be used. If not present or not supported, defaults to the closest match or `en`.
+      required: false
+      schema:
+        type: string
