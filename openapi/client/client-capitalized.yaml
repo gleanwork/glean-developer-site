@@ -2,7 +2,7 @@ openapi: 3.0.0
 info:
   version: 0.9.0
   title: Glean API
-  x-source-commit-sha: a604bd819216fb7919e8d0b0bd69f5af33b5d2bd
+  x-source-commit-sha: 5663ebb14ef0003ab48d2d14cda2ba526226b054
   description: |
     # Introduction
     In addition to the data sources that Glean has built-in support for, Glean also provides a REST API that enables customers to put arbitrary content in the search index. This is useful, for example, for doing permissions-aware search over content in internal tools that reside on-prem as well as for searching over applications that Glean does not currently support first class. In addition these APIs allow the customer to push organization data (people info, organization structure etc) into Glean.
@@ -22,7 +22,7 @@ info:
     These API clients provide type-safe, idiomatic interfaces for working with Glean IndexingAPIs in your language of choice.
   x-logo:
     url: https://app.glean.com/images/glean-text2.svg
-  x-open-api-commit-sha: 62b05ceecaf04d28668647bb61969173aed8cbd9
+  x-open-api-commit-sha: 67e14b261dffd352aba686d9e04aa825a7c2402e
   x-speakeasy-name: Glean API
 servers:
   - url: https://{instance}-be.glean.com
@@ -23805,22 +23805,6 @@ components:
         dayRange:
           $ref: '#/components/schemas/Period'
           description: Time period for which Insights are requested.
-    InsightsAiAppRequestOptions:
-      type: object
-      properties:
-        aiAppIds:
-          type: array
-          items:
-            type: string
-          description: IDs of the AI Apps for which Insights should be returned. An empty array signifies all.
-    InsightsAgentsRequestOptions:
-      type: object
-      properties:
-        agentIds:
-          type: array
-          items:
-            type: string
-          description: IDs of the Agents for which Insights should be returned. An empty array signifies all.
     InsightsRequest:
       properties:
         overviewRequest:
@@ -23838,65 +23822,6 @@ components:
         disablePerUserInsights:
           type: boolean
           description: If true, suppresses the generation of per-user Insights in the response. Default is false.
-        categories:
-          deprecated: true
-          type: array
-          items:
-            type: string
-            enum:
-              - AGENTS
-              - AGENT_USERS
-              - TOP_AGENTS
-              - AGENTS_USAGE_BY_DEPARTMENT
-              - AI
-              - AI_APPS
-              - ANNOUNCEMENTS
-              - ANSWERS
-              - COLLECTIONS
-              - CONTENT
-              - GLEAN_ASSIST
-              - QUERIES
-              - SHORTCUTS
-              - USERS
-          description: Categories of data requested. Request can include single or multiple types.
-        departments:
-          deprecated: true
-          type: array
-          items:
-            type: string
-          description: Departments that the data is requested for. If this is empty, corresponds to whole company.
-        dayRange:
-          deprecated: true
-          $ref: '#/components/schemas/Period'
-        aiAppRequestOptions:
-          deprecated: true
-          $ref: '#/components/schemas/InsightsAiAppRequestOptions'
-        agentsRequestOptions:
-          deprecated: true
-          $ref: '#/components/schemas/InsightsAgentsRequestOptions'
-        assistantActivityTypes:
-          deprecated: true
-          type: array
-          items:
-            type: string
-            enum:
-              - GLEAN_CHAT
-              - AI_SUMMARY
-              - AI_ANSWER
-              - GLEANBOT_RESPONSE
-          description: Types of activity that should count in the definition of an Assistant Active User. Affects only insights for AI category.
-    LabeledCountInfo:
-      required:
-        - label
-      properties:
-        label:
-          type: string
-          description: Label for the included count information.
-        countInfo:
-          type: array
-          items:
-            $ref: '#/components/schemas/CountInfo'
-          description: List of data points for counts for a given date period.
     UserActivityInsight:
       required:
         - user
@@ -23917,218 +23842,6 @@ components:
           $ref: '#/components/schemas/CountInfo'
         activeDayCount:
           $ref: '#/components/schemas/CountInfo'
-    UserInsightsResponse:
-      properties:
-        lastLogTimestamp:
-          type: integer
-          description: Unix timestamp of the last activity processed to make the response (in seconds since epoch UTC).
-        activityInsights:
-          type: array
-          items:
-            $ref: '#/components/schemas/UserActivityInsight'
-          description: Insights for all active users with respect to set of actions.
-        inactiveInsights:
-          type: array
-          items:
-            $ref: '#/components/schemas/UserActivityInsight'
-          description: Insights for all in inactive users with respect to set of actions and time period. Activity count will be set to 0.
-        totalTeammates:
-          type: integer
-          description: Total number of teammates that have logged in to the product, that are still valid teammates.
-        totalActiveUsers:
-          type: integer
-          description: Total number of active users in the requested period.
-        departments:
-          type: array
-          items:
-            type: string
-          description: list of departments applicable for users tab.
-    DocumentInsight:
-      required:
-        - document
-      properties:
-        document:
-          $ref: '#/components/schemas/Document'
-        viewCount:
-          $ref: '#/components/schemas/CountInfo'
-        visitorCount:
-          $ref: '#/components/schemas/CountInfo'
-    ContentInsightsResponse:
-      properties:
-        lastLogTimestamp:
-          type: integer
-          description: Unix timestamp of the last activity processed to make the response (in seconds since epoch UTC).
-        documentInsights:
-          type: array
-          items:
-            $ref: '#/components/schemas/DocumentInsight'
-          description: Insights for documents.
-        departments:
-          type: array
-          items:
-            type: string
-          description: list of departments applicable for contents tab.
-        minDepartmentSizeThreshold:
-          type: integer
-          description: Min threshold in size of departments while populating results, otherwise 0.
-        minVisitorThreshold:
-          type: integer
-          description: Minimum number of visitors to a document required to be included in insights.
-    QueryInsight:
-      required:
-        - query
-      properties:
-        query:
-          type: string
-          description: The query string the information is about.
-        searchCount:
-          $ref: '#/components/schemas/CountInfo'
-        searchorCount:
-          $ref: '#/components/schemas/CountInfo'
-        searchWithClickCount:
-          $ref: '#/components/schemas/CountInfo'
-        clickCount:
-          $ref: '#/components/schemas/CountInfo'
-        similarQueries:
-          type: array
-          items:
-            $ref: '#/components/schemas/QueryInsight'
-          description: list of similar queries to current one.
-    QueryInsightsResponse:
-      properties:
-        lastLogTimestamp:
-          type: integer
-          description: Unix timestamp of the last activity processed to make the response (in seconds since epoch UTC).
-        queryInsights:
-          type: array
-          items:
-            $ref: '#/components/schemas/QueryInsight'
-          description: Insights for queries.
-        lowPerformingQueryInsights:
-          type: array
-          items:
-            $ref: '#/components/schemas/QueryInsight'
-          description: Insights for low performing queries without good results.
-        departments:
-          type: array
-          items:
-            type: string
-          description: list of departments applicable for queries tab.
-        minVisitorThreshold:
-          type: integer
-          description: Min threshold in number of visitors while populating results, otherwise 0.
-    ShortcutInsight:
-      required:
-        - shortcut
-      properties:
-        shortcut:
-          $ref: '#/components/schemas/Shortcut'
-        visitCount:
-          $ref: '#/components/schemas/CountInfo'
-        visitorCount:
-          $ref: '#/components/schemas/CountInfo'
-    ShortcutInsightsResponse:
-      properties:
-        lastLogTimestamp:
-          type: integer
-          description: Unix timestamp of the last activity processed to make the response (in seconds since epoch UTC).
-        shortcutInsights:
-          type: array
-          items:
-            $ref: '#/components/schemas/ShortcutInsight'
-          description: Insights for shortcuts.
-        departments:
-          type: array
-          items:
-            type: string
-          description: list of departments applicable for shortcuts tab.
-        minVisitorThreshold:
-          type: integer
-          description: Min threshold in number of visitors while populating results, otherwise 0.
-    AiInsightsResponse:
-      properties:
-        lastLogTimestamp:
-          type: integer
-          description: Unix timestamp of the last activity processed to make the response (in seconds since epoch UTC).
-        assistantInsights:
-          type: array
-          items:
-            $ref: '#/components/schemas/UserActivityInsight'
-        totalActiveAssistantUsers:
-          type: integer
-          description: Total number of Active Assistant users (chat, summary, AIA) in requested period.
-        totalChatMessages:
-          type: integer
-          description: Total number of Chat messages sent in requested period.
-        totalAiSummarizations:
-          type: integer
-          description: Total number of AI Document Summarizations invoked in the requested period.
-        totalAiAnswers:
-          type: integer
-          description: Total number of AI Answers generated in the requested period.
-        totalUpvotes:
-          type: integer
-          description: Total number of Chat messages which received upvotes by the user.
-        totalDownvotes:
-          type: integer
-          description: Total number of Chat messages which received downvotes by the user.
-        totalGleanbotResponses:
-          type: integer
-          description: Total number of Gleanbot responses, both proactive and reactive.
-        totalGleanbotResponsesShared:
-          type: integer
-          description: Total number of Gleanbot responses shared publicly (upvoted).
-        totalGleanbotResponsesNotHelpful:
-          type: integer
-          description: Total number of Glean responses rejected as not helpful (downvoted).
-        departments:
-          type: array
-          items:
-            type: string
-          description: list of departments applicable for users tab.
-    AiAppActionCounts:
-      type: object
-      additionalProperties:
-        type: integer
-      description: Map from action to frequency.
-      properties:
-        totalSlackbotResponses:
-          type: integer
-          description: Total number of Slackbot responses, both proactive and reactive.
-        totalSlackbotResponsesShared:
-          type: integer
-          description: Total number of Slackbot responses shared publicly (upvoted).
-        totalSlackbotResponsesNotHelpful:
-          type: integer
-          description: Total number of Slackbot responses rejected as not helpful (downvoted).
-        totalChatMessages:
-          type: integer
-          description: Total number of Chat messages sent in requested period.
-        totalUpvotes:
-          type: integer
-          description: Total number of Chat messages which received upvotes by the user.
-        totalDownvotes:
-          type: integer
-          description: Total number of Chat messages which received downvotes by the user.
-    AiAppsInsightsResponse:
-      properties:
-        lastLogTimestamp:
-          type: integer
-          description: Unix timestamp of the last activity processed to make the response (in seconds since epoch UTC).
-        aiAppInsights:
-          type: array
-          items:
-            $ref: '#/components/schemas/UserActivityInsight'
-        totalActiveUsers:
-          type: integer
-          description: Total number of active users on the Ai App in the requested period.
-        actionCounts:
-          $ref: '#/components/schemas/AiAppActionCounts'
-        departments:
-          type: array
-          items:
-            type: string
-          description: list of departments applicable for users tab.
     GleanAssistInsightsResponse:
       properties:
         lastLogTimestamp:
@@ -24206,6 +23919,18 @@ components:
               $ref: '#/components/schemas/CurrentActiveUsers'
             ugcSummary:
               $ref: '#/components/schemas/CurrentActiveUsers'
+    LabeledCountInfo:
+      required:
+        - label
+      properties:
+        label:
+          type: string
+          description: Label for the included count information.
+        countInfo:
+          type: array
+          items:
+            $ref: '#/components/schemas/CountInfo'
+          description: List of data points for counts for a given date period.
     PerUserInsight:
       properties:
         person:
@@ -24450,51 +24175,9 @@ components:
               $ref: '#/components/schemas/LabeledCountInfo'
     InsightsResponse:
       properties:
-        timeseries:
-          deprecated: true
-          type: array
-          items:
-            $ref: '#/components/schemas/LabeledCountInfo'
-          description: List of timeseries to make charts (if applicable).
-        users:
-          deprecated: true
-          $ref: '#/components/schemas/UserInsightsResponse'
-        content:
-          deprecated: true
-          $ref: '#/components/schemas/ContentInsightsResponse'
-        queries:
-          deprecated: true
-          $ref: '#/components/schemas/QueryInsightsResponse'
-        collections:
-          deprecated: true
-          $ref: '#/components/schemas/ContentInsightsResponse'
-        collectionsV2:
-          deprecated: true
-          $ref: '#/components/schemas/ContentInsightsResponse'
-        shortcuts:
-          deprecated: true
-          $ref: '#/components/schemas/ShortcutInsightsResponse'
-        announcements:
-          deprecated: true
-          $ref: '#/components/schemas/ContentInsightsResponse'
-        answers:
-          deprecated: true
-          $ref: '#/components/schemas/ContentInsightsResponse'
-        ai:
-          deprecated: true
-          $ref: '#/components/schemas/AiInsightsResponse'
-        aiApps:
-          deprecated: true
-          $ref: '#/components/schemas/AiAppsInsightsResponse'
         gleanAssist:
           deprecated: true
           $ref: '#/components/schemas/GleanAssistInsightsResponse'
-        departments:
-          deprecated: true
-          type: array
-          items:
-            type: string
-          description: list of all departments.
         overviewResponse:
           $ref: '#/components/schemas/InsightsOverviewResponse'
         assistantResponse:
