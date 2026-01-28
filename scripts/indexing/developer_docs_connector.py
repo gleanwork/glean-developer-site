@@ -36,9 +36,10 @@ class CustomDeveloperDocsConnector(BaseDatasourceConnector[Union[DocumentationPa
                     display_label="Information Page",
                     doc_category=DatasourceCategory.KNOWLEDGE_HUB,
                     property_definitions=PropertyDefinitionBuilder()
-                        .add_property("docSection", "Section", property_type=PropertyType.TEXT, ui_options=UIOptions.SEARCH_RESULT)
-                        .add_property("heading", "Heading", property_type=PropertyType.TEXT, ui_options=UIOptions.SEARCH_RESULT, hide_ui_facet=True)
-                        .add_property("content", "Content", property_type=PropertyType.TEXT, ui_options=UIOptions.SEARCH_RESULT, hide_ui_facet=True)
+                        .add_property("content", "Content",
+                                     property_type=PropertyType.TEXT,
+                                     ui_options=UIOptions.SEARCH_RESULT,
+                                     hide_ui_facet=True)
                         .build()
                 ),
                 ObjectDefinition(
@@ -79,13 +80,9 @@ class CustomDeveloperDocsConnector(BaseDatasourceConnector[Union[DocumentationPa
                     view_url=page["url"],
                     object_type="infoPage",
                     custom_properties=[
-                        CustomProperty(name="docSection", value=page["section"]),
-                        CustomProperty(name="heading", value=page["heading"]),
-                        CustomProperty(name='content', value=page["content"])
+                        CustomProperty(name="content", value=page["content"])
                     ],
-                    permissions=DocumentPermissionsDefinition(
-                        allow_anonymous_access=True
-                    )
+                    permissions=DocumentPermissionsDefinition(allow_anonymous_access=True)
                 )
             elif page["page_type"] == "api_reference":
                 document = DocumentDefinition(

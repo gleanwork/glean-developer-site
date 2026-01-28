@@ -1,12 +1,10 @@
 from typing import List, TypedDict
 
 class DocumentationPage(TypedDict):
-    """Type definition for Page Information data."""
+    """Type definition for full-page documentation data."""
 
     id: str
     title: str
-    section: str
-    heading: str
     content: str
     url: str
     page_type: str
