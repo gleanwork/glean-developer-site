@@ -1,4 +1,5 @@
 from typing import Union, List, Tuple, Optional
+from pathlib import PurePosixPath
 from urllib.parse import urlparse
 import uuid
 import json
@@ -37,8 +38,8 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[DocumentationPage, A
         """Extract documentation pages using trafilatura for clean content extraction."""
 
         def title_from_url(url: str) -> str:
-            path = urlparse(url).path.rstrip('/')
-            last_segment = path.split('/')[-1] if path else ""
+            path = PurePosixPath(urlparse(url).path)
+            last_segment = path.name or ""
             return last_segment.replace('-', ' ').replace('_', ' ').title()
 
         def extract_page(url: str) -> Optional[DocumentationPage]:
@@ -117,10 +118,19 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[DocumentationPage, A
         def _extract_api_reference(url: str, html: str) -> dict:
             soup = BeautifulSoup(html, 'html.parser')
             title = soup.find('h1').text.strip() if soup.find('h1') else ""
+
+            # Extract tag from breadcrumbs first
             tag = "unknown"
             breadcrumb_items = soup.select('ul.breadcrumbs li span.breadcrumbs__link')
             if breadcrumb_items and len(breadcrumb_items) >= 2:
                 tag = breadcrumb_items[1].text.strip().lower().replace(" ", "-")
+
+            # Fallback: extract tag from URL path (e.g., /api/client-api/governance/... -> governance)
+            if tag == "unknown":
+                path = PurePosixPath(urlparse(url).path)
+                # Pattern: /api/client-api/{tag}/... or /api/indexing-api/{tag}/...
+                if len(path.parts) >= 4 and path.parts[1] == 'api':
+                    tag = path.parts[3]
             method_block = soup.select_one("pre.openapi__method-endpoint")
             method = "unknown"
             endpoint = "unknown"
@@ -130,7 +140,9 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[DocumentationPage, A
                 if method_span and endpoint_h2:
                     method = method_span.text.strip()
                     endpoint_full = endpoint_h2.text.strip()
-                    endpoint = re.sub(r'https://.*?(/.*)', r'\1', endpoint_full)
+                    # Extract just the path from the full URL (e.g., "https://api.glean.com/rest/..." -> "/rest/...")
+                    parsed = urlparse(endpoint_full)
+                    endpoint = parsed.path if parsed.scheme else endpoint_full
             
             beta_admonition = soup.find('div', class_='theme-admonition')
             beta_text = ""
