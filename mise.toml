@@ -5,3 +5,26 @@ node = "22.16.0"
 pnpm = "10.13.1"
 python = "3.13.0"
 uv = "0.7"
+
+[tasks."indexing:run"]
+description = "Run the Glean indexing script"
+dir = "scripts/indexing"
+run = "uv run main.py"
+
+[tasks."indexing:dry-run"]
+description = "Dry run: fetch and transform data without uploading (outputs JSON)"
+dir = "scripts/indexing"
+run = "DRY_RUN=true uv run main.py"
+
+[tasks."indexing:sync"]
+description = "Sync indexing dependencies"
+dir = "scripts/indexing"
+run = "uv sync"
+
+[tasks."indexing:setup"]
+description = "Initial setup: sync deps and install playwright browsers"
+dir = "scripts/indexing"
+run = """
+uv sync
+uv run playwright install chromium
+"""

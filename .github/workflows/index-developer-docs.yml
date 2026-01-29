@@ -5,9 +5,14 @@ on:
   workflow_dispatch:
     inputs:
       reason:
-        description: 'Reason for redeployment (optional)'
+        description: 'Reason for running (optional)'
         required: false
         default: 'Manual trigger'
+      dry_run:
+        description: 'Dry run (validate extraction without uploading)'
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   run-script:
@@ -25,7 +30,7 @@ jobs:
           cache: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      
+
       - name: Install dependencies
         working-directory: scripts/indexing
         run: uv sync
@@ -39,4 +44,5 @@ jobs:
         env:
           GLEAN_INDEXING_API_TOKEN: ${{ secrets.GLEAN_INDEXING_API_TOKEN }}
           GLEAN_INSTANCE: ${{ secrets.GLEAN_INSTANCE }}
+          DRY_RUN: ${{ inputs.dry_run }}
         run: uv run main.py

@@ -1,14 +1,21 @@
-from typing import Union, List, Tuple
-from glean.indexing.connectors.base_data_client import BaseConnectorDataClient
-from data_types import DocumentationPage, ApiReferencePage
+from typing import Union, List, Tuple, Optional
+from pathlib import PurePosixPath
+from urllib.parse import urlparse
+import uuid
 import json
-import re
+import logging
 import requests
 import xml.etree.ElementTree as ET
-from playwright.sync_api import sync_playwright
-from bs4 import BeautifulSoup
-import uuid
 import concurrent.futures
+
+import trafilatura
+from bs4 import BeautifulSoup
+from playwright.sync_api import sync_playwright
+
+from glean.indexing.connectors.base_data_client import BaseConnectorDataClient
+from data_types import DocumentationPage, ApiReferencePage
+
+logger = logging.getLogger(__name__)
 
 class DeveloperDocsDataClient(BaseConnectorDataClient[Union[DocumentationPage, ApiReferencePage]]):
     
@@ -28,203 +35,64 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[DocumentationPage, A
         return bool(soup.find('pre', class_='openapi__method-endpoint'))
 
     def get_documentation_page_data(self, urls: List[str]) -> List[DocumentationPage]:
+        """Extract documentation pages using trafilatura for clean content extraction."""
 
-        def _slugify(text: str) -> str:
-            return re.sub(r'[^a-z0-9]+', '-', text.lower()).strip('-')
+        def title_from_url(url: str) -> str:
+            path = PurePosixPath(urlparse(url).path)
+            last_segment = path.name or ""
+            return last_segment.replace('-', ' ').replace('_', ' ').title()
 
-        def _extract_section_from_breadcrumbs(soup) -> str:
-            breadcrumbs = soup.select('ul.breadcrumbs li.breadcrumbs__item')
-            if not breadcrumbs or len(breadcrumbs) < 2:
-                return "unknown"
-            for i, li in enumerate(breadcrumbs):
-                if 'breadcrumbs__item--active' in li.get('class', []):
-                    if i > 0:
-                        prev = breadcrumbs[i-1]
-                        span = prev.find('span', class_='breadcrumbs__link')
-                        if span:
-                            return span.text.strip()
-                        return prev.get_text(strip=True)
-            if len(breadcrumbs) >= 2:
-                span = breadcrumbs[-2].find('span', class_='breadcrumbs__link')
-                if span:
-                    return span.text.strip()
-                return breadcrumbs[-2].get_text(strip=True)
-            return "unknown"
+        def extract_page(url: str) -> Optional[DocumentationPage]:
+            print(f"Scraping {url}...")
+            response = requests.get(url, timeout=30)
+            if response.status_code != 200:
+                logger.warning(f"Failed to fetch {url} - HTTP {response.status_code}")
+                return None
 
-        def _extract_content_until_next_h2(start_elem) -> str:
-            content_parts = []
-            for sibling in start_elem.next_siblings:
-                if isinstance(sibling, str):
-                    continue
-                if sibling.name == 'h2':
-                    break
-                
-                if sibling.name == 'table':
-                    table_text = _format_table_content(sibling)
-                    if table_text:
-                        content_parts.append(table_text)
-                else:
-                    text = sibling.get_text(separator=" ", strip=True)
-                    if text:
-                        content_parts.append(text)
-            return "\n".join(content_parts)
+            html = response.text
+            content = trafilatura.extract(
+                html,
+                include_tables=True,
+                include_comments=False,
+                include_images=False,
+                output_format="txt"
+            ) or ""
 
-        def _format_table_content(table) -> str:
-            """Format table content in a clear, LLM-friendly way."""
-            if not table:
-                return ""
-            
-            headers = []
-            thead = table.find('thead', recursive=False)
-            if thead:
-                header_row = thead.find('tr')
-                if header_row:
-                    for th in header_row.find_all(['th', 'td']):
-                        header_text = th.get_text(separator=" ").strip()
-                        headers.append(header_text)
-            
-            data_rows = []
-            tbody = table.find('tbody')
-            rows_container = tbody if tbody else table
-            
-            for row in rows_container.find_all('tr'):
-                if not headers or row != table.find('tr'):
-                    cells = row.find_all(['td', 'th'])
-                    if cells:
-                        row_data = []
-                        for cell in cells:
-                            cell_text = cell.get_text(separator=" ").strip()
-                            row_data.append(cell_text)
-                        if any(row_data):
-                            data_rows.append(row_data)
-            
-            if not data_rows:
-                return ""
-            
-            formatted_parts = []
-            
-            if headers and len(headers) >= 2:
-                formatted_parts.append(f"Table ({headers[0]} → {headers[1]}):")
-                for row in data_rows:
-                    if len(row) >= 2:
-                        key = row[0]
-                        value = row[1]
-                        if len(row) > 2:
-                            value = f"{value} ({', '.join(row[2:])})"
-                        formatted_parts.append(f"• {key}: {value}")
-            else:
-                formatted_parts.append("Table data:")
-                for i, row in enumerate(data_rows):
-                    formatted_parts.append(f"• Row {i+1}: {' | '.join(row)}")
-            
-            result = "\n".join(formatted_parts)
-            return result
+            if not content:
+                logger.warning(f"No content extracted from {url}, skipping")
+                return None
 
-        def _extract_intro_content_after_header(soup) -> str:
-            h1 = soup.find('h1')
-            header = h1.find_parent() if h1 else None
-            if not header:
-                return ""
-
-            content_parts = []
-            for sibling in header.next_siblings:
-                if isinstance(sibling, str):
-                    continue
-                if sibling.name == 'h2':
-                    break
-                    
-                if sibling.name == 'table':
-                    table_text = _format_table_content(sibling)
-                    if table_text:
-                        content_parts.append(table_text)
-                else:
-                    text = sibling.get_text(separator=" ", strip=True)
-                    if text:
-                        content_parts.append(text)
-            return "\n".join(content_parts).strip()
-
-        def _extract_page_info_with_fragments(url: str, html: str) -> List[DocumentationPage]:
             soup = BeautifulSoup(html, 'lxml')
-            page_title = soup.find('h1').text.strip() if soup.find('h1') else ""
-            section = _extract_section_from_breadcrumbs(soup)
-            data = []
             h1 = soup.find('h1')
-            h2_tags = soup.find_all('h2')
-            h1_content = _extract_intro_content_after_header(soup)
-            if h1:
-                if h1_content:
-                    page_info = DocumentationPage(
-                        id=str(uuid.uuid5(uuid.NAMESPACE_URL, url)),
-                        title=page_title,
-                        section=section,
-                        heading=page_title or section,
-                        content=h1_content,
-                        url=url,
-                        page_type="info_page"
-                    )
-                    data.append(page_info)
-            
-            # Track seen (class, heading_text) pairs to avoid duplicates
-            seen_headers = set()
-            if h2_tags:
-                for h2 in h2_tags:
-                    heading_text = h2.text.strip()
-                    parent_header = h2.find_parent('header')
-                    header_class = tuple(parent_header.get('class', [])) if parent_header else ()
-                    key = (header_class, heading_text)
-                    if key in seen_headers:
-                        continue
-                    seen_headers.add(key)
-                    fragment = _slugify(heading_text)
-                    full_url = url + "#" + fragment
-                    if "entryHeader_Mafo" in header_class:
-                        content = _extract_content_until_next_h2(parent_header)
-                    else:
-                        content = _extract_content_until_next_h2(h2)
-                    id_val = str(uuid.uuid5(uuid.NAMESPACE_URL, full_url))
-                    page_info = DocumentationPage(
-                        id=id_val,
-                        title=page_title,
-                        section=section,
-                        heading=heading_text,
-                        content=content,
-                        url=full_url,
-                        page_type="info_page"
-                    )
-                    data.append(page_info)
-            return data
+            title = h1.text.strip() if h1 else title_from_url(url)
 
-        def _scrape_dynamic_info_pages(urls: List[str], max_workers=10) -> List[DocumentationPage]:
-            all_page_info = []
-            url_idx_tuples = list(enumerate(urls))
-            ordered_results = [None] * len(urls)
-            
-            def _fetch_and_extract_with_index(idx_url_tuple) -> Tuple[int, List[DocumentationPage]]:
-                idx, url = idx_url_tuple
-                page_info = _fetch_and_extract(url)
-                return (idx, page_info)
-            
-            def _fetch_and_extract(url) -> List[DocumentationPage]:
-                print(f"Scraping {url}...")
+            return DocumentationPage(
+                id=str(uuid.uuid5(uuid.NAMESPACE_URL, url)),
+                title=title,
+                content=content,
+                url=url,
+                page_type="info_page"
+            )
+
+        results = []
+        errors = []
+        with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+            futures = {executor.submit(extract_page, url): url for url in urls}
+            for future in concurrent.futures.as_completed(futures):
+                url = futures[future]
                 try:
-                    response = requests.get(url)
-                    if response.status_code != 200:
-                        raise RuntimeError(f"Failed to fetch {url} - HTTP {response.status_code}")
-                    page_info = _extract_page_info_with_fragments(url, response.text)
-                    return page_info
+                    page = future.result()
+                    if page is not None:
+                        results.append(page)
                 except Exception as e:
-                    raise RuntimeError(f"Error scraping {url}: {e}") from e
-            
-            with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
-                for idx, page_info in executor.map(_fetch_and_extract_with_index, url_idx_tuples):
-                    ordered_results[idx] = page_info
-            for page_info in ordered_results:
-                all_page_info.extend(page_info)
-            return all_page_info
-        
-        res = _scrape_dynamic_info_pages(urls)
-        print("INFO PAGE DATA: ", res)
-        return res
+                    logger.error(f"Error scraping {url}: {e}")
+                    errors.append(url)
+
+        if errors:
+            logger.warning(f"Failed to scrape {len(errors)} pages: {errors}")
+
+        results.sort(key=lambda p: p["url"])
+        return results
 
     def get_api_reference_page_data(self, urls: List[str]) -> List[ApiReferencePage]:
         
@@ -250,10 +118,19 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[DocumentationPage, A
         def _extract_api_reference(url: str, html: str) -> dict:
             soup = BeautifulSoup(html, 'html.parser')
             title = soup.find('h1').text.strip() if soup.find('h1') else ""
+
+            # Extract tag from breadcrumbs first
             tag = "unknown"
             breadcrumb_items = soup.select('ul.breadcrumbs li span.breadcrumbs__link')
             if breadcrumb_items and len(breadcrumb_items) >= 2:
                 tag = breadcrumb_items[1].text.strip().lower().replace(" ", "-")
+
+            # Fallback: extract tag from URL path (e.g., /api/client-api/governance/... -> governance)
+            if tag == "unknown":
+                path = PurePosixPath(urlparse(url).path)
+                # Pattern: /api/client-api/{tag}/... or /api/indexing-api/{tag}/...
+                if len(path.parts) >= 4 and path.parts[1] == 'api':
+                    tag = path.parts[3]
             method_block = soup.select_one("pre.openapi__method-endpoint")
             method = "unknown"
             endpoint = "unknown"
@@ -263,7 +140,9 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[DocumentationPage, A
                 if method_span and endpoint_h2:
                     method = method_span.text.strip()
                     endpoint_full = endpoint_h2.text.strip()
-                    endpoint = re.sub(r'https://.*?(/.*)', r'\1', endpoint_full)
+                    # Extract just the path from the full URL (e.g., "https://api.glean.com/rest/..." -> "/rest/...")
+                    parsed = urlparse(endpoint_full)
+                    endpoint = parsed.path if parsed.scheme else endpoint_full
             
             beta_admonition = soup.find('div', class_='theme-admonition')
             beta_text = ""
