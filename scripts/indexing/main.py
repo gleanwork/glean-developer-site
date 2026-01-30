@@ -55,7 +55,7 @@ def main():
                 indexing_logger.log("Dry run complete. No data was uploaded to Glean.")
         else:
             connector.configure_datasource()
-            connector.index_data(mode=IndexingMode.FULL, force_restart=True)
+            connector.index_data(mode=IndexingMode.FULL)
 
             # Generate summary
             summary = indexing_logger.finish()
