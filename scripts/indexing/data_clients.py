@@ -1,9 +1,10 @@
-from typing import Union, List, Tuple, Optional
+from typing import Union, List, Tuple, Optional, TYPE_CHECKING
 from pathlib import PurePosixPath
 from urllib.parse import urlparse
 import uuid
 import json
 import logging
+import time
 import requests
 import xml.etree.ElementTree as ET
 import concurrent.futures
@@ -15,12 +16,16 @@ from playwright.sync_api import sync_playwright
 from glean.indexing.connectors.base_data_client import BaseConnectorDataClient
 from data_types import DocumentationPage, ApiReferencePage
 
+if TYPE_CHECKING:
+    from indexing_logger import IndexingLogger
+
 logger = logging.getLogger(__name__)
 
 class DeveloperDocsDataClient(BaseConnectorDataClient[Union[DocumentationPage, ApiReferencePage]]):
-    
-    def __init__(self, dev_docs_base_url: str):
+
+    def __init__(self, dev_docs_base_url: str, indexing_logger: Optional["IndexingLogger"] = None):
         self.dev_docs_base_url = dev_docs_base_url
+        self.indexing_logger = indexing_logger
 
     def _get_all_sitemap_urls(self, sitemap_url: str) -> List[str]:
         response = requests.get(sitemap_url)
@@ -42,54 +47,88 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[DocumentationPage, A
             last_segment = path.name or ""
             return last_segment.replace('-', ' ').replace('_', ' ').title()
 
-        def extract_page(url: str) -> Optional[DocumentationPage]:
-            print(f"Scraping {url}...")
-            response = requests.get(url, timeout=30)
-            if response.status_code != 200:
-                logger.warning(f"Failed to fetch {url} - HTTP {response.status_code}")
-                return None
+        def extract_page(url: str) -> Tuple[Optional[DocumentationPage], Optional[str], float]:
+            """Extract a page and return (page, error, duration_ms)."""
+            start_time = time.time()
+            try:
+                response = requests.get(url, timeout=30)
+                if response.status_code != 200:
+                    error = f"HTTP {response.status_code}"
+                    return None, error, (time.time() - start_time) * 1000
 
-            html = response.text
-            content = trafilatura.extract(
-                html,
-                include_tables=True,
-                include_comments=False,
-                include_images=False,
-                output_format="txt"
-            ) or ""
+                html = response.text
+                content = trafilatura.extract(
+                    html,
+                    include_tables=True,
+                    include_comments=False,
+                    include_images=False,
+                    output_format="txt"
+                ) or ""
 
-            if not content:
-                logger.warning(f"No content extracted from {url}, skipping")
-                return None
+                if not content:
+                    return None, "No content extracted", (time.time() - start_time) * 1000
 
-            soup = BeautifulSoup(html, 'lxml')
-            h1 = soup.find('h1')
-            title = h1.text.strip() if h1 else title_from_url(url)
+                soup = BeautifulSoup(html, 'lxml')
+                h1 = soup.find('h1')
+                title = h1.text.strip() if h1 else title_from_url(url)
 
-            return DocumentationPage(
-                id=str(uuid.uuid5(uuid.NAMESPACE_URL, url)),
-                title=title,
-                content=content,
-                url=url,
-                page_type="info_page"
-            )
+                page = DocumentationPage(
+                    id=str(uuid.uuid5(uuid.NAMESPACE_URL, url)),
+                    title=title,
+                    content=content,
+                    url=url,
+                    page_type="info_page"
+                )
+                return page, None, (time.time() - start_time) * 1000
+
+            except Exception as e:
+                return None, str(e), (time.time() - start_time) * 1000
 
         results = []
         errors = []
+
         with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
             futures = {executor.submit(extract_page, url): url for url in urls}
             for future in concurrent.futures.as_completed(futures):
                 url = futures[future]
                 try:
-                    page = future.result()
+                    page, error, duration_ms = future.result()
+
                     if page is not None:
                         results.append(page)
-                except Exception as e:
-                    logger.error(f"Error scraping {url}: {e}")
-                    errors.append(url)
+                        if self.indexing_logger:
+                            self.indexing_logger.log_document(
+                                url=url,
+                                doc_type="info_page",
+                                title=page["title"],
+                                content_length=len(page["content"]),
+                                status="success",
+                                duration_ms=duration_ms,
+                            )
+                    else:
+                        errors.append(url)
+                        if self.indexing_logger:
+                            self.indexing_logger.log_document(
+                                url=url,
+                                doc_type="info_page",
+                                title="",
+                                content_length=0,
+                                status="error",
+                                error=error,
+                                duration_ms=duration_ms,
+                            )
 
-        if errors:
-            logger.warning(f"Failed to scrape {len(errors)} pages: {errors}")
+                except Exception as e:
+                    errors.append(url)
+                    if self.indexing_logger:
+                        self.indexing_logger.log_document(
+                            url=url,
+                            doc_type="info_page",
+                            title="",
+                            content_length=0,
+                            status="error",
+                            error=str(e),
+                        )
 
         results.sort(key=lambda p: p["url"])
         return results
@@ -600,36 +639,56 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[DocumentationPage, A
         def _scrape_dynamic_api_pages(urls: List[str], max_workers=10) -> List[ApiReferencePage]:
             results = [None] * len(urls)
             url_idx_tuples = list(enumerate(urls))
-            
-            def _scrape_with_browser(url_idx_tuple: Tuple[int, str]) -> Tuple[int, ApiReferencePage]:
+            indexing_logger = self.indexing_logger
+
+            def _scrape_with_browser(url_idx_tuple: Tuple[int, str]) -> Tuple[int, ApiReferencePage, float, Optional[str]]:
                 idx, url = url_idx_tuple
+                start_time = time.time()
                 with sync_playwright() as p:
                     browser = p.chromium.launch(headless=True)
                     page = browser.new_page()
                     try:
-                        print(f"Scraping {url}...")
                         data = _scrape_single_page_with_page(url, page)
-                        return (idx, data)
+                        duration_ms = (time.time() - start_time) * 1000
+                        return (idx, data, duration_ms, None)
                     except Exception as e:
+                        duration_ms = (time.time() - start_time) * 1000
                         raise RuntimeError(f"Error scraping {url}: {e}") from e
                     finally:
                         browser.close()
-            
+
             with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
-                for idx, data in executor.map(_scrape_with_browser, url_idx_tuples):
+                for idx, data, duration_ms, error in executor.map(_scrape_with_browser, url_idx_tuples):
                     results[idx] = data
+                    if indexing_logger:
+                        content_length = (
+                            len(data["description"] or "") +
+                            len(data["request_body"] or "") +
+                            len(data["response_body"] or "")
+                        )
+                        indexing_logger.log_document(
+                            url=data["url"],
+                            doc_type="api_reference",
+                            title=data["title"],
+                            content_length=content_length,
+                            status="success",
+                            duration_ms=duration_ms,
+                            tag=data["tag"],
+                            method=data["method"],
+                            endpoint=data["endpoint"],
+                        )
             return results
-        
-        res = _scrape_dynamic_api_pages(urls)
-        print("API REFERENCE DATA: ", res)
-        return res
+
+        return _scrape_dynamic_api_pages(urls)
 
     def get_source_data(self, since: str = None) -> List[Union[DocumentationPage, ApiReferencePage]]:
         all_urls = self._get_all_sitemap_urls(self.dev_docs_base_url + "/sitemap.xml")
         info_page_urls = []
         api_ref_urls = []
-        
-        print(f"Checking {len(all_urls)} URLs for API reference pages...")
+
+        if self.indexing_logger:
+            self.indexing_logger.log(f"Checking {len(all_urls)} URLs from sitemap...")
+
         for url in all_urls:
             try:
                 response = requests.get(url)
@@ -642,6 +701,18 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[DocumentationPage, A
                     info_page_urls.append(url)
             except Exception as e:
                 raise RuntimeError(f"Error checking {url}: {e}") from e
-        print(f"Found {len(api_ref_urls)} API reference pages and {len(info_page_urls)} info pages.")
-        
-        return self.get_documentation_page_data(info_page_urls) + self.get_api_reference_page_data(api_ref_urls)
+
+        if self.indexing_logger:
+            self.indexing_logger.log(f"Found {len(api_ref_urls)} API reference pages and {len(info_page_urls)} info pages")
+            self.indexing_logger.log("")
+            self.indexing_logger.log("Extracting info pages...")
+
+        info_pages = self.get_documentation_page_data(info_page_urls)
+
+        if self.indexing_logger:
+            self.indexing_logger.log("")
+            self.indexing_logger.log("Extracting API reference pages...")
+
+        api_pages = self.get_api_reference_page_data(api_ref_urls)
+
+        return info_pages + api_pages
