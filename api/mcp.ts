@@ -11,7 +11,7 @@
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { McpDocsServer } from 'docusaurus-plugin-mcp-server';
+import type { McpDocsServer } from 'docusaurus-plugin-mcp-server';
 import path from 'path';
 
 // Initialize the server (lazy-loaded on first request)
@@ -20,6 +20,8 @@ let initialized = false;
 
 async function getServer(): Promise<McpDocsServer> {
   if (!server) {
+    const { McpDocsServer } = await import('docusaurus-plugin-mcp-server');
+
     // Use path relative to project root - Vercel's includeFiles puts build/mcp/** in the function
     // __dirname is api/, so we go up one level to project root
     const projectRoot = path.join(__dirname, '..');
