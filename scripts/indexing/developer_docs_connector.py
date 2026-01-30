@@ -1,5 +1,4 @@
 from typing import Union, List
-from collections import Counter
 
 from glean.indexing.connectors import BaseDatasourceConnector
 from glean.indexing.common.property_definition_builder import PropertyDefinitionBuilder
@@ -7,11 +6,9 @@ from glean.indexing.models import (
     ContentDefinition,
     CustomDatasourceConfig,
     DocumentDefinition,
-    UserReferenceDefinition
 )
 from glean.api_client.models import (
     ObjectDefinition,
-    PropertyDefinition,
     UIOptions,
     PropertyType,
     DatasourceCategory,
@@ -35,12 +32,6 @@ class CustomDeveloperDocsConnector(BaseDatasourceConnector[Union[DocumentationPa
                     name="infoPage",
                     display_label="Information Page",
                     doc_category=DatasourceCategory.KNOWLEDGE_HUB,
-                    property_definitions=PropertyDefinitionBuilder()
-                        .add_property("content", "Content",
-                                     property_type=PropertyType.TEXT,
-                                     ui_options=UIOptions.SEARCH_RESULT,
-                                     hide_ui_facet=True)
-                        .build()
                 ),
                 ObjectDefinition(
                     name="apiReference",
@@ -79,18 +70,41 @@ class CustomDeveloperDocsConnector(BaseDatasourceConnector[Union[DocumentationPa
                     datasource=self.name,
                     view_url=page["url"],
                     object_type="infoPage",
-                    custom_properties=[
-                        CustomProperty(name="content", value=page["content"])
-                    ],
+                    body=ContentDefinition(
+                        mime_type="text/plain",
+                        text_content=page["content"]
+                    ),
                     permissions=DocumentPermissionsDefinition(allow_anonymous_access=True)
                 )
             elif page["page_type"] == "api_reference":
+                # Build full text content for API reference pages
+                api_content_parts = [
+                    f"# {page['title']}",
+                    f"\n## Endpoint\n{page['method']} {page['endpoint']}",
+                ]
+                if page.get("description"):
+                    api_content_parts.append(f"\n## Description\n{page['description']}")
+                if page.get("request_body"):
+                    api_content_parts.append(f"\n## Request Body\n{page['request_body']}")
+                if page.get("response_body"):
+                    api_content_parts.append(f"\n## Response Body\n{page['response_body']}")
+                if page.get("python_code_sample"):
+                    api_content_parts.append(f"\n## Python Example\n```python\n{page['python_code_sample']}\n```")
+                if page.get("curl_code_sample"):
+                    api_content_parts.append(f"\n## cURL Example\n```bash\n{page['curl_code_sample']}\n```")
+
+                api_full_content = "\n".join(api_content_parts)
+
                 document = DocumentDefinition(
                     id=page["id"],
                     title=page["title"],
                     datasource=self.name,
                     view_url=page["url"],
                     object_type="apiReference",
+                    body=ContentDefinition(
+                        mime_type="text/plain",
+                        text_content=api_full_content
+                    ),
                     custom_properties=[
                         CustomProperty(name="apiTag", value=page["tag"]),
                         CustomProperty(name="endpoint", value=page["endpoint"]),
