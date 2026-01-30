@@ -236,13 +236,24 @@ const baseSidebars: SidebarsConfig = {
           ],
         },
         {
-          type: 'doc',
-          id: 'guides/mcp/mcp',
+          type: 'category',
           label: 'MCP',
           customProps: {
             icon: 'mcp',
             iconSet: 'glean',
           },
+          items: [
+            {
+              type: 'doc',
+              id: 'docs-mcp',
+              label: 'Docs MCP Server',
+            },
+            {
+              type: 'doc',
+              id: 'guides/mcp/mcp',
+              label: 'Remote MCP Server',
+            },
+          ],
         },
         {
           type: 'category',
