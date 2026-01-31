@@ -81,6 +81,10 @@ const config: Config = {
         return getNavbarItems(items, bools);
       })([
         {
+          type: 'custom-mcpInstallButton',
+          position: 'right',
+        },
+        {
           label: 'More from Glean',
           position: 'right',
           items: [
@@ -234,6 +238,15 @@ const config: Config = {
         content: {
           includePages: true,
           enableLlmsFullTxt: true,
+        },
+      },
+    ],
+    [
+      'docusaurus-plugin-mcp-server',
+      {
+        server: {
+          name: 'glean-developer-docs',
+          version: '1.0.0',
         },
       },
     ],
