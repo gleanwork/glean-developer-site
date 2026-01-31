@@ -61,7 +61,8 @@ export default class GleanSearchProvider {
       const request = {
         query,
         pageSize,
-        maxSnippetSize: 200,
+        returnLlmContentOverSnippets: true,
+        maxSnippetSize: 2000,
       };
 
       const response = await this.client.client.search.query(request);
