@@ -639,12 +639,16 @@ class DeveloperDocsDataClient(AsyncBaseStreamingDataClient[Union[DocumentationPa
             )
             return api_ref
 
-        async def _scrape_with_page(url: str, browser, semaphore: asyncio.Semaphore) -> Tuple[str, Optional[ApiReferencePage], Optional[str], float]:
-            """Scrape a single URL using a page from the shared browser."""
+        async def _scrape_with_context(url: str, browser, semaphore: asyncio.Semaphore) -> Tuple[str, Optional[ApiReferencePage], Optional[str], float]:
+            """Scrape a single URL using an isolated browser context."""
             async with semaphore:
                 start_time = time.time()
-                page = await browser.new_page()
+                context = None
+                page = None
                 try:
+                    # Use isolated context per page for better stability
+                    context = await browser.new_context()
+                    page = await context.new_page()
                     data = await _scrape_single_page_with_page(url, page)
                     duration_ms = (time.time() - start_time) * 1000
                     return (url, data, None, duration_ms)
@@ -652,23 +656,67 @@ class DeveloperDocsDataClient(AsyncBaseStreamingDataClient[Union[DocumentationPa
                     duration_ms = (time.time() - start_time) * 1000
                     return (url, None, str(e), duration_ms)
                 finally:
-                    await page.close()
+                    # Close in order: page first, then context
+                    if page:
+                        try:
+                            await page.close()
+                        except Exception:
+                            pass  # Ignore close errors
+                    if context:
+                        try:
+                            await context.close()
+                        except Exception:
+                            pass  # Ignore close errors
 
         indexing_logger = self.indexing_logger
-        semaphore = asyncio.Semaphore(5)  # Limit concurrent pages
+        # Reduced from 5 to 3 for better stability with Playwright's IPC
+        semaphore = asyncio.Semaphore(3)
 
-        # Use a single browser instance for all pages
+        # Collect all results first, then yield (avoids yielding mid-browser-operation)
+        results: List[Tuple[str, Optional[ApiReferencePage], Optional[str], float]] = []
+
         async with async_playwright() as p:
             browser = await p.chromium.launch(headless=True)
             try:
-                tasks = [asyncio.create_task(_scrape_with_page(url, browser, semaphore)) for url in urls]
+                tasks = [asyncio.create_task(_scrape_with_context(url, browser, semaphore)) for url in urls]
 
-                # Use as_completed to yield results incrementally as they finish
+                # Collect all results
                 for coro in asyncio.as_completed(tasks):
                     try:
                         result = await coro
+                        results.append(result)
+
+                        # Log progress immediately
+                        url, data, error, duration_ms = result
+                        if error:
+                            if indexing_logger:
+                                indexing_logger.log_document(
+                                    url=url,
+                                    doc_type="api_reference",
+                                    title="",
+                                    content_length=0,
+                                    status="error",
+                                    error=error,
+                                    duration_ms=duration_ms,
+                                )
+                        elif data and indexing_logger:
+                            content_length = (
+                                len(data["description"] or "") +
+                                len(data["request_body"] or "") +
+                                len(data["response_body"] or "")
+                            )
+                            indexing_logger.log_document(
+                                url=data["url"],
+                                doc_type="api_reference",
+                                title=data["title"],
+                                content_length=content_length,
+                                status="success",
+                                duration_ms=duration_ms,
+                                tag=data["tag"],
+                                method=data["method"],
+                                endpoint=data["endpoint"],
+                            )
                     except Exception as e:
-                        error_msg = str(e)
                         if indexing_logger:
                             indexing_logger.log_document(
                                 url="unknown",
@@ -676,46 +724,18 @@ class DeveloperDocsDataClient(AsyncBaseStreamingDataClient[Union[DocumentationPa
                                 title="",
                                 content_length=0,
                                 status="error",
-                                error=error_msg,
+                                error=str(e),
                             )
-                        continue
-
-                    url, data, error, duration_ms = result
-
-                    if error:
-                        if indexing_logger:
-                            indexing_logger.log_document(
-                                url=url,
-                                doc_type="api_reference",
-                                title="",
-                                content_length=0,
-                                status="error",
-                                error=error,
-                                duration_ms=duration_ms,
-                            )
-                        continue
-
-                    if data and indexing_logger:
-                        content_length = (
-                            len(data["description"] or "") +
-                            len(data["request_body"] or "") +
-                            len(data["response_body"] or "")
-                        )
-                        indexing_logger.log_document(
-                            url=data["url"],
-                            doc_type="api_reference",
-                            title=data["title"],
-                            content_length=content_length,
-                            status="success",
-                            duration_ms=duration_ms,
-                            tag=data["tag"],
-                            method=data["method"],
-                            endpoint=data["endpoint"],
-                        )
-                    if data:
-                        yield data
             finally:
-                await browser.close()
+                try:
+                    await browser.close()
+                except Exception:
+                    pass  # Ignore browser close errors
+
+        # Now yield results after browser is closed (safer)
+        for url, data, error, duration_ms in results:
+            if data:
+                yield data
 
     async def get_source_data(self, **kwargs) -> AsyncGenerator[Union[DocumentationPage, ApiReferencePage], None]:
         """Fetch and process all pages inline, yielding as they complete."""
