@@ -1,19 +1,19 @@
-from typing import Union, List, Tuple, Optional, TYPE_CHECKING
+from typing import Union, List, Tuple, Optional, TYPE_CHECKING, AsyncGenerator
 from pathlib import PurePosixPath
 from urllib.parse import urlparse
+import asyncio
 import uuid
 import json
 import logging
 import time
-import requests
 import xml.etree.ElementTree as ET
-import concurrent.futures
 
+import aiohttp
 import trafilatura
 from bs4 import BeautifulSoup
-from playwright.sync_api import sync_playwright
+from playwright.async_api import async_playwright
 
-from glean.indexing.connectors.base_data_client import BaseConnectorDataClient
+from glean.indexing.connectors.async_streaming import AsyncBaseStreamingDataClient
 from data_types import DocumentationPage, ApiReferencePage
 
 if TYPE_CHECKING:
@@ -21,25 +21,27 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-class DeveloperDocsDataClient(BaseConnectorDataClient[Union[DocumentationPage, ApiReferencePage]]):
+class DeveloperDocsDataClient(AsyncBaseStreamingDataClient[Union[DocumentationPage, ApiReferencePage]]):
 
     def __init__(self, dev_docs_base_url: str, indexing_logger: Optional["IndexingLogger"] = None):
         self.dev_docs_base_url = dev_docs_base_url
         self.indexing_logger = indexing_logger
 
-    def _get_all_sitemap_urls(self, sitemap_url: str) -> List[str]:
-        response = requests.get(sitemap_url)
-        if response.status_code != 200:
-            raise RuntimeError(f"Failed to fetch sitemap: {response.status_code}")
-        root = ET.fromstring(response.content)
-        urls = [elem.text for elem in root.findall('.//{http://www.sitemaps.org/schemas/sitemap/0.9}loc')]
-        return urls
+    async def _get_all_sitemap_urls(self, sitemap_url: str) -> List[str]:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(sitemap_url) as response:
+                if response.status != 200:
+                    raise RuntimeError(f"Failed to fetch sitemap: {response.status}")
+                content = await response.read()
+                root = ET.fromstring(content)
+                urls = [elem.text for elem in root.findall('.//{http://www.sitemaps.org/schemas/sitemap/0.9}loc')]
+                return urls
 
     def _is_api_reference_page(self, html: str) -> bool:
         soup = BeautifulSoup(html, 'html.parser')
         return bool(soup.find('pre', class_='openapi__method-endpoint'))
 
-    def get_documentation_page_data(self, urls: List[str]) -> List[DocumentationPage]:
+    async def get_documentation_page_data(self, urls: List[str]) -> AsyncGenerator[DocumentationPage, None]:
         """Extract documentation pages using trafilatura for clean content extraction."""
 
         def title_from_url(url: str) -> str:
@@ -47,79 +49,82 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[DocumentationPage, A
             last_segment = path.name or ""
             return last_segment.replace('-', ' ').replace('_', ' ').title()
 
-        def extract_page(url: str) -> Tuple[Optional[DocumentationPage], Optional[str], float]:
+        async def extract_page(session: aiohttp.ClientSession, url: str) -> Tuple[Optional[DocumentationPage], Optional[str], float]:
             """Extract a page and return (page, error, duration_ms)."""
             start_time = time.time()
             try:
-                response = requests.get(url, timeout=30)
-                if response.status_code != 200:
-                    error = f"HTTP {response.status_code}"
-                    return None, error, (time.time() - start_time) * 1000
+                async with session.get(url, timeout=aiohttp.ClientTimeout(total=30)) as response:
+                    if response.status != 200:
+                        error = f"HTTP {response.status}"
+                        return None, error, (time.time() - start_time) * 1000
 
-                html = response.text
-                content = trafilatura.extract(
-                    html,
-                    include_tables=True,
-                    include_comments=False,
-                    include_images=False,
-                    output_format="txt"
-                ) or ""
+                    html = await response.text()
+                    content = trafilatura.extract(
+                        html,
+                        include_tables=True,
+                        include_comments=False,
+                        include_images=False,
+                        output_format="txt"
+                    ) or ""
 
-                if not content:
-                    return None, "No content extracted", (time.time() - start_time) * 1000
+                    if not content:
+                        return None, "No content extracted", (time.time() - start_time) * 1000
 
-                soup = BeautifulSoup(html, 'lxml')
-                h1 = soup.find('h1')
-                title = h1.text.strip() if h1 else title_from_url(url)
+                    soup = BeautifulSoup(html, 'lxml')
+                    h1 = soup.find('h1')
+                    title = h1.text.strip() if h1 else title_from_url(url)
 
-                page = DocumentationPage(
-                    id=str(uuid.uuid5(uuid.NAMESPACE_URL, url)),
-                    title=title,
-                    content=content,
-                    url=url,
-                    page_type="info_page"
-                )
-                return page, None, (time.time() - start_time) * 1000
+                    page = DocumentationPage(
+                        id=str(uuid.uuid5(uuid.NAMESPACE_URL, url)),
+                        title=title,
+                        content=content,
+                        url=url,
+                        page_type="info_page"
+                    )
+                    return page, None, (time.time() - start_time) * 1000
 
             except Exception as e:
                 return None, str(e), (time.time() - start_time) * 1000
 
-        results = []
-        errors = []
+        connector = aiohttp.TCPConnector(limit=10)
+        async with aiohttp.ClientSession(connector=connector) as session:
+            # Create tasks with URL tracking for incremental yielding
+            async def extract_with_url(url: str) -> Tuple[str, Tuple[Optional[DocumentationPage], Optional[str], float]]:
+                result = await extract_page(session, url)
+                return (url, result)
 
-        with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
-            futures = {executor.submit(extract_page, url): url for url in urls}
-            for future in concurrent.futures.as_completed(futures):
-                url = futures[future]
+            tasks = [asyncio.create_task(extract_with_url(url)) for url in urls]
+
+            # Use as_completed to yield results incrementally as they finish
+            for coro in asyncio.as_completed(tasks):
                 try:
-                    page, error, duration_ms = future.result()
-
-                    if page is not None:
-                        results.append(page)
-                        if self.indexing_logger:
-                            self.indexing_logger.log_document(
-                                url=url,
-                                doc_type="info_page",
-                                title=page["title"],
-                                content_length=len(page["content"]),
-                                status="success",
-                                duration_ms=duration_ms,
-                            )
-                    else:
-                        errors.append(url)
-                        if self.indexing_logger:
-                            self.indexing_logger.log_document(
-                                url=url,
-                                doc_type="info_page",
-                                title="",
-                                content_length=0,
-                                status="error",
-                                error=error,
-                                duration_ms=duration_ms,
-                            )
-
+                    url, result = await coro
                 except Exception as e:
-                    errors.append(url)
+                    if self.indexing_logger:
+                        self.indexing_logger.log_document(
+                            url="unknown",
+                            doc_type="info_page",
+                            title="",
+                            content_length=0,
+                            status="error",
+                            error=str(e),
+                        )
+                    continue
+
+                page, error, duration_ms = result
+
+                if page is not None:
+                    if self.indexing_logger:
+                        self.indexing_logger.log_document(
+                            url=url,
+                            doc_type="info_page",
+                            title=page["title"],
+                            content_length=len(page["content"]),
+                            status="success",
+                            duration_ms=duration_ms,
+                        )
+                    yield page
+                else:
                     if self.indexing_logger:
                         self.indexing_logger.log_document(
                             url=url,
@@ -127,14 +132,12 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[DocumentationPage, A
                             title="",
                             content_length=0,
                             status="error",
-                            error=str(e),
+                            error=error,
+                            duration_ms=duration_ms,
                         )
 
-        results.sort(key=lambda p: p["url"])
-        return results
+    async def get_api_reference_page_data(self, urls: List[str]) -> AsyncGenerator[ApiReferencePage, None]:
 
-    def get_api_reference_page_data(self, urls: List[str]) -> List[ApiReferencePage]:
-        
         def _extract_mime_type(soup, section="request") -> str:
             h2 = soup.find("h2", id=section)
             if not h2:
@@ -558,59 +561,59 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[DocumentationPage, A
             
             return ""
 
-        def _extract_code_samples(page) -> dict:
+        async def _extract_code_samples(page) -> dict:
             languages = {
                 'python': 'python_code_sample',
-                'go': 'go_code_sample', 
+                'go': 'go_code_sample',
                 'java': 'java_code_sample',
                 'javascript': 'typescript_code_sample',
                 'curl': 'curl_code_sample',
             }
-            
+
             code_samples = {key: '' for key in languages.values()}
-            
+
             for lang, key in languages.items():
                 try:
                     tab_selector = f'.openapi-tabs__code-item--{lang}'
-                    tab_count = page.locator(tab_selector).count()
+                    tab_count = await page.locator(tab_selector).count()
                     if tab_count > 0:
-                        page.click(tab_selector)
-                        page.wait_for_timeout(500)
-                        
+                        await page.click(tab_selector)
+                        await page.wait_for_timeout(500)
+
                         code_lines = []
                         content_spans = page.locator('.openapi-explorer__code-block-code-line-content')
-                        span_count = content_spans.count()
-                        
+                        span_count = await content_spans.count()
+
                         for i in range(span_count):
                             span_element = content_spans.nth(i)
-                            is_visible = span_element.is_visible()
+                            is_visible = await span_element.is_visible()
                             if is_visible:
-                                line_content = span_element.inner_text()
+                                line_content = await span_element.inner_text()
                                 if line_content.strip():
                                     code_lines.append(line_content)
-                        
+
                         if len(code_lines) > 0:
                             code_text = '\n'.join(code_lines)
                             code_samples[key] = code_text
                 except Exception as e:
                     continue
             return code_samples
-        
-        def _scrape_single_page_with_page(url: str, page) -> ApiReferencePage:
+
+        async def _scrape_single_page_with_page(url: str, page) -> ApiReferencePage:
             try:
-                page.goto(url, wait_until="networkidle")
+                await page.goto(url, wait_until="networkidle")
             except Exception as e:
                 raise RuntimeError(f"Failed to load {url}: {e}") from e
 
-            page.wait_for_timeout(3000)
-            html_content = page.content()
+            await page.wait_for_timeout(3000)
+            html_content = await page.content()
             soup = BeautifulSoup(html_content, 'html.parser')
             api_ref_data = _extract_api_reference(url, html_content)
             request_query_parameters = _extract_request_parameters(soup, "query")
             request_path_parameters = _extract_request_parameters(soup, "path")
             request_body = _extract_body_schema(soup, "request")
             response_body = _extract_body_schema(soup, "response")
-            code_samples = _extract_code_samples(page)
+            code_samples = await _extract_code_samples(page)
             api_ref = ApiReferencePage(
                 id=api_ref_data["id"],
                 title=api_ref_data["title"],
@@ -635,32 +638,64 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[DocumentationPage, A
                 page_type="api_reference"
             )
             return api_ref
-        
-        def _scrape_dynamic_api_pages(urls: List[str], max_workers=10) -> List[ApiReferencePage]:
-            results = [None] * len(urls)
-            url_idx_tuples = list(enumerate(urls))
-            indexing_logger = self.indexing_logger
 
-            def _scrape_with_browser(url_idx_tuple: Tuple[int, str]) -> Tuple[int, ApiReferencePage, float, Optional[str]]:
-                idx, url = url_idx_tuple
+        async def _scrape_with_page(url: str, browser, semaphore: asyncio.Semaphore) -> Tuple[str, Optional[ApiReferencePage], Optional[str], float]:
+            """Scrape a single URL using a page from the shared browser."""
+            async with semaphore:
                 start_time = time.time()
-                with sync_playwright() as p:
-                    browser = p.chromium.launch(headless=True)
-                    page = browser.new_page()
-                    try:
-                        data = _scrape_single_page_with_page(url, page)
-                        duration_ms = (time.time() - start_time) * 1000
-                        return (idx, data, duration_ms, None)
-                    except Exception as e:
-                        duration_ms = (time.time() - start_time) * 1000
-                        raise RuntimeError(f"Error scraping {url}: {e}") from e
-                    finally:
-                        browser.close()
+                page = await browser.new_page()
+                try:
+                    data = await _scrape_single_page_with_page(url, page)
+                    duration_ms = (time.time() - start_time) * 1000
+                    return (url, data, None, duration_ms)
+                except Exception as e:
+                    duration_ms = (time.time() - start_time) * 1000
+                    return (url, None, str(e), duration_ms)
+                finally:
+                    await page.close()
 
-            with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
-                for idx, data, duration_ms, error in executor.map(_scrape_with_browser, url_idx_tuples):
-                    results[idx] = data
-                    if indexing_logger:
+        indexing_logger = self.indexing_logger
+        semaphore = asyncio.Semaphore(5)  # Limit concurrent pages
+
+        # Use a single browser instance for all pages
+        async with async_playwright() as p:
+            browser = await p.chromium.launch(headless=True)
+            try:
+                tasks = [asyncio.create_task(_scrape_with_page(url, browser, semaphore)) for url in urls]
+
+                # Use as_completed to yield results incrementally as they finish
+                for coro in asyncio.as_completed(tasks):
+                    try:
+                        result = await coro
+                    except Exception as e:
+                        error_msg = str(e)
+                        if indexing_logger:
+                            indexing_logger.log_document(
+                                url="unknown",
+                                doc_type="api_reference",
+                                title="",
+                                content_length=0,
+                                status="error",
+                                error=error_msg,
+                            )
+                        continue
+
+                    url, data, error, duration_ms = result
+
+                    if error:
+                        if indexing_logger:
+                            indexing_logger.log_document(
+                                url=url,
+                                doc_type="api_reference",
+                                title="",
+                                content_length=0,
+                                status="error",
+                                error=error,
+                                duration_ms=duration_ms,
+                            )
+                        continue
+
+                    if data and indexing_logger:
                         content_length = (
                             len(data["description"] or "") +
                             len(data["request_body"] or "") +
@@ -677,42 +712,127 @@ class DeveloperDocsDataClient(BaseConnectorDataClient[Union[DocumentationPage, A
                             method=data["method"],
                             endpoint=data["endpoint"],
                         )
-            return results
+                    if data:
+                        yield data
+            finally:
+                await browser.close()
 
-        return _scrape_dynamic_api_pages(urls)
-
-    def get_source_data(self, since: str = None) -> List[Union[DocumentationPage, ApiReferencePage]]:
-        all_urls = self._get_all_sitemap_urls(self.dev_docs_base_url + "/sitemap.xml")
-        info_page_urls = []
-        api_ref_urls = []
+    async def get_source_data(self, **kwargs) -> AsyncGenerator[Union[DocumentationPage, ApiReferencePage], None]:
+        """Fetch and process all pages inline, yielding as they complete."""
+        all_urls = await self._get_all_sitemap_urls(self.dev_docs_base_url + "/sitemap.xml")
 
         if self.indexing_logger:
-            self.indexing_logger.log(f"Checking {len(all_urls)} URLs from sitemap...")
+            self.indexing_logger.log(f"Processing {len(all_urls)} URLs from sitemap...")
 
-        for url in all_urls:
+        # Process all URLs in parallel, yielding results as they complete
+        # Info pages are processed inline; API reference pages are queued for Playwright
+        api_ref_urls: List[str] = []
+
+        async def process_url(session: aiohttp.ClientSession, url: str) -> Tuple[str, Optional[Union[DocumentationPage, ApiReferencePage]], bool, Optional[str], float]:
+            """
+            Process a single URL.
+            Returns: (url, result, is_api_ref, error, duration_ms)
+            - If info page: result is DocumentationPage, is_api_ref=False
+            - If API ref: result is None, is_api_ref=True (needs Playwright)
+            """
+            start_time = time.time()
             try:
-                response = requests.get(url)
-                if response.status_code != 200:
-                    raise RuntimeError(f"Failed to fetch {url} - HTTP {response.status_code}")
-                html = response.text
-                if self._is_api_reference_page(html):
-                    api_ref_urls.append(url)
-                else:
-                    info_page_urls.append(url)
+                async with session.get(url, timeout=aiohttp.ClientTimeout(total=30)) as response:
+                    if response.status != 200:
+                        return url, None, False, f"HTTP {response.status}", (time.time() - start_time) * 1000
+
+                    html = await response.text()
+
+                    # Check if it's an API reference page
+                    if self._is_api_reference_page(html):
+                        # API reference pages need Playwright for JS rendering
+                        return url, None, True, None, (time.time() - start_time) * 1000
+
+                    # Process as info page inline
+                    content = trafilatura.extract(
+                        html,
+                        include_tables=True,
+                        include_comments=False,
+                        include_images=False,
+                        output_format="txt"
+                    ) or ""
+
+                    if not content:
+                        return url, None, False, "No content extracted", (time.time() - start_time) * 1000
+
+                    soup = BeautifulSoup(html, 'lxml')
+                    h1 = soup.find('h1')
+                    path = PurePosixPath(urlparse(url).path)
+                    last_segment = path.name or ""
+                    title = h1.text.strip() if h1 else last_segment.replace('-', ' ').replace('_', ' ').title()
+
+                    page = DocumentationPage(
+                        id=str(uuid.uuid5(uuid.NAMESPACE_URL, url)),
+                        title=title,
+                        content=content,
+                        url=url,
+                        page_type="info_page"
+                    )
+                    return url, page, False, None, (time.time() - start_time) * 1000
+
             except Exception as e:
-                raise RuntimeError(f"Error checking {url}: {e}") from e
+                return url, None, False, str(e), (time.time() - start_time) * 1000
 
-        if self.indexing_logger:
-            self.indexing_logger.log(f"Found {len(api_ref_urls)} API reference pages and {len(info_page_urls)} info pages")
-            self.indexing_logger.log("")
-            self.indexing_logger.log("Extracting info pages...")
+        # Process URLs incrementally - yield results as they complete
+        connector = aiohttp.TCPConnector(limit=10)
+        async with aiohttp.ClientSession(connector=connector) as session:
+            tasks = [asyncio.create_task(process_url(session, url)) for url in all_urls]
 
-        info_pages = self.get_documentation_page_data(info_page_urls)
+            # Use as_completed to yield results as they finish (not wait for all)
+            for coro in asyncio.as_completed(tasks):
+                try:
+                    result = await coro
+                except Exception as e:
+                    if self.indexing_logger:
+                        self.indexing_logger.log_document(
+                            url="unknown",
+                            doc_type="info_page",
+                            title="",
+                            content_length=0,
+                            status="error",
+                            error=str(e),
+                        )
+                    continue
 
-        if self.indexing_logger:
-            self.indexing_logger.log("")
-            self.indexing_logger.log("Extracting API reference pages...")
+                url, page_result, is_api_ref, error, duration_ms = result
 
-        api_pages = self.get_api_reference_page_data(api_ref_urls)
+                if is_api_ref:
+                    # Queue API reference pages for Playwright processing
+                    api_ref_urls.append(url)
+                elif page_result is not None:
+                    # Yield info page immediately as it completes
+                    if self.indexing_logger:
+                        self.indexing_logger.log_document(
+                            url=url,
+                            doc_type="info_page",
+                            title=page_result["title"],
+                            content_length=len(page_result["content"]),
+                            status="success",
+                            duration_ms=duration_ms,
+                        )
+                    yield page_result
+                elif error:
+                    if self.indexing_logger:
+                        self.indexing_logger.log_document(
+                            url=url,
+                            doc_type="info_page",
+                            title="",
+                            content_length=0,
+                            status="error",
+                            error=error,
+                            duration_ms=duration_ms,
+                        )
 
-        return info_pages + api_pages
+        # Now process API reference pages with Playwright (these need JS rendering)
+        if api_ref_urls:
+            if self.indexing_logger:
+                self.indexing_logger.log("")
+                self.indexing_logger.log(f"Processing {len(api_ref_urls)} API reference pages with Playwright...")
+
+            async for page in self.get_api_reference_page_data(api_ref_urls):
+                yield page

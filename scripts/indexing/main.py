@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import asyncio
 import os
 import sys
 from pathlib import Path
@@ -12,12 +13,12 @@ if env_path.exists():
     load_dotenv(env_path)
 
 from data_clients import DeveloperDocsDataClient
-from developer_docs_connector import CustomDeveloperDocsConnector
+from developer_docs_connector import DeveloperDocsConnector
 from glean.indexing.models import IndexingMode
 from indexing_logger import create_logger
 
 
-def main():
+async def main():
     dry_run = os.getenv("DRY_RUN", "").lower() in ("true", "1", "yes")
     log_format = os.getenv("LOG_FORMAT", "stdout")
     indexing_logger = create_logger(format=log_format, verbose=True)
@@ -32,11 +33,13 @@ def main():
             "https://developers.glean.com",
             indexing_logger=indexing_logger
         )
-        connector = CustomDeveloperDocsConnector(name="devdocs", data_client=developer_docs_data_client)
+        connector = DeveloperDocsConnector(name="devdocs", async_data_client=developer_docs_data_client)
 
         if dry_run:
-            # Fetch source data
-            data = connector.get_data()
+            # Fetch source data (async streaming - consume async generator into list for dry run)
+            data = []
+            async for item in connector.get_data_async():
+                data.append(item)
             indexing_logger.log("")
             indexing_logger.log(f"Fetched {len(data)} pages total")
 
@@ -55,7 +58,7 @@ def main():
                 indexing_logger.log("Dry run complete. No data was uploaded to Glean.")
         else:
             connector.configure_datasource()
-            connector.index_data(mode=IndexingMode.FULL)
+            await connector.index_data_async(mode=IndexingMode.FULL)
 
             # Generate summary
             summary = indexing_logger.finish()
@@ -72,4 +75,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())

@@ -4,8 +4,8 @@ version = "0.1.0"
 description = "Indexing scripts for Glean developer documentation"
 requires-python = ">=3.10,<4.0"
 dependencies = [
-    "glean-indexing-sdk",
-    "requests",
+    "glean-indexing-sdk[studio]",
+    "aiohttp",
     "playwright",
     "beautifulsoup4",
     "lxml",
@@ -14,5 +14,12 @@ dependencies = [
 ]
 
 
-[tool.uv]
-dev-dependencies = []
+[dependency-groups]
+dev = [
+    "sse-starlette>=3.2.0",
+    "starlette>=0.52.1",
+    "uvicorn>=0.40.0",
+]
+
+[tool.uv.sources]
+glean-indexing-sdk = { path = "../../../glean-indexing-sdk", editable = true }
