@@ -1,6 +1,6 @@
-from typing import Union, List
+from typing import Union, List, Sequence
 
-from glean.indexing.connectors import BaseDatasourceConnector
+from glean.indexing.connectors import BaseAsyncStreamingDatasourceConnector
 from glean.indexing.models import (
     ContentDefinition,
     CustomDatasourceConfig,
@@ -72,7 +72,7 @@ def _format_api_reference(page: ApiReferencePage) -> str:
     return "\n".join(sections)
 
 
-class DeveloperDocsConnector(BaseDatasourceConnector[Union[DocumentationPage, ApiReferencePage]]):
+class DeveloperDocsConnector(BaseAsyncStreamingDatasourceConnector[Union[DocumentationPage, ApiReferencePage]]):
     configuration: CustomDatasourceConfig = CustomDatasourceConfig(
         name="devdocs",
         display_name="Glean Developer Docs",
