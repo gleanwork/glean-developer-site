@@ -111,14 +111,13 @@ paths:
                 ],
               });
 
-              // Handle the result
               console.log(result);
             }
 
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithInstance(os.Getenv(\"GLEAN_INSTANCE\")),\n    )\n\n    res, err := s.Client.Pins.Update(ctx, components.EditPinRequest{\n        AudienceFilters: []components.FacetFilter{\n            components.FacetFilter{\n                FieldName: apiclientgo.Pointer(\"type\"),\n                Values: []components.FacetFilterValue{\n                    components.FacetFilterValue{\n                        Value: apiclientgo.Pointer(\"Spreadsheet\"),\n                        RelationType: components.RelationTypeEquals.ToPointer(),\n                    },\n                    components.FacetFilterValue{\n                        Value: apiclientgo.Pointer(\"Presentation\"),\n                        RelationType: components.RelationTypeEquals.ToPointer(),\n                    },\n                },\n            },\n        },\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PinDocument != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithInstance(os.Getenv(\"GLEAN_INSTANCE\")),\n    )\n\n    res, err := s.Client.Pins.Update(ctx, components.EditPinRequest{\n        AudienceFilters: []components.FacetFilter{\n            components.FacetFilter{\n                FieldName: apiclientgo.Pointer(\"type\"),\n                Values: []components.FacetFilterValue{\n                    components.FacetFilterValue{\n                        Value: apiclientgo.Pointer(\"Spreadsheet\"),\n                        RelationType: components.RelationTypeEquals.ToPointer(),\n                    },\n                    components.FacetFilterValue{\n                        Value: apiclientgo.Pointer(\"Presentation\"),\n                        RelationType: components.RelationTypeEquals.ToPointer(),\n                    },\n                },\n            },\n        },\n    }, nil)\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PinDocument != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -225,14 +224,13 @@ paths:
             async function run() {
               const result = await glean.client.pins.retrieve({});
 
-              // Handle the result
               console.log(result);
             }
 
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithInstance(os.Getenv(\"GLEAN_INSTANCE\")),\n    )\n\n    res, err := s.Client.Pins.Retrieve(ctx, components.GetPinRequest{})\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.GetPinResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithInstance(os.Getenv(\"GLEAN_INSTANCE\")),\n    )\n\n    res, err := s.Client.Pins.Retrieve(ctx, components.GetPinRequest{}, nil)\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.GetPinResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -325,14 +323,13 @@ paths:
             async function run() {
               const result = await glean.client.pins.list({});
 
-              // Handle the result
               console.log(result);
             }
 
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/operations\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithInstance(os.Getenv(\"GLEAN_INSTANCE\")),\n    )\n\n    res, err := s.Client.Pins.List(ctx, operations.ListpinsRequest{})\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.ListPinsResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/operations\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithInstance(os.Getenv(\"GLEAN_INSTANCE\")),\n    )\n\n    res, err := s.Client.Pins.List(ctx, operations.ListpinsRequestBody{}, nil)\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.ListPinsResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -455,14 +452,13 @@ paths:
                 ],
               });
 
-              // Handle the result
               console.log(result);
             }
 
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithInstance(os.Getenv(\"GLEAN_INSTANCE\")),\n    )\n\n    res, err := s.Client.Pins.Create(ctx, components.PinRequest{\n        AudienceFilters: []components.FacetFilter{\n            components.FacetFilter{\n                FieldName: apiclientgo.Pointer(\"type\"),\n                Values: []components.FacetFilterValue{\n                    components.FacetFilterValue{\n                        Value: apiclientgo.Pointer(\"Spreadsheet\"),\n                        RelationType: components.RelationTypeEquals.ToPointer(),\n                    },\n                    components.FacetFilterValue{\n                        Value: apiclientgo.Pointer(\"Presentation\"),\n                        RelationType: components.RelationTypeEquals.ToPointer(),\n                    },\n                },\n            },\n        },\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PinDocument != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithInstance(os.Getenv(\"GLEAN_INSTANCE\")),\n    )\n\n    res, err := s.Client.Pins.Create(ctx, components.PinRequest{\n        AudienceFilters: []components.FacetFilter{\n            components.FacetFilter{\n                FieldName: apiclientgo.Pointer(\"type\"),\n                Values: []components.FacetFilterValue{\n                    components.FacetFilterValue{\n                        Value: apiclientgo.Pointer(\"Spreadsheet\"),\n                        RelationType: components.RelationTypeEquals.ToPointer(),\n                    },\n                    components.FacetFilterValue{\n                        Value: apiclientgo.Pointer(\"Presentation\"),\n                        RelationType: components.RelationTypeEquals.ToPointer(),\n                    },\n                },\n            },\n        },\n    }, nil)\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PinDocument != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -572,7 +568,7 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithInstance(os.Getenv(\"GLEAN_INSTANCE\")),\n    )\n\n    res, err := s.Client.Pins.Remove(ctx, components.Unpin{})\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithInstance(os.Getenv(\"GLEAN_INSTANCE\")),\n    )\n\n    res, err := s.Client.Pins.Remove(ctx, components.Unpin{}, nil)\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-

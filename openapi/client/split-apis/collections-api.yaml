@@ -83,14 +83,13 @@ paths:
                 collectionId: 7742.68,
               });
 
-              // Handle the result
               console.log(result);
             }
 
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithInstance(os.Getenv(\"GLEAN_INSTANCE\")),\n    )\n\n    res, err := s.Client.Collections.AddItems(ctx, components.AddCollectionItemsRequest{\n        CollectionID: 7742.68,\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.AddCollectionItemsResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithInstance(os.Getenv(\"GLEAN_INSTANCE\")),\n    )\n\n    res, err := s.Client.Collections.AddItems(ctx, components.AddCollectionItemsRequest{\n        CollectionID: 7742.68,\n    }, nil)\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.AddCollectionItemsResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -226,7 +225,7 @@ paths:
                       name: "George Clooney",
                       obfuscatedId: "abc123",
                     },
-                    role: "ANSWER_MODERATOR",
+                    role: "OWNER",
                   },
                 ],
                 removedRoles: [
@@ -235,21 +234,7 @@ paths:
                       name: "George Clooney",
                       obfuscatedId: "abc123",
                     },
-                    role: "VERIFIER",
-                  },
-                  {
-                    person: {
-                      name: "George Clooney",
-                      obfuscatedId: "abc123",
-                    },
-                    role: "VERIFIER",
-                  },
-                  {
-                    person: {
-                      name: "George Clooney",
-                      obfuscatedId: "abc123",
-                    },
-                    role: "VERIFIER",
+                    role: "ANSWER_MODERATOR",
                   },
                 ],
                 audienceFilters: [
@@ -269,14 +254,13 @@ paths:
                 ],
               });
 
-              // Handle the result
               console.log(result);
             }
 
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithInstance(os.Getenv(\"GLEAN_INSTANCE\")),\n    )\n\n    res, err := s.Client.Collections.Create(ctx, components.CreateCollectionRequest{\n        Name: \"<value>\",\n        AddedRoles: []components.UserRoleSpecification{\n            components.UserRoleSpecification{\n                Person: &components.Person{\n                    Name: \"George Clooney\",\n                    ObfuscatedID: \"abc123\",\n                },\n                Role: components.UserRoleOwner,\n            },\n        },\n        RemovedRoles: []components.UserRoleSpecification{\n            components.UserRoleSpecification{\n                Person: &components.Person{\n                    Name: \"George Clooney\",\n                    ObfuscatedID: \"abc123\",\n                },\n                Role: components.UserRoleAnswerModerator,\n            },\n        },\n        AudienceFilters: []components.FacetFilter{\n            components.FacetFilter{\n                FieldName: apiclientgo.Pointer(\"type\"),\n                Values: []components.FacetFilterValue{\n                    components.FacetFilterValue{\n                        Value: apiclientgo.Pointer(\"Spreadsheet\"),\n                        RelationType: components.RelationTypeEquals.ToPointer(),\n                    },\n                    components.FacetFilterValue{\n                        Value: apiclientgo.Pointer(\"Presentation\"),\n                        RelationType: components.RelationTypeEquals.ToPointer(),\n                    },\n                },\n            },\n        },\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.OneOf != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithInstance(os.Getenv(\"GLEAN_INSTANCE\")),\n    )\n\n    res, err := s.Client.Collections.Create(ctx, components.CreateCollectionRequest{\n        Name: \"<value>\",\n        AddedRoles: []components.UserRoleSpecification{\n            components.UserRoleSpecification{\n                Person: &components.Person{\n                    Name: \"George Clooney\",\n                    ObfuscatedID: \"abc123\",\n                },\n                Role: components.UserRoleOwner,\n            },\n        },\n        RemovedRoles: []components.UserRoleSpecification{\n            components.UserRoleSpecification{\n                Person: &components.Person{\n                    Name: \"George Clooney\",\n                    ObfuscatedID: \"abc123\",\n                },\n                Role: components.UserRoleAnswerModerator,\n            },\n        },\n        AudienceFilters: []components.FacetFilter{\n            components.FacetFilter{\n                FieldName: apiclientgo.Pointer(\"type\"),\n                Values: []components.FacetFilterValue{\n                    components.FacetFilterValue{\n                        Value: apiclientgo.Pointer(\"Spreadsheet\"),\n                        RelationType: components.RelationTypeEquals.ToPointer(),\n                    },\n                    components.FacetFilterValue{\n                        Value: apiclientgo.Pointer(\"Presentation\"),\n                        RelationType: components.RelationTypeEquals.ToPointer(),\n                    },\n                },\n            },\n        },\n    }, nil)\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.OneOf != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -418,7 +402,7 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithInstance(os.Getenv(\"GLEAN_INSTANCE\")),\n    )\n\n    res, err := s.Client.Collections.Delete(ctx, components.DeleteCollectionRequest{\n        Ids: []int64{\n            930352,\n            156719,\n            25102,\n        },\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithInstance(os.Getenv(\"GLEAN_INSTANCE\")),\n    )\n\n    res, err := s.Client.Collections.Delete(ctx, components.DeleteCollectionRequest{\n        Ids: []int64{\n            930352,\n            156719,\n            25102,\n        },\n    }, nil)\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -520,14 +504,13 @@ paths:
                 itemId: "<id>",
               });
 
-              // Handle the result
               console.log(result);
             }
 
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithInstance(os.Getenv(\"GLEAN_INSTANCE\")),\n    )\n\n    res, err := s.Client.Collections.DeleteItem(ctx, components.DeleteCollectionItemRequest{\n        CollectionID: 6980.49,\n        ItemID: \"<id>\",\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.DeleteCollectionItemResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithInstance(os.Getenv(\"GLEAN_INSTANCE\")),\n    )\n\n    res, err := s.Client.Collections.DeleteItem(ctx, components.DeleteCollectionItemRequest{\n        CollectionID: 6980.49,\n        ItemID: \"<id>\",\n    }, nil)\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.DeleteCollectionItemResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -664,7 +647,7 @@ paths:
                       name: "George Clooney",
                       obfuscatedId: "abc123",
                     },
-                    role: "VERIFIER",
+                    role: "VIEWER",
                   },
                 ],
                 removedRoles: [
@@ -673,14 +656,7 @@ paths:
                       name: "George Clooney",
                       obfuscatedId: "abc123",
                     },
-                    role: "EDITOR",
-                  },
-                  {
-                    person: {
-                      name: "George Clooney",
-                      obfuscatedId: "abc123",
-                    },
-                    role: "EDITOR",
+                    role: "VERIFIER",
                   },
                 ],
                 audienceFilters: [
@@ -698,17 +674,16 @@ paths:
                     ],
                   },
                 ],
-                id: 330922,
+                id: 347152,
               });
 
-              // Handle the result
               console.log(result);
             }
 
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithInstance(os.Getenv(\"GLEAN_INSTANCE\")),\n    )\n\n    res, err := s.Client.Collections.Update(ctx, components.EditCollectionRequest{\n        Name: \"<value>\",\n        AddedRoles: []components.UserRoleSpecification{\n            components.UserRoleSpecification{\n                Person: &components.Person{\n                    Name: \"George Clooney\",\n                    ObfuscatedID: \"abc123\",\n                },\n                Role: components.UserRoleViewer,\n            },\n        },\n        RemovedRoles: []components.UserRoleSpecification{\n            components.UserRoleSpecification{\n                Person: &components.Person{\n                    Name: \"George Clooney\",\n                    ObfuscatedID: \"abc123\",\n                },\n                Role: components.UserRoleVerifier,\n            },\n        },\n        AudienceFilters: []components.FacetFilter{\n            components.FacetFilter{\n                FieldName: apiclientgo.Pointer(\"type\"),\n                Values: []components.FacetFilterValue{\n                    components.FacetFilterValue{\n                        Value: apiclientgo.Pointer(\"Spreadsheet\"),\n                        RelationType: components.RelationTypeEquals.ToPointer(),\n                    },\n                    components.FacetFilterValue{\n                        Value: apiclientgo.Pointer(\"Presentation\"),\n                        RelationType: components.RelationTypeEquals.ToPointer(),\n                    },\n                },\n            },\n        },\n        ID: 347152,\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.EditCollectionResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithInstance(os.Getenv(\"GLEAN_INSTANCE\")),\n    )\n\n    res, err := s.Client.Collections.Update(ctx, components.EditCollectionRequest{\n        Name: \"<value>\",\n        AddedRoles: []components.UserRoleSpecification{\n            components.UserRoleSpecification{\n                Person: &components.Person{\n                    Name: \"George Clooney\",\n                    ObfuscatedID: \"abc123\",\n                },\n                Role: components.UserRoleViewer,\n            },\n        },\n        RemovedRoles: []components.UserRoleSpecification{\n            components.UserRoleSpecification{\n                Person: &components.Person{\n                    Name: \"George Clooney\",\n                    ObfuscatedID: \"abc123\",\n                },\n                Role: components.UserRoleVerifier,\n            },\n        },\n        AudienceFilters: []components.FacetFilter{\n            components.FacetFilter{\n                FieldName: apiclientgo.Pointer(\"type\"),\n                Values: []components.FacetFilterValue{\n                    components.FacetFilterValue{\n                        Value: apiclientgo.Pointer(\"Spreadsheet\"),\n                        RelationType: components.RelationTypeEquals.ToPointer(),\n                    },\n                    components.FacetFilterValue{\n                        Value: apiclientgo.Pointer(\"Presentation\"),\n                        RelationType: components.RelationTypeEquals.ToPointer(),\n                    },\n                },\n            },\n        },\n        ID: 347152,\n    }, nil)\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.EditCollectionResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -837,14 +812,13 @@ paths:
                 itemId: "<id>",
               });
 
-              // Handle the result
               console.log(result);
             }
 
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithInstance(os.Getenv(\"GLEAN_INSTANCE\")),\n    )\n\n    res, err := s.Client.Collections.UpdateItem(ctx, components.EditCollectionItemRequest{\n        CollectionID: 142375,\n        ItemID: \"<id>\",\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.EditCollectionItemResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithInstance(os.Getenv(\"GLEAN_INSTANCE\")),\n    )\n\n    res, err := s.Client.Collections.UpdateItem(ctx, components.EditCollectionItemRequest{\n        CollectionID: 142375,\n        ItemID: \"<id>\",\n    }, nil)\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.EditCollectionItemResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -941,14 +915,13 @@ paths:
                 id: 425335,
               });
 
-              // Handle the result
               console.log(result);
             }
 
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithInstance(os.Getenv(\"GLEAN_INSTANCE\")),\n    )\n\n    res, err := s.Client.Collections.Retrieve(ctx, components.GetCollectionRequest{\n        ID: 425335,\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.GetCollectionResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithInstance(os.Getenv(\"GLEAN_INSTANCE\")),\n    )\n\n    res, err := s.Client.Collections.Retrieve(ctx, components.GetCollectionRequest{\n        ID: 425335,\n    }, nil)\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.GetCollectionResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -1042,14 +1015,13 @@ paths:
             async function run() {
               const result = await glean.client.collections.list({});
 
-              // Handle the result
               console.log(result);
             }
 
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithInstance(os.Getenv(\"GLEAN_INSTANCE\")),\n    )\n\n    res, err := s.Client.Collections.List(ctx, components.ListCollectionsRequest{})\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.ListCollectionsResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithInstance(os.Getenv(\"GLEAN_INSTANCE\")),\n    )\n\n    res, err := s.Client.Collections.List(ctx, components.ListCollectionsRequest{}, nil)\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.ListCollectionsResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-

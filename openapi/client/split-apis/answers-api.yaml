@@ -152,7 +152,7 @@ paths:
                         name: "George Clooney",
                         obfuscatedId: "abc123",
                       },
-                      role: "ANSWER_MODERATOR",
+                      role: "VIEWER",
                     },
                   ],
                   removedRoles: [
@@ -161,7 +161,7 @@ paths:
                         name: "George Clooney",
                         obfuscatedId: "abc123",
                       },
-                      role: "EDITOR",
+                      role: "ANSWER_MODERATOR",
                     },
                   ],
                   roles: [
@@ -170,14 +170,7 @@ paths:
                         name: "George Clooney",
                         obfuscatedId: "abc123",
                       },
-                      role: "VERIFIER",
-                    },
-                    {
-                      person: {
-                        name: "George Clooney",
-                        obfuscatedId: "abc123",
-                      },
-                      role: "VERIFIER",
+                      role: "OWNER",
                     },
                   ],
                   combinedAnswerText: {
@@ -186,14 +179,13 @@ paths:
                 },
               });
 
-              // Handle the result
               console.log(result);
             }
 
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithInstance(os.Getenv(\"GLEAN_INSTANCE\")),\n    )\n\n    res, err := s.Client.Answers.Create(ctx, components.CreateAnswerRequest{\n        Data: components.AnswerCreationData{\n            Question: apiclientgo.Pointer(\"Why is the sky blue?\"),\n            BodyText: apiclientgo.Pointer(\"From https://en.wikipedia.org/wiki/Diffuse_sky_radiation, the sky is blue because blue light is more strongly scattered than longer-wavelength light.\"),\n            AudienceFilters: []components.FacetFilter{\n                components.FacetFilter{\n                    FieldName: apiclientgo.Pointer(\"type\"),\n                    Values: []components.FacetFilterValue{\n                        components.FacetFilterValue{\n                            Value: apiclientgo.Pointer(\"Spreadsheet\"),\n                            RelationType: components.RelationTypeEquals.ToPointer(),\n                        },\n                        components.FacetFilterValue{\n                            Value: apiclientgo.Pointer(\"Presentation\"),\n                            RelationType: components.RelationTypeEquals.ToPointer(),\n                        },\n                    },\n                },\n            },\n            AddedRoles: []components.UserRoleSpecification{\n                components.UserRoleSpecification{\n                    Person: &components.Person{\n                        Name: \"George Clooney\",\n                        ObfuscatedID: \"abc123\",\n                    },\n                    Role: components.UserRoleViewer,\n                },\n            },\n            RemovedRoles: []components.UserRoleSpecification{\n                components.UserRoleSpecification{\n                    Person: &components.Person{\n                        Name: \"George Clooney\",\n                        ObfuscatedID: \"abc123\",\n                    },\n                    Role: components.UserRoleAnswerModerator,\n                },\n            },\n            Roles: []components.UserRoleSpecification{\n                components.UserRoleSpecification{\n                    Person: &components.Person{\n                        Name: \"George Clooney\",\n                        ObfuscatedID: \"abc123\",\n                    },\n                    Role: components.UserRoleOwner,\n                },\n            },\n            CombinedAnswerText: &components.StructuredTextMutableProperties{\n                Text: \"From https://en.wikipedia.org/wiki/Diffuse_sky_radiation, the sky is blue because blue light is more strongly scattered than longer-wavelength light.\",\n            },\n        },\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.Answer != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithInstance(os.Getenv(\"GLEAN_INSTANCE\")),\n    )\n\n    res, err := s.Client.Answers.Create(ctx, components.CreateAnswerRequest{\n        Data: components.AnswerCreationData{\n            Question: apiclientgo.Pointer(\"Why is the sky blue?\"),\n            BodyText: apiclientgo.Pointer(\"From https://en.wikipedia.org/wiki/Diffuse_sky_radiation, the sky is blue because blue light is more strongly scattered than longer-wavelength light.\"),\n            AudienceFilters: []components.FacetFilter{\n                components.FacetFilter{\n                    FieldName: apiclientgo.Pointer(\"type\"),\n                    Values: []components.FacetFilterValue{\n                        components.FacetFilterValue{\n                            Value: apiclientgo.Pointer(\"Spreadsheet\"),\n                            RelationType: components.RelationTypeEquals.ToPointer(),\n                        },\n                        components.FacetFilterValue{\n                            Value: apiclientgo.Pointer(\"Presentation\"),\n                            RelationType: components.RelationTypeEquals.ToPointer(),\n                        },\n                    },\n                },\n            },\n            AddedRoles: []components.UserRoleSpecification{\n                components.UserRoleSpecification{\n                    Person: &components.Person{\n                        Name: \"George Clooney\",\n                        ObfuscatedID: \"abc123\",\n                    },\n                    Role: components.UserRoleViewer,\n                },\n            },\n            RemovedRoles: []components.UserRoleSpecification{\n                components.UserRoleSpecification{\n                    Person: &components.Person{\n                        Name: \"George Clooney\",\n                        ObfuscatedID: \"abc123\",\n                    },\n                    Role: components.UserRoleAnswerModerator,\n                },\n            },\n            Roles: []components.UserRoleSpecification{\n                components.UserRoleSpecification{\n                    Person: &components.Person{\n                        Name: \"George Clooney\",\n                        ObfuscatedID: \"abc123\",\n                    },\n                    Role: components.UserRoleOwner,\n                },\n            },\n            CombinedAnswerText: &components.StructuredTextMutableProperties{\n                Text: \"From https://en.wikipedia.org/wiki/Diffuse_sky_radiation, the sky is blue because blue light is more strongly scattered than longer-wavelength light.\",\n            },\n        },\n    }, nil)\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.Answer != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -335,7 +327,7 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithInstance(os.Getenv(\"GLEAN_INSTANCE\")),\n    )\n\n    res, err := s.Client.Answers.Delete(ctx, components.DeleteAnswerRequest{\n        ID: 3,\n        DocID: apiclientgo.Pointer(\"ANSWERS_answer_3\"),\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithInstance(os.Getenv(\"GLEAN_INSTANCE\")),\n    )\n\n    res, err := s.Client.Answers.Delete(ctx, components.DeleteAnswerRequest{\n        ID: 3,\n        DocID: apiclientgo.Pointer(\"ANSWERS_answer_3\"),\n    }, nil)\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -492,14 +484,7 @@ paths:
                       name: "George Clooney",
                       obfuscatedId: "abc123",
                     },
-                    role: "OWNER",
-                  },
-                  {
-                    person: {
-                      name: "George Clooney",
-                      obfuscatedId: "abc123",
-                    },
-                    role: "OWNER",
+                    role: "EDITOR",
                   },
                 ],
                 removedRoles: [
@@ -508,21 +493,7 @@ paths:
                       name: "George Clooney",
                       obfuscatedId: "abc123",
                     },
-                    role: "ANSWER_MODERATOR",
-                  },
-                  {
-                    person: {
-                      name: "George Clooney",
-                      obfuscatedId: "abc123",
-                    },
-                    role: "ANSWER_MODERATOR",
-                  },
-                  {
-                    person: {
-                      name: "George Clooney",
-                      obfuscatedId: "abc123",
-                    },
-                    role: "ANSWER_MODERATOR",
+                    role: "OWNER",
                   },
                 ],
                 roles: [
@@ -531,7 +502,7 @@ paths:
                       name: "George Clooney",
                       obfuscatedId: "abc123",
                     },
-                    role: "OWNER",
+                    role: "EDITOR",
                   },
                 ],
                 combinedAnswerText: {
@@ -539,14 +510,13 @@ paths:
                 },
               });
 
-              // Handle the result
               console.log(result);
             }
 
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithInstance(os.Getenv(\"GLEAN_INSTANCE\")),\n    )\n\n    res, err := s.Client.Answers.Update(ctx, components.EditAnswerRequest{\n        ID: 3,\n        DocID: apiclientgo.Pointer(\"ANSWERS_answer_3\"),\n        Question: apiclientgo.Pointer(\"Why is the sky blue?\"),\n        BodyText: apiclientgo.Pointer(\"From https://en.wikipedia.org/wiki/Diffuse_sky_radiation, the sky is blue because blue light is more strongly scattered than longer-wavelength light.\"),\n        AudienceFilters: []components.FacetFilter{\n            components.FacetFilter{\n                FieldName: apiclientgo.Pointer(\"type\"),\n                Values: []components.FacetFilterValue{\n                    components.FacetFilterValue{\n                        Value: apiclientgo.Pointer(\"Spreadsheet\"),\n                        RelationType: components.RelationTypeEquals.ToPointer(),\n                    },\n                    components.FacetFilterValue{\n                        Value: apiclientgo.Pointer(\"Presentation\"),\n                        RelationType: components.RelationTypeEquals.ToPointer(),\n                    },\n                },\n            },\n        },\n        AddedRoles: []components.UserRoleSpecification{\n            components.UserRoleSpecification{\n                Person: &components.Person{\n                    Name: \"George Clooney\",\n                    ObfuscatedID: \"abc123\",\n                },\n                Role: components.UserRoleEditor,\n            },\n        },\n        RemovedRoles: []components.UserRoleSpecification{\n            components.UserRoleSpecification{\n                Person: &components.Person{\n                    Name: \"George Clooney\",\n                    ObfuscatedID: \"abc123\",\n                },\n                Role: components.UserRoleOwner,\n            },\n        },\n        Roles: []components.UserRoleSpecification{\n            components.UserRoleSpecification{\n                Person: &components.Person{\n                    Name: \"George Clooney\",\n                    ObfuscatedID: \"abc123\",\n                },\n                Role: components.UserRoleEditor,\n            },\n        },\n        CombinedAnswerText: &components.StructuredTextMutableProperties{\n            Text: \"From https://en.wikipedia.org/wiki/Diffuse_sky_radiation, the sky is blue because blue light is more strongly scattered than longer-wavelength light.\",\n        },\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.Answer != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithInstance(os.Getenv(\"GLEAN_INSTANCE\")),\n    )\n\n    res, err := s.Client.Answers.Update(ctx, components.EditAnswerRequest{\n        ID: 3,\n        DocID: apiclientgo.Pointer(\"ANSWERS_answer_3\"),\n        Question: apiclientgo.Pointer(\"Why is the sky blue?\"),\n        BodyText: apiclientgo.Pointer(\"From https://en.wikipedia.org/wiki/Diffuse_sky_radiation, the sky is blue because blue light is more strongly scattered than longer-wavelength light.\"),\n        AudienceFilters: []components.FacetFilter{\n            components.FacetFilter{\n                FieldName: apiclientgo.Pointer(\"type\"),\n                Values: []components.FacetFilterValue{\n                    components.FacetFilterValue{\n                        Value: apiclientgo.Pointer(\"Spreadsheet\"),\n                        RelationType: components.RelationTypeEquals.ToPointer(),\n                    },\n                    components.FacetFilterValue{\n                        Value: apiclientgo.Pointer(\"Presentation\"),\n                        RelationType: components.RelationTypeEquals.ToPointer(),\n                    },\n                },\n            },\n        },\n        AddedRoles: []components.UserRoleSpecification{\n            components.UserRoleSpecification{\n                Person: &components.Person{\n                    Name: \"George Clooney\",\n                    ObfuscatedID: \"abc123\",\n                },\n                Role: components.UserRoleEditor,\n            },\n        },\n        RemovedRoles: []components.UserRoleSpecification{\n            components.UserRoleSpecification{\n                Person: &components.Person{\n                    Name: \"George Clooney\",\n                    ObfuscatedID: \"abc123\",\n                },\n                Role: components.UserRoleOwner,\n            },\n        },\n        Roles: []components.UserRoleSpecification{\n            components.UserRoleSpecification{\n                Person: &components.Person{\n                    Name: \"George Clooney\",\n                    ObfuscatedID: \"abc123\",\n                },\n                Role: components.UserRoleEditor,\n            },\n        },\n        CombinedAnswerText: &components.StructuredTextMutableProperties{\n            Text: \"From https://en.wikipedia.org/wiki/Diffuse_sky_radiation, the sky is blue because blue light is more strongly scattered than longer-wavelength light.\",\n        },\n    }, nil)\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.Answer != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -687,14 +657,13 @@ paths:
                 docId: "ANSWERS_answer_3",
               });
 
-              // Handle the result
               console.log(result);
             }
 
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithInstance(os.Getenv(\"GLEAN_INSTANCE\")),\n    )\n\n    res, err := s.Client.Answers.Retrieve(ctx, components.GetAnswerRequest{\n        ID: apiclientgo.Pointer[int64](3),\n        DocID: apiclientgo.Pointer(\"ANSWERS_answer_3\"),\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.GetAnswerResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithInstance(os.Getenv(\"GLEAN_INSTANCE\")),\n    )\n\n    res, err := s.Client.Answers.Retrieve(ctx, components.GetAnswerRequest{\n        ID: apiclientgo.Pointer[int64](3),\n        DocID: apiclientgo.Pointer(\"ANSWERS_answer_3\"),\n    }, nil)\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.GetAnswerResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
