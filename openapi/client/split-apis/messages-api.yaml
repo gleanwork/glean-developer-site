@@ -85,14 +85,13 @@ paths:
                 datasource: "SLACK",
               });
 
-              // Handle the result
               console.log(result);
             }
 
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithInstance(os.Getenv(\"GLEAN_INSTANCE\")),\n    )\n\n    res, err := s.Client.Messages.Retrieve(ctx, components.MessagesRequest{\n        IDType: components.IDTypeConversationID,\n        ID: \"<id>\",\n        Datasource: components.DatasourceSlack,\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.MessagesResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithInstance(os.Getenv(\"GLEAN_INSTANCE\")),\n    )\n\n    res, err := s.Client.Messages.Retrieve(ctx, components.MessagesRequest{\n        IDType: components.IDTypeConversationID,\n        ID: \"<id>\",\n        Datasource: components.DatasourceSlack,\n    }, nil)\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.MessagesResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
