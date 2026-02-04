@@ -2,7 +2,7 @@ openapi: 3.0.0
 info:
   version: 0.9.0
   title: Glean API
-  x-source-commit-sha: 14f293dbff52da193f7f219865a15688c4e65c00
+  x-source-commit-sha: f776288f52c7c0f55daa257c5617c9eeb561ff50
   description: |
     # Introduction
     In addition to the data sources that Glean has built-in support for, Glean also provides a REST API that enables customers to put arbitrary content in the search index. This is useful, for example, for doing permissions-aware search over content in internal tools that reside on-prem as well as for searching over applications that Glean does not currently support first class. In addition these APIs allow the customer to push organization data (people info, organization structure etc) into Glean.
@@ -22,7 +22,7 @@ info:
     These API clients provide type-safe, idiomatic interfaces for working with Glean IndexingAPIs in your language of choice.
   x-logo:
     url: https://app.glean.com/images/glean-text2.svg
-  x-open-api-commit-sha: 239eeee8b29b9dbc972cacedd67ba305695551f0
+  x-open-api-commit-sha: 14086499099307e83aa6c664fda16c200692dc91
   x-speakeasy-name: Glean API
 servers:
   - url: https://{instance}-be.glean.com
@@ -19375,18 +19375,21 @@ components:
             UNIVERSAL: Uses both company and web knowledge. This will soon be deprecated in favor of the FAST and ADVANCED `agent` values
             FAST: Uses an agent powered by the agentic engine that responds faster but may have lower quality results. Requires the agentic engine to be enabled in the deployment.
             ADVANCED: Uses an agent powered by the agentic engine that thinks for longer and potentially makes more LLM calls to return higher quality results. Requires the agentic engine to be enabled in the deployment.
+            AUTO: Uses an agent powered by the agentic engine that routes between reasoning efforts based on the question and context.
           enum:
             - DEFAULT
             - GPT
             - UNIVERSAL
             - FAST
             - ADVANCED
+            - AUTO
           x-speakeasy-enum-descriptions:
             DEFAULT: Integrates with your company's knowledge. This will soon be deprecated in favor of the FAST and ADVANCED `agent` values
             GPT: Communicates directly with the LLM. This will soon be deprecated in favor of the FAST and ADVANCED `agent` values
             UNIVERSAL: Uses both company and web knowledge. This will soon be deprecated in favor of the FAST and ADVANCED `agent` values
             FAST: Uses an agent powered by the agentic engine that responds faster but may have lower quality results. Requires the agentic engine to be enabled in the deployment.
             ADVANCED: Uses an agent powered by the agentic engine that thinks for longer and potentially makes more LLM calls to return higher quality results. Requires the agentic engine to be enabled in the deployment.
+            AUTO: Uses an agent powered by the agentic engine that routes between reasoning efforts based on the question and context.
         toolSets:
           $ref: '#/components/schemas/ToolSets'
         mode:
