@@ -2,11 +2,11 @@ openapi: 3.0.0
 info:
   version: 0.9.0
   title: Glean API - Agents
-  x-source-commit-sha: f776288f52c7c0f55daa257c5617c9eeb561ff50
+  x-source-commit-sha: 2a745f932cc47169f6ceb0e7b3e9869d02726cea
   description: API endpoints for Agents
   x-logo:
     url: https://app.glean.com/images/glean-text2.svg
-  x-open-api-commit-sha: 14086499099307e83aa6c664fda16c200692dc91
+  x-open-api-commit-sha: c9207631abff9271cdd02433399797f6ee15e063
   x-speakeasy-name: Glean API
 servers:
   - url: https://{instance}-be.glean.com
@@ -345,7 +345,7 @@ paths:
       tags:
         - Agents
       summary: Create an agent run and stream the response
-      description: Executes an [agent](https://developers.glean.com/agents/agents-api) run and returns the result as a stream of server-sent events (SSE).
+      description: 'Executes an [agent](https://developers.glean.com/agents/agents-api) run and returns the result as a stream of server-sent events (SSE). **Note**: If the agent uses an input form trigger, all form fields (including optional fields) must be included in the `input` object.'
       operationId: createAndStreamRun
       x-visibility: Preview
       requestBody:
@@ -494,7 +494,7 @@ paths:
       tags:
         - Agents
       summary: Create an agent run and wait for the response
-      description: Executes an [agent](https://developers.glean.com/agents/agents-api) run and returns the final response.
+      description: 'Executes an [agent](https://developers.glean.com/agents/agents-api) run and returns the final response. **Note**: If the agent uses an input form trigger, all form fields (including optional fields) must be included in the `input` object.'
       operationId: createAndWaitRun
       x-visibility: Preview
       requestBody:
@@ -709,7 +709,7 @@ components:
           items:
             $ref: '#/components/schemas/Agent'
     AgentRunCreate:
-      description: Payload for creating a run.
+      description: 'Payload for creating a run. **Important**: If the agent uses an input form trigger, the `input` field is required and must include all fields defined in the form schema. Even fields marked as optional in the UI must be included in the request—use an empty string (`""`) for optional fields without values. Omitting required form fields will result in a 500 error.'
       type: object
       required:
         - agent_id
@@ -721,7 +721,7 @@ components:
         input:
           type: object
           title: Input
-          description: The input to the agent.
+          description: The input to the agent. Required when the agent uses an input form trigger.
           additionalProperties: true
         messages:
           type: array
