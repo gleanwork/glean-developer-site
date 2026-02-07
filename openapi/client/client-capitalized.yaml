@@ -2,7 +2,7 @@ openapi: 3.0.0
 info:
   version: 0.9.0
   title: Glean API
-  x-source-commit-sha: 2a745f932cc47169f6ceb0e7b3e9869d02726cea
+  x-source-commit-sha: 29ae3041647f4c92f0c333d6bf325aba502bd6f2
   description: |
     # Introduction
     In addition to the data sources that Glean has built-in support for, Glean also provides a REST API that enables customers to put arbitrary content in the search index. This is useful, for example, for doing permissions-aware search over content in internal tools that reside on-prem as well as for searching over applications that Glean does not currently support first class. In addition these APIs allow the customer to push organization data (people info, organization structure etc) into Glean.
@@ -22,7 +22,7 @@ info:
     These API clients provide type-safe, idiomatic interfaces for working with Glean IndexingAPIs in your language of choice.
   x-logo:
     url: https://app.glean.com/images/glean-text2.svg
-  x-open-api-commit-sha: c9207631abff9271cdd02433399797f6ee15e063
+  x-open-api-commit-sha: c557172d7d9891aa5189542f331a78581045864b
   x-speakeasy-name: Glean API
 servers:
   - url: https://{instance}-be.glean.com
@@ -19744,7 +19744,14 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ChatMessageCitation'
-          description: A list of Citations that were used to generate the response.
+          description: 'Deprecated: Use inline citations via ChatMessageFragment.citation instead. For detailed reference information, use ChatMessageCitation.referenceRanges. This field is still populated for backward compatibility.'
+          deprecated: true
+          x-glean-deprecated:
+            id: 6446f85e-c90e-4c00-9717-796f9db3dc61
+            introduced: '2026-02-06'
+            message: Use inline citations via ChatMessageFragment.citation and ChatMessageCitation.referenceRanges instead. This field is still populated for backward compatibility.
+            removal: '2026-10-15'
+          x-speakeasy-deprecation-message: 'Deprecated on 2026-02-06, removal scheduled for 2026-10-15: Use inline citations via ChatMessageFragment.citation and ChatMessageCitation.referenceRanges instead. This field is still populated for backward compatibility.'
         uploadedFileIds:
           type: array
           items:
