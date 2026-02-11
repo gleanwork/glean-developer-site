@@ -24,6 +24,10 @@ const CLIENT_LOGOS: Record<string, string> = {
   [CLIENT.GOOSE]: '/img/mcp-clients/goose.png',
   [CLIENT.WINDSURF]: '/img/mcp-clients/windsurf.png',
   [CLIENT.CHATGPT]: '/img/mcp-clients/chatgpt.png',
+  [CLIENT.CODEX]: '/img/mcp-clients/codex.png',
+  [CLIENT.JUNIE]: '/img/mcp-clients/jetbrains.png',
+  [CLIENT.JETBRAINS]: '/img/mcp-clients/jetbrains.png',
+  [CLIENT.GEMINI]: '/img/mcp-clients/gemini.png',
 };
 
 function getPlatform(): 'darwin' | 'linux' | 'win32' | undefined {
