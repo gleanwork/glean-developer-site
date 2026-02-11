@@ -315,6 +315,23 @@ paths:
                       },
                     ],
                   },
+                  {
+                    filters: [
+                      {
+                        fieldName: "type",
+                        values: [
+                          {
+                            value: "Spreadsheet",
+                            relationType: "EQUALS",
+                          },
+                          {
+                            value: "Presentation",
+                            relationType: "EQUALS",
+                          },
+                        ],
+                      },
+                    ],
+                  },
                 ],
               });
 
@@ -324,7 +341,7 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithInstance(os.Getenv(\"GLEAN_INSTANCE\")),\n    )\n\n    res, err := s.Client.Documents.RetrieveByFacets(ctx, nil, &components.GetDocumentsByFacetsRequest{\n        FilterSets: []components.FacetFilterSet{\n            components.FacetFilterSet{\n                Filters: []components.FacetFilter{\n                    components.FacetFilter{\n                        FieldName: apiclientgo.Pointer(\"type\"),\n                        Values: []components.FacetFilterValue{\n                            components.FacetFilterValue{\n                                Value: apiclientgo.Pointer(\"Spreadsheet\"),\n                                RelationType: components.RelationTypeEquals.ToPointer(),\n                            },\n                            components.FacetFilterValue{\n                                Value: apiclientgo.Pointer(\"Presentation\"),\n                                RelationType: components.RelationTypeEquals.ToPointer(),\n                            },\n                        },\n                    },\n                },\n            },\n        },\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.GetDocumentsByFacetsResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithInstance(os.Getenv(\"GLEAN_INSTANCE\")),\n    )\n\n    res, err := s.Client.Documents.RetrieveByFacets(ctx, nil, &components.GetDocumentsByFacetsRequest{\n        FilterSets: []components.FacetFilterSet{\n            components.FacetFilterSet{\n                Filters: []components.FacetFilter{\n                    components.FacetFilter{\n                        FieldName: apiclientgo.Pointer(\"type\"),\n                        Values: []components.FacetFilterValue{\n                            components.FacetFilterValue{\n                                Value: apiclientgo.Pointer(\"Spreadsheet\"),\n                                RelationType: components.RelationTypeEquals.ToPointer(),\n                            },\n                            components.FacetFilterValue{\n                                Value: apiclientgo.Pointer(\"Presentation\"),\n                                RelationType: components.RelationTypeEquals.ToPointer(),\n                            },\n                        },\n                    },\n                },\n            },\n            components.FacetFilterSet{\n                Filters: []components.FacetFilter{\n                    components.FacetFilter{\n                        FieldName: apiclientgo.Pointer(\"type\"),\n                        Values: []components.FacetFilterValue{\n                            components.FacetFilterValue{\n                                Value: apiclientgo.Pointer(\"Spreadsheet\"),\n                                RelationType: components.RelationTypeEquals.ToPointer(),\n                            },\n                            components.FacetFilterValue{\n                                Value: apiclientgo.Pointer(\"Presentation\"),\n                                RelationType: components.RelationTypeEquals.ToPointer(),\n                            },\n                        },\n                    },\n                },\n            },\n        },\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.GetDocumentsByFacetsResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
