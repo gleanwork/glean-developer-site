@@ -87,8 +87,15 @@ paths:
               const result = await glean.client.documents.summarize({
                 documentSpecs: [
                   {
-                    ugcType: "SHORTCUTS",
+                    ugcType: "CHATS",
                     ugcId: "<id>",
+                  },
+                  {
+                    ugcType: "CHATS",
+                    ugcId: "<id>",
+                  },
+                  {
+                    id: "<id>",
                   },
                 ],
               });
@@ -99,7 +106,7 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithInstance(os.Getenv(\"GLEAN_INSTANCE\")),\n    )\n\n    res, err := s.Client.Documents.Summarize(ctx, components.SummarizeRequest{\n        DocumentSpecs: []components.DocumentSpecUnion{\n            components.CreateDocumentSpecUnionDocumentSpec4(\n                components.DocumentSpec4{\n                    UgcType: components.DocumentSpecUgcType2Shortcuts,\n                    UgcID: \"<id>\",\n                },\n            ),\n        },\n    }, nil)\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.SummarizeResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithInstance(os.Getenv(\"GLEAN_INSTANCE\")),\n    )\n\n    res, err := s.Client.Documents.Summarize(ctx, components.SummarizeRequest{\n        DocumentSpecs: []components.DocumentSpecUnion{\n            components.CreateDocumentSpecUnionDocumentSpec4(\n                components.DocumentSpec4{\n                    UgcType: components.DocumentSpecUgcType2Chats,\n                    UgcID: \"<id>\",\n                },\n            ),\n            components.CreateDocumentSpecUnionDocumentSpec4(\n                components.DocumentSpec4{\n                    UgcType: components.DocumentSpecUgcType2Chats,\n                    UgcID: \"<id>\",\n                },\n            ),\n            components.CreateDocumentSpecUnionDocumentSpec2(\n                components.DocumentSpec2{\n                    ID: \"<id>\",\n                },\n            ),\n        },\n    }, nil)\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.SummarizeResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
