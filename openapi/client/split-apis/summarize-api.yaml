@@ -66,7 +66,7 @@ paths:
 
                 res = glean.client.documents.summarize(document_specs=[
                     {
-                        "ugc_type": models.DocumentSpecUgcType2.SHORTCUTS,
+                        "ugc_type": models.DocumentSpecUgcType2.CHATS,
                         "ugc_id": "<id>",
                     },
                 ])
@@ -112,11 +112,11 @@ paths:
           source: |-
             package hello.world;
 
+            import com.glean.api_client.glean_api_client.Glean;
+            import com.glean.api_client.glean_api_client.models.components.*;
+            import com.glean.api_client.glean_api_client.models.operations.SummarizeResponse;
             import java.lang.Exception;
             import java.util.List;
-            import org.openapis.openapi.Glean;
-            import org.openapis.openapi.models.components.*;
-            import org.openapis.openapi.models.operations.SummarizeResponse;
 
             public class Application {
 
@@ -130,8 +130,15 @@ paths:
                             .summarizeRequest(SummarizeRequest.builder()
                                 .documentSpecs(List.of(
                                     DocumentSpecUnion.of(DocumentSpec4.builder()
-                                        .ugcType(DocumentSpecUgcType2.SHORTCUTS)
+                                        .ugcType(DocumentSpecUgcType2.CHATS)
                                         .ugcId("<id>")
+                                        .build()),
+                                    DocumentSpecUnion.of(DocumentSpec4.builder()
+                                        .ugcType(DocumentSpecUgcType2.CHATS)
+                                        .ugcId("<id>")
+                                        .build()),
+                                    DocumentSpecUnion.of(DocumentSpec2.builder()
+                                        .id("<id>")
                                         .build())))
                                 .build())
                             .call();
