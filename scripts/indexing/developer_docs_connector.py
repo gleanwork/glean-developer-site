@@ -1,6 +1,6 @@
 from typing import Union, List, Sequence
 
-from glean.indexing.connectors.async_streaming import AsyncBaseStreamingDatasourceConnector
+from glean.indexing.connectors import BaseAsyncStreamingDatasourceConnector
 from glean.indexing.common.property_definition_builder import PropertyDefinitionBuilder
 from glean.indexing.models import (
     ContentDefinition,
@@ -17,7 +17,7 @@ from glean.api_client.models import (
 )
 from data_types import DocumentationPage, ApiReferencePage
 
-class DeveloperDocsConnector(AsyncBaseStreamingDatasourceConnector[Union[DocumentationPage, ApiReferencePage]]):
+class DeveloperDocsConnector(BaseAsyncStreamingDatasourceConnector[Union[DocumentationPage, ApiReferencePage]]):
     configuration: CustomDatasourceConfig = CustomDatasourceConfig(
         name="devdocs",
         display_name="Glean Developer Docs",

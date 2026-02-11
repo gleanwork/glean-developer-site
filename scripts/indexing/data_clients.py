@@ -13,7 +13,7 @@ import trafilatura
 from bs4 import BeautifulSoup
 from playwright.async_api import async_playwright
 
-from glean.indexing.connectors.async_streaming import AsyncBaseStreamingDataClient
+from glean.indexing.connectors import BaseAsyncStreamingDataClient
 from data_types import DocumentationPage, ApiReferencePage
 
 if TYPE_CHECKING:
@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-class DeveloperDocsDataClient(AsyncBaseStreamingDataClient[Union[DocumentationPage, ApiReferencePage]]):
+class DeveloperDocsDataClient(BaseAsyncStreamingDataClient[Union[DocumentationPage, ApiReferencePage]]):
 
     def __init__(self, dev_docs_base_url: str, indexing_logger: Optional["IndexingLogger"] = None):
         self.dev_docs_base_url = dev_docs_base_url
