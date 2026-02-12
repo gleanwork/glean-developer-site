@@ -2,11 +2,11 @@ openapi: 3.0.0
 info:
   version: 0.9.0
   title: Glean API - Answers
-  x-source-commit-sha: 8fbf6821f2079d099f0c65e2d5f31cebaa9275e4
+  x-source-commit-sha: 8a8660c64f8e0b709e1cae89fe04be0ded24cbcd
   description: API endpoints for Answers
   x-logo:
     url: https://app.glean.com/images/glean-text2.svg
-  x-open-api-commit-sha: 431948c1e94b08a8c7bec446283d7ad8124f1a6a
+  x-open-api-commit-sha: e39252ddec5b28ba9db435b2a5eb274a1f44cb9c
   x-speakeasy-name: Glean API
 servers:
   - url: https://{instance}-be.glean.com
@@ -4856,8 +4856,14 @@ paths:
       deprecated: true
       x-visibility: Public
       x-codegen-request-body-name: payload
+      x-glean-deprecated:
+        id: 4c0923bd-64c7-45b9-99a5-b36f2705e618
+        introduced: '2026-01-21'
+        message: Answer boards have been removed and this endpoint no longer serves a purpose
+        removal: '2026-10-15'
       parameters:
         - $ref: '#/components/parameters/locale'
+      x-speakeasy-deprecation-message: 'Deprecated on 2026-01-21, removal scheduled for 2026-10-15: Answer boards have been removed and this endpoint no longer serves a purpose'
       requestBody:
         content:
           application/json:
@@ -4879,12 +4885,6 @@ paths:
           description: Not Authorized
         '429':
           description: Too Many Requests
-      x-glean-deprecated:
-        id: 4c0923bd-64c7-45b9-99a5-b36f2705e618
-        introduced: '2026-01-21'
-        message: Answer boards have been removed and this endpoint no longer serves a purpose
-        removal: '2026-10-15'
-      x-speakeasy-deprecation-message: 'Deprecated on 2026-01-21, removal scheduled for 2026-10-15: Answer boards have been removed and this endpoint no longer serves a purpose'
       x-speakeasy-name-override: list
       x-speakeasy-group: client.answers
 components:
@@ -4979,13 +4979,6 @@ components:
         DOMAIN_VISIBLE: Anyone in the domain can search for the document.
         PUBLIC_LINK: Anyone with the link can see the document.
         PUBLIC_VISIBLE: Anyone on the internet can search for the document.
-      enum:
-        - PRIVATE
-        - SPECIFIC_PEOPLE_AND_GROUPS
-        - DOMAIN_LINK
-        - DOMAIN_VISIBLE
-        - PUBLIC_LINK
-        - PUBLIC_VISIBLE
       x-speakeasy-enum-descriptions:
         PRIVATE: Only one person is able to see the document.
         SPECIFIC_PEOPLE_AND_GROUPS: Only specific people and/or groups can see the document.
@@ -4993,6 +4986,13 @@ components:
         DOMAIN_VISIBLE: Anyone in the domain can search for the document.
         PUBLIC_LINK: Anyone with the link can see the document.
         PUBLIC_VISIBLE: Anyone on the internet can search for the document.
+      enum:
+        - PRIVATE
+        - SPECIFIC_PEOPLE_AND_GROUPS
+        - DOMAIN_LINK
+        - DOMAIN_VISIBLE
+        - PUBLIC_LINK
+        - PUBLIC_VISIBLE
     SearchResultProminenceEnum:
       type: string
       description: |
@@ -5001,14 +5001,14 @@ components:
         HERO: A high-confidence result that should feature prominently on the page.
         PROMOTED: May not be the best result but should be given additional visual distinction.
         STANDARD: Should not be distinct from any other results.
-      enum:
-        - HERO
-        - PROMOTED
-        - STANDARD
       x-speakeasy-enum-descriptions:
         HERO: A high-confidence result that should feature prominently on the page.
         PROMOTED: May not be the best result but should be given additional visual distinction.
         STANDARD: Should not be distinct from any other results.
+      enum:
+        - HERO
+        - PROMOTED
+        - STANDARD
     AnswerDocId:
       properties:
         docId:
@@ -5153,13 +5153,13 @@ components:
             LT: The value is less than the specified value.
             GT: The value is greater than the specified value.
             NOT_EQUALS: The value is not equal to the specified value.
-          example: EQUALS
           x-speakeasy-enum-descriptions:
             EQUALS: The value is equal to the specified value.
             ID_EQUALS: The value is equal to the specified ID.
             LT: The value is less than the specified value.
             GT: The value is greater than the specified value.
             NOT_EQUALS: The value is not equal to the specified value.
+          example: EQUALS
         isNegated:
           type: boolean
           deprecated: true
@@ -6711,18 +6711,18 @@ components:
               QUERY_METADATA: Returns result counts for each result set which has non-zero results, as well as other information about the search such as suggested spelling corrections.
               RESULTS: Return search result documents.
               SPELLCHECK_METADATA: Return metadata pertaining to spellcheck results.
-            enum:
-              - ALL_RESULT_COUNTS
-              - FACET_RESULTS
-              - QUERY_METADATA
-              - RESULTS
-              - SPELLCHECK_METADATA
             x-speakeasy-enum-descriptions:
               ALL_RESULT_COUNTS: Return result counts for each result set which has non-zero results, even when the request itself is limited to a subset.
               FACET_RESULTS: Return only facet results.
               QUERY_METADATA: Returns result counts for each result set which has non-zero results, as well as other information about the search such as suggested spelling corrections.
               RESULTS: Return search result documents.
               SPELLCHECK_METADATA: Return metadata pertaining to spellcheck results.
+            enum:
+              - ALL_RESULT_COUNTS
+              - FACET_RESULTS
+              - QUERY_METADATA
+              - RESULTS
+              - SPELLCHECK_METADATA
         timezoneOffset:
           type: integer
           description: The offset of the client's timezone in minutes from UTC. e.g. PDT is -420 because it's 7 hours behind UTC.
