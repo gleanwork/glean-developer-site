@@ -14,7 +14,7 @@ Server-to-server authentication enables your backend to provide authentication t
 
 The Web SDK supports two implementation approaches for server-to-server authentication:
 
-1. **Manual Token Management** - Your application fetches and manages auth tokens for authenticated users
+1. **Manual Token Management** - Your application fetches and manages auth tokens for authenticated users using a Glean API key or an access token from your OAuth provider
 2. **Guest Auth Provider** - The Web SDK automatically manages tokens for anonymous/guest users
 
 ## Overview
@@ -39,7 +39,12 @@ Choose your implementation approach:
 
 This approach gives you complete control over token generation and refresh. Your application manages user authentication and fetches tokens from Glean's API.
 
-### Prerequisites
+<Tabs>
+<TabItem value="api-key" label="API Key" default>
+
+<!-- Required for docusaurus styles to apply corectly 😬 -->
+<div class="markdown">
+<h3>Prerequisites</h3>
 
 Before implementing server-to-server authentication, you need an admin API key from Glean:
 
@@ -56,7 +61,7 @@ The API key must be stored very securely and **never exposed to client-side code
 The default TTL for generated tokens is 2 hours, but this is configurable. Contact your Glean administrator to adjust this setting if needed.
 :::
 
-### Implementation
+<h3>Implementation</h3>
 
 <Steps>
   <Step title="Create Server Endpoint">
@@ -116,20 +121,7 @@ The default TTL for generated tokens is 2 hours, but this is configurable. Conta
     Install the Glean Web SDK in your frontend application:
 
     <Tabs>
-    <TabItem value="npm" label="NPM">
-
-    ```bash
-    npm install @gleanwork/web-sdk
-    ```
-
-    Import in your application:
-
-    ```typescript
-    import GleanWebSDK from '@gleanwork/web-sdk';
-    ```
-
-    </TabItem>
-    <TabItem value="script" label="Script Tag">
+    <TabItem value="script" label="Script Tag" default>
 
     Add to your page's `<head>`:
 
@@ -141,6 +133,19 @@ The default TTL for generated tokens is 2 hours, but this is configurable. Conta
     ```
 
     The SDK will be available globally as `GleanWebSDK`.
+
+    </TabItem>
+    <TabItem value="npm" label="NPM">
+
+    ```bash
+    npm install @gleanwork/web-sdk
+    ```
+
+    Import in your application:
+
+    ```typescript
+    import GleanWebSDK from '@gleanwork/web-sdk';
+    ```
 
     </TabItem>
     </Tabs>
@@ -187,7 +192,7 @@ The default TTL for generated tokens is 2 hours, but this is configurable. Conta
   </Step>
 </Steps>
 
-### Implementation Checklist
+<h3>Implementation Checklist</h3>
 
 - [ ] Generate and securely store API key from Glean admin panel
 - [ ] Create backend endpoint (`/api/get-glean-token`) that calls Glean's `/createauthtoken` API
@@ -195,6 +200,169 @@ The default TTL for generated tokens is 2 hours, but this is configurable. Conta
 - [ ] Implement client-side token fetching and pass to Web SDK
 - [ ] Implement `onAuthTokenRequired` callback for automatic token refresh
 - [ ] Test token expiration and refresh flow (tokens expire after 2 hours by default)
+
+</div>
+
+</TabItem>
+<TabItem value="oauth" label="OAuth Access Token">
+<div class="markdown">
+<h3>Prerequisites</h3>
+
+Before implementing server-to-server authentication using OAuth access tokens, you need to configure Glean with information about your OAuth provider:
+
+1. Use Azure, GSuite, Okta, OneLogin, or Ping as your OAuth provider
+2. An admin with sufficient access navigates to the [Third party access page](https://app.glean.com/admin/setup/third-party-oauth)
+3. Enable IDP OAuth for API access and provide the necessary SSO information 
+
+:::tip
+The default TTL for Glean generated tokens is 2 hours, but this is configurable. Contact your Glean administrator to adjust this setting if needed.
+:::
+
+<h3>Implementation</h3>
+
+<Steps>
+  <Step title="Create Server Endpoint">
+    Create a backend endpoint that your client can call to obtain Glean auth tokens. This endpoint calls Glean's `/createauthtoken` API with the user's OAuth access token.
+
+    **Node.js/Express Example:**
+
+    ```javascript
+    const express = require("express");
+    const axios = require("axios");
+    const app = express();
+
+    app.use(express.json());
+
+    app.post("/api/get-glean-token", async (req, res) => {
+      const { userEmail } = req.body;
+
+      // Retrieve the user's OAuth access token
+      const accessToken = <USER'S ACCESS TOKEN>;
+
+      // Your backend URL (e.g., 'https://your-company-be.glean.com')
+      const backend = process.env.GLEAN_BACKEND_URL;
+
+      const tokenApiPath = backend.endsWith("/")
+        ? `${backend}rest/api/v1/createauthtoken`
+        : `${backend}/rest/api/v1/createauthtoken`;
+
+      try {
+        const response = await axios({
+          method: "POST",
+          url: tokenApiPath,
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "X-Glean-Auth-Type": "OAUTH",
+            accept: "application/json",
+          },
+        });
+
+        // Response contains: { token: "GLEAN_AUTH_TOKEN_...", expirationTime: 1234567890 }
+        res.json(response.data);
+      } catch (error) {
+        console.error("Failed to fetch Glean token:", error);
+        res.status(500).json({ error: "Failed to generate auth token" });
+      }
+    });
+
+    app.listen(3000);
+    ```
+
+    **Key points:**
+    - `Authorization: Bearer <accessToken>` - The user's OAuth access token
+    - `X-Glean-Auth-Type: OAUTH` - **Required header**
+    - Response includes both `token` (the auth token) and `expirationTime` (Unix timestamp in seconds)
+
+    For more details on this API, see [Create Authentication Token API](/api/client-api/authentication/createauthtoken).
+  </Step>
+
+  <Step title="Install Web SDK">
+    Install the Glean Web SDK in your frontend application:
+
+    <Tabs>
+    <TabItem value="script" label="Script Tag" default>
+
+    Add to your page's `<head>`:
+
+    ```html
+    <script
+      defer
+      src="https://{GLEAN_APP_DOMAIN}/embedded-search-latest.min.js"
+    ></script>
+    ```
+
+    The SDK will be available globally as `GleanWebSDK`.
+
+    </TabItem>
+    <TabItem value="npm" label="NPM">
+
+    ```bash
+    npm install @gleanwork/web-sdk
+    ```
+
+    Import in your application:
+
+    ```typescript
+    import GleanWebSDK from '@gleanwork/web-sdk';
+    ```
+
+    </TabItem>
+    </Tabs>
+  </Step>
+
+  <Step title="Implement Client-Side Authentication">
+    Fetch a token from your server endpoint and pass it to the Web SDK:
+
+    ```javascript
+    // Fetch initial token from your server
+    async function getGleanToken() {
+      const response = await fetch('/api/get-glean-token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userEmail: 'user@company.com' // The user's email, or other identifier used to retrieve their access token
+        })
+      });
+
+      const data = await response.json();
+      return data; // Returns { token, expirationTime }
+    }
+
+    // Initialize Web SDK with token-based auth
+    const authToken = await getGleanToken();
+
+    GleanWebSDK.renderSearchBox(document.getElementById('search-container'), {
+      authMethod: 'token',
+      authToken: authToken,
+      backend: 'https://{your}-be.glean.com/',
+      onAuthTokenRequired: async () => {
+        // Called when token is approaching expiration
+        return await getGleanToken();
+      }
+    });
+    ```
+
+    **Key points:**
+    - `authMethod: 'token'` - Use token-based authentication
+    - `authToken` - Initial token object with `token` and `expirationTime`
+    - `onAuthTokenRequired` - Callback invoked when token needs refresh (automatically called ~30 min before expiration)
+
+    You can use this pattern with any Web SDK component: `renderSearchBox()`, `renderChat()`, `renderSearchResults()`, `attach()`, etc.
+  </Step>
+</Steps>
+
+<h3>Implementation Checklist</h3>
+
+- [ ] Configure Glean with all your OAuth provider's details
+- [ ] Create backend endpoint (`/api/get-glean-token`) that calls Glean's `/createauthtoken` API with the user's access token
+- [ ] Install Glean Web SDK in your frontend application
+- [ ] Implement client-side token fetching and pass to Web SDK
+- [ ] Implement `onAuthTokenRequired` callback for automatic token refresh
+- [ ] Test token expiration and refresh flow (tokens expire after 2 hours by default)
+
+</div>
+</TabItem>
+</Tabs>
 
 ## Approach 2: Guest Auth Provider
 
