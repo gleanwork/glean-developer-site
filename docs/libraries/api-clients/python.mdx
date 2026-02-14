@@ -208,6 +208,85 @@ response = client.client.chat.create(
 )
 ```
 
+### OAuth Authentication
+
+OAuth allows you to use access tokens from your identity provider (Google, Azure, Okta, etc.) instead of Glean-issued tokens.
+
+:::info Prerequisites
+- OAuth enabled in [Glean Admin > Third-Party OAuth](https://app.glean.com/admin/setup/third-party-oauth)
+- Your OAuth Client ID registered with Glean
+- See [OAuth Setup Guide](https://docs.glean.com/administration/oauth/oauth-idp) for admin configuration
+:::
+
+OAuth requests require these headers:
+
+| Header | Value |
+|--------|-------|
+| `Authorization` | `Bearer <oauth_access_token>` |
+| `X-Glean-Auth-Type` | `OAUTH` |
+
+#### Example: Authorization Code Flow
+
+This example uses [Authlib](https://pypi.org/project/Authlib/) with Flask:
+
+```python
+import os
+import httpx
+from flask import Flask, redirect, request, jsonify
+from authlib.integrations.flask_client import OAuth
+from glean.api_client import Glean
+from glean.api_client import models
+
+app = Flask(__name__)
+app.secret_key = os.urandom(24)
+
+oauth = OAuth(app)
+oauth.register(
+    name='provider',
+    client_id=os.getenv('OAUTH_CLIENT_ID'),
+    client_secret=os.getenv('OAUTH_CLIENT_SECRET'),
+    server_metadata_url=os.getenv('OAUTH_ISSUER') + '/.well-known/openid-configuration',
+    client_kwargs={'scope': 'openid email'},
+    code_challenge_method='S256',  # Enable PKCE
+)
+
+@app.route('/login')
+def login():
+    redirect_uri = 'http://localhost:5000/callback'
+    return oauth.provider.authorize_redirect(redirect_uri)
+
+@app.route('/callback')
+def callback():
+    token = oauth.provider.authorize_access_token()
+
+    # Create HTTP client with OAuth headers
+    http_client = httpx.Client(headers={
+        'Authorization': f"Bearer {token['access_token']}",
+        'X-Glean-Auth-Type': 'OAUTH',
+    })
+
+    # Use OAuth token with Glean
+    with Glean(
+        instance=os.getenv('GLEAN_INSTANCE'),
+        client=http_client,
+    ) as glean:
+        results = glean.client.search.query(
+            search_request=models.SearchRequest(
+                query='quarterly reports',
+                page_size=10,
+            )
+        )
+
+    return jsonify(results.to_dict())
+
+if __name__ == '__main__':
+    app.run(port=5000)
+```
+
+:::tip
+Access tokens typically expire after ~1 hour. For production use, implement token refresh using `token['refresh_token']`.
+:::
+
 ## Error Handling
 
 ```python

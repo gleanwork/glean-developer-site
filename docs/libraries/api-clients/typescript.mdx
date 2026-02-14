@@ -196,6 +196,107 @@ const response = await client.client.chat.create({
 });
 ```
 
+### OAuth Authentication
+
+OAuth allows you to use access tokens from your identity provider (Google, Azure, Okta, etc.) instead of Glean-issued tokens.
+
+:::info Prerequisites
+- OAuth enabled in [Glean Admin > Third-Party OAuth](https://app.glean.com/admin/setup/third-party-oauth)
+- Your OAuth Client ID registered with Glean
+- See [OAuth Setup Guide](https://docs.glean.com/administration/oauth/oauth-idp) for admin configuration
+:::
+
+OAuth requests require these headers:
+
+| Header | Value |
+|--------|-------|
+| `Authorization` | `Bearer <oauth_access_token>` |
+| `X-Glean-Auth-Type` | `OAUTH` |
+
+#### Example: Authorization Code Flow
+
+This example uses [openid-client](https://github.com/panva/openid-client) (v6+) with Express:
+
+```typescript
+import express from 'express';
+import session from 'express-session';
+import * as client from 'openid-client';
+import { Glean } from '@gleanwork/api-client';
+
+const config = {
+  clientId: process.env.OAUTH_CLIENT_ID!,
+  clientSecret: process.env.OAUTH_CLIENT_SECRET!,
+  redirectUri: 'http://localhost:3000/callback',
+  issuer: process.env.OAUTH_ISSUER!, // e.g., https://accounts.google.com
+};
+
+const app = express();
+app.use(session({ secret: 'session-secret', resave: false, saveUninitialized: false }));
+
+let oidcConfig: client.Configuration;
+
+// Initialize OIDC client on startup
+async function init() {
+  oidcConfig = await client.discovery(
+    new URL(config.issuer),
+    config.clientId,
+    config.clientSecret
+  );
+}
+
+app.get('/login', async (req, res) => {
+  // Generate PKCE code verifier and state for security
+  const codeVerifier = client.randomPKCECodeVerifier();
+  const codeChallenge = await client.calculatePKCECodeChallenge(codeVerifier);
+  const state = client.randomState();
+
+  // Store in session for verification on callback
+  req.session.codeVerifier = codeVerifier;
+  req.session.state = state;
+
+  const authUrl = client.buildAuthorizationUrl(oidcConfig, {
+    redirect_uri: config.redirectUri,
+    scope: 'openid email',
+    code_challenge: codeChallenge,
+    code_challenge_method: 'S256',
+    state,
+  });
+  res.redirect(authUrl.href);
+});
+
+app.get('/callback', async (req, res) => {
+  const { codeVerifier, state } = req.session;
+  const callbackUrl = new URL(req.url, `http://${req.headers.host}`);
+
+  // Exchange code for tokens with PKCE and state verification
+  const tokens = await client.authorizationCodeGrant(oidcConfig, callbackUrl, {
+    pkceCodeVerifier: codeVerifier,
+    expectedState: state,
+  });
+
+  // Use OAuth token with Glean
+  const glean = new Glean({ instance: process.env.GLEAN_INSTANCE! });
+
+  const results = await glean.client.search.query({
+    query: 'quarterly reports',
+    pageSize: 10,
+  }, {
+    headers: {
+      'Authorization': `Bearer ${tokens.access_token}`,
+      'X-Glean-Auth-Type': 'OAUTH',
+    },
+  });
+
+  res.json(results);
+});
+
+init().then(() => app.listen(3000));
+```
+
+:::tip
+Access tokens typically expire after ~1 hour. For production use, implement token refresh using `tokens.refresh_token`.
+:::
+
 ## Error Handling
 
 ```typescript
