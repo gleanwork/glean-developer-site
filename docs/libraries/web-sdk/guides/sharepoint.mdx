@@ -1,0 +1,311 @@
+---
+title: 'SharePoint'
+description: 'Guide for embedding Glean Search or Chat into SharePoint sites using SharePoint Framework (SPFx)'
+icon: 'share-nodes'
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+# Embedding Glean Search & Chat into SharePoint Sites
+
+## Overview
+
+This guide provides step-by-step instructions for integrating Glean Search and Chat functionality into SharePoint sites using the SharePoint Framework (SPFx). 
+
+<CardGroup cols={2}>
+  <Card title="Glean Search" icon="Search" iconSet="feather">
+    Embed Glean's search functionality directly into SharePoint pages
+  </Card>
+  <Card title="Glean Chat" icon="chat" iconSet="glean">
+    Add Glean's conversational AI interface to SharePoint sites
+  </Card>
+</CardGroup>
+
+## Prerequisites
+
+Before beginning the integration, ensure your SharePoint environment meets the following requirements:
+
+### SharePoint Version Compatibility
+
+<Tabs>
+<TabItem value="online" label="SharePoint Online">
+
+SPFx is fully supported in SharePoint Online (Microsoft 365). This is the recommended platform for Glean integration.
+
+</TabItem>
+<TabItem value="onprem" label="SharePoint On-Premises">
+
+SPFx requires:
+- **SharePoint Server 2016**: Feature Pack 2 or later
+- **SharePoint Server 2019**: Fully supported
+- **SharePoint Subscription Edition**: Fully supported
+
+</TabItem>
+</Tabs>
+
+### Required Permissions
+
+You'll need the following permissions to deploy SPFx solutions:
+- SharePoint Administrator role, or
+- Site Collection Administrator rights for the target sites
+
+### App Catalog Verification
+
+<Steps>
+  <Step title="Check App Catalog Availability">
+    Navigate to your App Catalog: `https://<tenant-name>.sharepoint.com/sites/appcatalog/_layouts/15/tenantAppCatalog.aspx/manageApps`
+    
+    If you encounter a 404 error, the App Catalog needs to be created.
+  </Step>
+
+  <Step title="Create App Catalog (if needed)">
+    1. Go to **SharePoint Admin Center**: `https://admin.microsoft.com`
+    2. Navigate to **More features** > **Apps** > **App Catalog**
+    3. Follow the setup instructions to create a new App Catalog site
+  </Step>
+
+  <Step title="Verify Modern Pages">
+    Ensure your SharePoint sites use the modern experience. SPFx web parts are not compatible with classic SharePoint pages.
+  </Step>
+</Steps>
+
+## Development Environment Setup
+
+<Steps>
+  <Step title="Install Node.js">
+    Install Node.js version 18.x (required for SPFx compatibility):
+    
+    ```bash
+    # Check current version
+    node -v
+    
+    # Install Node.js 18.x if needed
+    # Visit https://nodejs.org/en/download/package-manager for installation instructions
+    ```
+  </Step>
+
+  <Step title="Install Development Tools">
+    Install the required global packages:
+    
+    ```bash
+    # Install Yeoman, SPFx Yeoman Generator, and Gulp CLI
+    npm install gulp-cli yo @microsoft/generator-sharepoint -g
+    ```
+  </Step>
+
+  <Step title="Set Up Code Editor">
+    Install Visual Studio Code or your preferred code editor for SPFx development.
+  </Step>
+</Steps>
+
+## Creating the SPFx Web Part
+
+### Generate New SPFx Project
+
+<Steps>
+  <Step title="Create Project Directory">
+    ```bash
+    mkdir GleanSearchWebPart
+    cd GleanSearchWebPart
+    ```
+  </Step>
+
+  <Step title="Generate SPFx Web Part">
+    Run the Yeoman generator:
+    
+    ```bash
+    yo @microsoft/sharepoint
+    ```
+    
+    Configure the project with these settings:
+    - **Solution Name**: `GleanSearchWebPart`
+    - **Target for deployment**: SharePoint Online only
+    - **Web Part Name**: `GleanSearch`
+    - **Framework**: React
+  </Step>
+
+  <Step title="Download Glean Web Part Code">
+    Replace the generated code with the Glean-specific implementation:
+    
+    - **Search Web Part**: Download from [web-sdk-embed-examples/sharepoint-webpart-search](https://github.com/gleanwork/web-sdk-embed-examples/tree/main/sharepoint-webpart-search)
+    - **Chat Web Part**: Download from [web-sdk-embed-examples/sharepoint-webpart-chat](https://github.com/gleanwork/web-sdk-embed-examples/tree/main/sharepoint-webpart-chat)
+  </Step>
+</Steps>
+
+### Customize for Your Environment
+
+<Steps>
+  <Step title="Update Search Element Selector">
+    The web part uses `document.querySelector('input[placeholder*="Search"]')` to locate SharePoint's search input.
+    
+    If your SharePoint site uses different search box styling or placeholder text, modify this selector in the web part code.
+  </Step>
+
+  <Step title="Configure Glean Settings">
+    Update the Glean configuration in the web part properties:
+    - Backend URL
+    - Authentication settings
+    - Application ID (for Chat web parts)
+  </Step>
+
+  <Step title="Test in Development">
+    Test the web part in a non-production SharePoint environment before deploying to live sites.
+  </Step>
+</Steps>
+
+## Build and Package
+
+<Steps>
+  <Step title="Build the Project">
+    ```bash
+    gulp build
+    ```
+  </Step>
+
+  <Step title="Create Production Bundle">
+    ```bash
+    gulp bundle --ship
+    ```
+  </Step>
+
+  <Step title="Package the Solution">
+    ```bash
+    gulp package-solution --ship
+    ```
+    
+    This creates a `.sppkg` file in the `sharepoint/solution` folder.
+  </Step>
+</Steps>
+
+## Deploy to SharePoint
+
+<Steps>
+  <Step title="Upload to App Catalog">
+    1. Navigate to your SharePoint App Catalog
+    2. Upload the generated `.sppkg` file
+    3. Click **Deploy** when prompted
+  </Step>
+
+  <Step title="Enable App">
+    Choose one of these deployment options:
+    
+    <Tabs>
+    <TabItem value="allsites" label="All Sites (Recommended)">
+    
+    Select **Enable this app and add it to all sites** to make the web part available across your tenant.
+    
+    </TabItem>
+    <TabItem value="manual" label="Manual Addition">
+    
+    Select **Only enable this app** to manually add the web part to specific sites.
+    
+    </TabItem>
+    </Tabs>
+  </Step>
+
+  <Step title="Confirm Deployment">
+    Wait for the confirmation message indicating successful deployment.
+  </Step>
+</Steps>
+
+## Add Web Part to SharePoint Pages
+
+<Steps>
+  <Step title="Navigate to Target Page">
+    Go to the SharePoint site where you want to add Glean functionality.
+  </Step>
+
+  <Step title="Edit the Page">
+    Click the **Edit** button to modify the page.
+  </Step>
+
+  <Step title="Add the Web Part">
+    1. Click the **+** icon to add a new web part
+    2. Search for your Glean web part by name
+    3. Select and add it to the page
+    
+    :::note
+    The web part can be added to any page section. It will activate when users interact with the SharePoint search box, regardless of where the web part is positioned.
+    :::
+  </Step>
+
+  <Step title="Configure Properties">
+    Configure any web part properties specific to your Glean deployment.
+  </Step>
+
+  <Step title="Save and Publish">
+    Save and **Republish** the page to make the Glean functionality live.
+  </Step>
+</Steps>
+
+## Testing the Integration
+
+<Steps>
+  <Step title="Verify Search Functionality">
+    Test that Glean Search activates when users interact with the SharePoint search box.
+  </Step>
+
+  <Step title="Check API Connectivity">
+    Ensure that API calls to Glean services are functioning correctly.
+  </Step>
+
+  <Step title="Validate User Experience">
+    Confirm that the search interface and results display properly within the SharePoint environment.
+  </Step>
+</Steps>
+
+## Chat Integration
+
+To implement Glean Chat instead of or in addition to Search, follow the same process using the Chat web part code. The main differences are:
+
+- Use the chat-specific web part code from the cs-tools repository
+- Configure the Application ID for your specific AI application
+- Customize the chat trigger element selector as needed
+
+## Troubleshooting
+
+### Common Issues
+
+**App Catalog Not Found (404 Error)**
+If you encounter a 404 error when accessing the App Catalog, it may not be created yet. Follow the App Catalog setup steps in the Prerequisites section.
+
+**Web Part Not Appearing**
+- Verify the web part is properly deployed to the App Catalog
+- Confirm the page is using the modern SharePoint experience
+- Check that you have sufficient permissions to add web parts
+
+**Search Box Not Detected**
+If the Glean functionality doesn't activate:
+- Inspect your SharePoint page to identify the correct search box selector
+- Update the `querySelector` in the web part code to match your page structure
+- Test the selector in the browser console before rebuilding
+
+### Getting Help
+
+For additional support with SharePoint integration:
+- Review the [SharePoint Framework documentation](https://learn.microsoft.com/en-us/sharepoint/dev/spfx/sharepoint-framework-overview)
+- Check the [SPFx Yeoman Generator guide](https://learn.microsoft.com/en-us/sharepoint/dev/spfx/yeoman-generator-for-spfx-intro)
+- Consult SharePoint admin resources for App Catalog management
+
+## Technical Reference
+
+### Code Structure
+
+The Glean web parts extend Microsoft's `BaseClientSideWebPart` class, which provides:
+- Lifecycle methods (`onInit`, `render`, `onDispose`)
+- Property management for user-defined settings
+- Context access for SharePoint resources
+
+### Key Components
+
+- **Web Part Implementation**: Extends `BaseClientSideWebPart` with Glean-specific functionality
+- **Element Detection**: Uses `document.querySelector` to locate SharePoint search elements
+- **Dynamic Loading**: Loads Glean SDK from `https://app.glean.com/embedded-search-latest.min.js`
+- **Search Integration**: Attaches Glean's EmbeddedSearch object to SharePoint's search interface
+
+### Useful Resources
+
+- [SharePoint Framework Overview](https://learn.microsoft.com/en-us/sharepoint/dev/spfx/sharepoint-framework-overview)
+- [SharePoint App Catalog Management](https://learn.microsoft.com/en-us/sharepoint/use-app-catalog)
+- [SPFx Development Environment Setup](https://learn.microsoft.com/en-us/sharepoint/dev/spfx/yeoman-generator-for-spfx-intro)
