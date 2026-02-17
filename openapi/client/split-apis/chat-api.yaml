@@ -2,11 +2,11 @@ openapi: 3.0.0
 info:
   version: 0.9.0
   title: Glean API - Chat
-  x-source-commit-sha: d2e03f93b2fb98c5f5670e2d1205075305627d38
+  x-source-commit-sha: 10ac0d4f0fff32c2d93a0449ea8b28ea635f1af7
   description: API endpoints for Chat
   x-logo:
     url: https://app.glean.com/images/glean-text2.svg
-  x-open-api-commit-sha: ae13fa261b4e2d77c4375e0db4f7aac3ad57788a
+  x-open-api-commit-sha: b78fdf9fdf90a2b143ef1e329c8c348ddcfdc050
   x-speakeasy-name: Glean API
 servers:
   - url: https://{instance}-be.glean.com
@@ -1280,6 +1280,21 @@ paths:
             }
 components:
   schemas:
+    AuthStatus:
+      type: string
+      description: The per-user authorization status for a datasource.
+      enum:
+        - DISABLED
+        - AWAITING_AUTH
+        - AUTHORIZED
+        - STALE_OAUTH
+        - SEG_MIGRATION
+      x-enum-varnames:
+        - AUTH_STATUS_DISABLED
+        - AUTH_STATUS_AWAITING_AUTH
+        - AUTH_STATUS_AUTHORIZED
+        - AUTH_STATUS_STALE_OAUTH
+        - AUTH_STATUS_SEG_MIGRATION
     ChatFileFailureReason:
       type: string
       description: Reason for failed status.
@@ -2380,6 +2395,25 @@ components:
           $ref: '#/components/schemas/TimePoint'
         end:
           $ref: '#/components/schemas/TimePoint'
+    UnauthorizedDatasourceInstance:
+      description: |
+        A datasource instance that could not return results for this request because the user has not completed or has expired per-user OAuth.
+      properties:
+        datasourceInstance:
+          type: string
+          description: |
+            The instance identifier (e.g. "github", "github_enterprise_0", "slack_0"). Matches the instance names used in datasource configuration.
+          example: slack_0
+        displayName:
+          type: string
+          description: Human-readable name of the datasource instance for display.
+          example: Slack
+        authStatus:
+          $ref: '#/components/schemas/AuthStatus'
+        authUrlRelativePath:
+          type: string
+          description: |
+            Relative path to initiate or resume OAuth for the current user and instance. Clients should prepend their configured Glean backend base URL.
     WritePermission:
       description: Describes the write permissions levels that a user has for a specific feature
       properties:
@@ -2669,29 +2703,6 @@ components:
           items:
             $ref: '#/components/schemas/PossibleValue'
           description: Possible values that the parameter can take.
-    ChatResponse:
-      description: A single response from the /chat backend.
-      properties:
-        messages:
-          type: array
-          items:
-            $ref: '#/components/schemas/ChatMessage'
-        chatId:
-          type: string
-          description: The id of the associated Chat the messages belong to, if one exists.
-        followUpPrompts:
-          type: array
-          items:
-            type: string
-          description: Follow-up prompts for the user to potentially use
-        backendTimeMillis:
-          type: integer
-          format: int64
-          description: Time in milliseconds the backend took to respond to the request.
-          example: 1100
-        chatSessionTrackingToken:
-          type: string
-          description: A token that is used to track the session.
     ChatRequest:
       allOf:
         - $ref: '#/components/schemas/ChatRequestBase'
@@ -3006,6 +3017,35 @@ components:
         agentConfig:
           $ref: '#/components/schemas/AgentConfig'
           description: Describes the agent that will execute the request.
+    ChatResponse:
+      description: A single response from the /chat backend.
+      properties:
+        messages:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChatMessage'
+        chatId:
+          type: string
+          description: The id of the associated Chat the messages belong to, if one exists.
+        followUpPrompts:
+          type: array
+          items:
+            type: string
+          description: Follow-up prompts for the user to potentially use
+        backendTimeMillis:
+          type: integer
+          format: int64
+          description: Time in milliseconds the backend took to respond to the request.
+          example: 1100
+        chatSessionTrackingToken:
+          type: string
+          description: A token that is used to track the session.
+        unauthorizedDatasourceInstances:
+          type: array
+          description: |
+            Datasource instances that could not be queried because the user has not completed or has expired per-user OAuth, aggregated across all tools invoked in this turn.
+          items:
+            $ref: '#/components/schemas/UnauthorizedDatasourceInstance'
     ChatRequestStream:
       required:
         - messages
