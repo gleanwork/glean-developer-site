@@ -1,4 +1,3 @@
-// src/components/Steps/index.tsx
 import React from 'react';
 import { Menu, LinkIcon, Play } from 'lucide-react';
 import styles from './styles.module.css';

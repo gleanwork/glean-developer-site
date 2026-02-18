@@ -3,9 +3,9 @@ import clsx from 'clsx';
 import Link from '@docusaurus/Link';
 import { Info } from 'react-feather';
 import styles from './index.module.css';
-import Card from '../Card';
+import Card from '@theme/Card';
 import CarouselSection from './CarouselSection';
-import { GLEAN_BRAND_COLORS } from '../../utils/brandColors';
+import { GLEAN_BRAND_COLORS } from '@gleanwork/docusaurus-theme-glean/brandColors';
 
 type Feature = {
   title: string;

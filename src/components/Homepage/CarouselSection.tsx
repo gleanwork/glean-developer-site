@@ -4,11 +4,11 @@ import useBaseUrl from '@docusaurus/useBaseUrl';
 import clsx from 'clsx';
 import CodeBlock from '@theme/CodeBlock';
 import ThemedImage from '@theme/ThemedImage';
-import Frame from '../Frame';
+import Frame from '@theme/Frame';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, Pagination } from 'swiper/modules';
 import styles from './CarouselSection.module.css';
-import { Icon } from '../Icons';
+import { Icon } from '@theme/Icons';
 
 import 'swiper/css';
 import 'swiper/css/pagination';

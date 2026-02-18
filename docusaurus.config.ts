@@ -492,7 +492,7 @@ const config: Config = {
       },
     ],
   ],
-  themes: ['docusaurus-theme-openapi-docs', '@docusaurus/theme-mermaid'],
+  themes: ['docusaurus-theme-openapi-docs', '@docusaurus/theme-mermaid', '@gleanwork/docusaurus-theme-glean'],
   markdown: {
     mermaid: true,
     hooks: {
