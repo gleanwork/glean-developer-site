@@ -332,31 +332,26 @@ Design your UI to gracefully fall back to document-level behavior when no `refer
 
 ## Migration Checklist
 
-<Steps>
-  <div>
-    <h3>Verify Server Configuration</h3>
-    <p>Ensure your <code>/chat</code> requests are using <strong>Agentic Loop</strong> and an LLM configuration that supports deep-linked citations.</p>
-  </div>
+<Steps titleSize="h3">
+  <Step title="Verify Server Configuration">
+    Ensure your `/chat` requests are using **Agentic Loop** and an LLM configuration that supports deep-linked citations.
+  </Step>
 
-  <div>
-    <h3>Update API Types</h3>
-    <p>Regenerate your client types from the latest OpenAPI spec so <code>ChatMessageCitation.referenceRanges[].snippets[]</code> and <code>SearchResultSnippet.pageNumber</code> are present but optional.</p>
-  </div>
+  <Step title="Update API Types">
+    Regenerate your client types from the latest OpenAPI spec so `ChatMessageCitation.referenceRanges[].snippets[]` and `SearchResultSnippet.pageNumber` are present but optional.
+  </Step>
 
-  <div>
-    <h3>Handle New Fields Defensively</h3>
-    <p>Ensure your deserialization tolerates the new fields. Handle unknown/extra fields defensively to accommodate future enhancements.</p>
-  </div>
+  <Step title="Handle New Fields Defensively">
+    Ensure your deserialization tolerates the new fields. Handle unknown/extra fields defensively to accommodate future enhancements.
+  </Step>
 
-  <div>
-    <h3>Update Citation UI</h3>
-    <p>Keep your existing document-level citation pills (title, icon, click → <code>sourceDocument.url</code>). If <code>referenceRanges[].snippets[]</code> exists, show snippet text in your hover/detail view with optional page number.</p>
-  </div>
+  <Step title="Update Citation UI">
+    Keep your existing document-level citation pills (title, icon, click → `sourceDocument.url`). If `referenceRanges[].snippets[]` exists, show snippet text in your hover/detail view with optional page number.
+  </Step>
 
-  <div>
-    <h3>Add Contextual Preview (Recommended)</h3>
-    <p>On hover or "expand", call <code>/getdocuments</code> with the cited document IDs and <code>includeFields: ["DOCUMENT_CONTENT"]</code>. Use the returned <code>fullTextList</code> to compute surrounding context and highlight each snippet.</p>
-  </div>
+  <Step title="Add Contextual Preview (Recommended)">
+    On hover or "expand", call `/getdocuments` with the cited document IDs and `includeFields: ["DOCUMENT_CONTENT"]`. Use the returned `fullTextList` to compute surrounding context and highlight each snippet.
+  </Step>
 </Steps>
 
 ## Related Documentation
