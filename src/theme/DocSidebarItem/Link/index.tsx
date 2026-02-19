@@ -5,7 +5,7 @@ import { isActiveSidebarItem } from '@docusaurus/plugin-content-docs/client';
 import Link from '@docusaurus/Link';
 import isInternalUrl from '@docusaurus/isInternalUrl';
 import IconExternalLink from '@theme/Icon/ExternalLink';
-import { Icon } from '@site/src/components/Icons';
+import { Icon } from '@theme/Icons';
 import type { Props } from '@theme/DocSidebarItem/Link';
 
 import styles from './styles.module.css';

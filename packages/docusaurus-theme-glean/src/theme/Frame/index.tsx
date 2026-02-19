@@ -1,4 +1,3 @@
-// src/components/Frame/index.tsx
 import React from 'react';
 import type { CSSProperties } from 'react';
 import styles from './styles.module.css';
