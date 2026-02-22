@@ -2,38 +2,15 @@ import React, { useState, useEffect } from 'react';
 import * as FeatherIcons from 'react-feather';
 import useBaseUrl from '@docusaurus/useBaseUrl';
 
+import { GLEAN_ICON_MAP, AVAILABLE_GLEAN_ICONS } from './glean-icon-manifest';
+import type { GleanIconName } from './glean-icon-manifest';
+
 interface IconProps {
   width?: number;
   height?: number;
   className?: string;
   color?: string;
 }
-
-// Registry of available Glean SVG icons in /static/img/glean/
-const AVAILABLE_GLEAN_ICONS = [
-  'agent',
-  'chat',
-  'tools',
-  'platform',
-  'sparkles',
-  'mcp',
-  'langchain',
-  'plug',
-  'pin',
-  'golink',
-  'verification',
-  // Programming languages
-  'python',
-  'typescript',
-  'go',
-  'java',
-  // Package registries
-  'npm',
-  'pypi',
-  'maven',
-] as const;
-
-export type GleanIconName = (typeof AVAILABLE_GLEAN_ICONS)[number];
 
 interface IconComponentProps extends IconProps {
   name: string;
@@ -47,10 +24,12 @@ function GleanIcon({
   className,
   color,
 }: IconProps & { name: string }) {
-  const iconUrl = useBaseUrl(`/img/glean/${name}.svg`);
+  const entry = GLEAN_ICON_MAP[name as GleanIconName];
+  const iconUrl = useBaseUrl(entry ? `${entry.path}${entry.file}` : '');
   const [svgContent, setSvgContent] = useState<string>('');
 
   useEffect(() => {
+    if (!entry) return;
     fetch(iconUrl)
       .then((response) => response.text())
       .then((text) => {
@@ -74,7 +53,7 @@ function GleanIcon({
       .catch((error) => {
         console.error(`Failed to load SVG icon: ${name}`, error);
       });
-  }, [iconUrl, name]);
+  }, [iconUrl, name, entry]);
 
   if (!svgContent) {
     return <div style={{ width, height }} />; // Placeholder while loading
@@ -107,7 +86,7 @@ export function getIcon(
   props?: IconProps,
 ): React.ReactNode {
   if (iconSet === 'glean') {
-    if (AVAILABLE_GLEAN_ICONS.includes(iconName as GleanIconName)) {
+    if (iconName in GLEAN_ICON_MAP) {
       return <GleanIcon name={iconName} {...props} />;
     }
     console.warn(
@@ -148,5 +127,5 @@ export function Icon({
   return getIcon(name, iconSet, props) as React.ReactElement;
 }
 
-// Export the list of available icons for reference
 export { AVAILABLE_GLEAN_ICONS };
+export type { GleanIconName };
