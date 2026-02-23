@@ -9,7 +9,7 @@ import type { Props } from '@theme/DocSidebarItems';
 
 function filterItemsByFlags(
   items: Props['items'],
-  isEnabled: (flag: string) => boolean
+  isEnabled: (flag: string) => boolean,
 ): Props['items'] {
   return items
     .filter((item) => {
@@ -41,9 +41,12 @@ function DocSidebarItems({ items, ...props }: Props): ReactNode {
   const { isEnabled } = useContext(FeatureFlagsContext);
   const flagFilteredItems = useMemo(
     () => filterItemsByFlags(items, isEnabled),
-    [items, isEnabled]
+    [items, isEnabled],
   );
-  const visibleItems = useVisibleSidebarItems(flagFilteredItems, props.activePath);
+  const visibleItems = useVisibleSidebarItems(
+    flagFilteredItems,
+    props.activePath,
+  );
 
   return (
     <DocSidebarItemsExpandedStateProvider>

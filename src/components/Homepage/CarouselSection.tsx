@@ -89,7 +89,7 @@ with Glean(
       'Run intelligent agents that orchestrate workflows, reason over your enterprise knowledge, and automate complex tasks across your organization.',
     bullets: [
       '<strong>Multi-step reasoning</strong> – Agents that plan, execute, and iterate on complex workflows',
-      '<strong>Enterprise knowledge at their fingertips</strong> – Full access to your organization\'s data and context',
+      "<strong>Enterprise knowledge at their fingertips</strong> – Full access to your organization's data and context",
       '<strong>Automate anything</strong> – From sales reports to IT tickets to HR processes',
     ],
     ctaText: 'Explore Agent APIs',
@@ -215,9 +215,9 @@ export default function CarouselSection() {
                   </div>
                 ) : (
                   <div className={styles.codeWrap}>
-                      <CodeBlock language={slide.codeLanguage} showLineNumbers>
-                        {slide.codeContent}
-                      </CodeBlock>
+                    <CodeBlock language={slide.codeLanguage} showLineNumbers>
+                      {slide.codeContent}
+                    </CodeBlock>
                   </div>
                 )}
               </div>

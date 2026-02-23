@@ -87,8 +87,7 @@ function generateRss() {
 
   const feed = new Feed({
     title: 'Glean API Deprecations',
-    description:
-      'Deprecated endpoints, fields, and parameters in Glean\'s APIs',
+    description: "Deprecated endpoints, fields, and parameters in Glean's APIs",
     id: SITE_URL,
     link: DEPRECATIONS_URL,
     language: 'en',

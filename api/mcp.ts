@@ -47,7 +47,7 @@ async function getServer(): Promise<McpDocsServer> {
 
 export default async function handler(
   req: VercelRequest,
-  res: VercelResponse
+  res: VercelResponse,
 ): Promise<void> {
   // Only allow POST requests
   if (req.method !== 'POST') {
