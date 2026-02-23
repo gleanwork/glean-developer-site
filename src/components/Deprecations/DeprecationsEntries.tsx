@@ -115,7 +115,11 @@ function groupDeprecationsByDate(
         ...group,
         deprecations: group.deprecations.filter((dep) => {
           const depDate = parseDateString(dep.removal);
-          const removalDate = new Date(depDate.year, depDate.month, depDate.day);
+          const removalDate = new Date(
+            depDate.year,
+            depDate.month,
+            depDate.day,
+          );
           return removalDate <= now;
         }),
       }))

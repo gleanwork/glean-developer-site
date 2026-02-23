@@ -11,7 +11,11 @@ interface EndpointGroupProps {
   showRemovalDate?: boolean;
 }
 
-function MethodBadge({ method }: { method: EndpointGroupType['method'] }): React.ReactElement {
+function MethodBadge({
+  method,
+}: {
+  method: EndpointGroupType['method'];
+}): React.ReactElement {
   return (
     <span className={`${styles.methodBadge} ${styles[method.toLowerCase()]}`}>
       {method}
@@ -36,7 +40,11 @@ export default function EndpointGroup({
       </div>
       <div className={styles.deprecationsList}>
         {group.deprecations.map((deprecation) => (
-          <DeprecationEntry key={deprecation.id} entry={deprecation} showRemovalDate={showRemovalDate} />
+          <DeprecationEntry
+            key={deprecation.id}
+            entry={deprecation}
+            showRemovalDate={showRemovalDate}
+          />
         ))}
       </div>
     </div>
