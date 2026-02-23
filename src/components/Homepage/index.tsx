@@ -19,23 +19,23 @@ type Feature = {
 export default function Home() {
   const features: Feature[] = [
     {
-      title: 'Build AI Agents',
-      body: 'Create and orchestrate intelligent agents that reason over enterprise knowledge and automate work.',
-      href: 'guides/agents/overview',
-      icon: 'agent',
+      title: 'Integrate with AI Tools',
+      body: 'Connect Claude Code, Cursor, Copilot, and any MCP host to your enterprise knowledge.',
+      href: 'guides/mcp',
+      icon: 'plug',
       iconSet: 'glean',
       color: GLEAN_BRAND_COLORS.PRIMARY_BLUE,
     },
     {
-      title: 'Leverage Your Data',
-      body: "Use Glean's APIs and client libraries to search, chat, and embed Work AI in your own apps.",
+      title: 'Build with Our APIs',
+      body: 'Search, chat, and agent APIs with client libraries for Python, TypeScript, Java, and Go.',
       href: 'api-info/client/getting-started/overview',
-      icon: 'Search',
-      iconSet: 'feather',
+      icon: 'code-block',
+      iconSet: 'glean',
       color: GLEAN_BRAND_COLORS.PRIMARY_BLUE,
     },
     {
-      title: 'Create Connectors',
+      title: 'Connect Your Data',
       body: 'Bring any source into Glean with our connector framework and indexing API.',
       href: 'api-info/indexing/getting-started/overview',
       icon: 'Database',

@@ -32,99 +32,73 @@ type CarouselSlide = {
 
 const slides: CarouselSlide[] = [
   {
-    title: 'MCP Remote Server: Now Generally Available',
+    title: 'Your Coding Agent Knows Code. Glean Teaches It Your Company.',
     description:
-      'Connect Claude Desktop, Cursor, Windsurf, and 20+ AI tools to your secure enterprise data in 5 minutes. One server URL unlocks your entire knowledge base — no code required.',
+      'Individual MCP servers give your agent isolated access to each tool. Glean gives it the graph — connecting docs, conversations, code, and people so your agent understands context, not just content.',
     bullets: [
-      '<strong>One connection, universal access</strong> – Works with Claude Desktop, Cursor, VS Code, Windsurf, ChatGPT, and more',
-      "<strong>Enterprise-grade security</strong> – Respects your company's access controls automatically",
-      '<strong>5-minute setup</strong> – Just add server URL to any MCP client',
+      '<strong>Plans grounded in reality</strong> – Agents pull in design docs, past decisions, and org context before writing a line of code',
+      '<strong>Works where you work</strong> – Plugins for Claude Code, Cursor, and any MCP-compatible IDE',
+      "<strong>Permission-aware from day one</strong> – Every query respects your company's access controls",
+    ],
+    ctaText: 'Explore IDE Integrations',
+    ctaHref: '/guides/mcp',
+    ctaIcon: 'mcp',
+    ctaIconSet: 'glean',
+    imageUrl: {
+      light: '/img/claude-code-mcp.png',
+      dark: '/img/claude-code-mcp.png',
+    },
+    imageAlt:
+      'Claude Code terminal showing Glean MCP tool calls with enterprise results',
+  },
+  {
+    title:
+      'Not All Agents Will Be Built on Glean. All of Them Should Be Connected.',
+    description:
+      "Glean is the enterprise knowledge layer for every AI agent — wherever it runs. One MCP server URL gives any agent secure, permission-aware access to your company's docs, code, people, and conversations.",
+    bullets: [
+      '<strong>One connection, every tool</strong> – Works with Claude, Cursor, Copilot, ChatGPT, Windsurf, and 20+ MCP hosts',
+      '<strong>Agents as tools</strong> – Expose your Glean agents as callable MCP tools in any IDE or AI app',
+      '<strong>Framework-agnostic</strong> – Plug Glean into LangChain, OpenAI Agents SDK, Google ADK, or any MCP-compatible framework',
     ],
     ctaText: 'Get Started with MCP',
     ctaHref: '/guides/mcp',
     ctaIcon: 'mcp',
     ctaIconSet: 'glean',
     imageUrl: {
-      light: '/img/mcp-ga.png',
-      dark: '/img/mcp-ga.png',
+      light: '/img/ide-split.png',
+      dark: '/img/ide-split.png',
     },
-    imageAlt: 'Screenshot showing MCP server integration with AI clients',
+    imageAlt:
+      'Split-screen showing Claude Code with glean-core plugin and Cursor with Glean MCP',
   },
   {
-    title: 'Search and Chat with Your Data',
+    title: 'Build Agents That Actually Know Your Business',
     description:
-      "Connect your company data and ship AI-powered chat in minutes. Glean's APIs are permission-aware from day one and scale with your security requirements.",
-    bullets: [
-      '<strong>Instant answers from everywhere</strong> – Query docs, messages, tickets, and wikis in one API call',
-      '<strong>Your permissions, preserved</strong> – Automatic access control based on user identity',
-      '<strong>Deploy anywhere</strong> – Power chatbots, search bars, or AI assistants in any app',
-    ],
-    ctaText: 'Learn about the Chat API',
-    ctaHref: '/guides/chat/overview',
-    ctaIcon: 'chat',
-    ctaIconSet: 'glean',
-    codeLanguage: 'python',
-    codeContent: `import os
-from glean import Glean, models
-
-with Glean(
-    instance='acme',
-    api_token=os.getenv('GLEAN_API_TOKEN', ''),
-) as g:
-    res = g.client.chat.create(
-        messages=[
-            {
-                'fragments': [
-                    models.ChatMessageFragment(
-                        text='What are the company holidays this year?',
-                    )
-                ],
-            }
-        ]
-    )`,
-  },
-  {
-    title: 'Run AI Agents',
-    description:
-      'Run intelligent agents that orchestrate workflows, reason over your enterprise knowledge, and automate complex tasks across your organization.',
+      "Glean agents don't just reason — they reason over your company's entire knowledge graph. Build agents that search docs, analyze data, find experts, and take action, all with enterprise-grade permissions.",
     bullets: [
       '<strong>Multi-step reasoning</strong> – Agents that plan, execute, and iterate on complex workflows',
-      "<strong>Enterprise knowledge at their fingertips</strong> – Full access to your organization's data and context",
-      '<strong>Automate anything</strong> – From sales reports to IT tickets to HR processes',
+      '<strong>Grounded in your data</strong> – Search, chat, code search, people, and meetings as native tools',
+      '<strong>Deploy anywhere</strong> – Run on Glean, call via API, or expose as MCP tools in any host',
     ],
     ctaText: 'Explore Agent APIs',
     ctaHref: '/guides/agents/overview',
     ctaIcon: 'agent',
     ctaIconSet: 'glean',
-    codeLanguage: 'python',
-    codeContent: `import os
-from glean import Glean, models
-
-with Glean(
-    instance='acme',
-    api_token=os.getenv('GLEAN_API_TOKEN', ''),
-) as g:
-    agent_run = g.client.agents.create_and_stream_run(
-        agent_id='sales-assistant',
-        messages=[
-            {
-                'fragments': [
-                    models.ChatMessageFragment(
-                        text='Generate a sales report for Q4 2024',
-                    )
-                ],
-            }
-        ]
-    )`,
+    imageUrl: {
+      light: '/img/agent-as-tool.png',
+      dark: '/img/agent-as-tool.png',
+    },
+    imageAlt: 'Claude Code calling a Glean agent as an MCP tool',
   },
   {
-    title: 'Connect Any Data Source',
+    title: 'Bring Every Data Source into the Graph',
     description:
-      'Bring any data source into Glean with our powerful indexing APIs. Bulk upload documents, sync in real-time, and define custom properties.',
+      'Glean indexes 100+ enterprise apps out of the box. For everything else, our indexing APIs let you push any data source into the knowledge graph — with custom schemas, real-time sync, and full permission enforcement.',
     bullets: [
-      '<strong>Bulk or streaming, your choice</strong> – Upload millions of documents or sync in real-time',
-      '<strong>Your schema, your way</strong> – Define custom properties, relationships, and metadata',
-      '<strong>Battle-tested at scale</strong> – Powers search across 100+ data sources for Fortune 500 companies',
+      '<strong>Bulk or streaming</strong> – Upload millions of documents or sync in real-time',
+      '<strong>Your schema, your way</strong> – Custom properties, relationships, and metadata',
+      '<strong>Powers everything above</strong> – The richer the graph, the smarter every agent, search, and integration becomes',
     ],
     ctaText: 'View Indexing APIs',
     ctaHref: '/api-info/indexing/getting-started/overview',
@@ -144,7 +118,7 @@ with Glean(
         body='Our Q4 performance exceeded expectations...',
         datasource='internal-docs'
     )
-    
+
     g.indexing.index_document(document=document)`,
   },
 ];
