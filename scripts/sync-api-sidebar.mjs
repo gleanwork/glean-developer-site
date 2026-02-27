@@ -19,6 +19,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { parseArgs } from 'node:util';
 import jscodeshift from 'jscodeshift';
 import * as prettier from 'prettier';
 
@@ -158,8 +159,14 @@ function insertEntry(root, doc) {
   return inserted;
 }
 
-const mode = process.argv[2];
-if (mode !== '--check' && mode !== '--fix') {
+const { values: args } = parseArgs({
+  options: {
+    check: { type: 'boolean', default: false },
+    fix: { type: 'boolean', default: false },
+  },
+});
+
+if (!args.check && !args.fix) {
   console.error('Usage: node scripts/sync-api-sidebar.mjs --check | --fix');
   process.exit(1);
 }
@@ -171,7 +178,7 @@ const existingIds = extractSidebarIds(root);
 const missing = allDocs.filter((d) => !existingIds.has(d.docId));
 const orphaned = [...existingIds].filter(isOrphaned);
 
-if (mode === '--check') {
+if (args.check) {
   if (orphaned.length > 0) {
     console.warn(
       `Warning: ${orphaned.length} sidebar ID(s) have no corresponding .api.mdx file (investigate or clean up manually):`,
