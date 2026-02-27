@@ -76,7 +76,9 @@ function collectApiDocs(dir) {
       results.push(...collectApiDocs(path.join(dir, entry.name)));
     } else if (entry.name.endsWith('.api.mdx') && !shouldSkip(entry.name)) {
       const fullPath = path.join(dir, entry.name);
-      const docId = path.relative(DOCS_ROOT, fullPath).replace(/\.api\.mdx$/, '');
+      const docId = path
+        .relative(DOCS_ROOT, fullPath)
+        .replace(/\.api\.mdx$/, '');
       const content = fs.readFileSync(fullPath, 'utf8');
       const frontmatter = parseFrontmatter(content);
       if (frontmatter) {
@@ -117,7 +119,9 @@ function makeEntryNode(docId, label, className) {
     j.objectProperty(j.identifier('label'), j.stringLiteral(label)),
   ];
   if (className) {
-    props.push(j.objectProperty(j.identifier('className'), j.stringLiteral(className)));
+    props.push(
+      j.objectProperty(j.identifier('className'), j.stringLiteral(className)),
+    );
   }
   return j.objectExpression(props);
 }
@@ -140,12 +144,14 @@ function insertEntry(root, doc) {
             prop.type === 'ObjectProperty' &&
             prop.key?.name === 'id' &&
             prop.value?.type === 'StringLiteral' &&
-            prop.value?.value === overviewId
+            prop.value?.value === overviewId,
         );
       });
     })
     .forEach((p) => {
-      p.node.value.elements.push(makeEntryNode(doc.docId, doc.label, doc.className));
+      p.node.value.elements.push(
+        makeEntryNode(doc.docId, doc.label, doc.className),
+      );
       inserted = true;
     });
 
@@ -168,7 +174,7 @@ const orphaned = [...existingIds].filter(isOrphaned);
 if (mode === '--check') {
   if (orphaned.length > 0) {
     console.warn(
-      `Warning: ${orphaned.length} sidebar ID(s) have no corresponding .api.mdx file (investigate or clean up manually):`
+      `Warning: ${orphaned.length} sidebar ID(s) have no corresponding .api.mdx file (investigate or clean up manually):`,
     );
     for (const id of orphaned) {
       console.warn(`  - ${id}`);
@@ -181,11 +187,15 @@ if (mode === '--check') {
     process.exit(0);
   }
 
-  console.error(`✗ ${missing.length} .api.mdx file(s) are missing from sidebars.ts:\n`);
+  console.error(
+    `✗ ${missing.length} .api.mdx file(s) are missing from sidebars.ts:\n`,
+  );
   for (const doc of missing) {
     console.error(`  - ${doc.docId}`);
   }
-  console.error('\nRun `node scripts/sync-api-sidebar.mjs --fix` to auto-insert them.');
+  console.error(
+    '\nRun `node scripts/sync-api-sidebar.mjs --fix` to auto-insert them.',
+  );
   process.exit(1);
 }
 
@@ -200,7 +210,7 @@ for (const doc of missing) {
   const ok = insertEntry(root, doc);
   if (!ok) {
     warnings.push(
-      `Could not find sidebar category for '${doc.docId.split('/').slice(0, -1).join('/')}/overview' — add '${doc.docId}' manually`
+      `Could not find sidebar category for '${doc.docId.split('/').slice(0, -1).join('/')}/overview' — add '${doc.docId}' manually`,
     );
   }
 }
@@ -213,13 +223,17 @@ const formatted = await prettier.format(transformed, {
 });
 fs.writeFileSync(SIDEBARS_PATH, formatted, 'utf8');
 
-console.log(`✓ Inserted ${missing.length - warnings.length} entry(ies) into sidebars.ts:`);
+console.log(
+  `✓ Inserted ${missing.length - warnings.length} entry(ies) into sidebars.ts:`,
+);
 for (const doc of missing) {
   console.log(`  + ${doc.docId}  "${doc.label}"`);
 }
 
 if (warnings.length > 0) {
-  console.warn('\n⚠ The following entries could not be auto-inserted (new category?):');
+  console.warn(
+    '\n⚠ The following entries could not be auto-inserted (new category?):',
+  );
   for (const w of warnings) {
     console.warn(`  ! ${w}`);
   }
