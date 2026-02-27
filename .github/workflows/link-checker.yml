@@ -84,33 +84,42 @@ jobs:
         run: |
           base_url="${{ steps.params.outputs.base_url }}"
           check_type="${{ steps.params.outputs.check_type }}"
-          
+
           echo "🔍 Running $check_type link check on $base_url"
-          
-          # Run the check and capture human-readable output
+
+          # Use `|| exit_code=$?` so bash -e does not kill the step before outputs
+          # are written. Without this, any non-zero exit from the script terminates
+          # the step immediately and all GITHUB_OUTPUT writes below are skipped —
+          # leaving downstream steps with no status to act on.
+          exit_code=0
           if [ "$check_type" = "deep" ]; then
             echo "deep_check=true" >> $GITHUB_OUTPUT
-            ./scripts/check-links.sh "$base_url" true > link-check-results.txt 2>&1
+            ./scripts/check-links.sh "$base_url" true > link-check-results.txt 2>&1 || exit_code=$?
           else
             echo "deep_check=false" >> $GITHUB_OUTPUT
-            ./scripts/check-links.sh "$base_url" false > link-check-results.txt 2>&1
+            ./scripts/check-links.sh "$base_url" false > link-check-results.txt 2>&1 || exit_code=$?
           fi
-          
-          exit_code=$?
+
           echo "exit_code=$exit_code" >> $GITHUB_OUTPUT
-          
-          # Also get the lychee summary from the last line of output for quick parsing
+
+          # Extract the lychee summary line (contains "Total") — more reliable than
+          # tail -n 1 which breaks if lychee emits trailing blank lines.
           if [ -f link-check-results.txt ]; then
-            summary_line=$(tail -n 1 link-check-results.txt)
+            summary_line=$(grep -m1 "Total" link-check-results.txt || echo "")
             echo "summary_line=$summary_line" >> $GITHUB_OUTPUT
           fi
-          
-          if [ $exit_code -eq 0 ]; then
+
+          if [ "$exit_code" -eq 0 ]; then
             echo "✅ Link check passed!"
             echo "status=success" >> $GITHUB_OUTPUT
           else
-            echo "❌ Link check failed with errors"
             echo "status=failure" >> $GITHUB_OUTPUT
+            echo ""
+            echo "❌ Link check failed — broken links detected:"
+            echo "──────────────────────────────────────────────"
+            grep -E "\[ERROR\]|✗" link-check-results.txt | head -40 || grep -v "^\[" link-check-results.txt | tail -40
+            echo "──────────────────────────────────────────────"
+            echo "Full results are in the uploaded artifact."
           fi
 
       - name: Parse results
@@ -194,24 +203,28 @@ jobs:
             echo "The following errors were detected:" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-            grep -E "(ERROR|FAILED)" link-check-results.txt | head -20 >> $GITHUB_STEP_SUMMARY || true
+            grep -E "\[ERROR\]|✗" link-check-results.txt | head -40 >> $GITHUB_STEP_SUMMARY || true
             echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "📄 Full results are available in the uploaded artifact." >> $GITHUB_STEP_SUMMARY
-          else
+          elif [ "${{ steps.link-check.outputs.status }}" = "success" ]; then
             echo "## ✅ All Links Working" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "No broken links were found! 🎉" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "## ⚠️ Link Check Did Not Complete" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "The link check step failed before producing results. Check the step log for details." >> $GITHUB_STEP_SUMMARY
           fi
 
       - name: Create GitHub issue for broken links
-        if: failure() && steps.link-check.outputs.status == 'failure' && github.event_name == 'schedule'
+        if: always() && steps.link-check.outputs.status == 'failure' && github.event_name == 'schedule'
         uses: actions/github-script@v7
         with:
           script: |
             const fs = require('fs');
             const results = fs.readFileSync('link-check-results.txt', 'utf8');
-            const errors = results.split('\n').filter(line => line.includes('ERROR') || line.includes('FAILED'));
+            const errors = results.split('\n').filter(line => line.includes('[ERROR]') || line.includes('\u2717'));
             
             const issueBody = `
             # 🔗 Broken Links Detected
@@ -254,7 +267,7 @@ jobs:
             });
 
       - name: Fail workflow if links are broken
-        if: steps.link-check.outputs.status == 'failure'
+        if: always() && steps.link-check.outputs.status == 'failure'
         run: |
           echo "❌ Link check failed with ${{ steps.parse-results.outputs.errors }} broken links"
           exit 1 
