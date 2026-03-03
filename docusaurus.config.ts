@@ -189,7 +189,7 @@ const config: Config = {
         name: 'webpack-config',
         configureWebpack(config, isServer) {
           const isDev = process.env.NODE_ENV === 'development';
-          
+
           return {
             resolve: {
               fallback: {
@@ -203,22 +203,24 @@ const config: Config = {
                 ),
               },
             },
-            ...(isDev && !isServer ? {
-              cache: true,
-              optimization: {
-                removeAvailableModules: false,
-                removeEmptyChunks: false,
-                splitChunks: false,
-                runtimeChunk: true,
-              },
-              experiments: {
-                lazyCompilation: {
-                  entries: false,
-                  imports: true,
-                  test: /\.mdx?$/,
-                },
-              },
-            } : {}),
+            ...(isDev && !isServer
+              ? {
+                  cache: true,
+                  optimization: {
+                    removeAvailableModules: false,
+                    removeEmptyChunks: false,
+                    splitChunks: false,
+                    runtimeChunk: true,
+                  },
+                  experiments: {
+                    lazyCompilation: {
+                      entries: false,
+                      imports: true,
+                      test: /\.mdx?$/,
+                    },
+                  },
+                }
+              : {}),
           };
         },
       };
@@ -492,7 +494,11 @@ const config: Config = {
       },
     ],
   ],
-  themes: ['docusaurus-theme-openapi-docs', '@docusaurus/theme-mermaid'],
+  themes: [
+    'docusaurus-theme-openapi-docs',
+    '@docusaurus/theme-mermaid',
+    '@gleanwork/docusaurus-theme-glean',
+  ],
   markdown: {
     mermaid: true,
     hooks: {

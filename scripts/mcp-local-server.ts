@@ -81,7 +81,9 @@ async function main() {
 
     // 404 for other routes
     res.writeHead(404, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ error: 'Not found. Use POST /mcp or GET /health' }));
+    res.end(
+      JSON.stringify({ error: 'Not found. Use POST /mcp or GET /health' }),
+    );
   });
 
   server.listen(PORT, () => {

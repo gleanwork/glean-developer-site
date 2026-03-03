@@ -26,6 +26,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Check formatting
+        run: pnpm prettier --check .
+
       - name: Check for incorrect support email
         run: |
           echo "Checking for usage of support@glean.com..."
@@ -36,6 +39,9 @@ jobs:
           else
             echo "No usage of support@glean.com found"
           fi
+
+      - name: Check API sidebar completeness
+        run: pnpm sidebar:check
 
       - name: Build website
         run: pnpm build

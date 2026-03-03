@@ -359,6 +359,11 @@ const baseSidebars: SidebarsConfig = {
                 },
                 {
                   type: 'doc',
+                  id: 'libraries/web-sdk/guides/sharepoint',
+                  label: 'SharePoint',
+                },
+                {
+                  type: 'doc',
                   id: 'libraries/web-sdk/guides/zendesk',
                   label: 'Zendesk',
                 },
@@ -614,6 +619,12 @@ const baseSidebars: SidebarsConfig = {
               label: 'Create authentication token',
               className: 'api-method post',
             },
+            {
+              type: 'doc',
+              id: 'api/client-api/authentication/checkdatasourceauth',
+              label: 'Check datasource authorization',
+              className: 'api-method post',
+            },
           ],
         },
         {
@@ -866,6 +877,30 @@ const baseSidebars: SidebarsConfig = {
               id: 'api/client-api/governance/setdocvisibility',
               label: 'Hide or unhide docs',
               className: 'api-method post',
+            },
+            {
+              type: 'doc',
+              id: 'api/client-api/governance/createfindingsexport',
+              label: 'Creates findings export',
+              className: 'api-method post',
+            },
+            {
+              type: 'doc',
+              id: 'api/client-api/governance/deletefindingsexport',
+              label: 'Deletes findings export',
+              className: 'api-method delete',
+            },
+            {
+              type: 'doc',
+              id: 'api/client-api/governance/downloadfindingsexport',
+              label: 'Downloads findings export',
+              className: 'api-method get',
+            },
+            {
+              type: 'doc',
+              id: 'api/client-api/governance/listfindingsexports',
+              label: 'Lists findings exports',
+              className: 'api-method get',
             },
           ],
         },

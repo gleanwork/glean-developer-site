@@ -22,7 +22,7 @@ import Link from '@docusaurus/Link';
 import { translate } from '@docusaurus/Translate';
 import useIsBrowser from '@docusaurus/useIsBrowser';
 import DocSidebarItems from '@theme/DocSidebarItems';
-import { Icon } from '@site/src/components/Icons';
+import { Icon } from '@theme/Icons';
 import type { Props } from '@theme/DocSidebarItem/Category';
 
 // If we navigate to a category and it becomes active, it should automatically

@@ -2,11 +2,11 @@ openapi: 3.0.0
 info:
   version: 0.9.0
   title: Glean API - Authentication
-  x-source-commit-sha: d2e03f93b2fb98c5f5670e2d1205075305627d38
+  x-source-commit-sha: 4045699340887e4fc9b61bee0cf0ed888e74fcc1
   description: API endpoints for Authentication
   x-logo:
     url: https://app.glean.com/images/glean-text2.svg
-  x-open-api-commit-sha: ae13fa261b4e2d77c4375e0db4f7aac3ad57788a
+  x-open-api-commit-sha: 24c3e1f002896f627e40e5e9031a65214bd921e3
   x-speakeasy-name: Glean API
 servers:
   - url: https://{instance}-be.glean.com
@@ -17,6 +17,95 @@ servers:
 security:
   - APIToken: []
 paths:
+  /rest/api/v1/checkdatasourceauth:
+    post:
+      tags:
+        - Authentication
+      summary: Check datasource authorization
+      description: |
+        Returns all datasource instances that require per-user OAuth authorization
+        for the authenticated user, along with a transient auth token that can be
+        appended to auth URLs to complete OAuth flows.
+
+        Clients construct the full OAuth URL by combining the backend base URL,
+        the `authUrlRelativePath` from each instance, and the transient auth token:
+        `<backend>/<authUrlRelativePath>?transient_auth_token=<token>`.
+      operationId: checkdatasourceauth
+      x-visibility: Public
+      parameters: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckDatasourceAuthResponse'
+        '401':
+          description: Not Authorized
+        '429':
+          description: Too Many Requests
+      x-codeSamples:
+        - lang: Python
+          label: Python (API Client)
+          source: |-
+            from glean.api_client import Glean
+            import os
+
+
+            with Glean(
+                api_token=os.getenv("GLEAN_API_TOKEN", ""),
+                instance=os.getenv("GLEAN_INSTANCE", ""),
+            ) as glean:
+
+                res = glean.authentication.checkdatasourceauth()
+
+                # Handle response
+                print(res)
+        - lang: JavaScript
+          label: Typescript (API Client)
+          source: |-
+            import { Glean } from "@gleanwork/api-client";
+
+            const glean = new Glean({
+              apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
+              instance: process.env["GLEAN_INSTANCE"] ?? "",
+            });
+
+            async function run() {
+              const result = await glean.authentication.checkdatasourceauth();
+
+              console.log(result);
+            }
+
+            run();
+        - lang: Go
+          label: Go (API Client)
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithInstance(os.Getenv(\"GLEAN_INSTANCE\")),\n    )\n\n    res, err := s.Authentication.Checkdatasourceauth(ctx)\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.CheckDatasourceAuthResponse != nil {\n        // handle response\n    }\n}"
+        - lang: Java
+          label: Java (API Client)
+          source: |-
+            package hello.world;
+
+            import com.glean.api_client.glean_api_client.Glean;
+            import com.glean.api_client.glean_api_client.models.operations.CheckdatasourceauthResponse;
+            import java.lang.Exception;
+
+            public class Application {
+
+                public static void main(String[] args) throws Exception {
+
+                    Glean sdk = Glean.builder()
+                            .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
+                        .build();
+
+                    CheckdatasourceauthResponse res = sdk.authentication().checkdatasourceauth()
+                            .call();
+
+                    if (res.checkDatasourceAuthResponse().isPresent()) {
+                        // handle response
+                    }
+                }
+            }
   /rest/api/v1/createauthtoken:
     post:
       tags:
@@ -110,6 +199,21 @@ paths:
             }
 components:
   schemas:
+    AuthStatus:
+      type: string
+      description: The per-user authorization status for a datasource.
+      enum:
+        - DISABLED
+        - AWAITING_AUTH
+        - AUTHORIZED
+        - STALE_OAUTH
+        - SEG_MIGRATION
+      x-enum-varnames:
+        - AUTH_STATUS_DISABLED
+        - AUTH_STATUS_AWAITING_AUTH
+        - AUTH_STATUS_AUTHORIZED
+        - AUTH_STATUS_STALE_OAUTH
+        - AUTH_STATUS_SEG_MIGRATION
     CreateAuthTokenResponse:
       required:
         - token
@@ -122,6 +226,35 @@ components:
           description: Unix timestamp for when this token expires (in seconds since epoch UTC).
           type: integer
           format: int64
+    UnauthorizedDatasourceInstance:
+      description: |
+        A datasource instance that could not return results for this request because the user has not completed or has expired per-user OAuth.
+      properties:
+        datasourceInstance:
+          type: string
+          description: |
+            The instance identifier (e.g. "github", "github_enterprise_0", "slack_0"). Matches the instance names used in datasource configuration.
+          example: slack_0
+        displayName:
+          type: string
+          description: Human-readable name of the datasource instance for display.
+          example: Slack
+        authStatus:
+          $ref: '#/components/schemas/AuthStatus'
+        authUrlRelativePath:
+          type: string
+          description: |
+            Relative path to initiate or resume OAuth for the current user and instance, including a one-time authentication token as a query parameter. Clients should prepend their configured Glean backend base URL.
+    CheckDatasourceAuthResponse:
+      required:
+        - unauthorizedDatasourceInstances
+      properties:
+        unauthorizedDatasourceInstances:
+          type: array
+          description: |
+            Datasource instances that require per-user OAuth authorization. Empty when all datasources are authorized.
+          items:
+            $ref: '#/components/schemas/UnauthorizedDatasourceInstance'
   securitySchemes:
     APIToken:
       scheme: bearer

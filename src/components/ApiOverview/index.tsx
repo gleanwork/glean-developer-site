@@ -1,7 +1,7 @@
 import React from 'react';
 import Link from '@docusaurus/Link';
-import CardGroup from '../CardGroup';
-import Card from '../Card';
+import CardGroup from '@theme/CardGroup';
+import Card from '@theme/Card';
 import styles from './styles.module.css';
 import { getEndpointsForApi } from '../../utils/apiData';
 
