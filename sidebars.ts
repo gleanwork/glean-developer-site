@@ -341,6 +341,11 @@ const baseSidebars: SidebarsConfig = {
                   id: 'libraries/web-sdk/components/recommendations',
                   label: 'Recommendations',
                 },
+                {
+                  type: 'doc',
+                  id: 'libraries/web-sdk/components/settings',
+                  label: 'Settings',
+                },
               ],
             },
             {
