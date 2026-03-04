@@ -7,7 +7,7 @@
  * Required environment variables:
  * - GLEAN_API_TOKEN: Your Glean API token (Client API token, not Indexing token)
  * - GLEAN_SERVER_URL: Your Glean server URL (e.g., 'https://your-company-be.glean.com')
- *   Falls back to GLEAN_INSTANCE if GLEAN_SERVER_URL is not set.
+ *   Falls back to GLEAN_INSTANCE (deprecated) if GLEAN_SERVER_URL is not set.
  */
 
 import { Glean } from '@gleanwork/api-client';
@@ -31,7 +31,7 @@ export default class GleanSearchProvider {
 
     if (!serverURL && !instance) {
       throw new Error(
-        '[Glean] GLEAN_SERVER_URL (or GLEAN_INSTANCE) environment variable is required',
+        '[Glean] GLEAN_SERVER_URL (or deprecated GLEAN_INSTANCE) environment variable is required',
       );
     }
 

@@ -35,7 +35,7 @@ if (!process.env.GLEAN_API_TOKEN) {
 
 if (!process.env.GLEAN_SERVER_URL && !process.env.GLEAN_INSTANCE) {
   console.error(
-    'Error: GLEAN_SERVER_URL (or GLEAN_INSTANCE) environment variable is required',
+    'Error: GLEAN_SERVER_URL (or deprecated GLEAN_INSTANCE) environment variable is required',
   );
   process.exit(1);
 }
