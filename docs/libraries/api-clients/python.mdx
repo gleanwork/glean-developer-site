@@ -47,7 +47,7 @@ Glean's Python API client provides a Pythonic interface to Glean's Client API, m
 <Steps>
   <Step title="Set up environment variables">
     ```bash
-    export GLEAN_INSTANCE="your-company"
+    export GLEAN_SERVER_URL="https://your-company-be.glean.com"
     export GLEAN_API_TOKEN="your-token-here"
     ```
   </Step>
@@ -59,7 +59,7 @@ Glean's Python API client provides a Pythonic interface to Glean's Client API, m
 
     with Glean(
         api_token=os.getenv("GLEAN_API_TOKEN"),
-        instance=os.getenv("GLEAN_INSTANCE"),
+        server_url=os.getenv("GLEAN_SERVER_URL"),
     ) as client:
         response = client.client.chat.create(
             messages=[{
@@ -135,7 +135,7 @@ class ChatRequest(BaseModel):
 async def chat_endpoint(request: ChatRequest):
     with Glean(
         api_token=os.getenv("GLEAN_API_TOKEN"),
-        instance=os.getenv("GLEAN_INSTANCE"),
+        server_url=os.getenv("GLEAN_SERVER_URL"),
     ) as client:
         response = client.client.chat.create(
             messages=[{"fragments": [{"text": request.message}]}]
@@ -156,7 +156,7 @@ def chat_view(request):
     
     with Glean(
         api_token=os.getenv("GLEAN_API_TOKEN"),
-        instance=os.getenv("GLEAN_INSTANCE"),
+        server_url=os.getenv("GLEAN_SERVER_URL"),
     ) as client:
         response = client.client.chat.create(
             messages=[{"fragments": [{"text": message}]}]
@@ -178,7 +178,7 @@ user_input = st.text_input("Ask a question:")
 if user_input:
     with Glean(
         api_token=os.getenv("GLEAN_API_TOKEN"),
-        instance=os.getenv("GLEAN_INSTANCE"),
+        server_url=os.getenv("GLEAN_SERVER_URL"),
     ) as client:
         response = client.client.chat.create(
             messages=[{"fragments": [{"text": user_input}]}]
@@ -193,7 +193,7 @@ if user_input:
 ```python
 client = Glean(
     api_token="your-user-token",
-    instance="your-company"
+    server_url="https://your-company-be.glean.com"
 )
 ```
 

@@ -55,7 +55,7 @@ Run the indexing script locally:
 ```bash
 # Set required environment variables
 export GLEAN_INDEXING_API_TOKEN="your-api-token"
-export GLEAN_INSTANCE="your-glean-instance"
+export GLEAN_SERVER_URL="https://your-company-be.glean.com"
 
 # Run the script
 uv run main.py
@@ -64,7 +64,7 @@ uv run main.py
 ### Environment Variables
 
 - `GLEAN_INDEXING_API_TOKEN` - API token for Glean indexing
-- `GLEAN_INSTANCE` - Your Glean instance URL
+- `GLEAN_SERVER_URL` - Your Glean server URL (find at app.glean.com/admin/about-glean)
 
 ### GitHub Actions
 

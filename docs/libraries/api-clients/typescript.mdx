@@ -45,7 +45,7 @@ import { Glean } from "@gleanwork/api-client";
 
 const client = new Glean({
   apiToken: process.env.GLEAN_API_TOKEN,
-  instance: process.env.GLEAN_INSTANCE,
+  serverURL: process.env.GLEAN_SERVER_URL,
 });
 
 const result = await client.client.chat.create({
@@ -103,7 +103,7 @@ export async function POST(request: NextRequest) {
   
   const client = new Glean({
     apiToken: process.env.GLEAN_API_TOKEN!,
-    instance: process.env.GLEAN_INSTANCE!,
+    serverURL: process.env.GLEAN_SERVER_URL!,
   });
 
   const response = await client.client.chat.create({
@@ -120,11 +120,11 @@ export async function POST(request: NextRequest) {
 import React, { useState } from 'react';
 import { Glean } from '@gleanwork/api-client';
 
-export function ChatComponent({ apiToken, instance }) {
+export function ChatComponent({ apiToken, serverURL }) {
   const [input, setInput] = useState('');
   const [response, setResponse] = useState('');
-  
-  const client = new Glean({ apiToken, instance });
+
+  const client = new Glean({ apiToken, serverURL });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -159,7 +159,7 @@ app.use(express.json());
 
 const client = new Glean({
   apiToken: process.env.GLEAN_API_TOKEN!,
-  instance: process.env.GLEAN_INSTANCE!,
+  serverURL: process.env.GLEAN_SERVER_URL!,
 });
 
 app.post('/api/chat', async (req, res) => {
@@ -180,7 +180,7 @@ app.post('/api/chat', async (req, res) => {
 ```typescript
 const client = new Glean({
   apiToken: "your-user-token",
-  instance: "your-company"
+  serverURL: "https://your-company-be.glean.com"
 });
 ```
 

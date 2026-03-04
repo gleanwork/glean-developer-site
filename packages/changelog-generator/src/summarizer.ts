@@ -134,11 +134,12 @@ async function summarizeWithGlean(
   opts: { maxChars: number; category?: string; hints?: Array<string> },
 ): Promise<string | null> {
   const apiToken = process.env.GLEAN_API_TOKEN;
+  const serverURL = process.env.GLEAN_SERVER_URL;
   const instance = process.env.GLEAN_INSTANCE;
 
-  if (!apiToken || !instance) {
+  if (!apiToken || (!serverURL && !instance)) {
     dbgSum(
-      'summarize:skipping LLM (missing GLEAN_API_TOKEN or GLEAN_INSTANCE)',
+      'summarize:skipping LLM (missing GLEAN_API_TOKEN or GLEAN_SERVER_URL)',
     );
     return null;
   }
@@ -151,7 +152,13 @@ async function summarizeWithGlean(
       (opts.hints || []).length,
       cleaned.length,
     );
-    const client = new Glean({ apiToken, instance });
+    const clientOpts: Record<string, string> = { apiToken };
+    if (serverURL) {
+      clientOpts.serverURL = serverURL;
+    } else {
+      clientOpts.instance = instance!;
+    }
+    const client = new Glean(clientOpts);
 
     const systemInstructions = [
       `You are a changelog entry generator. Output ONLY the changelog content.`,
