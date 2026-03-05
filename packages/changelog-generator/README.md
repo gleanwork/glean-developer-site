@@ -12,7 +12,7 @@ This package analyzes releases and OpenAPI spec changes and opens PRs with rende
 ## Environment
 
 - Required for GitHub access: `GITHUB_TOKEN`.
-- Optional for LLM summaries: `GLEAN_API_TOKEN`, `GLEAN_INSTANCE`, `CHANGELOG_SUMMARIZE=1`.
+- Optional for LLM summaries: `GLEAN_API_TOKEN`, `GLEAN_SERVER_URL` (or deprecated `GLEAN_INSTANCE`), `CHANGELOG_SUMMARIZE=1`.
 
 ## Local usage
 

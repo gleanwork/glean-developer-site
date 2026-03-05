@@ -3,7 +3,7 @@
  * Local MCP server for testing the Glean search provider integration.
  *
  * Usage:
- *   1. Create a .env file with GLEAN_API_TOKEN and GLEAN_INSTANCE
+ *   1. Create a .env file with GLEAN_API_TOKEN and GLEAN_SERVER_URL
  *   2. Run: pnpm run mcp:local
  *
  * Then test with:
@@ -33,8 +33,10 @@ if (!process.env.GLEAN_API_TOKEN) {
   process.exit(1);
 }
 
-if (!process.env.GLEAN_INSTANCE) {
-  console.error('Error: GLEAN_INSTANCE environment variable is required');
+if (!process.env.GLEAN_SERVER_URL && !process.env.GLEAN_INSTANCE) {
+  console.error(
+    'Error: GLEAN_SERVER_URL (or deprecated GLEAN_INSTANCE) environment variable is required',
+  );
   process.exit(1);
 }
 
@@ -89,7 +91,7 @@ async function main() {
   server.listen(PORT, () => {
     console.log(`
 MCP server running at http://localhost:${PORT}/mcp
-Using Glean instance: ${process.env.GLEAN_INSTANCE}
+Using Glean: ${process.env.GLEAN_SERVER_URL || process.env.GLEAN_INSTANCE}
 
 Test commands:
   curl http://localhost:${PORT}/health

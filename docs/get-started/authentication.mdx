@@ -14,28 +14,27 @@ Glean provides two main authentication methods to access its APIs, each with dif
 
 ---
 
-## Finding Your Glean Instance
+## Finding Your Server URL
 
-All Glean API requests require specifying your organization's specific Glean instance. The instance identifier is used in API endpoints and API Client/SDK configuration.
+All Glean API requests require your organization's server URL. The server URL is used in API endpoints and API Client/SDK configuration.
 
-### How to Find Your Instance
+### How to Find Your Server URL
 
 1. **Navigate to the About Page**: Visit [https://app.glean.com/admin/about-glean](https://app.glean.com/admin/about-glean) in your Glean admin console
-2. **Locate Server Instance**: Find the **"Server instance (QE)"** field
-3. **Extract Instance Name**: Use the portion before `-be.glean.com`
+2. **Locate Server URL**: Find the **"Server instance (QE)"** field — this is your server URL
 
 ### Example
 
-If your Server instance shows: `https://acme-prod-be.glean.com/`  
-Your instance name is: **`acme-prod`**
+If the field shows: `https://acme-prod-be.glean.com/`
+Your server URL is: **`https://acme-prod-be.glean.com`**
 
 ### Usage in APIs
 
-Your instance name is used in:
-- **API Base URLs**: 
-  - Client API: `https://{instance}-be.glean.com/rest/api/v1/`
-  - Indexing API: `https://{instance}-be.glean.com/api/index/v1/`
-- **API Client/SDK Configuration**: Set as `GLEAN_INSTANCE` environment variable
+Your server URL is used in:
+- **API Base URLs**:
+  - Client API: `https://acme-prod-be.glean.com/rest/api/v1/`
+  - Indexing API: `https://acme-prod-be.glean.com/api/index/v1/`
+- **API Client/SDK Configuration**: Set as `GLEAN_SERVER_URL` environment variable
 
 ---
 
@@ -50,18 +49,18 @@ Glean offers two distinct APIs with different authentication capabilities. Choos
     - Search, chat, collections, agents
     - User-facing functionality
     - OAuth (recommended) + Glean tokens
-    - Base URL: `https://instance-be.glean.com/rest/api/v1/`
-    
+    - Base URL: `https://<your-server-url>/rest/api/v1/`
+
     [Implementation Guide →](/api-info/client/authentication/overview)
   </Card>
-  
+
   <Card title="Indexing API Authentication" icon="Database">
     **For administrative operations and content management**
-        
+
     - Document indexing, datasource management
     - Administrative operations
     - Glean tokens only (no OAuth support)
-    - Base URL: `https://instance-be.glean.com/api/index/v1/`
+    - Base URL: `https://<your-server-url>/api/index/v1/`
     
     [Implementation Guide →](/api-info/indexing/authentication/overview)
   </Card>

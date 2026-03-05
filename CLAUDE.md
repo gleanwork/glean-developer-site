@@ -35,7 +35,7 @@ The `scripts/indexing/` directory contains a Python-based Glean indexing pipelin
 
 ```bash
 mise run indexing:dry-run    # Test extraction without uploading
-mise run indexing:run        # Full indexing (requires GLEAN_INDEXING_API_TOKEN, GLEAN_INSTANCE)
+mise run indexing:run        # Full indexing (requires GLEAN_INDEXING_API_TOKEN, GLEAN_SERVER_URL)
 mise run indexing:setup      # Install deps and Playwright browsers
 ```
 

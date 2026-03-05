@@ -131,7 +131,7 @@ To publish an updated version:
 Ensure the `websiteUrl` target (currently pointing to `docs.glean.com`) includes:
 
 - Clear setup instructions for getting organization-specific URLs
-- Environment variable requirements (GLEAN_INSTANCE, etc.)
+- Environment variable requirements (GLEAN_SERVER_URL, etc.)
 - Authentication setup (OAuth or API tokens)
 - Troubleshooting guide
 - Example use cases and prompts

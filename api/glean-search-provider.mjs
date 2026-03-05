@@ -6,7 +6,8 @@
  *
  * Required environment variables:
  * - GLEAN_API_TOKEN: Your Glean API token (Client API token, not Indexing token)
- * - GLEAN_INSTANCE: Your Glean instance name (e.g., 'glean' for glean-be.glean.com)
+ * - GLEAN_SERVER_URL: Your Glean server URL (e.g., 'https://your-company-be.glean.com')
+ *   Falls back to GLEAN_INSTANCE (deprecated) if GLEAN_SERVER_URL is not set.
  */
 
 import { Glean } from '@gleanwork/api-client';
@@ -19,6 +20,7 @@ export default class GleanSearchProvider {
 
   async initialize(context, _initData) {
     const apiToken = process.env.GLEAN_API_TOKEN;
+    const serverURL = process.env.GLEAN_SERVER_URL;
     const instance = process.env.GLEAN_INSTANCE;
 
     if (!apiToken) {
@@ -27,22 +29,26 @@ export default class GleanSearchProvider {
       );
     }
 
-    if (!instance) {
+    if (!serverURL && !instance) {
       throw new Error(
-        '[Glean] GLEAN_INSTANCE environment variable is required',
+        '[Glean] GLEAN_SERVER_URL (or deprecated GLEAN_INSTANCE) environment variable is required',
       );
     }
 
-    this.client = new Glean({
-      apiToken,
-      instance,
-    });
+    const clientOpts = { apiToken };
+    if (serverURL) {
+      clientOpts.serverURL = serverURL;
+    } else {
+      clientOpts.instance = instance;
+    }
+
+    this.client = new Glean(clientOpts);
 
     this.baseUrl = context.baseUrl;
     this.ready = true;
 
     console.log(
-      `[Glean] Initialized search provider for instance: ${instance}`,
+      `[Glean] Initialized search provider for ${serverURL || instance}`,
     );
   }
 
@@ -132,7 +138,7 @@ export default class GleanSearchProvider {
 
       return {
         healthy: true,
-        message: `Connected to Glean instance: ${process.env.GLEAN_INSTANCE}`,
+        message: `Connected to Glean: ${process.env.GLEAN_SERVER_URL || process.env.GLEAN_INSTANCE}`,
       };
     } catch (error) {
       return {

@@ -52,10 +52,10 @@ When setting up OAuth (admin or user), you'll need to configure the following pa
 Your OAuth App must be configured to allow redirects (Callback URL) to:
 
 ```
-https://{your-glean-instance}-be.glean.com/tools/oauth/verify_code
+https://<your-server-url>/tools/oauth/verify_code
 ```
 
-You can find your instance name using our [instance lookup guide](/get-started/authentication#finding-your-glean-instance).
+Find your server URL at [app.glean.com/admin/about-glean](https://app.glean.com/admin/about-glean).
 
 Without this, the OAuth integration may fail or show invalid redirect URI errors.
 :::
@@ -87,16 +87,16 @@ import json
 import requests
 
 # Fill your glean instance here.
-YOUR_GLEAN_INSTANCE=''
-# Find this value using our instance lookup guide: /get-started/authentication#finding-your-glean-instance
+YOUR_GLEAN_SERVER_URL=''
+# Find your server URL at app.glean.com/admin/about-glean
 
-# Use this function as is in your code (once you have filled out YOUR_GLEAN_INSTANCE).
+# Use this function as is in your code (once you have filled out YOUR_GLEAN_SERVER_URL).
 # Pass the header value for Glean-Actions-Signature as the 'token' in this function.
 
 def verify_jwt(token):
     try:
         # First, we fetch the public key JSON response.
-        response = requests.get(f"https://{YOUR_GLEAN_INSTANCE}-be.glean.com/api/tools/v1/verification_key")
+        response = requests.get(f"{YOUR_GLEAN_SERVER_URL}/api/tools/v1/verification_key")
         response.raise_for_status() # Raises an exception for 4XX/5XX responses
         public_key_str = response.json()['publicKey']
 

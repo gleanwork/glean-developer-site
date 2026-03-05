@@ -89,14 +89,14 @@ from glean.api_client import Glean, models
 class CustomAgent:
     def __init__(self):
         self.api_token = os.getenv("GLEAN_API_TOKEN")
-        self.instance = os.getenv("GLEAN_INSTANCE")
+        self.server_url = os.getenv("GLEAN_SERVER_URL")
         
-        if not self.api_token or not self.instance:
-            raise ValueError("GLEAN_API_TOKEN and GLEAN_INSTANCE must be set")
+        if not self.api_token or not self.server_url:
+            raise ValueError("GLEAN_API_TOKEN and GLEAN_SERVER_URL must be set")
     
     def search_documents(self, query: str, page_size: int = 5):
         """Search for relevant documents"""
-        with Glean(api_token=self.api_token, instance=self.instance) as glean:
+        with Glean(api_token=self.api_token, server_url=self.server_url) as glean:
             try:
                 response = glean.client.search.search(
                     query=query,
@@ -109,7 +109,7 @@ class CustomAgent:
     
     def chat_with_context(self, query: str, search_results=None) -> str:
         """Generate response using chat API"""
-        with Glean(api_token=self.api_token, instance=self.instance) as glean:
+        with Glean(api_token=self.api_token, server_url=self.server_url) as glean:
             try:
                 # Prepare context from search results
                 context = ""
@@ -179,15 +179,15 @@ from typing import List, Dict, Optional
 class AdvancedAgent:
     def __init__(self):
         self.api_token = os.getenv("GLEAN_API_TOKEN")
-        self.instance = os.getenv("GLEAN_INSTANCE")
+        self.server_url = os.getenv("GLEAN_SERVER_URL")
         self.conversation_history = []
         
-        if not self.api_token or not self.instance:
-            raise ValueError("GLEAN_API_TOKEN and GLEAN_INSTANCE must be set")
+        if not self.api_token or not self.server_url:
+            raise ValueError("GLEAN_API_TOKEN and GLEAN_SERVER_URL must be set")
     
     def search_with_filters(self, query: str, filters: Optional[Dict] = None, page_size: int = 10) -> List[Dict]:
         """Search with optional filters"""
-        with Glean(api_token=self.api_token, instance=self.instance) as glean:
+        with Glean(api_token=self.api_token, server_url=self.server_url) as glean:
             try:
                 search_params = {
                     "query": query,
@@ -206,7 +206,7 @@ class AdvancedAgent:
     
     def chat_with_context(self, query: str, context_docs: Optional[List[Dict]] = None, save_to_history: bool = True) -> str:
         """Chat with document context and conversation history"""
-        with Glean(api_token=self.api_token, instance=self.instance) as glean:
+        with Glean(api_token=self.api_token, server_url=self.server_url) as glean:
             try:
                 # Build message with context
                 message_parts = []
@@ -264,7 +264,7 @@ class AdvancedAgent:
     
     def summarize_documents(self, documents: List[Dict]) -> str:
         """Summarize a list of documents"""
-        with Glean(api_token=self.api_token, instance=self.instance) as glean:
+        with Glean(api_token=self.api_token, server_url=self.server_url) as glean:
             try:
                 doc_texts = []
                 for doc in documents[:5]:  # Limit to 5 docs

@@ -48,7 +48,7 @@ public class GleanExample {
   public static void main(String[] args) {
     Glean client = Glean.builder()
         .apiToken(System.getenv("GLEAN_API_TOKEN"))
-        .instance(System.getenv("GLEAN_INSTANCE"))
+        .serverURL(System.getenv("GLEAN_SERVER_URL"))
         .build();
 
     var response = client.client().chat().create()
@@ -78,10 +78,10 @@ public class GleanExample {
 public class ChatService {
   private final Glean client;
   
-  public ChatService(String apiToken, String instance) {
+  public ChatService(String apiToken, String serverURL) {
     this.client = Glean.builder()
         .apiToken(apiToken)
-        .instance(instance)
+        .serverURL(serverURL)
         .build();
   }
   
@@ -111,10 +111,10 @@ public class ChatService {
 public class SearchService {
   private final Glean client;
   
-  public SearchService(String apiToken, String instance) {
+  public SearchService(String apiToken, String serverURL) {
     this.client = Glean.builder()
         .apiToken(apiToken)
-        .instance(instance)
+        .serverURL(serverURL)
         .build();
   }
   
@@ -142,25 +142,25 @@ public class SearchService {
 @ConfigurationProperties(prefix = "glean")
 public class GleanConfig {
   private String apiToken;
-  private String instance;
-  
+  private String serverURL;
+
   // Getters and setters
   public String getApiToken() { return apiToken; }
   public void setApiToken(String apiToken) { this.apiToken = apiToken; }
-  
-  public String getInstance() { return instance; }
-  public void setInstance(String instance) { this.instance = instance; }
+
+  public String getServerURL() { return serverURL; }
+  public void setServerURL(String serverURL) { this.serverURL = serverURL; }
 }
 
 @Configuration
 @EnableConfigurationProperties(GleanConfig.class)
 public class GleanAutoConfiguration {
-  
+
   @Bean
   public Glean gleanClient(GleanConfig config) {
     return Glean.builder()
         .apiToken(config.getApiToken())
-        .instance(config.getInstance())
+        .serverURL(config.getServerURL())
         .build();
   }
 }
@@ -215,7 +215,7 @@ public class GleanController {
 ```java
 Glean client = Glean.builder()
     .apiToken("your-user-token")
-    .instance("your-company")
+    .serverURL("https://your-company-be.glean.com")
     .build();
 ```
 
@@ -225,7 +225,7 @@ Glean client = Glean.builder()
 # application.yml
 glean:
   api-token: ${GLEAN_API_TOKEN}
-  instance: ${GLEAN_INSTANCE}
+  server-url: ${GLEAN_SERVER_URL}
 ```
 
 ## Error Handling
