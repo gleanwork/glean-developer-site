@@ -4,7 +4,6 @@ import useBaseUrl from '@docusaurus/useBaseUrl';
 import clsx from 'clsx';
 import CodeBlock from '@theme/CodeBlock';
 import ThemedImage from '@theme/ThemedImage';
-import Frame from '@theme/Frame';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, Pagination } from 'swiper/modules';
 import styles from './CarouselSection.module.css';
@@ -34,71 +33,71 @@ const slides: CarouselSlide[] = [
   {
     title: 'Your Coding Agent Knows Code. Glean Teaches It Your Company.',
     description:
-      'Individual MCP servers give your agent isolated access to each tool. Glean gives it the graph — connecting docs, conversations, code, and people so your agent understands context, not just content.',
+      'Code assistants can write fast. Glean gives them the context they’re missing — docs, decisions, people, tickets, and code — so they can build in the real world, not in a vacuum.',
     bullets: [
-      '<strong>Plans grounded in reality</strong> – Agents pull in design docs, past decisions, and org context before writing a line of code',
-      '<strong>Works where you work</strong> – Plugins for Claude Code, Cursor, and any MCP-compatible IDE',
+      '<strong>Ground plans in reality</strong> – Pull in design docs, prior decisions, and team context before writing code',
+      '<strong>Works where you work</strong> – Use Glean with Claude Code, Cursor, and other MCP-compatible tools',
       "<strong>Permission-aware from day one</strong> – Every query respects your company's access controls",
     ],
-    ctaText: 'Explore IDE Integrations',
+    ctaText: 'Connect Glean to Your IDE',
     ctaHref: '/guides/mcp',
-    ctaIcon: 'mcp',
+    ctaIcon: 'plug',
     ctaIconSet: 'glean',
     imageUrl: {
-      light: '/img/claude-code-mcp.png',
-      dark: '/img/claude-code-mcp.png',
+      light: '/img/glean-mcp-tool-calls.png',
+      dark: '/img/glean-mcp-tool-calls.png',
     },
     imageAlt:
-      'Claude Code terminal showing Glean MCP tool calls with enterprise results',
+      'Chat window showing Glean MCP tool calls with enterprise results',
   },
   {
     title:
-      'Not All Agents Will Be Built on Glean. All of Them Should Be Connected.',
+      'Connect Any Agent to Your Company\'s Knowledge',
     description:
-      "Glean is the enterprise knowledge layer for every AI agent — wherever it runs. One MCP server URL gives any agent secure, permission-aware access to your company's docs, code, people, and conversations.",
+      "Not every agent will run on Glean. That’s fine. Glean is the knowledge layer that connects any agent to your enterprise context through one secure MCP endpoint.",
     bullets: [
-      '<strong>One connection, every tool</strong> – Works with Claude, Cursor, Copilot, ChatGPT, Windsurf, and 20+ MCP hosts',
-      '<strong>Agents as tools</strong> – Expose your Glean agents as callable MCP tools in any IDE or AI app',
+      '<strong>One connection, many hosts</strong> – Works with Claude, Cursor, Copilot, ChatGPT, Windsurf, and 20+ MCP hosts',
       '<strong>Framework-agnostic</strong> – Plug Glean into LangChain, OpenAI Agents SDK, Google ADK, or any MCP-compatible framework',
+      '<strong>Bring agents to the data</strong> – Expose Glean agents as tools anywhere your developers work',
     ],
     ctaText: 'Get Started with MCP',
     ctaHref: '/guides/mcp',
     ctaIcon: 'mcp',
     ctaIconSet: 'glean',
     imageUrl: {
-      light: '/img/ide-split.png',
-      dark: '/img/ide-split.png',
+      light: '/img/mcp-ecosystem-diagram.png',
+      dark: '/img/mcp-ecosystem-diagram.png',
     },
     imageAlt:
-      'Split-screen showing Claude Code with glean-core plugin and Cursor with Glean MCP',
+      'MCP ecosystem diagram showing Glean as the central knowledge layer',
   },
   {
     title: 'Build Agents That Actually Know Your Business',
     description:
-      "Glean agents don't just reason — they reason over your company's entire knowledge graph. Build agents that search docs, analyze data, find experts, and take action, all with enterprise-grade permissions.",
+      "Glean agents reason over your company’s knowledge graph, not just a prompt window. Search, analyze, find experts, and take action with enterprise-safe access built in.",
     bullets: [
-      '<strong>Multi-step reasoning</strong> – Agents that plan, execute, and iterate on complex workflows',
-      '<strong>Grounded in your data</strong> – Search, chat, code search, people, and meetings as native tools',
-      '<strong>Deploy anywhere</strong> – Run on Glean, call via API, or expose as MCP tools in any host',
+      '<strong>Multi-step by design</strong> – Plan, execute, and iterate across complex workflows',
+      '<strong>Grounded in company context</strong> – Search, chat, code, people, and meetings as native tools',
+      '<strong>Deploy where you need them</strong> – Run on Glean, call via API, or expose as MCP tools in any host',
     ],
-    ctaText: 'Explore Agent APIs',
+    ctaText: 'Choose Your Agent Approach',
     ctaHref: '/guides/agents/overview',
     ctaIcon: 'agent',
     ctaIconSet: 'glean',
     imageUrl: {
-      light: '/img/agent-as-tool.png',
-      dark: '/img/agent-as-tool.png',
+      light: '/img/agents-server-config.png',
+      dark: '/img/agents-server-config.png',
     },
-    imageAlt: 'Claude Code calling a Glean agent as an MCP tool',
+    imageAlt: 'Glean Agents Server configuration screen',
   },
   {
     title: 'Bring Every Data Source into the Graph',
     description:
-      'Glean indexes 100+ enterprise apps out of the box. For everything else, our indexing APIs let you push any data source into the knowledge graph — with custom schemas, real-time sync, and full permission enforcement.',
+      'The better your knowledge graph, the better every search, agent, and integration performs. Glean connects 100+ apps out of the box and lets you index everything else through flexible APIs.',
     bullets: [
-      '<strong>Bulk or streaming</strong> – Upload millions of documents or sync in real-time',
-      '<strong>Your schema, your way</strong> – Custom properties, relationships, and metadata',
-      '<strong>Powers everything above</strong> – The richer the graph, the smarter every agent, search, and integration becomes',
+      '<strong>Bulk or real-time</strong> – Upload millions of documents or sync continuously',
+      '<strong>Flexible schema</strong> – Model metadata, relationships, and custom properties your way',
+      '<strong>Foundation for everything above</strong> – A richer graph makes every agent smarter',
     ],
     ctaText: 'View Indexing APIs',
     ctaHref: '/api-info/indexing/getting-started/overview',
