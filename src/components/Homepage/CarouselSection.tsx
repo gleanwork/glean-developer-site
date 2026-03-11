@@ -85,10 +85,10 @@ const slides: CarouselSlide[] = [
     ctaIcon: 'agent',
     ctaIconSet: 'glean',
     imageUrl: {
-      light: '/img/agents-server-config.png',
-      dark: '/img/agents-server-config.png',
+      light: '/img/agent-code-toolkit.png',
+      dark: '/img/agent-code-toolkit.png',
     },
-    imageAlt: 'Glean Agents Server configuration screen',
+    imageAlt: 'Python code defining CrewAI agents with glean-agent-toolkit',
   },
   {
     title: 'Bring Every Data Source into the Graph',
