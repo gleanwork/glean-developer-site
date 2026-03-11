@@ -65,11 +65,11 @@ const slides: CarouselSlide[] = [
     ctaIcon: 'mcp',
     ctaIconSet: 'glean',
     imageUrl: {
-      light: '/img/mcp-ecosystem-diagram.png',
-      dark: '/img/mcp-ecosystem-diagram.png',
+      light: '/img/mcp-connectors-diagram.png',
+      dark: '/img/mcp-connectors-diagram.png',
     },
     imageAlt:
-      'MCP ecosystem diagram showing Glean as the central knowledge layer',
+      'MCP connectors diagram showing Glean as the central knowledge layer',
   },
   {
     title: 'Build Agents That Actually Know Your Business',
@@ -84,11 +84,24 @@ const slides: CarouselSlide[] = [
     ctaHref: '/guides/agents/overview',
     ctaIcon: 'agent',
     ctaIconSet: 'glean',
-    imageUrl: {
-      light: '/img/agent-code-toolkit.png',
-      dark: '/img/agent-code-toolkit.png',
-    },
-    imageAlt: 'Python code defining CrewAI agents with glean-agent-toolkit',
+    codeLanguage: 'python',
+    codeContent: `import os
+from crewai import Agent, Crew, Task
+from glean.agent_toolkit.tools import glean_search
+
+os.environ["GLEAN_API_TOKEN"] = "your-api-token"
+os.environ["GLEAN_INSTANCE"] = "your-instance-name"
+
+researcher = Agent(
+    role="Research Specialist",
+    goal="Find company docs and information",
+    tools=[glean_search.as_crewai_tool()],
+)
+
+crew = Crew(agents=[researcher], tasks=[
+    Task(description="Find remote work policy", agent=researcher),
+])
+result = crew.kickoff()`,
   },
   {
     title: 'Bring Every Data Source into the Graph',
@@ -188,9 +201,11 @@ export default function CarouselSection() {
                   </div>
                 ) : (
                   <div className={styles.codeWrap}>
-                    <CodeBlock language={slide.codeLanguage} showLineNumbers>
-                      {slide.codeContent}
-                    </CodeBlock>
+                    <div className={styles.codeWrapInner}>
+                      <CodeBlock language={slide.codeLanguage} showLineNumbers>
+                        {slide.codeContent}
+                      </CodeBlock>
+                    </div>
                   </div>
                 )}
               </div>
