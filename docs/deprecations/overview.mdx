@@ -77,24 +77,46 @@ Consider a field deprecated on **2026-01-01**. The field will be removed on **20
   </Card>
 </CardGroup>
 
-When you use a deprecated feature, the API response includes an `X-Glean-Deprecated` header:
+When you use a deprecated feature, the API response includes a single `X-Glean-Deprecated` header containing a JSON array of all applicable deprecations, sorted by removal date (soonest first):
 
 ```http
-X-Glean-Deprecated: kind=field;name=snippetText;introduced=2026-01-01;removal=2026-07-15;docs=https://developers.glean.com/deprecations
+X-Glean-Deprecated: [{"name":"snippetText","kind":"property","context":"response","removal":"2026-07-15","schema":"SearchResult","docs":"https://developers.glean.com/deprecations"},{"name":"userId","kind":"property","context":"response","removal":"2027-04-15"}]
 ```
 
-The header contains:
+Each object in the JSON array contains:
 
-| Field | Description |
-|-------|-------------|
-| `kind` | Type of deprecation: `endpoint`, `field`, or `parameter` |
-| `name` | Name of the deprecated item |
-| `introduced` | Date the deprecation was announced (ISO-8601) |
-| `removal` | Date the item will be removed (ISO-8601) |
-| `docs` | Link to migration documentation |
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `name` | string | yes | Deprecated field path, parameter name, or endpoint path |
+| `kind` | string | yes | One of: `property`, `parameter`, `endpoint`, `enum-value` |
+| `context` | string | yes | One of: `request`, `response`, `endpoint` |
+| `removal` | string | no | Removal date in `YYYY-MM-DD` format. Omitted when unset. |
+| `schema` | string | no | OpenAPI component schema name. Omitted when not applicable. |
+| `docs` | string | no | URL to migration documentation. Omitted when not available. |
+| `value` | string | no | The deprecated enum value. Only present when `kind` is `enum-value`. |
 
 :::tip Automated Monitoring
-Parse this header in your integration tests or monitoring to catch deprecations early.
+Parse this header in your integration tests or monitoring to catch deprecations early:
+
+```javascript
+const header = response.headers.get("X-Glean-Deprecated");
+if (header) {
+  const deprecations = JSON.parse(header);
+  for (const item of deprecations) {
+    console.log(`${item.kind} "${item.name}" removed on ${item.removal}`);
+  }
+}
+```
+:::
+
+:::info Header Truncation
+When the deprecation list is too large to fit within HTTP header size limits, the array is truncated and the response includes an additional header:
+
+```http
+X-Glean-Deprecated-Truncated: true
+```
+
+The most actionable deprecations (soonest removal dates) are always retained. See the full [deprecation schedule](/deprecations) for a complete list.
 :::
 
 ---
