@@ -4,7 +4,6 @@ import useBaseUrl from '@docusaurus/useBaseUrl';
 import clsx from 'clsx';
 import CodeBlock from '@theme/CodeBlock';
 import ThemedImage from '@theme/ThemedImage';
-import Frame from '@theme/Frame';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, Pagination } from 'swiper/modules';
 import styles from './CarouselSection.module.css';
@@ -32,99 +31,85 @@ type CarouselSlide = {
 
 const slides: CarouselSlide[] = [
   {
-    title: 'MCP Remote Server: Now Generally Available',
+    title: 'Your Coding Agent Knows Code. Glean Teaches It Your Company.',
     description:
-      'Connect Claude Desktop, Cursor, Windsurf, and 20+ AI tools to your secure enterprise data in 5 minutes. One server URL unlocks your entire knowledge base — no code required.',
+      'Code assistants can write fast. Glean gives them the context they’re missing — docs, decisions, people, tickets, and code — so they can build in the real world, not in a vacuum.',
     bullets: [
-      '<strong>One connection, universal access</strong> – Works with Claude Desktop, Cursor, VS Code, Windsurf, ChatGPT, and more',
-      "<strong>Enterprise-grade security</strong> – Respects your company's access controls automatically",
-      '<strong>5-minute setup</strong> – Just add server URL to any MCP client',
+      '<strong>Ground plans in reality</strong> – Pull in design docs, prior decisions, and team context before writing code',
+      '<strong>Works where you work</strong> – Use Glean with Claude Code, Cursor, and other MCP-compatible tools',
+      "<strong>Permission-aware from day one</strong> – Every query respects your company's access controls",
+    ],
+    ctaText: 'Connect Glean to Your IDE',
+    ctaHref: '/guides/mcp',
+    ctaIcon: 'plug',
+    ctaIconSet: 'glean',
+    imageUrl: {
+      light: '/img/glean-mcp-tool-calls.png',
+      dark: '/img/glean-mcp-tool-calls.png',
+    },
+    imageAlt:
+      'Chat window showing Glean MCP tool calls with enterprise results',
+  },
+  {
+    title: "Connect Any Agent to Your Company's Knowledge",
+    description:
+      'Not every agent will run on Glean. That’s fine. Glean is the knowledge layer that connects any agent to your enterprise context through one secure MCP endpoint.',
+    bullets: [
+      '<strong>One connection, many hosts</strong> – Works with Claude, Cursor, Copilot, ChatGPT, Windsurf, and 20+ MCP hosts',
+      '<strong>Framework-agnostic</strong> – Plug Glean into LangChain, OpenAI Agents SDK, Google ADK, or any MCP-compatible framework',
+      '<strong>Bring agents to the data</strong> – Expose Glean agents as tools anywhere your developers work',
     ],
     ctaText: 'Get Started with MCP',
     ctaHref: '/guides/mcp',
     ctaIcon: 'mcp',
     ctaIconSet: 'glean',
     imageUrl: {
-      light: '/img/mcp-ga.png',
-      dark: '/img/mcp-ga.png',
+      light: '/img/mcp-connectors-diagram.png',
+      dark: '/img/mcp-connectors-diagram.png',
     },
-    imageAlt: 'Screenshot showing MCP server integration with AI clients',
+    imageAlt:
+      'MCP connectors diagram showing Glean as the central knowledge layer',
   },
   {
-    title: 'Search and Chat with Your Data',
+    title: 'Build Agents That Actually Know Your Business',
     description:
-      "Connect your company data and ship AI-powered chat in minutes. Glean's APIs are permission-aware from day one and scale with your security requirements.",
+      'Glean agents reason over your company’s knowledge graph, not just a prompt window. Search, analyze, find experts, and take action with enterprise-safe access built in.',
     bullets: [
-      '<strong>Instant answers from everywhere</strong> – Query docs, messages, tickets, and wikis in one API call',
-      '<strong>Your permissions, preserved</strong> – Automatic access control based on user identity',
-      '<strong>Deploy anywhere</strong> – Power chatbots, search bars, or AI assistants in any app',
+      '<strong>Multi-step by design</strong> – Plan, execute, and iterate across complex workflows',
+      '<strong>Grounded in company context</strong> – Search, chat, code, people, and meetings as native tools',
+      '<strong>Deploy where you need them</strong> – Run on Glean, call via API, or expose as MCP tools in any host',
     ],
-    ctaText: 'Learn about the Chat API',
-    ctaHref: '/guides/chat/overview',
-    ctaIcon: 'chat',
-    ctaIconSet: 'glean',
-    codeLanguage: 'python',
-    codeContent: `import os
-from glean import Glean, models
-
-with Glean(
-    instance='acme',
-    api_token=os.getenv('GLEAN_API_TOKEN', ''),
-) as g:
-    res = g.client.chat.create(
-        messages=[
-            {
-                'fragments': [
-                    models.ChatMessageFragment(
-                        text='What are the company holidays this year?',
-                    )
-                ],
-            }
-        ]
-    )`,
-  },
-  {
-    title: 'Run AI Agents',
-    description:
-      'Run intelligent agents that orchestrate workflows, reason over your enterprise knowledge, and automate complex tasks across your organization.',
-    bullets: [
-      '<strong>Multi-step reasoning</strong> – Agents that plan, execute, and iterate on complex workflows',
-      "<strong>Enterprise knowledge at their fingertips</strong> – Full access to your organization's data and context",
-      '<strong>Automate anything</strong> – From sales reports to IT tickets to HR processes',
-    ],
-    ctaText: 'Explore Agent APIs',
+    ctaText: 'Choose Your Agent Approach',
     ctaHref: '/guides/agents/overview',
     ctaIcon: 'agent',
     ctaIconSet: 'glean',
     codeLanguage: 'python',
     codeContent: `import os
-from glean import Glean, models
+from crewai import Agent, Crew, Task
+from glean.agent_toolkit.tools import glean_search
 
-with Glean(
-    instance='acme',
-    api_token=os.getenv('GLEAN_API_TOKEN', ''),
-) as g:
-    agent_run = g.client.agents.create_and_stream_run(
-        agent_id='sales-assistant',
-        messages=[
-            {
-                'fragments': [
-                    models.ChatMessageFragment(
-                        text='Generate a sales report for Q4 2024',
-                    )
-                ],
-            }
-        ]
-    )`,
+os.environ["GLEAN_API_TOKEN"] = "your-api-token"
+os.environ["GLEAN_INSTANCE"] = "your-instance-name"
+
+researcher = Agent(
+    role="Research Specialist",
+    goal="Find company docs and information",
+    tools=[glean_search.as_crewai_tool()],
+)
+
+crew = Crew(agents=[researcher], tasks=[
+    Task(description="Find remote work policy", agent=researcher),
+])
+result = crew.kickoff()`,
   },
   {
-    title: 'Connect Any Data Source',
+    title: 'Bring Every Data Source into the Graph',
     description:
-      'Bring any data source into Glean with our powerful indexing APIs. Bulk upload documents, sync in real-time, and define custom properties.',
+      'The better your knowledge graph, the better every search, agent, and integration performs. Glean connects 100+ apps out of the box and lets you index everything else through flexible APIs.',
     bullets: [
-      '<strong>Bulk or streaming, your choice</strong> – Upload millions of documents or sync in real-time',
-      '<strong>Your schema, your way</strong> – Define custom properties, relationships, and metadata',
-      '<strong>Battle-tested at scale</strong> – Powers search across 100+ data sources for Fortune 500 companies',
+      '<strong>Bulk or real-time</strong> – Upload millions of documents or sync continuously',
+      '<strong>Flexible schema</strong> – Model metadata, relationships, and custom properties your way',
+      '<strong>Foundation for everything above</strong> – A richer graph makes every agent smarter',
     ],
     ctaText: 'View Indexing APIs',
     ctaHref: '/api-info/indexing/getting-started/overview',
@@ -144,7 +129,7 @@ with Glean(
         body='Our Q4 performance exceeded expectations...',
         datasource='internal-docs'
     )
-    
+
     g.indexing.index_document(document=document)`,
   },
 ];
@@ -215,9 +200,11 @@ export default function CarouselSection() {
                   </div>
                 ) : (
                   <div className={styles.codeWrap}>
-                    <CodeBlock language={slide.codeLanguage} showLineNumbers>
-                      {slide.codeContent}
-                    </CodeBlock>
+                    <div className={styles.codeWrapInner}>
+                      <CodeBlock language={slide.codeLanguage} showLineNumbers>
+                        {slide.codeContent}
+                      </CodeBlock>
+                    </div>
                   </div>
                 )}
               </div>
