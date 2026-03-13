@@ -51,10 +51,9 @@ const slides: CarouselSlide[] = [
       'Chat window showing Glean MCP tool calls with enterprise results',
   },
   {
-    title:
-      'Connect Any Agent to Your Company\'s Knowledge',
+    title: "Connect Any Agent to Your Company's Knowledge",
     description:
-      "Not every agent will run on Glean. That’s fine. Glean is the knowledge layer that connects any agent to your enterprise context through one secure MCP endpoint.",
+      'Not every agent will run on Glean. That’s fine. Glean is the knowledge layer that connects any agent to your enterprise context through one secure MCP endpoint.',
     bullets: [
       '<strong>One connection, many hosts</strong> – Works with Claude, Cursor, Copilot, ChatGPT, Windsurf, and 20+ MCP hosts',
       '<strong>Framework-agnostic</strong> – Plug Glean into LangChain, OpenAI Agents SDK, Google ADK, or any MCP-compatible framework',
@@ -74,7 +73,7 @@ const slides: CarouselSlide[] = [
   {
     title: 'Build Agents That Actually Know Your Business',
     description:
-      "Glean agents reason over your company’s knowledge graph, not just a prompt window. Search, analyze, find experts, and take action with enterprise-safe access built in.",
+      'Glean agents reason over your company’s knowledge graph, not just a prompt window. Search, analyze, find experts, and take action with enterprise-safe access built in.',
     bullets: [
       '<strong>Multi-step by design</strong> – Plan, execute, and iterate across complex workflows',
       '<strong>Grounded in company context</strong> – Search, chat, code, people, and meetings as native tools',
