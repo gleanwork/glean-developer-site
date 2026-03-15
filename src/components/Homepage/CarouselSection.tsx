@@ -2,7 +2,7 @@ import React from 'react';
 import Link from '@docusaurus/Link';
 import useBaseUrl from '@docusaurus/useBaseUrl';
 import clsx from 'clsx';
-import CodeBlock from '@theme/CodeBlock';
+import { Highlight, themes } from 'prism-react-renderer';
 import ThemedImage from '@theme/ThemedImage';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, Pagination } from 'swiper/modules';
@@ -116,21 +116,36 @@ result = crew.kickoff()`,
     ctaIcon: 'Database',
     ctaIconSet: 'feather',
     codeLanguage: 'python',
-    codeContent: `import os
-from glean import Glean, models
+    codeContent: `from glean.indexing.connectors import BaseDatasourceConnector
+from glean.indexing.models import (
+    ContentDefinition, CustomDatasourceConfig, DocumentDefinition,
+)
+from glean.api_client.models import DatasourceCategory
 
-with Glean(
-    instance='acme',
-    api_token=os.getenv('GLEAN_INDEXING_TOKEN', ''),
-) as g:
-    document = models.DocumentDefinition(
-        id='doc-123',
-        title='Q4 Sales Report',
-        body='Our Q4 performance exceeded expectations...',
-        datasource='internal-docs'
+class LinearConnector(BaseDatasourceConnector[dict]):
+    configuration = CustomDatasourceConfig(
+        name="linear",
+        display_name="Linear",
+        datasource_category=DatasourceCategory.TICKETS,
     )
 
-    g.indexing.index_document(document=document)`,
+    def transform(self, issues: list[dict]) -> list[DocumentDefinition]:
+        return [
+            DocumentDefinition(
+                id=issue["id"],
+                title=issue["title"],
+                datasource=self.name,
+                body=ContentDefinition(
+                    mime_type="text/plain",
+                    text_content=issue.get("description", ""),
+                ),
+            )
+            for issue in issues
+        ]
+
+connector = LinearConnector(name="linear", data_client=client)
+connector.configure_datasource()
+connector.index_data()`,
   },
 ];
 
@@ -201,9 +216,23 @@ export default function CarouselSection() {
                 ) : (
                   <div className={styles.codeWrap}>
                     <div className={styles.codeWrapInner}>
-                      <CodeBlock language={slide.codeLanguage} showLineNumbers>
-                        {slide.codeContent}
-                      </CodeBlock>
+                      <Highlight
+                        theme={themes.dracula}
+                        code={slide.codeContent.trim()}
+                        language={slide.codeLanguage}
+                      >
+                        {({ className, style, tokens, getLineProps, getTokenProps }) => (
+                          <pre className={className} style={{ ...style, margin: 0, padding: '1rem 1.25rem', fontSize: '0.78rem', lineHeight: 1.55 }}>
+                            {tokens.map((line, i) => (
+                              <div key={i} {...getLineProps({ line })}>
+                                {line.map((token, key) => (
+                                  <span key={key} {...getTokenProps({ token })} />
+                                ))}
+                              </div>
+                            ))}
+                          </pre>
+                        )}
+                      </Highlight>
                     </div>
                   </div>
                 )}
