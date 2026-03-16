@@ -221,12 +221,30 @@ export default function CarouselSection() {
                         code={slide.codeContent.trim()}
                         language={slide.codeLanguage}
                       >
-                        {({ className, style, tokens, getLineProps, getTokenProps }) => (
-                          <pre className={className} style={{ ...style, margin: 0, padding: '1rem 1.25rem', fontSize: '0.78rem', lineHeight: 1.55 }}>
+                        {({
+                          className,
+                          style,
+                          tokens,
+                          getLineProps,
+                          getTokenProps,
+                        }) => (
+                          <pre
+                            className={className}
+                            style={{
+                              ...style,
+                              margin: 0,
+                              padding: '1rem 1.25rem',
+                              fontSize: '0.78rem',
+                              lineHeight: 1.55,
+                            }}
+                          >
                             {tokens.map((line, i) => (
                               <div key={i} {...getLineProps({ line })}>
                                 {line.map((token, key) => (
-                                  <span key={key} {...getTokenProps({ token })} />
+                                  <span
+                                    key={key}
+                                    {...getTokenProps({ token })}
+                                  />
                                 ))}
                               </div>
                             ))}
