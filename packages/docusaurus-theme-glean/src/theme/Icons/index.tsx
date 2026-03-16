@@ -42,9 +42,15 @@ function GleanIcon({
           .replace(/<svg([^>]*)\s+height="[^"]*"/, '<svg$1')
           .replace(/<svg/, '<svg style="width: 100%; height: 100%"');
 
-        // Add fill="currentColor" to path elements that don't have fill specified
+        // For stroke-only paths (no explicit fill): use fill="none" to preserve
+        // the stroke-only design intent. Without this, the path gets filled solid.
         cleanedSvg = cleanedSvg.replace(
-          /<path(?![^>]*fill=)([^>]*)>/g,
+          /<path(?=[^>]*stroke=)(?![^>]*fill=)([^>]*)>/g,
+          '<path$1 fill="none">',
+        );
+        // For paths with neither stroke nor fill: add fill="currentColor"
+        cleanedSvg = cleanedSvg.replace(
+          /<path(?![^>]*stroke=)(?![^>]*fill=)([^>]*)>/g,
           '<path$1 fill="currentColor">',
         );
 
