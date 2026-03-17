@@ -10,6 +10,7 @@ type IDEPlugin = {
   accentColor: string;
   description: string;
   repoHref: string;
+  configureHref: string;
 };
 
 const plugins: IDEPlugin[] = [
@@ -20,6 +21,8 @@ const plugins: IDEPlugin[] = [
     description:
       "Pull your company's docs, decisions, code context, and experts into Claude Code without leaving the terminal. Glean answers with your organization's actual knowledge.",
     repoHref: 'https://github.com/gleanwork/claude-plugins',
+    configureHref:
+      'https://app.glean.com/settings/install?mcpConfigure=true&mcpHost=claude-code',
   },
   {
     name: 'Cursor',
@@ -28,6 +31,8 @@ const plugins: IDEPlugin[] = [
     description:
       "Ground Cursor's AI in your organization's real knowledge base. Search internal docs, surface relevant context, and reference the right people as you code.",
     repoHref: 'https://github.com/gleanwork/cursor-plugins',
+    configureHref:
+      'https://app.glean.com/settings/install?mcpConfigure=true&mcpHost=cursor',
   },
 ];
 
@@ -65,7 +70,7 @@ export default function IDEPluginSection() {
                   View on GitHub
                 </Link>
                 <Link
-                  to="/guides/mcp"
+                  to={plugin.configureHref}
                   className={clsx(
                     'button button--primary',
                     styles.configureBtn,
