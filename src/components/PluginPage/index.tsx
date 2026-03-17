@@ -1,14 +1,19 @@
 import React from 'react';
 import Link from '@docusaurus/Link';
 import useBaseUrl from '@docusaurus/useBaseUrl';
+import { Steps, Step } from '@theme/Steps';
+import CodeBlock from '@theme/CodeBlock';
+import Frame from '@theme/Frame';
 import styles from './styles.module.css';
 
-type Step = {
+type PluginStep = {
   label: string;
   description: string;
+  image?: string;
 } & (
   | { type: 'cta'; ctaText: string; ctaHref: string }
-  | { type: 'command'; commands: string[] }
+  | { type: 'command'; commands: { code: string; title: string }[] }
+  | { type: 'list'; items: string[] }
 );
 
 type PluginPageProps = {
@@ -16,8 +21,7 @@ type PluginPageProps = {
   tagline: string;
   logo: string;
   accentColor: string;
-  gleanConfigureHref: string;
-  steps: Step[];
+  steps: PluginStep[];
 };
 
 export default function PluginPage({
@@ -53,40 +57,47 @@ export default function PluginPage({
         </div>
       </div>
 
+      <h2>Installation</h2>
+
       {/* Steps */}
-      <div className={styles.steps}>
+      <Steps>
         {steps.map((step, i) => (
-          <div key={i} className={styles.step}>
-            <div className={styles.stepNumber}>{i + 1}</div>
-            <div className={styles.stepContent}>
-              <h2 className={styles.stepLabel}>{step.label}</h2>
-              <p className={styles.stepDescription}>{step.description}</p>
-              {step.type === 'cta' && (
-                <Link
-                  to={step.ctaHref}
-                  className={styles.ctaButton}
-                  style={{
-                    backgroundColor: accentColor,
-                    borderColor: accentColor,
-                  }}
-                >
-                  {step.ctaText}
-                </Link>
-              )}
-              {step.type === 'command' && (
-                <div className={styles.commandBlock}>
-                  {step.commands.map((cmd, j) => (
-                    <div key={j} className={styles.commandLine}>
-                      <span className={styles.prompt}>$</span>
-                      <code>{cmd}</code>
-                    </div>
-                  ))}
+          <Step key={i} title={step.label} titleSize="h2">
+            <p>{step.description}</p>
+            {step.type === 'cta' && (
+              <Link
+                to={step.ctaHref}
+                className={styles.ctaButton}
+                style={{
+                  backgroundColor: accentColor,
+                  borderColor: accentColor,
+                }}
+              >
+                {step.ctaText}
+              </Link>
+            )}
+            {step.type === 'list' && (
+              <ol>
+                {step.items.map((item, j) => (
+                  <li key={j}>{item}</li>
+                ))}
+              </ol>
+            )}
+            {step.type === 'command' &&
+              step.commands.map((cmd, j) => (
+                <div key={j}>
+                  <p className={styles.commandLabel}>{cmd.title}</p>
+                  <CodeBlock language="bash">{cmd.code}</CodeBlock>
                 </div>
-              )}
-            </div>
-          </div>
+              ))}
+            {step.image && (
+              <Frame>
+                <img src={useBaseUrl(step.image)} alt={step.label} />
+              </Frame>
+            )}
+          </Step>
         ))}
-      </div>
+      </Steps>
     </div>
   );
 }

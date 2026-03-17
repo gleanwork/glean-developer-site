@@ -1,9 +1,11 @@
 ---
 title: Glean Plugin for Claude Code
-description: Install the official Glean plugin for Claude Code — enterprise knowledge as native skills in your terminal.
+description: Install the official Glean plugins for Claude Code — enterprise knowledge as native skills in your terminal.
 ---
 
 import PluginPage from '@site/src/components/PluginPage';
+
+{/* Plugin table synced from https://github.com/gleanwork/claude-plugins/blob/main/README.md */}
 
 <PluginPage
   name="Claude Code"
@@ -15,18 +17,32 @@ import PluginPage from '@site/src/components/PluginPage';
     {
       type: 'cta',
       label: 'Set up the Glean MCP Server',
-      description: 'The plugin requires a Glean MCP connection. Use the Glean configurator to connect Claude Code to your organization\'s Glean instance — OAuth authentication is handled automatically.',
+      description: 'The plugins require a Glean MCP connection. Use the Glean configurator to connect Claude Code to your organization\'s Glean instance. Authentication uses Glean\'s OAuth server where enabled, or a Glean API token as a fallback.',
       ctaText: 'Open MCP Configurator',
       ctaHref: 'https://app.glean.com/settings/install?mcpConfigure=true&mcpHost=claude-code',
     },
     {
       type: 'command',
-      label: 'Install the Glean Plugin',
-      description: 'Once your MCP connection is active, run these commands inside Claude Code to add the official Glean plugin from the marketplace.',
+      label: 'Add the Glean marketplace and install plugins',
+      description: 'Run these commands inside Claude Code. glean-core is required — then install whichever feature plugins you need.',
       commands: [
-        '/plugin marketplace add gleanwork/claude-plugins',
-        '/plugin install glean-core',
+        { title: 'Add the Glean marketplace', code: '/plugin marketplace add gleanwork/claude-plugins' },
+        { title: 'Install core (required)', code: '/plugin install glean-core' },
+        { title: 'Install feature plugins (pick what you need)', code: '/plugin install glean-search\n/plugin install glean-meetings\n/plugin install glean-people\n/plugin install glean-docs\n/plugin install glean-code\n/plugin install glean-skills\n/plugin install glean-productivity\n/plugin install glean-project' },
       ],
     },
   ]}
 />
+
+## Which plugin do I need?
+
+| I want to… | Install |
+|------------|---------|
+| Search company docs, Slack, wikis | `glean-core` + `glean-search` |
+| Prepare for meetings or catch up after PTO | `glean-core` + `glean-meetings` |
+| Find who knows about a topic | `glean-core` + `glean-people` |
+| Verify specs match implementation | `glean-core` + `glean-docs` |
+| Find code examples across repos | `glean-core` + `glean-code` |
+| Get daily briefings or weekly summaries | `glean-core` + `glean-productivity` |
+| Get project context or create handoffs | `glean-core` + `glean-project` |
+| All of the above | Install all plugins |

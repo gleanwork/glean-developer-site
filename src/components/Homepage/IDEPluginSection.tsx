@@ -28,7 +28,7 @@ const plugins: IDEPlugin[] = [
     logo: '/img/mcp-clients/cursor.png',
     accentColor: '#1c1c1c',
     description:
-      "The official Glean plugin for Cursor. Run /add-plugin glean to connect Cursor's AI to your company's knowledge — enterprise search, code exploration, and people discovery, backed by your Glean MCP server.",
+      "The official Glean plugin for Cursor. Install from the Cursor Marketplace to connect Cursor's AI to your company's knowledge — enterprise search, code exploration, and people discovery.",
     repoHref: 'https://github.com/gleanwork/cursor-plugins',
     pageHref: '/guides/mcp/cursor',
   },

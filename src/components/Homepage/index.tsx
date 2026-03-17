@@ -1,7 +1,6 @@
 import React from 'react';
 import clsx from 'clsx';
 import Link from '@docusaurus/Link';
-import { Info } from 'react-feather';
 import styles from './index.module.css';
 import Card from '@theme/Card';
 import CarouselSection from './CarouselSection';
@@ -54,16 +53,6 @@ export default function Home() {
 
       {/* IDE Plugin Promotion */}
       <IDEPluginSection />
-
-      {/* Docs MCP Info Banner */}
-      <div className={styles.mcpInfoBanner}>
-        <Info size={20} />
-        <span>
-          Connect your AI coding assistant to Glean's developer documentation
-          via MCP for instant access to API references and guides.{' '}
-          <Link to="/docs-mcp">Get started.</Link>
-        </span>
-      </div>
 
       <hr />
 
