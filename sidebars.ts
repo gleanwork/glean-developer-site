@@ -252,6 +252,16 @@ const baseSidebars: SidebarsConfig = {
               id: 'guides/mcp/mcp',
               label: 'Remote MCP Server',
             },
+            {
+              type: 'doc',
+              id: 'guides/mcp/claude-code',
+              label: 'Claude Code',
+            },
+            {
+              type: 'doc',
+              id: 'guides/mcp/cursor',
+              label: 'Cursor',
+            },
           ],
         },
         {

@@ -5,6 +5,7 @@ import { Info } from 'react-feather';
 import styles from './index.module.css';
 import Card from '@theme/Card';
 import CarouselSection from './CarouselSection';
+import IDEPluginSection from './IDEPluginSection';
 import { GLEAN_BRAND_COLORS } from '@gleanwork/docusaurus-theme-glean/brandColors';
 
 type Feature = {
@@ -48,6 +49,9 @@ export default function Home() {
     <>
       {/* Dynamic Carousel Section */}
       <CarouselSection />
+
+      {/* IDE Plugin Promotion */}
+      <IDEPluginSection />
 
       {/* Docs MCP Info Banner */}
       <div className={styles.mcpInfoBanner}>

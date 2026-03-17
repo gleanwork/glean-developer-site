@@ -1,0 +1,60 @@
+---
+title: Glean for Claude Code
+description: Connect Claude Code to your company's knowledge via Glean's remote MCP server.
+---
+
+# Glean for Claude Code
+
+Connect Claude Code to Glean's remote MCP server and give it access to your company's docs, decisions, code, people, and tickets — all respecting your existing access controls.
+
+## What you can do
+
+Once connected, you can ask Claude Code things like:
+
+- *"What's our policy on feature flags?"* — pulls from internal docs
+- *"Who owns the payments service?"* — finds the right person from Glean
+- *"What was decided in the Q3 architecture review?"* — surfaces past decisions
+- *"Find examples of how we use the logging library"* — searches your codebase context
+
+## Prerequisites
+
+- A Glean instance with MCP enabled
+- A Glean API token (see [Authentication](/get-started/authentication))
+- Claude Code installed (`npm install -g @anthropic-ai/claude-code`)
+
+## Installation
+
+Use the [MCP Configurator](/guides/mcp) to generate your setup command. Select **Claude Code** as your host, enter your Glean instance details, and copy the command into your terminal.
+
+## Verifying the connection
+
+After running the setup command, start a new Claude Code session and try:
+
+```
+/mcp
+```
+
+You should see `glean` listed as a connected MCP server. Then try asking something about your company's internal knowledge to confirm it's working.
+
+## Available tools
+
+The Glean MCP server exposes the following tools to Claude Code:
+
+| Tool | Description |
+|---|---|
+| `glean_search` | Full-text search across all connected Glean sources |
+| `glean_chat` | Conversational Q&A grounded in your company's knowledge |
+| `glean_get_document` | Retrieve a specific document by URL |
+| `glean_list_datasources` | List available data sources |
+
+## Configuration options
+
+The remote MCP server is managed by Glean — no local process to maintain. Access controls are enforced per-user based on your Glean permissions.
+
+To update your token or instance settings, re-run the setup command from the configurator above.
+
+## Related
+
+- [Remote MCP Server overview](/guides/mcp/mcp)
+- [Authentication](/get-started/authentication)
+- [Glean for Cursor](/guides/mcp/cursor)
