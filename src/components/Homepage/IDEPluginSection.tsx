@@ -10,7 +10,6 @@ type IDEPlugin = {
   accentColor: string;
   description: string;
   repoHref: string;
-  repoLabel: string;
   configureHref: string;
 };
 
@@ -22,7 +21,6 @@ const plugins: IDEPlugin[] = [
     description:
       'The official Glean plugin for Claude Code. Extends your Glean MCP connection with native Claude Code skills for enterprise search, people discovery, and knowledge retrieval — purpose-built for your development workflow.',
     repoHref: 'https://github.com/gleanwork/claude-plugins',
-    repoLabel: 'View on GitHub',
     configureHref:
       'https://app.glean.com/settings/install?mcpConfigure=true&mcpHost=claude-code',
   },
@@ -32,8 +30,7 @@ const plugins: IDEPlugin[] = [
     accentColor: '#1c1c1c',
     description:
       "The official Glean plugin for Cursor. Run /add-plugin glean to connect Cursor's AI to your company's knowledge — enterprise search, code exploration, and people discovery, backed by your Glean MCP server.",
-    repoHref: 'https://cursor.com/marketplace/glean',
-    repoLabel: 'View in Marketplace',
+    repoHref: 'https://github.com/gleanwork/cursor-plugins',
     configureHref:
       'https://app.glean.com/settings/install?mcpConfigure=true&mcpHost=cursor',
   },
@@ -70,7 +67,7 @@ export default function IDEPluginSection() {
                   to={plugin.repoHref}
                   className={clsx('button button--secondary', styles.docsBtn)}
                 >
-                  {plugin.repoLabel}
+                  View on GitHub
                 </Link>
                 <Link
                   to={plugin.configureHref}
