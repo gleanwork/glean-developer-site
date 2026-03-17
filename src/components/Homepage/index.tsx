@@ -31,8 +31,8 @@ export default function Home() {
       title: 'Build with Our APIs',
       body: 'Search, chat, and agent APIs with client libraries for Python, TypeScript, Java, and Go.',
       href: 'api-info/client/getting-started/overview',
-      icon: 'code-block',
-      iconSet: 'glean',
+      icon: 'Code',
+      iconSet: 'feather',
       color: GLEAN_BRAND_COLORS.PRIMARY_BLUE,
     },
     {
@@ -49,6 +49,8 @@ export default function Home() {
     <>
       {/* Dynamic Carousel Section */}
       <CarouselSection />
+
+      <hr />
 
       {/* IDE Plugin Promotion */}
       <IDEPluginSection />
