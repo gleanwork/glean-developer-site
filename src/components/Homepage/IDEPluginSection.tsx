@@ -19,7 +19,7 @@ const plugins: IDEPlugin[] = [
     logo: '/img/mcp-clients/claude.png',
     accentColor: '#D97757',
     description:
-      "Pull your company's docs, decisions, code context, and experts into Claude Code without leaving the terminal. Glean answers with your organization's actual knowledge.",
+      'The official Glean plugin for Claude Code. Extends your Glean MCP connection with native Claude Code skills for enterprise search, people discovery, and knowledge retrieval — purpose-built for your development workflow.',
     repoHref: 'https://github.com/gleanwork/claude-plugins',
     configureHref:
       'https://app.glean.com/settings/install?mcpConfigure=true&mcpHost=claude-code',
@@ -29,7 +29,7 @@ const plugins: IDEPlugin[] = [
     logo: '/img/mcp-clients/cursor.png',
     accentColor: '#1c1c1c',
     description:
-      "Ground Cursor's AI in your organization's real knowledge base. Search internal docs, surface relevant context, and reference the right people as you code.",
+      "The official Glean plugin for Cursor. Run /add-plugin glean to connect Cursor's AI to your company's knowledge — enterprise search, code exploration, and people discovery, backed by your Glean MCP server.",
     repoHref: 'https://github.com/gleanwork/cursor-plugins',
     configureHref:
       'https://app.glean.com/settings/install?mcpConfigure=true&mcpHost=cursor',
@@ -39,10 +39,10 @@ const plugins: IDEPlugin[] = [
 export default function IDEPluginSection() {
   return (
     <section className={clsx('container', styles.section)}>
-      <h2 className={styles.sectionHeading}>Get Glean in Your IDE</h2>
+      <h2 className={styles.sectionHeading}>Official IDE Plugins</h2>
       <p className={styles.sectionSubheading}>
-        One MCP connection gives your AI coding assistant access to your entire
-        company's knowledge.
+        Go beyond MCP — our official plugins add purpose-built skills and tools
+        for Claude Code and Cursor.
       </p>
       <div className="row">
         {plugins.map((plugin) => (
