@@ -62,7 +62,7 @@ export async function generateDeprecations(
   );
 
   const output = convertToDeprecationsOutput(deprecations, extraEndpoints);
-  fs.writeFileSync(outputLocation, JSON.stringify(output, null, 2));
+  fs.writeFileSync(outputLocation, JSON.stringify(output, null, 2) + '\n');
 }
 
 const HTTP_METHODS = ['get', 'post', 'put', 'patch', 'delete'] as const;
