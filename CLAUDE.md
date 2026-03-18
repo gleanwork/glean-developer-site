@@ -70,8 +70,15 @@ The build is orchestrated by Turbo with these key dependencies:
 - Extracts info pages (trafilatura) and API reference pages (Playwright for dynamic content)
 - Two object types: `infoPage` and `apiReference`
 
+## MCP Server Policy
+
+**We promote the remote MCP server exclusively. Never reference or recommend `@gleanwork/mcp-server` (the local npm package) — it is old and deprecated in favour of the remote server. All MCP documentation, examples, and guidance must direct users to the remote MCP server and the MCP Configurator at `/guides/mcp`.**
+
+**Authentication: The primary auth mechanism for the remote MCP server is OAuth. Do not tell users they need an API token — that is one option but not the default or recommended path.**
+
 ## Content Guidelines
 
 - Prefer built-in Docusaurus components over custom React components
 - Use existing CSS classes (infima or custom) rather than creating new ones
 - Avoid inline CSS styles
+- Do not invent or fabricate content (tool names, API details, code examples, steps) — only document what is verified and accurate

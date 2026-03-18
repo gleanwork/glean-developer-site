@@ -1,10 +1,10 @@
 import React from 'react';
 import clsx from 'clsx';
 import Link from '@docusaurus/Link';
-import { Info } from 'react-feather';
 import styles from './index.module.css';
 import Card from '@theme/Card';
 import CarouselSection from './CarouselSection';
+import IDEPluginSection from './IDEPluginSection';
 import { GLEAN_BRAND_COLORS } from '@gleanwork/docusaurus-theme-glean/brandColors';
 
 type Feature = {
@@ -30,8 +30,8 @@ export default function Home() {
       title: 'Build with Our APIs',
       body: 'Search, chat, and agent APIs with client libraries for Python, TypeScript, Java, and Go.',
       href: 'api-info/client/getting-started/overview',
-      icon: 'code-block',
-      iconSet: 'glean',
+      icon: 'Code',
+      iconSet: 'feather',
       color: GLEAN_BRAND_COLORS.PRIMARY_BLUE,
     },
     {
@@ -49,15 +49,10 @@ export default function Home() {
       {/* Dynamic Carousel Section */}
       <CarouselSection />
 
-      {/* Docs MCP Info Banner */}
-      <div className={styles.mcpInfoBanner}>
-        <Info size={20} />
-        <span>
-          Connect your AI coding assistant to Glean's developer documentation
-          via MCP for instant access to API references and guides.{' '}
-          <Link to="/docs-mcp">Get started.</Link>
-        </span>
-      </div>
+      <hr />
+
+      {/* IDE Plugin Promotion */}
+      <IDEPluginSection />
 
       <hr />
 
