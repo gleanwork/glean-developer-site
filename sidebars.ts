@@ -470,15 +470,9 @@ const baseSidebars: SidebarsConfig = {
               id: 'api-info/client/authentication/oauth',
               label: 'OAuth',
             },
-          ],
-        },
-        {
-          type: 'category',
-          label: 'Authorization',
-          items: [
             {
               type: 'doc',
-              id: 'api-info/client/authorization/datasource-oauth',
+              id: 'api-info/client/authentication/datasource-oauth',
               label: 'Datasource OAuth',
             },
           ],
