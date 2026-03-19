@@ -2,11 +2,11 @@ openapi: 3.0.0
 info:
   version: 0.9.0
   title: Glean API - Governance
-  x-source-commit-sha: 4045699340887e4fc9b61bee0cf0ed888e74fcc1
+  x-source-commit-sha: b82cd7608fd801b317cf9df15ebfb73f83d9febc
   description: API endpoints for Governance
   x-logo:
     url: https://app.glean.com/images/glean-text2.svg
-  x-open-api-commit-sha: 24c3e1f002896f627e40e5e9031a65214bd921e3
+  x-open-api-commit-sha: 0b2689b6010d15de5b45dc85490080ea14936ea6
   x-speakeasy-name: Glean API
 servers:
   - url: https://{instance}-be.glean.com
@@ -14,8 +14,7 @@ servers:
       instance:
         default: instance-name
         description: The instance name (typically the email domain without the TLD) that determines the deployment backend.
-security:
-  - APIToken: []
+security: []
 paths:
   /rest/api/v1/governance/data/policies/{id}:
     get:
@@ -24,6 +23,8 @@ paths:
       description: Fetches the specified policy version, or the latest if no version is provided.
       tags:
         - Governance
+      security:
+        - APIToken: []
       parameters:
         - name: id
           in: path
@@ -62,7 +63,7 @@ paths:
 
             with Glean(
                 api_token=os.getenv("GLEAN_API_TOKEN", ""),
-                instance=os.getenv("GLEAN_INSTANCE", ""),
+                server_url="https://mycompany-be.glean.com",
             ) as glean:
 
                 res = glean.client.governance.data.policies.retrieve(id="<id>")
@@ -76,7 +77,7 @@ paths:
 
             const glean = new Glean({
               apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
-              instance: process.env["GLEAN_INSTANCE"] ?? "",
+              serverURL: "https://mycompany-be.glean.com",
             });
 
             async function run() {
@@ -88,7 +89,7 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithInstance(os.Getenv(\"GLEAN_INSTANCE\")),\n    )\n\n    res, err := s.Client.Governance.Data.Policies.Retrieve(ctx, \"<id>\", nil)\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.GetDlpReportResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Client.Governance.Data.Policies.Retrieve(ctx, \"<id>\", nil)\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.GetDlpReportResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -111,7 +112,7 @@ paths:
                             .call();
 
                     if (res.getDlpReportResponse().isPresent()) {
-                        // handle response
+                        System.out.println(res.getDlpReportResponse().get());
                     }
                 }
             }
@@ -121,6 +122,8 @@ paths:
       description: Updates an existing policy.
       tags:
         - Governance
+      security:
+        - APIToken: []
       parameters:
         - name: id
           in: path
@@ -157,7 +160,7 @@ paths:
 
             with Glean(
                 api_token=os.getenv("GLEAN_API_TOKEN", ""),
-                instance=os.getenv("GLEAN_INSTANCE", ""),
+                server_url="https://mycompany-be.glean.com",
             ) as glean:
 
                 res = glean.client.governance.data.policies.update(id="<id>")
@@ -171,7 +174,7 @@ paths:
 
             const glean = new Glean({
               apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
-              instance: process.env["GLEAN_INSTANCE"] ?? "",
+              serverURL: "https://mycompany-be.glean.com",
             });
 
             async function run() {
@@ -183,7 +186,7 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithInstance(os.Getenv(\"GLEAN_INSTANCE\")),\n    )\n\n    res, err := s.Client.Governance.Data.Policies.Update(ctx, \"<id>\", components.UpdateDlpReportRequest{})\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.UpdateDlpReportResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Client.Governance.Data.Policies.Update(ctx, \"<id>\", components.UpdateDlpReportRequest{})\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.UpdateDlpReportResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -209,7 +212,7 @@ paths:
                             .call();
 
                     if (res.updateDlpReportResponse().isPresent()) {
-                        // handle response
+                        System.out.println(res.updateDlpReportResponse().get());
                     }
                 }
             }
@@ -220,6 +223,8 @@ paths:
       description: Lists policies with filtering.
       tags:
         - Governance
+      security:
+        - APIToken: []
       parameters:
         - name: autoHide
           in: query
@@ -257,7 +262,7 @@ paths:
 
             with Glean(
                 api_token=os.getenv("GLEAN_API_TOKEN", ""),
-                instance=os.getenv("GLEAN_INSTANCE", ""),
+                server_url="https://mycompany-be.glean.com",
             ) as glean:
 
                 res = glean.client.governance.data.policies.list()
@@ -271,7 +276,7 @@ paths:
 
             const glean = new Glean({
               apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
-              instance: process.env["GLEAN_INSTANCE"] ?? "",
+              serverURL: "https://mycompany-be.glean.com",
             });
 
             async function run() {
@@ -283,7 +288,7 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithInstance(os.Getenv(\"GLEAN_INSTANCE\")),\n    )\n\n    res, err := s.Client.Governance.Data.Policies.List(ctx, nil, nil)\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.ListDlpReportsResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Client.Governance.Data.Policies.List(ctx, nil, nil)\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.ListDlpReportsResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -305,7 +310,7 @@ paths:
                             .call();
 
                     if (res.listDlpReportsResponse().isPresent()) {
-                        // handle response
+                        System.out.println(res.listDlpReportsResponse().get());
                     }
                 }
             }
@@ -315,6 +320,8 @@ paths:
       description: Creates a new policy with specified specifications and returns its id.
       tags:
         - Governance
+      security:
+        - APIToken: []
       requestBody:
         content:
           application/json; charset=UTF-8:
@@ -345,7 +352,7 @@ paths:
 
             with Glean(
                 api_token=os.getenv("GLEAN_API_TOKEN", ""),
-                instance=os.getenv("GLEAN_INSTANCE", ""),
+                server_url="https://mycompany-be.glean.com",
             ) as glean:
 
                 res = glean.client.governance.data.policies.create()
@@ -359,7 +366,7 @@ paths:
 
             const glean = new Glean({
               apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
-              instance: process.env["GLEAN_INSTANCE"] ?? "",
+              serverURL: "https://mycompany-be.glean.com",
             });
 
             async function run() {
@@ -371,7 +378,7 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithInstance(os.Getenv(\"GLEAN_INSTANCE\")),\n    )\n\n    res, err := s.Client.Governance.Data.Policies.Create(ctx, components.CreateDlpReportRequest{})\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.CreateDlpReportResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Client.Governance.Data.Policies.Create(ctx, components.CreateDlpReportRequest{})\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.CreateDlpReportResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -398,7 +405,7 @@ paths:
                             .call();
 
                     if (res.createDlpReportResponse().isPresent()) {
-                        // handle response
+                        System.out.println(res.createDlpReportResponse().get());
                     }
                 }
             }
@@ -409,6 +416,8 @@ paths:
       description: Downloads CSV violations report for a specific policy id. This does not support continuous policies.
       tags:
         - Governance
+      security:
+        - APIToken: []
       parameters:
         - name: id
           in: path
@@ -443,7 +452,7 @@ paths:
 
             with Glean(
                 api_token=os.getenv("GLEAN_API_TOKEN", ""),
-                instance=os.getenv("GLEAN_INSTANCE", ""),
+                server_url="https://mycompany-be.glean.com",
             ) as glean:
 
                 res = glean.client.governance.data.policies.download(id="<id>")
@@ -457,7 +466,7 @@ paths:
 
             const glean = new Glean({
               apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
-              instance: process.env["GLEAN_INSTANCE"] ?? "",
+              serverURL: "https://mycompany-be.glean.com",
             });
 
             async function run() {
@@ -469,7 +478,7 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithInstance(os.Getenv(\"GLEAN_INSTANCE\")),\n    )\n\n    res, err := s.Client.Governance.Data.Policies.Download(ctx, \"<id>\")\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.Res != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Client.Governance.Data.Policies.Download(ctx, \"<id>\")\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.Res != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -492,7 +501,7 @@ paths:
                             .call();
 
                     if (res.res().isPresent()) {
-                        // handle response
+                        System.out.println(res.res().get());
                     }
                 }
             }
@@ -503,6 +512,8 @@ paths:
       description: Creates a new one-time report and executes its batch job.
       tags:
         - Governance
+      security:
+        - APIToken: []
       requestBody:
         content:
           application/json; charset=UTF-8:
@@ -533,7 +544,7 @@ paths:
 
             with Glean(
                 api_token=os.getenv("GLEAN_API_TOKEN", ""),
-                instance=os.getenv("GLEAN_INSTANCE", ""),
+                server_url="https://mycompany-be.glean.com",
             ) as glean:
 
                 res = glean.client.governance.data.reports.create()
@@ -547,7 +558,7 @@ paths:
 
             const glean = new Glean({
               apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
-              instance: process.env["GLEAN_INSTANCE"] ?? "",
+              serverURL: "https://mycompany-be.glean.com",
             });
 
             async function run() {
@@ -559,7 +570,7 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithInstance(os.Getenv(\"GLEAN_INSTANCE\")),\n    )\n\n    res, err := s.Client.Governance.Data.Reports.Create(ctx, components.UpdateDlpConfigRequest{})\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.UpdateDlpConfigResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Client.Governance.Data.Reports.Create(ctx, components.UpdateDlpConfigRequest{})\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.UpdateDlpConfigResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -586,7 +597,7 @@ paths:
                             .call();
 
                     if (res.updateDlpConfigResponse().isPresent()) {
-                        // handle response
+                        System.out.println(res.updateDlpConfigResponse().get());
                     }
                 }
             }
@@ -597,6 +608,8 @@ paths:
       description: Downloads CSV violations report for a specific report id.
       tags:
         - Governance
+      security:
+        - APIToken: []
       parameters:
         - name: id
           in: path
@@ -629,7 +642,7 @@ paths:
 
             with Glean(
                 api_token=os.getenv("GLEAN_API_TOKEN", ""),
-                instance=os.getenv("GLEAN_INSTANCE", ""),
+                server_url="https://mycompany-be.glean.com",
             ) as glean:
 
                 res = glean.client.governance.data.reports.download(id="<id>")
@@ -643,7 +656,7 @@ paths:
 
             const glean = new Glean({
               apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
-              instance: process.env["GLEAN_INSTANCE"] ?? "",
+              serverURL: "https://mycompany-be.glean.com",
             });
 
             async function run() {
@@ -655,7 +668,7 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithInstance(os.Getenv(\"GLEAN_INSTANCE\")),\n    )\n\n    res, err := s.Client.Governance.Data.Reports.Download(ctx, \"<id>\")\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.Res != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Client.Governance.Data.Reports.Download(ctx, \"<id>\")\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.Res != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -678,7 +691,7 @@ paths:
                             .call();
 
                     if (res.res().isPresent()) {
-                        // handle response
+                        System.out.println(res.res().get());
                     }
                 }
             }
@@ -689,6 +702,8 @@ paths:
       description: Fetches the status of the run corresponding to the report-id.
       tags:
         - Governance
+      security:
+        - APIToken: []
       parameters:
         - name: id
           in: path
@@ -720,7 +735,7 @@ paths:
 
             with Glean(
                 api_token=os.getenv("GLEAN_API_TOKEN", ""),
-                instance=os.getenv("GLEAN_INSTANCE", ""),
+                server_url="https://mycompany-be.glean.com",
             ) as glean:
 
                 res = glean.client.governance.data.reports.status(id="<id>")
@@ -734,7 +749,7 @@ paths:
 
             const glean = new Glean({
               apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
-              instance: process.env["GLEAN_INSTANCE"] ?? "",
+              serverURL: "https://mycompany-be.glean.com",
             });
 
             async function run() {
@@ -746,7 +761,7 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithInstance(os.Getenv(\"GLEAN_INSTANCE\")),\n    )\n\n    res, err := s.Client.Governance.Data.Reports.Status(ctx, \"<id>\")\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.ReportStatusResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Client.Governance.Data.Reports.Status(ctx, \"<id>\")\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.ReportStatusResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -769,7 +784,7 @@ paths:
                             .call();
 
                     if (res.reportStatusResponse().isPresent()) {
-                        // handle response
+                        System.out.println(res.reportStatusResponse().get());
                     }
                 }
             }
@@ -780,6 +795,8 @@ paths:
       description: Fetches the visibility override status of the documents passed.
       tags:
         - Governance
+      security:
+        - APIToken: []
       parameters:
         - name: docIds
           in: query
@@ -812,7 +829,7 @@ paths:
 
             with Glean(
                 api_token=os.getenv("GLEAN_API_TOKEN", ""),
-                instance=os.getenv("GLEAN_INSTANCE", ""),
+                server_url="https://mycompany-be.glean.com",
             ) as glean:
 
                 res = glean.client.governance.documents.visibilityoverrides.list()
@@ -826,7 +843,7 @@ paths:
 
             const glean = new Glean({
               apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
-              instance: process.env["GLEAN_INSTANCE"] ?? "",
+              serverURL: "https://mycompany-be.glean.com",
             });
 
             async function run() {
@@ -838,7 +855,7 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithInstance(os.Getenv(\"GLEAN_INSTANCE\")),\n    )\n\n    res, err := s.Client.Governance.Documents.Visibilityoverrides.List(ctx, nil)\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.GetDocumentVisibilityOverridesResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Client.Governance.Documents.Visibilityoverrides.List(ctx, nil)\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.GetDocumentVisibilityOverridesResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -860,7 +877,7 @@ paths:
                             .call();
 
                     if (res.getDocumentVisibilityOverridesResponse().isPresent()) {
-                        // handle response
+                        System.out.println(res.getDocumentVisibilityOverridesResponse().get());
                     }
                 }
             }
@@ -870,6 +887,8 @@ paths:
       description: Sets the visibility-override state of the documents specified, effectively hiding or un-hiding documents.
       tags:
         - Governance
+      security:
+        - APIToken: []
       requestBody:
         content:
           application/json; charset=UTF-8:
@@ -900,7 +919,7 @@ paths:
 
             with Glean(
                 api_token=os.getenv("GLEAN_API_TOKEN", ""),
-                instance=os.getenv("GLEAN_INSTANCE", ""),
+                server_url="https://mycompany-be.glean.com",
             ) as glean:
 
                 res = glean.client.governance.documents.visibilityoverrides.create()
@@ -914,7 +933,7 @@ paths:
 
             const glean = new Glean({
               apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
-              instance: process.env["GLEAN_INSTANCE"] ?? "",
+              serverURL: "https://mycompany-be.glean.com",
             });
 
             async function run() {
@@ -926,7 +945,7 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithInstance(os.Getenv(\"GLEAN_INSTANCE\")),\n    )\n\n    res, err := s.Client.Governance.Documents.Visibilityoverrides.Create(ctx, components.UpdateDocumentVisibilityOverridesRequest{})\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.UpdateDocumentVisibilityOverridesResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Client.Governance.Documents.Visibilityoverrides.Create(ctx, components.UpdateDocumentVisibilityOverridesRequest{})\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.UpdateDocumentVisibilityOverridesResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -953,7 +972,7 @@ paths:
                             .call();
 
                     if (res.updateDocumentVisibilityOverridesResponse().isPresent()) {
-                        // handle response
+                        System.out.println(res.updateDocumentVisibilityOverridesResponse().get());
                     }
                 }
             }
@@ -964,6 +983,8 @@ paths:
       description: Creates a new DLP findings export job.
       tags:
         - Governance
+      security:
+        - APIToken: []
       requestBody:
         content:
           application/json; charset=UTF-8:
@@ -992,7 +1013,7 @@ paths:
 
             with Glean(
                 api_token=os.getenv("GLEAN_API_TOKEN", ""),
-                instance=os.getenv("GLEAN_INSTANCE", ""),
+                server_url="https://mycompany-be.glean.com",
             ) as glean:
 
                 res = glean.governance.createfindingsexport()
@@ -1006,7 +1027,7 @@ paths:
 
             const glean = new Glean({
               apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
-              instance: process.env["GLEAN_INSTANCE"] ?? "",
+              serverURL: "https://mycompany-be.glean.com",
             });
 
             async function run() {
@@ -1018,7 +1039,7 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithInstance(os.Getenv(\"GLEAN_INSTANCE\")),\n    )\n\n    res, err := s.Governance.Createfindingsexport(ctx, components.DlpExportFindingsRequest{})\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.ExportInfo != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Governance.Createfindingsexport(ctx, components.DlpExportFindingsRequest{})\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.ExportInfo != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -1045,7 +1066,7 @@ paths:
                             .call();
 
                     if (res.exportInfo().isPresent()) {
-                        // handle response
+                        System.out.println(res.exportInfo().get());
                     }
                 }
             }
@@ -1055,6 +1076,8 @@ paths:
       description: Lists all DLP findings exports.
       tags:
         - Governance
+      security:
+        - APIToken: []
       responses:
         '200':
           description: OK
@@ -1077,7 +1100,7 @@ paths:
 
             with Glean(
                 api_token=os.getenv("GLEAN_API_TOKEN", ""),
-                instance=os.getenv("GLEAN_INSTANCE", ""),
+                server_url="https://mycompany-be.glean.com",
             ) as glean:
 
                 res = glean.governance.listfindingsexports()
@@ -1091,7 +1114,7 @@ paths:
 
             const glean = new Glean({
               apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
-              instance: process.env["GLEAN_INSTANCE"] ?? "",
+              serverURL: "https://mycompany-be.glean.com",
             });
 
             async function run() {
@@ -1103,7 +1126,7 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithInstance(os.Getenv(\"GLEAN_INSTANCE\")),\n    )\n\n    res, err := s.Governance.Listfindingsexports(ctx)\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.ListDlpFindingsExportsResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Governance.Listfindingsexports(ctx)\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.ListDlpFindingsExportsResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -1125,7 +1148,7 @@ paths:
                             .call();
 
                     if (res.listDlpFindingsExportsResponse().isPresent()) {
-                        // handle response
+                        System.out.println(res.listDlpFindingsExportsResponse().get());
                     }
                 }
             }
@@ -1136,6 +1159,8 @@ paths:
       description: Downloads a DLP findings export as a CSV file.
       tags:
         - Governance
+      security:
+        - APIToken: []
       parameters:
         - name: id
           in: path
@@ -1166,7 +1191,7 @@ paths:
 
             with Glean(
                 api_token=os.getenv("GLEAN_API_TOKEN", ""),
-                instance=os.getenv("GLEAN_INSTANCE", ""),
+                server_url="https://mycompany-be.glean.com",
             ) as glean:
 
                 res = glean.governance.downloadfindingsexport(id="<id>")
@@ -1180,7 +1205,7 @@ paths:
 
             const glean = new Glean({
               apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
-              instance: process.env["GLEAN_INSTANCE"] ?? "",
+              serverURL: "https://mycompany-be.glean.com",
             });
 
             async function run() {
@@ -1192,7 +1217,7 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithInstance(os.Getenv(\"GLEAN_INSTANCE\")),\n    )\n\n    res, err := s.Governance.Downloadfindingsexport(ctx, \"<id>\")\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.Res != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Governance.Downloadfindingsexport(ctx, \"<id>\")\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.Res != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -1215,7 +1240,7 @@ paths:
                             .call();
 
                     if (res.res().isPresent()) {
-                        // handle response
+                        System.out.println(res.res().get());
                     }
                 }
             }
@@ -1225,6 +1250,8 @@ paths:
       description: Deletes a DLP findings export.
       tags:
         - Governance
+      security:
+        - APIToken: []
       parameters:
         - name: id
           in: path
@@ -1251,7 +1278,7 @@ paths:
 
             with Glean(
                 api_token=os.getenv("GLEAN_API_TOKEN", ""),
-                instance=os.getenv("GLEAN_INSTANCE", ""),
+                server_url="https://mycompany-be.glean.com",
             ) as glean:
 
                 glean.governance.deletefindingsexport(id=741945)
@@ -1264,7 +1291,7 @@ paths:
 
             const glean = new Glean({
               apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
-              instance: process.env["GLEAN_INSTANCE"] ?? "",
+              serverURL: "https://mycompany-be.glean.com",
             });
 
             async function run() {
@@ -1276,7 +1303,7 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithInstance(os.Getenv(\"GLEAN_INSTANCE\")),\n    )\n\n    res, err := s.Governance.Deletefindingsexport(ctx, 741945)\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Governance.Deletefindingsexport(ctx, 741945)\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -1375,13 +1402,13 @@ components:
             - UNLIKELY
             - VERY_UNLIKELY
           deprecated: true
-          x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2026-10-15: Field is deprecated'
           x-glean-deprecated:
             - id: d45039ec-d6f6-47ba-93b7-ab2307b07f84
               introduced: '2026-02-05'
               kind: property
               message: Field is deprecated
               removal: '2026-10-15'
+          x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2026-10-15: Field is deprecated'
         infoType:
           type: string
           description: Text representation of an info-type to scan for.
@@ -1412,12 +1439,12 @@ components:
         enabled:
           type: boolean
           deprecated: true
-          x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2026-10-15: Field is deprecated'
           x-glean-deprecated:
             id: e9260be6-209b-4ce2-a4b3-f7f22879dd86
             introduced: '2026-02-05'
             message: Field is deprecated
             removal: '2026-10-15'
+          x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2026-10-15: Field is deprecated'
         threshold:
           type: integer
           description: The minimum number of users the document is shared with.
@@ -1427,12 +1454,12 @@ components:
         anyoneWithLinkEnabled:
           type: boolean
           deprecated: true
-          x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2026-10-15: Field is deprecated'
           x-glean-deprecated:
             id: 30646ced-e0db-43ef-8412-64a67c5d0f53
             introduced: '2026-02-05'
             message: Field is deprecated
             removal: '2026-10-15'
+          x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2026-10-15: Field is deprecated'
         anyoneInternalEnabled:
           type: boolean
           description: Only users within the organization can access the document.
@@ -1591,12 +1618,12 @@ components:
             domainAccessEnabled:
               type: boolean
       deprecated: true
-      x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2026-10-15: Use broadSharingOptions instead'
       x-glean-deprecated:
         id: 7c9e4a1d-3f8b-4e2c-9a5d-6b0f1c8e2d4a
         introduced: '2026-02-05'
         message: Use broadSharingOptions instead
         removal: '2026-10-15'
+      x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2026-10-15: Use broadSharingOptions instead'
     DocumentVisibilityUpdateResult:
       allOf:
         - $ref: '#/components/schemas/DocumentVisibilityOverride'
@@ -1649,12 +1676,12 @@ components:
             type: string
           description: list of url regex matching documents excluded from report
           deprecated: true
-          x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2026-10-15: Field is deprecated'
           x-glean-deprecated:
             id: e022aaa5-56e6-4b57-bca3-b11943da76a0
             introduced: '2026-02-05'
             message: Field is deprecated
             removal: '2026-10-15'
+          x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2026-10-15: Field is deprecated'
         datasourcesType:
           type: string
           enum:
@@ -1667,12 +1694,12 @@ components:
             type: string
           description: List of datasources to consider for report. DEPRECATED - use datasourceInstances instead.
           deprecated: true
-          x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2026-10-15: Use datasourceInstances instead'
           x-glean-deprecated:
             id: 97e35970-e0ed-4248-be13-2af8c22e7894
             introduced: '2026-02-05'
             message: Use datasourceInstances instead
             removal: '2026-10-15'
+          x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2026-10-15: Use datasourceInstances instead'
         datasourceInstances:
           type: array
           items:
@@ -1844,36 +1871,36 @@ components:
             $ref: '#/components/schemas/SensitiveInfoType'
           description: DEPRECATED - use 'customSensitiveExpressions' instead.
           deprecated: true
-          x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2026-10-15: Use customSensitiveExpressions instead'
           x-glean-deprecated:
             id: 3497cb1c-f7aa-42d8-81b8-309c3adeed84
             introduced: '2026-02-05'
             message: Use customSensitiveExpressions instead
             removal: '2026-10-15'
+          x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2026-10-15: Use customSensitiveExpressions instead'
         sensitiveTerms:
           type: array
           items:
             $ref: '#/components/schemas/SensitiveExpression'
           description: DEPRECATED - use 'customSensitiveExpressions' instead.
           deprecated: true
-          x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2026-10-15: Use customSensitiveExpressions instead'
           x-glean-deprecated:
             id: b0713b37-472e-4c29-80ba-6f5d6f2b449c
             introduced: '2026-02-05'
             message: Use customSensitiveExpressions instead
             removal: '2026-10-15'
+          x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2026-10-15: Use customSensitiveExpressions instead'
         sensitiveRegexes:
           type: array
           items:
             $ref: '#/components/schemas/SensitiveExpression'
           description: DEPRECATED - use 'customSensitiveExpressions' instead.
           deprecated: true
-          x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2026-10-15: Use customSensitiveExpressions instead'
           x-glean-deprecated:
             id: a26e1920-36b6-4c0f-981f-57b09a9ebce3
             introduced: '2026-02-05'
             message: Use customSensitiveExpressions instead
             removal: '2026-10-15'
+          x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2026-10-15: Use customSensitiveExpressions instead'
         customSensitiveExpressions:
           type: array
           items:
@@ -1892,12 +1919,12 @@ components:
             $ref: '#/components/schemas/SensitiveInfoType'
           description: DEPRECATED - use `sensitiveContentOptions` instead.
           deprecated: true
-          x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2026-10-15: Use sensitiveContentOptions instead'
           x-glean-deprecated:
             id: 60d6d182-e9d0-448d-af75-137f68bbdcbf
             introduced: '2026-02-05'
             message: Use sensitiveContentOptions instead
             removal: '2026-10-15'
+          x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2026-10-15: Use sensitiveContentOptions instead'
         inputOptions:
           $ref: '#/components/schemas/InputOptions'
           description: Options for documents to include or exclude in a report
@@ -1905,12 +1932,12 @@ components:
           $ref: '#/components/schemas/ExternalSharingOptions'
           description: DEPRECATED - use `broadSharingOptions` instead.
           deprecated: true
-          x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2026-10-15: Use broadSharingOptions instead'
           x-glean-deprecated:
             id: 6484ec17-a133-4176-b2ce-28e25b0e9065
             introduced: '2026-02-05'
             message: Use broadSharingOptions instead
             removal: '2026-10-15'
+          x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2026-10-15: Use broadSharingOptions instead'
         broadSharingOptions:
           $ref: '#/components/schemas/SharingOptions'
           description: Options for defining documents to scan for sensitive content.

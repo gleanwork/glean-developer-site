@@ -2,11 +2,11 @@ openapi: 3.0.0
 info:
   version: 0.9.0
   title: Glean API - Summarize
-  x-source-commit-sha: 4045699340887e4fc9b61bee0cf0ed888e74fcc1
+  x-source-commit-sha: b82cd7608fd801b317cf9df15ebfb73f83d9febc
   description: API endpoints for Summarize
   x-logo:
     url: https://app.glean.com/images/glean-text2.svg
-  x-open-api-commit-sha: 24c3e1f002896f627e40e5e9031a65214bd921e3
+  x-open-api-commit-sha: 0b2689b6010d15de5b45dc85490080ea14936ea6
   x-speakeasy-name: Glean API
 servers:
   - url: https://{instance}-be.glean.com
@@ -14,8 +14,7 @@ servers:
       instance:
         default: instance-name
         description: The instance name (typically the email domain without the TLD) that determines the deployment backend.
-security:
-  - APIToken: []
+security: []
 paths:
   /rest/api/v1/summarize:
     post:
@@ -49,6 +48,8 @@ paths:
           description: Not Authorized
         '429':
           description: Too Many Requests
+      security:
+        - APIToken: []
       x-speakeasy-name-override: summarize
       x-speakeasy-group: client.documents
       x-codeSamples:
@@ -61,7 +62,7 @@ paths:
 
             with Glean(
                 api_token=os.getenv("GLEAN_API_TOKEN", ""),
-                instance=os.getenv("GLEAN_INSTANCE", ""),
+                server_url="https://mycompany-be.glean.com",
             ) as glean:
 
                 res = glean.client.documents.summarize(document_specs=[
@@ -80,7 +81,7 @@ paths:
 
             const glean = new Glean({
               apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
-              instance: process.env["GLEAN_INSTANCE"] ?? "",
+              serverURL: "https://mycompany-be.glean.com",
             });
 
             async function run() {
@@ -106,7 +107,7 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithInstance(os.Getenv(\"GLEAN_INSTANCE\")),\n    )\n\n    res, err := s.Client.Documents.Summarize(ctx, components.SummarizeRequest{\n        DocumentSpecs: []components.DocumentSpecUnion{\n            components.CreateDocumentSpecUnionDocumentSpec4(\n                components.DocumentSpec4{\n                    UgcType: components.DocumentSpecUgcType2Chats,\n                    UgcID: \"<id>\",\n                },\n            ),\n            components.CreateDocumentSpecUnionDocumentSpec4(\n                components.DocumentSpec4{\n                    UgcType: components.DocumentSpecUgcType2Chats,\n                    UgcID: \"<id>\",\n                },\n            ),\n            components.CreateDocumentSpecUnionDocumentSpec2(\n                components.DocumentSpec2{\n                    ID: \"<id>\",\n                },\n            ),\n        },\n    }, nil)\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.SummarizeResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Client.Documents.Summarize(ctx, components.SummarizeRequest{\n        DocumentSpecs: []components.DocumentSpecUnion{\n            components.CreateDocumentSpecUnionDocumentSpec4(\n                components.DocumentSpec4{\n                    UgcType: components.DocumentSpecUgcType2Chats,\n                    UgcID: \"<id>\",\n                },\n            ),\n            components.CreateDocumentSpecUnionDocumentSpec4(\n                components.DocumentSpec4{\n                    UgcType: components.DocumentSpecUgcType2Chats,\n                    UgcID: \"<id>\",\n                },\n            ),\n            components.CreateDocumentSpecUnionDocumentSpec2(\n                components.DocumentSpec2{\n                    ID: \"<id>\",\n                },\n            ),\n        },\n    }, nil)\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.SummarizeResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -144,7 +145,7 @@ paths:
                             .call();
 
                     if (res.summarizeResponse().isPresent()) {
-                        // handle response
+                        System.out.println(res.summarizeResponse().get());
                     }
                 }
             }
