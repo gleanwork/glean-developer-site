@@ -470,6 +470,11 @@ const baseSidebars: SidebarsConfig = {
               id: 'api-info/client/authentication/oauth',
               label: 'OAuth',
             },
+            {
+              type: 'doc',
+              id: 'api-info/client/authentication/datasource-oauth',
+              label: 'Datasource OAuth',
+            },
           ],
         },
       ],
