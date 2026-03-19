@@ -1,0 +1,327 @@
+openapi: 3.0.0
+info:
+  version: 0.9.0
+  title: Glean API - Datasources
+  x-source-commit-sha: b82cd7608fd801b317cf9df15ebfb73f83d9febc
+  description: API endpoints for Datasources
+  x-logo:
+    url: https://app.glean.com/images/glean-text2.svg
+  x-open-api-commit-sha: 0b2689b6010d15de5b45dc85490080ea14936ea6
+  x-speakeasy-name: Glean API
+servers:
+  - url: https://{instance}-be.glean.com
+    variables:
+      instance:
+        default: instance-name
+        description: The instance name (typically the email domain without the TLD) that determines the deployment backend.
+security: []
+paths:
+  /rest/api/v1/configure/datasources/{datasourceId}/instances/{instanceId}:
+    get:
+      operationId: getDatasourceInstanceConfiguration
+      summary: Get datasource instance configuration
+      description: |
+        Gets the greenlisted configuration values for a datasource instance. Returns only configuration keys that are exposed via the public API greenlist.
+      tags:
+        - Datasources
+      security:
+        - APIToken: []
+      parameters:
+        - $ref: '#/components/parameters/datasourceId'
+        - $ref: '#/components/parameters/instanceId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DatasourceConfigurationResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Not authorized
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Datasource instance not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-visibility: Preview
+      x-codeSamples:
+        - lang: Python
+          label: Python (API Client)
+          source: |-
+            from glean.api_client import Glean
+            import os
+
+
+            with Glean(
+                api_token=os.getenv("GLEAN_API_TOKEN", ""),
+                server_url="https://mycompany-be.glean.com",
+            ) as glean:
+
+                res = glean.datasources.get_datasource_instance_configuration(datasource_id="o365sharepoint", instance_id="o365sharepoint_abc123")
+
+                # Handle response
+                print(res)
+        - lang: JavaScript
+          label: Typescript (API Client)
+          source: |-
+            import { Glean } from "@gleanwork/api-client";
+
+            const glean = new Glean({
+              apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
+              serverURL: "https://mycompany-be.glean.com",
+            });
+
+            async function run() {
+              const result = await glean.datasources.getDatasourceInstanceConfiguration("o365sharepoint", "o365sharepoint_abc123");
+
+              console.log(result);
+            }
+
+            run();
+        - lang: Go
+          label: Go (API Client)
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Datasources.GetDatasourceInstanceConfiguration(ctx, \"o365sharepoint\", \"o365sharepoint_abc123\")\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.DatasourceConfigurationResponse != nil {\n        // handle response\n    }\n}"
+        - lang: Java
+          label: Java (API Client)
+          source: |-
+            package hello.world;
+
+            import com.glean.api_client.glean_api_client.Glean;
+            import com.glean.api_client.glean_api_client.models.errors.ErrorResponse;
+            import com.glean.api_client.glean_api_client.models.operations.GetDatasourceInstanceConfigurationResponse;
+            import java.lang.Exception;
+
+            public class Application {
+
+                public static void main(String[] args) throws ErrorResponse, Exception {
+
+                    Glean sdk = Glean.builder()
+                            .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
+                        .build();
+
+                    GetDatasourceInstanceConfigurationResponse res = sdk.datasources().getDatasourceInstanceConfiguration()
+                            .datasourceId("o365sharepoint")
+                            .instanceId("o365sharepoint_abc123")
+                            .call();
+
+                    if (res.datasourceConfigurationResponse().isPresent()) {
+                        System.out.println(res.datasourceConfigurationResponse().get());
+                    }
+                }
+            }
+    patch:
+      operationId: updateDatasourceInstanceConfiguration
+      summary: Update datasource instance configuration
+      description: |
+        Updates the greenlisted configuration values for a datasource instance. Only configuration keys that are exposed via the public API greenlist may be set. Returns the full greenlisted configuration after the update is applied.
+      tags:
+        - Datasources
+      security:
+        - APIToken: []
+      parameters:
+        - $ref: '#/components/parameters/datasourceId'
+        - $ref: '#/components/parameters/instanceId'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateDatasourceConfigurationRequest'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DatasourceConfigurationResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Not authorized
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Datasource instance not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-visibility: Preview
+      x-codeSamples:
+        - lang: Python
+          label: Python (API Client)
+          source: |-
+            from glean.api_client import Glean
+            import os
+
+
+            with Glean(
+                api_token=os.getenv("GLEAN_API_TOKEN", ""),
+                server_url="https://mycompany-be.glean.com",
+            ) as glean:
+
+                res = glean.datasources.update_datasource_instance_configuration(datasource_id="o365sharepoint", instance_id="o365sharepoint_abc123", configuration={
+                    "values": {
+
+                    },
+                })
+
+                # Handle response
+                print(res)
+        - lang: JavaScript
+          label: Typescript (API Client)
+          source: |-
+            import { Glean } from "@gleanwork/api-client";
+
+            const glean = new Glean({
+              apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
+              serverURL: "https://mycompany-be.glean.com",
+            });
+
+            async function run() {
+              const result = await glean.datasources.updateDatasourceInstanceConfiguration({
+                configuration: {
+                  values: {
+
+                  },
+                },
+              }, "o365sharepoint", "o365sharepoint_abc123");
+
+              console.log(result);
+            }
+
+            run();
+        - lang: Go
+          label: Go (API Client)
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Datasources.UpdateDatasourceInstanceConfiguration(ctx, \"o365sharepoint\", \"o365sharepoint_abc123\", components.UpdateDatasourceConfigurationRequest{\n        Configuration: components.DatasourceInstanceConfiguration{\n            Values: map[string]components.ConfigurationValue{\n\n            },\n        },\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.DatasourceConfigurationResponse != nil {\n        // handle response\n    }\n}"
+        - lang: Java
+          label: Java (API Client)
+          source: |-
+            package hello.world;
+
+            import com.glean.api_client.glean_api_client.Glean;
+            import com.glean.api_client.glean_api_client.models.components.DatasourceInstanceConfiguration;
+            import com.glean.api_client.glean_api_client.models.components.UpdateDatasourceConfigurationRequest;
+            import com.glean.api_client.glean_api_client.models.errors.ErrorResponse;
+            import com.glean.api_client.glean_api_client.models.operations.UpdateDatasourceInstanceConfigurationResponse;
+            import java.lang.Exception;
+            import java.util.Map;
+
+            public class Application {
+
+                public static void main(String[] args) throws ErrorResponse, Exception {
+
+                    Glean sdk = Glean.builder()
+                            .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
+                        .build();
+
+                    UpdateDatasourceInstanceConfigurationResponse res = sdk.datasources().updateDatasourceInstanceConfiguration()
+                            .datasourceId("o365sharepoint")
+                            .instanceId("o365sharepoint_abc123")
+                            .updateDatasourceConfigurationRequest(UpdateDatasourceConfigurationRequest.builder()
+                                .configuration(DatasourceInstanceConfiguration.builder()
+                                    .values(Map.ofEntries(
+                                    ))
+                                    .build())
+                                .build())
+                            .call();
+
+                    if (res.datasourceConfigurationResponse().isPresent()) {
+                        System.out.println(res.datasourceConfigurationResponse().get());
+                    }
+                }
+            }
+components:
+  schemas:
+    ErrorResponse:
+      type: object
+      description: Error response returned for failed requests
+      properties:
+        message:
+          type: string
+          description: Client-facing error message describing what went wrong
+    ConfigurationValue:
+      type: object
+      properties:
+        value:
+          type: string
+          description: The configuration value as a string. Only one of value or valueList should be populated.
+        valueList:
+          type: array
+          items:
+            type: string
+          description: The configuration value as a list of strings. Only one of value or valueList should be populated.
+      description: A single configuration value, either a scalar or a list
+    UpdateDatasourceConfigurationRequest:
+      type: object
+      properties:
+        configuration:
+          $ref: '#/components/schemas/DatasourceInstanceConfiguration'
+      required:
+        - configuration
+      description: |
+        Request to update greenlisted configuration values for a datasource instance. Only keys that are exposed via the public API greenlist may be set.
+    ConfigurationValues:
+      type: object
+      additionalProperties:
+        $ref: '#/components/schemas/ConfigurationValue'
+      description: A map from configuration key names to their values
+    DatasourceConfigurationResponse:
+      type: object
+      properties:
+        configuration:
+          $ref: '#/components/schemas/DatasourceInstanceConfiguration'
+      required:
+        - configuration
+      description: |
+        The greenlisted configuration values for a datasource instance. Only keys that are exposed via the public API greenlist are included.
+    DatasourceInstanceConfiguration:
+      type: object
+      properties:
+        values:
+          $ref: '#/components/schemas/ConfigurationValues'
+      required:
+        - values
+      description: Configuration for a datasource instance
+  securitySchemes:
+    APIToken:
+      scheme: bearer
+      type: http
+  parameters:
+    datasourceId:
+      name: datasourceId
+      in: path
+      description: The datasource type identifier (e.g. o365sharepoint)
+      required: true
+      schema:
+        type: string
+        example: o365sharepoint
+    instanceId:
+      name: instanceId
+      in: path
+      description: The datasource instance identifier
+      required: true
+      schema:
+        type: string
+        example: o365sharepoint_abc123

@@ -2,11 +2,11 @@ openapi: 3.0.0
 info:
   version: 0.9.0
   title: Glean API - Agents
-  x-source-commit-sha: 4045699340887e4fc9b61bee0cf0ed888e74fcc1
+  x-source-commit-sha: b82cd7608fd801b317cf9df15ebfb73f83d9febc
   description: API endpoints for Agents
   x-logo:
     url: https://app.glean.com/images/glean-text2.svg
-  x-open-api-commit-sha: 24c3e1f002896f627e40e5e9031a65214bd921e3
+  x-open-api-commit-sha: 0b2689b6010d15de5b45dc85490080ea14936ea6
   x-speakeasy-name: Glean API
 servers:
   - url: https://{instance}-be.glean.com
@@ -14,8 +14,7 @@ servers:
       instance:
         default: instance-name
         description: The instance name (typically the email domain without the TLD) that determines the deployment backend.
-security:
-  - APIToken: []
+security: []
 paths:
   /rest/api/v1/agents/{agent_id}:
     get:
@@ -55,6 +54,8 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
         '500':
           description: Internal server error
+      security:
+        - APIToken: []
       x-speakeasy-group: client.agents
       x-speakeasy-name-override: retrieve
       x-codeSamples:
@@ -67,7 +68,7 @@ paths:
 
             with Glean(
                 api_token=os.getenv("GLEAN_API_TOKEN", ""),
-                instance=os.getenv("GLEAN_INSTANCE", ""),
+                server_url="https://mycompany-be.glean.com",
             ) as glean:
 
                 res = glean.client.agents.retrieve(agent_id="<id>")
@@ -81,7 +82,7 @@ paths:
 
             const glean = new Glean({
               apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
-              instance: process.env["GLEAN_INSTANCE"] ?? "",
+              serverURL: "https://mycompany-be.glean.com",
             });
 
             async function run() {
@@ -93,19 +94,20 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithInstance(os.Getenv(\"GLEAN_INSTANCE\")),\n    )\n\n    res, err := s.Client.Agents.Retrieve(ctx, \"<id>\", nil, nil)\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.Agent != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Client.Agents.Retrieve(ctx, \"<id>\", nil, nil)\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.Agent != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
             package hello.world;
 
             import com.glean.api_client.glean_api_client.Glean;
+            import com.glean.api_client.glean_api_client.models.errors.ErrorResponse;
             import com.glean.api_client.glean_api_client.models.operations.GetAgentResponse;
             import java.lang.Exception;
 
             public class Application {
 
-                public static void main(String[] args) throws Exception {
+                public static void main(String[] args) throws ErrorResponse, Exception {
 
                     Glean sdk = Glean.builder()
                             .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
@@ -116,7 +118,7 @@ paths:
                             .call();
 
                     if (res.agent().isPresent()) {
-                        // handle response
+                        System.out.println(res.agent().get());
                     }
                 }
             }
@@ -164,6 +166,8 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
         '500':
           description: Internal server error
+      security:
+        - APIToken: []
       x-speakeasy-group: client.agents
       x-speakeasy-name-override: retrieveSchemas
       x-codeSamples:
@@ -176,7 +180,7 @@ paths:
 
             with Glean(
                 api_token=os.getenv("GLEAN_API_TOKEN", ""),
-                instance=os.getenv("GLEAN_INSTANCE", ""),
+                server_url="https://mycompany-be.glean.com",
             ) as glean:
 
                 res = glean.client.agents.retrieve_schemas(agent_id="<id>")
@@ -190,7 +194,7 @@ paths:
 
             const glean = new Glean({
               apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
-              instance: process.env["GLEAN_INSTANCE"] ?? "",
+              serverURL: "https://mycompany-be.glean.com",
             });
 
             async function run() {
@@ -202,19 +206,20 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithInstance(os.Getenv(\"GLEAN_INSTANCE\")),\n    )\n\n    res, err := s.Client.Agents.RetrieveSchemas(ctx, \"<id>\", nil, nil)\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.AgentSchemas != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Client.Agents.RetrieveSchemas(ctx, \"<id>\", nil, nil)\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.AgentSchemas != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
             package hello.world;
 
             import com.glean.api_client.glean_api_client.Glean;
+            import com.glean.api_client.glean_api_client.models.errors.ErrorResponse;
             import com.glean.api_client.glean_api_client.models.operations.GetAgentSchemasResponse;
             import java.lang.Exception;
 
             public class Application {
 
-                public static void main(String[] args) throws Exception {
+                public static void main(String[] args) throws ErrorResponse, Exception {
 
                     Glean sdk = Glean.builder()
                             .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
@@ -225,7 +230,7 @@ paths:
                             .call();
 
                     if (res.agentSchemas().isPresent()) {
-                        // handle response
+                        System.out.println(res.agentSchemas().get());
                     }
                 }
             }
@@ -268,6 +273,8 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
         '500':
           description: Internal server error
+      security:
+        - APIToken: []
       x-speakeasy-group: client.agents
       x-speakeasy-name-override: list
       x-codeSamples:
@@ -280,7 +287,7 @@ paths:
 
             with Glean(
                 api_token=os.getenv("GLEAN_API_TOKEN", ""),
-                instance=os.getenv("GLEAN_INSTANCE", ""),
+                server_url="https://mycompany-be.glean.com",
             ) as glean:
 
                 res = glean.client.agents.list(name="HR Policy Agent")
@@ -294,7 +301,7 @@ paths:
 
             const glean = new Glean({
               apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
-              instance: process.env["GLEAN_INSTANCE"] ?? "",
+              serverURL: "https://mycompany-be.glean.com",
             });
 
             async function run() {
@@ -308,7 +315,7 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithInstance(os.Getenv(\"GLEAN_INSTANCE\")),\n    )\n\n    res, err := s.Client.Agents.List(ctx, components.SearchAgentsRequest{\n        Name: apiclientgo.Pointer(\"HR Policy Agent\"),\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.SearchAgentsResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Client.Agents.List(ctx, components.SearchAgentsRequest{\n        Name: apiclientgo.Pointer(\"HR Policy Agent\"),\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.SearchAgentsResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -316,12 +323,13 @@ paths:
 
             import com.glean.api_client.glean_api_client.Glean;
             import com.glean.api_client.glean_api_client.models.components.SearchAgentsRequest;
+            import com.glean.api_client.glean_api_client.models.errors.ErrorResponse;
             import com.glean.api_client.glean_api_client.models.operations.SearchAgentsResponse;
             import java.lang.Exception;
 
             public class Application {
 
-                public static void main(String[] args) throws Exception {
+                public static void main(String[] args) throws ErrorResponse, Exception {
 
                     Glean sdk = Glean.builder()
                             .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
@@ -336,7 +344,7 @@ paths:
                             .call();
 
                     if (res.searchAgentsResponse().isPresent()) {
-                        // handle response
+                        System.out.println(res.searchAgentsResponse().get());
                     }
                 }
             }
@@ -402,6 +410,8 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
         '500':
           description: Internal server error
+      security:
+        - APIToken: []
       x-speakeasy-group: client.agents
       x-speakeasy-name-override: runStream
       x-codeSamples:
@@ -414,7 +424,7 @@ paths:
 
             with Glean(
                 api_token=os.getenv("GLEAN_API_TOKEN", ""),
-                instance=os.getenv("GLEAN_INSTANCE", ""),
+                server_url="https://mycompany-be.glean.com",
             ) as glean:
 
                 res = glean.client.agents.run_stream(agent_id="<id>", messages=[
@@ -432,7 +442,7 @@ paths:
 
             const glean = new Glean({
               apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
-              instance: process.env["GLEAN_INSTANCE"] ?? "",
+              serverURL: "https://mycompany-be.glean.com",
             });
 
             async function run() {
@@ -451,7 +461,7 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithInstance(os.Getenv(\"GLEAN_INSTANCE\")),\n    )\n\n    res, err := s.Client.Agents.RunStream(ctx, components.AgentRunCreate{\n        AgentID: \"<id>\",\n        Messages: []components.Message{\n            components.Message{\n                Role: apiclientgo.Pointer(\"USER\"),\n            },\n        },\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.Res != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Client.Agents.RunStream(ctx, components.AgentRunCreate{\n        AgentID: \"<id>\",\n        Messages: []components.Message{\n            components.Message{\n                Role: apiclientgo.Pointer(\"USER\"),\n            },\n        },\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.Res != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -460,13 +470,14 @@ paths:
             import com.glean.api_client.glean_api_client.Glean;
             import com.glean.api_client.glean_api_client.models.components.AgentRunCreate;
             import com.glean.api_client.glean_api_client.models.components.Message;
+            import com.glean.api_client.glean_api_client.models.errors.ErrorResponse;
             import com.glean.api_client.glean_api_client.models.operations.CreateAndStreamRunResponse;
             import java.lang.Exception;
             import java.util.List;
 
             public class Application {
 
-                public static void main(String[] args) throws Exception {
+                public static void main(String[] args) throws ErrorResponse, Exception {
 
                     Glean sdk = Glean.builder()
                             .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
@@ -485,7 +496,7 @@ paths:
                             .call();
 
                     if (res.res().isPresent()) {
-                        // handle response
+                        System.out.println(res.res().get());
                     }
                 }
             }
@@ -522,6 +533,8 @@ paths:
           description: Validation Error
         '500':
           description: Internal server error
+      security:
+        - APIToken: []
       x-speakeasy-group: client.agents
       x-speakeasy-name-override: run
       x-codeSamples:
@@ -534,7 +547,7 @@ paths:
 
             with Glean(
                 api_token=os.getenv("GLEAN_API_TOKEN", ""),
-                instance=os.getenv("GLEAN_INSTANCE", ""),
+                server_url="https://mycompany-be.glean.com",
             ) as glean:
 
                 res = glean.client.agents.run(agent_id="<id>", messages=[
@@ -552,7 +565,7 @@ paths:
 
             const glean = new Glean({
               apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
-              instance: process.env["GLEAN_INSTANCE"] ?? "",
+              serverURL: "https://mycompany-be.glean.com",
             });
 
             async function run() {
@@ -571,7 +584,7 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithInstance(os.Getenv(\"GLEAN_INSTANCE\")),\n    )\n\n    res, err := s.Client.Agents.Run(ctx, components.AgentRunCreate{\n        AgentID: \"<id>\",\n        Messages: []components.Message{\n            components.Message{\n                Role: apiclientgo.Pointer(\"USER\"),\n            },\n        },\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.AgentRunWaitResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Client.Agents.Run(ctx, components.AgentRunCreate{\n        AgentID: \"<id>\",\n        Messages: []components.Message{\n            components.Message{\n                Role: apiclientgo.Pointer(\"USER\"),\n            },\n        },\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.AgentRunWaitResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -605,7 +618,7 @@ paths:
                             .call();
 
                     if (res.agentRunWaitResponse().isPresent()) {
-                        // handle response
+                        System.out.println(res.agentRunWaitResponse().get());
                     }
                 }
             }
@@ -622,10 +635,6 @@ components:
       type: string
       enum:
         - text
-    ErrorResponse:
-      type: string
-      title: ErrorResponse
-      description: Error message returned from the server
     SearchAgentsRequest:
       type: object
       properties:
@@ -633,6 +642,13 @@ components:
           type: string
           description: Filters on the name of the agent. The keyword search is case-insensitive. If search string is ommited or empty, acts as no filter.
           example: HR Policy Agent
+    ErrorResponse:
+      type: object
+      description: Error response returned for failed requests
+      properties:
+        message:
+          type: string
+          description: Client-facing error message describing what went wrong
     ActionSummary:
       type: object
       description: Represents a minimal summary of an action.
@@ -646,6 +662,31 @@ components:
         display_name:
           type: string
           description: The display name of the action.
+        type:
+          type: string
+          description: The type of tool - RETRIEVAL for read-only operations, ACTION for operations that modify data.
+        auth_type:
+          type: string
+          description: The authentication type required - OAUTH_USER, OAUTH_ADMIN, API_KEY, BASIC_AUTH, DWD (domain-wide delegation), or NONE.
+        write_action_type:
+          type: string
+          description: For write actions only - REDIRECT (client renders URL) or EXECUTION (external server call).
+        is_setup_finished:
+          type: boolean
+          description: Whether this action has been fully configured and validated.
+          x-includeEmpty: true
+        data_source:
+          type: string
+          description: |
+            Indicates the kind of knowledge a tool would access or modify.
+            Company knowledge:
+              - Glean search, and any native tools that derive from it (e.g., expert search, code search)
+              - Native federated tools to company data sources (e.g., outlook search)
+            World knowledge:
+              - Platform action like bravewebsearch, geminiwebsearch, etc
+            Neutral knowledge:
+              - Native tools that don't access or modify content via APIs (e.g., file analyst, think)
+              - Platform read or write tools (creator has to determine their knowledge implications)
     Agent:
       title: Agent
       type: object
@@ -725,6 +766,13 @@ components:
           title: Metadata
           description: The metadata to pass to the agent.
           additionalProperties: true
+    AgentRun:
+      allOf:
+        - $ref: '#/components/schemas/AgentRunCreate'
+        - type: object
+          properties:
+            status:
+              $ref: '#/components/schemas/AgentExecutionStatus'
     AgentSchemas:
       properties:
         agent_id:
@@ -732,6 +780,11 @@ components:
           title: Agent Id
           description: The ID of the agent.
           example: mho4lwzylcozgoc2
+        name:
+          type: string
+          title: Agent Name
+          description: The name of the agent.
+          example: HR Policy Agent
         input_schema:
           type: object
           title: Input Schema
@@ -753,13 +806,6 @@ components:
         - output_schema
       title: AgentSchemas
       description: Defines the structure and properties of an agent.
-    AgentRun:
-      allOf:
-        - $ref: '#/components/schemas/AgentRunCreate'
-        - type: object
-          properties:
-            status:
-              $ref: '#/components/schemas/AgentExecutionStatus'
     Message:
       type: object
       properties:
