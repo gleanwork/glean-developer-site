@@ -2,11 +2,11 @@ openapi: 3.0.0
 info:
   version: 0.9.0
   title: Glean API - Chat
-  x-source-commit-sha: 46c103d4cb6663364fc3a7a1730d370157cbfc3b
+  x-source-commit-sha: 065091cbaa45bccce1a25c344d29fbb89b9d556d
   description: API endpoints for Chat
   x-logo:
     url: https://app.glean.com/images/glean-text2.svg
-  x-open-api-commit-sha: e5ec36ce374053ce4b42dcb612c1908ca1687ac8
+  x-open-api-commit-sha: 2c6a9ca11722a7273718ee387ee66c1cf03c3a64
   x-speakeasy-name: Glean API
 servers:
   - url: https://{instance}-be.glean.com
@@ -3086,23 +3086,6 @@ components:
           items:
             $ref: '#/components/schemas/CollectionPinMetadata'
           description: List of targets this Collection can be pinned to, excluding the targets this Collection is already pinned to. We also include Collection ID already is pinned to each eligible target, which will be 0 if the target has no pinned Collection.
-    ChatMessageCitation:
-      description: Information about the source for a ChatMessage.
-      properties:
-        trackingToken:
-          type: string
-          description: An opaque token that represents this particular result in this particular ChatMessage. To be used for /feedback reporting.
-        sourceDocument:
-          $ref: '#/components/schemas/Document'
-        sourceFile:
-          $ref: '#/components/schemas/ChatFile'
-        sourcePerson:
-          $ref: '#/components/schemas/Person'
-        referenceRanges:
-          description: Each reference range and its corresponding snippets
-          type: array
-          items:
-            $ref: '#/components/schemas/ReferenceRange'
     ChatMessageFragment:
       description: Represents a part of a ChatMessage that originates from a single action/tool. It is designed to support rich data formats beyond simple text, allowing for a more dynamic and interactive chat experience. Each fragment can include various types of content, such as text, search queries, action information, and more. Also, each ChatMessageFragment should only have one of structuredResults, querySuggestion, writeAction, followupAction, agentRecommendation, followupRoutingSuggestion or file.
       allOf:
@@ -3272,6 +3255,25 @@ components:
           items:
             $ref: '#/components/schemas/UserRoleSpecification'
           description: A list of roles for this Chat.
+    ChatMessageCitation:
+      description: Information about the source for a ChatMessage.
+      properties:
+        trackingToken:
+          type: string
+          description: An opaque token that represents this particular result in this particular ChatMessage. To be used for /feedback reporting.
+        sourceDocument:
+          $ref: '#/components/schemas/Document'
+        sourceFile:
+          $ref: '#/components/schemas/ChatFile'
+        sourcePerson:
+          $ref: '#/components/schemas/Person'
+        sourceCustomEntity:
+          $ref: '#/components/schemas/CustomEntity'
+        referenceRanges:
+          description: Each reference range and its corresponding snippets
+          type: array
+          items:
+            $ref: '#/components/schemas/ReferenceRange'
     CodeLine:
       properties:
         content:
