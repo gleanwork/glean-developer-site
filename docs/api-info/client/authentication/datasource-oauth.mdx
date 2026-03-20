@@ -1,0 +1,113 @@
+---
+title: Datasource OAuth Redirects
+sidebar_label: Datasource OAuth
+description: Control where users land after completing datasource OAuth authorization
+---
+
+# Datasource OAuth Redirects
+
+Some datasources — such as Slack and GitHub — require individual users to complete an OAuth authorization flow before Glean can access their data. The [`checkdatasourceauth`](/api/client-api/authentication/checkdatasourceauth) endpoint identifies which datasources still need authorization and provides the URLs to initiate those flows.
+
+By default, after a user completes datasource OAuth, they are redirected to the Glean web application. For API-only or headless integrations that don't use the Glean UI, you can control where users land after authorization using the mechanisms described below.
+
+:::info
+This guide covers **per-user datasource OAuth** redirects (connecting individual user accounts to datasources like Slack or GitHub). For general Client API authentication, see the [OAuth](/api-info/client/authentication/oauth) or [Glean Tokens](/api-info/client/authentication/glean-issued) guides.
+:::
+
+---
+
+## Controlling the Post-Auth Redirect
+
+### Per-Request Redirect (`final_redirect_url`)
+
+The recommended approach for API and headless integrations. Pass the `final_redirect_url` query parameter when calling `checkdatasourceauth`:
+
+```
+POST /rest/api/v1/checkdatasourceauth?final_redirect_url=https://yourapp.example.com/oauth-complete
+```
+
+The returned `authUrlRelativePath` for each datasource instance automatically includes the redirect, so no additional URL construction is needed beyond the standard flow.
+
+```bash
+curl -X POST 'https://<instance>-be.glean.com/rest/api/v1/checkdatasourceauth?final_redirect_url=https%3A%2F%2Fyourapp.example.com%2Foauth-complete' \
+  -H 'Authorization: Bearer <token>' \
+  -H 'Content-Type: application/json'
+```
+
+### Tenant-Level Default (`oauth.postAuthRedirectUrl`)
+
+A tenant-wide fallback configured by an administrator. When set, all datasource OAuth flows that don't specify a per-request `final_redirect_url` will redirect to this URL instead of the default Glean landing page.
+
+This is useful when all OAuth flows across your integration should redirect to the same destination.
+
+---
+
+## Redirect Resolution Order
+
+The redirect destination is resolved in this order:
+
+1. **`final_redirect_url` query parameter** — if provided on the `checkdatasourceauth` request
+2. **`oauth.postAuthRedirectUrl` tenant config** — if set by an administrator
+3. **Default Glean landing page** — the standard fallback
+
+---
+
+## Example: Full Flow
+
+<Steps>
+  <Step title="Call checkdatasourceauth with final_redirect_url">
+    Include the `final_redirect_url` query parameter to specify where users should land after completing OAuth.
+
+```bash
+curl -X POST 'https://<instance>-be.glean.com/rest/api/v1/checkdatasourceauth?final_redirect_url=https%3A%2F%2Fyourapp.example.com%2Foauth-complete' \
+  -H 'Authorization: Bearer <token>' \
+  -H 'Content-Type: application/json'
+```
+  </Step>
+
+  <Step title="Receive the response">
+    The response includes datasource instances that need authorization. Each entry contains an `authUrlRelativePath` that already incorporates your redirect URL.
+
+```json
+{
+  "unauthorizedDatasourceInstances": [
+    {
+      "datasourceInstance": "slack_0",
+      "displayName": "Slack",
+      "authStatus": "AWAITING_AUTH",
+      "authUrlRelativePath": "/auth/datasource/slack_0?token=..."
+    }
+  ]
+}
+```
+  </Step>
+
+  <Step title="Construct the full OAuth URL">
+    Prepend your Glean backend base URL to the `authUrlRelativePath`:
+
+```
+https://<instance>-be.glean.com/<authUrlRelativePath>
+```
+  </Step>
+
+  <Step title="Redirect the user">
+    Send the user to the constructed URL. They complete the datasource's OAuth flow (e.g., authorizing Glean in Slack).
+  </Step>
+
+  <Step title="User lands at your redirect URL">
+    After completing OAuth, the user is redirected to the `final_redirect_url` you specified (`https://yourapp.example.com/oauth-complete` in this example) instead of the default Glean landing page.
+  </Step>
+</Steps>
+
+---
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="checkdatasourceauth API Reference" href="/api/client-api/authentication/checkdatasourceauth" icon="Book">
+    Full API reference for the checkdatasourceauth endpoint
+  </Card>
+  <Card title="Web SDK Settings Component" href="/libraries/web-sdk/components/settings" icon="Settings">
+    The Settings component handles datasource OAuth in embedded UI integrations
+  </Card>
+</CardGroup>
