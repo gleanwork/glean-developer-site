@@ -4,7 +4,7 @@ import {
   useVisibleSidebarItems,
 } from '@docusaurus/plugin-content-docs/client';
 import DocSidebarItem from '@theme/DocSidebarItem';
-import { FeatureFlagsContext } from '@site/src/theme/Root';
+import { FeatureFlagsContext } from '../FeatureFlagsProvider/context';
 import type { Props } from '@theme/DocSidebarItems';
 
 function filterItemsByFlags(
@@ -29,7 +29,6 @@ function filterItemsByFlags(
       return item;
     })
     .filter((item) => {
-      // Remove empty categories (all children were hidden)
       if (item.type === 'category') {
         return item.items && item.items.length > 0;
       }

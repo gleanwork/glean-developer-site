@@ -25,14 +25,14 @@ export function evaluateFlag(
   if (!def) return { enabled: false, reason: 'missing' };
 
   const now = context.currentTime ? new Date(context.currentTime) : new Date();
-  
+
   if (def.enableAfter) {
     const enableDate = new Date(def.enableAfter);
     if (!isNaN(enableDate.getTime()) && now < enableDate) {
       return { enabled: false, reason: 'not-yet-enabled' };
     }
   }
-  
+
   if (def.disableAfter) {
     const disableDate = new Date(def.disableAfter);
     if (!isNaN(disableDate.getTime()) && now > disableDate) {
@@ -75,6 +75,3 @@ export function flagsSnapshotToBooleans(
   }
   return out;
 }
-
-
-

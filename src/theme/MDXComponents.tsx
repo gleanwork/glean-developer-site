@@ -4,7 +4,7 @@ import CardGroup from '@theme/CardGroup';
 import { Steps, Step } from '@theme/Steps';
 import Frame from '@theme/Frame';
 import { Icon } from '@theme/Icons';
-import FeatureFlag from '@site/src/components/FeatureFlag';
+import FeatureFlag from '@theme/FeatureFlag';
 
 export default {
   ...MDXComponents,
