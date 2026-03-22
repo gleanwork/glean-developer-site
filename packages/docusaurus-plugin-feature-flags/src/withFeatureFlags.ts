@@ -9,7 +9,10 @@ export function withFeatureFlags(config: Config): Config {
 
   const themeConfig = config.themeConfig as any;
   if (themeConfig?.navbar?.items) {
-    themeConfig.navbar.items = getNavbarItems(themeConfig.navbar.items, booleans);
+    themeConfig.navbar.items = getNavbarItems(
+      themeConfig.navbar.items,
+      booleans,
+    );
   }
 
   config.customFields = {

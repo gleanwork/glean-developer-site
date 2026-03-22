@@ -175,7 +175,10 @@ const config: Config = {
   } satisfies Preset.ThemeConfig,
 
   plugins: [
-    ['@gleanwork/docusaurus-plugin-feature-flags', { apiEndpoint: '/api/feature-flags' }],
+    [
+      '@gleanwork/docusaurus-plugin-feature-flags',
+      { apiEndpoint: '/api/feature-flags' },
+    ],
     function (context, options) {
       return {
         name: 'webpack-config',

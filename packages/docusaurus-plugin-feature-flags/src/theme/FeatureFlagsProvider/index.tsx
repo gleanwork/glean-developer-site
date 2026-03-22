@@ -1,9 +1,4 @@
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import type {
   FeatureFlagsMap,
@@ -53,7 +48,9 @@ function writeCache(data: FeatureFlagsMap) {
   } catch {}
 }
 
-async function fetchRuntimeFlags(apiEndpoint: string): Promise<FeatureFlagsMap | undefined> {
+async function fetchRuntimeFlags(
+  apiEndpoint: string,
+): Promise<FeatureFlagsMap | undefined> {
   try {
     const res = await fetch(apiEndpoint, { headers: { 'x-ff': '1' } });
     if (!res.ok) return undefined;
@@ -70,7 +67,9 @@ type Props = {
 
 export default function FeatureFlagsProvider({ children }: Props) {
   const { siteConfig } = useDocusaurusContext();
-  const pluginData = usePluginData('docusaurus-plugin-feature-flags') as FeatureFlagPluginOptions;
+  const pluginData = usePluginData(
+    'docusaurus-plugin-feature-flags',
+  ) as FeatureFlagPluginOptions;
   const apiEndpoint = pluginData?.apiEndpoint ?? '/api/feature-flags';
   const cacheTtlMs = pluginData?.cacheTtlMs ?? 300_000;
 
