@@ -3,6 +3,11 @@ import { customApiMdGenerator } from './scripts/generator/customMdGenerators';
 
 const sharedOptions = {
   showSchemas: false,
+  // Explicitly enable prop externalization (externalJsonProps defaults to true in
+  // validateOptions, but gen-api-docs CLI bypasses that validation, so we set it here
+  // to ensure large JSON props are written to separate .json files rather than inlined
+  // in MDX — this significantly reduces MDX file sizes and speeds up the Docusaurus build).
+  externalJsonProps: true,
   sidebarOptions: {
     groupPathsBy: 'tag' as const,
     categoryLinkSource: 'tag' as const,
