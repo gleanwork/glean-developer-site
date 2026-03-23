@@ -163,6 +163,7 @@ export function customApiMdGenerator({
     `import OperationTabs from "@theme/OperationTabs";\n`,
     `import TabItem from "@theme/TabItem";\n`,
     `import Heading from "@theme/Heading";\n`,
+    `import Translate from "@docusaurus/Translate";\n`,
     hasDeprecations
       ? `import ApiDeprecations from "@site/src/theme/ApiDeprecations";\n\n`
       : '\n',
