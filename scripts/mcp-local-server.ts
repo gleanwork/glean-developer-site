@@ -18,7 +18,6 @@
  *     -d '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"docs_search","arguments":{"query":"OAuth"}}}'
  */
 
-import 'dotenv/config';
 import http from 'http';
 import path from 'path';
 import { fileURLToPath } from 'url';
