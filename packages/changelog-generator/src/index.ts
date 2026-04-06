@@ -2,7 +2,6 @@
 
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import * as dotenv from 'dotenv';
 import { findUp } from 'find-up';
 import { Command } from 'commander';
 import { createCommand } from './commands/entry-new.js';
@@ -56,18 +55,6 @@ async function findRepoRoot(startDir: string): Promise<string> {
 
 async function main() {
   const repoRoot = await findRepoRoot(process.cwd());
-
-  try {
-    const rootEnvPath = path.join(repoRoot, '.env');
-    const pkgEnvPath = path.join(
-      repoRoot,
-      'packages',
-      'changelog-generator',
-      '.env',
-    );
-    if (fs.existsSync(rootEnvPath)) dotenv.config({ path: rootEnvPath });
-    if (fs.existsSync(pkgEnvPath)) dotenv.config({ path: pkgEnvPath });
-  } catch {}
 
   const program = new Command();
 
