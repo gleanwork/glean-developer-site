@@ -2,11 +2,11 @@ openapi: 3.0.0
 info:
   version: 0.9.0
   title: Glean API - Insights
-  x-source-commit-sha: 960b1b2765070174d2a63633aa1e353b90304a8d
+  x-source-commit-sha: 1483d637252dd129c04a2f4e297e25ad17a26adf
   description: API endpoints for Insights
   x-logo:
     url: https://app.glean.com/images/glean-text2.svg
-  x-open-api-commit-sha: 0aca2849ad6ff56d65033024905e138781ea3dd5
+  x-open-api-commit-sha: 8b6a13c7746970643b1e02b27f20dd9d3bc9d2cd
   x-speakeasy-name: Glean API
 servers:
   - url: https://{instance}-be.glean.com
@@ -2315,6 +2315,29 @@ components:
             values:
               - fieldValues
               - fieldValues
+    CollectionBaseMutableProperties:
+      required:
+        - name
+      properties:
+        addedRoles:
+          description: A list of added user roles for the Collection.
+          type: array
+          items: *ref_16
+        audienceFilters:
+          description: Filters which restrict who should see this Collection. Values are taken from the corresponding filters in people search.
+          type: array
+          items: *ref_18
+        description:
+          description: A brief summary of the Collection's contents.
+          type: string
+        name:
+          description: The unique name of the Collection.
+          type: string
+        removedRoles:
+          description: A list of removed user roles for the Collection.
+          type: array
+          items: *ref_16
+      type: object
     AgentsInsightsV2Response:
       allOf:
         - $ref: '#/components/schemas/CurrentActiveUsers'
@@ -2348,33 +2371,16 @@ components:
               description: Insights for agents time saved over the specified time period.
             dailyAgentRunsTimeseries:
               $ref: '#/components/schemas/LabeledCountInfo'
+            successfulRunsTimeseries:
+              $ref: '#/components/schemas/LabeledCountInfo'
+            failedRunsTimeseries:
+              $ref: '#/components/schemas/LabeledCountInfo'
+            pausedRunsTimeseries:
+              $ref: '#/components/schemas/LabeledCountInfo'
             upvotesTimeseries:
               $ref: '#/components/schemas/LabeledCountInfo'
             downvotesTimeseries:
               $ref: '#/components/schemas/LabeledCountInfo'
-    CollectionBaseMutableProperties:
-      required:
-        - name
-      properties:
-        addedRoles:
-          description: A list of added user roles for the Collection.
-          type: array
-          items: *ref_16
-        audienceFilters:
-          description: Filters which restrict who should see this Collection. Values are taken from the corresponding filters in people search.
-          type: array
-          items: *ref_18
-        description:
-          description: A brief summary of the Collection's contents.
-          type: string
-        name:
-          description: The unique name of the Collection.
-          type: string
-        removedRoles:
-          description: A list of removed user roles for the Collection.
-          type: array
-          items: *ref_16
-      type: object
     QuerySuggestion:
       example: &ref_38
         query: app:github type:pull author:mortimer
