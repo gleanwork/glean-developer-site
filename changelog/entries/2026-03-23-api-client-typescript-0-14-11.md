@@ -3,10 +3,7 @@ title: 'api-client-typescript v0.14.11'
 categories: ['API Clients']
 ---
 
-- : - **Added**.
-- : - **Added**
-- **Added**
-- : **Added**
+Added sourceCustomEntity to message citations in glean.client.chat.create(), glean.client.chat.retrieve(), and glean.client.chat.createStream(). - Added issues enum to glean.governance.createfindingsexport() export type - Changed response.overviewResponse in glean.client.insights.retrieve()
 
 {/* truncate */}
 

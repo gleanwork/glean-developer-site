@@ -3,9 +3,7 @@ title: 'api-client-typescript v0.14.12'
 categories: ['API Clients']
 ---
 
-- : - **Added**.
-- : - **Added**
-- **Changed**
+The request.feedRequest.categories enum value weeklyMeetings was added and response.results was changed in glean.client.search.retrieveFeed(). - Added weeklyMeetings category enum - Changed feed response results
 
 {/* truncate */}
 

@@ -61,6 +61,14 @@ function normalizeText(text: string): string {
   return t.trim();
 }
 
+function isGarbageBullet(text: string): boolean {
+  if (/^[:\s\-*]*\*\*\w+\*\*[.\s]*$/.test(text)) return true;
+  if (/^:\s*-?\s*\*\*/.test(text)) return true;
+  const alphaOnly = text.replace(/[^a-zA-Z]/g, '');
+  if (alphaOnly.length < 10) return true;
+  return false;
+}
+
 function heuristicSummarize(
   text: string,
   opts: { maxChars: number; maxBullets: number },
@@ -79,7 +87,9 @@ function heuristicSummarize(
     }
   }
   if (!intro && lines.length > 0) intro = lines[0];
-  if (!intro) intro = 'Maintenance updates and improvements.';
+  if (!intro || isGarbageBullet(intro)) {
+    intro = 'Maintenance updates and improvements.';
+  }
   if (!/[.!?]$/.test(intro)) intro += '.';
   if (intro.length > opts.maxChars) {
     intro =
@@ -95,7 +105,7 @@ function heuristicSummarize(
     for (const l of lines) {
       if (l.startsWith('- ')) {
         const b = l.slice(2).trim();
-        if (b && /[a-zA-Z]/.test(b)) bullets.push(b);
+        if (b && /[a-zA-Z]/.test(b) && !isGarbageBullet(b)) bullets.push(b);
       }
       if (bullets.length >= maxBullets) break;
     }
@@ -104,7 +114,9 @@ function heuristicSummarize(
       const sentences = cleaned
         .split(/[.!?]\s+/)
         .map((s) => s.trim())
-        .filter((s) => s.length > 20 && /[a-zA-Z]/.test(s));
+        .filter(
+          (s) => s.length > 20 && /[a-zA-Z]/.test(s) && !isGarbageBullet(s),
+        );
       for (const s of sentences.slice(0, maxBullets)) bullets.push(s + '.');
     }
   }
@@ -124,6 +136,7 @@ function hasPlaceholderText(text: string): boolean {
     /\s+\.\s+/,
     /\bthe\s+field\s+is\s+now\s+included\s+in\s+within/,
     /\bresponse\s+type\s+for\s+has\s+changed/,
+    /^-\s*:\s*-?\s*\*\*/m,
   ];
 
   return placeholderPatterns.some((pattern) => pattern.test(text));
@@ -138,10 +151,9 @@ async function summarizeWithGlean(
   const instance = process.env.GLEAN_INSTANCE;
 
   if (!apiToken || (!serverURL && !instance)) {
-    dbgSum(
-      'summarize:skipping LLM (missing GLEAN_API_TOKEN or GLEAN_SERVER_URL)',
+    throw new Error(
+      'LLM summarization requires GLEAN_API_TOKEN and either GLEAN_SERVER_URL or GLEAN_INSTANCE to be set.',
     );
-    return null;
   }
 
   try {
@@ -237,9 +249,9 @@ async function summarizeWithGlean(
           .slice(0, opts.maxChars)
           .replace(/\s+\S*$/, '')
           .trim() + '...';
-  } catch (err) {
-    dbgSum('summarize:error %o', err);
-    return null;
+  } catch (err: any) {
+    const message = err?.message || String(err);
+    throw new Error(`Glean API chat request failed: ${message}`);
   }
 }
 
@@ -261,10 +273,19 @@ export async function summarizeRelease(
       hints: opts.hints,
     });
     if (llm) return llm;
+
+    throw new Error(
+      'LLM summarization failed — check that GLEAN_API_TOKEN is valid and not expired. ' +
+        'Set summarization.mode to "heuristic" in config.yml to use the fallback summarizer.',
+    );
   }
-  dbgSum('summarize:fallback heuristic');
-  return heuristicSummarize(text, {
-    maxChars: opts.maxChars,
-    maxBullets: opts.maxBullets,
-  });
+
+  if (opts.mode === 'heuristic') {
+    return heuristicSummarize(text, {
+      maxChars: opts.maxChars,
+      maxBullets: opts.maxBullets,
+    });
+  }
+
+  return 'Maintenance updates and improvements.';
 }
