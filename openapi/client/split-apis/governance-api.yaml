@@ -2,11 +2,11 @@ openapi: 3.0.0
 info:
   version: 0.9.0
   title: Glean API - Governance
-  x-source-commit-sha: d828d8748baaea5d08328c090c23e1e800990cff
+  x-source-commit-sha: f22099952cadccba25912a5a8a01d9ea21e70e27
   description: API endpoints for Governance
   x-logo:
     url: https://app.glean.com/images/glean-text2.svg
-  x-open-api-commit-sha: 84e37ffdb6ac1463f12d6a578f1cc8c48bc09f34
+  x-open-api-commit-sha: 292e27e6533b64a95d51fa3d49f485681eed2d8b
   x-speakeasy-name: Glean API
 servers:
   - url: https://{instance}-be.glean.com
@@ -1347,6 +1347,15 @@ components:
         - NONE
       description: Interval between scans. DAILY is deprecated.
       x-include-enum-class-prefix: true
+    DlpIssueStatus:
+      type: string
+      enum:
+        - OPEN
+        - CLOSED
+        - IN_PROGRESS
+        - RESOLVED
+      description: Status of a DLP issue.
+      x-include-enum-class-prefix: true
     DlpReportStatus:
       type: string
       enum:
@@ -1792,32 +1801,6 @@ components:
         reportName:
           type: string
           description: The new name of the policy if provided.
-    DlpFindingFilter:
-      properties:
-        infoType:
-          type: string
-        regexId:
-          type: string
-        reportId:
-          type: string
-        datasource:
-          type: string
-        visibility:
-          type: string
-        documentIds:
-          type: array
-          items:
-            type: string
-        severity:
-          $ref: '#/components/schemas/DlpSeverity'
-        documentSeverity:
-          type: array
-          items:
-            $ref: '#/components/schemas/DlpSeverity'
-        timeRange:
-          $ref: '#/components/schemas/TimeRangeFilter'
-        archived:
-          type: boolean
     DlpReport:
       properties:
         id:
@@ -1864,6 +1847,36 @@ components:
           $ref: '#/components/schemas/DlpPerson'
           description: Person who last updated this report.
       description: Full policy information that will be used for scans.
+    DlpFindingFilter:
+      properties:
+        infoType:
+          type: string
+        regexId:
+          type: string
+        reportId:
+          type: string
+        datasource:
+          type: string
+        visibility:
+          type: string
+        documentIds:
+          type: array
+          items:
+            type: string
+        severity:
+          $ref: '#/components/schemas/DlpSeverity'
+        documentSeverity:
+          type: array
+          items:
+            $ref: '#/components/schemas/DlpSeverity'
+        statuses:
+          type: array
+          items:
+            $ref: '#/components/schemas/DlpIssueStatus'
+        timeRange:
+          $ref: '#/components/schemas/TimeRangeFilter'
+        archived:
+          type: boolean
     SensitiveContentOptions:
       properties:
         sensitiveInfoTypes:
