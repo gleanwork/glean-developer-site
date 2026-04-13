@@ -3,8 +3,7 @@ title: 'api-client-python v0.12.8'
 categories: ['API Clients']
 ---
 
-- : **Changed**.
-- : **Changed**
+The response.unauthorized_datasource_instances field was changed in glean.authentication.checkdatasourceauth(). - Review usage of this endpoint for compatibility with the updated response field
 
 {/* truncate */}
 

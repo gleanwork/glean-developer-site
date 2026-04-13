@@ -3,8 +3,7 @@ title: 'api-client-python v0.12.3'
 categories: ['API Clients']
 ---
 
-- : **Added**.
-- : **Added**
+The response.tools field was added to glean.client.agents.retrieve_schemas(). - Added tools field to the agent schema retrieval response
 
 {/* truncate */}
 
