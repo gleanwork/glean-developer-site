@@ -208,10 +208,7 @@ export async function summarizeRelease(
       maxChars: opts.maxChars,
     });
 
-    if (
-      preProcessed.format === 'speakeasy' &&
-      preProcessed.structuredChanges.length > 0
-    ) {
+    if (preProcessed.format === 'speakeasy') {
       dbgSum(
         'summarize:using speakeasy-deterministic for %s %s',
         opts.release.repo,

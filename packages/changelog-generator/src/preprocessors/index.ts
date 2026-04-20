@@ -21,7 +21,7 @@ export function preProcessRelease(
     const cleanedText =
       structuredChanges.length > 0
         ? formatSpeakeasySummary(structuredChanges, opts)
-        : normalizeText(stripBoilerplate(body));
+        : `Released ${release.repo} ${release.tag} generated from updated OpenAPI spec using Speakeasy CLI.`;
 
     return {
       release,
