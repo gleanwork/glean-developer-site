@@ -153,8 +153,7 @@ export function formatSpeakeasySummary(
     details.push(`${c.action} ${fieldName} in ${method}`);
   }
 
-  let result =
-    details.length > 0 ? intro + ' - ' + details.join(' - ') : intro;
+  let result = details.length > 0 ? intro + ' - ' + details.join(' - ') : intro;
 
   // Capitalize first letter
   result = result.charAt(0).toUpperCase() + result.slice(1);

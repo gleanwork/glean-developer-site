@@ -100,7 +100,8 @@ describe('parseSpeakeasyNotes', () => {
 
     expect(changes[0]).toEqual({
       method: 'Glean.Client.Search.RetrieveFeed()',
-      field: 'response.Results[].PrimaryEntry.Workflow.Workflow.LastDraftSavedAt',
+      field:
+        'response.Results[].PrimaryEntry.Workflow.Workflow.LastDraftSavedAt',
       action: 'added',
     });
 
@@ -135,7 +136,8 @@ describe('parseSpeakeasyNotes', () => {
 
     expect(changes[1]).toEqual({
       method: 'Glean.Client.Search.RetrieveFeed()',
-      field: 'response.Results[].PrimaryEntry.PromptTemplate.FavoriteInfo.UgcType.Enum(spreadsheetType)',
+      field:
+        'response.Results[].PrimaryEntry.PromptTemplate.FavoriteInfo.UgcType.Enum(spreadsheetType)',
       action: 'added',
     });
   });
@@ -158,13 +160,15 @@ describe('parseSpeakeasyNotes', () => {
     // Spot-check a few
     expect(changes[0]).toEqual({
       method: 'glean.client.chat.create()',
-      field: 'request.chatRequest.messages[].citations[].sourceFile.metadata.status.enum(partiallyProcessed)',
+      field:
+        'request.chatRequest.messages[].citations[].sourceFile.metadata.status.enum(partiallyProcessed)',
       action: 'added',
     });
 
     expect(changes[4]).toEqual({
       method: 'glean.client.chat.retrieveFiles()',
-      field: 'response.files.Map<ChatFile>.metadata.status.enum(partiallyProcessed)',
+      field:
+        'response.files.Map<ChatFile>.metadata.status.enum(partiallyProcessed)',
       action: 'added',
     });
 

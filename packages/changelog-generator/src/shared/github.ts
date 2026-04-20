@@ -4,10 +4,7 @@ import * as os from 'node:os';
 import { createRequire } from 'node:module';
 import { loadConfig } from '../config.js';
 import { getLatestChangelogEntryDate } from '../latest-entry.js';
-import {
-  createOctokit,
-  findExistingChangelogPR,
-} from '../octo.js';
+import { createOctokit, findExistingChangelogPR } from '../octo.js';
 import type { PullRequest } from '../octo.js';
 import type { AnalyzeOutput } from '../schemas.js';
 import { renderChangelogEntry } from '../template.js';

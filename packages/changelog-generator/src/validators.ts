@@ -5,18 +5,76 @@ const dbgVal = dbg('changelog:validate');
 
 // Words that don't count as meaningful content
 const STRUCTURAL_WORDS = new Set([
-  'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for',
-  'of', 'with', 'by', 'from', 'is', 'are', 'was', 'were', 'be', 'been',
-  'has', 'have', 'had', 'do', 'does', 'did', 'will', 'would', 'could',
-  'should', 'may', 'might', 'can', 'shall', 'not', 'no', 'now', 'new',
-  'its', 'it', 'this', 'that', 'these', 'those', 'also', 'plus',
+  'the',
+  'a',
+  'an',
+  'and',
+  'or',
+  'but',
+  'in',
+  'on',
+  'at',
+  'to',
+  'for',
+  'of',
+  'with',
+  'by',
+  'from',
+  'is',
+  'are',
+  'was',
+  'were',
+  'be',
+  'been',
+  'has',
+  'have',
+  'had',
+  'do',
+  'does',
+  'did',
+  'will',
+  'would',
+  'could',
+  'should',
+  'may',
+  'might',
+  'can',
+  'shall',
+  'not',
+  'no',
+  'now',
+  'new',
+  'its',
+  'it',
+  'this',
+  'that',
+  'these',
+  'those',
+  'also',
+  'plus',
 ]);
 
 const ACTION_WORDS = new Set([
-  'added', 'adds', 'add', 'removed', 'removes', 'remove',
-  'changed', 'changes', 'change', 'updated', 'updates', 'update',
-  'deprecated', 'deprecates', 'deprecate', 'modified', 'modifies',
-  'breaking', 'included', 'includes',
+  'added',
+  'adds',
+  'add',
+  'removed',
+  'removes',
+  'remove',
+  'changed',
+  'changes',
+  'change',
+  'updated',
+  'updates',
+  'update',
+  'deprecated',
+  'deprecates',
+  'deprecate',
+  'modified',
+  'modifies',
+  'breaking',
+  'included',
+  'includes',
 ]);
 
 /**
@@ -29,9 +87,9 @@ function countMeaningfulTokens(text: string): number {
     .toLowerCase()
     .replace(/[^a-z0-9\s]/g, ' ')
     .split(/\s+/)
-    .filter(t => t.length > 1)
-    .filter(t => !STRUCTURAL_WORDS.has(t))
-    .filter(t => !ACTION_WORDS.has(t));
+    .filter((t) => t.length > 1)
+    .filter((t) => !STRUCTURAL_WORDS.has(t))
+    .filter((t) => !ACTION_WORDS.has(t));
   return new Set(tokens).size;
 }
 
@@ -50,7 +108,7 @@ function hasOrphanedFragments(text: string): boolean {
     // "- and add ," (orphaned conjunction)
     /- and (adds?|changed?)\s*,/i,
   ];
-  return patterns.some(p => p.test(text));
+  return patterns.some((p) => p.test(text));
 }
 
 /**
@@ -67,7 +125,7 @@ function hasPlaceholderText(text: string): boolean {
     /\bresponse\s+type\s+for\s+has\s+changed/,
     /^-\s*:\s*-?\s*\*\*/m,
   ];
-  return patterns.some(p => p.test(text));
+  return patterns.some((p) => p.test(text));
 }
 
 export interface ValidationResult {
@@ -90,23 +148,40 @@ export function validateSummary(
   }
 
   if (opts.maxChars && trimmed.length > opts.maxChars) {
-    return { valid: false, reason: `Summary exceeds ${opts.maxChars} chars (${trimmed.length})` };
+    return {
+      valid: false,
+      reason: `Summary exceeds ${opts.maxChars} chars (${trimmed.length})`,
+    };
   }
 
   if (hasPlaceholderText(trimmed)) {
     dbgVal('validate:rejected placeholder text in: %s', trimmed.slice(0, 80));
-    return { valid: false, reason: 'Summary contains placeholder text from failed LLM output' };
+    return {
+      valid: false,
+      reason: 'Summary contains placeholder text from failed LLM output',
+    };
   }
 
   if (hasOrphanedFragments(trimmed)) {
     dbgVal('validate:rejected orphaned fragments in: %s', trimmed.slice(0, 80));
-    return { valid: false, reason: 'Summary contains orphaned structural fragments without meaningful content' };
+    return {
+      valid: false,
+      reason:
+        'Summary contains orphaned structural fragments without meaningful content',
+    };
   }
 
   const meaningfulTokens = countMeaningfulTokens(trimmed);
   if (meaningfulTokens < 5) {
-    dbgVal('validate:rejected low token count (%d) in: %s', meaningfulTokens, trimmed.slice(0, 80));
-    return { valid: false, reason: `Summary has only ${meaningfulTokens} meaningful tokens (minimum 5)` };
+    dbgVal(
+      'validate:rejected low token count (%d) in: %s',
+      meaningfulTokens,
+      trimmed.slice(0, 80),
+    );
+    return {
+      valid: false,
+      reason: `Summary has only ${meaningfulTokens} meaningful tokens (minimum 5)`,
+    };
   }
 
   return { valid: true };
@@ -123,7 +198,10 @@ export function validateRenderedEntry(content: string): ValidationResult {
 
   const endOfFrontmatter = content.indexOf('\n---\n', 4);
   if (endOfFrontmatter === -1) {
-    return { valid: false, reason: 'Malformed YAML frontmatter (no closing ---)' };
+    return {
+      valid: false,
+      reason: 'Malformed YAML frontmatter (no closing ---)',
+    };
   }
 
   const frontmatter = content.slice(4, endOfFrontmatter);
@@ -141,9 +219,8 @@ export function validateRenderedEntry(content: string): ValidationResult {
   // Extract summary (content between frontmatter and truncate marker)
   const body = content.slice(endOfFrontmatter + 5).trim();
   const truncateIdx = body.indexOf('{/* truncate */}');
-  const summary = truncateIdx !== -1
-    ? body.slice(0, truncateIdx).trim()
-    : body.trim();
+  const summary =
+    truncateIdx !== -1 ? body.slice(0, truncateIdx).trim() : body.trim();
 
   if (!summary) {
     return { valid: false, reason: 'Empty summary section' };

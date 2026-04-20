@@ -1,7 +1,10 @@
 import { Glean } from '@gleanwork/api-client';
 import { createRequire } from 'node:module';
 import { preProcessRelease } from './preprocessors/index.js';
-import { stripBoilerplate, normalizeText } from './preprocessors/text-cleaner.js';
+import {
+  stripBoilerplate,
+  normalizeText,
+} from './preprocessors/text-cleaner.js';
 import { validateSummary } from './validators.js';
 import type { RawRelease, SummarizedRelease } from './types.js';
 
@@ -205,8 +208,15 @@ export async function summarizeRelease(
       maxChars: opts.maxChars,
     });
 
-    if (preProcessed.format === 'speakeasy' && preProcessed.structuredChanges.length > 0) {
-      dbgSum('summarize:using speakeasy-deterministic for %s %s', opts.release.repo, opts.release.tag);
+    if (
+      preProcessed.format === 'speakeasy' &&
+      preProcessed.structuredChanges.length > 0
+    ) {
+      dbgSum(
+        'summarize:using speakeasy-deterministic for %s %s',
+        opts.release.repo,
+        opts.release.tag,
+      );
       return {
         release: opts.release,
         summary: preProcessed.cleanedText,
@@ -224,7 +234,15 @@ export async function summarizeRelease(
     });
     if (llm) {
       return {
-        release: opts.release ?? { owner: '', repo: '', tag: '', url: '', publishedAt: '', body: text, category: opts.category || '' },
+        release: opts.release ?? {
+          owner: '',
+          repo: '',
+          tag: '',
+          url: '',
+          publishedAt: '',
+          body: text,
+          category: opts.category || '',
+        },
         summary: llm,
         strategy: 'llm',
       };
@@ -243,7 +261,15 @@ export async function summarizeRelease(
       maxBullets: opts.maxBullets,
     });
     return {
-      release: opts.release ?? { owner: '', repo: '', tag: '', url: '', publishedAt: '', body: text, category: opts.category || '' },
+      release: opts.release ?? {
+        owner: '',
+        repo: '',
+        tag: '',
+        url: '',
+        publishedAt: '',
+        body: text,
+        category: opts.category || '',
+      },
       summary,
       strategy: 'heuristic',
     };
@@ -251,7 +277,15 @@ export async function summarizeRelease(
 
   // Off mode
   return {
-    release: opts.release ?? { owner: '', repo: '', tag: '', url: '', publishedAt: '', body: text, category: opts.category || '' },
+    release: opts.release ?? {
+      owner: '',
+      repo: '',
+      tag: '',
+      url: '',
+      publishedAt: '',
+      body: text,
+      category: opts.category || '',
+    },
     summary: 'Maintenance updates and improvements.',
     strategy: 'fallback',
   };
