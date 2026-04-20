@@ -1,73 +1,14 @@
 import { Glean } from '@gleanwork/api-client';
 import { createRequire } from 'node:module';
+import { preProcessRelease } from './preprocessors/index.js';
+import { stripBoilerplate, normalizeText } from './preprocessors/text-cleaner.js';
+import { validateSummary } from './validators.js';
+import type { RawRelease, SummarizedRelease } from './types.js';
+
 const require = createRequire(import.meta.url);
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const dbg: any = require('debug');
 const dbgSum = dbg('changelog:sum');
-
-function stripBoilerplate(raw: string): string {
-  let t = raw;
-
-  t = t.replace(
-    /Generated\s+with\s+\[?Speakeasy CLI[^\]\n]*\]?\([^)]*\)/gi,
-    ' ',
-  );
-  t = t.replace(/Generated\s+by\s+Speakeasy\s+CLI[^\n]*/gi, ' ');
-  t = t.replace(/Publishing\s+Completed/gi, ' ');
-
-  t = t.replace(/https?:\/\/central\.sonatype\.com\/artifact\/[\w./-]+/gi, ' ');
-  t = t.replace(/https?:\/\/pypi\.org\/project\/[\w./-]+/gi, ' ');
-  t = t.replace(/https?:\/\/www\.npmjs\.com\/package\/[\w./-]+/gi, ' ');
-
-  // Unwrap markdown links to just their text
-  t = t.replace(/\[([^\]]+)\]\([^)]*\)/g, '$1');
-
-  t = t.replace(
-    /\b(Java|Python|Typescript|Go)\s+SDK\s+Changes\s+Detected:?/gi,
-    ' ',
-  );
-  t = t.replace(
-    /##+\s+(Java|Python|Typescript|Go)\s+SDK\s+Changes[^\n]*/gi,
-    ' ',
-  );
-
-  t = t.replace(/\(#[0-9]+\)/g, ' ');
-  t = t.replace(/\(@[a-z0-9_-]+\)/gi, ' ');
-
-  // Fix noisy token sequences like "* , , *"
-  t = t.replace(/\*\s*,\s*,\s*\*/g, ' ');
-  t = t.replace(/\*\s*,\s*/g, ' ');
-
-  // Normalize bullets to leading '- ' or '* '
-  t = t.replace(/^\s*[•·]\s+/gm, '- ');
-  t = t.replace(/^\s*\*\s+/gm, '- ');
-
-  // Trim repeated spaces and stray punctuation
-  t = t.replace(/\s{2,}/g, ' ');
-  t = t.replace(/\s+([.,;:])/g, '$1');
-
-  return t;
-}
-
-function normalizeText(text: string): string {
-  let t = text.replace(/```[\s\S]*?```/g, ' ');
-  t = t.replace(/`[^`]*`/g, ' ');
-  t = t.replace(/<[^>]+>/g, ' ');
-  t = t.replace(/^#+\s+.*$/gm, ' ');
-  t = t.replace(/\r/g, '');
-  t = t.replace(/[\t\f\v]/g, ' ');
-  t = t.replace(/\s+\n/g, '\n');
-  t = t.replace(/\n{3,}/g, '\n\n');
-  return t.trim();
-}
-
-function isGarbageBullet(text: string): boolean {
-  if (/^[:\s\-*]*\*\*\w+\*\*[.\s]*$/.test(text)) return true;
-  if (/^:\s*-?\s*\*\*/.test(text)) return true;
-  const alphaOnly = text.replace(/[^a-zA-Z]/g, '');
-  if (alphaOnly.length < 10) return true;
-  return false;
-}
 
 function heuristicSummarize(
   text: string,
@@ -87,7 +28,9 @@ function heuristicSummarize(
     }
   }
   if (!intro && lines.length > 0) intro = lines[0];
-  if (!intro || isGarbageBullet(intro)) {
+
+  const alphaOnly = (intro || '').replace(/[^a-zA-Z]/g, '');
+  if (!intro || alphaOnly.length < 10) {
     intro = 'Maintenance updates and improvements.';
   }
   if (!/[.!?]$/.test(intro)) intro += '.';
@@ -105,7 +48,8 @@ function heuristicSummarize(
     for (const l of lines) {
       if (l.startsWith('- ')) {
         const b = l.slice(2).trim();
-        if (b && /[a-zA-Z]/.test(b) && !isGarbageBullet(b)) bullets.push(b);
+        const bAlpha = b.replace(/[^a-zA-Z]/g, '');
+        if (b && bAlpha.length >= 10) bullets.push(b);
       }
       if (bullets.length >= maxBullets) break;
     }
@@ -114,9 +58,10 @@ function heuristicSummarize(
       const sentences = cleaned
         .split(/[.!?]\s+/)
         .map((s) => s.trim())
-        .filter(
-          (s) => s.length > 20 && /[a-zA-Z]/.test(s) && !isGarbageBullet(s),
-        );
+        .filter((s) => {
+          const sAlpha = s.replace(/[^a-zA-Z]/g, '');
+          return s.length > 20 && sAlpha.length >= 10;
+        });
       for (const s of sentences.slice(0, maxBullets)) bullets.push(s + '.');
     }
   }
@@ -124,22 +69,6 @@ function heuristicSummarize(
   return bullets.length > 0
     ? [intro, ...bullets.map((b) => `- ${b}`)].join('\n')
     : intro;
-}
-
-function hasPlaceholderText(text: string): boolean {
-  const placeholderPatterns = [
-    /\bhas changed to\s*\./,
-    /\bresponse of\s*\./,
-    /\bis now included in\s+within\s+the\s+response/,
-    /\bthe field is now included\s+in\s+within/,
-    /\bfor\s+has changed to\s*\./,
-    /\s+\.\s+/,
-    /\bthe\s+field\s+is\s+now\s+included\s+in\s+within/,
-    /\bresponse\s+type\s+for\s+has\s+changed/,
-    /^-\s*:\s*-?\s*\*\*/m,
-  ];
-
-  return placeholderPatterns.some((pattern) => pattern.test(text));
 }
 
 async function summarizeWithGlean(
@@ -237,18 +166,20 @@ async function summarizeWithGlean(
       .replace(/\s+/g, ' ')
       .trim();
 
-    if (!joined || hasPlaceholderText(joined)) {
-      dbgSum('summarize:rejected (empty or has placeholders)');
+    if (!joined) {
+      dbgSum('summarize:rejected (empty response)');
       return null;
     }
 
-    dbgSum('summarize:joined len=%d', joined.length);
-    return joined.length <= opts.maxChars
-      ? joined
-      : joined
-          .slice(0, opts.maxChars)
-          .replace(/\s+\S*$/, '')
-          .trim() + '...';
+    // Validate LLM output using the centralized validator
+    const validation = validateSummary(joined, { maxChars: opts.maxChars });
+    if (!validation.valid) {
+      dbgSum('summarize:rejected (%s)', validation.reason);
+      return null;
+    }
+
+    dbgSum('summarize:accepted len=%d', joined.length);
+    return joined;
   } catch (err: any) {
     const message = err?.message || String(err);
     throw new Error(`Glean API chat request failed: ${message}`);
@@ -264,15 +195,40 @@ export async function summarizeRelease(
     model?: string;
     category?: string;
     hints?: Array<string>;
+    release?: RawRelease;
   },
-): Promise<string> {
+): Promise<SummarizedRelease> {
+  // If we have a RawRelease, try the pre-processor first (handles Speakeasy deterministically)
+  if (opts.release) {
+    const preProcessed = preProcessRelease(opts.release, {
+      maxBullets: opts.maxBullets,
+      maxChars: opts.maxChars,
+    });
+
+    if (preProcessed.format === 'speakeasy' && preProcessed.structuredChanges.length > 0) {
+      dbgSum('summarize:using speakeasy-deterministic for %s %s', opts.release.repo, opts.release.tag);
+      return {
+        release: opts.release,
+        summary: preProcessed.cleanedText,
+        strategy: 'speakeasy-deterministic',
+      };
+    }
+  }
+
+  // LLM path
   if (opts.mode === 'llm') {
     const llm = await summarizeWithGlean(text, {
       maxChars: opts.maxChars,
       category: opts.category,
       hints: opts.hints,
     });
-    if (llm) return llm;
+    if (llm) {
+      return {
+        release: opts.release ?? { owner: '', repo: '', tag: '', url: '', publishedAt: '', body: text, category: opts.category || '' },
+        summary: llm,
+        strategy: 'llm',
+      };
+    }
 
     throw new Error(
       'LLM summarization failed — check that GLEAN_API_TOKEN is valid and not expired. ' +
@@ -280,12 +236,23 @@ export async function summarizeRelease(
     );
   }
 
+  // Heuristic path
   if (opts.mode === 'heuristic') {
-    return heuristicSummarize(text, {
+    const summary = heuristicSummarize(text, {
       maxChars: opts.maxChars,
       maxBullets: opts.maxBullets,
     });
+    return {
+      release: opts.release ?? { owner: '', repo: '', tag: '', url: '', publishedAt: '', body: text, category: opts.category || '' },
+      summary,
+      strategy: 'heuristic',
+    };
   }
 
-  return 'Maintenance updates and improvements.';
+  // Off mode
+  return {
+    release: opts.release ?? { owner: '', repo: '', tag: '', url: '', publishedAt: '', body: text, category: opts.category || '' },
+    summary: 'Maintenance updates and improvements.',
+    strategy: 'fallback',
+  };
 }

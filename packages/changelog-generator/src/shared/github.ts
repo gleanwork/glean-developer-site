@@ -3,14 +3,12 @@ import * as path from 'node:path';
 import * as os from 'node:os';
 import { createRequire } from 'node:module';
 import { loadConfig } from '../config.js';
-import { summarizeRelease } from '../summarizer.js';
 import { getLatestChangelogEntryDate } from '../latest-entry.js';
 import {
   createOctokit,
-  listReleases,
   findExistingChangelogPR,
 } from '../octo.js';
-import type { RepoReleases, PullRequest } from '../octo.js';
+import type { PullRequest } from '../octo.js';
 import type { AnalyzeOutput } from '../schemas.js';
 import { renderChangelogEntry } from '../template.js';
 import { ingestOpenApiCommits } from '../openapi.js';
@@ -19,6 +17,7 @@ import {
   formatChangeCategories,
 } from '../openapi-summary.js';
 import { enrichChangesWithContext } from '../openapi-context.js';
+import { processAllReleases } from '../pipeline.js';
 
 const DEFAULT_OWNER = 'gleanwork';
 const DEFAULT_REPO = 'glean-developer-site';
@@ -60,17 +59,6 @@ function today(): string {
   return `${y}-${m}-${d}`;
 }
 
-function safeSlug(s: string): string {
-  return s
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-}
-
-function normalizeTag(tag: string): string {
-  return tag.replace(/^v/i, '').replace(/\./g, '-');
-}
-
 export function writePreview(
   analyzed: AnalyzeOutput,
   repoRoot: string,
@@ -99,103 +87,27 @@ export async function analyze(repoRoot: string): Promise<AnalyzeOutput> {
   const skipped: AnalyzeOutput['report']['skipped'] = [];
   const errors: AnalyzeOutput['report']['errors'] = [];
 
-  const cutoff = latestDate ?? '0000-00-00';
-
   log(`Latest local entry date: ${latestDate ?? 'null'}`);
 
-  for (const spec of cfg.repos) {
-    try {
-      log(`Analyzing ${spec.owner}/${spec.repo} ...`);
-      const releases: RepoReleases = await listReleases(octokit, {
-        owner: spec.owner,
-        repo: spec.repo,
+  const { results: releaseResults, skipped: releaseSkipped } =
+    await processAllReleases(octokit, cfg, repoRoot, latestDate);
+
+  skipped.push(...releaseSkipped);
+
+  for (const result of releaseResults) {
+    if (result.status === 'ok') {
+      includedFiles.push({
+        path: result.entry.filePath,
+        content: result.entry.content,
+        commitMessage: result.entry.commitMessage,
       });
-      const candidates = releases
-        .filter((r: RepoReleases[number]) => !!r.published_at)
-        .sort((a: RepoReleases[number], b: RepoReleases[number]) =>
-          a.published_at! < b.published_at! ? 1 : -1,
-        );
-
-      if (candidates.length === 0) {
-        skipped.push({
-          owner: spec.owner,
-          repo: spec.repo,
-          decision: 'skip',
-          reason: 'no releases',
-        });
-        log(`${spec.repo}: skip (no releases)`);
-        continue;
-      }
-
-      const newReleases = candidates.filter((r: RepoReleases[number]) => {
-        const relDate = r.published_at!.slice(0, 10);
-        return relDate > cutoff;
-      });
-
-      if (newReleases.length === 0) {
-        skipped.push({
-          owner: spec.owner,
-          repo: spec.repo,
-          decision: 'skip',
-          reason: 'no newer release than latest entry',
-        });
-        log(`${spec.repo}: skip (no newer release than ${cutoff})`);
-        continue;
-      }
-
-      log(
-        `${spec.repo}: processing ${newReleases.length} release(s) after ${cutoff}`,
-      );
-
-      for (const release of newReleases) {
-        const relDate = release.published_at!.slice(0, 10);
-        const tag = release.tag_name || 'unknown';
-        const url = release.html_url || release.url || '';
-        const normalized = normalizeTag(tag);
-        const title = `${spec.repo} ${tag}`;
-
-        const body = release.body?.trim() ?? '';
-        const summaryText = await summarizeRelease(body || title, {
-          mode: cfg.summarization.mode,
-          maxBullets: cfg.summarization.maxBullets,
-          maxChars: cfg.summarization.maxChars,
-          model: cfg.summarization.model,
-          category: spec.category,
-          hints: cfg.summarization.categoryHints?.[spec.category] || [],
-        });
-        const summary = summaryText;
-
-        const details = `Full release notes: ${url}`;
-        const datePrefix = relDate;
-        const slug = `${safeSlug(spec.repo)}-${safeSlug(normalized)}`;
-
-        let filename = `${datePrefix}-${slug}.md`;
-        const entriesDir = path.join(repoRoot, 'changelog', 'entries');
-        let counter = 1;
-        while (fs.existsSync(path.join(entriesDir, filename))) {
-          filename = `${datePrefix}-${slug}-${counter}.md`;
-          counter += 1;
-        }
-
-        const filePath = path.join('changelog', 'entries', filename);
-        const content = renderChangelogEntry({
-          repoRoot,
-          title,
-          categories: [spec.category],
-          summary,
-          detailedContent: details,
-        });
-        const commitMessage = `chore(changelog): add ${spec.repo} ${tag}`;
-        includedFiles.push({ path: filePath, content, commitMessage });
-        log(`${spec.repo}: queued ${filePath}`);
-      }
-    } catch (e: any) {
+    } else if (result.status === 'error') {
+      const parts = result.error.release.split('/');
       errors.push({
-        owner: spec.owner,
-        repo: spec.repo,
-        reason: e?.message || 'error',
+        owner: parts.length > 1 ? parts[0] : '',
+        repo: parts.length > 1 ? parts[1] : result.error.release,
+        reason: result.error.message,
       });
-      log(`${spec.owner}/${spec.repo}: error: ${e?.message || e}`);
     }
   }
 
