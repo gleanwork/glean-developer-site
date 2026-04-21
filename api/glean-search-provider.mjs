@@ -107,8 +107,14 @@ export default class GleanSearchProvider {
         return null;
       }
 
-      // Content is in doc.content.fullTextList as an array of strings
-      const fullText = doc.content?.fullTextList?.join('\n\n') ?? '';
+      const fullTextList = doc.content?.fullTextList ?? [];
+      const fullText = fullTextList.join('\n\n');
+
+      if (!fullText) {
+        console.warn(
+          `[Glean] No content returned for ${url} (doc has content: ${!!doc.content}, fullTextList length: ${fullTextList.length})`,
+        );
+      }
 
       return {
         url,
@@ -119,7 +125,7 @@ export default class GleanSearchProvider {
       };
     } catch (error) {
       console.error('[Glean] Get document error:', error.message || error);
-      throw error; // Re-throw to see full error in response
+      return null;
     }
   }
 
