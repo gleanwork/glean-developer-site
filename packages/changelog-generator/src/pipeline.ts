@@ -40,7 +40,7 @@ export async function processRelease(
       status: 'error',
       error: {
         stage: 'summarize',
-        release: `${release.repo} ${release.tag}`,
+        release: `${release.owner}/${release.repo}`,
         message,
       },
     };

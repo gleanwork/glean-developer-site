@@ -79,7 +79,7 @@ export function parseSpeakeasyNotes(text: string): ParsedChange[] {
  */
 function simplifyFieldPath(field: string): string {
   // Extract enum value if present: .enum(value) -> "value enum"
-  const enumMatch = field.match(/\.enum\((\w+)\)$/);
+  const enumMatch = field.match(/\.enum\((\w+)\)$/i);
   if (enumMatch) {
     return enumMatch[1];
   }
