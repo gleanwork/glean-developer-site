@@ -2,11 +2,11 @@ openapi: 3.0.0
 info:
   version: 0.9.0
   title: Glean API - Insights
-  x-source-commit-sha: e40a9bf0ca34c371a9cb3ee43989e0cb78c99f78
+  x-source-commit-sha: a8fa186119684cfb02b671c706421d54aa603a0c
   description: API endpoints for Insights
   x-logo:
     url: https://app.glean.com/images/glean-text2.svg
-  x-open-api-commit-sha: 8487a4f3c837104df7b910eaf7f100a3a6750f3d
+  x-open-api-commit-sha: d779e0cb5fd1e7422a60bf5137113490232f468f
   x-speakeasy-name: Glean API
 servers:
   - url: https://{instance}-be.glean.com
@@ -1023,27 +1023,6 @@ components:
         provisioningId:
           type: string
           description: identifier for greenlist provisioning, aka sciokey
-    AgentsTimeSavedInsight:
-      properties:
-        agentId:
-          type: string
-          description: Agent ID
-        agentName:
-          type: string
-          description: Agent name
-        icon:
-          $ref: '#/components/schemas/IconConfig'
-          description: Agent icon configuration
-        isDeleted:
-          type: boolean
-          description: Indicates whether the agent has been deleted
-        runCount:
-          type: integer
-          description: Total number of runs for this agent over the specified time period.
-        minsPerRun:
-          type: number
-          format: float
-          description: Average minutes saved per run for this agent over the specified time period.
     AgentUsersInsight:
       properties:
         person:
@@ -1105,6 +1084,30 @@ components:
         numDaysActive:
           type: integer
           description: Total number of days this user was active on the Assistant over the specified time period.
+    AgentsTimeSavedInsight:
+      properties:
+        agentId:
+          type: string
+          description: Agent ID
+        agentName:
+          type: string
+          description: Agent name
+        icon:
+          $ref: '#/components/schemas/IconConfig'
+          description: Agent icon configuration
+        isDeleted:
+          type: boolean
+          description: Indicates whether the agent has been deleted
+        runCount:
+          type: integer
+          description: Total number of runs for this agent over the specified time period.
+        minsPerRun:
+          type: number
+          format: float
+          description: Average minutes saved per run for this agent over the specified time period.
+        feedbackUserCount:
+          type: integer
+          description: Total number of users who provided feedback on time saved for this agent over the specified time period.
     AgentsUsageByDepartmentInsight:
       properties:
         department:
@@ -1132,6 +1135,33 @@ components:
         isDeleted:
           type: boolean
           description: Indicates whether the agent has been deleted
+    AgentUseCaseInsight:
+      properties:
+        useCase:
+          type: string
+          description: Use case name
+        runCount:
+          type: integer
+          description: Total number of runs for this use case over the specified time period.
+        trend:
+          type: number
+          format: float
+          description: Percentage change in runs compared to the previous equivalent time period.
+        topDepartments:
+          type: string
+          description: Comma-separated list of the top departments using this use case.
+        topAgentId:
+          type: string
+          description: ID of the most-used agent for this use case.
+        topAgentName:
+          type: string
+          description: Name of the most-used agent for this use case.
+        topAgentIcon:
+          $ref: '#/components/schemas/IconConfig'
+          description: Icon of the most-used agent for this use case.
+        topAgentIsDeleted:
+          type: boolean
+          description: Indicates whether the top agent has been deleted.
     PerAgentInsight:
       properties:
         agentId:
@@ -2338,49 +2368,6 @@ components:
           type: array
           items: *ref_16
       type: object
-    AgentsInsightsV2Response:
-      allOf:
-        - $ref: '#/components/schemas/CurrentActiveUsers'
-        - type: object
-          properties:
-            monthlyActiveUserTimeseries:
-              $ref: '#/components/schemas/LabeledCountInfo'
-            weeklyActiveUserTimeseries:
-              $ref: '#/components/schemas/LabeledCountInfo'
-            dailyActiveUserTimeseries:
-              $ref: '#/components/schemas/LabeledCountInfo'
-            sharedAgentsCount:
-              type: integer
-              description: Total number of shared agents.
-            topAgentsInsights:
-              type: array
-              items:
-                $ref: '#/components/schemas/PerAgentInsight'
-            agentsUsageByDepartmentInsights:
-              type: array
-              items:
-                $ref: '#/components/schemas/AgentsUsageByDepartmentInsight'
-            agentUsersInsights:
-              type: array
-              items:
-                $ref: '#/components/schemas/AgentUsersInsight'
-            agentsTimeSavedInsights:
-              type: array
-              items:
-                $ref: '#/components/schemas/AgentsTimeSavedInsight'
-              description: Insights for agents time saved over the specified time period.
-            dailyAgentRunsTimeseries:
-              $ref: '#/components/schemas/LabeledCountInfo'
-            successfulRunsTimeseries:
-              $ref: '#/components/schemas/LabeledCountInfo'
-            failedRunsTimeseries:
-              $ref: '#/components/schemas/LabeledCountInfo'
-            pausedRunsTimeseries:
-              $ref: '#/components/schemas/LabeledCountInfo'
-            upvotesTimeseries:
-              $ref: '#/components/schemas/LabeledCountInfo'
-            downvotesTimeseries:
-              $ref: '#/components/schemas/LabeledCountInfo'
     QuerySuggestion:
       example: &ref_38
         query: app:github type:pull author:mortimer
@@ -2716,6 +2703,53 @@ components:
             - DEPRECATED
           type: string
       type: object
+    AgentsInsightsV2Response:
+      allOf:
+        - $ref: '#/components/schemas/CurrentActiveUsers'
+        - type: object
+          properties:
+            monthlyActiveUserTimeseries:
+              $ref: '#/components/schemas/LabeledCountInfo'
+            weeklyActiveUserTimeseries:
+              $ref: '#/components/schemas/LabeledCountInfo'
+            dailyActiveUserTimeseries:
+              $ref: '#/components/schemas/LabeledCountInfo'
+            sharedAgentsCount:
+              type: integer
+              description: Total number of shared agents.
+            topAgentsInsights:
+              type: array
+              items:
+                $ref: '#/components/schemas/PerAgentInsight'
+            topUseCasesInsights:
+              type: array
+              items:
+                $ref: '#/components/schemas/AgentUseCaseInsight'
+            agentsUsageByDepartmentInsights:
+              type: array
+              items:
+                $ref: '#/components/schemas/AgentsUsageByDepartmentInsight'
+            agentUsersInsights:
+              type: array
+              items:
+                $ref: '#/components/schemas/AgentUsersInsight'
+            agentsTimeSavedInsights:
+              type: array
+              items:
+                $ref: '#/components/schemas/AgentsTimeSavedInsight'
+              description: Insights for agents time saved over the specified time period.
+            dailyAgentRunsTimeseries:
+              $ref: '#/components/schemas/LabeledCountInfo'
+            successfulRunsTimeseries:
+              $ref: '#/components/schemas/LabeledCountInfo'
+            failedRunsTimeseries:
+              $ref: '#/components/schemas/LabeledCountInfo'
+            pausedRunsTimeseries:
+              $ref: '#/components/schemas/LabeledCountInfo'
+            upvotesTimeseries:
+              $ref: '#/components/schemas/LabeledCountInfo'
+            downvotesTimeseries:
+              $ref: '#/components/schemas/LabeledCountInfo'
     AnswerMutableProperties:
       properties:
         addedRoles:

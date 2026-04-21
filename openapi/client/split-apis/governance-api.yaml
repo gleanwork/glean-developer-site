@@ -2,11 +2,11 @@ openapi: 3.0.0
 info:
   version: 0.9.0
   title: Glean API - Governance
-  x-source-commit-sha: e40a9bf0ca34c371a9cb3ee43989e0cb78c99f78
+  x-source-commit-sha: a8fa186119684cfb02b671c706421d54aa603a0c
   description: API endpoints for Governance
   x-logo:
     url: https://app.glean.com/images/glean-text2.svg
-  x-open-api-commit-sha: 8487a4f3c837104df7b910eaf7f100a3a6750f3d
+  x-open-api-commit-sha: d779e0cb5fd1e7422a60bf5137113490232f468f
   x-speakeasy-name: Glean API
 servers:
   - url: https://{instance}-be.glean.com
@@ -1560,32 +1560,6 @@ components:
         evaluationExpression:
           type: string
           description: The expression to evaluate the keyword match.
-    DlpExportFindingsRequest:
-      properties:
-        exportType:
-          type: string
-          enum:
-            - FINDINGS
-            - DOCUMENTS
-            - ISSUES
-          description: The type of export to perform
-        filter:
-          $ref: '#/components/schemas/DlpFindingFilter'
-        fileName:
-          type: string
-          description: The name of the file to export the findings to
-        fieldScope:
-          type: string
-          enum:
-            - ALL
-            - EXCLUDE_SENSITIVE
-            - CUSTOM
-          description: Controls which fields to include in the export
-        fieldsToExclude:
-          type: array
-          items:
-            type: string
-          description: List of field names to exclude from the export
     DlpPerson:
       properties:
         name:
@@ -1738,39 +1712,35 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/DocumentVisibilityOverride'
-    ExportInfo:
+    DlpExportFindingsRequest:
       properties:
-        createdBy:
-          $ref: '#/components/schemas/DlpPerson'
-          description: person who triggered this export
-        startTime:
+        exportType:
           type: string
-          format: iso-date-time
-          description: Timestamp at which this export started.
-        endTime:
-          type: string
-          format: iso-date-time
-          description: Timestamp at which this export completed.
-        exportId:
-          type: string
-          description: The ID of the export
+          enum:
+            - FINDINGS
+            - DOCUMENTS
+            - ISSUES
+          description: The type of export to perform
+        filter:
+          $ref: '#/components/schemas/DlpFindingFilter'
+        issueFilter:
+          $ref: '#/components/schemas/DlpIssueFilter'
+          description: Filter for ISSUE-level exports. Used when exportType is ISSUES.
         fileName:
           type: string
           description: The name of the file to export the findings to
-        filter:
-          $ref: '#/components/schemas/DlpFindingFilter'
-          description: The filters used to export the findings
-        status:
+        fieldScope:
           type: string
           enum:
-            - PENDING
-            - COMPLETED
-            - FAILED
-          description: The status of the export
-        exportSize:
-          type: integer
-          format: int64
-          description: The size of the exported file in bytes
+            - ALL
+            - EXCLUDE_SENSITIVE
+            - CUSTOM
+          description: Controls which fields to include in the export
+        fieldsToExclude:
+          type: array
+          items:
+            type: string
+          description: List of field names to exclude from the export
     GetDocumentVisibilityOverridesResponse:
       properties:
         visibilityOverrides:
@@ -1801,6 +1771,49 @@ components:
         reportName:
           type: string
           description: The new name of the policy if provided.
+    ExportInfo:
+      properties:
+        createdBy:
+          $ref: '#/components/schemas/DlpPerson'
+          description: person who triggered this export
+        startTime:
+          type: string
+          format: iso-date-time
+          description: Timestamp at which this export started.
+        endTime:
+          type: string
+          format: iso-date-time
+          description: Timestamp at which this export completed.
+        exportId:
+          type: string
+          description: The ID of the export
+        fileName:
+          type: string
+          description: The name of the file to export the findings to
+        exportType:
+          type: string
+          enum:
+            - FINDINGS
+            - DOCUMENTS
+            - ISSUES
+          description: The type of export to perform
+        filter:
+          $ref: '#/components/schemas/DlpFindingFilter'
+          description: The filters used to export the findings. Set for FINDINGS and DOCUMENTS exports.
+        issueFilter:
+          $ref: '#/components/schemas/DlpIssueFilter'
+          description: The filters used for ISSUES exports.
+        status:
+          type: string
+          enum:
+            - PENDING
+            - COMPLETED
+            - FAILED
+          description: The status of the export
+        exportSize:
+          type: integer
+          format: int64
+          description: The size of the exported file in bytes
     DlpReport:
       properties:
         id:
@@ -1877,6 +1890,42 @@ components:
           $ref: '#/components/schemas/TimeRangeFilter'
         archived:
           type: boolean
+    DlpIssueFilter:
+      properties:
+        searchText:
+          type: string
+          description: Text to search for in issue fields.
+        statuses:
+          type: array
+          items:
+            $ref: '#/components/schemas/DlpIssueStatus'
+          description: Filter by one or more issue statuses.
+        assigneeId:
+          type: string
+          description: Filter by assignee user ID.
+        infoType:
+          type: string
+        regexId:
+          type: string
+        reportIds:
+          type: array
+          items:
+            type: string
+          description: Filter by one or more report/policy IDs.
+        docId:
+          type: string
+        datasource:
+          type: string
+        visibility:
+          type: string
+        severities:
+          type: array
+          items:
+            $ref: '#/components/schemas/DlpSeverity'
+          description: Filter by one or more severity levels.
+        timeRange:
+          $ref: '#/components/schemas/TimeRangeFilter'
+      description: Filter for DLP issues. Includes document-level filters and issue-specific filters.
     SensitiveContentOptions:
       properties:
         sensitiveInfoTypes:
