@@ -12,7 +12,7 @@ if env_path.exists():
     load_dotenv(env_path)
 
 from data_clients import DeveloperDocsDataClient
-from developer_docs_connector import CustomDeveloperDocsConnector
+from developer_docs_connector import DeveloperDocsConnector
 from glean.indexing.models import IndexingMode
 from indexing_logger import create_logger
 
@@ -32,7 +32,7 @@ def main():
             "https://developers.glean.com",
             indexing_logger=indexing_logger
         )
-        connector = CustomDeveloperDocsConnector(name="devdocs", data_client=developer_docs_data_client)
+        connector = DeveloperDocsConnector(name="devdocs", data_client=developer_docs_data_client)
 
         if dry_run:
             # Fetch source data
