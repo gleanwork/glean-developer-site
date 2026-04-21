@@ -167,6 +167,5 @@ export function formatSpeakeasySummary(
         .trim() + '...';
   }
 
-
   return result;
 }
