@@ -158,13 +158,15 @@ export function formatSpeakeasySummary(
   result = result.charAt(0).toUpperCase() + result.slice(1);
 
   // Truncate if needed
+
   if (result.length > maxChars) {
     result =
       result
-        .slice(0, maxChars)
+        .slice(0, maxChars - 3)
         .replace(/\s+\S*$/, '')
         .trim() + '...';
   }
+
 
   return result;
 }
