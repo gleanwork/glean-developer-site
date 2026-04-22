@@ -13,10 +13,16 @@ on:
         required: false
         type: boolean
         default: false
+      force_reindex:
+        description: 'Force full reindex (calls processalldocuments after upload)'
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   run-indexer:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -31,13 +37,15 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Install dependencies
+      - name: Install site dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build site
+        run: pnpm build
+
+      - name: Install indexing dependencies
         working-directory: scripts/indexing
         run: uv sync
-
-      - name: Install Playwright browsers
-        working-directory: scripts/indexing
-        run: uv run playwright install
 
       - name: Run indexing script
         working-directory: scripts/indexing
@@ -46,3 +54,17 @@ jobs:
           GLEAN_INSTANCE: ${{ secrets.GLEAN_INSTANCE }}
           DRY_RUN: ${{ inputs.dry_run }}
         run: uv run main.py
+
+      - name: Force reindex
+        if: inputs.force_reindex && inputs.dry_run != true
+        working-directory: scripts/indexing
+        env:
+          GLEAN_INDEXING_API_TOKEN: ${{ secrets.GLEAN_INDEXING_API_TOKEN }}
+          GLEAN_INSTANCE: ${{ secrets.GLEAN_INSTANCE }}
+        run: |
+          uv run python3 -c "
+          from glean.indexing.common import api_client
+          with api_client() as client:
+              client.indexing.documents.process_all(datasource='devdocs')
+          print('processalldocuments called for devdocs')
+          "
