@@ -1,6 +1,8 @@
+import logging
 from typing import Union, List, Sequence
 
 from glean.indexing.connectors import BaseAsyncStreamingDatasourceConnector
+from glean.indexing.common import api_client
 from glean.indexing.models import (
     ContentDefinition,
     CustomDatasourceConfig,
@@ -12,6 +14,8 @@ from glean.api_client.models import (
     DocumentPermissionsDefinition,
 )
 from data_types import DocumentationPage, ApiReferencePage
+
+logger = logging.getLogger(__name__)
 
 
 def _format_api_reference(page: ApiReferencePage) -> str:
@@ -95,6 +99,30 @@ class DeveloperDocsConnector(BaseAsyncStreamingDatasourceConnector[Union[Documen
             ),
         ],
     )
+
+    def configure_datasource(self, is_test: bool = False) -> None:
+        """Configure the datasource, working around a camelCase serialization
+        bug in glean-indexing-sdk where config.model_dump() returns camelCase
+        keys but datasources.add() expects snake_case kwargs."""
+        config = self.configuration
+        if is_test:
+            config.is_test_datasource = True
+
+        logger.info(f"Configuring datasource: {config.name}")
+
+        # Map camelCase model_dump keys to snake_case for datasources.add()
+        alias_to_field = {
+            info.alias or name: name
+            for name, info in type(config).model_fields.items()
+        }
+        kwargs = {
+            alias_to_field.get(k, k): v
+            for k, v in config.model_dump(exclude_unset=True).items()
+        }
+
+        with api_client() as client:
+            client.indexing.datasources.add(**kwargs)
+        logger.info(f"Successfully configured datasource: {config.name}")
 
     def transform(
         self, data: List[Union[DocumentationPage, ApiReferencePage]]
