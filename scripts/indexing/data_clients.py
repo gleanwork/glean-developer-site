@@ -601,7 +601,7 @@ class DeveloperDocsDataClient(BaseAsyncStreamingDataClient[Union[DocumentationPa
 
         async def _scrape_single_page_with_page(url: str, page) -> ApiReferencePage:
             try:
-                await page.goto(url, wait_until="networkidle")
+                await page.goto(url, wait_until="networkidle", timeout=60000)
             except Exception as e:
                 raise RuntimeError(f"Failed to load {url}: {e}") from e
 
