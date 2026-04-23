@@ -18,6 +18,11 @@ on:
         required: false
         type: boolean
         default: false
+      disable_stale_deletion_check:
+        description: 'Bypass 20% stale-deletion safeguard (use for one-off cleanup runs only)'
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   run-indexer:
@@ -53,6 +58,7 @@ jobs:
           GLEAN_INDEXING_API_TOKEN: ${{ secrets.GLEAN_INDEXING_API_TOKEN }}
           GLEAN_INSTANCE: ${{ secrets.GLEAN_INSTANCE }}
           DRY_RUN: ${{ inputs.dry_run }}
+          DISABLE_STALE_DELETION_CHECK: ${{ inputs.disable_stale_deletion_check }}
         run: uv run main.py
 
       - name: Force reindex

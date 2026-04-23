@@ -13,12 +13,15 @@ if env_path.exists():
 
 from data_client import DeveloperDocsDataClient
 from developer_docs_connector import DeveloperDocsConnector
-from glean.indexing.models import IndexingMode
+from glean.indexing.models import ConnectorOptions, IndexingMode
 from indexing_logger import create_logger
 
 
 def main():
     dry_run = os.getenv("DRY_RUN", "").lower() in ("true", "1", "yes")
+    disable_stale_deletion_check = os.getenv(
+        "DISABLE_STALE_DELETION_CHECK", ""
+    ).lower() in ("true", "1", "yes")
     log_format = os.getenv("LOG_FORMAT", "stdout")
     indexing_logger = create_logger(format=log_format, verbose=True)
 
@@ -49,7 +52,16 @@ def main():
                 indexing_logger.log("Dry run complete. No data was uploaded to Glean.")
         else:
             connector.configure_datasource()
-            connector.index_data(mode=IndexingMode.FULL)
+            if disable_stale_deletion_check:
+                indexing_logger.log(
+                    "WARNING: stale document deletion safeguard is DISABLED for this run"
+                )
+            connector.index_data(
+                mode=IndexingMode.FULL,
+                options=ConnectorOptions(
+                    disable_stale_deletion_check=disable_stale_deletion_check
+                ),
+            )
 
             summary = indexing_logger.finish()
 
