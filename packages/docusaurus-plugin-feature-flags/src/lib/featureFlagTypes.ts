@@ -21,6 +21,3 @@ export type FeatureEvaluationResult = {
   enabled: boolean;
   reason: 'explicit' | 'allowed-user' | 'rollout' | 'disabled' | 'missing' | 'not-yet-enabled' | 'expired';
 };
-
-
-

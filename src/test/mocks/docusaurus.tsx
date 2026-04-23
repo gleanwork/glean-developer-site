@@ -1,7 +1,7 @@
 import React from 'react';
 import { vi } from 'vitest';
 
-vi.mock('@site/src/theme/Root', () => ({
+vi.mock('@gleanwork/docusaurus-plugin-feature-flags/context', () => ({
   FeatureFlagsContext: React.createContext({
     isEnabled: () => false,
     flagConfigs: {},

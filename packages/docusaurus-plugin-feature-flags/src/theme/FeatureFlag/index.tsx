@@ -1,5 +1,5 @@
 import React, { ReactNode, useContext, useMemo } from 'react';
-import { FeatureFlagsContext } from '../theme/Root';
+import { FeatureFlagsContext } from '../FeatureFlagsProvider/context';
 
 export type FeatureFlagProps = {
   flag: string;

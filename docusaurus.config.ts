@@ -7,8 +7,7 @@ const redirects = [
   ...require('./redirects.json'),
   ...require('./permalinks.json'),
 ];
-import { getBuildTimeFlags } from './src/utils/buildTimeFlags';
-import { flagsSnapshotToBooleans } from './src/lib/featureFlags';
+import { withFeatureFlags } from '@gleanwork/docusaurus-plugin-feature-flags/withFeatureFlags';
 
 // Optional environment variable for Google site verification
 const googleSiteVerification = process.env.GOOGLE_SITE_VERIFICATION;
@@ -71,14 +70,7 @@ const config: Config = {
         src: 'img/glean-developer-logo-light.svg',
         srcDark: 'img/glean-developer-logo-dark.svg',
       },
-      items: ((items) => {
-        const { getBuildTimeFlags } = require('./src/utils/buildTimeFlags');
-        const { flagsSnapshotToBooleans } = require('./src/lib/featureFlags');
-        const { getNavbarItems } = require('./src/utils/filtering');
-        const raw = getBuildTimeFlags();
-        const bools = flagsSnapshotToBooleans(raw, {});
-        return getNavbarItems(items, bools);
-      })([
+      items: [
         {
           type: 'custom-mcpInstallButton',
           position: 'right',
@@ -124,7 +116,7 @@ const config: Config = {
             },
           ],
         },
-      ]),
+      ],
     },
     prism: {
       theme: prismThemes.github,
@@ -183,6 +175,10 @@ const config: Config = {
   } satisfies Preset.ThemeConfig,
 
   plugins: [
+    [
+      '@gleanwork/docusaurus-plugin-feature-flags',
+      { apiEndpoint: '/api/feature-flags' },
+    ],
     function (context, options) {
       return {
         name: 'webpack-config',
@@ -288,14 +284,6 @@ const config: Config = {
       onBrokenMarkdownLinks: 'throw',
     },
   },
-  customFields: (() => {
-    const raw = getBuildTimeFlags();
-    const booleans = flagsSnapshotToBooleans(raw, {});
-    return {
-      __BUILD_FLAGS__: raw,
-      __BUILD_FLAGS_BOOLEANS__: booleans,
-    } as Record<string, unknown>;
-  })(),
 };
 
-export default config;
+export default withFeatureFlags(config);

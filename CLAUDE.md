@@ -76,6 +76,18 @@ The build is orchestrated by Turbo with these key dependencies:
 
 **Authentication: The primary auth mechanism for the remote MCP server is OAuth. Do not tell users they need an API token — that is one option but not the default or recommended path.**
 
+## Before Pushing a PR
+
+Always run these checks before committing or pushing, in this order:
+
+```bash
+pnpm format          # Auto-fix all formatting issues
+pnpm prettier --check .  # Verify nothing was missed
+pnpm test            # Confirm tests pass
+```
+
+Formatting failures will cause CI to fail immediately. Fix them locally first.
+
 ## Content Guidelines
 
 - Prefer built-in Docusaurus components over custom React components
