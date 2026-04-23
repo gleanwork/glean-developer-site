@@ -61,18 +61,6 @@ def _format_api_reference(page: ApiReferencePage) -> str:
         if isinstance(codes, list) and codes:
             sections.append("\n## Response Codes\n" + "\n".join(f"- {c}" for c in codes))
 
-    # Include all code samples
-    samples = [
-        ("Python", page.get("python_code_sample")),
-        ("TypeScript", page.get("typescript_code_sample")),
-        ("Go", page.get("go_code_sample")),
-        ("Java", page.get("java_code_sample")),
-        ("cURL", page.get("curl_code_sample")),
-    ]
-    for lang, code in samples:
-        if code:
-            sections.append(f"\n## {lang} Example\n{code}")
-
     return "\n".join(sections)
 
 

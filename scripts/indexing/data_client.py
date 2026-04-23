@@ -5,8 +5,6 @@ Instead of scraping the live site with Playwright, this reads from:
 - docs/api/**/*.RequestSchema.json — request schemas
 - docs/api/**/*.StatusCodes.json — response codes
 - docs/api/**/*.ParamsDetails.json — query/path parameters
-- openapi/client/split-apis/*.yaml — code samples via x-codeSamples
-- openapi/client/split-apis/split-info.json — endpoint-to-file mapping
 """
 
 from typing import Union, List, Optional, TYPE_CHECKING
@@ -14,8 +12,6 @@ from pathlib import Path
 import uuid
 import json
 import logging
-
-import yaml
 
 from data_types import DocumentationPage, ApiReferencePage
 
@@ -27,6 +23,8 @@ logger = logging.getLogger(__name__)
 
 class DeveloperDocsDataClient:
     """Reads documentation content from Docusaurus build output files."""
+
+    MAX_SCHEMA_CHARS = 20_000
 
     def __init__(
         self,
@@ -40,39 +38,10 @@ class DeveloperDocsDataClient:
 
         self.docs_json_path = self.repo_root / "build" / "mcp" / "docs.json"
         self.api_docs_dir = self.repo_root / "docs" / "api"
-        self.split_info_path = (
-            self.repo_root / "openapi" / "client" / "split-apis" / "split-info.json"
-        )
-        self.openapi_dir = self.repo_root / "openapi" / "client" / "split-apis"
-        self.indexing_openapi_path = (
-            self.repo_root / "openapi" / "indexing" / "indexing-capitalized.yaml"
-        )
-
-        self._split_info = None
-        self._openapi_specs = {}
 
     def _log(self, msg: str) -> None:
         if self.indexing_logger:
             self.indexing_logger.log(msg)
-
-    def _load_split_info(self) -> dict:
-        """Load the split-info.json that maps endpoints to OpenAPI YAML files."""
-        if self._split_info is None:
-            if self.split_info_path.exists():
-                self._split_info = json.loads(self.split_info_path.read_text())
-            else:
-                self._split_info = {"tags": []}
-        return self._split_info
-
-    def _load_openapi_spec(self, yaml_file: str) -> dict:
-        """Load and cache an OpenAPI YAML spec file."""
-        if yaml_file not in self._openapi_specs:
-            path = self.openapi_dir / yaml_file
-            if path.exists():
-                self._openapi_specs[yaml_file] = yaml.safe_load(path.read_text())
-            else:
-                self._openapi_specs[yaml_file] = {}
-        return self._openapi_specs[yaml_file]
 
     def _is_api_reference(self, route: str) -> bool:
         """Check if a route is an API reference page (not an overview)."""
@@ -93,16 +62,34 @@ class DeveloperDocsDataClient:
         parts = route.strip("/").split("/")
         return parts[-1] if parts else ""
 
-    def _load_schema_file(self, api_group: str, slug: str, suffix: str) -> Optional[str]:
-        """Load a schema JSON file and return its content as formatted text."""
-        path = self.api_docs_dir / api_group / f"{slug}.{suffix}.json"
-        if not path.exists():
-            return None
-        try:
-            data = json.loads(path.read_text())
-            return json.dumps(data, indent=2)
-        except (json.JSONDecodeError, OSError):
-            return None
+    def _simplify_schema(self, schema: dict, max_depth: int = 2, depth: int = 0) -> dict:
+        """Simplify a JSON schema by limiting nesting depth."""
+        if depth >= max_depth:
+            return {"type": schema.get("type", "object"), "description": schema.get("description", "...")}
+
+        result = {}
+        for key in ("type", "description", "required", "enum"):
+            if key in schema:
+                result[key] = schema[key]
+
+        if "properties" in schema:
+            result["properties"] = {
+                name: self._simplify_schema(prop, max_depth, depth + 1)
+                for name, prop in schema["properties"].items()
+            }
+
+        if "items" in schema and isinstance(schema["items"], dict):
+            result["items"] = self._simplify_schema(schema["items"], max_depth, depth + 1)
+
+        if "allOf" in schema:
+            merged = {}
+            for sub in schema["allOf"]:
+                if isinstance(sub, dict):
+                    simplified = self._simplify_schema(sub, max_depth, depth)
+                    merged.update(simplified)
+            return merged
+
+        return result
 
     def _load_request_schema(self, api_group: str, slug: str) -> str:
         """Load and format the request schema for an endpoint."""
@@ -116,16 +103,17 @@ class DeveloperDocsDataClient:
             for content_type, spec in content.items():
                 schema = spec.get("schema", {})
                 if schema:
-                    return json.dumps(schema, indent=2)
+                    simplified = self._simplify_schema(schema)
+                    text = json.dumps(simplified, indent=2)
+                    if len(text) > self.MAX_SCHEMA_CHARS:
+                        text = text[:self.MAX_SCHEMA_CHARS] + "\n... (truncated)"
+                    return text
             return ""
         except (json.JSONDecodeError, OSError):
             return ""
 
     def _load_status_codes(self, api_group: str, slug: str) -> tuple[List[str], str]:
-        """Load response status codes and the success response body schema.
-
-        Returns (status_codes, response_body_json).
-        """
+        """Load response status codes and the success response body schema."""
         path = self.api_docs_dir / api_group / f"{slug}.StatusCodes.json"
         if not path.exists():
             return [], ""
@@ -141,7 +129,11 @@ class DeveloperDocsDataClient:
                 for content_type, spec in content.items():
                     schema = spec.get("schema", {})
                     if schema:
-                        response_body = json.dumps(schema, indent=2)
+                        simplified = self._simplify_schema(schema)
+                        text = json.dumps(simplified, indent=2)
+                        if len(text) > self.MAX_SCHEMA_CHARS:
+                            text = text[:self.MAX_SCHEMA_CHARS] + "\n... (truncated)"
+                        response_body = text
                         break
 
             return codes, response_body
@@ -164,71 +156,6 @@ class DeveloperDocsDataClient:
             )
         except (json.JSONDecodeError, OSError):
             return "", ""
-
-    def _find_code_samples(self, route: str) -> dict[str, str]:
-        """Find code samples for an endpoint from the OpenAPI specs."""
-        samples = {
-            "python": "",
-            "go": "",
-            "java": "",
-            "typescript": "",
-            "curl": "",
-        }
-
-        slug = self._route_to_endpoint_slug(route)
-        split_info = self._load_split_info()
-
-        # Find the tag and YAML file for this endpoint
-        for tag in split_info.get("tags", []):
-            for endpoint in tag.get("endpoints", []):
-                if endpoint.get("operationId") == slug:
-                    yaml_file = tag.get("file")
-                    if not yaml_file:
-                        continue
-
-                    spec = self._load_openapi_spec(yaml_file)
-                    ep_path = endpoint.get("path", "")
-                    ep_method = endpoint.get("method", "").lower()
-
-                    path_ops = spec.get("paths", {}).get(ep_path, {})
-                    op = path_ops.get(ep_method, {})
-                    code_samples = op.get("x-codeSamples", [])
-
-                    for cs in code_samples:
-                        lang = cs.get("lang", "").lower()
-                        source = cs.get("source", "")
-                        if lang == "python":
-                            samples["python"] = source
-                        elif lang == "go":
-                            samples["go"] = source
-                        elif lang == "java":
-                            samples["java"] = source
-                        elif lang in ("javascript", "typescript"):
-                            samples["typescript"] = source
-
-                    return samples
-
-        # Check indexing API spec for indexing endpoints
-        if "/indexing-api/" in route:
-            if self.indexing_openapi_path.exists():
-                spec = yaml.safe_load(self.indexing_openapi_path.read_text())
-                for ep_path, methods in spec.get("paths", {}).items():
-                    for method, op in methods.items():
-                        if isinstance(op, dict) and op.get("operationId") == slug:
-                            for cs in op.get("x-codeSamples", []):
-                                lang = cs.get("lang", "").lower()
-                                source = cs.get("source", "")
-                                if lang == "python":
-                                    samples["python"] = source
-                                elif lang == "go":
-                                    samples["go"] = source
-                                elif lang == "java":
-                                    samples["java"] = source
-                                elif lang in ("javascript", "typescript"):
-                                    samples["typescript"] = source
-                            return samples
-
-        return samples
 
     def _extract_method_and_endpoint(self, markdown: str) -> tuple[str, str]:
         """Extract HTTP method and endpoint path from the markdown content."""
@@ -262,7 +189,7 @@ class DeveloperDocsDataClient:
         )
 
     def _build_api_reference(self, url: str, doc: dict) -> ApiReferencePage:
-        """Build an ApiReferencePage by combining docs.json with schema files and OpenAPI specs."""
+        """Build an ApiReferencePage by combining docs.json with schema files."""
         route = doc.get("route", "")
         api_group = self._route_to_api_group(route)
         slug = self._route_to_endpoint_slug(route)
@@ -275,7 +202,6 @@ class DeveloperDocsDataClient:
         request_body = self._load_request_schema(api_group, slug)
         response_codes, response_body = self._load_status_codes(api_group, slug)
         query_params, path_params = self._load_params(api_group, slug)
-        code_samples = self._find_code_samples(route)
 
         return ApiReferencePage(
             id=str(uuid.uuid5(uuid.NAMESPACE_URL, url)),
@@ -292,11 +218,11 @@ class DeveloperDocsDataClient:
             response_body=response_body,
             response_codes=response_codes,
             authentication="",
-            python_code_sample=code_samples.get("python", ""),
-            go_code_sample=code_samples.get("go", ""),
-            java_code_sample=code_samples.get("java", ""),
-            typescript_code_sample=code_samples.get("typescript", ""),
-            curl_code_sample=code_samples.get("curl", ""),
+            python_code_sample="",
+            go_code_sample="",
+            java_code_sample="",
+            typescript_code_sample="",
+            curl_code_sample="",
             url=url,
             page_type="api_reference",
         )
