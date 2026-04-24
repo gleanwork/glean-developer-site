@@ -186,6 +186,8 @@ class DeveloperDocsDataClient:
             content=doc.get("markdown", ""),
             url=url,
             page_type="info_page",
+            created_at=doc.get("createdAt"),
+            updated_at=doc.get("lastUpdate"),
         )
 
     def _build_api_reference(self, url: str, doc: dict) -> ApiReferencePage:
@@ -225,6 +227,8 @@ class DeveloperDocsDataClient:
             curl_code_sample="",
             url=url,
             page_type="api_reference",
+            created_at=doc.get("createdAt"),
+            updated_at=doc.get("lastUpdate"),
         )
 
     def get_source_data(

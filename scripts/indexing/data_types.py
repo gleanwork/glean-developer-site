@@ -1,4 +1,4 @@
-from typing import List, TypedDict
+from typing import List, Optional, TypedDict
 
 class DocumentationPage(TypedDict):
     """Type definition for full-page documentation data."""
@@ -8,10 +8,12 @@ class DocumentationPage(TypedDict):
     content: str
     url: str
     page_type: str
+    created_at: Optional[int]  # epoch seconds; None when source doesn't expose it
+    updated_at: Optional[int]
 
 class ApiReferencePage(TypedDict):
     """Type definition for API Reference data."""
-    
+
     id: str
     title: str
     tag: str # tag the endpoint belongs to (Activity, Announcements, etc.)
@@ -33,3 +35,5 @@ class ApiReferencePage(TypedDict):
     curl_code_sample: str
     url: str
     page_type: str
+    created_at: Optional[int]
+    updated_at: Optional[int]
