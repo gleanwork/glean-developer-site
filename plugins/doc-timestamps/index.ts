@@ -68,7 +68,10 @@ async function collectGitTimestamps(
   // is the most recent commit (lastUpdate); the LAST sighting is the oldest
   // commit (createdAt).
   for (const block of stdout.split(COMMIT_MARKER)) {
-    const lines = block.split('\n').map((s) => s.trim()).filter(Boolean);
+    const lines = block
+      .split('\n')
+      .map((s) => s.trim())
+      .filter(Boolean);
     if (lines.length === 0) continue;
     const ts = Number.parseInt(lines[0], 10);
     if (!Number.isFinite(ts)) continue;
