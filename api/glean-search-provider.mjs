@@ -151,10 +151,14 @@ export default class GleanSearchProvider {
       const fullTextList = doc.content?.fullTextList ?? [];
       const fullText = fullTextList.join('\n\n');
 
+      // Glean returns a document object even for non-existent URLs (with empty
+      // content). Treat empty content as a miss so the caller can fall back
+      // to the next lookup path or return null cleanly.
       if (!fullText) {
         console.warn(
-          `[Glean] No content returned for ${url} via ${label} (doc has content: ${!!doc.content}, fullTextList length: ${fullTextList.length})`,
+          `[Glean] Empty content for ${url} via ${label} (treating as miss)`,
         );
+        return null;
       }
 
       return {
