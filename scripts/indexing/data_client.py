@@ -7,8 +7,9 @@ Instead of scraping the live site with Playwright, this reads from:
 - docs/api/**/*.ParamsDetails.json — query/path parameters
 """
 
+from dataclasses import dataclass
 from typing import Union, List, Optional, TYPE_CHECKING
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 import uuid
 import json
 import logging
@@ -19,6 +20,42 @@ if TYPE_CHECKING:
     from indexing_logger import IndexingLogger
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass(frozen=True)
+class ApiRoute:
+    """Parsed representation of a /api/* route.
+
+    Two route shapes:
+      - Nested (client-api): /api/client-api/<group>/<slug>
+      - Flat (indexing-api): /api/indexing-api/<slug>
+    """
+
+    api: str            # "client-api" | "indexing-api"
+    group: Optional[str]  # tag/group name, or None for flat routes
+    slug: str           # endpoint identifier
+
+    @classmethod
+    def parse(cls, route: str) -> Optional["ApiRoute"]:
+        """Parse a route string. Returns None if the shape isn't recognized."""
+        parts = PurePosixPath(route).parts
+        # Absolute path: parts[0] == "/", parts[1] should be "api"
+        if len(parts) < 4 or parts[0] != "/" or parts[1] != "api":
+            return None
+        if len(parts) == 4:
+            return cls(api=parts[2], group=None, slug=parts[3])
+        if len(parts) == 5:
+            return cls(api=parts[2], group=parts[3], slug=parts[4])
+        return None
+
+    @property
+    def schema_dir(self) -> str:
+        """Relative directory under docs/api/ that holds this endpoint's schema files."""
+        return f"{self.api}/{self.group}" if self.group else self.api
+
+    @property
+    def is_overview(self) -> bool:
+        return "overview" in self.slug
 
 
 class DeveloperDocsDataClient:
@@ -72,22 +109,8 @@ class DeveloperDocsDataClient:
 
     def _is_api_reference(self, route: str) -> bool:
         """Check if a route is an API reference page (not an overview)."""
-        if not (route.startswith("/api/client-api/") or route.startswith("/api/indexing-api/")):
-            return False
-        slug = route.rstrip("/").split("/")[-1]
-        return "overview" not in slug
-
-    def _route_to_api_group(self, route: str) -> str:
-        """Extract API group from route: /api/client-api/activity/feedback -> client-api/activity"""
-        parts = route.strip("/").split("/")
-        if len(parts) >= 3:
-            return f"{parts[1]}/{parts[2]}"
-        return ""
-
-    def _route_to_endpoint_slug(self, route: str) -> str:
-        """Extract endpoint slug from route: /api/client-api/activity/feedback -> feedback"""
-        parts = route.strip("/").split("/")
-        return parts[-1] if parts else ""
+        parsed = ApiRoute.parse(route)
+        return parsed is not None and not parsed.is_overview
 
     def _simplify_schema(self, schema: dict, max_depth: int = 2, depth: int = 0) -> dict:
         """Simplify a JSON schema by limiting nesting depth."""
@@ -118,9 +141,9 @@ class DeveloperDocsDataClient:
 
         return result
 
-    def _load_request_schema(self, api_group: str, slug: str) -> str:
+    def _load_request_schema(self, route: ApiRoute) -> str:
         """Load and format the request schema for an endpoint."""
-        path = self.api_docs_dir / api_group / f"{slug}.RequestSchema.json"
+        path = self.api_docs_dir / route.schema_dir / f"{route.slug}.RequestSchema.json"
         if not path.exists():
             return ""
         try:
@@ -139,9 +162,9 @@ class DeveloperDocsDataClient:
         except (json.JSONDecodeError, OSError):
             return ""
 
-    def _load_status_codes(self, api_group: str, slug: str) -> tuple[List[str], str]:
+    def _load_status_codes(self, route: ApiRoute) -> tuple[List[str], str]:
         """Load response status codes and the success response body schema."""
-        path = self.api_docs_dir / api_group / f"{slug}.StatusCodes.json"
+        path = self.api_docs_dir / route.schema_dir / f"{route.slug}.StatusCodes.json"
         if not path.exists():
             return [], ""
         try:
@@ -167,9 +190,9 @@ class DeveloperDocsDataClient:
         except (json.JSONDecodeError, OSError):
             return [], ""
 
-    def _load_params(self, api_group: str, slug: str) -> tuple[str, str]:
+    def _load_params(self, route: ApiRoute) -> tuple[str, str]:
         """Load query and path parameters. Returns (query_params, path_params) as JSON strings."""
-        path = self.api_docs_dir / api_group / f"{slug}.ParamsDetails.json"
+        path = self.api_docs_dir / route.schema_dir / f"{route.slug}.ParamsDetails.json"
         if not path.exists():
             return "", ""
         try:
@@ -198,13 +221,6 @@ class DeveloperDocsDataClient:
                 break
         return method, endpoint
 
-    def _extract_tag_from_route(self, route: str) -> str:
-        """Extract API tag from route: /api/client-api/activity/feedback -> activity"""
-        parts = route.strip("/").split("/")
-        if len(parts) >= 3:
-            return parts[2]
-        return ""
-
     def _build_info_page(self, url: str, doc: dict) -> DocumentationPage:
         """Build a DocumentationPage from docs.json entry."""
         ts = self._load_timestamps().get(url, {})
@@ -221,23 +237,22 @@ class DeveloperDocsDataClient:
     def _build_api_reference(self, url: str, doc: dict) -> ApiReferencePage:
         """Build an ApiReferencePage by combining docs.json with schema files."""
         ts = self._load_timestamps().get(url, {})
-        route = doc.get("route", "")
-        api_group = self._route_to_api_group(route)
-        slug = self._route_to_endpoint_slug(route)
+        route = ApiRoute.parse(doc.get("route", ""))
+        if route is None:
+            raise ValueError(f"_build_api_reference called with non-API route: {doc.get('route')!r}")
         markdown = doc.get("markdown", "")
 
         method, endpoint = self._extract_method_and_endpoint(markdown)
-        tag = self._extract_tag_from_route(route)
         description = doc.get("description", "")
 
-        request_body = self._load_request_schema(api_group, slug)
-        response_codes, response_body = self._load_status_codes(api_group, slug)
-        query_params, path_params = self._load_params(api_group, slug)
+        request_body = self._load_request_schema(route)
+        response_codes, response_body = self._load_status_codes(route)
+        query_params, path_params = self._load_params(route)
 
         return ApiReferencePage(
             id=str(uuid.uuid5(uuid.NAMESPACE_URL, url)),
             title=doc.get("title", "Untitled"),
-            tag=tag,
+            tag=route.group or "",
             endpoint=endpoint,
             method=method,
             description=description,
