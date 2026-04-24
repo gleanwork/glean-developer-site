@@ -11,6 +11,34 @@
  */
 
 import { Glean } from '@gleanwork/api-client';
+import { v5 as uuidv5 } from 'uuid';
+
+const DATASOURCE = 'devdocs';
+
+function getObjectType(url) {
+  let pathname;
+  try {
+    pathname = new URL(url).pathname;
+  } catch {
+    pathname = url.startsWith('/') ? url : `/${url}`;
+  }
+
+  const isApiRoute =
+    pathname.startsWith('/api/client-api/') ||
+    pathname.startsWith('/api/indexing-api/');
+  if (!isApiRoute) {
+    return 'infoPage';
+  }
+
+  const lastSegment = pathname.replace(/\/+$/, '').split('/').pop() ?? '';
+  return lastSegment.includes('overview') ? 'infoPage' : 'apiReference';
+}
+
+function computeDocId(url) {
+  const objectType = getObjectType(url);
+  const uuid = uuidv5(url, uuidv5.URL);
+  return `CUSTOM_${DATASOURCE.toUpperCase()}_${objectType}_${uuid}`;
+}
 
 export default class GleanSearchProvider {
   name = 'glean';
@@ -80,26 +108,39 @@ export default class GleanSearchProvider {
   }
 
   /**
-   * Get a document by URL.
+   * Get a document. Tries the deterministic docId first (avoids stale URL→docId
+   * mappings in Glean's index), then falls back to URL lookup.
    */
   async getDocument(url) {
     if (!this.client) {
       throw new Error('[Glean] Provider not initialized');
     }
 
+    const docId = computeDocId(url);
+
+    let result = await this.#retrieve(url, { id: docId }, `id=${docId}`);
+    if (result) {
+      return result;
+    }
+
+    console.warn(
+      `[Glean] docId lookup returned no document for ${url} (id=${docId}); falling back to URL lookup`,
+    );
+    return this.#retrieve(url, { url }, `url=${url}`);
+  }
+
+  async #retrieve(url, documentSpec, label) {
     try {
       const response = await this.client.client.documents.retrieve({
-        documentSpecs: [{ url }],
+        documentSpecs: [documentSpec],
         includeFields: ['DOCUMENT_CONTENT'],
       });
 
-      // Response is a map keyed by document identifier
       const docs = response.documents;
       if (!docs) {
         return null;
       }
 
-      // Get the first (and only) document from the map
       const docKey = Object.keys(docs)[0];
       const doc = docs[docKey];
 
@@ -110,10 +151,14 @@ export default class GleanSearchProvider {
       const fullTextList = doc.content?.fullTextList ?? [];
       const fullText = fullTextList.join('\n\n');
 
+      // Glean returns a document object even for non-existent URLs (with empty
+      // content). Treat empty content as a miss so the caller can fall back
+      // to the next lookup path or return null cleanly.
       if (!fullText) {
         console.warn(
-          `[Glean] No content returned for ${url} (doc has content: ${!!doc.content}, fullTextList length: ${fullTextList.length})`,
+          `[Glean] Empty content for ${url} via ${label} (treating as miss)`,
         );
+        return null;
       }
 
       return {
@@ -124,7 +169,10 @@ export default class GleanSearchProvider {
         headings: [],
       };
     } catch (error) {
-      console.error('[Glean] Get document error:', error.message || error);
+      console.error(
+        `[Glean] Get document error (${label}):`,
+        error.message || error,
+      );
       return null;
     }
   }

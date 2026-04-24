@@ -137,6 +137,8 @@ class DeveloperDocsConnector(BaseDatasourceConnector[Union[DocumentationPage, Ap
                 permissions=DocumentPermissionsDefinition(
                     allow_anonymous_access=True
                 ),
+                created_at=page.get("created_at"),
+                updated_at=page.get("updated_at"),
             )
             documents.append(document)
         return documents

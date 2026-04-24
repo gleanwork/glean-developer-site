@@ -37,7 +37,34 @@ class DeveloperDocsDataClient:
         self.indexing_logger = indexing_logger
 
         self.docs_json_path = self.repo_root / "build" / "mcp" / "docs.json"
+        self.timestamps_path = self.repo_root / "build" / "indexing" / "timestamps.json"
         self.api_docs_dir = self.repo_root / "docs" / "api"
+        self._timestamps: Optional[dict[str, dict]] = None
+
+    def _load_timestamps(self) -> dict[str, dict]:
+        """Load timestamps map produced by the doc-timestamps Docusaurus plugin.
+
+        Returns an empty dict if the file is missing — connector then emits None
+        for created_at/updated_at and the SDK omits the fields from the upload.
+        """
+        if self._timestamps is not None:
+            return self._timestamps
+        if not self.timestamps_path.exists():
+            self._log(
+                f"  No timestamps file at {self.timestamps_path}; "
+                "documents will be indexed without created_at/updated_at"
+            )
+            self._timestamps = {}
+            return self._timestamps
+        try:
+            self._timestamps = json.loads(self.timestamps_path.read_text())
+            self._log(
+                f"  Loaded {len(self._timestamps)} timestamp entries from {self.timestamps_path}"
+            )
+        except (json.JSONDecodeError, OSError) as e:
+            self._log(f"  Failed to load timestamps file: {e}; continuing without")
+            self._timestamps = {}
+        return self._timestamps
 
     def _log(self, msg: str) -> None:
         if self.indexing_logger:
@@ -180,16 +207,20 @@ class DeveloperDocsDataClient:
 
     def _build_info_page(self, url: str, doc: dict) -> DocumentationPage:
         """Build a DocumentationPage from docs.json entry."""
+        ts = self._load_timestamps().get(url, {})
         return DocumentationPage(
             id=str(uuid.uuid5(uuid.NAMESPACE_URL, url)),
             title=doc.get("title", "Untitled"),
             content=doc.get("markdown", ""),
             url=url,
             page_type="info_page",
+            created_at=ts.get("createdAt"),
+            updated_at=ts.get("lastUpdate"),
         )
 
     def _build_api_reference(self, url: str, doc: dict) -> ApiReferencePage:
         """Build an ApiReferencePage by combining docs.json with schema files."""
+        ts = self._load_timestamps().get(url, {})
         route = doc.get("route", "")
         api_group = self._route_to_api_group(route)
         slug = self._route_to_endpoint_slug(route)
@@ -225,6 +256,8 @@ class DeveloperDocsDataClient:
             curl_code_sample="",
             url=url,
             page_type="api_reference",
+            created_at=ts.get("createdAt"),
+            updated_at=ts.get("lastUpdate"),
         )
 
     def get_source_data(

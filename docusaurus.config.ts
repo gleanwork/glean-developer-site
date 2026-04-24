@@ -3,6 +3,7 @@ import path from 'path';
 import type { Config } from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
 import { openApiPluginOptions } from './openapi.config';
+import docTimestampsPlugin from './plugins/doc-timestamps';
 const redirects = [
   ...require('./redirects.json'),
   ...require('./permalinks.json'),
@@ -276,6 +277,7 @@ const config: Config = {
       },
     ],
     ['docusaurus-plugin-openapi-docs', openApiPluginOptions],
+    docTimestampsPlugin,
   ],
   themes: [
     'docusaurus-theme-openapi-docs',
