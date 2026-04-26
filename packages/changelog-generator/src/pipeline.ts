@@ -5,6 +5,7 @@ import type { RawRelease, ReleaseResult } from './types.js';
 import { fetchNewReleases } from './release-fetcher.js';
 import { summarizeRelease } from './summarizer.js';
 import { renderEntry } from './entry-renderer.js';
+import { preProcessRelease } from './preprocessors/index.js';
 
 export async function processRelease(
   release: RawRelease,
@@ -15,6 +16,22 @@ export async function processRelease(
   },
 ): Promise<ReleaseResult> {
   try {
+    // Skip Speakeasy releases that have no structured API changes — these are
+    // SDK rebuilds (e.g. "Publishing Completed") with nothing user-facing to
+    // describe, and would otherwise produce noise entries in the changelog.
+    const preProcessed = preProcessRelease(release);
+    if (
+      preProcessed.format === 'speakeasy' &&
+      preProcessed.structuredChanges.length === 0
+    ) {
+      return {
+        status: 'skipped',
+        owner: release.owner,
+        repo: release.repo,
+        reason: `${release.tag} has no structured API changes`,
+      };
+    }
+
     const result = await summarizeRelease(release.body, {
       mode: opts.summarization.mode,
       maxBullets: opts.summarization.maxBullets,

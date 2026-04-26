@@ -98,6 +98,13 @@ export async function analyze(repoRoot: string): Promise<AnalyzeOutput> {
         content: result.entry.content,
         commitMessage: result.entry.commitMessage,
       });
+    } else if (result.status === 'skipped') {
+      skipped.push({
+        owner: result.owner,
+        repo: result.repo,
+        decision: 'skip',
+        reason: result.reason,
+      });
     } else if (result.status === 'error') {
       const parts = result.error.release.split('/');
       errors.push({

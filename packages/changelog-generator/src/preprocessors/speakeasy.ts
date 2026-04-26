@@ -70,21 +70,12 @@ export function parseSpeakeasyNotes(text: string): ParsedChange[] {
   return changes;
 }
 
-/**
- * Simplify a deep field path for human-readable summary.
- * e.g. "request.chatRequest.messages[].citations[].sourceFile.metadata.status.enum(partiallyProcessed)"
- *   -> "partiallyProcessed"
- *
- * But for simple paths: "request.document.nativeAppUrl" -> "nativeAppUrl"
- */
 function simplifyFieldPath(field: string): string {
-  // Extract enum value if present: .enum(value) -> "value enum"
   const enumMatch = field.match(/\.enum\((\w+)\)$/i);
   if (enumMatch) {
     return enumMatch[1];
   }
 
-  // Get the last meaningful segment
   const segments = field.split('.');
   const last = segments[segments.length - 1]
     .replace(/\[\]/g, '')
@@ -92,22 +83,35 @@ function simplifyFieldPath(field: string): string {
   return last;
 }
 
-/**
- * Extract a short method name from the full SDK path.
- * e.g. "Glean.Client.Chat.Create()" -> "chat create"
- * e.g. "glean.client.chat.create()" -> "chat create"
- * e.g. "Glean.Governance.Createfindingsexport()" -> "governance createfindingsexport"
- */
 function shortMethodName(method: string): string {
-  const parts = method.replace(/\(\)$/, '').split('.');
-  // Skip "Glean"/"glean" and "Client"/"client" prefixes
-  const meaningful = parts.filter((p) => !/^(glean|client)$/i.test(p));
-  return meaningful.join(' ').toLowerCase();
+  // Strip the leading "Glean." namespace but preserve everything else,
+  // so we keep meaningful paths like "client.insights.retrieve()" or
+  // "governance.createfindingsexport()".
+  return method.replace(/^[Gg]lean\./, '').toLowerCase();
 }
 
+function joinList(items: string[]): string {
+  if (items.length === 0) return '';
+  if (items.length === 1) return items[0];
+  if (items.length === 2) return `${items[0]} and ${items[1]}`;
+  return `${items.slice(0, -1).join(', ')}, and ${items[items.length - 1]}`;
+}
+
+const VERBS: Array<{
+  action: ParsedChange['action'];
+  verb: string;
+  preposition: string;
+}> = [
+  { action: 'added', verb: 'Added', preposition: 'to' },
+  { action: 'removed', verb: 'Removed', preposition: 'from' },
+  { action: 'changed', verb: 'Changed', preposition: 'on' },
+  { action: 'deprecated', verb: 'Deprecated', preposition: 'on' },
+];
+
 /**
- * Format parsed Speakeasy changes into a human-readable summary
- * matching the repo's established entry format.
+ * Format parsed Speakeasy changes into prose: one sentence per action verb,
+ * with backticked field and method names. Deterministic — only emits
+ * identifiers that appear in the parsed changes.
  */
 export function formatSpeakeasySummary(
   changes: ParsedChange[],
@@ -117,47 +121,26 @@ export function formatSpeakeasySummary(
     return 'Maintenance updates and improvements.';
   }
 
-  const maxBullets = opts.maxBullets ?? 3;
   const maxChars = opts.maxChars ?? 300;
+  const itemsPerVerb = Math.max(1, opts.maxBullets ?? 4);
 
-  // Group changes by action type
-  const byAction = new Map<string, ParsedChange[]>();
-  for (const c of changes) {
-    const existing = byAction.get(c.action) || [];
-    existing.push(c);
-    byAction.set(c.action, existing);
+  const sentences: string[] = [];
+  for (const { action, verb, preposition } of VERBS) {
+    const items = changes.filter((c) => c.action === action);
+    if (items.length === 0) continue;
+
+    const phrases = items.slice(0, itemsPerVerb).map((c) => {
+      const field = simplifyFieldPath(c.field);
+      const method = shortMethodName(c.method);
+      return `\`${field}\` ${preposition} \`${method}\``;
+    });
+
+    const overflow = items.length - itemsPerVerb;
+    const tail = overflow > 0 ? ` and ${overflow} more` : '';
+    sentences.push(`${verb} ${joinList(phrases)}${tail}.`);
   }
 
-  // Group changes by simplified method for the intro
-  const methodNames = new Set(changes.map((c) => shortMethodName(c.method)));
-  const methodList = [...methodNames].slice(0, 4);
-  const methodSuffix =
-    methodNames.size > 4 ? ` and ${methodNames.size - 4} more` : '';
-
-  // Build intro sentence
-  const actionCounts: string[] = [];
-  for (const [action, items] of byAction) {
-    actionCounts.push(
-      `${items.length} field${items.length > 1 ? 's' : ''} ${action}`,
-    );
-  }
-
-  const intro = `${actionCounts.join(', ')} across ${methodList.join(', ')}${methodSuffix} endpoints.`;
-
-  // Build detail bullets (up to maxBullets) using ` - ` separator format
-  const details: string[] = [];
-  for (const c of changes.slice(0, maxBullets)) {
-    const fieldName = simplifyFieldPath(c.field);
-    const method = shortMethodName(c.method);
-    details.push(`${c.action} ${fieldName} in ${method}`);
-  }
-
-  let result = details.length > 0 ? intro + ' - ' + details.join(' - ') : intro;
-
-  // Capitalize first letter
-  result = result.charAt(0).toUpperCase() + result.slice(1);
-
-  // Truncate if needed
+  let result = sentences.join(' ');
 
   if (result.length > maxChars) {
     result =
