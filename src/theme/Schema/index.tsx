@@ -13,7 +13,7 @@ import clsx from 'clsx';
 import {
   getQualifierMessage,
   getSchemaName,
-} from 'docusaurus-plugin-openapi-docs/lib/markdown/schema';
+} from 'docusaurus-theme-openapi-docs/lib/markdown/schema';
 import { SchemaObject } from 'docusaurus-plugin-openapi-docs/lib/openapi/types';
 
 // eslint-disable-next-line import/no-extraneous-dependencies
