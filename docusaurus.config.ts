@@ -21,7 +21,7 @@ const config: Config = {
 
   // Future flags, see https://docusaurus.io/docs/api/docusaurus-config#future
   future: {
-    experimental_faster: true,
+    faster: true,
     // Rspack needs this to unlock some optimizations
     v4: { removeLegacyPostBuildHeadAttribute: true },
   },
