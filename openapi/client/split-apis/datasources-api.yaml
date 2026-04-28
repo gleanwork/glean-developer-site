@@ -2,11 +2,11 @@ openapi: 3.0.0
 info:
   version: 0.9.0
   title: Glean API - Datasources
-  x-source-commit-sha: a8fa186119684cfb02b671c706421d54aa603a0c
+  x-source-commit-sha: c208d27df9f9ec87fc6d56a88ff4f9200d5411dd
   description: API endpoints for Datasources
   x-logo:
     url: https://app.glean.com/images/glean-text2.svg
-  x-open-api-commit-sha: d779e0cb5fd1e7422a60bf5137113490232f468f
+  x-open-api-commit-sha: 43a7d4a3e200437df5daa6418e2044db7ebbe409
   x-speakeasy-name: Glean API
 servers:
   - url: https://{instance}-be.glean.com
@@ -252,8 +252,252 @@ paths:
                     }
                 }
             }
+  /rest/api/v1/datasource/{datasourceInstanceId}/credentialstatus:
+    get:
+      operationId: getDatasourceCredentialStatus
+      summary: Get datasource instance credential status
+      description: |
+        Returns the current credential status for a datasource instance. Access is limited to callers with the ADMIN scope; the handler enforces this check.
+      tags:
+        - Datasources
+      security:
+        - APIToken: []
+      parameters:
+        - $ref: '#/components/parameters/datasourceInstanceId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DatasourceCredentialStatusResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Not authorized
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Datasource instance not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-visibility: Preview
+      x-codeSamples:
+        - lang: Python
+          label: Python (API Client)
+          source: |-
+            from glean.api_client import Glean
+            import os
+
+
+            with Glean(
+                api_token=os.getenv("GLEAN_API_TOKEN", ""),
+                server_url="https://mycompany-be.glean.com",
+            ) as glean:
+
+                res = glean.datasources.get_datasource_credential_status(datasource_instance_id="o365sharepoint_abc123")
+
+                # Handle response
+                print(res)
+        - lang: JavaScript
+          label: Typescript (API Client)
+          source: |-
+            import { Glean } from "@gleanwork/api-client";
+
+            const glean = new Glean({
+              apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
+              serverURL: "https://mycompany-be.glean.com",
+            });
+
+            async function run() {
+              const result = await glean.datasources.getDatasourceCredentialStatus("o365sharepoint_abc123");
+
+              console.log(result);
+            }
+
+            run();
+        - lang: Go
+          label: Go (API Client)
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Datasources.GetDatasourceCredentialStatus(ctx, \"o365sharepoint_abc123\")\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.DatasourceCredentialStatusResponse != nil {\n        // handle response\n    }\n}"
+        - lang: Java
+          label: Java (API Client)
+          source: |-
+            package hello.world;
+
+            import com.glean.api_client.glean_api_client.Glean;
+            import com.glean.api_client.glean_api_client.models.errors.ErrorResponse;
+            import com.glean.api_client.glean_api_client.models.operations.GetDatasourceCredentialStatusResponse;
+            import java.lang.Exception;
+
+            public class Application {
+
+                public static void main(String[] args) throws ErrorResponse, Exception {
+
+                    Glean sdk = Glean.builder()
+                            .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
+                        .build();
+
+                    GetDatasourceCredentialStatusResponse res = sdk.datasources().getDatasourceCredentialStatus()
+                            .datasourceInstanceId("o365sharepoint_abc123")
+                            .call();
+
+                    if (res.datasourceCredentialStatusResponse().isPresent()) {
+                        System.out.println(res.datasourceCredentialStatusResponse().get());
+                    }
+                }
+            }
+  /rest/api/v1/datasource/{datasourceInstanceId}/credentials:
+    post:
+      operationId: rotateDatasourceCredentials
+      summary: Rotate datasource instance credentials
+      description: |
+        Rotates the credentials that a datasource instance uses to connect to its upstream system. Replaces the active credential material with the supplied values and returns the credential status after rotation. Access is limited to callers with the ADMIN scope; the handler enforces this check.
+        Only keys recognized as credential material for the datasource type may be set in `credentials.values` (e.g. `clientSecret`, `apiToken`, `privateKey`, depending on the configured auth method). Unrecognized keys, or keys that correspond to non-credential configuration, cause a 400; other instance configuration must be updated via PATCH /configure/datasources/{datasourceId}/instances/{instanceId}.
+      tags:
+        - Datasources
+      security:
+        - APIToken: []
+      parameters:
+        - $ref: '#/components/parameters/datasourceInstanceId'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RotateDatasourceCredentialsRequest'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DatasourceCredentialStatusResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Not authorized
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Datasource instance not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-visibility: Preview
+      x-codeSamples:
+        - lang: Python
+          label: Python (API Client)
+          source: |-
+            from glean.api_client import Glean
+            import os
+
+
+            with Glean(
+                api_token=os.getenv("GLEAN_API_TOKEN", ""),
+                server_url="https://mycompany-be.glean.com",
+            ) as glean:
+
+                res = glean.datasources.rotate_datasource_credentials(datasource_instance_id="o365sharepoint_abc123", credentials={
+                    "values": {
+                        "key": {},
+                    },
+                })
+
+                # Handle response
+                print(res)
+        - lang: JavaScript
+          label: Typescript (API Client)
+          source: |-
+            import { Glean } from "@gleanwork/api-client";
+
+            const glean = new Glean({
+              apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
+              serverURL: "https://mycompany-be.glean.com",
+            });
+
+            async function run() {
+              const result = await glean.datasources.rotateDatasourceCredentials({
+                credentials: {
+                  values: {
+                    "key": {},
+                  },
+                },
+              }, "o365sharepoint_abc123");
+
+              console.log(result);
+            }
+
+            run();
+        - lang: Go
+          label: Go (API Client)
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Datasources.RotateDatasourceCredentials(ctx, \"o365sharepoint_abc123\", components.RotateDatasourceCredentialsRequest{\n        Credentials: components.DatasourceInstanceConfiguration{\n            Values: map[string]components.ConfigurationValue{\n                \"key\": components.ConfigurationValue{},\n            },\n        },\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.DatasourceCredentialStatusResponse != nil {\n        // handle response\n    }\n}"
+        - lang: Java
+          label: Java (API Client)
+          source: |-
+            package hello.world;
+
+            import com.glean.api_client.glean_api_client.Glean;
+            import com.glean.api_client.glean_api_client.models.components.*;
+            import com.glean.api_client.glean_api_client.models.errors.ErrorResponse;
+            import com.glean.api_client.glean_api_client.models.operations.RotateDatasourceCredentialsResponse;
+            import java.lang.Exception;
+            import java.util.Map;
+
+            public class Application {
+
+                public static void main(String[] args) throws ErrorResponse, Exception {
+
+                    Glean sdk = Glean.builder()
+                            .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
+                        .build();
+
+                    RotateDatasourceCredentialsResponse res = sdk.datasources().rotateDatasourceCredentials()
+                            .datasourceInstanceId("o365sharepoint_abc123")
+                            .rotateDatasourceCredentialsRequest(RotateDatasourceCredentialsRequest.builder()
+                                .credentials(DatasourceInstanceConfiguration.builder()
+                                    .values(Map.ofEntries(
+                                        Map.entry("key", ConfigurationValue.builder()
+                                            .build())))
+                                    .build())
+                                .build())
+                            .call();
+
+                    if (res.datasourceCredentialStatusResponse().isPresent()) {
+                        System.out.println(res.datasourceCredentialStatusResponse().get());
+                    }
+                }
+            }
 components:
   schemas:
+    DatasourceCredentialStatus:
+      type: string
+      enum:
+        - VALID
+        - VALID_WITH_WARNINGS
+        - VALIDATING
+        - INVALID
+        - MISSING
+      description: |
+        Lifecycle state of the credentials installed for a datasource instance. Mirrors the internal admin Status enum so the handler can surface the same health signals already tracked today. EXPIRING_SOON is represented as VALID_WITH_WARNINGS (with detail in `message`); EXPIRED is surfaced as INVALID plus a non-null `expiresAt` in the past.
     ErrorResponse:
       type: object
       description: Error response returned for failed requests
@@ -273,6 +517,16 @@ components:
             type: string
           description: The configuration value as a list of strings. Only one of value or valueList should be populated.
       description: A single configuration value, either a scalar or a list
+    RotateDatasourceCredentialsRequest:
+      type: object
+      properties:
+        credentials:
+          $ref: '#/components/schemas/DatasourceInstanceConfiguration'
+      required:
+        - credentials
+      description: |
+        Request to rotate the credentials used by a datasource instance. Replaces the active credential material with the supplied values.
+        `credentials.values` must contain only keys recognized as credential material for the datasource type (for example `clientSecret` for OAuth, `apiToken` for API-token auth, `privateKey` for certificate auth). Unrecognized keys, or keys that correspond to non-credential configuration, cause a 400; use the configure endpoint to change non-credential config.
     UpdateDatasourceConfigurationRequest:
       type: object
       properties:
@@ -304,6 +558,26 @@ components:
       required:
         - values
       description: Configuration for a datasource instance
+    DatasourceCredentialStatusResponse:
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/DatasourceCredentialStatus'
+        lastRotatedAt:
+          type: string
+          format: date-time
+          description: When the credentials were last rotated. Omitted when not known.
+        expiresAt:
+          type: string
+          format: date-time
+          description: |
+            When the active credentials expire. Omitted when not known or not applicable to this credential type.
+        message:
+          type: string
+          description: Optional human-readable detail about the current credential status.
+      required:
+        - status
+      description: Status of the credentials currently installed for a datasource instance.
   securitySchemes:
     APIToken:
       scheme: bearer
@@ -321,6 +595,14 @@ components:
       name: instanceId
       in: path
       description: The datasource instance identifier
+      required: true
+      schema:
+        type: string
+        example: o365sharepoint_abc123
+    datasourceInstanceId:
+      name: datasourceInstanceId
+      in: path
+      description: The full datasource instance identifier (e.g. o365sharepoint_abc123)
       required: true
       schema:
         type: string
