@@ -2,11 +2,11 @@ openapi: 3.0.0
 info:
   version: 0.9.0
   title: Glean API - Insights
-  x-source-commit-sha: a8fa186119684cfb02b671c706421d54aa603a0c
+  x-source-commit-sha: c208d27df9f9ec87fc6d56a88ff4f9200d5411dd
   description: API endpoints for Insights
   x-logo:
     url: https://app.glean.com/images/glean-text2.svg
-  x-open-api-commit-sha: d779e0cb5fd1e7422a60bf5137113490232f468f
+  x-open-api-commit-sha: 43a7d4a3e200437df5daa6418e2044db7ebbe409
   x-speakeasy-name: Glean API
 servers:
   - url: https://{instance}-be.glean.com
@@ -279,10 +279,10 @@ components:
       properties:
         monthlyActiveUsers:
           type: integer
-          description: Number of current Monthly Active Users, in the specified departments.
+          description: Number of current Monthly Active Users.
         weeklyActiveUsers:
           type: integer
-          description: Number of current Weekly Active Users, in the specified departments.
+          description: Number of current Weekly Active Users.
     CustomFieldValueHyperlink:
       properties:
         urlAnchor:
@@ -1361,6 +1361,44 @@ components:
           items:
             $ref: '#/components/schemas/FacetFilter'
       description: Within a single FacetFilterSet, the filters are treated as AND. For example, owner Sumeet and type Spreadsheet shows documents that are by Sumeet AND are Spreadsheets.
+    McpBreakdownInsightsRequest:
+      properties:
+        departments:
+          type: array
+          items:
+            type: string
+          description: Departments for which Insights are requested.
+        managerIds:
+          type: array
+          items:
+            type: string
+          description: Manager user IDs whose teams should be filtered for. Empty array means no filtering.
+        dayRange:
+          $ref: '#/components/schemas/Period'
+          description: Time period for which Insights are requested.
+        breakdownType:
+          type: string
+          enum:
+            - USERS
+            - HOST_APPLICATIONS
+            - TOOLS
+            - SERVERS
+          description: Type of breakdown to return.
+        hostApplications:
+          type: array
+          items:
+            type: string
+          description: Host applications to filter by. Empty array means all host applications.
+        tools:
+          type: array
+          items:
+            type: string
+          description: MCP tools to filter by. Empty array means all tools.
+        servers:
+          type: array
+          items:
+            type: string
+          description: MCP servers to filter by. Empty array means all servers.
     RelatedObjectEdge:
       properties:
         objects:
@@ -1631,23 +1669,6 @@ components:
           description: Filters which restrict who should see the pinned document. Values are taken from the corresponding filters in people search.
           items:
             $ref: '#/components/schemas/FacetFilter'
-    InsightsRequest:
-      properties:
-        overviewRequest:
-          $ref: '#/components/schemas/InsightsOverviewRequest'
-          x-visibility: Public
-          description: If specified, will return data for the Overview section of the Insights Dashboard.
-        assistantRequest:
-          $ref: '#/components/schemas/InsightsAssistantRequest'
-          x-visibility: Public
-          description: If specified, will return data for the Assistant section of the Insights Dashboard.
-        agentsRequest:
-          $ref: '#/components/schemas/AgentsInsightsV2Request'
-          x-visibility: Public
-          description: If specified, will return data for the Agents section of the Insights Dashboard.
-        disablePerUserInsights:
-          type: boolean
-          description: If true, suppresses the generation of per-user Insights in the response. Default is false.
     Permissions:
       description: |-
         Describes the permissions levels that a user has for permissioned features. When the client sends this, Permissions.read and Permissions.write are the additional permissions granted to a user on top of what they have via their roles.
@@ -1755,6 +1776,25 @@ components:
           $ref: '#/components/schemas/AssistantInsightsResponse'
         agentsResponse:
           $ref: '#/components/schemas/AgentsInsightsV2Response'
+    InsightsRequest:
+      properties:
+        overviewRequest:
+          $ref: '#/components/schemas/InsightsOverviewRequest'
+          x-visibility: Public
+          description: If specified, will return data for the Overview section of the Insights Dashboard.
+        assistantRequest:
+          $ref: '#/components/schemas/InsightsAssistantRequest'
+          x-visibility: Public
+          description: If specified, will return data for the Assistant section of the Insights Dashboard.
+        agentsRequest:
+          $ref: '#/components/schemas/AgentsInsightsV2Request'
+          x-visibility: Public
+          description: If specified, will return data for the Agents section of the Insights Dashboard.
+        mcpBreakdownRequest:
+          $ref: '#/components/schemas/McpBreakdownInsightsRequest'
+        disablePerUserInsights:
+          type: boolean
+          description: If true, suppresses the generation of per-user Insights in the response. Default is false.
     CollectionPinnedMetadata:
       properties:
         existingPins:
