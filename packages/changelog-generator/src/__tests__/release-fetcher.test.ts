@@ -11,7 +11,11 @@ const { listReleases } = await import('../octo.js');
 const mockListReleases = vi.mocked(listReleases);
 
 const fakeOctokit = {} as Octokit;
-const spec = { owner: 'gleanwork', repo: 'api-client-go', category: 'API Clients' };
+const spec = {
+  owner: 'gleanwork',
+  repo: 'api-client-go',
+  category: 'API Clients',
+};
 
 function makeRelease(tag: string, publishedAt: string | null) {
   return {
@@ -31,7 +35,9 @@ describe('fetchNewReleases', () => {
   it('throws when listReleases returns an empty array (transient API failure)', async () => {
     mockListReleases.mockResolvedValue([] as RepoReleases);
 
-    await expect(fetchNewReleases(fakeOctokit, spec, '2026-04-13')).rejects.toThrow(
+    await expect(
+      fetchNewReleases(fakeOctokit, spec, '2026-04-13'),
+    ).rejects.toThrow(
       /listReleases returned zero dated releases for gleanwork\/api-client-go/,
     );
   });
@@ -41,9 +47,9 @@ describe('fetchNewReleases', () => {
       makeRelease('v0.1.0', null),
     ] as RepoReleases);
 
-    await expect(fetchNewReleases(fakeOctokit, spec, '2026-04-13')).rejects.toThrow(
-      /zero dated releases/,
-    );
+    await expect(
+      fetchNewReleases(fakeOctokit, spec, '2026-04-13'),
+    ).rejects.toThrow(/zero dated releases/);
   });
 
   it('returns empty status (not an error) when all releases are older than cutoff', async () => {
