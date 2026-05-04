@@ -2,11 +2,11 @@ openapi: 3.0.0
 info:
   version: 0.9.0
   title: Glean API - Insights
-  x-source-commit-sha: c208d27df9f9ec87fc6d56a88ff4f9200d5411dd
+  x-source-commit-sha: 084a38e736474e58631b0ce03aff14df68813883
   description: API endpoints for Insights
   x-logo:
     url: https://app.glean.com/images/glean-text2.svg
-  x-open-api-commit-sha: 43a7d4a3e200437df5daa6418e2044db7ebbe409
+  x-open-api-commit-sha: 1ba4734f08fab834e9a98752b97414a464a4bbb8
   x-speakeasy-name: Glean API
 servers:
   - url: https://{instance}-be.glean.com
@@ -856,26 +856,6 @@ components:
       description: Custom fields specific to individual datasources
       additionalProperties:
         $ref: '#/components/schemas/CustomDataValue'
-    InsightsAssistantRequest:
-      properties:
-        departments:
-          type: array
-          items:
-            type: string
-          description: Departments for which Insights are requested.
-        dayRange:
-          $ref: '#/components/schemas/Period'
-          description: Time period for which Insights are requested.
-    InsightsOverviewRequest:
-      properties:
-        departments:
-          type: array
-          items:
-            type: string
-          description: Departments for which Insights are requested.
-        dayRange:
-          $ref: '#/components/schemas/Period'
-          description: Time period for which Insights are requested.
     GrantPermission:
       description: Describes the grant permission level that a user has for a specific feature
       properties:
@@ -989,21 +969,6 @@ components:
         delete:
           type: boolean
           description: True if user has delete permission for this feature and scope
-    AgentsInsightsV2Request:
-      properties:
-        agentIds:
-          type: array
-          items:
-            type: string
-          description: IDs of the Agents for which Insights should be returned. An empty array signifies all.
-        departments:
-          type: array
-          items:
-            type: string
-          description: Departments for which Insights are requested.
-        dayRange:
-          $ref: '#/components/schemas/Period'
-          description: Time period for which Insights are requested.
     Group:
       required:
         - type
@@ -1023,6 +988,36 @@ components:
         provisioningId:
           type: string
           description: identifier for greenlist provisioning, aka sciokey
+    InsightsAssistantRequest:
+      properties:
+        departments:
+          type: array
+          items:
+            type: string
+          description: Departments for which Insights are requested.
+        managerEmails:
+          type: array
+          items:
+            type: string
+          description: Manager emails whose teams should be filtered for. Empty array means no filtering.
+        dayRange:
+          $ref: '#/components/schemas/Period'
+          description: Time period for which Insights are requested.
+    InsightsOverviewRequest:
+      properties:
+        departments:
+          type: array
+          items:
+            type: string
+          description: Departments for which Insights are requested.
+        managerEmails:
+          type: array
+          items:
+            type: string
+          description: Manager emails whose teams should be filtered for. Empty array means no filtering.
+        dayRange:
+          $ref: '#/components/schemas/Period'
+          description: Time period for which Insights are requested.
     AgentUsersInsight:
       properties:
         person:
@@ -1216,6 +1211,26 @@ components:
         numAgentRuns:
           type: integer
           description: Total number of agent runs for this user over the specified time period.
+    AgentsInsightsV2Request:
+      properties:
+        agentIds:
+          type: array
+          items:
+            type: string
+          description: IDs of the Agents for which Insights should be returned. An empty array signifies all.
+        departments:
+          type: array
+          items:
+            type: string
+          description: Departments for which Insights are requested.
+        managerEmails:
+          type: array
+          items:
+            type: string
+          description: Manager emails whose teams should be filtered for. Empty array means no filtering.
+        dayRange:
+          $ref: '#/components/schemas/Period'
+          description: Time period for which Insights are requested.
     Code:
       example: &ref_98
         repoName: scio
@@ -1361,44 +1376,6 @@ components:
           items:
             $ref: '#/components/schemas/FacetFilter'
       description: Within a single FacetFilterSet, the filters are treated as AND. For example, owner Sumeet and type Spreadsheet shows documents that are by Sumeet AND are Spreadsheets.
-    McpBreakdownInsightsRequest:
-      properties:
-        departments:
-          type: array
-          items:
-            type: string
-          description: Departments for which Insights are requested.
-        managerIds:
-          type: array
-          items:
-            type: string
-          description: Manager user IDs whose teams should be filtered for. Empty array means no filtering.
-        dayRange:
-          $ref: '#/components/schemas/Period'
-          description: Time period for which Insights are requested.
-        breakdownType:
-          type: string
-          enum:
-            - USERS
-            - HOST_APPLICATIONS
-            - TOOLS
-            - SERVERS
-          description: Type of breakdown to return.
-        hostApplications:
-          type: array
-          items:
-            type: string
-          description: Host applications to filter by. Empty array means all host applications.
-        tools:
-          type: array
-          items:
-            type: string
-          description: MCP tools to filter by. Empty array means all tools.
-        servers:
-          type: array
-          items:
-            type: string
-          description: MCP servers to filter by. Empty array means all servers.
     RelatedObjectEdge:
       properties:
         objects:
@@ -1476,6 +1453,49 @@ components:
           $ref: '#/components/schemas/CountInfo'
         activeDayCount:
           $ref: '#/components/schemas/CountInfo'
+    McpBreakdownInsightsRequest:
+      properties:
+        departments:
+          type: array
+          items:
+            type: string
+          description: Departments for which Insights are requested.
+        managerIds:
+          type: array
+          items:
+            type: string
+          description: Manager user IDs whose teams should be filtered for. Empty array means no filtering.
+        managerEmails:
+          type: array
+          items:
+            type: string
+          description: Manager emails whose teams should be filtered for. Empty array means no filtering.
+        dayRange:
+          $ref: '#/components/schemas/Period'
+          description: Time period for which Insights are requested.
+        breakdownType:
+          type: string
+          enum:
+            - USERS
+            - HOST_APPLICATIONS
+            - TOOLS
+            - SERVERS
+          description: Type of breakdown to return.
+        hostApplications:
+          type: array
+          items:
+            type: string
+          description: Host applications to filter by. Empty array means all host applications.
+        tools:
+          type: array
+          items:
+            type: string
+          description: MCP tools to filter by. Empty array means all tools.
+        servers:
+          type: array
+          items:
+            type: string
+          description: MCP servers to filter by. Empty array means all servers.
     GleanAssistInsightsResponse:
       properties:
         lastLogTimestamp:
