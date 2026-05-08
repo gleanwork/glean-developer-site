@@ -29,6 +29,10 @@ The Glean Indexing API enables organizations to make their custom content search
   <Card title="Permission Management" icon="Shield">
     Enforce fine-grained access controls ensuring users only see content they're authorized to access
   </Card>
+
+  <Card title="Custom Metadata (Any Datasource)" icon="Tag">
+    Attach structured metadata to documents from any datasource — native connectors and custom — without re-indexing
+  </Card>
 </CardGroup>
 
 ## Common Use Cases
@@ -38,6 +42,7 @@ The Glean Indexing API enables organizations to make their custom content search
 - **Custom Application Data**: Index structured data from internal applications and databases
 - **Document Repositories**: Make file servers, wikis, and document management systems searchable
 - **Organizational Data**: Push people information, team structures, and organizational knowledge into Glean
+- **Cross-Datasource Enrichment**: Tag and classify documents already indexed in Glean — from native connectors (Google Drive, Confluence, Jira, etc.) and custom datasources alike — using the [Custom Metadata API](../custom-metadata/overview), without re-indexing the source document
 
 ## How It Works
 
@@ -70,6 +75,7 @@ The Indexing API supports various types of content:
 - **User Information**: Employee profiles, organizational structures, and team data
 - **Groups & Teams**: Organizational units and membership information
 - **External Shortcuts**: Quick access links to frequently used external resources
+- **Custom Metadata**: Schema-defined key-value metadata attached to any document already indexed in Glean — see [Custom Metadata (Any Datasource)](../custom-metadata/overview)
 
 ## Quick Example
 
@@ -116,6 +122,33 @@ Here's how to create a datasource and index your first document:
   ```
 
   </TabItem>
+  <TabItem value="custom-metadata" label="Attach Custom Metadata">
+
+  Attach structured metadata to a document already indexed in Glean — from any datasource. First define the group schema, then attach values per document. See [Custom Metadata (Any Datasource)](../custom-metadata/overview) for full details.
+
+  ```bash
+  # 1. Define the metadata group schema
+  curl -X PUT https://customer-be.glean.com/rest/api/index/custom-metadata/schema/compliance \
+    -H 'Authorization: Bearer <custommetadata_token>' \
+    -d '{
+      "metadataKeys": [
+        { "name": "status", "propertyType": "PICKLIST" },
+        { "name": "tags", "propertyType": "MULTIPICKLIST" }
+      ]
+    }'
+
+  # 2. Attach metadata to a document (works with any datasource)
+  curl -X PUT https://customer-be.glean.com/rest/api/index/document/gdrive_abc123/custom-metadata/compliance \
+    -H 'Authorization: Bearer <custommetadata_token>' \
+    -d '{
+      "customMetadata": [
+        { "name": "status", "value": "Approved" },
+        { "name": "tags", "value": ["SOC2", "annual-review"] }
+      ]
+    }'
+  ```
+
+  </TabItem>
 </Tabs>
 
 ## Authentication & Permissions
@@ -143,6 +176,10 @@ Learn more in our [Authentication Guide](../authentication/overview).
 
   <Card title="Index Your First Document" icon="FileText" href="index-documents">
     Follow our step-by-step guide to index content and make it searchable
+  </Card>
+
+  <Card title="Enrich Documents with Custom Metadata" icon="Tag" href="../custom-metadata/overview">
+    Attach structured metadata to documents from any datasource — works with native connectors (Google Drive, Confluence, Jira, etc.) and custom datasources
   </Card>
 
   <Card title="Manage Authentication" icon="Shield" href="../authentication/overview">
