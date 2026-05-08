@@ -12,8 +12,8 @@ describe('template rendering', () => {
       summary: 'Summary line',
       detailedContent: 'Details here',
     });
-    expect(out).toContain('title: "Test Title"');
-    expect(out).toContain('categories: ["API"]');
+    expect(out).toContain("title: 'Test Title'");
+    expect(out).toContain("categories: ['API']");
     expect(out).toContain('Summary line');
     expect(out).toContain('Details here');
   });

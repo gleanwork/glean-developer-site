@@ -61,10 +61,10 @@ describe('Filename utilities', () => {
 
 describe('Category utilities', () => {
   it('formatCategories formats correctly', () => {
-    expect(formatCategories(['API'])).toBe('"API"');
-    expect(formatCategories(['API', 'Feature'])).toBe('"API", "Feature"');
+    expect(formatCategories(['API'])).toBe("'API'");
+    expect(formatCategories(['API', 'Feature'])).toBe("'API', 'Feature'");
     expect(formatCategories(['SDK', 'Breaking', 'Enhancement'])).toBe(
-      '"SDK", "Breaking", "Enhancement"',
+      "'SDK', 'Breaking', 'Enhancement'",
     );
   });
 
