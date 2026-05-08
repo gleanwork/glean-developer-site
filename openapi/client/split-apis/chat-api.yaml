@@ -2,11 +2,11 @@ openapi: 3.0.0
 info:
   version: 0.9.0
   title: Glean API - Chat
-  x-source-commit-sha: 084a38e736474e58631b0ce03aff14df68813883
+  x-source-commit-sha: efd0e29759d848a897d479b3195704bbde82daec
   description: API endpoints for Chat
   x-logo:
     url: https://app.glean.com/images/glean-text2.svg
-  x-open-api-commit-sha: 1ba4734f08fab834e9a98752b97414a464a4bbb8
+  x-open-api-commit-sha: 368a20e9e9b003c93c2a9bc7a34d0672cd764a20
   x-speakeasy-name: Glean API
 servers:
   - url: https://{instance}-be.glean.com
@@ -1064,6 +1064,112 @@ paths:
                             .call();
 
                     // handle response
+                }
+            }
+  /rest/api/v1/chat-files/{fileId}:
+    get:
+      tags:
+        - Chat
+      summary: Download a chat file
+      description: |
+        Download the raw content of a file generated or uploaded during a chat session (for example, an image produced by the assistant). Returns the file bytes with a Content-Type header matching the file's MIME type.
+      operationId: getChatFile
+      x-visibility: Public
+      parameters:
+        - name: fileId
+          in: path
+          required: true
+          description: Identifier of the chat file to download.
+          schema:
+            type: string
+        - name: preview
+          in: query
+          required: false
+          description: |
+            When true and the file is a PDF, the response is served inline (Content-Disposition: inline) instead of as an attachment.
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: File content.
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '400':
+          description: File ID missing from path.
+        '401':
+          description: Missing or invalid API token.
+        '403':
+          description: Caller does not have access to the file.
+        '404':
+          description: File not found.
+        '500':
+          description: Internal server error.
+      security:
+        - APIToken: []
+      x-codeSamples:
+        - lang: Python
+          label: Python (API Client)
+          source: |-
+            from glean.api_client import Glean
+            import os
+
+
+            with Glean(
+                api_token=os.getenv("GLEAN_API_TOKEN", ""),
+                server_url="https://mycompany-be.glean.com",
+            ) as glean:
+
+                res = glean.chat.get_chat_file(file_id="<id>")
+
+                # Handle response
+                print(res)
+        - lang: JavaScript
+          label: Typescript (API Client)
+          source: |-
+            import { Glean } from "@gleanwork/api-client";
+
+            const glean = new Glean({
+              apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
+              serverURL: "https://mycompany-be.glean.com",
+            });
+
+            async function run() {
+              const result = await glean.chat.getChatFile("<id>");
+
+              console.log(result);
+            }
+
+            run();
+        - lang: Go
+          label: Go (API Client)
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Chat.GetChatFile(ctx, \"<id>\", nil)\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.ResponseStream != nil {\n        // handle response\n    }\n}"
+        - lang: Java
+          label: Java (API Client)
+          source: |-
+            package hello.world;
+
+            import com.glean.api_client.glean_api_client.Glean;
+            import com.glean.api_client.glean_api_client.models.operations.GetChatFileResponse;
+            import java.lang.Exception;
+
+            public class Application {
+
+                public static void main(String[] args) throws Exception {
+
+                    Glean sdk = Glean.builder()
+                            .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
+                        .build();
+
+                    GetChatFileResponse res = sdk.chat().getChatFile()
+                            .fileId("<id>")
+                            .call();
+
+                    if (res.responseStream().isPresent()) {
+                        // handle response
+                    }
                 }
             }
   /rest/api/v1/chat#stream:

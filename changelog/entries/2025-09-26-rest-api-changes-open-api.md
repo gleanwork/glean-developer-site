@@ -3,8 +3,11 @@ title: 'REST API: changes (endpoints) 2025-09-26'
 categories: ['API']
 ---
 
-1 endpoint added
+1 endpoint added.
 
 {/* truncate */}
 
-Added endpoint: /debug/{datasource}/document/events
+## Changes
+
+- Added endpoint: /debug/{datasource}/document/events.
+- 1 endpoint added.

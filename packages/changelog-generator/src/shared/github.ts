@@ -15,6 +15,8 @@ import {
 } from '../openapi-summary.js';
 import { enrichChangesWithContext } from '../openapi-context.js';
 import { processAllReleases } from '../pipeline.js';
+import { renderNormalizedRelease } from '../normalized-renderer.js';
+import type { NormalizedChange, SourceRef } from '../types.js';
 
 const DEFAULT_OWNER = 'gleanwork';
 const DEFAULT_REPO = 'glean-developer-site';
@@ -48,12 +50,135 @@ function toErrorMessage(err: unknown): string {
   return String(err);
 }
 
+function parseReleaseIdentifier(identifier: string): {
+  owner: string;
+  repo: string;
+  tag?: string;
+} {
+  const [repoPart, ...tagParts] = identifier.split(/\s+/);
+  const repoParts = repoPart.split('/');
+  return {
+    owner: repoParts.length > 1 ? repoParts[0] : '',
+    repo: repoParts.length > 1 ? repoParts[1] : repoPart,
+    tag: tagParts.length > 0 ? tagParts.join(' ') : undefined,
+  };
+}
+
 function today(): string {
   const now = new Date();
   const y = now.getFullYear();
   const m = String(now.getMonth() + 1).padStart(2, '0');
   const d = String(now.getDate()).padStart(2, '0');
   return `${y}-${m}-${d}`;
+}
+
+function normalizeOpenApiDetails(
+  details: string[],
+  breaking: boolean,
+): NormalizedChange[] {
+  const changes: NormalizedChange[] = [];
+  let context = '';
+  for (const raw of details) {
+    const line = raw.trim();
+    if (!line) continue;
+    const heading = line.match(/^\*\*([^*]+)\*\*$/);
+    if (heading) {
+      context = heading[1];
+      continue;
+    }
+    const cleaned = line
+      .replace(/^[-*]\s+/, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+    if (!cleaned) continue;
+    const text =
+      context && !/^added endpoint|removed endpoint/i.test(cleaned)
+        ? `${context}: ${cleaned}`
+        : cleaned;
+    const lower = cleaned.toLowerCase();
+    const type =
+      breaking && lower.includes('removed')
+        ? 'breaking'
+        : lower.includes('added')
+          ? 'added'
+          : lower.includes('removed')
+            ? 'breaking'
+            : 'changed';
+    changes.push({ type, text });
+  }
+  return changes;
+}
+
+function buildPullRequestBody(
+  bundleDate: string,
+  includedFiles: AnalyzeOutput['files'],
+  skipped: AnalyzeOutput['report']['skipped'],
+  errors: AnalyzeOutput['report']['errors'],
+): string {
+  const sourceLinks = (refs: SourceRef[] | undefined): string => {
+    if (!refs || refs.length === 0) return '';
+    return refs
+      .map((ref) => `[${ref.label}](${ref.url})`)
+      .join('<br />')
+      .replace(/\|/g, '\\|');
+  };
+
+  const lines: Array<string> = [
+    `Adds ${includedFiles.length} changelog entries generated on ${bundleDate}.`,
+    '',
+    '## Generated entries',
+    '',
+    '| Repo/source | Tag/date | Parser | Entry | Source links |',
+    '| --- | --- | --- | --- | --- |',
+    ...includedFiles.map((file) => {
+      const metadata = file.metadata;
+      const source = metadata ? metadata.repo : file.path;
+      const tag = metadata?.tag || '';
+      const parser = metadata?.parser || 'unknown';
+      return `| ${source} | ${tag} | ${parser} | \`${file.path}\` | ${sourceLinks(metadata?.sourceRefs)} |`;
+    }),
+    '',
+    '## Reviewer checklist',
+    '',
+    '- Confirm generated entries use the normalized changelog format.',
+    '- Confirm deleted or skipped releases are no-op entries or older than the latest local entry.',
+    '- Confirm parser warnings and errors are actionable.',
+    '- Confirm source links point to the upstream release, PR, or commit.',
+  ];
+
+  if (skipped.length > 0) {
+    lines.push(
+      '',
+      '## Skipped',
+      '',
+      '| Repo/tag | Reason | Classification |',
+      '| --- | --- | --- |',
+      ...skipped.map((item) => {
+        const classification = item.emptyOrNoop
+          ? 'empty/no-op'
+          : item.olderThanLatest
+            ? 'older than latest entry'
+            : 'skip';
+        return `| ${item.repo}${item.tag ? ` ${item.tag}` : ''} | ${item.reason.replace(/\|/g, '\\|')} | ${classification} |`;
+      }),
+    );
+  }
+
+  if (errors.length > 0) {
+    lines.push(
+      '',
+      '## Errors',
+      '',
+      '| Repo/tag | Stage | Actionable message |',
+      '| --- | --- | --- |',
+      ...errors.map(
+        (item) =>
+          `| ${item.repo}${item.tag ? ` ${item.tag}` : ''} | ${item.stage || 'unknown'} | ${item.reason.replace(/\|/g, '\\|')} |`,
+      ),
+    );
+  }
+
+  return lines.join('\n');
 }
 
 export function writePreview(
@@ -80,6 +205,7 @@ export async function analyze(repoRoot: string): Promise<AnalyzeOutput> {
     path: string;
     content: string;
     commitMessage: string;
+    metadata?: AnalyzeOutput['files'][number]['metadata'];
   }> = [];
   const skipped: AnalyzeOutput['report']['skipped'] = [];
   const errors: AnalyzeOutput['report']['errors'] = [];
@@ -97,19 +223,25 @@ export async function analyze(repoRoot: string): Promise<AnalyzeOutput> {
         path: result.entry.filePath,
         content: result.entry.content,
         commitMessage: result.entry.commitMessage,
+        metadata: result.entry.metadata,
       });
     } else if (result.status === 'skipped') {
       skipped.push({
         owner: result.owner,
         repo: result.repo,
+        tag: result.tag,
         decision: 'skip',
         reason: result.reason,
+        emptyOrNoop: result.emptyOrNoop,
+        olderThanLatest: result.olderThanLatest,
       });
     } else if (result.status === 'error') {
-      const parts = result.error.release.split('/');
+      const parsed = parseReleaseIdentifier(result.error.release);
       errors.push({
-        owner: parts.length > 1 ? parts[0] : '',
-        repo: parts.length > 1 ? parts[1] : result.error.release,
+        owner: parsed.owner,
+        repo: parsed.repo,
+        tag: parsed.tag,
+        stage: result.error.stage,
         reason: result.error.message,
       });
     }
@@ -175,20 +307,50 @@ export async function analyze(repoRoot: string): Promise<AnalyzeOutput> {
           const changeTypes = formatChangeCategories(analyzed.categories);
           const title = `REST API: changes (${changeTypes}) ${day}`;
 
-          const detailedContent = analyzed.details.join('\n');
+          const sourceRefs: SourceRef[] = commits.slice(0, 8).map((commit) => ({
+            label: `open-api ${commit.sha.slice(0, 7)}`,
+            url: `https://github.com/${openapiCfg.repo.owner}/${openapiCfg.repo.repo}/commit/${commit.sha}`,
+          }));
+          const normalized = {
+            release: {
+              owner: openapiCfg.repo.owner,
+              repo: openapiCfg.repo.repo,
+              tag: day,
+              url: `https://github.com/${openapiCfg.repo.owner}/${openapiCfg.repo.repo}`,
+              publishedAt: day,
+              body: analyzed.details.join('\n'),
+              category: 'API',
+            },
+            parser: 'openapi' as const,
+            summary: analyzed.summary,
+            changes: normalizeOpenApiDetails(
+              analyzed.details,
+              analyzed.breaking,
+            ),
+            sourceRefs,
+            warnings: [],
+          };
+          const rendered = renderNormalizedRelease(normalized);
 
           const content = renderChangelogEntry({
             repoRoot,
             title,
             categories: ['API'],
-            summary: analyzed.summary,
-            detailedContent,
+            summary: rendered.summary,
+            detailedContent: rendered.detailedContent,
           });
           const filename = `${day}-rest-api-changes-open-api.md`;
           return {
             path: path.join('changelog', 'entries', filename),
             content,
             commitMessage: `chore(changelog): add REST API changes ${day}`,
+            metadata: {
+              repo: openapiCfg.repo.repo,
+              tag: day,
+              parser: 'openapi',
+              summary: rendered.summary,
+              sourceRefs,
+            },
           };
         },
       });
@@ -214,6 +376,7 @@ export async function analyze(repoRoot: string): Promise<AnalyzeOutput> {
     errors.push({
       owner: DEFAULT_OWNER,
       repo: DEFAULT_OPENAPI_REPO,
+      stage: 'fetch',
       reason: e?.message || 'error',
     });
   }
@@ -227,26 +390,7 @@ export async function analyze(repoRoot: string): Promise<AnalyzeOutput> {
     body:
       includedFiles.length === 0
         ? 'No new entries.'
-        : [
-            `Adds ${includedFiles.length} changelog entries generated on ${bundleDate}.`,
-            '',
-            'Files:',
-            ...includedFiles.map((f) => `- ${f.path}`),
-            skipped.length > 0 ? '' : null,
-            skipped.length > 0 ? 'Skipped:' : null,
-            ...skipped.map(
-              (s: AnalyzeOutput['report']['skipped'][number]) =>
-                `- {repo: ${s.repo}, decision: ${s.decision}, reason: ${s.reason}}`,
-            ),
-            errors.length > 0 ? '' : null,
-            errors.length > 0 ? 'Errors:' : null,
-            ...errors.map(
-              (er: AnalyzeOutput['report']['errors'][number]) =>
-                `- {repo: ${er.repo}, reason: ${er.reason}}`,
-            ),
-          ]
-            .filter((v) => v !== null)
-            .join('\n'),
+        : buildPullRequestBody(bundleDate, includedFiles, skipped, errors),
   };
 
   const out: AnalyzeOutput = {

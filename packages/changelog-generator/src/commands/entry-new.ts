@@ -131,15 +131,12 @@ export async function createCommand(repoRoot: string): Promise<void> {
     fs.writeFileSync(filepath, content);
 
     console.log(
-      chalk.green(`\n✅ Created: ${path.relative(process.cwd(), filepath)}`),
+      chalk.green(`\nCreated: ${path.relative(process.cwd(), filepath)}`),
     );
-    console.log(chalk.yellow('📝 Next steps:'));
-    console.log(chalk.yellow('  • Run: pnpm start (to see changes locally)'));
+    console.log(chalk.yellow('Next steps:'));
+    console.log(chalk.yellow('  - Run: pnpm build'));
   } catch (error: any) {
-    console.error(
-      chalk.red('❌ Error creating changelog entry:'),
-      error.message,
-    );
+    console.error(chalk.red('Error creating changelog entry:'), error.message);
     process.exit(1);
   }
 }

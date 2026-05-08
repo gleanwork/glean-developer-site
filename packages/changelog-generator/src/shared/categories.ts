@@ -16,5 +16,7 @@ export const SECONDARY_CATEGORIES = [
 ];
 
 export function formatCategories(categories: Array<string>): string {
-  return categories.map((category) => `"${category}"`).join(', ');
+  return categories
+    .map((category) => `'${category.replace(/'/g, "''")}'`)
+    .join(', ');
 }

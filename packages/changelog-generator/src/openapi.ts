@@ -21,8 +21,21 @@ export type OpenApiConfig = {
   diffEngine?: 'openapi-changes' | 'none';
 };
 
+type GeneratedOpenApiEntry = {
+  path: string;
+  content: string;
+  commitMessage: string;
+  metadata?: {
+    repo: string;
+    tag: string;
+    parser: string;
+    summary: string;
+    sourceRefs: Array<{ label: string; url: string }>;
+  };
+};
+
 export type OpenApiIngestResult = {
-  files: Array<{ path: string; content: string; commitMessage: string }>;
+  files: GeneratedOpenApiEntry[];
   report: { days: number; commits: number; diffToolFailures: number };
 };
 
@@ -262,7 +275,7 @@ export async function ingestOpenApiCommits(opts: {
       files: Array<string>;
       diffs?: Array<{ baseYaml: string; headYaml: string; diff: any }>;
     }>,
-  ) => Promise<{ path: string; content: string; commitMessage: string } | null>;
+  ) => Promise<GeneratedOpenApiEntry | null>;
 }): Promise<OpenApiIngestResult> {
   if (!opts.cfg.enabled)
     return { files: [], report: { days: 0, commits: 0, diffToolFailures: 0 } };
@@ -409,8 +422,7 @@ export async function ingestOpenApiCommits(opts: {
   }
 
   const days = Array.from(dayBuckets.keys()).sort();
-  const files: Array<{ path: string; content: string; commitMessage: string }> =
-    [];
+  const files: GeneratedOpenApiEntry[] = [];
   let totalCommits = 0;
   for (const day of days) {
     const entries = dayBuckets.get(day)!;

@@ -1,5 +1,5 @@
 ---
-title: "{{TITLE}}"
+title: '{{TITLE}}'
 categories: [{{CATEGORIES}}]
 ---
 
@@ -7,4 +7,4 @@ categories: [{{CATEGORIES}}]
 
 {/* truncate */}
 
-{{DETAILED_CONTENT}} 
+{{DETAILED_CONTENT}}

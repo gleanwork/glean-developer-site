@@ -1,136 +1,17 @@
-import { createRequire } from 'node:module';
-const require = createRequire(import.meta.url);
-const dbg: any = require('debug');
-const dbgVal = dbg('changelog:validate');
-
-// Words that don't count as meaningful content
-const STRUCTURAL_WORDS = new Set([
-  'the',
-  'a',
-  'an',
-  'and',
-  'or',
-  'but',
-  'in',
-  'on',
-  'at',
-  'to',
-  'for',
-  'of',
-  'with',
-  'by',
-  'from',
-  'is',
-  'are',
-  'was',
-  'were',
-  'be',
-  'been',
-  'has',
-  'have',
-  'had',
-  'do',
-  'does',
-  'did',
-  'will',
-  'would',
-  'could',
-  'should',
-  'may',
-  'might',
-  'can',
-  'shall',
-  'not',
-  'no',
-  'now',
-  'new',
-  'its',
-  'it',
-  'this',
-  'that',
-  'these',
-  'those',
-  'also',
-  'plus',
-]);
-
-const ACTION_WORDS = new Set([
-  'added',
-  'adds',
-  'add',
-  'removed',
-  'removes',
-  'remove',
-  'changed',
-  'changes',
-  'change',
-  'updated',
-  'updates',
-  'update',
-  'deprecated',
-  'deprecates',
-  'deprecate',
-  'modified',
-  'modifies',
-  'breaking',
-  'included',
-  'includes',
-]);
-
-/**
- * Count meaningful unique content tokens in a summary.
- * Strips structural words, action verbs, and punctuation,
- * then counts unique remaining words.
- */
-function countMeaningfulTokens(text: string): number {
-  const tokens = text
-    .toLowerCase()
-    .replace(/[^a-z0-9\s]/g, ' ')
-    .split(/\s+/)
-    .filter((t) => t.length > 1)
-    .filter((t) => !STRUCTURAL_WORDS.has(t))
-    .filter((t) => !ACTION_WORDS.has(t));
-  return new Set(tokens).size;
-}
-
-/**
- * Detect orphaned structural fragments — patterns where the LLM
- * echoed change-type markers without the actual content.
- */
-function hasOrphanedFragments(text: string): boolean {
-  const patterns = [
-    // "- : added" or "- : changed" (colon with no preceding noun)
-    /- :\s*(added|changed|removed|deprecated)/i,
-    // "- added - added" (repeated bare action words as bullets)
-    /- (adds?|changed?|removed?)\s+-\s+(adds?|changed?|removed?)/i,
-    // "- adds and - adds" (conjunction fragments)
-    /- (adds?|changed?)\s+and\s+-/i,
-    // "- and add ," (orphaned conjunction)
-    /- and (adds?|changed?)\s*,/i,
-  ];
-  return patterns.some((p) => p.test(text));
-}
-
-/**
- * Detect placeholder text from failed LLM summarization
- */
-function hasPlaceholderText(text: string): boolean {
-  const patterns = [
-    /\bhas changed to\s*\./,
-    /\bresponse of\s*\./,
-    /\bis now included in\s+within\s+the\s+response/,
-    /\bthe field is now included\s+in\s+within/,
-    /\bfor\s+has changed to\s*\./,
-    /\bthe\s+field\s+is\s+now\s+included\s+in\s+within/,
-    /\bresponse\s+type\s+for\s+has\s+changed/,
-    /^-\s*:\s*-?\s*\*\*/m,
-  ];
-  return patterns.some((p) => p.test(text));
-}
-
 export interface ValidationResult {
   valid: boolean;
   reason?: string;
+}
+
+const EMOJI_SHORTCODES =
+  /:(rocket|bug|house|memo|warning|lock|boom|sparkles|white_check_mark|x):/i;
+
+function hasEmoji(text: string): boolean {
+  return /\p{Extended_Pictographic}/u.test(text) || EMOJI_SHORTCODES.test(text);
+}
+
+function hasFlattenedBullets(text: string): boolean {
+  return /\.\s+-\s+\S/i.test(text);
 }
 
 /**
@@ -154,33 +35,24 @@ export function validateSummary(
     };
   }
 
-  if (hasPlaceholderText(trimmed)) {
-    dbgVal('validate:rejected placeholder text in: %s', trimmed.slice(0, 80));
+  if (/^[-*]\s+/.test(trimmed)) {
     return {
       valid: false,
-      reason: 'Summary contains placeholder text from failed LLM output',
+      reason: 'Summary must be prose, not a bullet',
     };
   }
 
-  if (hasOrphanedFragments(trimmed)) {
-    dbgVal('validate:rejected orphaned fragments in: %s', trimmed.slice(0, 80));
+  if (hasEmoji(trimmed)) {
     return {
       valid: false,
-      reason:
-        'Summary contains orphaned structural fragments without meaningful content',
+      reason: 'Summary contains emoji or emoji shortcode',
     };
   }
 
-  const meaningfulTokens = countMeaningfulTokens(trimmed);
-  if (meaningfulTokens < 5) {
-    dbgVal(
-      'validate:rejected low token count (%d) in: %s',
-      meaningfulTokens,
-      trimmed.slice(0, 80),
-    );
+  if (hasFlattenedBullets(trimmed)) {
     return {
       valid: false,
-      reason: `Summary has only ${meaningfulTokens} meaningful tokens (minimum 5)`,
+      reason: 'Summary contains flattened inline bullets',
     };
   }
 
@@ -194,6 +66,19 @@ export function validateRenderedEntry(content: string): ValidationResult {
   // Check frontmatter exists
   if (!content.startsWith('---\n')) {
     return { valid: false, reason: 'Missing YAML frontmatter' };
+  }
+
+  if (hasEmoji(content)) {
+    return { valid: false, reason: 'Rendered entry contains emoji' };
+  }
+
+  const markerCount = (content.match(/\{\/\*\s*truncate\s*\*\/\}/g) || [])
+    .length;
+  if (markerCount !== 1) {
+    return {
+      valid: false,
+      reason: `Expected exactly one truncate marker, found ${markerCount}`,
+    };
   }
 
   const endOfFrontmatter = content.indexOf('\n---\n', 4);

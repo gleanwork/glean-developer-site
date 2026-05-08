@@ -2,11 +2,11 @@ openapi: 3.0.0
 info:
   version: 0.9.0
   title: Glean API - Tools
-  x-source-commit-sha: 084a38e736474e58631b0ce03aff14df68813883
+  x-source-commit-sha: efd0e29759d848a897d479b3195704bbde82daec
   description: API endpoints for Tools
   x-logo:
     url: https://app.glean.com/images/glean-text2.svg
-  x-open-api-commit-sha: 1ba4734f08fab834e9a98752b97414a464a4bbb8
+  x-open-api-commit-sha: 368a20e9e9b003c93c2a9bc7a34d0672cd764a20
   x-speakeasy-name: Glean API
 servers:
   - url: https://{instance}-be.glean.com
@@ -234,8 +234,238 @@ paths:
                     }
                 }
             }
+  /rest/api/v1/actions/{actionPackId}/auth:
+    get:
+      tags:
+        - Tools
+      summary: Get end-user authentication status for an action pack.
+      description: |
+        Reports whether the calling user is already authenticated against the third-party
+        tool backing the specified action pack. Intended for headless / server-driven clients
+        that render an "Authorize" prompt when the user has not yet consented to the tool.
+      operationId: getActionAuthStatus
+      x-visibility: Preview
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActionAuthStatusResponse'
+        '400':
+          description: Bad Request
+        '401':
+          description: Unauthorized
+        '404':
+          description: Action pack not found
+        '429':
+          description: Too Many Requests
+      security:
+        - APIToken: []
+      x-codeSamples:
+        - lang: Python
+          label: Python (API Client)
+          source: |-
+            from glean.api_client import Glean
+            import os
+
+
+            with Glean(
+                api_token=os.getenv("GLEAN_API_TOKEN", ""),
+                server_url="https://mycompany-be.glean.com",
+            ) as glean:
+
+                res = glean.tools.get_action_auth_status(action_pack_id="<id>")
+
+                # Handle response
+                print(res)
+        - lang: JavaScript
+          label: Typescript (API Client)
+          source: |-
+            import { Glean } from "@gleanwork/api-client";
+
+            const glean = new Glean({
+              apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
+              serverURL: "https://mycompany-be.glean.com",
+            });
+
+            async function run() {
+              const result = await glean.tools.getActionAuthStatus("<id>");
+
+              console.log(result);
+            }
+
+            run();
+        - lang: Go
+          label: Go (API Client)
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Tools.GetActionAuthStatus(ctx, \"<id>\")\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.ActionAuthStatusResponse != nil {\n        // handle response\n    }\n}"
+        - lang: Java
+          label: Java (API Client)
+          source: |-
+            package hello.world;
+
+            import com.glean.api_client.glean_api_client.Glean;
+            import com.glean.api_client.glean_api_client.models.operations.GetActionAuthStatusResponse;
+            import java.lang.Exception;
+
+            public class Application {
+
+                public static void main(String[] args) throws Exception {
+
+                    Glean sdk = Glean.builder()
+                            .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
+                        .build();
+
+                    GetActionAuthStatusResponse res = sdk.tools().getActionAuthStatus()
+                            .actionPackId("<id>")
+                            .call();
+
+                    if (res.actionAuthStatusResponse().isPresent()) {
+                        System.out.println(res.actionAuthStatusResponse().get());
+                    }
+                }
+            }
+    post:
+      tags:
+        - Tools
+      summary: Start the OAuth authorization flow for an action pack.
+      description: |
+        Starts the third-party OAuth flow for the specified action pack and returns the
+        redirect URL that the client should navigate the end user to. After the OAuth
+        callback completes, the user's browser is redirected back to `returnUrl` with a
+        status query parameter (`?glean_action_auth=success|error&actionPackId=...`).
+
+        `returnUrl` must match the tenant's configured return URL allowlist; otherwise the
+        request is rejected with 400.
+      operationId: authorizeAction
+      x-visibility: Preview
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthorizeActionRequest'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthorizeActionResponse'
+        '400':
+          description: Invalid request (e.g. returnUrl not in allowlist, unsupported auth type)
+        '401':
+          description: Unauthorized
+        '403':
+          description: User not entitled to the action pack
+        '404':
+          description: Action pack not found
+        '429':
+          description: Too Many Requests
+      security:
+        - APIToken: []
+      x-codeSamples:
+        - lang: Python
+          label: Python (API Client)
+          source: |-
+            from glean.api_client import Glean
+            import os
+
+
+            with Glean(
+                api_token=os.getenv("GLEAN_API_TOKEN", ""),
+                server_url="https://mycompany-be.glean.com",
+            ) as glean:
+
+                res = glean.tools.authorize_action(action_pack_id="<id>", return_url="https://irresponsible-trick.name/")
+
+                # Handle response
+                print(res)
+        - lang: JavaScript
+          label: Typescript (API Client)
+          source: |-
+            import { Glean } from "@gleanwork/api-client";
+
+            const glean = new Glean({
+              apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
+              serverURL: "https://mycompany-be.glean.com",
+            });
+
+            async function run() {
+              const result = await glean.tools.authorizeAction({
+                returnUrl: "https://irresponsible-trick.name/",
+              }, "<id>");
+
+              console.log(result);
+            }
+
+            run();
+        - lang: Go
+          label: Go (API Client)
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Tools.AuthorizeAction(ctx, \"<id>\", components.AuthorizeActionRequest{\n        ReturnURL: \"https://irresponsible-trick.name/\",\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.AuthorizeActionResponse != nil {\n        // handle response\n    }\n}"
+        - lang: Java
+          label: Java (API Client)
+          source: |-
+            package hello.world;
+
+            import com.glean.api_client.glean_api_client.Glean;
+            import com.glean.api_client.glean_api_client.models.components.AuthorizeActionRequest;
+            import com.glean.api_client.glean_api_client.models.operations.AuthorizeActionResponse;
+            import java.lang.Exception;
+
+            public class Application {
+
+                public static void main(String[] args) throws Exception {
+
+                    Glean sdk = Glean.builder()
+                            .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
+                        .build();
+
+                    AuthorizeActionResponse res = sdk.tools().authorizeAction()
+                            .actionPackId("<id>")
+                            .authorizeActionRequest(AuthorizeActionRequest.builder()
+                                .returnUrl("https://irresponsible-trick.name/")
+                                .build())
+                            .call();
+
+                    if (res.authorizeActionResponse().isPresent()) {
+                        System.out.println(res.authorizeActionResponse().get());
+                    }
+                }
+            }
 components:
   schemas:
+    ActionAuthType:
+      type: string
+      description: |
+        Authentication mechanism used by an action pack.
+          - `AUTH_USER_OAUTH`: Requires per-user OAuth consent to the third-party tool.
+          - `AUTH_ADMIN`: Uses a service-account / admin-owned credential. End users do not authorize individually.
+          - `AUTH_NONE`: Action pack requires no authentication.
+      enum:
+        - AUTH_USER_OAUTH
+        - AUTH_ADMIN
+        - AUTH_NONE
+    AuthorizeActionRequest:
+      type: object
+      required:
+        - returnUrl
+      properties:
+        returnUrl:
+          type: string
+          description: |
+            URL on the customer's domain to redirect the end user's browser back to after the third-party OAuth
+            callback completes. Must be present in the tenant's return URL allowlist.
+    AuthorizeActionResponse:
+      type: object
+      required:
+        - redirectUrl
+      properties:
+        redirectUrl:
+          type: string
+          description: |
+            URL that the customer UI should navigate the end user to in order to begin the third-party OAuth flow.
+            After the user consents, control returns to `returnUrl` from the request.
     ToolsCallResponse:
       type: object
       properties:
@@ -260,6 +490,17 @@ components:
           description: The parameters for the tool. Each key is the name of the parameter and the value is the parameter object.
           additionalProperties:
             $ref: '#/components/schemas/ToolsCallParameter'
+    ActionAuthStatusResponse:
+      type: object
+      required:
+        - authenticated
+        - authType
+      properties:
+        authenticated:
+          type: boolean
+          description: Whether the calling user is already authenticated to the tool backing the action pack.
+        authType:
+          $ref: '#/components/schemas/ActionAuthType'
     Tool:
       type: object
       properties:

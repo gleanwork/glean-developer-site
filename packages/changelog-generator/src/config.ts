@@ -1,6 +1,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import yaml from 'js-yaml';
+import type { ReleaseParser } from './types.js';
 
 const DEFAULT_OWNER = 'gleanwork';
 const DEFAULT_BASE_BRANCH = 'main';
@@ -10,19 +11,13 @@ export type RepoSpec = {
   owner: string;
   repo: string;
   category: string;
+  parser: ReleaseParser;
 };
 
 export type GeneratorConfig = {
   owner: string;
   baseBranch: string;
   repos: Array<RepoSpec>;
-  summarization: {
-    mode: 'off' | 'heuristic' | 'llm';
-    maxBullets: number;
-    maxChars: number;
-    model?: string;
-    categoryHints: Record<string, Array<string>>;
-  };
   openapi?: {
     enabled: boolean;
     repo: { owner: string; repo: string };
@@ -68,6 +63,7 @@ export function loadConfig(repoRoot: string): GeneratorConfig {
           owner,
           repo: String(r.repo),
           category: String(r.category),
+          parser: parseReleaseParser(r.parser),
         };
       })
     : [];
@@ -75,33 +71,6 @@ export function loadConfig(repoRoot: string): GeneratorConfig {
   if (repos.length === 0) {
     throw new Error('Config repos is empty; add at least one repo entry.');
   }
-
-  const s = data?.summarization || {};
-  const envSummarizeRaw = process.env.CHANGELOG_SUMMARIZE;
-  const envSummarize =
-    typeof envSummarizeRaw === 'string'
-      ? /^(1|true|yes|on)$/i.test(envSummarizeRaw)
-      : undefined;
-  let mode: 'off' | 'heuristic' | 'llm';
-  const rawMode = s?.mode ? String(s.mode) : undefined;
-  if (envSummarize !== undefined) {
-    mode = envSummarize ? 'llm' : 'heuristic';
-  } else if (
-    rawMode === 'off' ||
-    rawMode === 'heuristic' ||
-    rawMode === 'llm'
-  ) {
-    mode = rawMode;
-  } else {
-    mode = 'heuristic';
-  }
-  const summarization = {
-    mode,
-    maxBullets: Number.isFinite(s.maxBullets) ? Number(s.maxBullets) : 3,
-    maxChars: Number.isFinite(s.maxChars) ? Number(s.maxChars) : 300,
-    model: process.env.CHANGELOG_OPENAI_MODEL || s.model || 'gpt-4o-mini',
-    categoryHints: (s.categoryHints as Record<string, Array<string>>) || {},
-  };
 
   // openapi block (optional)
   let openapi: GeneratorConfig['openapi'] | undefined = undefined;
@@ -142,5 +111,21 @@ export function loadConfig(repoRoot: string): GeneratorConfig {
     }
   }
 
-  return { owner, baseBranch, repos, summarization, openapi };
+  return { owner, baseBranch, repos, openapi };
+}
+
+function parseReleaseParser(value: unknown): ReleaseParser {
+  const parser = value ? String(value) : 'auto';
+  if (
+    parser === 'auto' ||
+    parser === 'speakeasy' ||
+    parser === 'commitizen' ||
+    parser === 'lerna-changelog' ||
+    parser === 'openapi' ||
+    parser === 'plain' ||
+    parser === 'legacy'
+  ) {
+    return parser;
+  }
+  throw new Error(`Unknown changelog parser '${parser}' in config.yml`);
 }

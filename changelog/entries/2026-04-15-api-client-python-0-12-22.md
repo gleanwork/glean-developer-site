@@ -7,4 +7,10 @@ Added `feedback_user_count` to `client.insights.retrieve()` and `issue_filter` t
 
 {/* truncate */}
 
-Full release notes: https://github.com/gleanwork/api-client-python/releases/tag/v0.12.22
+## Changes
+
+- Added `feedback_user_count` to `client.insights.retrieve()` and `issue_filter` to `governance.createfindingsexport()`. Changed `response` on `governance.createfindingsexport()` and `exports` on `governance.listfindingsexports()`.
+
+## Source
+
+- [Release notes](https://github.com/gleanwork/api-client-python/releases/tag/v0.12.22)

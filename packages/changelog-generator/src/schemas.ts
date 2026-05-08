@@ -7,7 +7,18 @@ export type AnalyzeOutput = {
     title: string;
     body: string;
   };
-  files: Array<{ path: string; content: string; commitMessage: string }>;
+  files: Array<{
+    path: string;
+    content: string;
+    commitMessage: string;
+    metadata?: {
+      repo: string;
+      tag: string;
+      parser: string;
+      summary: string;
+      sourceRefs: Array<{ label: string; url: string }>;
+    };
+  }>;
   report: {
     stats: {
       totalProcessed: number;
@@ -18,10 +29,19 @@ export type AnalyzeOutput = {
     skipped: Array<{
       owner: string;
       repo: string;
+      tag?: string;
       decision: string;
       reason: string;
+      emptyOrNoop?: boolean;
+      olderThanLatest?: boolean;
     }>;
-    errors: Array<{ owner: string; repo: string; reason: string }>;
+    errors: Array<{
+      owner: string;
+      repo: string;
+      tag?: string;
+      stage?: string;
+      reason: string;
+    }>;
   };
 };
 

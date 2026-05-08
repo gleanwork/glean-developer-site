@@ -113,7 +113,7 @@ function generateGroupedDetails(grouped: GroupedChanges): Array<string> {
             : change.changeType === 'removed'
               ? 'Removed'
               : 'Modified';
-        const breakingMark = change.breaking ? ' ⚠️' : '';
+        const breakingMark = change.breaking ? ' (breaking change)' : '';
         details.push(`${action} endpoint: ${change.itemName}${breakingMark}`);
       }
     } else {
@@ -128,7 +128,7 @@ function generateGroupedDetails(grouped: GroupedChanges): Array<string> {
               : 'Modified';
         const locationStr =
           endpoint.location !== 'unknown' ? ` (${endpoint.location})` : '';
-        const breakingMark = change.breaking ? ' ⚠️' : '';
+        const breakingMark = change.breaking ? ' (breaking change)' : '';
 
         if (change.itemType === 'field') {
           details.push(
@@ -313,7 +313,7 @@ function generateSummary(
   }
 
   const summary = parts.join(', ');
-  return breaking ? `⚠️ Breaking: ${summary}` : summary;
+  return breaking ? `Breaking change: ${summary}` : summary;
 }
 
 export function formatChangeCategories(

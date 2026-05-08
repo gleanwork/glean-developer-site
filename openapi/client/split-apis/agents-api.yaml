@@ -2,11 +2,11 @@ openapi: 3.0.0
 info:
   version: 0.9.0
   title: Glean API - Agents
-  x-source-commit-sha: 084a38e736474e58631b0ce03aff14df68813883
+  x-source-commit-sha: efd0e29759d848a897d479b3195704bbde82daec
   description: API endpoints for Agents
   x-logo:
     url: https://app.glean.com/images/glean-text2.svg
-  x-open-api-commit-sha: 1ba4734f08fab834e9a98752b97414a464a4bbb8
+  x-open-api-commit-sha: 368a20e9e9b003c93c2a9bc7a34d0672cd764a20
   x-speakeasy-name: Glean API
 servers:
   - url: https://{instance}-be.glean.com
@@ -120,6 +120,113 @@ paths:
                     if (res.agent().isPresent()) {
                         System.out.println(res.agent().get());
                     }
+                }
+            }
+    post:
+      tags:
+        - Agents
+      summary: Edit an agent
+      description: Creates a draft or publishes an [agent](https://developers.glean.com/agents/agents-api). Use `isDraft=true` to save a draft, or `isDraft=false` (or omit) to publish immediately. Only draft and publish modes are supported.
+      operationId: editAgent
+      x-visibility: Preview
+      parameters:
+        - $ref: '#/components/parameters/locale'
+        - $ref: '#/components/parameters/timezoneOffset'
+        - description: The ID of the agent.
+          required: true
+          schema:
+            type: string
+            title: Agent ID
+            description: The ID of the agent.
+          name: agent_id
+          in: path
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EditWorkflowRequest'
+      responses:
+        '200':
+          description: Success
+        '400':
+          description: Bad request
+        '401':
+          description: Not Authorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+      security:
+        - APIToken: []
+      x-codeSamples:
+        - lang: Python
+          label: Python (API Client)
+          source: |-
+            from glean.api_client import Glean
+            import os
+
+
+            with Glean(
+                api_token=os.getenv("GLEAN_API_TOKEN", ""),
+                server_url="https://mycompany-be.glean.com",
+            ) as glean:
+
+                glean.agents.edit_agent(agent_id="<id>")
+
+                # Use the SDK ...
+        - lang: JavaScript
+          label: Typescript (API Client)
+          source: |-
+            import { Glean } from "@gleanwork/api-client";
+
+            const glean = new Glean({
+              apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
+              serverURL: "https://mycompany-be.glean.com",
+            });
+
+            async function run() {
+              await glean.agents.editAgent({}, "<id>");
+
+
+            }
+
+            run();
+        - lang: Go
+          label: Go (API Client)
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Agents.EditAgent(ctx, \"<id>\", components.EditWorkflowRequest{}, nil, nil)\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res != nil {\n        // handle response\n    }\n}"
+        - lang: Java
+          label: Java (API Client)
+          source: |-
+            package hello.world;
+
+            import com.glean.api_client.glean_api_client.Glean;
+            import com.glean.api_client.glean_api_client.models.components.EditWorkflowRequest;
+            import com.glean.api_client.glean_api_client.models.errors.ErrorResponse;
+            import com.glean.api_client.glean_api_client.models.operations.EditAgentResponse;
+            import java.lang.Exception;
+
+            public class Application {
+
+                public static void main(String[] args) throws ErrorResponse, Exception {
+
+                    Glean sdk = Glean.builder()
+                            .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
+                        .build();
+
+                    EditAgentResponse res = sdk.agents().editAgent()
+                            .agentId("<id>")
+                            .editWorkflowRequest(EditWorkflowRequest.builder()
+                                .build())
+                            .call();
+
+                    // handle response
                 }
             }
   /rest/api/v1/agents/{agent_id}/schemas:
@@ -649,6 +756,11 @@ components:
         message:
           type: string
           description: Client-facing error message describing what went wrong
+    WorkflowDraftableProperties:
+      properties:
+        name:
+          type: string
+          description: The name of the workflow.
     ActionSummary:
       type: object
       description: Represents a minimal summary of an action.
@@ -732,6 +844,19 @@ components:
               title: Streaming
               description: Whether the agent supports streaming output. If true, you you can stream agent ouput. All agents currently support streaming.
           additionalProperties: true
+    EditWorkflowRequest:
+      allOf:
+        - $ref: '#/components/schemas/WorkflowMutableProperties'
+        - type: object
+          properties:
+            id:
+              type: string
+              description: The workflow ID we want to update.
+    WorkflowMutableProperties:
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/WorkflowDraftableProperties'
+        - type: object
     SearchAgentsResponse:
       type: object
       title: Response Search Agents

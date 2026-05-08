@@ -1,7 +1,9 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import type { SummarizedRelease, RenderedEntry } from './types.js';
+import type { NormalizedRelease, RenderedEntry } from './types.js';
 import { renderChangelogEntry } from './template.js';
+import { renderNormalizedRelease } from './normalized-renderer.js';
+import { dedupeSourceRefs } from './normalizers/utils.js';
 import { validateRenderedEntry } from './validators.js';
 
 function safeSlug(s: string): string {
@@ -16,14 +18,14 @@ function normalizeTag(tag: string): string {
 }
 
 export function renderEntry(
-  summarized: SummarizedRelease,
+  normalizedRelease: NormalizedRelease,
   opts: { repoRoot: string; entriesDir: string },
 ): RenderedEntry {
-  const { release, summary } = summarized;
+  const { release } = normalizedRelease;
   const title = `${release.repo} ${release.tag}`;
-  const details = `Full release notes: ${release.url}`;
   const normalized = normalizeTag(release.tag);
   const slug = `${safeSlug(release.repo)}-${safeSlug(normalized)}`;
+  const rendered = renderNormalizedRelease(normalizedRelease);
 
   let filename = `${release.publishedAt}-${slug}.md`;
   let counter = 1;
@@ -37,8 +39,8 @@ export function renderEntry(
     repoRoot: opts.repoRoot,
     title,
     categories: [release.category],
-    summary,
-    detailedContent: details,
+    summary: rendered.summary,
+    detailedContent: rendered.detailedContent,
   });
 
   const validation = validateRenderedEntry(content);
@@ -49,5 +51,21 @@ export function renderEntry(
   }
 
   const commitMessage = `chore(changelog): add ${release.repo} ${release.tag}`;
-  return { filePath, content, commitMessage };
+  return {
+    filePath,
+    content,
+    commitMessage,
+    metadata: {
+      repo: release.repo,
+      tag: release.tag,
+      parser: normalizedRelease.parser,
+      summary: rendered.summary,
+      sourceRefs: dedupeSourceRefs([
+        ...normalizedRelease.sourceRefs,
+        ...normalizedRelease.changes.flatMap(
+          (change) => change.sourceRefs || [],
+        ),
+      ]),
+    },
+  };
 }

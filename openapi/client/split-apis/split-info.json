@@ -64,6 +64,13 @@
           "operationId": "getAgent"
         },
         {
+          "method": "POST",
+          "path": "/rest/api/v1/agents/{agent_id}",
+          "summary": "Edit an agent",
+          "description": "Creates a draft or publishes an [agent](https://developers.glean.com/agents/agents-api). Use `isDraft=true` to save a draft, or `isDraft=false` (or omit) to publish immediately. Only draft and publish modes are supported.",
+          "operationId": "editAgent"
+        },
+        {
           "method": "GET",
           "path": "/rest/api/v1/agents/{agent_id}/schemas",
           "summary": "List an agent's schemas",
@@ -71,7 +78,7 @@
           "operationId": "getAgentSchemas"
         }
       ],
-      "schemas": 12,
+      "schemas": 15,
       "fullyInlined": false,
       "circularReferencesFixed": true
     },
@@ -190,7 +197,7 @@
       "description": "",
       "file": "chat-api.yaml",
       "configId": "chat",
-      "paths": 10,
+      "paths": 11,
       "endpoints": [
         {
           "method": "POST",
@@ -205,6 +212,13 @@
           "summary": "Chat",
           "description": "Have a conversation with Glean AI.",
           "operationId": "chat"
+        },
+        {
+          "method": "GET",
+          "path": "/rest/api/v1/chat-files/{fileId}",
+          "summary": "Download a chat file",
+          "description": "Download the raw content of a file generated or uploaded during a chat session (for example, an image produced by the assistant). Returns the file bytes with a Content-Type header matching the file's MIME type.\n",
+          "operationId": "getChatFile"
         },
         {
           "method": "POST",
@@ -417,7 +431,7 @@
       "description": "",
       "file": "entities-api.yaml",
       "configId": "entities",
-      "paths": 2,
+      "paths": 3,
       "endpoints": [
         {
           "method": "POST",
@@ -432,6 +446,13 @@
           "summary": "Read people",
           "description": "Read people details for the given IDs.",
           "operationId": "people"
+        },
+        {
+          "method": "GET",
+          "path": "/rest/api/v1/people/{person_id}/photo",
+          "summary": "Get person photo",
+          "description": "Returns the profile photo bytes for a person whose photo is stored in Glean (crawled from an identity source or user-uploaded via admin console). Photos hosted externally (e.g. Slack CDN) are not served by this endpoint; callers should follow the photoUrl from /people or /listentities directly. Responses include a Cache-Control header (max-age=3600) to reduce redundant fetches.\n",
+          "operationId": "getPersonPhoto"
         }
       ],
       "schemas": 134,
@@ -759,8 +780,22 @@
       "description": "",
       "file": "tools-api.yaml",
       "configId": "tools",
-      "paths": 2,
+      "paths": 3,
       "endpoints": [
+        {
+          "method": "GET",
+          "path": "/rest/api/v1/actions/{actionPackId}/auth",
+          "summary": "Get end-user authentication status for an action pack.",
+          "description": "Reports whether the calling user is already authenticated against the third-party\ntool backing the specified action pack. Intended for headless / server-driven clients\nthat render an \"Authorize\" prompt when the user has not yet consented to the tool.\n",
+          "operationId": "getActionAuthStatus"
+        },
+        {
+          "method": "POST",
+          "path": "/rest/api/v1/actions/{actionPackId}/auth",
+          "summary": "Start the OAuth authorization flow for an action pack.",
+          "description": "Starts the third-party OAuth flow for the specified action pack and returns the\nredirect URL that the client should navigate the end user to. After the OAuth\ncallback completes, the user's browser is redirected back to `returnUrl` with a\nstatus query parameter (`?glean_action_auth=success|error&actionPackId=...`).\n\n`returnUrl` must match the tenant's configured return URL allowlist; otherwise the\nrequest is rejected with 400.\n",
+          "operationId": "authorizeAction"
+        },
         {
           "method": "POST",
           "path": "/rest/api/v1/tools/call",
@@ -776,7 +811,7 @@
           "operationId": "list-available-tools"
         }
       ],
-      "schemas": 6,
+      "schemas": 10,
       "fullyInlined": false,
       "circularReferencesFixed": true
     },

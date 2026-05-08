@@ -547,6 +547,12 @@ const baseSidebars: SidebarsConfig = {
               label: 'Create an agent run and wait for the response',
               className: 'api-method post',
             },
+            {
+              type: 'doc',
+              id: 'api/client-api/agents/edit-agent',
+              label: 'Edit an agent',
+              className: 'api-method post',
+            },
           ],
         },
         {
@@ -711,6 +717,12 @@ const baseSidebars: SidebarsConfig = {
               label: 'Chat',
               className: 'api-method post',
             },
+            {
+              type: 'doc',
+              id: 'api/client-api/chat/get-chat-file',
+              label: 'Download a chat file',
+              className: 'api-method get',
+            },
           ],
         },
         {
@@ -821,6 +833,12 @@ const baseSidebars: SidebarsConfig = {
               id: 'api/client-api/entities/people',
               label: 'Read people',
               className: 'api-method post',
+            },
+            {
+              type: 'doc',
+              id: 'api/client-api/entities/get-person-photo',
+              label: 'Get person photo',
+              className: 'api-method get',
             },
           ],
         },
@@ -1113,6 +1131,18 @@ const baseSidebars: SidebarsConfig = {
               id: 'api/client-api/tools/execute-the-specified-tool',
               label: 'Execute the specified tool',
               className: 'api-method post',
+            },
+            {
+              type: 'doc',
+              id: 'api/client-api/tools/authorize-action',
+              label: 'Start the OAuth authorization flow for an action pack.',
+              className: 'api-method post',
+            },
+            {
+              type: 'doc',
+              id: 'api/client-api/tools/get-action-auth-status',
+              label: 'Get end-user authentication status for an action pack.',
+              className: 'api-method get',
             },
           ],
         },

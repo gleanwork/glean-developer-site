@@ -7,6 +7,7 @@ import { Command } from 'commander';
 import { createCommand } from './commands/entry-new.js';
 import { buildCommand } from './commands/compile-json.js';
 import { rssCommand } from './commands/compile-rss.js';
+import { normalizeHistoryCommand } from './commands/normalize-history.js';
 import { previewCommand } from './commands/preview.js';
 import { publishCommand } from './commands/publish.js';
 
@@ -82,6 +83,14 @@ async function main() {
     .description('Generate RSS feed from changelog data')
     .action(() => {
       rssCommand(repoRoot);
+    });
+
+  program
+    .command('normalize-history')
+    .description('Normalize existing changelog entries with the house renderer')
+    .option('--dry-run', 'Report changes without writing files')
+    .action((options) => {
+      normalizeHistoryCommand(repoRoot, { dryRun: options.dryRun });
     });
 
   program

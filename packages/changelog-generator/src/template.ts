@@ -2,6 +2,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { formatCategories } from './shared/categories.js';
+import { stripEmoji } from './normalizers/utils.js';
 
 function getTemplatePath(repoRoot: string): string {
   const __filename = fileURLToPath(import.meta.url);
@@ -29,6 +30,7 @@ function getTemplatePath(repoRoot: string): string {
 export function renderChangelogEntry(opts: {
   repoRoot: string;
   title: string;
+  slug?: string;
   categories: Array<string>;
   summary: string;
   detailedContent: string;
@@ -37,10 +39,10 @@ export function renderChangelogEntry(opts: {
   const template = fs.readFileSync(templatePath, 'utf-8');
 
   const variables: Record<string, string> = {
-    TITLE: opts.title,
+    TITLE: stripEmoji(opts.title).replace(/'/g, "''"),
     CATEGORIES: formatCategories(opts.categories),
-    SUMMARY: opts.summary.trim(),
-    DETAILED_CONTENT: opts.detailedContent.trim(),
+    SUMMARY: stripEmoji(opts.summary).trim(),
+    DETAILED_CONTENT: stripEmoji(opts.detailedContent).trim(),
   };
 
   let result = template;
@@ -51,6 +53,9 @@ export function renderChangelogEntry(opts: {
   }
   for (const [key, value] of Object.entries(variables)) {
     result = result.replace(placeholderRegexes[key], value);
+  }
+  if (opts.slug) {
+    result = result.replace(/^---\n/, `---\nslug: ${opts.slug}\n`);
   }
   return result;
 }

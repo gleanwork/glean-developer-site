@@ -6,6 +6,7 @@ import { parseChangelogEntry } from '../shared/entry-parser.js';
 interface CacheData {
   directoryHash: string;
   generatedAt: string;
+  schemaVersion?: number;
 }
 
 interface ChangelogData {
@@ -14,6 +15,8 @@ interface ChangelogData {
   generatedAt: string;
   totalEntries: number;
 }
+
+const CACHE_SCHEMA_VERSION = 2;
 
 function getFileHash(filePath: string): string | null {
   if (!fs.existsSync(filePath)) return null;
@@ -74,7 +77,11 @@ function hasChanges(
   const currentHash = getDirectoryHash(changelogDir);
   const outputExists = fs.existsSync(outputFile);
 
-  return !outputExists || cache.directoryHash !== currentHash;
+  return (
+    !outputExists ||
+    cache.directoryHash !== currentHash ||
+    cache.schemaVersion !== CACHE_SCHEMA_VERSION
+  );
 }
 
 /**
@@ -146,6 +153,7 @@ export function buildCommand(repoRoot: string): void {
   const cache: CacheData = {
     directoryHash: getDirectoryHash(changelogDir)!,
     generatedAt: new Date().toISOString(),
+    schemaVersion: CACHE_SCHEMA_VERSION,
   };
   saveCache(cacheFile, cache);
 

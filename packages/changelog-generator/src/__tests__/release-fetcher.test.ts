@@ -15,6 +15,7 @@ const spec = {
   owner: 'gleanwork',
   repo: 'api-client-go',
   category: 'API Clients',
+  parser: 'speakeasy' as const,
 };
 
 function makeRelease(tag: string, publishedAt: string | null) {

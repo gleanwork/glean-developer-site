@@ -2,11 +2,11 @@ openapi: 3.0.0
 info:
   version: 0.9.0
   title: Glean API - Entities
-  x-source-commit-sha: 084a38e736474e58631b0ce03aff14df68813883
+  x-source-commit-sha: efd0e29759d848a897d479b3195704bbde82daec
   description: API endpoints for Entities
   x-logo:
     url: https://app.glean.com/images/glean-text2.svg
-  x-open-api-commit-sha: 1ba4734f08fab834e9a98752b97414a464a4bbb8
+  x-open-api-commit-sha: 368a20e9e9b003c93c2a9bc7a34d0672cd764a20
   x-speakeasy-name: Glean API
 servers:
   - url: https://{instance}-be.glean.com
@@ -273,6 +273,121 @@ paths:
 
                     if (res.peopleResponse().isPresent()) {
                         System.out.println(res.peopleResponse().get());
+                    }
+                }
+            }
+  /rest/api/v1/people/{person_id}/photo:
+    get:
+      tags:
+        - Entities
+      summary: Get person photo
+      description: |
+        Returns the profile photo bytes for a person whose photo is stored in Glean (crawled from an identity source or user-uploaded via admin console). Photos hosted externally (e.g. Slack CDN) are not served by this endpoint; callers should follow the photoUrl from /people or /listentities directly. Responses include a Cache-Control header (max-age=3600) to reduce redundant fetches.
+      operationId: getPersonPhoto
+      x-visibility: Public
+      parameters:
+        - name: person_id
+          in: path
+          required: true
+          description: The obfuscated ID of the person whose photo to retrieve.
+          schema:
+            type: string
+        - name: ds
+          in: query
+          required: false
+          description: |
+            Optional datasource override for crawled photos (e.g. AZURE, GDRIVE, OKTA). When omitted, the datasource is derived from the person's stored photo URL or the deployment's primary person datasource.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Photo bytes returned successfully.
+          headers:
+            Cache-Control:
+              description: Caching directive for the photo response.
+              schema:
+                type: string
+                example: public, max-age=3600
+          content:
+            image/png:
+              schema:
+                type: string
+                format: binary
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+        '400':
+          description: Missing person_id parameter.
+        '401':
+          description: Not Authorized.
+        '404':
+          description: |
+            Person not found, person has no photo, or photo is not hosted by Glean (follow photoUrl from /people or /listentities directly).
+        '429':
+          description: Too Many Requests.
+      security:
+        - APIToken: []
+      x-codeSamples:
+        - lang: Python
+          label: Python (API Client)
+          source: |-
+            from glean.api_client import Glean
+            import os
+
+
+            with Glean(
+                api_token=os.getenv("GLEAN_API_TOKEN", ""),
+                server_url="https://mycompany-be.glean.com",
+            ) as glean:
+
+                res = glean.entities.get_person_photo(person_id="<id>")
+
+                # Handle response
+                print(res)
+        - lang: JavaScript
+          label: Typescript (API Client)
+          source: |-
+            import { Glean } from "@gleanwork/api-client";
+
+            const glean = new Glean({
+              apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
+              serverURL: "https://mycompany-be.glean.com",
+            });
+
+            async function run() {
+              const result = await glean.entities.getPersonPhoto("<id>");
+
+              console.log(result);
+            }
+
+            run();
+        - lang: Go
+          label: Go (API Client)
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Entities.GetPersonPhoto(ctx, \"<id>\", nil)\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.TwoHundredImagePngResponseStream != nil {\n        // handle response\n    }\n}"
+        - lang: Java
+          label: Java (API Client)
+          source: |-
+            package hello.world;
+
+            import com.glean.api_client.glean_api_client.Glean;
+            import com.glean.api_client.glean_api_client.models.operations.GetPersonPhotoResponse;
+            import java.lang.Exception;
+
+            public class Application {
+
+                public static void main(String[] args) throws Exception {
+
+                    Glean sdk = Glean.builder()
+                            .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
+                        .build();
+
+                    GetPersonPhotoResponse res = sdk.entities().getPersonPhoto()
+                            .personId("<id>")
+                            .call();
+
+                    if (res.twoHundredImagePngResponseStream().isPresent()) {
+                        // handle response
                     }
                 }
             }

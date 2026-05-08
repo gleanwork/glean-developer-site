@@ -1,4 +1,9 @@
 import matter from 'gray-matter';
+import {
+  classifyChangelogImpact,
+  type ChangelogAttention,
+  type ChangelogImpact,
+} from './impact.js';
 import { processChangelogContent } from './markdown.js';
 
 export interface ParsedChangelogEntry {
@@ -7,6 +12,8 @@ export interface ParsedChangelogEntry {
   title: string;
   date: string;
   categories: Array<string>;
+  impact: ChangelogImpact;
+  attention: ChangelogAttention[];
   summary: string;
   fullContent: string;
   hasTruncation: boolean;
@@ -34,6 +41,7 @@ export function parseChangelogEntry(
   const processedContent = processChangelogContent(content);
 
   const categories = data.categories || [];
+  const classification = classifyChangelogImpact(content, categories);
 
   return {
     id: `${dateStr}-${slug}`,
@@ -41,6 +49,8 @@ export function parseChangelogEntry(
     title: data.title,
     date: dateStr,
     categories,
+    impact: classification.impact,
+    attention: classification.attention,
     summary: processedContent.summary,
     fullContent: processedContent.fullContent,
     hasTruncation: processedContent.hasTruncation,

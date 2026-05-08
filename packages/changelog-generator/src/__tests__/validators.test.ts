@@ -13,33 +13,15 @@ describe('validateSummary', () => {
       expect(result.valid).toBe(false);
     });
 
-    it('rejects "- : changed - : added"', () => {
-      const result = validateSummary('- : changed - : added');
+    it('rejects markdown bullet summaries', () => {
+      const result = validateSummary('- Added support for a new endpoint.');
       expect(result.valid).toBe(false);
     });
 
-    it('rejects "- added - added and - added"', () => {
-      const result = validateSummary('- added - added and - added');
-      expect(result.valid).toBe(false);
-    });
-
-    it('rejects "- adds - adds and - adds"', () => {
-      const result = validateSummary('- adds - adds and - adds');
-      expect(result.valid).toBe(false);
-    });
-
-    it('rejects "- and add , and also adds - adds"', () => {
-      const result = validateSummary('- and add , and also adds - adds');
-      expect(result.valid).toBe(false);
-    });
-
-    it('rejects "- : **Added**" (just bold markers)', () => {
-      const result = validateSummary('- : **Added**');
-      expect(result.valid).toBe(false);
-    });
-
-    it('rejects "Added. Changed." (too few meaningful tokens)', () => {
-      const result = validateSummary('Added. Changed.');
+    it('rejects emoji shortcodes', () => {
+      const result = validateSummary(
+        ':rocket: Added support for a new endpoint.',
+      );
       expect(result.valid).toBe(false);
     });
 
@@ -80,11 +62,11 @@ describe('validateSummary', () => {
       expect(result.valid).toBe(true);
     });
 
-    it('accepts a summary with detail bullets using " - " separator', () => {
+    it('rejects a summary with flattened detail bullets', () => {
       const result = validateSummary(
         '1 field changed, 1 field added across insights retrieve, search retrievefeed endpoints. - changed AgentsResponse in insights retrieve - added spreadsheetType in search retrievefeed',
       );
-      expect(result.valid).toBe(true);
+      expect(result.valid).toBe(false);
     });
   });
 });
@@ -100,7 +82,9 @@ describe('validateRenderedEntry', () => {
     const content = `---
 categories: [API Clients]
 ---
-Some summary content about the release with enough meaningful tokens.`;
+Some summary content about the release with enough meaningful tokens.
+
+{/* truncate */}`;
 
     const result = validateRenderedEntry(content);
     expect(result.valid).toBe(false);
@@ -111,7 +95,9 @@ Some summary content about the release with enough meaningful tokens.`;
     const content = `---
 title: Go SDK v0.11.41
 ---
-Some summary content about the release with enough meaningful tokens.`;
+Some summary content about the release with enough meaningful tokens.
+
+{/* truncate */}`;
 
     const result = validateRenderedEntry(content);
     expect(result.valid).toBe(false);
@@ -123,6 +109,7 @@ Some summary content about the release with enough meaningful tokens.`;
 title: Go SDK v0.11.41
 categories: [API Clients]
 ---
+{/* truncate */}
 `;
 
     const result = validateRenderedEntry(content);

@@ -7,4 +7,10 @@ Updated TypeScript API client to version 0.13.12 based on OpenAPI Doc 0.9.0 and 
 
 {/* truncate */}
 
-Full release notes: https://github.com/gleanwork/api-client-typescript/releases/tag/v0.13.12
+## Changes
+
+- Updated TypeScript API client to version 0.13.12 based on OpenAPI Doc 0.9.0 and Speakeasy CLI 1.660.0.
+
+## Source
+
+- [Release notes](https://github.com/gleanwork/api-client-typescript/releases/tag/v0.13.12)

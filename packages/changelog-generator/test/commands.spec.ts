@@ -146,8 +146,88 @@ This is the detailed content.`;
     expect(entry.title).toBe('Test Entry');
     expect(entry.date).toBe('2025-11-15');
     expect(entry.categories).toEqual(['API', 'Feature']);
+    expect(entry.impact).toBe('routine');
+    expect(entry.attention).toEqual([]);
     expect(entry.hasTruncation).toBe(true);
     expect(entry.fileName).toBe(fileName);
+  });
+
+  it('parseChangelogEntry classifies breaking and action-required entries', () => {
+    const fileName = '2025-11-15-breaking-entry.md';
+    const content = `---
+title: "Breaking Entry"
+categories: ["API"]
+---
+
+The endpoint was removed and clients must migrate.
+
+{/* truncate */}
+
+## Changes
+
+- This release only includes breaking changes.
+
+## Action Required
+
+- Update callers to stop using /rest/api/v1/old.
+
+## Breaking Changes
+
+- Removed endpoint: /rest/api/v1/old.
+`;
+
+    const entry = parseChangelogEntry(fileName, content);
+
+    expect(entry.impact).toBe('breaking');
+    expect(entry.attention).toEqual([
+      { level: 'breaking', label: 'Breaking' },
+      { level: 'action_required', label: 'Action required' },
+    ]);
+  });
+
+  it('parseChangelogEntry classifies noteworthy and deprecated entries', () => {
+    const noteworthy = parseChangelogEntry(
+      '2025-11-15-new-endpoint.md',
+      `---
+title: "New Endpoint"
+categories: ["API"]
+---
+
+Added a new endpoint for tools.
+
+{/* truncate */}
+
+## Changes
+
+- New endpoint: GET /tools/list.
+`,
+    );
+
+    const deprecated = parseChangelogEntry(
+      '2025-11-16-deprecated-field.md',
+      `---
+title: "Deprecated Field"
+categories: ["API"]
+---
+
+Deprecated legacy field.
+
+{/* truncate */}
+
+## Changes
+
+- Deprecated old_field on search responses.
+`,
+    );
+
+    expect(noteworthy.impact).toBe('noteworthy');
+    expect(noteworthy.attention).toEqual([
+      { level: 'noteworthy', label: 'Noteworthy' },
+    ]);
+    expect(deprecated.impact).toBe('deprecated');
+    expect(deprecated.attention).toEqual([
+      { level: 'deprecated', label: 'Deprecated' },
+    ]);
   });
 
   it('parseChangelogEntry throws on invalid filename', () => {

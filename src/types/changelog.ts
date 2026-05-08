@@ -1,3 +1,15 @@
+export type ChangelogImpact =
+  | 'breaking'
+  | 'action_required'
+  | 'deprecated'
+  | 'noteworthy'
+  | 'routine';
+
+export interface ChangelogAttention {
+  level: Exclude<ChangelogImpact, 'routine'>;
+  label: string;
+}
+
 export interface ChangelogEntry {
   id: string;
   slug: string;
@@ -5,6 +17,8 @@ export interface ChangelogEntry {
   date: string; // ISO date string
   tags: Array<string>;
   categories: Array<string>; // Processed semantic categories
+  impact: ChangelogImpact;
+  attention: Array<ChangelogAttention>;
   summary: string;
   fullContent: string;
   hasTruncation: boolean;
@@ -44,14 +58,10 @@ export const TAG_TO_CATEGORY_MAP: Record<string, string> = {
   Documentation: 'Documentation',
 };
 
-export const CATEGORY_COLORS: Record<string, string> = {
-  API: 'primary',
-  SDK: 'info',
-  Documentation: 'secondary',
-  Breaking: 'danger',
-  Security: 'warning',
-  Enhancement: 'success',
-  'Bug Fix': 'warning',
-  Feature: 'success',
-  Deprecation: 'secondary',
+export const IMPACT_LABELS: Record<ChangelogImpact, string> = {
+  breaking: 'Breaking',
+  action_required: 'Action required',
+  deprecated: 'Deprecated',
+  noteworthy: 'Noteworthy',
+  routine: 'Routine',
 };

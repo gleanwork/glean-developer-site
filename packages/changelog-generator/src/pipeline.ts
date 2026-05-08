@@ -1,48 +1,55 @@
 import type { Octokit } from 'octokit';
 import * as path from 'node:path';
 import type { GeneratorConfig } from './config.js';
-import type { RawRelease, ReleaseResult } from './types.js';
+import type {
+  NormalizedRelease,
+  RawRelease,
+  ReleaseParser,
+  ReleaseResult,
+} from './types.js';
 import { fetchNewReleases } from './release-fetcher.js';
-import { summarizeRelease } from './summarizer.js';
 import { renderEntry } from './entry-renderer.js';
-import { preProcessRelease } from './preprocessors/index.js';
+import { normalizeRelease } from './normalizers/index.js';
 
 export async function processRelease(
   release: RawRelease,
   opts: {
     repoRoot: string;
-    summarization: GeneratorConfig['summarization'];
+    parser: ReleaseParser;
     entriesDir: string;
   },
 ): Promise<ReleaseResult> {
+  let normalized: NormalizedRelease;
   try {
-    // Skip Speakeasy releases that have no structured API changes — these are
-    // SDK rebuilds (e.g. "Publishing Completed") with nothing user-facing to
-    // describe, and would otherwise produce noise entries in the changelog.
-    const preProcessed = preProcessRelease(release);
-    if (
-      preProcessed.format === 'speakeasy' &&
-      preProcessed.structuredChanges.length === 0
-    ) {
-      return {
-        status: 'skipped',
-        owner: release.owner,
-        repo: release.repo,
-        reason: `${release.tag} has no structured API changes`,
-      };
-    }
+    normalized = normalizeRelease(release, opts.parser);
+  } catch (e: unknown) {
+    const message =
+      e && typeof e === 'object' && 'message' in e
+        ? String((e as Error).message)
+        : String(e);
+    return {
+      status: 'error',
+      error: {
+        stage: 'parse',
+        release: `${release.owner}/${release.repo} ${release.tag}`,
+        message,
+      },
+    };
+  }
 
-    const result = await summarizeRelease(release.body, {
-      mode: opts.summarization.mode,
-      maxBullets: opts.summarization.maxBullets,
-      maxChars: opts.summarization.maxChars,
-      model: opts.summarization.model,
-      category: release.category,
-      hints: opts.summarization.categoryHints?.[release.category] || [],
-      release,
-    });
+  if (normalized.isEmpty || normalized.changes.length === 0) {
+    return {
+      status: 'skipped',
+      owner: release.owner,
+      repo: release.repo,
+      tag: release.tag,
+      reason: `${release.tag} has no meaningful changelog changes`,
+      emptyOrNoop: true,
+    };
+  }
 
-    const entry = renderEntry(result, {
+  try {
+    const entry = renderEntry(normalized, {
       repoRoot: opts.repoRoot,
       entriesDir: opts.entriesDir,
     });
@@ -56,8 +63,8 @@ export async function processRelease(
     return {
       status: 'error',
       error: {
-        stage: 'summarize',
-        release: `${release.owner}/${release.repo}`,
+        stage: 'render',
+        release: `${release.owner}/${release.repo} ${release.tag}`,
         message,
       },
     };
@@ -74,16 +81,22 @@ export async function processAllReleases(
   skipped: Array<{
     owner: string;
     repo: string;
+    tag?: string;
     decision: string;
     reason: string;
+    emptyOrNoop?: boolean;
+    olderThanLatest?: boolean;
   }>;
 }> {
   const results: ReleaseResult[] = [];
   const skipped: Array<{
     owner: string;
     repo: string;
+    tag?: string;
     decision: string;
     reason: string;
+    emptyOrNoop?: boolean;
+    olderThanLatest?: boolean;
   }> = [];
   const entriesDir = path.join(repoRoot, 'changelog', 'entries');
 
@@ -95,8 +108,10 @@ export async function processAllReleases(
         skipped.push({
           owner: spec.owner,
           repo: spec.repo,
+          tag: undefined,
           decision: 'skip',
           reason: fetchResult.reason,
+          olderThanLatest: true,
         });
         continue;
       }
@@ -104,7 +119,7 @@ export async function processAllReleases(
       for (const release of fetchResult.releases) {
         const result = await processRelease(release, {
           repoRoot,
-          summarization: config.summarization,
+          parser: spec.parser,
           entriesDir,
         });
         results.push(result);

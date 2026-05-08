@@ -3,8 +3,22 @@ title: 'api-client-python v0.8.0'
 categories: ['API Clients']
 ---
 
-Breaking changes to multiple API endpoints, including request and response field modifications, and a new parameter added to chat file retrieval. - Major breaking changes to request/response fields in documents, answers, shortcuts, chat, search, announcements, and collections endpoints - Added...
+Breaking changes to multiple API endpoints, including request and response field modifications, and a new parameter added to chat file retrieval.
 
 {/* truncate */}
 
-Full release notes: https://github.com/gleanwork/api-client-python/releases/tag/v0.8.0
+## Action Required
+
+- Review this breaking change before upgrading: Breaking changes to multiple API endpoints, including request and response field modifications, and a new parameter added to chat file retrieval.
+
+## Changes
+
+- This release only includes breaking or deprecated changes.
+
+## Breaking Changes
+
+- Breaking changes to multiple API endpoints, including request and response field modifications, and a new parameter added to chat file retrieval.
+
+## Source
+
+- [Release notes](https://github.com/gleanwork/api-client-python/releases/tag/v0.8.0)

@@ -3,8 +3,22 @@ title: 'api-client-java v0.12.2'
 categories: ['API Clients']
 ---
 
-The chatId field was removed from request.getchatfilesrequest in glean.client.chat.retrieveFiles(), introducing a breaking change. - Breaking change: chatId parameter is no longer available in retrieveFiles() requests
+The chatId field was removed from request.getchatfilesrequest in glean.client.chat.retrieveFiles(), introducing a breaking change.
 
 {/* truncate */}
 
-Full release notes: https://github.com/gleanwork/api-client-java/releases/tag/v0.12.2
+## Action Required
+
+- Review this breaking change before upgrading: Breaking change: chatId parameter is no longer available in retrieveFiles() requests.
+
+## Changes
+
+- This release only includes breaking or deprecated changes.
+
+## Breaking Changes
+
+- Breaking change: chatId parameter is no longer available in retrieveFiles() requests.
+
+## Source
+
+- [Release notes](https://github.com/gleanwork/api-client-java/releases/tag/v0.12.2)
