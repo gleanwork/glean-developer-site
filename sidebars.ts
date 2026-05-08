@@ -1232,6 +1232,41 @@ const baseSidebars: SidebarsConfig = {
         },
         {
           type: 'category',
+          label: 'Custom Metadata (Any Datasource)',
+          link: {
+            type: 'doc',
+            id: 'api-info/indexing/custom-metadata/overview',
+          },
+          items: [
+            {
+              type: 'doc',
+              id: 'api-info/indexing/custom-metadata/overview',
+              label: 'Overview',
+            },
+            {
+              type: 'doc',
+              id: 'api-info/indexing/custom-metadata/authentication',
+              label: 'Authentication',
+            },
+            {
+              type: 'doc',
+              id: 'api-info/indexing/custom-metadata/schema-management',
+              label: 'Schema Management',
+            },
+            {
+              type: 'doc',
+              id: 'api-info/indexing/custom-metadata/indexing-metadata',
+              label: 'Indexing Metadata',
+            },
+            {
+              type: 'doc',
+              id: 'api-info/indexing/custom-metadata/querying',
+              label: 'Querying',
+            },
+          ],
+        },
+        {
+          type: 'category',
           label: 'Datasource',
           items: [
             {
