@@ -2,11 +2,11 @@ openapi: 3.0.0
 info:
   version: 0.9.0
   title: Glean API - Insights
-  x-source-commit-sha: efd0e29759d848a897d479b3195704bbde82daec
+  x-source-commit-sha: be392b09dbb2d90d1eb33786d69d1b8df8ea98ec
   description: API endpoints for Insights
   x-logo:
     url: https://app.glean.com/images/glean-text2.svg
-  x-open-api-commit-sha: 368a20e9e9b003c93c2a9bc7a34d0672cd764a20
+  x-open-api-commit-sha: 127bc440bea5368e5d1cea27cd51c5ef900b9147
   x-speakeasy-name: Glean API
 servers:
   - url: https://{instance}-be.glean.com
@@ -275,6 +275,12 @@ components:
         text:
           type: string
           example: From https://en.wikipedia.org/wiki/Diffuse_sky_radiation, the sky is blue because blue light is more strongly scattered than longer-wavelength light.
+    UgcTrackingSignals:
+      type: object
+      properties:
+        trackingToken:
+          type: string
+          description: An opaque token that represents this particular UGC. To be used for `/feedback` reporting.
     CurrentActiveUsers:
       properties:
         monthlyActiveUsers:
@@ -1157,32 +1163,6 @@ components:
         topAgentIsDeleted:
           type: boolean
           description: Indicates whether the top agent has been deleted.
-    PerAgentInsight:
-      properties:
-        agentId:
-          type: string
-          description: Agent ID
-        agentName:
-          type: string
-          description: Agent name
-        icon:
-          $ref: '#/components/schemas/IconConfig'
-          description: Agent icon configuration
-        isDeleted:
-          type: boolean
-          description: Indicates whether the agent has been deleted
-        userCount:
-          type: integer
-          description: Total number of users for this agent over the specified time period.
-        runCount:
-          type: integer
-          description: Total number of runs for this agent over the specified time period.
-        upvoteCount:
-          type: integer
-          description: Total number of upvotes for this agent over the specified time period.
-        downvoteCount:
-          type: integer
-          description: Total number of downvotes for this agent over the specified time period.
     PerUserInsight:
       properties:
         person:
@@ -1496,6 +1476,36 @@ components:
           items:
             type: string
           description: MCP servers to filter by. Empty array means all servers.
+    PerAgentInsight:
+      properties:
+        agentId:
+          type: string
+          description: Agent ID
+        agentName:
+          type: string
+          description: Agent name
+        icon:
+          $ref: '#/components/schemas/IconConfig'
+          description: Agent icon configuration
+        isDeleted:
+          type: boolean
+          description: Indicates whether the agent has been deleted
+        userCount:
+          type: integer
+          description: Total number of users for this agent over the specified time period.
+        runCount:
+          type: integer
+          description: Total number of runs for this agent over the specified time period.
+        upvoteCount:
+          type: integer
+          description: Total number of upvotes for this agent over the specified time period.
+        downvoteCount:
+          type: integer
+          description: Total number of downvotes for this agent over the specified time period.
+        owner:
+          $ref: '#/components/schemas/Person'
+          description: |
+            The creator/owner of the agent. Absent if agent is deleted or owner is unknown.
     GleanAssistInsightsResponse:
       properties:
         lastLogTimestamp:
