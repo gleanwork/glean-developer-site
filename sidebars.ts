@@ -1599,6 +1599,12 @@ const baseSidebars: SidebarsConfig = {
             },
             {
               type: 'doc',
+              id: 'api/indexing-api/beta-get-document-lifecycle-events',
+              label: 'Beta: Get document lifecycle events\n',
+              className: 'api-method post',
+            },
+            {
+              type: 'doc',
               id: 'api/indexing-api/beta-get-information-of-a-batch-of-documents',
               label: 'Beta: Get information of a batch of documents\n',
               className: 'api-method post',
