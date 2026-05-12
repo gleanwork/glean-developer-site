@@ -2,11 +2,11 @@ openapi: 3.0.0
 info:
   version: 0.9.0
   title: Glean API - Search
-  x-source-commit-sha: efd0e29759d848a897d479b3195704bbde82daec
+  x-source-commit-sha: be392b09dbb2d90d1eb33786d69d1b8df8ea98ec
   description: API endpoints for Search
   x-logo:
     url: https://app.glean.com/images/glean-text2.svg
-  x-open-api-commit-sha: 368a20e9e9b003c93c2a9bc7a34d0672cd764a20
+  x-open-api-commit-sha: 127bc440bea5368e5d1cea27cd51c5ef900b9147
   x-speakeasy-name: Glean API
 servers:
   - url: https://{instance}-be.glean.com
@@ -1705,6 +1705,12 @@ components:
         text:
           type: string
           example: From https://en.wikipedia.org/wiki/Diffuse_sky_radiation, the sky is blue because blue light is more strongly scattered than longer-wavelength light.
+    UgcTrackingSignals:
+      type: object
+      properties:
+        trackingToken:
+          type: string
+          description: An opaque token that represents this particular UGC. To be used for `/feedback` reporting.
     WorkflowDraftableProperties:
       properties:
         name:
@@ -3762,41 +3768,6 @@ components:
         title:
           description: Title or name of the custom entity.
           type: string
-    Announcement:
-      allOf:
-        - $ref: '#/components/schemas/AnnouncementMutableProperties'
-        - $ref: '#/components/schemas/DraftProperties'
-        - $ref: '#/components/schemas/PermissionedObject'
-        - type: object
-          properties:
-            id:
-              type: integer
-              description: The opaque id of the announcement.
-            author:
-              $ref: '#/components/schemas/Person'
-            createTimestamp:
-              type: integer
-              description: Server Unix timestamp of the creation time (in seconds since epoch UTC).
-            lastUpdateTimestamp:
-              type: integer
-              description: Server Unix timestamp of the last update time (in seconds since epoch UTC).
-            updatedBy:
-              $ref: '#/components/schemas/Person'
-            viewerInfo:
-              type: object
-              properties:
-                isDismissed:
-                  type: boolean
-                  description: Whether the viewer has dismissed the announcement.
-                isRead:
-                  type: boolean
-                  description: Whether the viewer has read the announcement.
-            sourceDocument:
-              $ref: '#/components/schemas/Document'
-              description: The source document if the announcement is created from one.
-            isPublished:
-              type: boolean
-              description: Whether or not the announcement is published.
     CodeLine:
       properties:
         content:
@@ -3946,6 +3917,42 @@ components:
         isNoQuotesSuggestion:
           type: boolean
           description: Whether the query was modified to remove quotes
+    Announcement:
+      allOf:
+        - $ref: '#/components/schemas/AnnouncementMutableProperties'
+        - $ref: '#/components/schemas/DraftProperties'
+        - $ref: '#/components/schemas/PermissionedObject'
+        - $ref: '#/components/schemas/UgcTrackingSignals'
+        - type: object
+          properties:
+            id:
+              type: integer
+              description: The opaque id of the announcement.
+            author:
+              $ref: '#/components/schemas/Person'
+            createTimestamp:
+              type: integer
+              description: Server Unix timestamp of the creation time (in seconds since epoch UTC).
+            lastUpdateTimestamp:
+              type: integer
+              description: Server Unix timestamp of the last update time (in seconds since epoch UTC).
+            updatedBy:
+              $ref: '#/components/schemas/Person'
+            viewerInfo:
+              type: object
+              properties:
+                isDismissed:
+                  type: boolean
+                  description: Whether the viewer has dismissed the announcement.
+                isRead:
+                  type: boolean
+                  description: Whether the viewer has read the announcement.
+            sourceDocument:
+              $ref: '#/components/schemas/Document'
+              description: The source document if the announcement is created from one.
+            isPublished:
+              type: boolean
+              description: Whether or not the announcement is published.
     AutocompleteResponse:
       allOf:
         - $ref: '#/components/schemas/BackendExperimentsContext'
