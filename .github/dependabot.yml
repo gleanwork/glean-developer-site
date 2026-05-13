@@ -14,5 +14,14 @@ updates:
       docusaurus:
         patterns:
           - "@docusaurus/*"
+        # Without this, the group defaults to production-only and silently
+        # excludes @docusaurus/* dev deps (faster, types, theme-mermaid, etc.),
+        # so they land in the dev-dependencies group while production
+        # @docusaurus/* packages get a separate PR — version skew.
+        dependency-type: "production-and-development"
       dev-dependencies:
         dependency-type: "development"
+        # Keep @docusaurus/* dev deps in the docusaurus group above so all
+        # @docusaurus/* packages bump together.
+        exclude-patterns:
+          - "@docusaurus/*"
