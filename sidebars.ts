@@ -1144,6 +1144,18 @@ const baseSidebars: SidebarsConfig = {
               label: 'Get end-user authentication status for an action pack.',
               className: 'api-method get',
             },
+            {
+              type: 'doc',
+              id: 'api/client-api/tools/authorize-action-pack',
+              label: 'Start the OAuth authorization flow for an action pack.',
+              className: 'api-method post',
+            },
+            {
+              type: 'doc',
+              id: 'api/client-api/tools/get-action-pack-auth-status',
+              label: 'Get end-user authentication status for an action pack.',
+              className: 'api-method get',
+            },
           ],
         },
         {
@@ -1632,6 +1644,12 @@ const baseSidebars: SidebarsConfig = {
               id: 'api/indexing-api/get-user-count',
               label: 'Get user count',
               className: 'menu__list-item--deprecated api-method post',
+            },
+            {
+              type: 'doc',
+              id: 'api/indexing-api/beta-get-document-lifecycle-events',
+              label: 'Beta: Get document lifecycle events',
+              className: 'api-method post',
             },
           ],
         },
