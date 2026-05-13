@@ -22,6 +22,7 @@ import { fileURLToPath } from 'url';
 import { parseArgs } from 'node:util';
 import jscodeshift from 'jscodeshift';
 import * as prettier from 'prettier';
+import yaml from 'js-yaml';
 
 const j = jscodeshift.withParser('tsx');
 
@@ -34,6 +35,13 @@ const API_DIRS = [
   path.join(DOCS_ROOT, 'api/client-api'),
   path.join(DOCS_ROOT, 'api/indexing-api'),
 ];
+
+const INDEXING_SPEC = path.join(
+  REPO_ROOT,
+  'openapi/indexing/indexing-capitalized.yaml',
+);
+const CLIENT_SPLIT_DIR = path.join(REPO_ROOT, 'openapi/client/split-apis');
+const HTTP_METHODS = ['get', 'post', 'put', 'patch', 'delete'];
 
 function shouldSkip(filename) {
   return (
@@ -127,7 +135,81 @@ function makeEntryNode(docId, label, className) {
   return j.objectExpression(props);
 }
 
-function insertEntry(root, doc) {
+function slugify(text) {
+  return text
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+}
+
+// Build a map: docId-slug -> tag-name from all OpenAPI source specs.
+// Used to determine which sidebar category a flat-structured doc (e.g.
+// indexing-api endpoints) belongs to, since the file path alone doesn't
+// encode the category.
+function buildSlugToTagMap() {
+  const map = new Map();
+  const specPaths = [];
+  if (fs.existsSync(INDEXING_SPEC)) specPaths.push(INDEXING_SPEC);
+  if (fs.existsSync(CLIENT_SPLIT_DIR)) {
+    for (const f of fs.readdirSync(CLIENT_SPLIT_DIR)) {
+      if (f.endsWith('.yaml')) specPaths.push(path.join(CLIENT_SPLIT_DIR, f));
+    }
+  }
+  for (const specPath of specPaths) {
+    let spec;
+    try {
+      spec = yaml.load(fs.readFileSync(specPath, 'utf8'));
+    } catch (e) {
+      console.warn(`Warning: failed to parse ${specPath}: ${e.message}`);
+      continue;
+    }
+    for (const methods of Object.values(spec?.paths ?? {})) {
+      if (!methods || typeof methods !== 'object') continue;
+      for (const [m, op] of Object.entries(methods)) {
+        if (!HTTP_METHODS.includes(m)) continue;
+        if (!op || typeof op !== 'object') continue;
+        const tag = op.tags?.[0];
+        if (!op.summary || !tag) continue;
+        map.set(slugify(op.summary), tag);
+      }
+    }
+  }
+  return map;
+}
+
+function findCategoryItemsByLabel(root, label) {
+  let found = null;
+  root.find(j.ObjectExpression).forEach((p) => {
+    if (found) return;
+    const props = p.node.properties;
+    const isCategory = props.some(
+      (pr) =>
+        pr.type === 'ObjectProperty' &&
+        pr.key?.name === 'type' &&
+        pr.value?.type === 'StringLiteral' &&
+        pr.value?.value === 'category',
+    );
+    if (!isCategory) return;
+    const labelMatch = props.some(
+      (pr) =>
+        pr.type === 'ObjectProperty' &&
+        pr.key?.name === 'label' &&
+        pr.value?.type === 'StringLiteral' &&
+        pr.value?.value === label,
+    );
+    if (!labelMatch) return;
+    const itemsProp = props.find(
+      (pr) => pr.type === 'ObjectProperty' && pr.key?.name === 'items',
+    );
+    if (itemsProp?.value?.type === 'ArrayExpression') {
+      found = itemsProp.value;
+    }
+  });
+  return found;
+}
+
+function insertEntry(root, doc, slugToTag) {
   const segments = doc.docId.split('/');
   const overviewId = segments.slice(0, -1).join('/') + '/overview';
 
@@ -150,13 +232,32 @@ function insertEntry(root, doc) {
       });
     })
     .forEach((p) => {
+      if (inserted) return;
       p.node.value.elements.push(
         makeEntryNode(doc.docId, doc.label, doc.className),
       );
       inserted = true;
     });
 
-  return inserted;
+  if (inserted) return true;
+
+  // Fallback: look up the operation's OpenAPI tag and find the category whose
+  // label matches. This handles flat-structure APIs (e.g. indexing-api) where
+  // all docs live in one directory and the category is determined by the tag,
+  // not the file path.
+  const slug = segments[segments.length - 1];
+  const tag = slugToTag.get(slug);
+  if (tag) {
+    const itemsArr = findCategoryItemsByLabel(root, tag);
+    if (itemsArr) {
+      itemsArr.elements.push(
+        makeEntryNode(doc.docId, doc.label, doc.className),
+      );
+      return true;
+    }
+  }
+
+  return false;
 }
 
 const { values: args } = parseArgs({
@@ -212,13 +313,17 @@ if (missing.length === 0) {
 }
 
 const warnings = [];
+const slugToTag = buildSlugToTagMap();
 
 for (const doc of missing) {
-  const ok = insertEntry(root, doc);
+  const ok = insertEntry(root, doc, slugToTag);
   if (!ok) {
-    warnings.push(
-      `Could not find sidebar category for '${doc.docId.split('/').slice(0, -1).join('/')}/overview' — add '${doc.docId}' manually`,
-    );
+    const slug = doc.docId.split('/').slice(-1)[0];
+    const tag = slugToTag.get(slug);
+    const reason = tag
+      ? `no sidebar category labelled '${tag}' (and no parent overview doc found)`
+      : `no OpenAPI tag found for slug '${slug}' and no parent overview doc found`;
+    warnings.push(`Could not auto-insert '${doc.docId}': ${reason}`);
   }
 }
 
@@ -244,6 +349,7 @@ if (warnings.length > 0) {
   for (const w of warnings) {
     console.warn(`  ! ${w}`);
   }
-  console.warn('\nAdd them manually to sidebars.ts.');
-  process.exit(1);
+  console.warn(
+    '\nAdd them manually to sidebars.ts. Continuing with partial fix so the regenerate workflow can still produce a PR for the entries that were auto-inserted.',
+  );
 }
