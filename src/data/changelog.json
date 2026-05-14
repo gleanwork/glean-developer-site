@@ -1,6 +1,177 @@
 {
   "entries": [
     {
+      "id": "2026-05-18-custom-metadata-api-ga",
+      "slug": "custom-metadata-api-ga",
+      "title": "Custom Metadata API is Generally Available",
+      "date": "2026-05-18",
+      "categories": [
+        "API"
+      ],
+      "impact": "noteworthy",
+      "attention": [
+        {
+          "level": "noteworthy",
+          "label": "Noteworthy"
+        }
+      ],
+      "summary": "<p>The Custom Metadata API is now generally available — a new capability for attaching structured metadata to documents from any datasource, including native connectors and custom datasources, without re-indexing the source document.</p>\n",
+      "fullContent": "<p>The Custom Metadata API is now generally available — a new capability for attaching structured metadata to documents from any datasource, including native connectors and custom datasources, without re-indexing the source document.</p>\n<h2>What&#39;s new</h2>\n<ul>\n<li><strong>New endpoints</strong> under <code>/rest/api/index</code>:<ul>\n<li><code>PUT /custom-metadata/schema/{groupName}</code> — create or update a metadata group schema</li>\n<li><code>GET /custom-metadata/schema/{groupName}</code> — retrieve a metadata group schema</li>\n<li><code>DELETE /custom-metadata/schema/{groupName}</code> — remove a metadata group schema</li>\n<li><code>PUT /document/{docId}/custom-metadata/{groupName}</code> — add or update metadata on a document</li>\n<li><code>DELETE /document/{docId}/custom-metadata/{groupName}</code> — remove metadata from a document</li>\n</ul>\n</li>\n<li><strong>Property types</strong>: <code>TEXT</code>, <code>PICKLIST</code>, <code>TEXTLIST</code>, <code>MULTIPICKLIST</code>, with optional <code>skipIndexing</code> to keep values retrievable but excluded from full-text search.</li>\n<li><strong>Scoped tokens</strong> — manage permissions per metadata group via <code>custommetadata:&lt;group_name&gt;</code>, or globally with <code>custommetadata:global_scope</code>.</li>\n<li><strong>Querying</strong> — values are searchable as facets (<code>&lt;groupName&gt;&lt;keyName&gt;:&lt;value&gt;</code>) and retrievable through the Client API <code>getDocuments</code> endpoint with <code>includeFields: [&quot;CUSTOM_METADATA&quot;]</code>.</li>\n</ul>\n<h2>When to use it</h2>\n<p>Custom Metadata works with any document already indexed in Glean. Use it to enrich documents from native connectors (Google Drive, Confluence, Jira, etc.) or custom datasources without re-uploading them. For a side-by-side comparison with Custom Properties (which require re-indexing the document), see <a href=\"/api-info/indexing/custom-metadata/custom-properties-vs-custom-metadata\">Custom Properties vs Custom Metadata</a>.</p>\n<h2>Documentation</h2>\n<ul>\n<li><a href=\"/api-info/indexing/custom-metadata/overview\">Custom Metadata Overview</a></li>\n<li><a href=\"/api-info/indexing/custom-metadata/authentication\">Authentication</a></li>\n<li><a href=\"/api-info/indexing/custom-metadata/schema-management\">Schema Management</a></li>\n<li><a href=\"/api-info/indexing/custom-metadata/indexing-metadata\">Indexing Metadata</a></li>\n<li><a href=\"/api-info/indexing/custom-metadata/querying\">Querying</a></li>\n</ul>\n",
+      "hasTruncation": true,
+      "fileName": "2026-05-18-custom-metadata-api-ga.md"
+    },
+    {
+      "id": "2026-05-13-rest-api-changes-open-api",
+      "slug": "rest-api-changes-open-api",
+      "title": "REST API: changes (endpoints) 2026-05-13",
+      "date": "2026-05-13",
+      "categories": [
+        "API"
+      ],
+      "impact": "noteworthy",
+      "attention": [
+        {
+          "level": "noteworthy",
+          "label": "Noteworthy"
+        }
+      ],
+      "summary": "<p>2 endpoints added.</p>\n",
+      "fullContent": "<p>2 endpoints added.</p>\n<h2>Changes</h2>\n<ul>\n<li>Added endpoint: /custom-metadata/schema/{groupName}</li>\n<li>Added endpoint: /document/{docId}/custom-metadata/{groupName}</li>\n</ul>\n<h2>Source</h2>\n<ul>\n<li><a href=\"https://github.com/gleanwork/open-api/commit/1d568391d821bd180625c82512f0000265073362\">open-api 1d56839</a></li>\n<li><a href=\"https://github.com/gleanwork/open-api/commit/6249d56b0e04656fd917ec7477aa135a78e84305\">open-api 6249d56</a></li>\n<li><a href=\"https://github.com/gleanwork/open-api/commit/647eaa38c051fec5593ab69cfdbc89e96fe5932f\">open-api 647eaa3</a></li>\n<li><a href=\"https://github.com/gleanwork/open-api/commit/7a2b665f271485fea9181f008202a3f98536fcae\">open-api 7a2b665</a></li>\n</ul>\n",
+      "hasTruncation": true,
+      "fileName": "2026-05-13-rest-api-changes-open-api.md"
+    },
+    {
+      "id": "2026-05-12-rest-api-changes-open-api",
+      "slug": "rest-api-changes-open-api",
+      "title": "REST API: changes (endpoints) 2026-05-12",
+      "date": "2026-05-12",
+      "categories": [
+        "API"
+      ],
+      "impact": "breaking",
+      "attention": [
+        {
+          "level": "breaking",
+          "label": "Breaking"
+        },
+        {
+          "level": "action_required",
+          "label": "Action required"
+        },
+        {
+          "level": "noteworthy",
+          "label": "Noteworthy"
+        }
+      ],
+      "summary": "<p>Breaking change: 1 endpoint added, 1 endpoint removed.</p>\n",
+      "fullContent": "<p>Breaking change: 1 endpoint added, 1 endpoint removed.</p>\n<h2>Action Required</h2>\n<ul>\n<li>Update callers to stop using /actions/{actionPackId}/auth.</li>\n</ul>\n<h2>Changes</h2>\n<ul>\n<li>Added endpoint: /actions/actionpack/{actionPackId}/auth</li>\n</ul>\n<h2>Breaking Changes</h2>\n<ul>\n<li>Removed endpoint: /actions/{actionPackId}/auth (breaking change)</li>\n</ul>\n<h2>Source</h2>\n<ul>\n<li><a href=\"https://github.com/gleanwork/open-api/commit/02f647c1ae9b636e06115733a1d5e179a31578d2\">open-api 02f647c</a></li>\n<li><a href=\"https://github.com/gleanwork/open-api/commit/222faa48c244289ca936bbc8c880543c048b73e0\">open-api 222faa4</a></li>\n<li><a href=\"https://github.com/gleanwork/open-api/commit/3c5f04e4172b07ada26ee79f7f6751f1720fb04c\">open-api 3c5f04e</a></li>\n<li><a href=\"https://github.com/gleanwork/open-api/commit/439d1d2144619900359c140129d902e6b28e8688\">open-api 439d1d2</a></li>\n<li><a href=\"https://github.com/gleanwork/open-api/commit/51db945590372dc3832099eff8ee01d3ce66c162\">open-api 51db945</a></li>\n<li><a href=\"https://github.com/gleanwork/open-api/commit/5a6fddcf74166faa81f53f824a4d389e61800e83\">open-api 5a6fddc</a></li>\n<li><a href=\"https://github.com/gleanwork/open-api/commit/5f2faf1fd784e237def639db02464cccdd827c1d\">open-api 5f2faf1</a></li>\n<li><a href=\"https://github.com/gleanwork/open-api/commit/81d283bdc17d07db5fb7c2de0801c40e8bd017c0\">open-api 81d283b</a></li>\n</ul>\n",
+      "hasTruncation": true,
+      "fileName": "2026-05-12-rest-api-changes-open-api.md"
+    },
+    {
+      "id": "2026-05-11-rest-api-changes-open-api",
+      "slug": "rest-api-changes-open-api",
+      "title": "REST API: changes (endpoints) 2026-05-11",
+      "date": "2026-05-11",
+      "categories": [
+        "API"
+      ],
+      "impact": "noteworthy",
+      "attention": [
+        {
+          "level": "noteworthy",
+          "label": "Noteworthy"
+        }
+      ],
+      "summary": "<p>2 endpoints added.</p>\n",
+      "fullContent": "<p>2 endpoints added.</p>\n<h2>Changes</h2>\n<ul>\n<li>Added endpoint: /api/index/v1/debug/{datasource}/document/events</li>\n<li>Added endpoint: /debug/{datasource}/document/events</li>\n</ul>\n<h2>Source</h2>\n<ul>\n<li><a href=\"https://github.com/gleanwork/open-api/commit/31144d0a1a6d47a7a15e0df5fe47d4d9e1f2a846\">open-api 31144d0</a></li>\n<li><a href=\"https://github.com/gleanwork/open-api/commit/565ee21edfefe7b9ebedd2f3c568054dbc340901\">open-api 565ee21</a></li>\n<li><a href=\"https://github.com/gleanwork/open-api/commit/8d3a9118a3de11737fa4eda5bcdb850867067613\">open-api 8d3a911</a></li>\n<li><a href=\"https://github.com/gleanwork/open-api/commit/968befb8c149a90c5954f43a49a3c40ae5834772\">open-api 968befb</a></li>\n<li><a href=\"https://github.com/gleanwork/open-api/commit/ae19c79f11106c658bf1061dcc8d4ca5c9a26f07\">open-api ae19c79</a></li>\n<li><a href=\"https://github.com/gleanwork/open-api/commit/eb3e8be368aaa09d127d325de8413064635e76dd\">open-api eb3e8be</a></li>\n</ul>\n",
+      "hasTruncation": true,
+      "fileName": "2026-05-11-rest-api-changes-open-api.md"
+    },
+    {
+      "id": "2026-05-07-rest-api-changes-open-api",
+      "slug": "rest-api-changes-open-api",
+      "title": "REST API: changes (endpoints) 2026-05-07",
+      "date": "2026-05-07",
+      "categories": [
+        "API"
+      ],
+      "impact": "noteworthy",
+      "attention": [
+        {
+          "level": "noteworthy",
+          "label": "Noteworthy"
+        }
+      ],
+      "summary": "<p>2 endpoints added.</p>\n",
+      "fullContent": "<p>2 endpoints added.</p>\n<h2>Changes</h2>\n<ul>\n<li>Added endpoint: /actions/{actionPackId}/auth</li>\n<li>Added endpoint: /chat-files/{fileId}</li>\n</ul>\n<h2>Source</h2>\n<ul>\n<li><a href=\"https://github.com/gleanwork/open-api/commit/368a20e9e9b003c93c2a9bc7a34d0672cd764a20\">open-api 368a20e</a></li>\n<li><a href=\"https://github.com/gleanwork/open-api/commit/36ccb9ca0c45287b1f1f6d876940315f09e51ab0\">open-api 36ccb9c</a></li>\n<li><a href=\"https://github.com/gleanwork/open-api/commit/49f327d09ca52c6dcd7b5ef92c1ba891e753d9bb\">open-api 49f327d</a></li>\n<li><a href=\"https://github.com/gleanwork/open-api/commit/50b0df50b50693714bddc3e93c6cfa281962767d\">open-api 50b0df5</a></li>\n<li><a href=\"https://github.com/gleanwork/open-api/commit/6a7c06cb55082b8df19cf4111a4d1fefd6efb22e\">open-api 6a7c06c</a></li>\n<li><a href=\"https://github.com/gleanwork/open-api/commit/6bd6a0894942908a5a808538273f228c59e2f41f\">open-api 6bd6a08</a></li>\n<li><a href=\"https://github.com/gleanwork/open-api/commit/6c3c728ff527a3e06c2616e820057fb69dd6406f\">open-api 6c3c728</a></li>\n<li><a href=\"https://github.com/gleanwork/open-api/commit/8d724f8d913aa80050700dcc64f42f202943ada9\">open-api 8d724f8</a></li>\n</ul>\n",
+      "hasTruncation": true,
+      "fileName": "2026-05-07-rest-api-changes-open-api.md"
+    },
+    {
+      "id": "2026-05-05-rest-api-changes-open-api",
+      "slug": "rest-api-changes-open-api",
+      "title": "REST API: changes (endpoints) 2026-05-05",
+      "date": "2026-05-05",
+      "categories": [
+        "API"
+      ],
+      "impact": "noteworthy",
+      "attention": [
+        {
+          "level": "noteworthy",
+          "label": "Noteworthy"
+        }
+      ],
+      "summary": "<p>1 endpoint added.</p>\n",
+      "fullContent": "<p>1 endpoint added.</p>\n<h2>Changes</h2>\n<ul>\n<li>Added endpoint: /people/{person_id}/photo</li>\n</ul>\n<h2>Source</h2>\n<ul>\n<li><a href=\"https://github.com/gleanwork/open-api/commit/2800e7a577fa6d58a60b0659a83e2b4cd07ee575\">open-api 2800e7a</a></li>\n<li><a href=\"https://github.com/gleanwork/open-api/commit/2d3443c7126e7b9b8504012ebc1b576f478f719e\">open-api 2d3443c</a></li>\n<li><a href=\"https://github.com/gleanwork/open-api/commit/61c1f35f0e4d5c3cad1fe94c398a131a42628273\">open-api 61c1f35</a></li>\n<li><a href=\"https://github.com/gleanwork/open-api/commit/73555b80908616f7b414a05add5defcf86178a0c\">open-api 73555b8</a></li>\n<li><a href=\"https://github.com/gleanwork/open-api/commit/8b52a73a0470863ec091b92ba321dbfd4bdb3d5d\">open-api 8b52a73</a></li>\n<li><a href=\"https://github.com/gleanwork/open-api/commit/8f8bfbd45f91882595938f16493847a4488a5ac9\">open-api 8f8bfbd</a></li>\n<li><a href=\"https://github.com/gleanwork/open-api/commit/a6d97ad3f1a75fee061fbad5d48f402834e3531e\">open-api a6d97ad</a></li>\n<li><a href=\"https://github.com/gleanwork/open-api/commit/d485d2c00fb0fcbba724b8fefe66283b2d55e155\">open-api d485d2c</a></li>\n</ul>\n",
+      "hasTruncation": true,
+      "fileName": "2026-05-05-rest-api-changes-open-api.md"
+    },
+    {
+      "id": "2026-05-04-configure-mcp-server-3-2-0",
+      "slug": "configure-mcp-server-3-2-0",
+      "title": "configure-mcp-server v3.2.0",
+      "date": "2026-05-04",
+      "categories": [
+        "MCP"
+      ],
+      "impact": "routine",
+      "attention": [],
+      "summary": "<p>Configure-mcp-server v3.2.0: Friendly error when no local MCP server is configured.</p>\n",
+      "fullContent": "<p>Configure-mcp-server v3.2.0: Friendly error when no local MCP server is configured.</p>\n<h2>Changes</h2>\n<ul>\n<li>Friendly error when no local MCP server is configured.</li>\n</ul>\n<h2>Source</h2>\n<ul>\n<li><a href=\"https://github.com/gleanwork/configure-mcp-server/releases/tag/v3.2.0\">Release notes</a></li>\n<li><a href=\"https://github.com/gleanwork/configure-mcp-server/pull/78\">PR #78</a></li>\n</ul>\n",
+      "hasTruncation": true,
+      "fileName": "2026-05-04-configure-mcp-server-3-2-0.md"
+    },
+    {
+      "id": "2026-05-02-mcp-config-5-0-0",
+      "slug": "mcp-config-5-0-0",
+      "title": "mcp-config v5.0.0",
+      "date": "2026-05-02",
+      "categories": [
+        "MCP"
+      ],
+      "impact": "breaking",
+      "attention": [
+        {
+          "level": "breaking",
+          "label": "Breaking"
+        },
+        {
+          "level": "action_required",
+          "label": "Action required"
+        },
+        {
+          "level": "deprecated",
+          "label": "Deprecated"
+        }
+      ],
+      "summary": "<p>Breaking change: <code>mcp-config-glean</code>, <code>mcp-config-schema</code>: drop local MCP path; add cliVersion pin support.</p>\n",
+      "fullContent": "<p>Breaking change: <code>mcp-config-glean</code>, <code>mcp-config-schema</code>: drop local MCP path; add cliVersion pin support.</p>\n<h2>Action Required</h2>\n<ul>\n<li>Review this breaking change before upgrading: <code>mcp-config-glean</code>, <code>mcp-config-schema</code>: drop local MCP path; add cliVersion pin support.</li>\n</ul>\n<h2>Changes</h2>\n<ul>\n<li>This release only includes breaking or deprecated changes.</li>\n</ul>\n<h2>Breaking Changes</h2>\n<ul>\n<li><code>mcp-config-glean</code>, <code>mcp-config-schema</code>: drop local MCP path; add cliVersion pin support.</li>\n</ul>\n<h2>Source</h2>\n<ul>\n<li><a href=\"https://github.com/gleanwork/mcp-config/releases/tag/v5.0.0\">Release notes</a></li>\n<li><a href=\"https://github.com/gleanwork/mcp-config/pull/108\">PR #108</a></li>\n</ul>\n",
+      "hasTruncation": true,
+      "fileName": "2026-05-02-mcp-config-5-0-0.md"
+    },
+    {
       "id": "2026-04-23-glean-indexing-sdk-1-0-0b2",
       "slug": "glean-indexing-sdk-1-0-0b2",
       "title": "glean-indexing-sdk v1.0.0b2",
@@ -4948,6 +5119,6 @@
     "Website",
     "langchain-glean"
   ],
-  "generatedAt": "2026-04-23T00:00:00.000Z",
-  "totalEntries": 287
+  "generatedAt": "2026-05-18T00:00:00.000Z",
+  "totalEntries": 295
 }
