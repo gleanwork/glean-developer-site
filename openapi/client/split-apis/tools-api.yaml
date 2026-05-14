@@ -2,11 +2,11 @@ openapi: 3.0.0
 info:
   version: 0.9.0
   title: Glean API - Tools
-  x-source-commit-sha: be392b09dbb2d90d1eb33786d69d1b8df8ea98ec
+  x-source-commit-sha: 509a3e53bb2cd759b456a72dac7bb4d89e7922b7
   description: API endpoints for Tools
   x-logo:
     url: https://app.glean.com/images/glean-text2.svg
-  x-open-api-commit-sha: 127bc440bea5368e5d1cea27cd51c5ef900b9147
+  x-open-api-commit-sha: 6dadb3d4d79f45ae6872d80589e93423b75ba93a
   x-speakeasy-name: Glean API
 servers:
   - url: https://{instance}-be.glean.com
@@ -234,7 +234,7 @@ paths:
                     }
                 }
             }
-  /rest/api/v1/actions/{actionPackId}/auth:
+  /rest/api/v1/actions/actionpack/{actionPackId}/auth:
     get:
       tags:
         - Tools
@@ -243,7 +243,7 @@ paths:
         Reports whether the calling user is already authenticated against the third-party
         tool backing the specified action pack. Intended for headless / server-driven clients
         that render an "Authorize" prompt when the user has not yet consented to the tool.
-      operationId: getActionAuthStatus
+      operationId: getActionPackAuthStatus
       x-visibility: Preview
       responses:
         '200':
@@ -251,7 +251,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActionAuthStatusResponse'
+                $ref: '#/components/schemas/ActionPackAuthStatusResponse'
         '400':
           description: Bad Request
         '401':
@@ -275,7 +275,7 @@ paths:
                 server_url="https://mycompany-be.glean.com",
             ) as glean:
 
-                res = glean.tools.get_action_auth_status(action_pack_id="<id>")
+                res = glean.tools.get_action_pack_auth_status(action_pack_id="<id>")
 
                 # Handle response
                 print(res)
@@ -290,7 +290,7 @@ paths:
             });
 
             async function run() {
-              const result = await glean.tools.getActionAuthStatus("<id>");
+              const result = await glean.tools.getActionPackAuthStatus("<id>");
 
               console.log(result);
             }
@@ -298,14 +298,14 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Tools.GetActionAuthStatus(ctx, \"<id>\")\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.ActionAuthStatusResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Tools.GetActionPackAuthStatus(ctx, \"<id>\")\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.ActionPackAuthStatusResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
             package hello.world;
 
             import com.glean.api_client.glean_api_client.Glean;
-            import com.glean.api_client.glean_api_client.models.operations.GetActionAuthStatusResponse;
+            import com.glean.api_client.glean_api_client.models.operations.GetActionPackAuthStatusResponse;
             import java.lang.Exception;
 
             public class Application {
@@ -316,12 +316,12 @@ paths:
                             .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
                         .build();
 
-                    GetActionAuthStatusResponse res = sdk.tools().getActionAuthStatus()
+                    GetActionPackAuthStatusResponse res = sdk.tools().getActionPackAuthStatus()
                             .actionPackId("<id>")
                             .call();
 
-                    if (res.actionAuthStatusResponse().isPresent()) {
-                        System.out.println(res.actionAuthStatusResponse().get());
+                    if (res.actionPackAuthStatusResponse().isPresent()) {
+                        System.out.println(res.actionPackAuthStatusResponse().get());
                     }
                 }
             }
@@ -337,21 +337,21 @@ paths:
 
         `returnUrl` must match the tenant's configured return URL allowlist; otherwise the
         request is rejected with 400.
-      operationId: authorizeAction
+      operationId: authorizeActionPack
       x-visibility: Preview
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/AuthorizeActionRequest'
+              $ref: '#/components/schemas/AuthorizeActionPackRequest'
       responses:
         '200':
           description: Successful operation
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AuthorizeActionResponse'
+                $ref: '#/components/schemas/AuthorizeActionPackResponse'
         '400':
           description: Invalid request (e.g. returnUrl not in allowlist, unsupported auth type)
         '401':
@@ -377,7 +377,7 @@ paths:
                 server_url="https://mycompany-be.glean.com",
             ) as glean:
 
-                res = glean.tools.authorize_action(action_pack_id="<id>", return_url="https://irresponsible-trick.name/")
+                res = glean.tools.authorize_action_pack(action_pack_id="<id>", return_url="https://merry-allocation.org/")
 
                 # Handle response
                 print(res)
@@ -392,8 +392,8 @@ paths:
             });
 
             async function run() {
-              const result = await glean.tools.authorizeAction({
-                returnUrl: "https://irresponsible-trick.name/",
+              const result = await glean.tools.authorizeActionPack({
+                returnUrl: "https://merry-allocation.org/",
               }, "<id>");
 
               console.log(result);
@@ -402,15 +402,15 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Tools.AuthorizeAction(ctx, \"<id>\", components.AuthorizeActionRequest{\n        ReturnURL: \"https://irresponsible-trick.name/\",\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.AuthorizeActionResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Tools.AuthorizeActionPack(ctx, \"<id>\", components.AuthorizeActionPackRequest{\n        ReturnURL: \"https://merry-allocation.org/\",\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.AuthorizeActionPackResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
             package hello.world;
 
             import com.glean.api_client.glean_api_client.Glean;
-            import com.glean.api_client.glean_api_client.models.components.AuthorizeActionRequest;
-            import com.glean.api_client.glean_api_client.models.operations.AuthorizeActionResponse;
+            import com.glean.api_client.glean_api_client.models.components.AuthorizeActionPackRequest;
+            import com.glean.api_client.glean_api_client.models.operations.AuthorizeActionPackResponse;
             import java.lang.Exception;
 
             public class Application {
@@ -421,15 +421,15 @@ paths:
                             .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
                         .build();
 
-                    AuthorizeActionResponse res = sdk.tools().authorizeAction()
+                    AuthorizeActionPackResponse res = sdk.tools().authorizeActionPack()
                             .actionPackId("<id>")
-                            .authorizeActionRequest(AuthorizeActionRequest.builder()
-                                .returnUrl("https://irresponsible-trick.name/")
+                            .authorizeActionPackRequest(AuthorizeActionPackRequest.builder()
+                                .returnUrl("https://merry-allocation.org/")
                                 .build())
                             .call();
 
-                    if (res.authorizeActionResponse().isPresent()) {
-                        System.out.println(res.authorizeActionResponse().get());
+                    if (res.authorizeActionPackResponse().isPresent()) {
+                        System.out.println(res.authorizeActionPackResponse().get());
                     }
                 }
             }
@@ -446,7 +446,7 @@ components:
         - AUTH_USER_OAUTH
         - AUTH_ADMIN
         - AUTH_NONE
-    AuthorizeActionRequest:
+    AuthorizeActionPackRequest:
       type: object
       required:
         - returnUrl
@@ -456,7 +456,7 @@ components:
           description: |
             URL on the customer's domain to redirect the end user's browser back to after the third-party OAuth
             callback completes. Must be present in the tenant's return URL allowlist.
-    AuthorizeActionResponse:
+    AuthorizeActionPackResponse:
       type: object
       required:
         - redirectUrl
@@ -490,7 +490,18 @@ components:
           description: The parameters for the tool. Each key is the name of the parameter and the value is the parameter object.
           additionalProperties:
             $ref: '#/components/schemas/ToolsCallParameter'
-    ActionAuthStatusResponse:
+    ActionPackAuthStatusResponse:
+      type: object
+      required:
+        - actionPack
+      properties:
+        actionPack:
+          $ref: '#/components/schemas/ActionPackAuthStatus'
+          description: |
+            Action-pack-scoped authentication status. Wrapped under `actionPack` so the response
+            shape clearly conveys that the status applies to the whole pack and leaves room to add
+            sibling fields (e.g. per-action status) later without a breaking change.
+    ActionPackAuthStatus:
       type: object
       required:
         - authenticated

@@ -2,7 +2,7 @@ openapi: 3.0.0
 info:
   version: 0.9.0
   title: Glean API
-  x-source-commit-sha: be392b09dbb2d90d1eb33786d69d1b8df8ea98ec
+  x-source-commit-sha: 509a3e53bb2cd759b456a72dac7bb4d89e7922b7
   description: |
     # Introduction
     In addition to the data sources that Glean has built-in support for, Glean also provides a REST API that enables customers to put arbitrary content in the search index. This is useful, for example, for doing permissions-aware search over content in internal tools that reside on-prem as well as for searching over applications that Glean does not currently support first class. In addition these APIs allow the customer to push organization data (people info, organization structure etc) into Glean.
@@ -22,7 +22,7 @@ info:
     These API clients provide type-safe, idiomatic interfaces for working with Glean IndexingAPIs in your language of choice.
   x-logo:
     url: https://app.glean.com/images/glean-text2.svg
-  x-open-api-commit-sha: 127bc440bea5368e5d1cea27cd51c5ef900b9147
+  x-open-api-commit-sha: 6dadb3d4d79f45ae6872d80589e93423b75ba93a
   x-speakeasy-name: Glean API
 servers:
   - url: https://{instance}-be.glean.com
@@ -3716,6 +3716,607 @@ paths:
         - lang: Go
           label: Go (API Client)
           source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Indexing.Shortcuts.Upload(ctx, components.UploadShortcutsRequest{\n        UploadID: \"<id>\",\n        Shortcuts: []components.IndexingShortcut{\n            components.IndexingShortcut{\n                InputAlias: \"<value>\",\n                DestinationURL: \"https://majestic-pharmacopoeia.info/\",\n                CreatedBy: \"<value>\",\n            },\n            components.IndexingShortcut{\n                InputAlias: \"<value>\",\n                DestinationURL: \"https://majestic-pharmacopoeia.info/\",\n                CreatedBy: \"<value>\",\n            },\n            components.IndexingShortcut{\n                InputAlias: \"<value>\",\n                DestinationURL: \"https://majestic-pharmacopoeia.info/\",\n                CreatedBy: \"<value>\",\n            },\n        },\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res != nil {\n        // handle response\n    }\n}"
+  /api/index/v1/debug/{datasource}/document/events:
+    post:
+      x-beta: true
+      summary: |
+        Beta: Get document lifecycle events
+      description: |
+        Retrieves lifecycle events for a specific document including upload time, index times and deletions. Rate limited to 1 request per minute per datasource. Currently in beta, might undergo breaking changes without prior notice.
+      tags:
+        - Troubleshooting
+      parameters:
+        - name: datasource
+          in: path
+          description: The datasource to which the document belongs
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json; charset=UTF-8:
+            schema:
+              $ref: '#/components/schemas/DebugDocumentLifecycleRequest'
+        required: true
+        x-exportParamName: DebugDocumentLifecycleRequest
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json; charset=UTF-8:
+              schema:
+                $ref: '#/components/schemas/DebugDocumentLifecycleResponse'
+        '400':
+          description: Bad Request
+        '401':
+          description: Not Authorized
+        '429':
+          description: Too Many Requests
+      x-codeSamples:
+        - lang: Python
+          label: Python (API Client)
+          source: |-
+            from glean.api_client import Glean
+            import os
+
+
+            with Glean(
+                api_token=os.getenv("GLEAN_API_TOKEN", ""),
+                server_url="https://mycompany-be.glean.com",
+            ) as glean:
+
+                res = glean.troubleshooting.post_api_index_v1_debug_datasource_document_events(datasource="<value>", object_type="Article", doc_id="art123", start_date="2025-05-01", max_events=50)
+
+                # Handle response
+                print(res)
+        - lang: JavaScript
+          label: Typescript (API Client)
+          source: |-
+            import { Glean } from "@gleanwork/api-client";
+
+            const glean = new Glean({
+              apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
+              serverURL: "https://mycompany-be.glean.com",
+            });
+
+            async function run() {
+              const result = await glean.troubleshooting.postApiIndexV1DebugDatasourceDocumentEvents({
+                objectType: "Article",
+                docId: "art123",
+                startDate: "2025-05-01",
+                maxEvents: 50,
+              }, "<value>");
+
+              console.log(result);
+            }
+
+            run();
+        - lang: Java
+          label: Java (API Client)
+          source: |-
+            package hello.world;
+
+            import com.glean.api_client.glean_api_client.Glean;
+            import com.glean.api_client.glean_api_client.models.components.DebugDocumentLifecycleRequest;
+            import com.glean.api_client.glean_api_client.models.operations.PostApiIndexV1DebugDatasourceDocumentEventsResponse;
+            import java.lang.Exception;
+
+            public class Application {
+
+                public static void main(String[] args) throws Exception {
+
+                    Glean sdk = Glean.builder()
+                            .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
+                        .build();
+
+                    PostApiIndexV1DebugDatasourceDocumentEventsResponse res = sdk.troubleshooting().postApiIndexV1DebugDatasourceDocumentEvents()
+                            .datasource("<value>")
+                            .debugDocumentLifecycleRequest(DebugDocumentLifecycleRequest.builder()
+                                .objectType("Article")
+                                .docId("art123")
+                                .startDate("2025-05-01")
+                                .maxEvents(50L)
+                                .build())
+                            .call();
+
+                    if (res.debugDocumentLifecycleResponse().isPresent()) {
+                        System.out.println(res.debugDocumentLifecycleResponse().get());
+                    }
+                }
+            }
+        - lang: Go
+          label: Go (API Client)
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Troubleshooting.PostAPIIndexV1DebugDatasourceDocumentEvents(ctx, \"<value>\", components.DebugDocumentLifecycleRequest{\n        ObjectType: \"Article\",\n        DocID: \"art123\",\n        StartDate: apiclientgo.Pointer(\"2025-05-01\"),\n        MaxEvents: apiclientgo.Pointer[int64](50),\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.DebugDocumentLifecycleResponse != nil {\n        // handle response\n    }\n}"
+  /rest/api/index/document/{docId}/custom-metadata/{groupName}:
+    servers:
+      - url: https://{instance}-be.glean.com
+        variables:
+          instance:
+            default: instance-name
+            description: The instance name (typically the email domain without the TLD) that determines the deployment backend.
+    parameters:
+      - name: docId
+        in: path
+        description: Unique Glean identifier of the document
+        required: true
+        schema:
+          type: string
+      - name: groupName
+        in: path
+        description: Name of the metadata group as specified while adding schema
+        required: true
+        schema:
+          type: string
+    put:
+      summary: Add or update custom metadata
+      description: Associates custom metadata with a specific document. Custom metadata enables you to enrich documents with additional structured information that can be used for search, filtering, and faceting.
+      tags:
+        - Custom Metadata
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomMetadataPutRequest'
+        required: true
+        x-exportParamName: CustomMetadataPutRequest
+      responses:
+        '200':
+          $ref: '#/components/responses/SuccessResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '429':
+          $ref: '#/components/responses/TooManyRequestsError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      x-speakeasy-name-override: upsert
+      x-speakeasy-group: indexing.customMetadata
+      x-codeSamples:
+        - lang: Python
+          label: Python (API Client)
+          source: |-
+            from glean.api_client import Glean
+            import os
+
+
+            with Glean(
+                api_token=os.getenv("GLEAN_API_TOKEN", ""),
+                server_url="https://mycompany-be.glean.com",
+            ) as glean:
+
+                res = glean.indexing.custom_metadata.upsert(doc_id="<id>", group_name="<value>", custom_metadata=[])
+
+                # Handle response
+                print(res)
+        - lang: JavaScript
+          label: Typescript (API Client)
+          source: |-
+            import { Glean } from "@gleanwork/api-client";
+
+            const glean = new Glean({
+              apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
+              serverURL: "https://mycompany-be.glean.com",
+            });
+
+            async function run() {
+              const result = await glean.indexing.customMetadata.upsert({
+                customMetadata: [],
+              }, "<id>", "<value>");
+
+              console.log(result);
+            }
+
+            run();
+        - lang: Java
+          label: Java (API Client)
+          source: |-
+            package hello.world;
+
+            import com.glean.api_client.glean_api_client.Glean;
+            import com.glean.api_client.glean_api_client.models.components.CustomMetadataPutRequest;
+            import com.glean.api_client.glean_api_client.models.errors.ErrorInfoResponse;
+            import com.glean.api_client.glean_api_client.models.operations.PutRestApiIndexDocumentDocIdCustomMetadataGroupNameResponse;
+            import java.lang.Exception;
+            import java.util.List;
+
+            public class Application {
+
+                public static void main(String[] args) throws ErrorInfoResponse, Exception {
+
+                    Glean sdk = Glean.builder()
+                            .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
+                        .build();
+
+                    PutRestApiIndexDocumentDocIdCustomMetadataGroupNameResponse res = sdk.indexing().customMetadata().upsert()
+                            .docId("<id>")
+                            .groupName("<value>")
+                            .customMetadataPutRequest(CustomMetadataPutRequest.builder()
+                                .customMetadata(List.of())
+                                .build())
+                            .call();
+
+                    if (res.successResponse().isPresent()) {
+                        System.out.println(res.successResponse().get());
+                    }
+                }
+            }
+        - lang: Go
+          label: Go (API Client)
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Indexing.CustomMetadata.Upsert(ctx, \"<id>\", \"<value>\", components.CustomMetadataPutRequest{\n        CustomMetadata: []components.CustomProperty{},\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.SuccessResponse != nil {\n        // handle response\n    }\n}"
+    delete:
+      summary: Remove custom metadata
+      description: Removes all custom metadata for the specified metadata group from a document.
+      tags:
+        - Custom Metadata
+      responses:
+        '200':
+          $ref: '#/components/responses/SuccessResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '429':
+          $ref: '#/components/responses/TooManyRequestsError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      x-speakeasy-name-override: delete
+      x-speakeasy-group: indexing.customMetadata
+      x-codeSamples:
+        - lang: Python
+          label: Python (API Client)
+          source: |-
+            from glean.api_client import Glean
+            import os
+
+
+            with Glean(
+                api_token=os.getenv("GLEAN_API_TOKEN", ""),
+                server_url="https://mycompany-be.glean.com",
+            ) as glean:
+
+                res = glean.indexing.custom_metadata.delete(doc_id="<id>", group_name="<value>")
+
+                # Handle response
+                print(res)
+        - lang: JavaScript
+          label: Typescript (API Client)
+          source: |-
+            import { Glean } from "@gleanwork/api-client";
+
+            const glean = new Glean({
+              apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
+              serverURL: "https://mycompany-be.glean.com",
+            });
+
+            async function run() {
+              const result = await glean.indexing.customMetadata.delete("<id>", "<value>");
+
+              console.log(result);
+            }
+
+            run();
+        - lang: Java
+          label: Java (API Client)
+          source: |-
+            package hello.world;
+
+            import com.glean.api_client.glean_api_client.Glean;
+            import com.glean.api_client.glean_api_client.models.errors.ErrorInfoResponse;
+            import com.glean.api_client.glean_api_client.models.operations.DeleteRestApiIndexDocumentDocIdCustomMetadataGroupNameResponse;
+            import java.lang.Exception;
+
+            public class Application {
+
+                public static void main(String[] args) throws ErrorInfoResponse, Exception {
+
+                    Glean sdk = Glean.builder()
+                            .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
+                        .build();
+
+                    DeleteRestApiIndexDocumentDocIdCustomMetadataGroupNameResponse res = sdk.indexing().customMetadata().delete()
+                            .docId("<id>")
+                            .groupName("<value>")
+                            .call();
+
+                    if (res.successResponse().isPresent()) {
+                        System.out.println(res.successResponse().get());
+                    }
+                }
+            }
+        - lang: Go
+          label: Go (API Client)
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Indexing.CustomMetadata.Delete(ctx, \"<id>\", \"<value>\")\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.SuccessResponse != nil {\n        // handle response\n    }\n}"
+  /rest/api/index/custom-metadata/schema/{groupName}:
+    servers:
+      - url: https://{instance}-be.glean.com
+        variables:
+          instance:
+            default: instance-name
+            description: The instance name (typically the email domain without the TLD) that determines the deployment backend.
+    parameters:
+      - name: groupName
+        in: path
+        description: Name of the metadata group schema
+        required: true
+        schema:
+          type: string
+    get:
+      summary: Retrieve metadata schema
+      description: Retrieves the current schema definition for a metadata group.
+      tags:
+        - Custom Metadata
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomMetadataSchema'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '429':
+          $ref: '#/components/responses/TooManyRequestsError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      x-speakeasy-name-override: getSchema
+      x-speakeasy-group: indexing.customMetadata
+      x-codeSamples:
+        - lang: Python
+          label: Python (API Client)
+          source: |-
+            from glean.api_client import Glean
+            import os
+
+
+            with Glean(
+                api_token=os.getenv("GLEAN_API_TOKEN", ""),
+                server_url="https://mycompany-be.glean.com",
+            ) as glean:
+
+                res = glean.indexing.custom_metadata.get_schema(group_name="<value>")
+
+                # Handle response
+                print(res)
+        - lang: JavaScript
+          label: Typescript (API Client)
+          source: |-
+            import { Glean } from "@gleanwork/api-client";
+
+            const glean = new Glean({
+              apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
+              serverURL: "https://mycompany-be.glean.com",
+            });
+
+            async function run() {
+              const result = await glean.indexing.customMetadata.getSchema("<value>");
+
+              console.log(result);
+            }
+
+            run();
+        - lang: Java
+          label: Java (API Client)
+          source: |-
+            package hello.world;
+
+            import com.glean.api_client.glean_api_client.Glean;
+            import com.glean.api_client.glean_api_client.models.errors.ErrorInfoResponse;
+            import com.glean.api_client.glean_api_client.models.operations.GetRestApiIndexCustomMetadataSchemaGroupNameResponse;
+            import java.lang.Exception;
+
+            public class Application {
+
+                public static void main(String[] args) throws ErrorInfoResponse, Exception {
+
+                    Glean sdk = Glean.builder()
+                            .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
+                        .build();
+
+                    GetRestApiIndexCustomMetadataSchemaGroupNameResponse res = sdk.indexing().customMetadata().getSchema()
+                            .groupName("<value>")
+                            .call();
+
+                    if (res.customMetadataSchema().isPresent()) {
+                        System.out.println(res.customMetadataSchema().get());
+                    }
+                }
+            }
+        - lang: Go
+          label: Go (API Client)
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Indexing.CustomMetadata.GetSchema(ctx, \"<value>\")\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.CustomMetadataSchema != nil {\n        // handle response\n    }\n}"
+    put:
+      summary: Create or update metadata schema
+      description: Defines or updates the schema for a metadata group. Schemas should be defined before indexing metadata.
+      tags:
+        - Custom Metadata
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomMetadataSchema'
+        required: true
+        x-exportParamName: CustomMetadataSchema
+      responses:
+        '200':
+          $ref: '#/components/responses/SuccessResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '409':
+          description: Conflict - Schema already exists with incompatible changes
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInfoResponse'
+        '429':
+          $ref: '#/components/responses/TooManyRequestsError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      x-speakeasy-name-override: upsertSchema
+      x-speakeasy-group: indexing.customMetadata
+      x-codeSamples:
+        - lang: Python
+          label: Python (API Client)
+          source: |-
+            from glean.api_client import Glean
+            import os
+
+
+            with Glean(
+                api_token=os.getenv("GLEAN_API_TOKEN", ""),
+                server_url="https://mycompany-be.glean.com",
+            ) as glean:
+
+                res = glean.indexing.custom_metadata.upsert_schema(group_name="<value>", metadata_keys=[])
+
+                # Handle response
+                print(res)
+        - lang: JavaScript
+          label: Typescript (API Client)
+          source: |-
+            import { Glean } from "@gleanwork/api-client";
+
+            const glean = new Glean({
+              apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
+              serverURL: "https://mycompany-be.glean.com",
+            });
+
+            async function run() {
+              const result = await glean.indexing.customMetadata.upsertSchema({
+                metadataKeys: [],
+              }, "<value>");
+
+              console.log(result);
+            }
+
+            run();
+        - lang: Java
+          label: Java (API Client)
+          source: |-
+            package hello.world;
+
+            import com.glean.api_client.glean_api_client.Glean;
+            import com.glean.api_client.glean_api_client.models.components.CustomMetadataSchema;
+            import com.glean.api_client.glean_api_client.models.errors.ErrorInfoResponse;
+            import com.glean.api_client.glean_api_client.models.operations.PutRestApiIndexCustomMetadataSchemaGroupNameResponse;
+            import java.lang.Exception;
+            import java.util.List;
+
+            public class Application {
+
+                public static void main(String[] args) throws ErrorInfoResponse, Exception {
+
+                    Glean sdk = Glean.builder()
+                            .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
+                        .build();
+
+                    PutRestApiIndexCustomMetadataSchemaGroupNameResponse res = sdk.indexing().customMetadata().upsertSchema()
+                            .groupName("<value>")
+                            .customMetadataSchema(CustomMetadataSchema.builder()
+                                .metadataKeys(List.of())
+                                .build())
+                            .call();
+
+                    if (res.successResponse().isPresent()) {
+                        System.out.println(res.successResponse().get());
+                    }
+                }
+            }
+        - lang: Go
+          label: Go (API Client)
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Indexing.CustomMetadata.UpsertSchema(ctx, \"<value>\", components.CustomMetadataSchema{\n        MetadataKeys: []components.CustomMetadataPropertyDefinition{},\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.SuccessResponse != nil {\n        // handle response\n    }\n}"
+    delete:
+      summary: Remove metadata schema
+      description: Deletes the schema definition for a metadata group. This does not delete existing metadata values on documents.
+      tags:
+        - Custom Metadata
+      responses:
+        '200':
+          $ref: '#/components/responses/SuccessResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '429':
+          $ref: '#/components/responses/TooManyRequestsError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      x-speakeasy-name-override: deleteSchema
+      x-speakeasy-group: indexing.customMetadata
+      x-codeSamples:
+        - lang: Python
+          label: Python (API Client)
+          source: |-
+            from glean.api_client import Glean
+            import os
+
+
+            with Glean(
+                api_token=os.getenv("GLEAN_API_TOKEN", ""),
+                server_url="https://mycompany-be.glean.com",
+            ) as glean:
+
+                res = glean.indexing.custom_metadata.delete_schema(group_name="<value>")
+
+                # Handle response
+                print(res)
+        - lang: JavaScript
+          label: Typescript (API Client)
+          source: |-
+            import { Glean } from "@gleanwork/api-client";
+
+            const glean = new Glean({
+              apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
+              serverURL: "https://mycompany-be.glean.com",
+            });
+
+            async function run() {
+              const result = await glean.indexing.customMetadata.deleteSchema("<value>");
+
+              console.log(result);
+            }
+
+            run();
+        - lang: Java
+          label: Java (API Client)
+          source: |-
+            package hello.world;
+
+            import com.glean.api_client.glean_api_client.Glean;
+            import com.glean.api_client.glean_api_client.models.errors.ErrorInfoResponse;
+            import com.glean.api_client.glean_api_client.models.operations.DeleteRestApiIndexCustomMetadataSchemaGroupNameResponse;
+            import java.lang.Exception;
+
+            public class Application {
+
+                public static void main(String[] args) throws ErrorInfoResponse, Exception {
+
+                    Glean sdk = Glean.builder()
+                            .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
+                        .build();
+
+                    DeleteRestApiIndexCustomMetadataSchemaGroupNameResponse res = sdk.indexing().customMetadata().deleteSchema()
+                            .groupName("<value>")
+                            .call();
+
+                    if (res.successResponse().isPresent()) {
+                        System.out.println(res.successResponse().get());
+                    }
+                }
+            }
+        - lang: Go
+          label: Go (API Client)
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Indexing.CustomMetadata.DeleteSchema(ctx, \"<value>\")\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.SuccessResponse != nil {\n        // handle response\n    }\n}"
 components:
   securitySchemes:
     APIToken:
@@ -5202,6 +5803,28 @@ components:
           description: List of lifecycle events corresponding to the document
           items:
             $ref: '#/components/schemas/LifeCycleEvent'
+    CustomMetadataPutRequest:
+      type: object
+      description: Request body for adding or updating custom metadata on a document
+      properties:
+        customMetadata:
+          type: array
+          description: Array of custom metadata key-value pairs
+          items:
+            $ref: '#/components/schemas/CustomProperty'
+      required:
+        - customMetadata
+    CustomMetadataSchema:
+      type: object
+      description: Schema for custom metadata containing metadata key definitions
+      properties:
+        metadataKeys:
+          type: array
+          description: Array of metadata key definitions
+          items:
+            $ref: '#/components/schemas/CustomMetadataPropertyDefinition'
+      required:
+        - metadataKeys
     SuccessResponse:
       type: object
       description: Success response for custom metadata operations
@@ -5645,3 +6268,24 @@ components:
         urlTemplate:
           type: string
           description: For variable shortcuts, contains the URL template; note, `destinationUrl` contains default URL.
+    CustomMetadataPropertyDefinition:
+      type: object
+      description: The definition for a key within a Custom Metadata schema. Only the fields applicable to Custom Metadata are exposed.
+      properties:
+        name:
+          type: string
+          description: The name of the metadata key.
+        propertyType:
+          type: string
+          enum:
+            - TEXT
+            - PICKLIST
+            - TEXTLIST
+            - MULTIPICKLIST
+          description: The type of metadata key. This governs the search and faceting behavior.
+        skipIndexing:
+          type: boolean
+          description: If true then the property will not be indexed for retrieval and ranking.
+      required:
+        - name
+        - propertyType
