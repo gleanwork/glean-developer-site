@@ -126,9 +126,18 @@ mv "${url_list}.pages" "$url_list"
 # ── Build lychee command with appropriate options ─────────────────────────────
 # Use an array to properly handle arguments and avoid word splitting issues
 # This prevents problems with spaces and special characters in arguments
+#
+# OUTPUT: We always write structured JSON to RESULTS_JSON below. The companion
+# script `scripts/render-link-check-results.mjs` reads it to produce the
+# human-readable summary (and the AI-actionable fix-me prompt). Doing this in
+# two passes keeps lychee responsible for the network work and keeps the
+# rendering decoupled and easy to evolve.
+RESULTS_JSON="${RESULTS_JSON:-link-check-results.json}"
 lychee_cmd=(
   lychee
-  --verbose                # Show detailed progress
+  --no-progress            # Quiet stdout; structured output goes to file
+  --format json
+  --output "$RESULTS_JSON"
   --max-redirects 10       # Follow up to 10 redirects
   --max-concurrency 8      # Limit concurrent requests to avoid rate limiting
 )
@@ -208,16 +217,33 @@ if [ "$DEEP_CHECK" = "true" ]; then
     --include-fragments
     --include-verbatim
   )
-  
+
   echo "Restricting to base URL: $BASE_URL"
   lychee_cmd+=( --base-url "$BASE_URL" )
-  
+
   # Pass URLs directly to lychee (not as a file) so it crawls their content
   echo "Found $(wc -l < "$url_list") pages to crawl..."
-  "${lychee_cmd[@]}" $(cat "$url_list")
+  # Use `|| lychee_exit=$?` so set -e doesn't abort before we render results.
+  # When lychee finds broken links it exits non-zero; we still want to print
+  # the summary and re-exit with that same code at the end.
+  lychee_exit=0
+  "${lychee_cmd[@]}" $(cat "$url_list") || lychee_exit=$?
 else
   echo "Running sitemap-only link check..."
-  "${lychee_cmd[@]}" "$url_list"
+  lychee_exit=0
+  "${lychee_cmd[@]}" "$url_list" || lychee_exit=$?
 fi
 
 rm -rf "$tmp_dir"
+
+# ── Render the JSON results into human + AI artifacts ────────────────────────
+# Always run, even on lychee failure — the failure case is precisely when the
+# rendered summary is most valuable (the workflow log otherwise shows nothing
+# actionable; see scripts/render-link-check-results.mjs).
+if [ -f "$RESULTS_JSON" ]; then
+  node "$(dirname "$0")/render-link-check-results.mjs" "$RESULTS_JSON" \
+    --summary-md link-check-summary.md \
+    --fixme-md link-check-fixme.md
+fi
+
+exit "$lychee_exit"
