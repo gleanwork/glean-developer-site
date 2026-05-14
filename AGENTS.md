@@ -23,3 +23,9 @@ AVOID RUNNING `pnpm start` - this causes very slow build times, and will interup
   cannot achieve the desired result.
 - Prefer default styles rather than creating new ones. Leverage existing CSS classes first, either from infima or via custom defined classes
 - Avoid inline CSS styles
+
+## Task-specific skills
+
+Project-local Claude Code skills live under `.claude/skills/`. Load the relevant skill when its scenario triggers:
+
+- **`.claude/skills/fix-broken-links/SKILL.md`** — Use when investigating a `Broken Links Detected` issue or a failing `Link Checker` workflow run. The nightly link checker emits a `link-check-fixme.md` artifact designed to be handed directly to an agent; the skill describes the project conventions for triaging the failures, where exclusions belong, and how to verify a fix.
