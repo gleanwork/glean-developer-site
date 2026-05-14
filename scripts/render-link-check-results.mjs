@@ -175,12 +175,8 @@ if (args['fixme-md']) {
   lines.push('');
   lines.push('## Triage rubric');
   lines.push('');
-  lines.push(
-    '| Category | What it means | Suggested action |',
-  );
-  lines.push(
-    '| --- | --- | --- |',
-  );
+  lines.push('| Category | What it means | Suggested action |');
+  lines.push('| --- | --- | --- |');
   lines.push(
     '| `broken` (404, 410) | Target page is gone | Find the source `.mdx` file (`grep -rn "<URL>" docs/`), update the link to the new location or remove it. |',
   );
