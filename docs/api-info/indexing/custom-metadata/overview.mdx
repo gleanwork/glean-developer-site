@@ -1,0 +1,57 @@
+---
+title: 'Overview'
+icon: 'send-backward'
+---
+
+The Custom Metadata API attaches structured metadata to any document already indexed in Glean — regardless of which datasource it came from. Unlike [Custom Properties](/api-info/indexing/datasource/custom-properties), which are tied to a custom datasource and require re-uploading the entire document, Custom Metadata can be updated independently and applied to documents from any source (native connectors, custom datasources, etc.).
+
+## Key concepts
+
+- **Document ID (`docId`)**: The unique Glean identifier for a document. You can obtain it via the Client API (for example, [Search](/api/client-api/search/search) or [Get Documents](/api/client-api/documents/getdocuments)).
+- **Metadata group**: A namespace that groups related metadata keys together. Each group has its own schema and access scope.
+- **Metadata schema**: Defines the keys allowed in a group, their property types, and indexing behavior.
+
+:::info
+Metadata group names and key names are case-insensitive and may only contain alphanumeric characters.
+:::
+
+## Base URL
+
+All Custom Metadata endpoints are served from the indexing backend:
+
+```
+https://<glean-instance-name>-be.glean.com/rest/api/index
+```
+
+Replace `<glean-instance-name>` with your Glean instance subdomain.
+
+## Workflow at a glance
+
+A typical end-to-end flow:
+
+1. **[Create a scoped token](/api-info/indexing/custom-metadata/authentication).** Generate a token with scope `custommetadata:<group_name>`, or `custommetadata:global_scope` if you manage multiple groups.
+2. **[Define the schema](/api-info/indexing/custom-metadata/schema-management).** `PUT /custom-metadata/schema/{groupName}` with the keys you want to track and their property types.
+3. **[Attach metadata to documents](/api-info/indexing/custom-metadata/indexing-metadata).** `PUT /document/{docId}/custom-metadata/{groupName}` for each document you want to enrich.
+4. **[Query](/api-info/indexing/custom-metadata/querying).** Use facets (`<groupName><keyName>:<value>`) in Search, or fetch all metadata via `getDocuments` with `includeFields: ["CUSTOM_METADATA"]`.
+
+## Error responses
+
+All Custom Metadata endpoints return errors in this shape:
+
+```json
+{
+  "error": "<reason>",
+  "message": "<details>"
+}
+```
+
+Common status codes:
+
+| Status | Reason |
+| ------ | ------ |
+| `400 Bad Request` | Invalid request body, unknown property type, or missing required field. |
+| `401 Unauthorized` | Invalid or missing authentication token, or token scope does not cover the target group. |
+| `404 Not Found` | The document or metadata group does not exist. |
+| `409 Conflict` | Schema update conflicts with an existing schema (for example, a property type change). |
+| `429 Too Many Requests` | Rate limit exceeded for the group. |
+| `500 Internal Server Error` | Unexpected server-side failure. |
