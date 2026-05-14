@@ -216,25 +216,23 @@ function findCategoryItemsByLabel(root, label) {
 function removeOrphanEntries(root, orphanedIds) {
   if (orphanedIds.size === 0) return 0;
   let removed = 0;
-  root
-    .find(j.ObjectProperty, { key: { name: 'items' } })
-    .forEach((p) => {
-      const arr = p.node.value;
-      if (arr.type !== 'ArrayExpression') return;
-      const before = arr.elements.length;
-      arr.elements = arr.elements.filter((el) => {
-        if (!el || el.type !== 'ObjectExpression') return true;
-        const idProp = el.properties.find(
-          (prop) =>
-            prop.type === 'ObjectProperty' &&
-            prop.key?.name === 'id' &&
-            prop.value?.type === 'StringLiteral',
-        );
-        if (!idProp) return true;
-        return !orphanedIds.has(idProp.value.value);
-      });
-      removed += before - arr.elements.length;
+  root.find(j.ObjectProperty, { key: { name: 'items' } }).forEach((p) => {
+    const arr = p.node.value;
+    if (arr.type !== 'ArrayExpression') return;
+    const before = arr.elements.length;
+    arr.elements = arr.elements.filter((el) => {
+      if (!el || el.type !== 'ObjectExpression') return true;
+      const idProp = el.properties.find(
+        (prop) =>
+          prop.type === 'ObjectProperty' &&
+          prop.key?.name === 'id' &&
+          prop.value?.type === 'StringLiteral',
+      );
+      if (!idProp) return true;
+      return !orphanedIds.has(idProp.value.value);
     });
+    removed += before - arr.elements.length;
+  });
   return removed;
 }
 
