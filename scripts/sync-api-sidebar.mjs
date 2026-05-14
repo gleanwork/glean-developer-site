@@ -209,6 +209,33 @@ function findCategoryItemsByLabel(root, label) {
   return found;
 }
 
+// Remove sidebar entries whose `id` is in `orphanedIds` (typically because the
+// upstream OpenAPI spec renamed or removed the operation, leaving the entry
+// pointing at a doc that no longer exists). Operates on every `items: [...]`
+// array in the AST so nested categories are handled.
+function removeOrphanEntries(root, orphanedIds) {
+  if (orphanedIds.size === 0) return 0;
+  let removed = 0;
+  root.find(j.ObjectProperty, { key: { name: 'items' } }).forEach((p) => {
+    const arr = p.node.value;
+    if (arr.type !== 'ArrayExpression') return;
+    const before = arr.elements.length;
+    arr.elements = arr.elements.filter((el) => {
+      if (!el || el.type !== 'ObjectExpression') return true;
+      const idProp = el.properties.find(
+        (prop) =>
+          prop.type === 'ObjectProperty' &&
+          prop.key?.name === 'id' &&
+          prop.value?.type === 'StringLiteral',
+      );
+      if (!idProp) return true;
+      return !orphanedIds.has(idProp.value.value);
+    });
+    removed += before - arr.elements.length;
+  });
+  return removed;
+}
+
 function insertEntry(root, doc, slugToTag) {
   const segments = doc.docId.split('/');
   const overviewId = segments.slice(0, -1).join('/') + '/overview';
@@ -307,7 +334,7 @@ if (args.check) {
   process.exit(1);
 }
 
-if (missing.length === 0) {
+if (missing.length === 0 && orphaned.length === 0) {
   console.log('✓ sidebars.ts is already complete — nothing to do.');
   process.exit(0);
 }
@@ -327,6 +354,9 @@ for (const doc of missing) {
   }
 }
 
+const orphanedSet = new Set(orphaned);
+const removedCount = removeOrphanEntries(root, orphanedSet);
+
 const transformed = root.toSource();
 const prettierConfig = await prettier.resolveConfig(SIDEBARS_PATH);
 const formatted = await prettier.format(transformed, {
@@ -335,11 +365,22 @@ const formatted = await prettier.format(transformed, {
 });
 fs.writeFileSync(SIDEBARS_PATH, formatted, 'utf8');
 
-console.log(
-  `✓ Inserted ${missing.length - warnings.length} entry(ies) into sidebars.ts:`,
-);
-for (const doc of missing) {
-  console.log(`  + ${doc.docId}  "${doc.label}"`);
+if (missing.length > 0) {
+  console.log(
+    `✓ Inserted ${missing.length - warnings.length} entry(ies) into sidebars.ts:`,
+  );
+  for (const doc of missing) {
+    console.log(`  + ${doc.docId}  "${doc.label}"`);
+  }
+}
+
+if (removedCount > 0) {
+  console.log(
+    `\n✓ Removed ${removedCount} orphan entry(ies) from sidebars.ts (no corresponding .api.mdx / .mdx file):`,
+  );
+  for (const id of orphaned) {
+    console.log(`  - ${id}`);
+  }
 }
 
 if (warnings.length > 0) {
