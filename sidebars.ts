@@ -1134,18 +1134,6 @@ const baseSidebars: SidebarsConfig = {
             },
             {
               type: 'doc',
-              id: 'api/client-api/tools/authorize-action',
-              label: 'Start the OAuth authorization flow for an action pack.',
-              className: 'api-method post',
-            },
-            {
-              type: 'doc',
-              id: 'api/client-api/tools/get-action-auth-status',
-              label: 'Get end-user authentication status for an action pack.',
-              className: 'api-method get',
-            },
-            {
-              type: 'doc',
               id: 'api/client-api/tools/authorize-action-pack',
               label: 'Start the OAuth authorization flow for an action pack.',
               className: 'api-method post',
