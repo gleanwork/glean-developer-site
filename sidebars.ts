@@ -1280,6 +1280,36 @@ const baseSidebars: SidebarsConfig = {
               id: 'api-info/indexing/custom-metadata/custom-properties-vs-custom-metadata',
               label: 'Custom Properties vs Custom Metadata',
             },
+            {
+              type: 'doc',
+              id: 'api/indexing-api/add-or-update-custom-metadata',
+              label: 'Add or update custom metadata',
+              className: 'api-method put',
+            },
+            {
+              type: 'doc',
+              id: 'api/indexing-api/create-or-update-metadata-schema',
+              label: 'Create or update metadata schema',
+              className: 'api-method put',
+            },
+            {
+              type: 'doc',
+              id: 'api/indexing-api/remove-custom-metadata',
+              label: 'Remove custom metadata',
+              className: 'api-method delete',
+            },
+            {
+              type: 'doc',
+              id: 'api/indexing-api/remove-metadata-schema',
+              label: 'Remove metadata schema',
+              className: 'api-method delete',
+            },
+            {
+              type: 'doc',
+              id: 'api/indexing-api/retrieve-metadata-schema',
+              label: 'Retrieve metadata schema',
+              className: 'api-method get',
+            },
           ],
         },
         {
