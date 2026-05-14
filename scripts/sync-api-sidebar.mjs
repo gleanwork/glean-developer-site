@@ -178,6 +178,10 @@ function buildSlugToTagMap() {
   return map;
 }
 
+// Find the `items` array of the sidebar category whose label matches the
+// given tag. Falls back to a `<tag> (...)` prefix match so a category can
+// add a clarifying parenthetical (e.g. label "Custom Metadata (Any Datasource)"
+// for OpenAPI tag "Custom Metadata") without breaking auto-insertion.
 function findCategoryItemsByLabel(root, label) {
   let found = null;
   root.find(j.ObjectExpression).forEach((p) => {
@@ -196,7 +200,7 @@ function findCategoryItemsByLabel(root, label) {
         pr.type === 'ObjectProperty' &&
         pr.key?.name === 'label' &&
         pr.value?.type === 'StringLiteral' &&
-        pr.value?.value === label,
+        (pr.value.value === label || pr.value.value.startsWith(`${label} (`)),
     );
     if (!labelMatch) return;
     const itemsProp = props.find(
