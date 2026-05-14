@@ -1275,6 +1275,11 @@ const baseSidebars: SidebarsConfig = {
               id: 'api-info/indexing/custom-metadata/querying',
               label: 'Querying',
             },
+            {
+              type: 'doc',
+              id: 'api-info/indexing/custom-metadata/custom-properties-vs-custom-metadata',
+              label: 'Custom Properties vs Custom Metadata',
+            },
           ],
         },
         {
