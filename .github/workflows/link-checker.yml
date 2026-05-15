@@ -30,8 +30,6 @@ on:
 
 permissions:
   contents: read
-  issues: write
-  pull-requests: write
 
 jobs:
   link-check:
@@ -180,56 +178,6 @@ jobs:
           CHECK_TYPE: ${{ steps.params.outputs.check_type }}
           BASE_URL: ${{ steps.params.outputs.base_url }}
           STATUS: ${{ steps.link-check.outputs.status }}
-
-      - name: Create GitHub issue for broken links
-        if: always() && steps.link-check.outputs.status == 'failure' && github.event_name == 'schedule'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const fs = require('fs');
-            const summary = fs.existsSync('link-check-summary.md')
-              ? fs.readFileSync('link-check-summary.md', 'utf8')
-              : '_(no summary produced)_';
-            const fixmePresent = fs.existsSync('link-check-fixme.md');
-
-            const runUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
-            const errors = process.env.ERRORS;
-            const checkType = process.env.CHECK_TYPE;
-            const baseUrl = process.env.BASE_URL;
-
-            const issueBody = [
-              '# \ud83d\udd17 Broken Links Detected',
-              '',
-              `The nightly link check found **${errors}** broken links.`,
-              '',
-              `**Check Type:** ${checkType}`,
-              `**Base URL:** ${baseUrl}`,
-              '',
-              summary,
-              '',
-              '## Next Steps',
-              '',
-              `1. Inspect the [workflow run](${runUrl}) \u2014 the full per-page table is in the run summary.`,
-              `2. Download the run's artifact (\`link-check-results.json\` for tooling, \`link-check-fixme.md\` for an AI-actionable prompt${fixmePresent ? '' : ' [missing this run]'}).`,
-              '3. Fix or exclude the broken links \u2014 see `scripts/check-links.sh` for the exclusion conventions.',
-              '4. Verify locally: `pnpm links:check:local`.',
-              '',
-              '---',
-              '',
-              '_This issue was automatically created by the nightly link checker._',
-            ].join('\n');
-
-            await github.rest.issues.create({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              title: `Broken Links Detected (${errors} errors)`,
-              body: issueBody,
-              labels: ['bug', 'documentation', 'automated']
-            });
-        env:
-          ERRORS: ${{ steps.parse-results.outputs.errors }}
-          CHECK_TYPE: ${{ steps.params.outputs.check_type }}
-          BASE_URL: ${{ steps.params.outputs.base_url }}
 
       - name: Fail workflow if links are broken
         if: always() && steps.link-check.outputs.status == 'failure'
