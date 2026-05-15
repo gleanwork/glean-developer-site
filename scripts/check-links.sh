@@ -185,10 +185,18 @@ lychee_cmd+=(
   --exclude "^https://picsum\.photos/"             # Random image service
   --exclude "^https://docs\.lumapps\.com/"        # LumApps docs (auth)
   --exclude "^https://www\.npmjs\.com/"           # npm.com blocks automated requests (403)
+  --exclude "^https://status\.glean\.com/"        # Statuspage (anti-bot, 403 to crawlers)
+  --exclude "^https://codesandbox\.io/"           # CodeSandbox (anti-bot, 403 to crawlers)
 )
 
 # Add exclusions for GitHub URLs (will be handled separately if needed)
 lychee_cmd+=( --exclude "^https://github\.com/gleanwork/" )
+
+# The MCP server endpoint at /mcp is exposed by docusaurus-plugin-mcp-server
+# and gets included in every page's globalData (visible to crawlers like
+# lychee). It's not a doc page — it's a JSON-RPC endpoint that returns 405
+# on a bare GET. Exclude the bare endpoint URL.
+lychee_cmd+=( --exclude "^https://developers\.glean\.com/mcp$" )
 
 # ── TEMPORARY EXCLUSIONS ───────────────────────────────────────────────────────
 # These are temporary exclusions that should be removed once the target pages exist.
