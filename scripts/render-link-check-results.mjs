@@ -63,10 +63,40 @@ const totalErrorLinks = sources.reduce(
   0,
 );
 
+// ── Build a URL-centric inverted index ────────────────────────────────────
+// In practice most failures are footer/nav links repeated on hundreds of
+// pages, so the per-source view drowns the actionable signal in repetition.
+// Group by URL: each unique broken URL appears once with its status, the
+// triage category, and the list of affected source pages.
+const urlIndex = new Map(); // url -> { status, code, category, sources: [] }
+for (const src of sources) {
+  for (const entry of errorMap[src]) {
+    let row = urlIndex.get(entry.url);
+    if (!row) {
+      row = {
+        url: entry.url,
+        status: entry.status?.text ?? 'error',
+        code: entry.status?.code ?? null,
+        category: category(entry),
+        sources: [],
+      };
+      urlIndex.set(entry.url, row);
+    }
+    row.sources.push(src);
+  }
+}
+const uniqueUrls = [...urlIndex.values()].sort(
+  (a, b) => b.sources.length - a.sources.length || a.url.localeCompare(b.url),
+);
+
 function statusFor(entry) {
   const s = entry.status ?? {};
   if (s.code) return `${s.code} ${s.text ?? ''}`.trim();
   return s.text ?? 'error';
+}
+
+function urlStatusLabel(row) {
+  return row.code ? `${row.code} ${row.status}` : row.status;
 }
 
 // Group status codes into an action category so the fix-me prompt can suggest
@@ -93,16 +123,15 @@ if (!args.quiet) {
   console.log(`  Excluded:            ${data.excludes ?? '?'}`);
   console.log(`  Redirects:           ${data.redirects ?? '?'}`);
   console.log(`  Duration:            ${data.duration_secs ?? '?'}s`);
-  if (totalErrorLinks > 0) {
+  if (uniqueUrls.length > 0) {
     console.log('');
     console.log(
-      `❌ ${totalErrorLinks} broken link${totalErrorLinks === 1 ? '' : 's'} across ${sources.length} source page${sources.length === 1 ? '' : 's'}:`,
+      `❌ ${uniqueUrls.length} unique broken URL${uniqueUrls.length === 1 ? '' : 's'} (${totalErrorLinks} occurrence${totalErrorLinks === 1 ? '' : 's'} across ${sources.length} source page${sources.length === 1 ? '' : 's'}):`,
     );
-    for (const src of sources) {
-      console.log(`  ${src}`);
-      for (const entry of errorMap[src]) {
-        console.log(`    └─ ${statusFor(entry)}  ${entry.url}`);
-      }
+    for (const row of uniqueUrls) {
+      console.log(
+        `  [${urlStatusLabel(row)}] ${row.url}  (${row.sources.length} page${row.sources.length === 1 ? '' : 's'})`,
+      );
     }
   } else {
     console.log('');
@@ -110,37 +139,59 @@ if (!args.quiet) {
   }
 }
 
-// ── Markdown summary (grouped by source) ───────────────────────────────────
+// ── Markdown summary (URL-centric) ─────────────────────────────────────────
+// Lead with unique URLs because most failures are footer/nav links repeated
+// across hundreds of pages — fixing the URL once collapses dozens of
+// "errors" at once. The per-source view is kept as a collapsible details
+// section for the case where one page has many distinct broken URLs.
 if (args['summary-md']) {
   const lines = [];
   lines.push('# Link check results');
   lines.push('');
-  lines.push('| Total | OK | Errors | Excluded | Redirects | Duration |');
-  lines.push('| --- | --- | --- | --- | --- | --- |');
   lines.push(
-    `| ${data.total ?? '?'} | ${data.successful ?? '?'} | **${data.errors ?? '?'}** | ${data.excludes ?? '?'} | ${data.redirects ?? '?'} | ${data.duration_secs ?? '?'}s |`,
+    '| Total | OK | Unique broken URLs | Total occurrences | Excluded | Redirects | Duration |',
+  );
+  lines.push('| --- | --- | --- | --- | --- | --- | --- |');
+  lines.push(
+    `| ${data.total ?? '?'} | ${data.successful ?? '?'} | **${uniqueUrls.length}** | ${totalErrorLinks} | ${data.excludes ?? '?'} | ${data.redirects ?? '?'} | ${data.duration_secs ?? '?'}s |`,
   );
   lines.push('');
 
-  if (totalErrorLinks === 0) {
+  if (uniqueUrls.length === 0) {
     lines.push('✅ No broken links found.');
   } else {
     lines.push(
-      `## ❌ ${totalErrorLinks} broken link${totalErrorLinks === 1 ? '' : 's'} across ${sources.length} source page${sources.length === 1 ? '' : 's'}`,
+      `## ❌ ${uniqueUrls.length} unique broken URL${uniqueUrls.length === 1 ? '' : 's'} (${totalErrorLinks} occurrence${totalErrorLinks === 1 ? '' : 's'} across ${sources.length} source page${sources.length === 1 ? '' : 's'})`,
     );
     lines.push('');
-    for (const src of sources) {
-      const errs = errorMap[src];
-      lines.push(`### \`${src}\``);
+    lines.push(
+      'Each row is one broken URL. Fixing or excluding a URL once removes every occurrence below.',
+    );
+    lines.push('');
+    lines.push('| Status | Category | Pages | URL |');
+    lines.push('| --- | --- | --- | --- |');
+    for (const row of uniqueUrls) {
+      const url = row.url.replace(/\|/g, '\\|');
+      lines.push(
+        `| \`${urlStatusLabel(row)}\` | \`${row.category}\` | ${row.sources.length} | ${url} |`,
+      );
+    }
+    lines.push('');
+
+    // Per-URL affected pages (collapsed) — useful when fixing a URL in source
+    // content and you need to know which `.mdx` files reference it.
+    lines.push('<details><summary>Affected pages per URL</summary>');
+    lines.push('');
+    for (const row of uniqueUrls) {
+      lines.push(`#### \`${row.url}\``);
       lines.push('');
-      lines.push('| Status | URL |');
-      lines.push('| --- | --- |');
-      for (const entry of errs) {
-        const url = entry.url.replace(/\|/g, '\\|');
-        lines.push(`| \`${statusFor(entry)}\` | ${url} |`);
+      for (const src of row.sources) {
+        lines.push(`- ${src}`);
       }
       lines.push('');
     }
+    lines.push('</details>');
+    lines.push('');
   }
   fs.writeFileSync(args['summary-md'], lines.join('\n'), 'utf8');
 }
@@ -194,34 +245,34 @@ if (args['fixme-md']) {
   );
   lines.push('');
 
-  if (totalErrorLinks === 0) {
+  if (uniqueUrls.length === 0) {
     lines.push('## Failures');
     lines.push('');
     lines.push('_No broken links — nothing to fix._');
   } else {
     lines.push(
-      `## Failures (${totalErrorLinks} broken link${totalErrorLinks === 1 ? '' : 's'} across ${sources.length} source page${sources.length === 1 ? '' : 's'})`,
+      `## Failures (${uniqueUrls.length} unique URL${uniqueUrls.length === 1 ? '' : 's'}, ${totalErrorLinks} occurrence${totalErrorLinks === 1 ? '' : 's'} across ${sources.length} source page${sources.length === 1 ? '' : 's'})`,
     );
     lines.push('');
-    for (const src of sources) {
-      const errs = errorMap[src];
-      // Try to derive the .mdx file path. Site URLs map to docs/<path>.mdx
-      // (or docs/<path>/index.mdx). The agent should still grep, but this
-      // hint helps narrow the search.
-      const sourceHint = src.startsWith('http')
-        ? src.replace(/^https?:\/\/[^/]+\/?/, '').replace(/\/$/, '') ||
-          '<homepage>'
-        : src;
-      lines.push(`### Source: \`${src}\``);
+    lines.push(
+      'Work URL by URL — fixing or excluding a URL once collapses every occurrence under it. Site URLs map to `docs/<path>.mdx` (or `docs/<path>/index.mdx`); the affected-page list under each URL is the grep target.',
+    );
+    lines.push('');
+    for (const row of uniqueUrls) {
+      lines.push(`### \`${row.url}\``);
       lines.push('');
       lines.push(
-        `_Likely lives at_ \`docs/${sourceHint}.mdx\` _or_ \`docs/${sourceHint}/index.mdx\``,
+        `**Status:** ${urlStatusLabel(row)} · **Category:** \`${row.category}\` · **Affected pages:** ${row.sources.length}`,
       );
       lines.push('');
-      for (const entry of errs) {
-        lines.push(
-          `- **${statusFor(entry)}** \`${category(entry)}\` — \`${entry.url}\``,
-        );
+      lines.push('Affected pages:');
+      lines.push('');
+      for (const src of row.sources) {
+        const sourceHint = src.startsWith('http')
+          ? src.replace(/^https?:\/\/[^/]+\/?/, '').replace(/\/$/, '') ||
+            '<homepage>'
+          : src;
+        lines.push(`- ${src}  → likely \`docs/${sourceHint}.mdx\``);
       }
       lines.push('');
     }
