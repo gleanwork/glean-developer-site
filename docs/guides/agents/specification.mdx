@@ -1,0 +1,204 @@
+---
+title: Glean Auto Mode Agent Specification
+description: A human-readable file system format for defining Glean Auto Mode agents.
+---
+
+# Glean Auto Mode Agent Specification
+
+The Glean Auto Mode agent specification is a human-readable file system format for defining a Glean Auto Mode agent — its instructions, tools, knowledge sources, skills, and subagents — as a directory of files. It is the source format consumed by the Glean Agents MCP tools and the GitHub Action, so agents can be authored and version-controlled outside the Glean UI.
+
+## Directory layout
+
+A typical agent directory looks like this:
+
+```text
+<agent-name>/
+├── spec.yaml
+├── instructions.md
+├── skills/
+│   └── <skill-name>/
+│       └── SKILL.md
+└── subagents/
+    └── <subagent-name>/
+        ├── spec.yaml
+        ├── instructions.md
+        └── skills/
+```
+
+Notes:
+
+- `spec.yaml` and `instructions.md` are required for the root agent.
+- `skills/` is optional.
+- `subagents/` is optional.
+- Skills do not have their own `spec.yaml`.
+- Subagents can have skills, but cannot contain nested subagents.
+- The directory names should use kebab-case.
+- The display name shown to users is defined in `spec.yaml`.
+
+## Required files
+### `spec.yaml`
+
+`spec.yaml` is the main configuration file for the agent.
+
+Common top-level fields:
+
+| Field | Required | Description |
+| --- | --- | --- |
+| `id` | Yes | Stable unique agent identifier. Do not change it after creation. |
+| `name` | Yes | Human-readable agent name shown to users. |
+| `description` | Yes | Short description of what the agent does. |
+| `instruction_file` | No | Path to the instructions file. Defaults to `instructions.md`. |
+| `model` | No | Which agentic model the agent runs on and how hard it reasons. |
+| `trigger` | No | How the agent is invoked. |
+| `skills` | No | List of skill directory paths to include. |
+| `subagents` | No | List of subagent directory paths to include. |
+| `tools` | No | Tool providers and selected tools exposed to the agent. |
+| `gleanSearchConfig` | No | Company-knowledge access configuration. |
+
+
+Example:
+
+```yaml
+id: a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6
+name: Travel Agent
+description: >
+  What this agent does, in a sentence or two.
+instruction_file: instructions.md
+
+skills:
+  - skills/lead-qualification/
+  - skills/deal-analysis/
+
+subagents:
+  - subagents/research-subagent/
+
+tools:
+  - toolProviderId: a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6
+    selectedTools:
+      - name: create-doc
+        customisationData:
+          skipUserInteraction: true
+      - name: update-doc
+      - name: search-doc
+  - toolProviderId: 7e9f1a3b5c7d9e1f3a5b7c9d1e3f5a7b
+    selectedTools:
+      - name: send-email
+
+gleanSearchConfig:
+  datasourceInstances:
+    - asana
+    - confluence
+  urls:
+    - https://drive.google.com/file/d/1F2MN8DfBTOEFxFzS3BA6OU7eQWpbEm3MLtpRtpDh0/view
+```
+
+### `instructions.md`
+
+`instructions.md` contains the agent's system prompt.
+
+Guidelines:
+
+- Use Markdown for structured workflows.
+- Start with a clear role statement.
+- Keep instructions precise and complete.
+- Preserve exact step order when the workflow is rigid.
+- Do not repeat tool descriptions unnecessarily.
+
+
+## Optional configuration
+
+### Model
+
+The `model` block configures which agentic model the agent runs on and how hard it reasons. All keys are optional.
+
+| Key | Description |
+| --- | --- |
+| `name` | Model Name |
+| `mode` | Reasoning effort per turn. `ADVANCED` (default) or `FAST`. |
+| `autoUpgrade` | Boolean. When `true`, Glean rolls the agent onto newer model sets as they ship. |
+
+`mode` values:
+
+- `ADVANCED` — high reasoning effort. The default when `mode` is omitted.
+- `FAST` — low reasoning effort.
+
+Example:
+
+```yaml
+model:
+  name: GPT_5_4_MS
+  mode: ADVANCED
+  autoUpgrade: true
+```
+
+### Trigger
+
+`trigger` controls how the agent is invoked. Three modes are supported:
+
+- **Chat** — the user converses with the agent. This is the default when `trigger` is omitted.
+- **Input form** — the agent receives a typed set of `trigger.inputFields` provided by the user at invocation time.
+- **No input** — the agent runs without any user-supplied input; `trigger.inputFields` is empty.
+
+### Tools
+
+Tools are optional. Add them when the agent needs to perform actions outside its instructions and built-in knowledge, such as search, email, or API calls. If you declare tools, make sure every instructed external action has a corresponding tool.
+
+Each tool entry includes:
+
+- `toolProviderId`: ID of the MCP server / Action Pack
+- `selectedTools` : list of actions
+
+### `gleanSearchConfig`
+
+`gleanSearchConfig` controls company-knowledge access.
+
+Supported fields:
+
+| Field | Description |
+| --- | --- |
+| `datasourceInstances` | Restrict search to specific datasource instances. |
+| `urls` | Restrict search to specific documents or folders. Folder URLs apply transitively to contained documents. |
+
+
+Valid states:
+
+| State | Meaning |
+| --- | --- |
+| Omitted | No company knowledge access. |
+| `{}` | Unrestricted company knowledge access for the invoking user. |
+| Populated | Restricted to the listed datasources and/or URLs. |
+
+### Skills
+
+A skill defines:
+
+- what the skill does
+- when to use it
+- how it works
+
+Each skill directory must contain a `SKILL.md` file.
+
+### Subagents
+
+Subagents are optional isolated execution units.
+
+Rules:
+
+- A subagent has its own `spec.yaml` and `instructions.md`.
+- A subagent may have its own `skills/` directory.
+- A subagent must not declare its own `subagents` field.
+- Subagents cannot be nested.
+- The parent agent receives only the subagent's final result.
+
+## Minimal example
+
+```text
+my-agent/
+├── spec.yaml
+├── instructions.md
+└── skills/
+    └── domain-knowledge/
+        └── SKILL.md
+```
+
+This is a minimal useful agent with one skill. More advanced agents can also include tools, knowledge restrictions, and subagents.
