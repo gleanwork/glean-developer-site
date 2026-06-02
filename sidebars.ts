@@ -171,6 +171,11 @@ const baseSidebars: SidebarsConfig = {
               id: 'guides/agents/nvidia-example',
               label: 'NVIDIA NIM Example',
             },
+            {
+              type: 'doc',
+              id: 'guides/agents/from-ai-assistants',
+              label: 'Build from AI Assistants',
+            },
           ],
         },
         {
