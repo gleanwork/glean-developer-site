@@ -1,11 +1,13 @@
 ---
-title: Glean Auto Mode Agent Specification
-description: A human-readable file system format for defining Glean Auto Mode agents.
+title: Glean Agent Specification
+description: A human-readable file system format for defining Glean agents.
 ---
 
-# Glean Auto Mode Agent Specification
+# Glean Agent Specification
 
-The Glean Auto Mode agent specification is a human-readable file system format for defining a Glean Auto Mode agent — its instructions, tools, knowledge sources, skills, and subagents — as a directory of files. It is the source format consumed by the Glean Agents MCP tools and the GitHub Action, so agents can be authored and version-controlled outside the Glean UI.
+The Glean agent specification is a human-readable file system format for defining a Glean agent — its instructions, tools, knowledge sources, skills, and subagents — as a directory of files. It is the source format consumed by the Glean Agents MCP tools and the GitHub Action, so Glean agents can be authored and version-controlled outside the UI.
+
+Once authored, pass the specification directory to the Glean Agents MCP tools or the GitHub Action to create or update agents in Glean.
 
 ## Directory layout
 
@@ -27,13 +29,13 @@ A typical agent directory looks like this:
 
 Notes:
 
-- `spec.yaml` and `instructions.md` are required for the root agent.
+- `spec.yaml` and `instructions.md` are required for the root agent as well as for all the subagents.
 - `skills/` is optional.
 - `subagents/` is optional.
-- Skills do not have their own `spec.yaml`.
+- Skills should have `SKILL.md` file.
 - Subagents can have skills, but cannot contain nested subagents.
 - The directory names should use kebab-case.
-- The display name shown to users is defined in `spec.yaml`.
+- The display name of agents / subagents shown to users is defined in `spec.yaml`.
 
 ## Required files
 ### `spec.yaml`
@@ -49,7 +51,7 @@ Common top-level fields:
 | `description` | Yes | Short description of what the agent does. |
 | `instruction_file` | No | Path to the instructions file. Defaults to `instructions.md`. |
 | `model` | No | Which agentic model the agent runs on and how hard it reasons. |
-| `trigger` | No | How the agent is invoked. |
+| `trigger` | No | How the agent is invoked. Defaults to chat based trigger. |
 | `skills` | No | List of skill directory paths to include. |
 | `subagents` | No | List of subagent directory paths to include. |
 | `tools` | No | Tool providers and selected tools exposed to the agent. |
@@ -65,6 +67,14 @@ description: >
   What this agent does, in a sentence or two.
 instruction_file: instructions.md
 
+model:
+  name: GPT_5_4_MS
+  mode: ADVANCED
+  autoUpgrade: true
+
+trigger:
+  type: CHAT_MESSAGE
+
 skills:
   - skills/lead-qualification/
   - skills/deal-analysis/
@@ -74,10 +84,10 @@ subagents:
 
 tools:
   - toolProviderId: a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6
+    customisationData:
+      skipUserInteraction: true
     selectedTools:
       - name: create-doc
-        customisationData:
-          skipUserInteraction: true
       - name: update-doc
       - name: search-doc
   - toolProviderId: 7e9f1a3b5c7d9e1f3a5b7c9d1e3f5a7b
@@ -89,7 +99,7 @@ gleanSearchConfig:
     - asana
     - confluence
   urls:
-    - https://drive.google.com/file/d/1F2MN8DfBTOEFxFzS3BA6OU7eQWpbEm3MLtpRtpDh0/view
+    - https://drive.google.com/file/d/document/view
 ```
 
 ### `instructions.md`
@@ -115,12 +125,12 @@ The `model` block configures which agentic model the agent runs on and how hard 
 | --- | --- |
 | `name` | Model Name |
 | `mode` | Reasoning effort per turn. `ADVANCED` (default) or `FAST`. |
-| `autoUpgrade` | Boolean. When `true`, Glean rolls the agent onto newer model sets as they ship. |
+| `autoUpgrade` | Boolean. When `true`, Glean rolls the agent onto newer models as they ship. |
 
 `mode` values:
 
 - `ADVANCED` — high reasoning effort. The default when `mode` is omitted.
-- `FAST` — low reasoning effort.
+- `FAST` — low reasoning effort. This should be used only for simple tasks.
 
 Example:
 
@@ -133,11 +143,32 @@ model:
 
 ### Trigger
 
-`trigger` controls how the agent is invoked. Three modes are supported:
+`trigger` controls how the agent is invoked.
 
-- **Chat** — the user converses with the agent. This is the default when `trigger` is omitted.
-- **Input form** — the agent receives a typed set of `trigger.inputFields` provided by the user at invocation time.
-- **No input** — the agent runs without any user-supplied input; `trigger.inputFields` is empty.
+Supported `type` values:
+
+| `type` | Description |
+| --- | --- |
+| `CHAT_MESSAGE` | The user converses with the agent. This is the default when `trigger` is omitted. |
+| `INPUT_FORM` | The agent receives a typed set of `trigger.inputFields` provided by the user at invocation time. When `inputFields` is empty, the agent runs without any user input. |
+
+Examples:
+
+```yaml
+# Chat trigger (default)
+trigger:
+  type: CHAT_MESSAGE
+```
+
+```yaml
+# Input form trigger
+trigger:
+  type: INPUT_FORM
+  inputFields:
+    - name: query
+      label: Search query
+      required: true
+```
 
 ### Tools
 
@@ -145,8 +176,9 @@ Tools are optional. Add them when the agent needs to perform actions outside its
 
 Each tool entry includes:
 
-- `toolProviderId`: ID of the MCP server / Action Pack
-- `selectedTools` : list of actions
+- `toolProviderId`: Glean internal identifier for tool provider which can also be MCP server.
+- `selectedTools` : list of selected tools for the specified provider
+- `customisationData` : optional provider-level configuration passed to all tools in the provider
 
 ### `gleanSearchConfig`
 
@@ -176,7 +208,7 @@ A skill defines:
 - when to use it
 - how it works
 
-Each skill directory must contain a `SKILL.md` file.
+Each skill directory must contain a `SKILL.md` file. The display name on the UI is directly derived from the folder name.
 
 ### Subagents
 
@@ -186,8 +218,7 @@ Rules:
 
 - A subagent has its own `spec.yaml` and `instructions.md`.
 - A subagent may have its own `skills/` directory.
-- A subagent must not declare its own `subagents` field.
-- Subagents cannot be nested.
+- A subagent must not declare its own `subagents` field since nested subagents are not supported
 - The parent agent receives only the subagent's final result.
 
 ## Minimal example

@@ -174,7 +174,7 @@ const baseSidebars: SidebarsConfig = {
             {
               type: 'doc',
               id: 'guides/agents/specification',
-              label: 'Auto Agent Specification',
+              label: 'Agent Specification',
             },
           ],
         },
