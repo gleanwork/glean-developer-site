@@ -1,5 +1,8 @@
 import React from 'react';
-import { getClientIcon, type ClientId } from '@gleanwork/mcp-config-schema/browser';
+import {
+  getClientIcon,
+  type ClientId,
+} from '@gleanwork/mcp-config-schema/browser';
 
 interface McpHostIconProps {
   /** Registry client id — renders the icon shipped in @gleanwork/mcp-config-schema. */
@@ -13,7 +16,9 @@ interface McpHostIconProps {
 
 /** All hex colors referenced anywhere in the SVG (attributes, `<style>` blocks, stops). */
 function hexColors(svg: string): string[] {
-  return (svg.match(/#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})\b/g) ?? []).map((h) => h.toLowerCase());
+  return (svg.match(/#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})\b/g) ?? []).map((h) =>
+    h.toLowerCase(),
+  );
 }
 
 /** A hex is "dark" when every channel is low — i.e. a near-black mark that vanishes in dark mode. */
@@ -57,7 +62,12 @@ function fitToBox(svg: string): string {
   return svg.replace(/<svg\b/i, `<svg style="${sizing}"`);
 }
 
-export default function McpHostIcon({ clientId, imgSrc, alt, size = 24 }: McpHostIconProps) {
+export default function McpHostIcon({
+  clientId,
+  imgSrc,
+  alt,
+  size = 24,
+}: McpHostIconProps) {
   if (imgSrc) {
     return (
       <img

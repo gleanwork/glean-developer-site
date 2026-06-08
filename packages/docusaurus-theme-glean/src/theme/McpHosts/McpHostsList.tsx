@@ -45,7 +45,9 @@ function buildHosts(): McpHost[] {
     documentationUrl: c.documentationUrl,
   }));
   return [...fromRegistry, ...EXTRA_HOSTS].sort((a, b) =>
-    a.displayName.localeCompare(b.displayName, undefined, { sensitivity: 'base' }),
+    a.displayName.localeCompare(b.displayName, undefined, {
+      sensitivity: 'base',
+    }),
   );
 }
 
@@ -67,7 +69,12 @@ interface ChipGroupProps<T extends string> {
   onChange: (value: T) => void;
 }
 
-function ChipGroup<T extends string>({ label, value, options, onChange }: ChipGroupProps<T>) {
+function ChipGroup<T extends string>({
+  label,
+  value,
+  options,
+  onChange,
+}: ChipGroupProps<T>) {
   return (
     <div className={styles.facet}>
       <span className={styles.facetLabel}>{label}</span>
@@ -103,7 +110,10 @@ export interface McpHostsListProps {
  * (plus a small set of extras) with live filtering by installability, client
  * type, and name. Each card links to the host's official documentation.
  */
-export default function McpHostsList({ defaultInstall = 'all', cols = 3 }: McpHostsListProps) {
+export default function McpHostsList({
+  defaultInstall = 'all',
+  cols = 3,
+}: McpHostsListProps) {
   const [install, setInstall] = useState<InstallFilter>(defaultInstall);
   const [type, setType] = useState<TypeFilter>('all');
   const [query, setQuery] = useState('');
@@ -126,7 +136,8 @@ export default function McpHostsList({ defaultInstall = 'all', cols = 3 }: McpHo
     );
   }, [install, type, query]);
 
-  const hasActiveFilters = install !== defaultInstall || type !== 'all' || query !== '';
+  const hasActiveFilters =
+    install !== defaultInstall || type !== 'all' || query !== '';
 
   return (
     <div className={styles.root}>
@@ -137,7 +148,12 @@ export default function McpHostsList({ defaultInstall = 'all', cols = 3 }: McpHo
           options={INSTALL_OPTIONS}
           onChange={setInstall}
         />
-        <ChipGroup<TypeFilter> label="Type" value={type} options={typeOptions} onChange={setType} />
+        <ChipGroup<TypeFilter>
+          label="Type"
+          value={type}
+          options={typeOptions}
+          onChange={setType}
+        />
         <div className={styles.search}>
           <span className={styles.facetLabel}>Search</span>
           <input
