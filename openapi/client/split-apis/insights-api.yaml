@@ -2,11 +2,11 @@ openapi: 3.0.0
 info:
   version: 0.9.0
   title: Glean API - Insights
-  x-source-commit-sha: 509a3e53bb2cd759b456a72dac7bb4d89e7922b7
+  x-source-commit-sha: 6f50f0b325ae618cb38dd2fdc0b334e9d6ccf805
   description: API endpoints for Insights
   x-logo:
     url: https://app.glean.com/images/glean-text2.svg
-  x-open-api-commit-sha: 6dadb3d4d79f45ae6872d80589e93423b75ba93a
+  x-open-api-commit-sha: 98fce8303895c9cdc333fe1210501e17f21a2800
   x-speakeasy-name: Glean API
 servers:
   - url: https://{instance}-be.glean.com
@@ -409,6 +409,17 @@ components:
             message: Use relationType instead
             removal: '2026-10-15'
           x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2026-10-15: Use relationType instead'
+    McpHostApplicationBreakdown:
+      properties:
+        hostApplication:
+          type: string
+          description: Host application name.
+        totalCalls:
+          type: integer
+          description: Total number of MCP calls made from this host application in the specified time period.
+        activeUsers:
+          type: integer
+          description: Total number of active users from this host application in the specified time period.
     PersonDistance:
       required:
         - name
@@ -662,6 +673,38 @@ components:
       description: A map of {string, int} pairs representing counts of each document type associated with this customer.
       additionalProperties:
         type: integer
+    McpServerBreakdown:
+      properties:
+        server:
+          type: string
+          description: MCP server name.
+        totalCalls:
+          type: integer
+          description: Total number of MCP calls for this server in the specified time period.
+        activeUsers:
+          type: integer
+          description: Total number of active users for this server in the specified time period.
+        hostApplications:
+          type: array
+          items:
+            type: string
+          description: Host applications using this server in the specified time period.
+    McpToolBreakdown:
+      properties:
+        tool:
+          type: string
+          description: MCP tool name.
+        totalCalls:
+          type: integer
+          description: Total number of MCP calls for this tool in the specified time period.
+        activeUsers:
+          type: integer
+          description: Total number of active users for this tool in the specified time period.
+        hostApplications:
+          type: array
+          items:
+            type: string
+          description: Host applications using this tool in the specified time period.
     CustomDataValue:
       properties:
         displayLabel:
@@ -1163,6 +1206,46 @@ components:
         topAgentIsDeleted:
           type: boolean
           description: Indicates whether the top agent has been deleted.
+    AgentsInsightsV2Request:
+      properties:
+        agentIds:
+          type: array
+          items:
+            type: string
+          description: IDs of the Agents for which Insights should be returned. An empty array signifies all.
+        departments:
+          type: array
+          items:
+            type: string
+          description: Departments for which Insights are requested.
+        managerEmails:
+          type: array
+          items:
+            type: string
+          description: Manager emails whose teams should be filtered for. Empty array means no filtering.
+        dayRange:
+          $ref: '#/components/schemas/Period'
+          description: Time period for which Insights are requested.
+    McpInsightsRequest:
+      properties:
+        departments:
+          type: array
+          items:
+            type: string
+          description: Departments for which Insights are requested.
+        managerIds:
+          type: array
+          items:
+            type: string
+          description: Manager user IDs whose teams should be filtered for. Empty array means no filtering.
+        managerEmails:
+          type: array
+          items:
+            type: string
+          description: Manager emails whose teams should be filtered for. Empty array means no filtering.
+        dayRange:
+          $ref: '#/components/schemas/Period'
+          description: Time period for which Insights are requested.
     PerUserInsight:
       properties:
         person:
@@ -1191,26 +1274,9 @@ components:
         numAgentRuns:
           type: integer
           description: Total number of agent runs for this user over the specified time period.
-    AgentsInsightsV2Request:
-      properties:
-        agentIds:
-          type: array
-          items:
-            type: string
-          description: IDs of the Agents for which Insights should be returned. An empty array signifies all.
-        departments:
-          type: array
-          items:
-            type: string
-          description: Departments for which Insights are requested.
-        managerEmails:
-          type: array
-          items:
-            type: string
-          description: Manager emails whose teams should be filtered for. Empty array means no filtering.
-        dayRange:
-          $ref: '#/components/schemas/Period'
-          description: Time period for which Insights are requested.
+        numMcpCalls:
+          type: integer
+          description: Total number of MCP calls for this user over the specified time period.
     Code:
       example: &ref_98
         repoName: scio
@@ -1356,6 +1422,28 @@ components:
           items:
             $ref: '#/components/schemas/FacetFilter'
       description: Within a single FacetFilterSet, the filters are treated as AND. For example, owner Sumeet and type Spreadsheet shows documents that are by Sumeet AND are Spreadsheets.
+    McpUserBreakdown:
+      properties:
+        person:
+          $ref: '#/components/schemas/Person'
+        totalCalls:
+          type: integer
+          description: Total number of MCP calls made by this user in the specified time period.
+        hostApplications:
+          type: array
+          items:
+            type: string
+          description: Host applications used by this user in the specified time period.
+        tools:
+          type: array
+          items:
+            type: string
+          description: MCP tools used by this user in the specified time period.
+        servers:
+          type: array
+          items:
+            type: string
+          description: MCP servers used by this user in the specified time period.
     RelatedObjectEdge:
       properties:
         objects:
@@ -1699,6 +1787,26 @@ components:
           description: Filters which restrict who should see the pinned document. Values are taken from the corresponding filters in people search.
           items:
             $ref: '#/components/schemas/FacetFilter'
+    McpInsightsResponse:
+      allOf:
+        - $ref: '#/components/schemas/CurrentActiveUsers'
+        - type: object
+          properties:
+            dailyActiveUsers:
+              type: integer
+              description: Number of current Daily Active Users.
+            monthlyActiveUserTimeseries:
+              $ref: '#/components/schemas/LabeledCountInfo'
+            weeklyActiveUserTimeseries:
+              $ref: '#/components/schemas/LabeledCountInfo'
+            dailyActiveUserTimeseries:
+              $ref: '#/components/schemas/LabeledCountInfo'
+            overallDailyActiveUserTimeseries:
+              $ref: '#/components/schemas/LabeledCountInfo'
+            topHostApplicationsActiveUserTimeseries:
+              type: array
+              items:
+                $ref: '#/components/schemas/LabeledCountInfo'
     Permissions:
       description: |-
         Describes the permissions levels that a user has for permissioned features. When the client sends this, Permissions.read and Permissions.write are the additional permissions granted to a user on top of what they have via their roles.
@@ -1785,46 +1893,13 @@ components:
             agentsActiveUsers:
               $ref: '#/components/schemas/CurrentActiveUsers'
               description: Agents-specific active user counts for the specified departments.
+            mcpActiveUsers:
+              $ref: '#/components/schemas/CurrentActiveUsers'
+              description: MCP active user counts for the specified departments.
             extensionSummary:
               $ref: '#/components/schemas/CurrentActiveUsers'
             ugcSummary:
               $ref: '#/components/schemas/CurrentActiveUsers'
-    InsightsResponse:
-      properties:
-        gleanAssist:
-          deprecated: true
-          $ref: '#/components/schemas/GleanAssistInsightsResponse'
-          x-glean-deprecated:
-            id: 15850758-4d95-4d98-8d57-39c50663a796
-            introduced: '2026-02-05'
-            message: Field is deprecated
-            removal: '2026-10-15'
-          x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2026-10-15: Field is deprecated'
-        overviewResponse:
-          $ref: '#/components/schemas/InsightsOverviewResponse'
-        assistantResponse:
-          $ref: '#/components/schemas/AssistantInsightsResponse'
-        agentsResponse:
-          $ref: '#/components/schemas/AgentsInsightsV2Response'
-    InsightsRequest:
-      properties:
-        overviewRequest:
-          $ref: '#/components/schemas/InsightsOverviewRequest'
-          x-visibility: Public
-          description: If specified, will return data for the Overview section of the Insights Dashboard.
-        assistantRequest:
-          $ref: '#/components/schemas/InsightsAssistantRequest'
-          x-visibility: Public
-          description: If specified, will return data for the Assistant section of the Insights Dashboard.
-        agentsRequest:
-          $ref: '#/components/schemas/AgentsInsightsV2Request'
-          x-visibility: Public
-          description: If specified, will return data for the Agents section of the Insights Dashboard.
-        mcpBreakdownRequest:
-          $ref: '#/components/schemas/McpBreakdownInsightsRequest'
-        disablePerUserInsights:
-          type: boolean
-          description: If true, suppresses the generation of per-user Insights in the response. Default is false.
     CollectionPinnedMetadata:
       properties:
         existingPins:
@@ -1870,6 +1945,28 @@ components:
               $ref: '#/components/schemas/LabeledCountInfo'
             downvotesTimeseries:
               $ref: '#/components/schemas/LabeledCountInfo'
+    InsightsRequest:
+      properties:
+        overviewRequest:
+          $ref: '#/components/schemas/InsightsOverviewRequest'
+          x-visibility: Public
+          description: If specified, will return data for the Overview section of the Insights Dashboard.
+        assistantRequest:
+          $ref: '#/components/schemas/InsightsAssistantRequest'
+          x-visibility: Public
+          description: If specified, will return data for the Assistant section of the Insights Dashboard.
+        agentsRequest:
+          $ref: '#/components/schemas/AgentsInsightsV2Request'
+          x-visibility: Public
+          description: If specified, will return data for the Agents section of the Insights Dashboard.
+        mcpRequest:
+          $ref: '#/components/schemas/McpInsightsRequest'
+          description: If specified, will return data for the MCP section of the Insights Dashboard.
+        mcpBreakdownRequest:
+          $ref: '#/components/schemas/McpBreakdownInsightsRequest'
+        disablePerUserInsights:
+          type: boolean
+          description: If true, suppresses the generation of per-user Insights in the response. Default is false.
     InsightsOverviewResponse:
       allOf:
         - $ref: '#/components/schemas/InsightsDepartmentsSummary'
@@ -1913,11 +2010,19 @@ components:
               $ref: '#/components/schemas/LabeledCountInfo'
             agentsDailyActiveUserTimeseries:
               $ref: '#/components/schemas/LabeledCountInfo'
+            mcpMonthlyActiveUserTimeseries:
+              $ref: '#/components/schemas/LabeledCountInfo'
+            mcpWeeklyActiveUserTimeseries:
+              $ref: '#/components/schemas/LabeledCountInfo'
+            mcpDailyActiveUserTimeseries:
+              $ref: '#/components/schemas/LabeledCountInfo'
             searchesTimeseries:
               $ref: '#/components/schemas/LabeledCountInfo'
             assistantInteractionsTimeseries:
               $ref: '#/components/schemas/LabeledCountInfo'
             agentRunsTimeseries:
+              $ref: '#/components/schemas/LabeledCountInfo'
+            mcpCallsTimeseries:
               $ref: '#/components/schemas/LabeledCountInfo'
             searchDatasourceCounts:
               type: object
@@ -1969,6 +2074,27 @@ components:
         title:
           description: Title or name of the custom entity.
           type: string
+    InsightsResponse:
+      properties:
+        gleanAssist:
+          deprecated: true
+          $ref: '#/components/schemas/GleanAssistInsightsResponse'
+          x-glean-deprecated:
+            id: 15850758-4d95-4d98-8d57-39c50663a796
+            introduced: '2026-02-05'
+            message: Field is deprecated
+            removal: '2026-10-15'
+          x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2026-10-15: Field is deprecated'
+        overviewResponse:
+          $ref: '#/components/schemas/InsightsOverviewResponse'
+        assistantResponse:
+          $ref: '#/components/schemas/AssistantInsightsResponse'
+        agentsResponse:
+          $ref: '#/components/schemas/AgentsInsightsV2Response'
+        mcpResponse:
+          $ref: '#/components/schemas/McpInsightsResponse'
+        mcpBreakdownResponse:
+          $ref: '#/components/schemas/McpBreakdownInsightsResponse'
     CodeLine:
       properties:
         content:
@@ -2081,6 +2207,24 @@ components:
           description: A URL, generated based on availability, that links to the position of the snippet text or to the nearest header above the snippet text.
           type: string
       type: object
+    McpBreakdownInsightsResponse:
+      properties:
+        usersBreakdown:
+          type: array
+          items:
+            $ref: '#/components/schemas/McpUserBreakdown'
+        hostApplicationsBreakdown:
+          type: array
+          items:
+            $ref: '#/components/schemas/McpHostApplicationBreakdown'
+        toolsBreakdown:
+          type: array
+          items:
+            $ref: '#/components/schemas/McpToolBreakdown'
+        serversBreakdown:
+          type: array
+          items:
+            $ref: '#/components/schemas/McpServerBreakdown'
     Team:
       type: object
       properties:

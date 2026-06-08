@@ -2,11 +2,11 @@ openapi: 3.0.0
 info:
   version: 0.9.0
   title: Glean API - Search
-  x-source-commit-sha: 509a3e53bb2cd759b456a72dac7bb4d89e7922b7
+  x-source-commit-sha: 6f50f0b325ae618cb38dd2fdc0b334e9d6ccf805
   description: API endpoints for Search
   x-logo:
     url: https://app.glean.com/images/glean-text2.svg
-  x-open-api-commit-sha: 6dadb3d4d79f45ae6872d80589e93423b75ba93a
+  x-open-api-commit-sha: 98fce8303895c9cdc333fe1210501e17f21a2800
   x-speakeasy-name: Glean API
 servers:
   - url: https://{instance}-be.glean.com
@@ -1659,6 +1659,7 @@ components:
         - SLIDE_TYPE
         - SPREADSHEET_TYPE
         - INLINE_HTML_TYPE
+        - PODCAST_TYPE
         - WORKFLOWS_TYPE
     ChatZeroStateSuggestionOptions:
       properties:
@@ -3015,6 +3016,7 @@ components:
               - PROJECT_NEXT_STEP
               - DEMO_CARD
               - OOO_PLANNER
+              - OOO_CATCH_UP
           description: Categories of content requested. An allowlist gives flexibility to request content separately or together.
         requestOptions:
           $ref: '#/components/schemas/FeedRequestOptions'
@@ -3183,6 +3185,7 @@ components:
             - PROJECT_NEXT_STEP
             - DEMO_CARD
             - OOO_PLANNER
+            - OOO_CATCH_UP
           description: Category of the result, one of the requested categories in incoming request.
         primaryEntry:
           $ref: '#/components/schemas/FeedEntry'
@@ -3627,6 +3630,14 @@ components:
             id:
               type: string
               description: The ID of the workflow.
+            verified:
+              type: boolean
+              readOnly: true
+              description: When present, indicates this workflow is admin-verified. Set via the dedicated admin settings endpoint, not by regular edits.
+            showOrganizationAsAuthor:
+              type: boolean
+              readOnly: true
+              description: When true, displays organization name instead of author name in agent card. Set via the dedicated admin settings endpoint, not by regular edits.
     AnnouncementMutableProperties:
       properties:
         startTime:
@@ -5176,6 +5187,7 @@ components:
             - PROJECT_NEXT_STEP
             - DEMO_CARD
             - OOO_PLANNER
+            - OOO_CATCH_UP
           description: Type of the justification.
         justification:
           type: string
