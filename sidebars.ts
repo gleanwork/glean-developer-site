@@ -254,6 +254,11 @@ const baseSidebars: SidebarsConfig = {
             },
             {
               type: 'doc',
+              id: 'guides/mcp/supported-hosts',
+              label: 'Supported Hosts',
+            },
+            {
+              type: 'doc',
               id: 'guides/mcp/claude-code',
               label: 'Claude Code Plugin',
             },
