@@ -165,10 +165,41 @@ trigger:
 trigger:
   type: INPUT_FORM
   inputFields:
-    - name: query
-      label: Search query
-      required: true
+    - displayName: Account Name
+      description: Target account for outreach
+      type: TEXT
+    - displayName: Region
+      type: SELECT
+      defaultValue: AMER
+      options:
+        - value: AMER
+        - value: EMEA
+        - value: APJ
+    - displayName: Due Date
+      type: DATE
+      optional: true
 ```
+
+#### `inputFields` entry schema
+
+Each entry in `trigger.inputFields` accepts the following keys:
+
+| Key | Required | Type | Default | Description |
+| --- | --- | --- | --- | --- |
+| `displayName` | Yes | string | — | Human-readable label, and the identifier referenced from `instructions.md` as `[[displayName]]`. Must be unique within the agent. |
+| `description` | No | string | — | Helper text describing the field. |
+| `type` | Yes | enum | — | One of `TEXT`, `SELECT`, or `DATE`. |
+| `optional` | No | boolean | `false` | When `true`, the field may be left empty. |
+| `defaultValue` | No | string | — | Pre-filled value. For `SELECT`, must match one of `options[*].value`. For `DATE`, use `YYYY-MM-DD`. |
+| `options` | For `SELECT` | list | — | List of `{ value: <choice> }` entries. Required when `type` is `SELECT`. |
+
+Supported `type` values:
+
+| `type` | Description |
+| --- | --- |
+| `TEXT` | Free-form string. Use for open-ended values the agent reads or interpolates verbatim. |
+| `SELECT` | Single choice from a closed set declared via `options`. |
+| `DATE` | Calendar date in `YYYY-MM-DD` format. |
 
 ### Tools
 
