@@ -1,0 +1,266 @@
+---
+title: Glean Agent Specification
+description: A human-readable file system format for defining Glean agents.
+---
+
+# Glean Agent Specification
+
+The Glean agent specification is a human-readable file system format for defining a Glean agent — its instructions, tools, knowledge sources, skills, and subagents — as a directory of files. It is the source format consumed by the Glean Agents MCP tools and the GitHub Action, so Glean agents can be authored and version-controlled outside the UI.
+
+Once authored, pass the specification directory to the Glean Agents MCP tools or the GitHub Action to create or update agents in Glean.
+
+## Directory layout
+
+A typical agent directory looks like this:
+
+```text
+<agent-name>/
+├── spec.yaml
+├── instructions.md
+├── skills/
+│   └── <skill-name>/
+│       └── SKILL.md
+└── subagents/
+    └── <subagent-name>/
+        ├── spec.yaml
+        ├── instructions.md
+        └── skills/
+```
+
+Notes:
+
+- `spec.yaml` and `instructions.md` are required for the root agent as well as for all the subagents.
+- `skills/` is optional.
+- `subagents/` is optional.
+- Skills should have `SKILL.md` file.
+- Subagents can have skills, but cannot contain nested subagents.
+- The directory names should use kebab-case.
+- The display name of agents / subagents shown to users is defined in `spec.yaml`.
+
+## Required files
+### `spec.yaml`
+
+`spec.yaml` is the main configuration file for the agent.
+
+Common top-level fields:
+
+| Field | Required | Description |
+| --- | --- | --- |
+| `id` | Yes | Stable unique agent identifier. Do not change it after creation. |
+| `name` | Yes | Human-readable agent name shown to users. |
+| `description` | Yes | Short description of what the agent does. |
+| `instruction_file` | No | Path to the instructions file. Defaults to `instructions.md`. |
+| `model` | No | Which agentic model the agent runs on and how hard it reasons. |
+| `trigger` | No | How the agent is invoked. Defaults to chat based trigger. |
+| `skills` | No | List of skill directory paths to include. |
+| `subagents` | No | List of subagent directory paths to include. |
+| `tools` | No | Tool providers and selected tools exposed to the agent. |
+| `gleanSearchConfig` | No | Company-knowledge access configuration. |
+
+
+Example:
+
+```yaml
+id: a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6
+name: Travel Agent
+description: >
+  What this agent does, in a sentence or two.
+instruction_file: instructions.md
+
+model:
+  name: GPT_5_4_MS
+  mode: ADVANCED
+  autoUpgrade: true
+
+trigger:
+  type: CHAT_MESSAGE
+
+skills:
+  - skills/lead-qualification/
+  - skills/deal-analysis/
+
+subagents:
+  - subagents/research-subagent/
+
+tools:
+  - toolProviderId: a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6
+    customisationData:
+      skipUserInteraction: true
+    selectedTools:
+      - name: create-doc
+      - name: update-doc
+      - name: search-doc
+  - toolProviderId: 7e9f1a3b5c7d9e1f3a5b7c9d1e3f5a7b
+    selectedTools:
+      - name: send-email
+
+gleanSearchConfig:
+  datasourceInstances:
+    - asana
+    - confluence
+  urls:
+    - https://drive.google.com/file/d/document/view
+```
+
+### `instructions.md`
+
+`instructions.md` contains the agent's system prompt.
+
+Guidelines:
+
+- Use Markdown for structured workflows.
+- Start with a clear role statement.
+- Keep instructions precise and complete.
+- Preserve exact step order when the workflow is rigid.
+- Do not repeat tool descriptions unnecessarily.
+
+
+## Optional configuration
+
+### Model
+
+The `model` block configures which agentic model the agent runs on and how hard it reasons. All keys are optional.
+
+| Key | Description |
+| --- | --- |
+| `name` | Model Name |
+| `mode` | Reasoning effort per turn. `ADVANCED` (default) or `FAST`. |
+| `autoUpgrade` | Boolean. When `true`, Glean rolls the agent onto newer models as they ship. |
+
+`mode` values:
+
+- `ADVANCED` — high reasoning effort. The default when `mode` is omitted.
+- `FAST` — low reasoning effort. This should be used only for simple tasks.
+
+Example:
+
+```yaml
+model:
+  name: GPT_5_4_MS
+  mode: ADVANCED
+  autoUpgrade: true
+```
+
+### Trigger
+
+`trigger` controls how the agent is invoked.
+
+Supported `type` values:
+
+| `type` | Description |
+| --- | --- |
+| `CHAT_MESSAGE` | The user converses with the agent. This is the default when `trigger` is omitted. |
+| `INPUT_FORM` | The agent receives a typed set of `trigger.inputFields` provided by the user at invocation time. When `inputFields` is empty, the agent runs without any user input. |
+
+Examples:
+
+```yaml
+# Chat trigger (default)
+trigger:
+  type: CHAT_MESSAGE
+```
+
+```yaml
+# Input form trigger
+trigger:
+  type: INPUT_FORM
+  inputFields:
+    - displayName: Account Name
+      description: Target account for outreach
+      type: TEXT
+    - displayName: Region
+      type: SELECT
+      defaultValue: AMER
+      options:
+        - value: AMER
+        - value: EMEA
+        - value: APJ
+    - displayName: Due Date
+      type: DATE
+      optional: true
+```
+
+#### `inputFields` entry schema
+
+Each entry in `trigger.inputFields` accepts the following keys:
+
+| Key | Required | Type | Default | Description |
+| --- | --- | --- | --- | --- |
+| `displayName` | Yes | string | — | Human-readable label, and the identifier referenced from `instructions.md` as `[[displayName]]`. Must be unique within the agent. |
+| `description` | No | string | — | Helper text describing the field. |
+| `type` | Yes | enum | — | One of `TEXT`, `SELECT`, or `DATE`. |
+| `optional` | No | boolean | `false` | When `true`, the field may be left empty. |
+| `defaultValue` | No | string | — | Pre-filled value. For `SELECT`, must match one of `options[*].value`. For `DATE`, use `YYYY-MM-DD`. |
+| `options` | For `SELECT` | list | — | List of `{ value: <choice> }` entries. Required when `type` is `SELECT`. |
+
+Supported `type` values:
+
+| `type` | Description |
+| --- | --- |
+| `TEXT` | Free-form string. Use for open-ended values the agent reads or interpolates verbatim. |
+| `SELECT` | Single choice from a closed set declared via `options`. |
+| `DATE` | Calendar date in `YYYY-MM-DD` format. |
+
+### Tools
+
+Tools are optional. Add them when the agent needs to perform actions outside its instructions and built-in knowledge, such as search, email, or API calls. If you declare tools, make sure every instructed external action has a corresponding tool.
+
+Each tool entry includes:
+
+- `toolProviderId`: Glean internal identifier for tool provider which can also be MCP server.
+- `selectedTools` : list of selected tools for the specified provider
+- `customisationData` : optional provider-level configuration passed to all tools in the provider
+
+### `gleanSearchConfig`
+
+`gleanSearchConfig` controls company-knowledge access.
+
+Supported fields:
+
+| Field | Description |
+| --- | --- |
+| `datasourceInstances` | Restrict search to specific datasource instances. |
+| `urls` | Restrict search to specific documents or folders. Folder URLs apply transitively to contained documents. |
+
+
+Valid states:
+
+| State | Meaning |
+| --- | --- |
+| Omitted | No company knowledge access. |
+| `{}` | Unrestricted company knowledge access for the invoking user. |
+| Populated | Restricted to the listed datasources and/or URLs. |
+
+### Skills
+
+A skill defines:
+
+- what the skill does
+- when to use it
+- how it works
+
+Each skill directory must contain a `SKILL.md` file. The display name on the UI is directly derived from the folder name.
+
+### Subagents
+
+Subagents are optional isolated execution units.
+
+Rules:
+
+- A subagent has its own `spec.yaml` and `instructions.md`.
+- A subagent may have its own `skills/` directory.
+- A subagent must not declare its own `subagents` field since nested subagents are not supported
+- The parent agent receives only the subagent's final result.
+
+## Minimal example
+
+```text
+my-agent/
+├── spec.yaml
+├── instructions.md
+└── skills/
+    └── domain-knowledge/
+        └── SKILL.md
+```
+
+This is a minimal useful agent with one skill. More advanced agents can also include tools, knowledge restrictions, and subagents.
