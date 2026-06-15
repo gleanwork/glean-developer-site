@@ -228,6 +228,47 @@ glean:
   server-url: ${GLEAN_SERVER_URL}
 ```
 
+### OAuth Access Tokens
+
+An OAuth access token is a bearer credential, so it goes in the same `apiToken` field:
+
+```java
+Glean client = Glean.builder()
+    .apiToken(oauthAccessToken)
+    .serverURL("https://your-server-id-be.glean.com")
+    .build();
+```
+
+Tokens issued by the **Glean OAuth Authorization Server** (including tokens obtained via Dynamic Client Registration) are detected automatically and need no extra header.
+
+Tokens issued by an **external identity provider** (Google, Okta, Azure, etc.) additionally require the `X-Glean-Auth-Type: OAUTH` header on each request. The builder has no per-request header option, so supply a custom HTTP client that adds it:
+
+```java
+import com.glean.api_client.glean_api_client.utils.HTTPClient;
+import com.glean.api_client.glean_api_client.utils.SpeakeasyHTTPClient;
+import java.io.InputStream;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+
+HTTPClient oauthClient = new SpeakeasyHTTPClient() {
+  @Override
+  public HttpResponse<InputStream> send(HttpRequest request)
+      throws java.io.IOException, InterruptedException, java.net.URISyntaxException {
+    return super.send(HttpRequest.newBuilder(request, (name, value) -> true)
+        .header("X-Glean-Auth-Type", "OAUTH")
+        .build());
+  }
+};
+
+Glean client = Glean.builder()
+    .apiToken(oauthAccessToken)
+    .serverURL("https://your-server-id-be.glean.com")
+    .client(oauthClient)
+    .build();
+```
+
+See the [OAuth authentication guide](/api-info/client/authentication/oauth) for identity-provider setup.
+
 ## Error Handling
 
 ```java

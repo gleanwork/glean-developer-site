@@ -194,6 +194,29 @@ const response = await client.client.chat.create({
 });
 ```
 
+### OAuth Access Tokens
+
+An OAuth access token is a bearer credential, so it goes in the same `apiToken` field — no separate option is needed:
+
+```typescript
+const client = new Glean({
+  apiToken: oauthAccessToken,
+  serverURL: "https://your-server-id-be.glean.com",
+});
+```
+
+Tokens issued by the **Glean OAuth Authorization Server** (including tokens obtained via Dynamic Client Registration) are detected automatically. Tokens issued by an **external identity provider** (Google, Okta, Azure, etc.) additionally require the `X-Glean-Auth-Type: OAUTH` header on each request:
+
+```typescript
+const response = await client.client.chat.create({
+  messages: [{ fragments: [{ text: "Hello" }] }]
+}, {
+  headers: { "X-Glean-Auth-Type": "OAUTH" }
+});
+```
+
+See the [OAuth authentication guide](/api-info/client/authentication/oauth) for identity-provider setup.
+
 ## Error Handling
 
 ```typescript
