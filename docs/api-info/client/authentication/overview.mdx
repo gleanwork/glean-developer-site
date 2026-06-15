@@ -13,13 +13,13 @@ This guide helps you choose and implement the right authentication method for Gl
 
 <CardGroup cols={2}>
   <Card title="OAuth (Recommended)" icon="Shield">
-    **Leverages your existing identity provider**
-    
-    - No token management required
+    **Glean Authorization Server or your IdP**
+
+    - Tokens from the Glean OAuth Authorization Server (incl. DCR) or an external IdP
     - Works with Google, Azure, Okta, OneLogin
     - Full API access without scope restrictions
-    - Best for production applications
-    
+    - Powers the remote MCP server
+
     [Setup OAuth →](./oauth)
   </Card>
   
@@ -64,7 +64,7 @@ Different authentication methods require different headers:
 
 ```bash
 Authorization: Bearer <oauth_access_token>
-X-Glean-Auth-Type: OAUTH
+X-Glean-Auth-Type: OAUTH   # required for external-IdP tokens; omit for Glean Authorization Server tokens
 ```
 
 </TabItem>
@@ -171,7 +171,7 @@ Successful authentication returns a 200 status with search results:
 |-------|--------------|----------|
 | `401 Unauthorized` | Invalid or expired token | Verify token is correct and not expired |
 | `403 Forbidden` | Insufficient permissions | Check token scopes or OAuth settings |
-| `Missing X-Glean-Auth-Type header` | OAuth header not set | Add `X-Glean-Auth-Type: OAUTH` for OAuth |
+| `Missing X-Glean-Auth-Type header` / `Invalid Secret` | External-IdP OAuth token sent without the auth-type header | Add `X-Glean-Auth-Type: OAUTH` (external-IdP tokens only; not needed for Glean Authorization Server tokens) |
 | `Required header missing: X-Glean-ActAs` | Global token header missing | Add `X-Glean-ActAs: user@email.com` |
 
 For detailed troubleshooting, see your specific authentication guide.
