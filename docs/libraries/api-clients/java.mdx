@@ -210,7 +210,7 @@ public class GleanController {
 
 ## Authentication
 
-### User-Scoped Tokens (Recommended)
+### User-Scoped Tokens
 
 ```java
 Glean client = Glean.builder()
@@ -226,6 +226,139 @@ Glean client = Glean.builder()
 glean:
   api-token: ${GLEAN_API_TOKEN}
   server-url: ${GLEAN_SERVER_URL}
+```
+
+### OAuth Access Tokens
+
+An OAuth access token is a bearer credential, so it goes in the same `apiToken` field:
+
+```java
+Glean client = Glean.builder()
+    .apiToken(oauthAccessToken)
+    .serverURL("https://your-server-id-be.glean.com")
+    .build();
+```
+
+Tokens issued by the **Glean OAuth Authorization Server** (including tokens obtained via Dynamic Client Registration) are detected automatically and need no extra header.
+
+Tokens issued by an **external identity provider** (Google, Okta, Azure, etc.) additionally require the `X-Glean-Auth-Type: OAUTH` header on each request. The builder has no per-request header option, so supply a custom HTTP client that adds it:
+
+```java
+import com.glean.api_client.glean_api_client.utils.HTTPClient;
+import com.glean.api_client.glean_api_client.utils.SpeakeasyHTTPClient;
+import java.io.InputStream;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+
+HTTPClient oauthClient = new SpeakeasyHTTPClient() {
+  @Override
+  public HttpResponse<InputStream> send(HttpRequest request)
+      throws java.io.IOException, InterruptedException, java.net.URISyntaxException {
+    return super.send(HttpRequest.newBuilder(request, (name, value) -> true)
+        .header("X-Glean-Auth-Type", "OAUTH")
+        .build());
+  }
+};
+
+Glean client = Glean.builder()
+    .apiToken(oauthAccessToken)
+    .serverURL("https://your-server-id-be.glean.com")
+    .client(oauthClient)
+    .build();
+```
+
+See the [OAuth authentication guide](/api-info/client/authentication/oauth) for identity-provider setup.
+
+#### Complete Example: Authorization Code with PKCE
+
+This example uses Spring Security's OAuth2 Client. Point `OAUTH_ISSUER` at the Glean OAuth Authorization Server or your IdP. For a confidential client, enable PKCE with an authorization-request customizer (it is on by default for public clients).
+
+```yaml
+# application.yml
+spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          glean:
+            provider: glean
+            client-id: ${OAUTH_CLIENT_ID}
+            client-secret: ${OAUTH_CLIENT_SECRET}
+            authorization-grant-type: authorization_code
+            scope: openid,offline_access,SEARCH # SEARCH lets the token call /search; offline_access requests a refresh token
+            redirect-uri: '{baseUrl}/login/oauth2/code/{registrationId}'
+        provider:
+          glean:
+            issuer-uri: ${OAUTH_ISSUER}
+
+glean:
+  server-url: ${GLEAN_SERVER_URL}
+```
+
+```java
+// SecurityConfig.java — enable PKCE for a confidential client
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
+import org.springframework.security.oauth2.client.web.DefaultOAuth2AuthorizationRequestResolver;
+import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestCustomizers;
+import org.springframework.security.web.SecurityFilterChain;
+
+@Configuration
+public class SecurityConfig {
+  @Bean
+  SecurityFilterChain filterChain(HttpSecurity http, ClientRegistrationRepository repo)
+      throws Exception {
+    var resolver = new DefaultOAuth2AuthorizationRequestResolver(repo, "/oauth2/authorization");
+    resolver.setAuthorizationRequestCustomizer(OAuth2AuthorizationRequestCustomizers.withPkce());
+    http.oauth2Login(login -> login
+        .authorizationEndpoint(endpoint -> endpoint.authorizationRequestResolver(resolver)));
+    return http.build();
+  }
+}
+```
+
+```java
+// SearchController.java — exchange the authorized client's token for a Glean call
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
+import org.springframework.security.oauth2.client.annotation.RegisteredOAuth2AuthorizedClient;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
+import com.glean.api_client.glean_api_client.Glean;
+import com.glean.api_client.glean_api_client.models.components.*;
+import java.util.List;
+
+@RestController
+public class SearchController {
+  @Value("${glean.server-url}")
+  private String serverURL;
+
+  @GetMapping("/search")
+  public List<SearchResult> search(
+      @RegisteredOAuth2AuthorizedClient("glean") OAuth2AuthorizedClient authorizedClient) {
+    String accessToken = authorizedClient.getAccessToken().getTokenValue();
+
+    // For external-IdP tokens, add a custom HTTPClient that sets
+    // X-Glean-Auth-Type: OAUTH (see "OAuth Access Tokens" above). Glean
+    // Authorization Server tokens need no extra header.
+    Glean glean = Glean.builder()
+        .apiToken(accessToken)
+        .serverURL(serverURL)
+        .build();
+
+    return glean.client().search().query()
+        .request(SearchRequest.builder()
+            .query("quarterly reports")
+            .pageSize(10)
+            .build())
+        .call()
+        .searchResponse()
+        .flatMap(SearchResponse::results)
+        .orElse(List.of());
+  }
+}
 ```
 
 ## Error Handling

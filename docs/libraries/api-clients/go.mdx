@@ -237,7 +237,7 @@ func batchSearch(client *glean.Client, queries []string) ([]glean.SearchResponse
 
 ## Authentication
 
-### User-Scoped Tokens (Recommended)
+### User-Scoped Tokens
 
 ```go
 client := glean.New(
@@ -248,20 +248,126 @@ client := glean.New(
 
 ### Global Tokens with ActAs
 
+Per-request headers are passed with `operations.WithSetHeaders`:
+
 ```go
-ctx := context.Background()
+import (
+  glean "github.com/gleanwork/api-client-go"
+  "github.com/gleanwork/api-client-go/models/components"
+  "github.com/gleanwork/api-client-go/models/operations"
+)
 
-// Add ActAs header to context
-ctx = context.WithValue(ctx, "X-Glean-ActAs", "user@company.com")
-
-response, err := client.Client.Chat.Create(ctx, &glean.ChatRequest{
-  Messages: []glean.ChatMessage{{
-    Fragments: []glean.ChatMessageFragment{{
-      Text: "Hello",
+response, err := client.Client.Chat.Create(ctx, components.ChatRequest{
+  Messages: []components.ChatMessage{{
+    Fragments: []components.ChatMessageFragment{{
+      Text: glean.String("Hello"),
     }},
   }},
-})
+}, nil, operations.WithSetHeaders(map[string]string{
+  "X-Glean-ActAs": "user@company.com",
+}))
 ```
+
+### OAuth Access Tokens
+
+An OAuth access token is a bearer credential, so it goes in the same `WithSecurity` option:
+
+```go
+client := glean.New(
+  glean.WithSecurity(oauthAccessToken),
+  glean.WithServerURL("https://your-server-id-be.glean.com"),
+)
+```
+
+Tokens issued by the **Glean OAuth Authorization Server** (including tokens obtained via Dynamic Client Registration) are detected automatically. Tokens issued by an **external identity provider** (Google, Okta, Azure, etc.) additionally require the `X-Glean-Auth-Type: OAUTH` header on each request:
+
+```go
+import (
+  "github.com/gleanwork/api-client-go/models/components"
+  "github.com/gleanwork/api-client-go/models/operations"
+)
+
+results, err := client.Client.Search.Query(ctx, &components.SearchRequest{
+  Query: "quarterly reports",
+}, operations.WithSetHeaders(map[string]string{
+  "X-Glean-Auth-Type": "OAUTH",
+}))
+```
+
+See the [OAuth authentication guide](/api-info/client/authentication/oauth) for identity-provider setup.
+
+#### Complete Example: Authorization Code with PKCE
+
+This example uses [`golang.org/x/oauth2`](https://pkg.go.dev/golang.org/x/oauth2). It runs the Authorization Code flow with PKCE (`S256ChallengeOption` / `VerifierOption`) and `AccessTypeOffline` for a refresh token, then passes the access token to the Glean client. Read `AuthURL`/`TokenURL` from the issuer's metadata document.
+
+```go
+package main
+
+import (
+  "context"
+  "encoding/json"
+  "net/http"
+  "os"
+
+  "golang.org/x/oauth2"
+  glean "github.com/gleanwork/api-client-go"
+  "github.com/gleanwork/api-client-go/models/components"
+  "github.com/gleanwork/api-client-go/models/operations"
+)
+
+var (
+  conf = &oauth2.Config{
+    ClientID:     os.Getenv("OAUTH_CLIENT_ID"),
+    ClientSecret: os.Getenv("OAUTH_CLIENT_SECRET"), // omit for a public client
+    RedirectURL:  "http://localhost:8080/callback",
+    Scopes:       []string{"openid", "offline_access", "SEARCH"}, // SEARCH lets the token call /search; offline_access → refresh token
+    Endpoint: oauth2.Endpoint{
+      AuthURL:  os.Getenv("OAUTH_AUTH_URL"),
+      TokenURL: os.Getenv("OAUTH_TOKEN_URL"),
+    },
+  }
+  // Demo only: generate and store the verifier per request (e.g. in session) in production.
+  verifier = oauth2.GenerateVerifier()
+)
+
+func main() {
+  http.HandleFunc("/login", func(w http.ResponseWriter, r *http.Request) {
+    url := conf.AuthCodeURL("state", oauth2.AccessTypeOffline,
+      oauth2.S256ChallengeOption(verifier))
+    http.Redirect(w, r, url, http.StatusFound)
+  })
+
+  http.HandleFunc("/callback", func(w http.ResponseWriter, r *http.Request) {
+    ctx := r.Context()
+    tok, err := conf.Exchange(ctx, r.URL.Query().Get("code"), oauth2.VerifierOption(verifier))
+    if err != nil {
+      http.Error(w, err.Error(), http.StatusInternalServerError)
+      return
+    }
+
+    client := glean.New(
+      glean.WithSecurity(tok.AccessToken),
+      glean.WithServerURL(os.Getenv("GLEAN_SERVER_URL")),
+    )
+
+    results, err := client.Client.Search.Query(ctx, &components.SearchRequest{
+      Query: "quarterly reports",
+    }, // Omit this option when the token is from the Glean Authorization Server.
+      operations.WithSetHeaders(map[string]string{"X-Glean-Auth-Type": "OAUTH"}))
+    if err != nil {
+      http.Error(w, err.Error(), http.StatusInternalServerError)
+      return
+    }
+    json.NewEncoder(w).Encode(results)
+  })
+
+  http.ListenAndServe(":8080", nil)
+}
+```
+
+:::tip
+Access tokens expire. Wrap the token in `conf.TokenSource(ctx, tok)` to refresh automatically when you requested `offline_access`.
+:::
 
 ## Error Handling
 

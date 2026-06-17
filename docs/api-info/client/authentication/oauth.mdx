@@ -1,7 +1,7 @@
 ---
 title: OAuth Authentication
 sidebar_label: OAuth
-description: Complete OAuth setup guide for Client API authentication with provider-specific instructions
+description: Use OAuth access tokens with the Client API — from the Glean OAuth Authorization Server or your external identity provider
 ---
 
 import Tabs from '@theme/Tabs';
@@ -9,88 +9,146 @@ import TabItem from '@theme/TabItem';
 
 # OAuth Authentication for Client API
 
-OAuth is the **recommended authentication method** for Client API integrations. It allows you to use access tokens from your existing identity provider without managing additional tokens.
+OAuth is the **recommended authentication method** for Client API integrations. You authenticate with an OAuth access token instead of managing a Glean-issued API token.
 
-<Card title="OAuth Benefits" icon="Shield">
-  - **No token management** - Use existing identity provider tokens
-  - **Full API access** - No scope restrictions like Glean tokens
-  - **Provider flexibility** - Works with Google, Azure, Okta, OneLogin
-  - **Enterprise security** - Leverages your existing auth infrastructure
-</Card>
+There are two sources for that token, and they behave slightly differently on the wire:
+
+<CardGroup cols={2}>
+  <Card title="Glean OAuth Authorization Server" icon="Shield">
+    **Glean issues the tokens (OAuth 2.1)**
+
+    - Authorization Code flow with PKCE
+    - Static clients or [Dynamic Client Registration](https://docs.glean.com/administration/oauth/dynamic-client-registration)
+    - Glean-defined, fine-grained scopes
+    - Recognized by issuer — **no extra header**
+    - Powers the [remote MCP server](/guides/mcp)
+  </Card>
+
+  <Card title="External Identity Provider" icon="Key">
+    **Your IdP issues the tokens**
+
+    - Google, Okta, Azure Entra ID, OneLogin, etc.
+    - Token lifecycle owned by your IdP
+    - Requires the **`X-Glean-Auth-Type: OAUTH`** header
+    - Reuses your existing enterprise auth
+  </Card>
+</CardGroup>
 
 :::warning
-  OAuth authentication is **only supported for Client API**. Indexing API operations require Glean-issued tokens.
+OAuth is supported for the **Client API only**. Indexing API operations require [Glean-issued tokens](/api-info/client/authentication/glean-issued) and do not accept OAuth.
 :::
 
 ---
 
 ## Authentication Headers
 
-OAuth requests require these specific headers:
+Every OAuth request sends the access token as a bearer credential:
 
 ```bash
 Authorization: Bearer <oauth_access_token>
-X-Glean-Auth-Type: OAUTH
 ```
 
-### Header Details
+Whether you **also** need `X-Glean-Auth-Type: OAUTH` depends on who issued the token:
 
-| Header | Description | Example Value |
-|--------|-------------|---------------|
-| `Authorization` | Bearer token from your OAuth provider | `Bearer eyJ0eXAiOiJKV1Q...` |
-| `X-Glean-Auth-Type` | Required to specify OAuth authentication | `OAUTH` |
+| Token source | `X-Glean-Auth-Type: OAUTH` |
+|--------------|----------------------------|
+| Glean OAuth Authorization Server (incl. Dynamic Client Registration) | Not required — Glean recognizes its own tokens by their issuer |
+| External identity provider (Google, Okta, Azure, etc.) | **Required** — without it the token is treated as a Glean API token and rejected with `401` |
+
+:::tip Using an SDK?
+The official API clients accept an OAuth access token in their existing token field. See the OAuth section of the [TypeScript](/libraries/api-clients/typescript#oauth-access-tokens), [Python](/libraries/api-clients/python#oauth-access-tokens), [Go](/libraries/api-clients/go#oauth-access-tokens), or [Java](/libraries/api-clients/java#oauth-access-tokens) client docs.
+:::
 
 ---
 
-## Quick Setup Overview
+## Setup
+
+<Tabs>
+<TabItem value="gas" label="Glean Authorization Server">
+
+The [Glean OAuth Authorization Server](https://docs.glean.com/administration/oauth/authorization-server) is an OAuth 2.1 authorization server that issues access tokens for the Client API. It reuses your existing SSO for user authentication — it does not replace your IdP.
 
 <Steps>
-  <Step title="Configure your identity provider">
-    Set up OAuth application in Google Workspace, Azure, Okta, or OneLogin
+  <Step title="Enable the authorization server">
+    The Glean OAuth Authorization Server is disabled by default. An administrator enables it in the Glean admin console.
   </Step>
-  
-  <Step title="Enable OAuth in Glean">
-    Navigate to [Client API Settings](https://app.glean.com/admin/platform/tokenManagement?tab=client) and enable OAuth
+
+  <Step title="Register a client">
+    Register a **static client**, or allow [Dynamic Client Registration](https://docs.glean.com/administration/oauth/dynamic-client-registration) (primarily for MCP hosts). Administrators can restrict or disable dynamic registration.
   </Step>
-  
-  <Step title="Register your Client ID">
-    Add your OAuth application's Client ID to Glean's configuration
-  </Step>
-  
-  <Step title="Use OAuth tokens">
-    Include `Authorization` and `X-Glean-Auth-Type` headers in your requests
+
+  <Step title="Obtain a token">
+    Use the Authorization Code flow with **PKCE**. Discover endpoints from the server metadata document and exchange the authorization code for an access token.
   </Step>
 </Steps>
 
----
+Endpoints (replace `<instance>` — see [finding your server URL](/get-started/authentication#finding-your-server-url)):
 
-## Prerequisites
+| Purpose | URL |
+|---------|-----|
+| OAuth server metadata | `https://<instance>-be.glean.com/.well-known/oauth-authorization-server` |
+| Token | `https://<instance>-be.glean.com/oauth/token` |
+| Dynamic Client Registration | `https://<instance>-be.glean.com/oauth/register` |
 
-Before setting up OAuth authentication:
+The metadata document is the authoritative source for endpoints — fetch it to discover the current authorization, token, registration, and any other endpoints rather than relying on the values listed above.
 
-- **Admin access** to Glean's admin console
-- **Identity provider** account (Google Workspace, Azure, Okta, or OneLogin)
-- **OAuth application** configured in your identity provider
+Tokens from the Glean Authorization Server are recognized by their issuer, so requests **do not** need the `X-Glean-Auth-Type` header.
 
----
+</TabItem>
+<TabItem value="idp" label="External Identity Provider">
 
-## Provider-Specific Setup
+Register an OAuth 2.1 application in your enterprise IdP and configure Glean to accept its tokens. See [OAuth with IdP-issued tokens](https://docs.glean.com/administration/oauth/oauth-idp) for the authoritative guide.
 
-Use the Help Center for detailed identity provider setup steps.
+<Steps>
+  <Step title="Configure your identity provider">
+    Set up an OAuth application in Google Workspace, Azure Entra ID, Okta, or OneLogin. Use the Authorization Code flow with **PKCE**; request the `offline_access` scope if you need a refresh token.
+  </Step>
+
+  <Step title="Enable OAuth in Glean">
+    In [Client API Settings](https://app.glean.com/admin/platform/tokenManagement?tab=client), enable **Allow OAuth token-based access**.
+  </Step>
+
+  <Step title="Register your Client ID and issuer">
+    Provide your OAuth application's Client ID and issuer so Glean can validate incoming tokens.
+  </Step>
+
+  <Step title="Send both headers">
+    Include `Authorization: Bearer <token>` **and** `X-Glean-Auth-Type: OAUTH` on every Client API request.
+  </Step>
+</Steps>
+
+Provider setup references:
 
 - Google Workspace (OIDC): [Google (OIDC)](https://docs.glean.com/administration/identity/sso/configuration/google-oidc)
 - Azure Entra ID (OIDC): [Azure (OIDC)](https://docs.glean.com/administration/identity/sso/configuration/entra-id-oidc)
 - Okta (SAML): [Okta (SAML)](https://docs.glean.com/administration/identity/sso/configuration/okta-saml)
 - OneLogin: [Generic SAML guide](https://docs.glean.com/administration/identity/sso/configuration/generic-saml)
 
+</TabItem>
+</Tabs>
+
 ---
 
 ## Implementation Examples
 
-### Basic Search Request
+<Tabs>
+<TabItem value="gas" label="Glean Authorization Server token">
 
 ```bash
-curl -X POST https://instance-be.glean.com/rest/api/v1/search \
+curl -X POST https://<instance>-be.glean.com/rest/api/v1/search \
+  -H 'Authorization: Bearer <oauth_token>' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "query": "quarterly reports",
+    "pageSize": 10
+  }'
+```
+
+</TabItem>
+<TabItem value="idp" label="External IdP token">
+
+```bash
+curl -X POST https://<instance>-be.glean.com/rest/api/v1/search \
   -H 'Authorization: Bearer <oauth_token>' \
   -H 'X-Glean-Auth-Type: OAUTH' \
   -H 'Content-Type: application/json' \
@@ -100,91 +158,32 @@ curl -X POST https://instance-be.glean.com/rest/api/v1/search \
   }'
 ```
 
-### Chat Request
-
-```bash
-curl -X POST https://instance-be.glean.com/rest/api/v1/chat \
-  -H 'Authorization: Bearer <oauth_token>' \
-  -H 'X-Glean-Auth-Type: OAUTH' \
-  -H 'Content-Type: application/json' \
-  -d '{
-    "query": "What are the latest quarterly results?",
-    "conversationId": "optional-conversation-id"
-  }'
-```
+</TabItem>
+</Tabs>
 
 ---
 
 ## Token Properties
 
-Understanding OAuth token characteristics:
-
-- **Scope**: Full Client API access (not restricted by scopes)
-- **User context**: Treated as user-permissioned tokens
-- **Expiration**: Managed by your identity provider
-- **API Support**: Client API only (Indexing API not supported)
-- **Security**: Leverages your existing identity provider security
-
----
-
-## Testing OAuth Authentication
-
-### Test Command
-
-```bash
-curl -X POST https://<instance>-be.glean.com/rest/api/v1/search \
-  -H 'Authorization: Bearer <OAUTH_TOKEN>' \
-  -H 'X-Glean-Auth-Type: OAUTH' \
-  -H 'Content-Type: application/json' \
-  -d '{"query": "test", "pageSize": 1}'
-```
-
-### Expected Response
-
-Successful authentication returns a 200 status with search results:
-
-```json
-{
-  "results": [...],
-  "trackingToken": "...",
-  "requestId": "..."
-}
-```
+- **Scope**: Governed by Glean [scopes](/api-info/client/authentication/glean-issued) (for example `SEARCH`, `CHAT`). For static clients, the allowed scopes are selected when the client is created or edited; dynamically registered (DCR) clients are limited to a restricted subset. Request only the scopes your integration needs
+- **User context**: Treated as user-permissioned; permissions are enforced by Glean at request time
+- **Expiration & refresh**: Controlled by the issuer (Glean Authorization Server or your IdP). For a refresh token, request the `offline_access` scope and refresh with a standard OAuth library
+- **API support**: Client API only (Indexing API not supported)
 
 ---
 
 ## Troubleshooting OAuth
 
-### Common OAuth Errors
-
 | Error | Cause | Solution |
 |-------|-------|----------|
-| `Missing X-Glean-Auth-Type header` | OAuth header not set | Add `X-Glean-Auth-Type: OAUTH` header |
-| `Invalid token format` | Malformed token | Verify token is valid JWT from your provider |
-| `401 Unauthorized` | Invalid or expired token | Verify token is correct and not expired |
-| `403 Forbidden` | OAuth not enabled | Contact admin to enable OAuth in Glean settings |
+| `401 Unauthorized` / `Invalid Secret` | External-IdP token sent without `X-Glean-Auth-Type: OAUTH`, so it was treated as a Glean API token | Add the `X-Glean-Auth-Type: OAUTH` header (external-IdP tokens only) |
+| `401 Unauthorized` | Invalid or expired token | Verify the token is valid and not expired; refresh if needed |
+| `403 Forbidden` | OAuth not enabled, or client ID / issuer mismatch | Confirm OAuth is enabled in Glean and the registered client ID / issuer matches the token |
+| `Invalid token format` | Malformed token | Verify the token is a valid JWT from your issuer |
 
-### Debugging Steps
-
-<Steps>
-  <Step title="Verify OAuth is enabled">
-    Check that OAuth is enabled in [Glean Token Management](https://app.glean.com/admin/platform/tokenManagement?tab=client)
-  </Step>
-  
-  <Step title="Confirm headers">
-    Ensure you have both required headers:
-    - `Authorization: Bearer <oauth_token>`
-    - `X-Glean-Auth-Type: OAUTH`
-  </Step>
-  
-  <Step title="Validate token">
-    Verify your OAuth token is valid and not expired
-  </Step>
-  
-  <Step title="Test with simple endpoint">
-    Start with a basic search request before testing complex operations
-  </Step>
-</Steps>
+:::note
+If you are using the Glean OAuth Authorization Server and still see a missing-header error, confirm the token was issued by Glean's server (not your IdP). Glean-issued tokens are detected by issuer and need no header; external-IdP tokens always do.
+:::
 
 ---
 
@@ -193,34 +192,32 @@ Successful authentication returns a 200 status with search results:
 ### Security
 
 - **Use HTTPS** for all OAuth flows and API requests
-- **Validate tokens** before making API requests
-- **Handle token refresh** gracefully in your application
-- **Store tokens securely** - never commit to version control
-
-### Development
-
-- **Test OAuth flow** in development environment first
-- **Handle errors gracefully** - OAuth tokens can expire or be revoked
-- **Implement proper logging** for OAuth authentication events
-- **Monitor token usage** through your identity provider
+- **Use Authorization Code + PKCE** — it is required by OAuth 2.1 and by the Glean Authorization Server
+- **Store tokens securely** — never commit them to version control
+- **Handle token refresh** gracefully using a standard OAuth library
 
 ### Production
 
-- **Use production OAuth applications** - don't use development credentials
-- **Implement token caching** to reduce identity provider calls
-- **Set up monitoring** for authentication failures
-- **Plan for token rotation** and refresh scenarios
+- **Use production OAuth applications** — don't ship development credentials
+- **Reuse an access token until it expires** rather than requesting a new one per call, and refresh once it expires
+- **Monitor authentication failures** through your issuer and Glean
 
 ---
 
 ## Next Steps
 
 <CardGroup cols={2}>
-  <Card title="Client API Reference" href="/api/client-api/activity/overview" icon="Book">
-    Explore available Client API endpoints that work with OAuth
+  <Card title="Use OAuth with an SDK" href="/libraries/api-clients/typescript#oauth-access-tokens" icon="Code">
+    Pass an OAuth token to the TypeScript, Python, Go, or Java client
   </Card>
-  <Card title="Search Implementation" href="/guides/search/filtering-results" icon="Search">
-    Learn advanced search techniques with OAuth authentication
+  <Card title="Client API Reference" href="/api/client-api/activity/overview" icon="Book">
+    Explore Client API endpoints that work with OAuth
+  </Card>
+  <Card title="Glean OAuth Authorization Server" href="https://docs.glean.com/administration/oauth/authorization-server" icon="Shield">
+    Admin guide to enabling and configuring the Glean Authorization Server
+  </Card>
+  <Card title="Remote MCP Server" href="/guides/mcp" icon="mcp">
+    OAuth-authenticated MCP access powered by the Glean Authorization Server
   </Card>
 </CardGroup>
 
