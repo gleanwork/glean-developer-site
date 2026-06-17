@@ -285,7 +285,7 @@ spring:
             client-id: ${OAUTH_CLIENT_ID}
             client-secret: ${OAUTH_CLIENT_SECRET}
             authorization-grant-type: authorization_code
-            scope: openid,offline_access # offline_access requests a refresh token
+            scope: openid,offline_access,SEARCH # SEARCH lets the token call /search; offline_access requests a refresh token
             redirect-uri: '{baseUrl}/login/oauth2/code/{registrationId}'
         provider:
           glean:
@@ -348,14 +348,14 @@ public class SearchController {
         .serverURL(serverURL)
         .build();
 
-    return glean.client().search().search()
-        .searchRequest(SearchRequest.builder()
+    return glean.client().search().query()
+        .request(SearchRequest.builder()
             .query("quarterly reports")
             .pageSize(10)
             .build())
         .call()
         .searchResponse()
-        .map(SearchResponse::results)
+        .flatMap(SearchResponse::results)
         .orElse(List.of());
   }
 }

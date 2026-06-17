@@ -252,6 +252,7 @@ Per-request headers are passed with `operations.WithSetHeaders`:
 
 ```go
 import (
+  glean "github.com/gleanwork/api-client-go"
   "github.com/gleanwork/api-client-go/models/components"
   "github.com/gleanwork/api-client-go/models/operations"
 )
@@ -259,7 +260,7 @@ import (
 response, err := client.Client.Chat.Create(ctx, components.ChatRequest{
   Messages: []components.ChatMessage{{
     Fragments: []components.ChatMessageFragment{{
-      Text: "Hello",
+      Text: glean.String("Hello"),
     }},
   }},
 }, nil, operations.WithSetHeaders(map[string]string{
@@ -269,11 +270,11 @@ response, err := client.Client.Chat.Create(ctx, components.ChatRequest{
 
 ### OAuth Access Tokens
 
-An OAuth access token is a bearer credential, so it goes in the same `WithAPIToken` option:
+An OAuth access token is a bearer credential, so it goes in the same `WithSecurity` option:
 
 ```go
 client := glean.New(
-  glean.WithAPIToken(oauthAccessToken),
+  glean.WithSecurity(oauthAccessToken),
   glean.WithServerURL("https://your-server-id-be.glean.com"),
 )
 ```
@@ -319,7 +320,7 @@ var (
     ClientID:     os.Getenv("OAUTH_CLIENT_ID"),
     ClientSecret: os.Getenv("OAUTH_CLIENT_SECRET"), // omit for a public client
     RedirectURL:  "http://localhost:8080/callback",
-    Scopes:       []string{"openid", "offline_access"}, // offline_access → refresh token
+    Scopes:       []string{"openid", "offline_access", "SEARCH"}, // SEARCH lets the token call /search; offline_access → refresh token
     Endpoint: oauth2.Endpoint{
       AuthURL:  os.Getenv("OAUTH_AUTH_URL"),
       TokenURL: os.Getenv("OAUTH_TOKEN_URL"),
@@ -345,7 +346,7 @@ func main() {
     }
 
     client := glean.New(
-      glean.WithAPIToken(tok.AccessToken),
+      glean.WithSecurity(tok.AccessToken),
       glean.WithServerURL(os.Getenv("GLEAN_SERVER_URL")),
     )
 

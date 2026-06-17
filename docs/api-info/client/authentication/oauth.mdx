@@ -90,6 +90,8 @@ Endpoints (replace `<instance>` — see [finding your server URL](/get-started/a
 | Token | `https://<instance>-be.glean.com/oauth/token` |
 | Dynamic Client Registration | `https://<instance>-be.glean.com/oauth/register` |
 
+The metadata document is the authoritative source for endpoints — fetch it to discover the current authorization, token, registration, and any other endpoints rather than relying on the values listed above.
+
 Tokens from the Glean Authorization Server are recognized by their issuer, so requests **do not** need the `X-Glean-Auth-Type` header.
 
 </TabItem>
@@ -163,7 +165,7 @@ curl -X POST https://<instance>-be.glean.com/rest/api/v1/search \
 
 ## Token Properties
 
-- **Scope**: Full Client API access, unless your administrator restricts the integration to specific [scopes](/api-info/client/authentication/glean-issued)
+- **Scope**: Governed by Glean [scopes](/api-info/client/authentication/glean-issued) (for example `SEARCH`, `CHAT`). For static clients, the allowed scopes are selected when the client is created or edited; dynamically registered (DCR) clients are limited to a restricted subset. Request only the scopes your integration needs
 - **User context**: Treated as user-permissioned; permissions are enforced by Glean at request time
 - **Expiration & refresh**: Controlled by the issuer (Glean Authorization Server or your IdP). For a refresh token, request the `offline_access` scope and refresh with a standard OAuth library
 - **API support**: Client API only (Indexing API not supported)
@@ -197,7 +199,7 @@ If you are using the Glean OAuth Authorization Server and still see a missing-he
 ### Production
 
 - **Use production OAuth applications** — don't ship development credentials
-- **Cache tokens** to reduce calls to the issuer, and refresh before expiry
+- **Reuse an access token until it expires** rather than requesting a new one per call, and refresh once it expires
 - **Monitor authentication failures** through your issuer and Glean
 
 ---

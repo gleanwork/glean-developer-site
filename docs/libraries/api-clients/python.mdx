@@ -248,7 +248,7 @@ oauth.register(
     client_secret=os.environ.get("OAUTH_CLIENT_SECRET"),  # omit for a public client
     server_metadata_url=os.environ["OAUTH_METADATA_URL"],
     client_kwargs={
-        "scope": "openid offline_access",  # offline_access requests a refresh token
+        "scope": "openid offline_access SEARCH",  # SEARCH lets the token call /search (a Glean scope); offline_access requests a refresh token
         "code_challenge_method": "S256",   # enable PKCE
     },
 )
@@ -265,7 +265,7 @@ def callback():
         api_token=token["access_token"],
         server_url=os.environ["GLEAN_SERVER_URL"],
     ) as glean:
-        results = glean.client.search.search(
+        results = glean.client.search.query(
             query="quarterly reports",
             page_size=10,
             # Omit this header when the token is from the Glean Authorization Server.
