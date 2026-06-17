@@ -462,7 +462,7 @@ const baseSidebars: SidebarsConfig = {
             {
               type: 'doc',
               id: 'api-info/client/getting-started/choosing-a-retrieval-interface',
-              label: 'Choosing a retrieval interface',
+              label: 'Choose a retrieval interface',
             },
           ],
         },
