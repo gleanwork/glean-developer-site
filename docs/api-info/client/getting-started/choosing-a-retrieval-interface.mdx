@@ -1,0 +1,27 @@
+---
+title: 'Choosing a Retrieval Interface'
+icon: 'git-branch'
+iconSet: 'feather'
+---
+
+# Choosing a retrieval interface
+
+Glean offers more than one way to retrieve enterprise knowledge, and the right choice depends on what you are building. Each interface is designed for a different use case, so matching the interface to what you're building — rather than, for example, calling the Search API from an LLM-based application — gives you the best results.
+
+| Interface               | Use it for                                                                       | Query to send                    |
+| :---------------------- | :------------------------------------------------------------------------------- | :------------------------------- |
+| Search API              | Programmatic access to Glean search, such as building a custom search experience | Query in the request body (POST) |
+| Glean MCP `search` tool | LLM-based applications                                                           | The LLM-rewritten query          |
+| Glean MCP `chat` tool   | End-to-end chat experiences                                                      | The original user query          |
+
+- The **Search API** provides programmatic access to Glean search — building a custom search experience is one example. Do not use it to retrieve context for LLM-based applications; use the Glean MCP tools instead.
+- The **Glean MCP `search` tool** is for LLM-based applications. Send the query your LLM has rewritten for retrieval, not the raw user input.
+- The **Glean MCP `chat` tool** is for end-to-end chat experiences. Send the original user query rather than a rewritten one.
+
+The `search` and `chat` tools are the two most relevant to this choice; the Glean MCP server also exposes other tools, such as document retrieval, code search, and people lookup.
+
+:::info
+
+For a full overview of the Glean MCP server and its available tools, see the [MCP documentation](https://docs.glean.com/administration/platform/mcp/about).
+
+:::
