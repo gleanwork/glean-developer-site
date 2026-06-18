@@ -459,6 +459,11 @@ const baseSidebars: SidebarsConfig = {
               id: 'api-info/client/getting-started/basic-usage',
               label: 'Basic Usage',
             },
+            {
+              type: 'doc',
+              id: 'api-info/client/getting-started/choosing-a-retrieval-interface',
+              label: 'Choose a retrieval interface',
+            },
           ],
         },
         {
