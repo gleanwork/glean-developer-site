@@ -6,22 +6,38 @@ iconSet: 'feather'
 
 # Choose a retrieval interface
 
-Glean offers more than one way to retrieve enterprise knowledge, and the right choice depends on what you are building. Each interface is designed for a different use case, so matching the interface to what you're building — rather than, for example, calling the Search API from an LLM-based application — gives you the best results.
+Glean exposes enterprise knowledge through two main retrieval interfaces: **REST APIs** and the **Glean MCP server**. Choosing the right one depends on what you are building.
 
-| Interface               | Use it for                                                                       | Query to send                    |
-| :---------------------- | :------------------------------------------------------------------------------- | :------------------------------- |
-| Search API              | Programmatic access to Glean search, such as building a custom search experience | Query in the request body (POST) |
-| Glean MCP `search` tool | LLM-based applications                                                           | The LLM-rewritten query          |
-| Glean MCP `chat` tool   | End-to-end chat experiences                                                      | The original user query          |
+## Glean REST APIs
 
-- The **Search API** provides programmatic access to Glean search — building a custom search experience is one example. Do not use it to retrieve context for LLM-based applications; use the Glean MCP tools instead.
-- The **Glean MCP `search` tool** is for LLM-based applications. Send the query your LLM has rewritten for retrieval, not the raw user input.
-- The **Glean MCP `chat` tool** is for end-to-end chat experiences. Send the original user query rather than a rewritten one.
+The Glean REST APIs give you direct, programmatic access to Glean functionality. You control exactly what to query, when to query it, and how to handle the response. Use the REST APIs when you are building:
 
-The `search` and `chat` tools are the two most relevant to this choice; the Glean MCP server also exposes other tools, such as document retrieval, code search, and people lookup.
+- A custom search experience
+- A backend pipeline that processes or aggregates Glean data
+- An integration that needs deterministic, structured results
+
+## Glean MCP server
+
+The Glean MCP server exposes Glean's capabilities as tools that an LLM can invoke. The model decides when to call a tool and what to send. The MCP server includes tools for search, chat, document retrieval, code search, people lookup, and more. Use MCP when you are building:
+
+- An LLM-based application or agent that needs to retrieve enterprise context
+- A chat experience backed by Glean's knowledge graph
+- Any integration where the LLM, not your code, drives retrieval
+
+## Example: retrieving context for an LLM
+
+A common mistake is calling the Search REST API from an LLM-based application. The Search API expects a deterministic query and returns structured results — it is not designed for the variable, rewritten queries an LLM produces.
+
+For LLM applications, use the MCP tools instead:
+
+| Goal | Use |
+| :--- | :--- |
+| Retrieve documents for an LLM to reason over | Glean MCP `search` tool — send the LLM-rewritten query |
+| Build an end-to-end chat experience | Glean MCP `chat` tool — send the original user query |
+| Build a custom search UI | Search REST API — send the user query directly |
 
 :::info
 
-For a full overview of the Glean MCP server and its available tools, see the [MCP documentation](https://docs.glean.com/administration/platform/mcp/about).
+For a full list of available MCP tools, see the [MCP documentation](https://docs.glean.com/administration/platform/mcp/about).
 
 :::
