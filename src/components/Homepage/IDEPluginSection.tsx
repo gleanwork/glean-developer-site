@@ -42,45 +42,41 @@ export default function IDEPluginSection() {
         Go beyond MCP — our official plugins add purpose-built skills and tools
         for Claude Code and Cursor.
       </p>
-      <div className="row">
+      <div className={styles.grid}>
         {plugins.map((plugin) => (
-          <div key={plugin.name} className="col col--6">
-            <div
-              className={styles.card}
-              style={
-                { '--plugin-accent': plugin.accentColor } as React.CSSProperties
-              }
-            >
-              <div className={styles.cardHeader}>
-                <img
-                  src={useBaseUrl(plugin.logo)}
-                  alt={plugin.name}
-                  className={styles.logo}
-                />
-                <span className={styles.pluginName}>{plugin.name}</span>
-              </div>
-              <p className={styles.description}>{plugin.description}</p>
-              <div className={styles.actions}>
-                <Link
-                  to={plugin.repoHref}
-                  className={clsx('button button--secondary', styles.docsBtn)}
-                >
-                  View on GitHub
-                </Link>
-                <Link
-                  to={plugin.pageHref}
-                  className={clsx(
-                    'button button--primary',
-                    styles.configureBtn,
-                  )}
-                  style={{
-                    backgroundColor: plugin.accentColor,
-                    borderColor: plugin.accentColor,
-                  }}
-                >
-                  Get Started
-                </Link>
-              </div>
+          <div
+            key={plugin.name}
+            className={styles.card}
+            style={
+              { '--plugin-accent': plugin.accentColor } as React.CSSProperties
+            }
+          >
+            <div className={styles.cardHeader}>
+              <img
+                src={useBaseUrl(plugin.logo)}
+                alt={plugin.name}
+                className={styles.logo}
+              />
+              <span className={styles.pluginName}>{plugin.name}</span>
+            </div>
+            <p className={styles.description}>{plugin.description}</p>
+            <div className={styles.actions}>
+              <Link
+                to={plugin.repoHref}
+                className={clsx('button button--secondary', styles.docsBtn)}
+              >
+                View on GitHub
+              </Link>
+              <Link
+                to={plugin.pageHref}
+                className={clsx('button button--primary', styles.configureBtn)}
+                style={{
+                  backgroundColor: plugin.accentColor,
+                  borderColor: plugin.accentColor,
+                }}
+              >
+                Get Started
+              </Link>
             </div>
           </div>
         ))}
