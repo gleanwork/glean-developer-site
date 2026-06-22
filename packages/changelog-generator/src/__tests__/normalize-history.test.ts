@@ -14,10 +14,11 @@ function repoRoot(): string {
 }
 
 describe('normalizeHistoryEntries', () => {
-  // TODO(followup): the normalizer's flat change model is lossy for rich
+  // TODO(#587): the normalizer's flat change model is lossy for rich
   // hand-authored entries (strips doc links, prose sections, nested lists,
   // tags), so re-normalizing them reports rewrites here. Re-enable once the
   // normalizer is made idempotent/content-preserving on already-clean entries.
+  // https://github.com/gleanwork/glean-developer-site/issues/587
   it.skip('dry-runs every historical changelog entry without parse failures', () => {
     const result = normalizeHistoryEntries(repoRoot(), { dryRun: true });
 
