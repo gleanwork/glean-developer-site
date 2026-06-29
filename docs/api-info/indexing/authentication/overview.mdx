@@ -104,9 +104,13 @@ Authorization: Bearer <indexing_api_token>
     - **Token Name**: Descriptive name for tracking
     - **Global Permissions**: Full indexing API access
     - **App Permissions**: Limit to specific datasources (optional)
-    - **Expires On**: Optional expiration date
+    - **Expires On**: Expiration date (**required**) — the Admin Console validates this field before creating the token
     - **IP Restrictions**: Optional IP range limitations
     - **Rotation Settings**: Optional automated rotation
+
+    :::note
+      An expiration date is **required**. If you leave the **Expires** field empty, the Admin Console blocks token creation with a validation message rather than failing with a server error.
+    :::
   </Step>
 
   <Step title="Save Token Securely">
@@ -130,7 +134,7 @@ Authorization: Bearer <indexing_api_token>
 - **API Support**: **Indexing API only** (Client API not supported)
 - **User Context**: Global permissions (no user-scoping available)
 - **Scopes**: Full indexing API access (no granular scope control)
-- **Expiration**: Optional custom expiry dates
+- **Expiration**: Required expiry date (validated in the Admin Console at creation time)
 - **Security**: Support for IP restrictions and rotation
 
 ---
@@ -439,7 +443,7 @@ curl -X POST https://<instance>-be.glean.com/api/index/v1/indexdocument \
 - **Store tokens securely** - never commit tokens to version control
 - **Use IP restrictions** when possible to limit token usage
 - **Enable token rotation** for long-running applications
-- **Set expiration dates** for tokens used in temporary projects
+- **Set an appropriate expiration date** - expiration is required, so choose the shortest window that fits your use case (and plan to rotate or reissue before it lapses)
 - **Monitor token usage** through the admin console
 - **Create separate tokens** for different environments (dev/staging/prod)
 
