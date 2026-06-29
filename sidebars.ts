@@ -568,6 +568,12 @@ const baseSidebars: SidebarsConfig = {
               label: 'Edit an agent',
               className: 'api-method post',
             },
+            {
+              type: 'doc',
+              id: 'api/client-api/agents/create-agent',
+              label: 'Create an agent',
+              className: 'api-method post',
+            },
           ],
         },
         {
