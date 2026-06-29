@@ -2,11 +2,11 @@ openapi: 3.0.0
 info:
   version: 0.9.0
   title: Glean API - Shortcuts
-  x-source-commit-sha: 6f50f0b325ae618cb38dd2fdc0b334e9d6ccf805
+  x-source-commit-sha: 6103cdd1c1bdd4666a563b84954e895fb548e87d
   description: API endpoints for Shortcuts
   x-logo:
     url: https://app.glean.com/images/glean-text2.svg
-  x-open-api-commit-sha: 98fce8303895c9cdc333fe1210501e17f21a2800
+  x-open-api-commit-sha: 389ef1dd5a469ab93c8757680d121524473818b1
   x-speakeasy-name: Glean API
 servers:
   - url: https://{instance}-be.glean.com
@@ -9175,6 +9175,8 @@ components:
     GroupType:
       type: string
       description: The type of user group
+      x-enumDescriptions:
+        COLLECTION_AUDIENCE: Refers to any viewers of the Collection.
       enum:
         - DEPARTMENT
         - ALL
@@ -9184,6 +9186,9 @@ components:
         - LOCATION
         - REGION
         - EXTERNAL_GROUP
+        - COLLECTION_AUDIENCE
+      x-speakeasy-enum-descriptions:
+        COLLECTION_AUDIENCE: Refers to any viewers of the Collection.
     ScopeType:
       type: string
       description: Describes the scope for a ReadPermission, WritePermission, or GrantPermission object
@@ -16402,6 +16407,7 @@ components:
     APIToken:
       scheme: bearer
       type: http
+      description: 'HTTP bearer token. Accepts a Glean-issued API token, an OAuth access token from the Glean OAuth Authorization Server (including Dynamic Client Registration clients), or an OAuth access token issued by an external identity provider. External-IdP OAuth tokens must also include the `X-Glean-Auth-Type: OAUTH` request header. OAuth is supported on the Client API only; the Indexing API requires a Glean-issued token.'
   parameters:
     locale:
       name: locale
