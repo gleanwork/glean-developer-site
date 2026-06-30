@@ -155,7 +155,4 @@ function generateRss() {
   );
 }
 
-// Run only when executed directly, not when imported.
-if (process.argv[1] === __filename) {
-  generateRss();
-}
+generateRss();
