@@ -6,9 +6,10 @@ import ApiOverview from '@site/src/components/ApiOverview';
 
 # Chat API
 
+The Chat API enables you to build conversational experiences with Glean AI. Create interactive chat applications, manage conversation history, upload files for context, and leverage Glean's AI capabilities to provide intelligent responses based on your organization's knowledge.
+
 <ApiOverview
   title="Chat API"
-  description="The Chat API enables you to build conversational experiences with Glean AI. Create interactive chat applications, manage conversation history, upload files for context, and leverage Glean's AI capabilities to provide intelligent responses based on your organization's knowledge."
   apiFamily="chat"
   useCases={[
     {
@@ -28,30 +29,30 @@ import ApiOverview from '@site/src/components/ApiOverview';
       icon: "Clock"
     }
   ]}
->
-  ## Chat API integrations
+/>
 
-  If you use the Chat API to integrate Glean Assistant into your own applications, the agentic engine is not enabled by default for API requests. When you omit `agentConfig` from a Chat API request, the API defaults to legacy Chat V2 behavior, even if the agentic engine is enabled for your tenant in the Glean UI.
+## Chat API integrations
 
-  To use the agentic engine through the Chat API, set `agentConfig.agent` in your request body to one of the following values:
+If you use the Chat API to integrate Glean Assistant into your own applications, the agentic engine is not enabled by default for API requests. When you omit `agentConfig` from a Chat API request, the API defaults to legacy Chat V2 behavior, even if the agentic engine is enabled for your tenant in the Glean UI.
 
-  - **`FAST`**: Uses the agentic engine with a fast model set and reduced reasoning effort. Corresponds to fast mode in the Glean UI.
-  - **`ADVANCED`**: Uses full agentic reasoning with the best model set. Corresponds to thinking mode in the Glean UI.
+To use the agentic engine through the Chat API, set `agentConfig.agent` in your request body to one of the following values:
 
-  If you don't set `agentConfig.agent`, or set it to `DEFAULT`, the API uses legacy Chat V2 without the agentic engine.
+- **`FAST`**: Uses the agentic engine with a fast model set and reduced reasoning effort. Corresponds to fast mode in the Glean UI.
+- **`ADVANCED`**: Uses full agentic reasoning with the best model set. Corresponds to thinking mode in the Glean UI.
 
-  The same model requirements apply to API integrations: GPT-5 or Claude Sonnet 4.5 must be configured as the agentic reasoning model. Without a supported model, the API falls back to legacy Chat V2 regardless of the `agentConfig` setting.
+If you don't set `agentConfig.agent`, or set it to `DEFAULT`, the API uses legacy Chat V2 without the agentic engine.
 
-  ### Verify the agentic engine is active
+The same model requirements apply to API integrations: GPT-5 or Claude Sonnet 4.5 must be configured as the agentic reasoning model. Without a supported model, the API falls back to legacy Chat V2 regardless of the `agentConfig` setting.
 
-  To confirm that a Chat API response used the agentic engine, check for `"workflowId": "INTERNAL_LOOPING_PYAGENT"` in the response body.
+### Verify the agentic engine is active
 
-  ### Citations in Chat API responses
+To confirm that a Chat API response used the agentic engine, check for `"workflowId": "INTERNAL_LOOPING_PYAGENT"` in the response body.
 
-  Citation behavior differs between legacy Chat V2 and the agentic engine:
+### Citations in Chat API responses
 
-  - **Legacy Chat V2 (`DEFAULT`)**: May return fewer or missing citations compared to the Glean UI.
-  - **Agentic engine (`FAST` or `ADVANCED`)**: Provides grounded answers with consistent citations, including deep-linked citations when supported.
+Citation behavior differs between legacy Chat V2 and the agentic engine:
 
-  If your Chat API integration previously returned citations and they stopped appearing after enabling the agentic engine in the UI, verify that your API requests include `agentConfig.agent` set to `FAST` or `ADVANCED`.
-</ApiOverview>
+- **Legacy Chat V2 (`DEFAULT`)**: May return fewer or missing citations compared to the Glean UI.
+- **Agentic engine (`FAST` or `ADVANCED`)**: Provides grounded answers with consistent citations, including deep-linked citations when supported.
+
+If your Chat API integration previously returned citations and they stopped appearing after enabling the agentic engine in the UI, verify that your API requests include `agentConfig.agent` set to `FAST` or `ADVANCED`.

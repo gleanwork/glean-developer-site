@@ -22,11 +22,10 @@ interface UseCase {
 
 interface ApiOverviewProps {
   title: string;
-  description: string;
+  description?: string;
   useCases: UseCase[];
   apiFamily: string;
   apiType?: 'client-api' | 'indexing-api';
-  children?: React.ReactNode;
 }
 
 function MethodBadge({ method }: { method: string }) {
@@ -305,7 +304,6 @@ export default function ApiOverview({
   useCases,
   apiFamily,
   apiType = 'client-api',
-  children,
 }: ApiOverviewProps) {
   const endpoints =
     apiType === 'indexing-api'
@@ -314,9 +312,7 @@ export default function ApiOverview({
 
   return (
     <div>
-      <p className="margin-bottom--lg">{description}</p>
-
-      {children && <div className="margin-bottom--xl">{children}</div>}
+      {description && <p className="margin-bottom--lg">{description}</p>}
 
       <div className="margin-bottom--xl">
         <h2>Use Cases</h2>
