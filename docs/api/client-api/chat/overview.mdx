@@ -29,31 +29,29 @@ import ApiOverview from '@site/src/components/ApiOverview';
     }
   ]}
 >
+  ## Chat API integrations
 
-## Chat API integrations
+  If you use the Chat API to integrate Glean Assistant into your own applications, the agentic engine is not enabled by default for API requests. When you omit `agentConfig` from a Chat API request, the API defaults to legacy Chat V2 behavior, even if the agentic engine is enabled for your tenant in the Glean UI.
 
-If you use the Chat API to integrate Glean Assistant into your own applications, the agentic engine is not enabled by default for API requests. When you omit `agentConfig` from a Chat API request, the API defaults to legacy Chat V2 behavior, even if the agentic engine is enabled for your tenant in the Glean UI.
+  To use the agentic engine through the Chat API, set `agentConfig.agent` in your request body to one of the following values:
 
-To use the agentic engine through the Chat API, set `agentConfig.agent` in your request body to one of the following values:
+  - **`FAST`**: Uses the agentic engine with a fast model set and reduced reasoning effort. Corresponds to fast mode in the Glean UI.
+  - **`ADVANCED`**: Uses full agentic reasoning with the best model set. Corresponds to thinking mode in the Glean UI.
 
-- **`FAST`**: Uses the agentic engine with a fast model set and reduced reasoning effort. Corresponds to fast mode in the Glean UI.
-- **`ADVANCED`**: Uses full agentic reasoning with the best model set. Corresponds to thinking mode in the Glean UI.
+  If you don't set `agentConfig.agent`, or set it to `DEFAULT`, the API uses legacy Chat V2 without the agentic engine.
 
-If you don't set `agentConfig.agent`, or set it to `DEFAULT`, the API uses legacy Chat V2 without the agentic engine.
+  The same model requirements apply to API integrations: GPT-5 or Claude Sonnet 4.5 must be configured as the agentic reasoning model. Without a supported model, the API falls back to legacy Chat V2 regardless of the `agentConfig` setting.
 
-The same model requirements apply to API integrations: GPT-5 or Claude Sonnet 4.5 must be configured as the agentic reasoning model. Without a supported model, the API falls back to legacy Chat V2 regardless of the `agentConfig` setting.
+  ### Verify the agentic engine is active
 
-### Verify the agentic engine is active
+  To confirm that a Chat API response used the agentic engine, check for `"workflowId": "INTERNAL_LOOPING_PYAGENT"` in the response body.
 
-To confirm that a Chat API response used the agentic engine, check for `"workflowId": "INTERNAL_LOOPING_PYAGENT"` in the response body.
+  ### Citations in Chat API responses
 
-### Citations in Chat API responses
+  Citation behavior differs between legacy Chat V2 and the agentic engine:
 
-Citation behavior differs between legacy Chat V2 and the agentic engine:
+  - **Legacy Chat V2 (`DEFAULT`)**: May return fewer or missing citations compared to the Glean UI.
+  - **Agentic engine (`FAST` or `ADVANCED`)**: Provides grounded answers with consistent citations, including deep-linked citations when supported.
 
-- **Legacy Chat V2 (`DEFAULT`)**: May return fewer or missing citations compared to the Glean UI.
-- **Agentic engine (`FAST` or `ADVANCED`)**: Provides grounded answers with consistent citations, including deep-linked citations when supported.
-
-If your Chat API integration previously returned citations and they stopped appearing after enabling the agentic engine in the UI, verify that your API requests include `agentConfig.agent` set to `FAST` or `ADVANCED`.
-
+  If your Chat API integration previously returned citations and they stopped appearing after enabling the agentic engine in the UI, verify that your API requests include `agentConfig.agent` set to `FAST` or `ADVANCED`.
 </ApiOverview>
