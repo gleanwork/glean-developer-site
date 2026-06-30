@@ -13,9 +13,9 @@ describe('getLocationFromPath', () => {
 
   it('labels client API paths as "Client API"', () => {
     expect(getLocationFromPath('/rest/api/v1/chat')).toBe('Client API');
-    expect(getLocationFromPath('/rest/api/v1/governance/data/policies/{id}')).toBe(
-      'Client API',
-    );
+    expect(
+      getLocationFromPath('/rest/api/v1/governance/data/policies/{id}'),
+    ).toBe('Client API');
   });
 
   it('defaults unknown paths to "Client API"', () => {
