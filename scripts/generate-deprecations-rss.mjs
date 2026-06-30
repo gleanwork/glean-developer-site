@@ -51,8 +51,8 @@ function needsRegeneration(dataFile, outputFile) {
 /**
  * Get location label from endpoint path
  */
-function getLocationFromPath(endpointPath) {
-  if (endpointPath.startsWith('/indexing/')) {
+export function getLocationFromPath(endpointPath) {
+  if (endpointPath.startsWith('/api/index/')) {
     return 'Indexing API';
   }
   return 'Client API';
@@ -164,5 +164,7 @@ function generateRss() {
   );
 }
 
-// Run if called directly
-generateRss();
+// Run if called directly (skip when imported, e.g. in tests)
+if (process.argv[1] === __filename) {
+  generateRss();
+}

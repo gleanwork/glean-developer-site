@@ -22,7 +22,7 @@ export interface EndpointGroup {
 }
 
 export function getLocationFromPath(path: string): string {
-  if (path.startsWith('/indexing/')) {
+  if (path.startsWith('/api/index/')) {
     return 'Indexing API';
   }
   return 'Client API';
