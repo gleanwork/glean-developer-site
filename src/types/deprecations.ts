@@ -21,12 +21,7 @@ export interface EndpointGroup {
   deprecations: DeprecationItem[];
 }
 
-export function getLocationFromPath(path: string): string {
-  if (path.startsWith('/api/index/')) {
-    return 'Indexing API';
-  }
-  return 'Client API';
-}
+export { getLocationFromPath } from './deprecations-location.mjs';
 
 export interface DeprecationsData {
   endpoints: EndpointGroup[];

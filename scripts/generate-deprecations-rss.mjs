@@ -13,6 +13,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { Feed } from 'feed';
+import { getLocationFromPath } from '../src/types/deprecations-location.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -46,16 +47,6 @@ function needsRegeneration(dataFile, outputFile) {
   const outputStats = fs.statSync(outputFile);
 
   return dataStats.mtime > outputStats.mtime;
-}
-
-/**
- * Get location label from endpoint path
- */
-export function getLocationFromPath(endpointPath) {
-  if (endpointPath.startsWith('/api/index/')) {
-    return 'Indexing API';
-  }
-  return 'Client API';
 }
 
 /**
@@ -164,7 +155,7 @@ function generateRss() {
   );
 }
 
-// Run if called directly (skip when imported, e.g. in tests)
+// Run only when executed directly, not when imported.
 if (process.argv[1] === __filename) {
   generateRss();
 }
