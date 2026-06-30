@@ -155,4 +155,5 @@ function generateRss() {
   );
 }
 
+// Run if called directly
 generateRss();
