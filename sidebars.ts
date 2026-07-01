@@ -444,6 +444,9 @@ const baseSidebars: SidebarsConfig = {
       label: 'Platform API',
       collapsible: false,
       collapsed: false,
+      customProps: {
+        flag: 'platform-api',
+      },
       items: [
         {
           type: 'category',
@@ -474,6 +477,9 @@ const baseSidebars: SidebarsConfig = {
       label: 'Platform API Reference',
       collapsible: false,
       collapsed: false,
+      customProps: {
+        flag: 'platform-api',
+      },
       items: [
         {
           type: 'category',
