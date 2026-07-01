@@ -441,6 +441,124 @@ const baseSidebars: SidebarsConfig = {
     },
     {
       type: 'category' as const,
+      label: 'Platform API',
+      collapsible: false,
+      collapsed: false,
+      items: [
+        {
+          type: 'category',
+          label: 'Getting Started',
+          items: [
+            {
+              type: 'doc',
+              id: 'api-info/platform/getting-started/overview',
+              label: 'Overview',
+            },
+          ],
+        },
+        {
+          type: 'category',
+          label: 'Authentication',
+          items: [
+            {
+              type: 'doc',
+              id: 'api-info/platform/authentication/overview',
+              label: 'Overview',
+            },
+          ],
+        },
+      ],
+    },
+    {
+      type: 'category',
+      label: 'Platform API Reference',
+      collapsible: false,
+      collapsed: false,
+      items: [
+        {
+          type: 'category',
+          label: 'Agents',
+          items: [
+            {
+              type: 'doc',
+              id: 'api/platform-api/agents-overview',
+              label: 'Overview',
+            },
+            {
+              type: 'doc',
+              id: 'api/platform-api/platform-agents-search',
+              label: 'Search agents',
+              className: 'api-method post',
+            },
+            {
+              type: 'doc',
+              id: 'api/platform-api/platform-agents-get',
+              label: 'Get agent',
+              className: 'api-method get',
+            },
+            {
+              type: 'doc',
+              id: 'api/platform-api/platform-agents-get-schemas',
+              label: 'Get agent schemas',
+              className: 'api-method get',
+            },
+            {
+              type: 'doc',
+              id: 'api/platform-api/platform-agents-create-run',
+              label: 'Create agent run',
+              className: 'api-method post',
+            },
+          ],
+        },
+        {
+          type: 'category',
+          label: 'Skills',
+          items: [
+            {
+              type: 'doc',
+              id: 'api/platform-api/skills-overview',
+              label: 'Overview',
+            },
+            {
+              type: 'doc',
+              id: 'api/platform-api/platform-skills-list',
+              label: 'List skills',
+              className: 'api-method get',
+            },
+            {
+              type: 'doc',
+              id: 'api/platform-api/platform-skills-get',
+              label: 'Retrieve skill',
+              className: 'api-method get',
+            },
+          ],
+        },
+        {
+          type: 'category',
+          label: 'Search',
+          items: [
+            {
+              type: 'doc',
+              id: 'api/platform-api/search-overview',
+              label: 'Overview',
+            },
+            {
+              type: 'doc',
+              id: 'api/platform-api/platform-search',
+              label: 'Search',
+              className: 'api-method post',
+            },
+          ],
+        },
+        {
+          type: 'link',
+          href: 'https://developers.glean.com/oas/platform',
+          label: 'OpenAPI Spec',
+        },
+      ],
+    },
+    {
+      type: 'category' as const,
       label: 'Client API',
       collapsible: false,
       collapsed: false,

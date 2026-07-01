@@ -25,7 +25,7 @@ interface ApiOverviewProps {
   description: string;
   useCases: UseCase[];
   apiFamily: string;
-  apiType?: 'client-api' | 'indexing-api';
+  apiType?: 'client-api' | 'indexing-api' | 'platform-api';
 }
 
 function MethodBadge({ method }: { method: string }) {
@@ -49,8 +49,70 @@ function getDocLinkForEndpoint(
     return `/api/indexing-api/${kebabCaseId}`;
   }
 
+  if (apiType === 'platform-api') {
+    const kebabCaseId = camelToKebab(operationId);
+    return `/api/platform-api/${kebabCaseId}`;
+  }
+
   const kebabCaseId = camelToKebab(operationId);
   return `/api/client-api/${apiFamily.toLowerCase()}/${kebabCaseId}`;
+}
+
+function getPlatformApiEndpoints(apiFamily: string): Endpoint[] {
+  // Platform API is generated from a single flat spec (indexing pattern), so
+  // endpoints are enumerated here per tag rather than read from split-info.json.
+  const platformEndpoints: { [key: string]: Endpoint[] } = {
+    agents: [
+      {
+        method: 'POST',
+        path: '/api/agents/search',
+        summary: 'Search agents',
+        operationId: 'platform-agents-search',
+      },
+      {
+        method: 'GET',
+        path: '/api/agents/{agent_id}',
+        summary: 'Get agent',
+        operationId: 'platform-agents-get',
+      },
+      {
+        method: 'GET',
+        path: '/api/agents/{agent_id}/schemas',
+        summary: 'Get agent schemas',
+        operationId: 'platform-agents-get-schemas',
+      },
+      {
+        method: 'POST',
+        path: '/api/agents/{agent_id}/runs',
+        summary: 'Create agent run',
+        operationId: 'platform-agents-create-run',
+      },
+    ],
+    skills: [
+      {
+        method: 'GET',
+        path: '/api/skills',
+        summary: 'List skills',
+        operationId: 'platform-skills-list',
+      },
+      {
+        method: 'GET',
+        path: '/api/skills/{skill_id}',
+        summary: 'Retrieve skill',
+        operationId: 'platform-skills-get',
+      },
+    ],
+    search: [
+      {
+        method: 'POST',
+        path: '/api/search',
+        summary: 'Search',
+        operationId: 'platform-search',
+      },
+    ],
+  };
+
+  return platformEndpoints[apiFamily] || [];
 }
 
 function getIndexingApiEndpoints(apiFamily: string): Endpoint[] {
@@ -308,7 +370,9 @@ export default function ApiOverview({
   const endpoints =
     apiType === 'indexing-api'
       ? getIndexingApiEndpoints(apiFamily)
-      : getEndpointsForApi(apiFamily);
+      : apiType === 'platform-api'
+        ? getPlatformApiEndpoints(apiFamily)
+        : getEndpointsForApi(apiFamily);
 
   return (
     <div>
