@@ -23,6 +23,7 @@ import { translate } from '@docusaurus/Translate';
 import useIsBrowser from '@docusaurus/useIsBrowser';
 import DocSidebarItems from '@theme/DocSidebarItems';
 import { Icon } from '@theme/Icons';
+import { FeatureFlagsContext } from '@site/src/theme/Root';
 import type { Props } from '@theme/DocSidebarItem/Category';
 
 // If we navigate to a category and it becomes active, it should automatically
@@ -155,6 +156,16 @@ export default function DocSidebarItemCategory({
       setCollapsed(true);
     }
   }, [collapsible, expandedItem, index, setCollapsed, autoCollapseCategories]);
+
+  // Feature-flag gating: hide a category (and its children) when it declares a
+  // `customProps.flag` that isn't enabled. Evaluated at the end so all hooks
+  // above always run in a stable order (see rules of hooks). Enable via Edge
+  // Config or the runtime query param, e.g. `?ff_platform-api=true`.
+  const { isEnabled } = React.useContext(FeatureFlagsContext);
+  const flag = (item as any).customProps?.flag as string | undefined;
+  if (flag && !isEnabled(flag)) {
+    return null;
+  }
 
   return (
     <li
