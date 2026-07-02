@@ -441,12 +441,9 @@ const baseSidebars: SidebarsConfig = {
     },
     {
       type: 'category' as const,
-      label: 'Platform API',
+      label: 'API Overview',
       collapsible: false,
       collapsed: false,
-      customProps: {
-        flag: 'platform-api',
-      },
       items: [
         {
           type: 'category',
@@ -454,8 +451,18 @@ const baseSidebars: SidebarsConfig = {
           items: [
             {
               type: 'doc',
-              id: 'api-info/platform/getting-started/overview',
+              id: 'api-info/client/getting-started/overview',
               label: 'Overview',
+            },
+            {
+              type: 'doc',
+              id: 'api-info/client/getting-started/basic-usage',
+              label: 'Basic Usage',
+            },
+            {
+              type: 'doc',
+              id: 'api-info/client/getting-started/choosing-a-retrieval-interface',
+              label: 'Choose a retrieval interface',
             },
           ],
         },
@@ -465,8 +472,23 @@ const baseSidebars: SidebarsConfig = {
           items: [
             {
               type: 'doc',
-              id: 'api-info/platform/authentication/overview',
-              label: 'Overview',
+              id: 'api-info/client/authentication/overview',
+              label: 'Implementation Guide',
+            },
+            {
+              type: 'doc',
+              id: 'api-info/client/authentication/glean-issued',
+              label: 'Glean Tokens',
+            },
+            {
+              type: 'doc',
+              id: 'api-info/client/authentication/oauth',
+              label: 'OAuth',
+            },
+            {
+              type: 'doc',
+              id: 'api-info/client/authentication/datasource-oauth',
+              label: 'Datasource OAuth',
             },
           ],
         },
@@ -560,61 +582,6 @@ const baseSidebars: SidebarsConfig = {
           type: 'link',
           href: 'https://developers.glean.com/oas/platform',
           label: 'OpenAPI Spec',
-        },
-      ],
-    },
-    {
-      type: 'category' as const,
-      label: 'Client API',
-      collapsible: false,
-      collapsed: false,
-      items: [
-        {
-          type: 'category',
-          label: 'Getting Started',
-          items: [
-            {
-              type: 'doc',
-              id: 'api-info/client/getting-started/overview',
-              label: 'Overview',
-            },
-            {
-              type: 'doc',
-              id: 'api-info/client/getting-started/basic-usage',
-              label: 'Basic Usage',
-            },
-            {
-              type: 'doc',
-              id: 'api-info/client/getting-started/choosing-a-retrieval-interface',
-              label: 'Choose a retrieval interface',
-            },
-          ],
-        },
-        {
-          type: 'category',
-          label: 'Authentication',
-          items: [
-            {
-              type: 'doc',
-              id: 'api-info/client/authentication/overview',
-              label: 'Implementation Guide',
-            },
-            {
-              type: 'doc',
-              id: 'api-info/client/authentication/glean-issued',
-              label: 'Glean Tokens',
-            },
-            {
-              type: 'doc',
-              id: 'api-info/client/authentication/oauth',
-              label: 'OAuth',
-            },
-            {
-              type: 'doc',
-              id: 'api-info/client/authentication/datasource-oauth',
-              label: 'Datasource OAuth',
-            },
-          ],
         },
       ],
     },
