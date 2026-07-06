@@ -6,6 +6,7 @@ import Link from '@docusaurus/Link';
 import isInternalUrl from '@docusaurus/isInternalUrl';
 import IconExternalLink from '@theme/Icon/ExternalLink';
 import { Icon } from '@theme/Icons';
+import { FeatureFlagsContext } from '@site/src/theme/Root';
 import type { Props } from '@theme/DocSidebarItem/Link';
 
 import styles from './styles.module.css';
@@ -21,6 +22,13 @@ export default function DocSidebarItemLink({
   const { href, label, className, autoAddBaseUrl } = item;
   const isActive = isActiveSidebarItem(item, activePath);
   const isInternalLink = isInternalUrl(href);
+  // Feature-flag gating: hide a link when it declares a `customProps.flag`
+  // that isn't enabled (e.g. reveal via `?ff_platform-api=true`).
+  const { isEnabled } = React.useContext(FeatureFlagsContext);
+  const flag = (item as any).customProps?.flag as string | undefined;
+  if (flag && !isEnabled(flag)) {
+    return null;
+  }
   return (
     <li
       className={clsx(

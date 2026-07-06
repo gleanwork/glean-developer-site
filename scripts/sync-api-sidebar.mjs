@@ -34,11 +34,16 @@ const SIDEBARS_PATH = path.join(REPO_ROOT, 'sidebars.ts');
 const API_DIRS = [
   path.join(DOCS_ROOT, 'api/client-api'),
   path.join(DOCS_ROOT, 'api/indexing-api'),
+  path.join(DOCS_ROOT, 'api/platform-api'),
 ];
 
 const INDEXING_SPEC = path.join(
   REPO_ROOT,
   'openapi/indexing/indexing-capitalized.yaml',
+);
+const PLATFORM_SPEC = path.join(
+  REPO_ROOT,
+  'openapi/platform/platform-capitalized.yaml',
 );
 const CLIENT_SPLIT_DIR = path.join(REPO_ROOT, 'openapi/client/split-apis');
 const HTTP_METHODS = ['get', 'post', 'put', 'patch', 'delete'];
@@ -151,6 +156,7 @@ function buildSlugToTagMap() {
   const map = new Map();
   const specPaths = [];
   if (fs.existsSync(INDEXING_SPEC)) specPaths.push(INDEXING_SPEC);
+  if (fs.existsSync(PLATFORM_SPEC)) specPaths.push(PLATFORM_SPEC);
   if (fs.existsSync(CLIENT_SPLIT_DIR)) {
     for (const f of fs.readdirSync(CLIENT_SPLIT_DIR)) {
       if (f.endsWith('.yaml')) specPaths.push(path.join(CLIENT_SPLIT_DIR, f));

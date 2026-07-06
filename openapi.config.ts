@@ -24,6 +24,11 @@ export const openApiPluginOptions = {
       specPath: './openapi/indexing/indexing-capitalized.yaml',
       outputDir: 'docs/api/indexing-api',
     },
+    platform: {
+      ...sharedOptions,
+      specPath: './openapi/platform/platform-capitalized.yaml',
+      outputDir: 'docs/api/platform-api',
+    },
     activity: {
       // ok
       ...sharedOptions,
