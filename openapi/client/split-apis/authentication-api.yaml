@@ -2,11 +2,11 @@ openapi: 3.0.0
 info:
   version: 0.9.0
   title: Glean API - Authentication
-  x-source-commit-sha: 6103cdd1c1bdd4666a563b84954e895fb548e87d
+  x-source-commit-sha: 33bf057cf0f948a83126e81582717aebdb622bfa
   description: API endpoints for Authentication
   x-logo:
     url: https://app.glean.com/images/glean-text2.svg
-  x-open-api-commit-sha: 389ef1dd5a469ab93c8757680d121524473818b1
+  x-open-api-commit-sha: f5245e430a3578e1540117c92889ddcf2cb18c90
   x-speakeasy-name: Glean API
 servers:
   - url: https://{instance}-be.glean.com
@@ -45,6 +45,8 @@ paths:
           description: Too Many Requests
       security:
         - APIToken: []
+      x-speakeasy-name-override: checkDatasourceAuth
+      x-speakeasy-group: client.authentication
       x-codeSamples:
         - lang: Python
           label: Python (API Client)
@@ -58,7 +60,7 @@ paths:
                 server_url="https://mycompany-be.glean.com",
             ) as glean:
 
-                res = glean.authentication.checkdatasourceauth()
+                res = glean.client.authentication.check_datasource_auth()
 
                 # Handle response
                 print(res)
@@ -73,7 +75,7 @@ paths:
             });
 
             async function run() {
-              const result = await glean.authentication.checkdatasourceauth();
+              const result = await glean.client.authentication.checkDatasourceAuth();
 
               console.log(result);
             }
@@ -81,7 +83,7 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Authentication.Checkdatasourceauth(ctx)\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.CheckDatasourceAuthResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Client.Authentication.CheckDatasourceAuth(ctx)\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.CheckDatasourceAuthResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -99,7 +101,7 @@ paths:
                             .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
                         .build();
 
-                    CheckdatasourceauthResponse res = sdk.authentication().checkdatasourceauth()
+                    CheckdatasourceauthResponse res = sdk.client().authentication().checkDatasourceAuth()
                             .call();
 
                     if (res.checkDatasourceAuthResponse().isPresent()) {

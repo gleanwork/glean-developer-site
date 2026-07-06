@@ -2,7 +2,7 @@ openapi: 3.0.0
 info:
   version: 0.9.0
   title: Glean API
-  x-source-commit-sha: 6103cdd1c1bdd4666a563b84954e895fb548e87d
+  x-source-commit-sha: 33bf057cf0f948a83126e81582717aebdb622bfa
   description: |
     # Introduction
     In addition to the data sources that Glean has built-in support for, Glean also provides a REST API that enables customers to put arbitrary content in the search index. This is useful, for example, for doing permissions-aware search over content in internal tools that reside on-prem as well as for searching over applications that Glean does not currently support first class. In addition these APIs allow the customer to push organization data (people info, organization structure etc) into Glean.
@@ -22,7 +22,7 @@ info:
     These API clients provide type-safe, idiomatic interfaces for working with Glean IndexingAPIs in your language of choice.
   x-logo:
     url: https://app.glean.com/images/glean-text2.svg
-  x-open-api-commit-sha: 389ef1dd5a469ab93c8757680d121524473818b1
+  x-open-api-commit-sha: f5245e430a3578e1540117c92889ddcf2cb18c90
   x-speakeasy-name: Glean API
 servers:
   - url: https://{instance}-be.glean.com
@@ -3752,6 +3752,8 @@ paths:
           description: Not Authorized
         '429':
           description: Too Many Requests
+      x-speakeasy-group: indexing.documents
+      x-speakeasy-name-override: debugEvents
       x-codeSamples:
         - lang: Python
           label: Python (API Client)
@@ -3765,7 +3767,7 @@ paths:
                 server_url="https://mycompany-be.glean.com",
             ) as glean:
 
-                res = glean.troubleshooting.post_api_index_v1_debug_datasource_document_events(datasource="<value>", object_type="Article", doc_id="art123", start_date="2025-05-01", max_events=50)
+                res = glean.indexing.documents.debug_events(datasource="<value>", object_type="Article", doc_id="art123", start_date="2025-05-01", max_events=50)
 
                 # Handle response
                 print(res)
@@ -3780,7 +3782,7 @@ paths:
             });
 
             async function run() {
-              const result = await glean.troubleshooting.postApiIndexV1DebugDatasourceDocumentEvents({
+              const result = await glean.indexing.documents.debugEvents({
                 objectType: "Article",
                 docId: "art123",
                 startDate: "2025-05-01",
@@ -3809,7 +3811,7 @@ paths:
                             .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
                         .build();
 
-                    PostApiIndexV1DebugDatasourceDocumentEventsResponse res = sdk.troubleshooting().postApiIndexV1DebugDatasourceDocumentEvents()
+                    PostApiIndexV1DebugDatasourceDocumentEventsResponse res = sdk.indexing().documents().debugEvents()
                             .datasource("<value>")
                             .debugDocumentLifecycleRequest(DebugDocumentLifecycleRequest.builder()
                                 .objectType("Article")
@@ -3826,7 +3828,7 @@ paths:
             }
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Troubleshooting.PostAPIIndexV1DebugDatasourceDocumentEvents(ctx, \"<value>\", components.DebugDocumentLifecycleRequest{\n        ObjectType: \"Article\",\n        DocID: \"art123\",\n        StartDate: apiclientgo.Pointer(\"2025-05-01\"),\n        MaxEvents: apiclientgo.Pointer[int64](50),\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.DebugDocumentLifecycleResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Indexing.Documents.DebugEvents(ctx, \"<value>\", components.DebugDocumentLifecycleRequest{\n        ObjectType: \"Article\",\n        DocID: \"art123\",\n        StartDate: apiclientgo.Pointer(\"2025-05-01\"),\n        MaxEvents: apiclientgo.Pointer[int64](50),\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.DebugDocumentLifecycleResponse != nil {\n        // handle response\n    }\n}"
   /rest/api/index/document/{docId}/custom-metadata/{groupName}:
     servers:
       - url: https://{instance}-be.glean.com

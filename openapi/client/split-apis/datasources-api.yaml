@@ -2,11 +2,11 @@ openapi: 3.0.0
 info:
   version: 0.9.0
   title: Glean API - Datasources
-  x-source-commit-sha: 6103cdd1c1bdd4666a563b84954e895fb548e87d
+  x-source-commit-sha: 33bf057cf0f948a83126e81582717aebdb622bfa
   description: API endpoints for Datasources
   x-logo:
     url: https://app.glean.com/images/glean-text2.svg
-  x-open-api-commit-sha: 389ef1dd5a469ab93c8757680d121524473818b1
+  x-open-api-commit-sha: f5245e430a3578e1540117c92889ddcf2cb18c90
   x-speakeasy-name: Glean API
 servers:
   - url: https://{instance}-be.glean.com
@@ -57,6 +57,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
       x-visibility: Preview
+      x-speakeasy-group: client.datasources
+      x-speakeasy-name-override: retrieveConfiguration
       x-codeSamples:
         - lang: Python
           label: Python (API Client)
@@ -70,7 +72,7 @@ paths:
                 server_url="https://mycompany-be.glean.com",
             ) as glean:
 
-                res = glean.datasources.get_datasource_instance_configuration(datasource_id="o365sharepoint", instance_id="o365sharepoint_abc123")
+                res = glean.client.datasources.retrieve_configuration(datasource_id="o365sharepoint", instance_id="o365sharepoint_abc123")
 
                 # Handle response
                 print(res)
@@ -85,7 +87,7 @@ paths:
             });
 
             async function run() {
-              const result = await glean.datasources.getDatasourceInstanceConfiguration("o365sharepoint", "o365sharepoint_abc123");
+              const result = await glean.client.datasources.retrieveConfiguration("o365sharepoint", "o365sharepoint_abc123");
 
               console.log(result);
             }
@@ -93,7 +95,7 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Datasources.GetDatasourceInstanceConfiguration(ctx, \"o365sharepoint\", \"o365sharepoint_abc123\")\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.DatasourceConfigurationResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Client.Datasources.RetrieveConfiguration(ctx, \"o365sharepoint\", \"o365sharepoint_abc123\")\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.DatasourceConfigurationResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -112,7 +114,7 @@ paths:
                             .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
                         .build();
 
-                    GetDatasourceInstanceConfigurationResponse res = sdk.datasources().getDatasourceInstanceConfiguration()
+                    GetDatasourceInstanceConfigurationResponse res = sdk.client().datasources().retrieveConfiguration()
                             .datasourceId("o365sharepoint")
                             .instanceId("o365sharepoint_abc123")
                             .call();
@@ -168,6 +170,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
       x-visibility: Preview
+      x-speakeasy-group: client.datasources
+      x-speakeasy-name-override: updateConfiguration
       x-codeSamples:
         - lang: Python
           label: Python (API Client)
@@ -181,7 +185,7 @@ paths:
                 server_url="https://mycompany-be.glean.com",
             ) as glean:
 
-                res = glean.datasources.update_datasource_instance_configuration(datasource_id="o365sharepoint", instance_id="o365sharepoint_abc123", configuration={
+                res = glean.client.datasources.update_configuration(datasource_id="o365sharepoint", instance_id="o365sharepoint_abc123", configuration={
                     "values": {
 
                     },
@@ -200,7 +204,7 @@ paths:
             });
 
             async function run() {
-              const result = await glean.datasources.updateDatasourceInstanceConfiguration({
+              const result = await glean.client.datasources.updateConfiguration({
                 configuration: {
                   values: {
 
@@ -214,7 +218,7 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Datasources.UpdateDatasourceInstanceConfiguration(ctx, \"o365sharepoint\", \"o365sharepoint_abc123\", components.UpdateDatasourceConfigurationRequest{\n        Configuration: components.DatasourceInstanceConfiguration{\n            Values: map[string]components.ConfigurationValue{\n\n            },\n        },\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.DatasourceConfigurationResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Client.Datasources.UpdateConfiguration(ctx, \"o365sharepoint\", \"o365sharepoint_abc123\", components.UpdateDatasourceConfigurationRequest{\n        Configuration: components.DatasourceInstanceConfiguration{\n            Values: map[string]components.ConfigurationValue{\n\n            },\n        },\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.DatasourceConfigurationResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -236,7 +240,7 @@ paths:
                             .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
                         .build();
 
-                    UpdateDatasourceInstanceConfigurationResponse res = sdk.datasources().updateDatasourceInstanceConfiguration()
+                    UpdateDatasourceInstanceConfigurationResponse res = sdk.client().datasources().updateConfiguration()
                             .datasourceId("o365sharepoint")
                             .instanceId("o365sharepoint_abc123")
                             .updateDatasourceConfigurationRequest(UpdateDatasourceConfigurationRequest.builder()
@@ -292,6 +296,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
       x-visibility: Preview
+      x-speakeasy-group: client.datasources
+      x-speakeasy-name-override: retrieveCredentialStatus
       x-codeSamples:
         - lang: Python
           label: Python (API Client)
@@ -305,7 +311,7 @@ paths:
                 server_url="https://mycompany-be.glean.com",
             ) as glean:
 
-                res = glean.datasources.get_datasource_credential_status(datasource_instance_id="o365sharepoint_abc123")
+                res = glean.client.datasources.retrieve_credential_status(datasource_instance_id="o365sharepoint_abc123")
 
                 # Handle response
                 print(res)
@@ -320,7 +326,7 @@ paths:
             });
 
             async function run() {
-              const result = await glean.datasources.getDatasourceCredentialStatus("o365sharepoint_abc123");
+              const result = await glean.client.datasources.retrieveCredentialStatus("o365sharepoint_abc123");
 
               console.log(result);
             }
@@ -328,7 +334,7 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Datasources.GetDatasourceCredentialStatus(ctx, \"o365sharepoint_abc123\")\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.DatasourceCredentialStatusResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Client.Datasources.RetrieveCredentialStatus(ctx, \"o365sharepoint_abc123\")\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.DatasourceCredentialStatusResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -347,7 +353,7 @@ paths:
                             .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
                         .build();
 
-                    GetDatasourceCredentialStatusResponse res = sdk.datasources().getDatasourceCredentialStatus()
+                    GetDatasourceCredentialStatusResponse res = sdk.client().datasources().retrieveCredentialStatus()
                             .datasourceInstanceId("o365sharepoint_abc123")
                             .call();
 
@@ -403,6 +409,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
       x-visibility: Preview
+      x-speakeasy-group: client.datasources
+      x-speakeasy-name-override: rotateCredentials
       x-codeSamples:
         - lang: Python
           label: Python (API Client)
@@ -416,7 +424,7 @@ paths:
                 server_url="https://mycompany-be.glean.com",
             ) as glean:
 
-                res = glean.datasources.rotate_datasource_credentials(datasource_instance_id="o365sharepoint_abc123", credentials={
+                res = glean.client.datasources.rotate_credentials(datasource_instance_id="o365sharepoint_abc123", credentials={
                     "values": {
                         "key": {},
                     },
@@ -435,7 +443,7 @@ paths:
             });
 
             async function run() {
-              const result = await glean.datasources.rotateDatasourceCredentials({
+              const result = await glean.client.datasources.rotateCredentials({
                 credentials: {
                   values: {
                     "key": {},
@@ -449,7 +457,7 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Datasources.RotateDatasourceCredentials(ctx, \"o365sharepoint_abc123\", components.RotateDatasourceCredentialsRequest{\n        Credentials: components.DatasourceInstanceConfiguration{\n            Values: map[string]components.ConfigurationValue{\n                \"key\": components.ConfigurationValue{},\n            },\n        },\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.DatasourceCredentialStatusResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Client.Datasources.RotateCredentials(ctx, \"o365sharepoint_abc123\", components.RotateDatasourceCredentialsRequest{\n        Credentials: components.DatasourceInstanceConfiguration{\n            Values: map[string]components.ConfigurationValue{\n                \"key\": components.ConfigurationValue{},\n            },\n        },\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.DatasourceCredentialStatusResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -470,7 +478,7 @@ paths:
                             .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
                         .build();
 
-                    RotateDatasourceCredentialsResponse res = sdk.datasources().rotateDatasourceCredentials()
+                    RotateDatasourceCredentialsResponse res = sdk.client().datasources().rotateCredentials()
                             .datasourceInstanceId("o365sharepoint_abc123")
                             .rotateDatasourceCredentialsRequest(RotateDatasourceCredentialsRequest.builder()
                                 .credentials(DatasourceInstanceConfiguration.builder()
