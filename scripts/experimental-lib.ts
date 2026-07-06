@@ -1,6 +1,14 @@
 import fs from 'node:fs';
 import yaml from 'js-yaml';
 import kebabCase from 'lodash/kebabCase.js';
+import type {
+  ExperimentalEndpoint,
+  ExperimentalData,
+  HttpMethod,
+} from '../src/types/experimental';
+
+// Re-export the shared contract so callers/tests can import from one place.
+export type { ExperimentalEndpoint, ExperimentalData, HttpMethod };
 
 /**
  * Shape of the `x-glean-experimental` vendor extension as authored in the
@@ -16,30 +24,14 @@ export interface XGleanExperimental {
   introduced?: string;
 }
 
-export interface ExperimentalEndpoint {
-  /** Uppercase HTTP method, e.g. "POST". */
-  method: string;
-  /** API path as written in the spec, e.g. "/agents/search". */
-  path: string;
-  /** Operation id from the spec, when present. */
-  operationId?: string;
-  /**
-   * Kebab-cased id derived from the operation id (falling back to the summary).
-   * This matches the last path segment of the generated doc's sidebar id
-   * (e.g. "api/platform-api/platform-agents-search"), which is how the sidebar
-   * link component matches an item to its experimental status.
-   */
-  baseId: string;
-  /** Stable id from the `x-glean-experimental.id` field, when present. */
-  id?: string;
-  /** ISO date the endpoint was introduced, when present. */
-  introduced?: string;
-}
-
-export interface ExperimentalOutput {
-  endpoints: ExperimentalEndpoint[];
-  generatedAt: string;
-  totalCount: number;
+/**
+ * A spec to scan together with the doc-id prefix its operations are generated
+ * under (the plugin's `outputDir` minus the leading `docs/`), e.g.
+ * `api/platform-api` or `api/client-api/activity`.
+ */
+export interface ExperimentalSource {
+  specPath: string;
+  docIdPrefix: string;
 }
 
 const HTTP_METHODS = ['get', 'post', 'put', 'patch', 'delete'] as const;
@@ -66,12 +58,18 @@ export function computeBaseId(operation: OperationLike): string {
 /**
  * Extract every operation-level `x-glean-experimental` endpoint from a single
  * parsed OpenAPI document. Pure — no IO.
+ *
+ * @param docIdPrefix The generated doc-id prefix for this spec (the plugin's
+ *   `outputDir` without the leading `docs/`), used to build each endpoint's
+ *   full `docId`.
  */
 export function extractExperimentalEndpoints(
   spec: OpenApiDocLike,
+  docIdPrefix: string,
 ): ExperimentalEndpoint[] {
   const endpoints: ExperimentalEndpoint[] = [];
   const paths = spec?.paths ?? {};
+  const prefix = docIdPrefix.replace(/\/+$/, '');
 
   for (const [apiPath, methods] of Object.entries(paths)) {
     if (!methods || typeof methods !== 'object') continue;
@@ -86,11 +84,14 @@ export function extractExperimentalEndpoints(
       const experimental = op['x-glean-experimental'];
       if (!experimental) continue;
 
+      const baseId = computeBaseId(op);
+
       endpoints.push({
-        method: method.toUpperCase(),
+        method: method.toUpperCase() as HttpMethod,
         path: apiPath,
         operationId: op.operationId,
-        baseId: computeBaseId(op),
+        baseId,
+        docId: `${prefix}/${baseId}`,
         ...(experimental.id ? { id: experimental.id } : {}),
         ...(experimental.introduced
           ? { introduced: experimental.introduced }
@@ -103,18 +104,17 @@ export function extractExperimentalEndpoints(
 }
 
 /**
- * Build the final output object from a flat list of experimental endpoints:
- * dedupe by `method baseId`, sort by path then method, and add metadata.
+ * Build the final data object from a flat list of experimental endpoints:
+ * dedupe by `docId`, sort by path then method, and add metadata.
  */
-export function buildExperimentalOutput(
+export function buildExperimentalData(
   endpoints: ExperimentalEndpoint[],
-): ExperimentalOutput {
+): ExperimentalData {
   const seen = new Set<string>();
   const deduped: ExperimentalEndpoint[] = [];
   for (const endpoint of endpoints) {
-    const key = `${endpoint.method} ${endpoint.baseId}`;
-    if (seen.has(key)) continue;
-    seen.add(key);
+    if (seen.has(endpoint.docId)) continue;
+    seen.add(endpoint.docId);
     deduped.push(endpoint);
   }
 
@@ -131,16 +131,16 @@ export function buildExperimentalOutput(
 }
 
 /**
- * Read the given OpenAPI specs, extract all experimental endpoints, and write
- * the aggregated result to `outputLocation` as JSON.
+ * Read the given specs, extract all experimental endpoints (with full doc ids),
+ * and write the aggregated result to `outputLocation` as JSON.
  */
 export async function generateExperimental(
-  inputSpecs: string[],
+  sources: ExperimentalSource[],
   outputLocation: string,
-): Promise<ExperimentalOutput> {
+): Promise<ExperimentalData> {
   const all: ExperimentalEndpoint[] = [];
 
-  for (const specPath of inputSpecs) {
+  for (const { specPath, docIdPrefix } of sources) {
     if (!fs.existsSync(specPath)) {
       console.warn(`Warning: spec not found, skipping: ${specPath}`);
       continue;
@@ -154,10 +154,10 @@ export async function generateExperimental(
       );
       continue;
     }
-    all.push(...extractExperimentalEndpoints(spec));
+    all.push(...extractExperimentalEndpoints(spec, docIdPrefix));
   }
 
-  const output = buildExperimentalOutput(all);
-  fs.writeFileSync(outputLocation, JSON.stringify(output, null, 2) + '\n');
-  return output;
+  const data = buildExperimentalData(all);
+  fs.writeFileSync(outputLocation, JSON.stringify(data, null, 2) + '\n');
+  return data;
 }

@@ -13,18 +13,16 @@ import type { ExperimentalData } from '@site/src/types/experimental';
 
 import styles from './styles.module.css';
 
-// Set of kebab-cased operation ids (baseId) that are marked experimental via
-// `x-glean-experimental` in the OpenAPI specs. The last segment of a sidebar
-// item's docId (e.g. "api/platform-api/platform-agents-search") equals the
-// baseId, which is how we match an item to its experimental status.
-const experimentalBaseIds = new Set(
-  (experimentalData as ExperimentalData).endpoints.map((e) => e.baseId),
+// Set of full doc ids (e.g. "api/platform-api/platform-agents-search") that are
+// marked experimental via `x-glean-experimental` in the OpenAPI specs. Matching
+// on the full doc id — not just the last segment — keeps the pill scoped to the
+// exact endpoint, so a kebab collision in another API family can't mis-tag it.
+const experimentalDocIds = new Set(
+  (experimentalData as ExperimentalData).endpoints.map((e) => e.docId),
 );
 
 function isExperimentalItem(docId: string | undefined): boolean {
-  if (!docId || !docId.startsWith('api/')) return false;
-  const baseId = docId.split('/').pop();
-  return baseId ? experimentalBaseIds.has(baseId) : false;
+  return docId ? experimentalDocIds.has(docId) : false;
 }
 
 export default function DocSidebarItemLink({
