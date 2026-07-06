@@ -441,9 +441,15 @@ const baseSidebars: SidebarsConfig = {
     },
     {
       type: 'category' as const,
+      // Original label when `platform-api` is off/unset; renamed to
+      // 'API Overview' when the flag is enabled (since the guides become
+      // shared across Client + Platform APIs).
       label: 'Client API',
       collapsible: false,
       collapsed: false,
+      customProps: {
+        flagLabel: { flag: 'platform-api', label: 'API Overview' },
+      },
       items: [
         {
           type: 'category',
@@ -491,6 +497,77 @@ const baseSidebars: SidebarsConfig = {
               label: 'Datasource OAuth',
             },
           ],
+        },
+      ],
+    },
+    {
+      type: 'category',
+      label: 'Platform API Reference',
+      collapsible: false,
+      collapsed: false,
+      // Gated behind the `platform-api` feature flag: when the flag is false or
+      // unset the section is omitted (original sidebar); when enabled (Edge
+      // Config or `?ff_platform-api=true`) it renders.
+      customProps: {
+        flag: 'platform-api',
+      },
+      items: [
+        {
+          type: 'category',
+          label: 'Agents',
+          items: [
+            {
+              type: 'doc',
+              id: 'api/platform-api/agents-overview',
+              label: 'Overview',
+            },
+            {
+              type: 'doc',
+              id: 'api/platform-api/platform-agents-search',
+              label: 'Search agents',
+              className: 'api-method post',
+            },
+            {
+              type: 'doc',
+              id: 'api/platform-api/platform-agents-get',
+              label: 'Get agent',
+              className: 'api-method get',
+            },
+            {
+              type: 'doc',
+              id: 'api/platform-api/platform-agents-get-schemas',
+              label: 'Get agent schemas',
+              className: 'api-method get',
+            },
+            {
+              type: 'doc',
+              id: 'api/platform-api/platform-agents-create-run',
+              label: 'Create agent run',
+              className: 'api-method post',
+            },
+          ],
+        },
+        {
+          type: 'category',
+          label: 'Search',
+          items: [
+            {
+              type: 'doc',
+              id: 'api/platform-api/search-overview',
+              label: 'Overview',
+            },
+            {
+              type: 'doc',
+              id: 'api/platform-api/platform-search',
+              label: 'Search',
+              className: 'api-method post',
+            },
+          ],
+        },
+        {
+          type: 'link',
+          href: 'https://developers.glean.com/oas/platform',
+          label: 'OpenAPI Spec',
         },
       ],
     },
