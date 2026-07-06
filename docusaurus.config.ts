@@ -51,6 +51,13 @@ const config: Config = {
           docItemComponent: '@theme/ApiItem',
           editUrl:
             'https://github.com/gleanwork/glean-developer-site/edit/main/',
+          admonitions: {
+            // Register a custom `experimental` admonition used by API pages
+            // (see scripts/generator/customMdGenerators.ts). Rendered via the
+            // swizzled @theme/Admonition/Types and styled in src/css/custom.css.
+            keywords: ['experimental'],
+            extendDefaults: true,
+          },
         },
         theme: {
           customCss: './src/css/custom.css',

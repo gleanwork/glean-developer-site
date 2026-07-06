@@ -8,8 +8,24 @@ import IconExternalLink from '@theme/Icon/ExternalLink';
 import { Icon } from '@theme/Icons';
 import { FeatureFlagsContext } from '@site/src/theme/Root';
 import type { Props } from '@theme/DocSidebarItem/Link';
+import experimentalData from '@site/src/data/experimental.json';
+import type { ExperimentalData } from '@site/src/types/experimental';
 
 import styles from './styles.module.css';
+
+// Set of kebab-cased operation ids (baseId) that are marked experimental via
+// `x-glean-experimental` in the OpenAPI specs. The last segment of a sidebar
+// item's docId (e.g. "api/platform-api/platform-agents-search") equals the
+// baseId, which is how we match an item to its experimental status.
+const experimentalBaseIds = new Set(
+  (experimentalData as ExperimentalData).endpoints.map((e) => e.baseId),
+);
+
+function isExperimentalItem(docId: string | undefined): boolean {
+  if (!docId || !docId.startsWith('api/')) return false;
+  const baseId = docId.split('/').pop();
+  return baseId ? experimentalBaseIds.has(baseId) : false;
+}
 
 export default function DocSidebarItemLink({
   item,
@@ -21,6 +37,7 @@ export default function DocSidebarItemLink({
 }: Props): ReactNode {
   const { href, label, className, autoAddBaseUrl } = item;
   const isActive = isActiveSidebarItem(item, activePath);
+  const isExperimental = isExperimentalItem((item as any).docId);
   const isInternalLink = isInternalUrl(href);
   // Feature-flag gating: hide a link when it declares a `customProps.flag`
   // that isn't enabled (e.g. reveal via `?ff_platform-api=true`).
@@ -63,6 +80,11 @@ export default function DocSidebarItemLink({
           />
         )}
         {label}
+        {isExperimental && (
+          <span className={styles.experimentalBadge} title="Experimental">
+            Experimental
+          </span>
+        )}
         {!isInternalLink && <IconExternalLink />}
       </Link>
     </li>
