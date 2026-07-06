@@ -2,11 +2,11 @@ openapi: 3.0.0
 info:
   version: 0.9.0
   title: Glean API - Governance
-  x-source-commit-sha: 6103cdd1c1bdd4666a563b84954e895fb548e87d
+  x-source-commit-sha: 33bf057cf0f948a83126e81582717aebdb622bfa
   description: API endpoints for Governance
   x-logo:
     url: https://app.glean.com/images/glean-text2.svg
-  x-open-api-commit-sha: 389ef1dd5a469ab93c8757680d121524473818b1
+  x-open-api-commit-sha: f5245e430a3578e1540117c92889ddcf2cb18c90
   x-speakeasy-name: Glean API
 servers:
   - url: https://{instance}-be.glean.com
@@ -1003,6 +1003,8 @@ paths:
         '500':
           description: Internal error
       x-visibility: Public
+      x-speakeasy-group: client.governance.data.findings
+      x-speakeasy-name-override: create
       x-codeSamples:
         - lang: Python
           label: Python (API Client)
@@ -1016,7 +1018,7 @@ paths:
                 server_url="https://mycompany-be.glean.com",
             ) as glean:
 
-                res = glean.governance.createfindingsexport()
+                res = glean.client.governance.data.findings.create()
 
                 # Handle response
                 print(res)
@@ -1031,7 +1033,7 @@ paths:
             });
 
             async function run() {
-              const result = await glean.governance.createfindingsexport({});
+              const result = await glean.client.governance.data.findings.create({});
 
               console.log(result);
             }
@@ -1039,7 +1041,7 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Governance.Createfindingsexport(ctx, components.DlpExportFindingsRequest{})\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.ExportInfo != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Client.Governance.Data.Findings.Create(ctx, components.DlpExportFindingsRequest{})\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.ExportInfo != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -1061,7 +1063,7 @@ paths:
                     DlpExportFindingsRequest req = DlpExportFindingsRequest.builder()
                             .build();
 
-                    CreatefindingsexportResponse res = sdk.governance().createfindingsexport()
+                    CreatefindingsexportResponse res = sdk.client().governance().data().findings().create()
                             .request(req)
                             .call();
 
@@ -1090,6 +1092,8 @@ paths:
         '500':
           description: Internal error
       x-visibility: Public
+      x-speakeasy-group: client.governance.data.findings
+      x-speakeasy-name-override: list
       x-codeSamples:
         - lang: Python
           label: Python (API Client)
@@ -1103,7 +1107,7 @@ paths:
                 server_url="https://mycompany-be.glean.com",
             ) as glean:
 
-                res = glean.governance.listfindingsexports()
+                res = glean.client.governance.data.findings.list()
 
                 # Handle response
                 print(res)
@@ -1118,7 +1122,7 @@ paths:
             });
 
             async function run() {
-              const result = await glean.governance.listfindingsexports();
+              const result = await glean.client.governance.data.findings.list();
 
               console.log(result);
             }
@@ -1126,7 +1130,7 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Governance.Listfindingsexports(ctx)\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.ListDlpFindingsExportsResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Client.Governance.Data.Findings.List(ctx)\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.ListDlpFindingsExportsResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -1144,7 +1148,7 @@ paths:
                             .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
                         .build();
 
-                    ListfindingsexportsResponse res = sdk.governance().listfindingsexports()
+                    ListfindingsexportsResponse res = sdk.client().governance().data().findings().list()
                             .call();
 
                     if (res.listDlpFindingsExportsResponse().isPresent()) {
@@ -1181,6 +1185,8 @@ paths:
         '500':
           description: Internal error
       x-visibility: Public
+      x-speakeasy-group: client.governance.data.findings
+      x-speakeasy-name-override: download
       x-codeSamples:
         - lang: Python
           label: Python (API Client)
@@ -1194,7 +1200,7 @@ paths:
                 server_url="https://mycompany-be.glean.com",
             ) as glean:
 
-                res = glean.governance.downloadfindingsexport(id="<id>")
+                res = glean.client.governance.data.findings.download(id="<id>")
 
                 # Handle response
                 print(res)
@@ -1209,7 +1215,7 @@ paths:
             });
 
             async function run() {
-              const result = await glean.governance.downloadfindingsexport("<id>");
+              const result = await glean.client.governance.data.findings.download("<id>");
 
               console.log(result);
             }
@@ -1217,7 +1223,7 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Governance.Downloadfindingsexport(ctx, \"<id>\")\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.Res != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Client.Governance.Data.Findings.Download(ctx, \"<id>\")\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.Res != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -1235,7 +1241,7 @@ paths:
                             .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
                         .build();
 
-                    DownloadfindingsexportResponse res = sdk.governance().downloadfindingsexport()
+                    DownloadfindingsexportResponse res = sdk.client().governance().data().findings().download()
                             .id("<id>")
                             .call();
 
@@ -1268,6 +1274,8 @@ paths:
         '500':
           description: Internal error
       x-visibility: Public
+      x-speakeasy-group: client.governance.data.findings
+      x-speakeasy-name-override: delete
       x-codeSamples:
         - lang: Python
           label: Python (API Client)
@@ -1281,7 +1289,7 @@ paths:
                 server_url="https://mycompany-be.glean.com",
             ) as glean:
 
-                glean.governance.deletefindingsexport(id=741945)
+                glean.client.governance.data.findings.delete(id=741945)
 
                 # Use the SDK ...
         - lang: JavaScript
@@ -1295,7 +1303,7 @@ paths:
             });
 
             async function run() {
-              await glean.governance.deletefindingsexport(741945);
+              await glean.client.governance.data.findings.delete(741945);
 
 
             }
@@ -1303,7 +1311,7 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Governance.Deletefindingsexport(ctx, 741945)\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Client.Governance.Data.Findings.Delete(ctx, 741945)\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -1321,7 +1329,7 @@ paths:
                             .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
                         .build();
 
-                    DeletefindingsexportResponse res = sdk.governance().deletefindingsexport()
+                    DeletefindingsexportResponse res = sdk.client().governance().data().findings().delete()
                             .id(741945L)
                             .call();
 

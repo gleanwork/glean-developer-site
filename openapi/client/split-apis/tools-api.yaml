@@ -2,11 +2,11 @@ openapi: 3.0.0
 info:
   version: 0.9.0
   title: Glean API - Tools
-  x-source-commit-sha: 6103cdd1c1bdd4666a563b84954e895fb548e87d
+  x-source-commit-sha: 33bf057cf0f948a83126e81582717aebdb622bfa
   description: API endpoints for Tools
   x-logo:
     url: https://app.glean.com/images/glean-text2.svg
-  x-open-api-commit-sha: 389ef1dd5a469ab93c8757680d121524473818b1
+  x-open-api-commit-sha: f5245e430a3578e1540117c92889ddcf2cb18c90
   x-speakeasy-name: Glean API
 servers:
   - url: https://{instance}-be.glean.com
@@ -262,6 +262,8 @@ paths:
           description: Too Many Requests
       security:
         - APIToken: []
+      x-speakeasy-name-override: retrieveActionPackAuthStatus
+      x-speakeasy-group: client.tools
       x-codeSamples:
         - lang: Python
           label: Python (API Client)
@@ -275,7 +277,7 @@ paths:
                 server_url="https://mycompany-be.glean.com",
             ) as glean:
 
-                res = glean.tools.get_action_pack_auth_status(action_pack_id="<id>")
+                res = glean.client.tools.retrieve_action_pack_auth_status(action_pack_id="<id>")
 
                 # Handle response
                 print(res)
@@ -290,7 +292,7 @@ paths:
             });
 
             async function run() {
-              const result = await glean.tools.getActionPackAuthStatus("<id>");
+              const result = await glean.client.tools.retrieveActionPackAuthStatus("<id>");
 
               console.log(result);
             }
@@ -298,7 +300,7 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Tools.GetActionPackAuthStatus(ctx, \"<id>\")\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.ActionPackAuthStatusResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Client.Tools.RetrieveActionPackAuthStatus(ctx, \"<id>\")\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.ActionPackAuthStatusResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -316,7 +318,7 @@ paths:
                             .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
                         .build();
 
-                    GetActionPackAuthStatusResponse res = sdk.tools().getActionPackAuthStatus()
+                    GetActionPackAuthStatusResponse res = sdk.client().tools().retrieveActionPackAuthStatus()
                             .actionPackId("<id>")
                             .call();
 
@@ -364,6 +366,8 @@ paths:
           description: Too Many Requests
       security:
         - APIToken: []
+      x-speakeasy-name-override: authorizeActionPack
+      x-speakeasy-group: client.tools
       x-codeSamples:
         - lang: Python
           label: Python (API Client)
@@ -377,7 +381,7 @@ paths:
                 server_url="https://mycompany-be.glean.com",
             ) as glean:
 
-                res = glean.tools.authorize_action_pack(action_pack_id="<id>", return_url="https://merry-allocation.org/")
+                res = glean.client.tools.authorize_action_pack(action_pack_id="<id>", return_url="https://merry-allocation.org/")
 
                 # Handle response
                 print(res)
@@ -392,7 +396,7 @@ paths:
             });
 
             async function run() {
-              const result = await glean.tools.authorizeActionPack({
+              const result = await glean.client.tools.authorizeActionPack({
                 returnUrl: "https://merry-allocation.org/",
               }, "<id>");
 
@@ -402,7 +406,7 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Tools.AuthorizeActionPack(ctx, \"<id>\", components.AuthorizeActionPackRequest{\n        ReturnURL: \"https://merry-allocation.org/\",\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.AuthorizeActionPackResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Client.Tools.AuthorizeActionPack(ctx, \"<id>\", components.AuthorizeActionPackRequest{\n        ReturnURL: \"https://merry-allocation.org/\",\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.AuthorizeActionPackResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -421,7 +425,7 @@ paths:
                             .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
                         .build();
 
-                    AuthorizeActionPackResponse res = sdk.tools().authorizeActionPack()
+                    AuthorizeActionPackResponse res = sdk.client().tools().authorizeActionPack()
                             .actionPackId("<id>")
                             .authorizeActionPackRequest(AuthorizeActionPackRequest.builder()
                                 .returnUrl("https://merry-allocation.org/")
