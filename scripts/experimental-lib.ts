@@ -1,19 +1,6 @@
 import fs from 'node:fs';
 import yaml from 'js-yaml';
-
-/**
- * Kebab-case a string the same way the OpenAPI docs plugin does (it uses
- * lodash's `kebabCase`, which splits on camelCase/PascalCase boundaries,
- * spaces, underscores, and digit groups). We reimplement it here to avoid a
- * direct lodash dependency — lodash is only a transitive dep, so importing it
- * directly fails under pnpm's strict node_modules in CI.
- */
-export function kebabCase(input: string): string {
-  const words = input.match(
-    /[A-Z]{2,}(?=[A-Z][a-z]+[0-9]*|\b)|[A-Z]?[a-z]+[0-9]*|[A-Z]|[0-9]+/g,
-  );
-  return words ? words.map((word) => word.toLowerCase()).join('-') : '';
-}
+import kebabCase from 'lodash/kebabCase.js';
 
 /**
  * Shape of the `x-glean-experimental` vendor extension as authored in the
