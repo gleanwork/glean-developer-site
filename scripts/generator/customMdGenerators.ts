@@ -199,7 +199,12 @@ export function customApiMdGenerator({
           deprecated,
           description: deprecatedDescription,
         }),
-    createPreviewNotice({ xVisibility, xBeta }),
+    // When an endpoint is experimental, the experimental notice is the
+    // stronger/more specific signal, so we suppress the (redundant) Beta/Preview
+    // notice to avoid stacking two stability banners.
+    xGleanExperimental
+      ? undefined
+      : createPreviewNotice({ xVisibility, xBeta }),
     createExperimentalNotice({ xGleanExperimental }),
     createDescription(description),
     requestBody || parameters ? createRequestHeader('Request') : undefined,
