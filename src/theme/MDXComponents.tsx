@@ -5,6 +5,7 @@ import { Steps, Step } from '@theme/Steps';
 import Frame from '@theme/Frame';
 import { Icon } from '@theme/Icons';
 import FeatureFlag from '@site/src/components/FeatureFlag';
+import BeakerIcon from '@site/src/components/BeakerIcon';
 
 export default {
   ...MDXComponents,
@@ -15,4 +16,5 @@ export default {
   Frame,
   Icon,
   FeatureFlag,
+  BeakerIcon,
 };
