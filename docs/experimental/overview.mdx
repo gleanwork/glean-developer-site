@@ -1,0 +1,149 @@
+---
+title: Experimental APIs
+description: How Glean ships experimental REST API features and how to opt in to preview them
+---
+
+# Experimental APIs
+
+Glean ships some capabilities as **experimental** so you can preview and give feedback on new functionality before it becomes generally available (GA). Experimental features are opt-in, and they may change — or be removed — without the notice period that applies to stable APIs.
+
+:::experimental[Warning]
+Experimental features may change in backwards-incompatible ways, or be removed entirely, **without notice**. They are not covered by our [deprecation policy](/deprecations/overview). Don't depend on them in production.
+:::
+
+---
+
+## What "Experimental" Means
+
+<CardGroup cols={2}>
+  <Card title="Experimental" icon="Zap" color="#d97706">
+    Preview functionality that is still evolving:
+
+    - Not yet generally available
+    - May change or be removed without notice
+    - Not covered by the deprecation policy
+    - Opt-in only — hidden unless you ask for it
+  </Card>
+  <Card title="Generally Available" icon="CheckCircle" color="#16a34a">
+    Stable, production-ready functionality:
+
+    - Available by default
+    - Backwards-compatible changes only
+    - Covered by our [deprecation policy](/deprecations/overview)
+    - Predictable, announced removals
+  </Card>
+</CardGroup>
+
+---
+
+## How You'll Know an Endpoint Is Experimental
+
+<CardGroup cols={2}>
+  <Card title="Sidebar Tag" icon="Tag" color="#d97706">
+    Experimental endpoints are marked with an orange **Experimental** tag in the API reference sidebar.
+  </Card>
+  <Card title="Page Banner" icon="AlertCircle" color="#d97706">
+    Each experimental endpoint shows a banner at the top of its reference page linking back to this guide.
+  </Card>
+</CardGroup>
+
+---
+
+## Opting In
+
+Experimental endpoints and fields are hidden by default. To use them, send the `X-Glean-Include-Experimental` request header set to `true`:
+
+```http
+X-Glean-Include-Experimental: true
+```
+
+| Header | Value | Description |
+|--------|-------|-------------|
+| `X-Glean-Include-Experimental` | `true` | Enables experimental API features that are not yet generally available. |
+
+:::tip
+Only send this header in development or testing environments while you evaluate experimental features. Leaving it off in production keeps your integration on stable, GA behavior.
+:::
+
+### Example Request
+
+```bash
+curl -X POST https://your-instance-be.glean.com/api/agents/search \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -H "X-Glean-Include-Experimental: true" \
+  -d '{ "name": "HR Policy Agent" }'
+```
+
+Without the `X-Glean-Include-Experimental` header, experimental endpoints and fields are not exposed, and your requests continue to run against stable API behavior only.
+
+---
+
+## Using the SDKs
+
+Glean's official SDKs can set this header for you through a constructor option or an environment variable — no need to manage the raw header yourself.
+
+#### Using an Environment Variable
+
+```typescript
+// Set before initializing the SDK
+process.env.X_GLEAN_INCLUDE_EXPERIMENTAL = 'true';
+
+import { Glean } from '@gleanwork/api-client';
+
+const glean = new Glean({
+  apiToken: process.env['GLEAN_API_TOKEN'] ?? '',
+  serverURL: 'https://your-instance-be.glean.com',
+});
+```
+
+#### Using a Constructor Option
+
+```typescript
+import { Glean } from '@gleanwork/api-client';
+
+const glean = new Glean({
+  apiToken: process.env['GLEAN_API_TOKEN'] ?? '',
+  serverURL: 'https://your-instance-be.glean.com',
+  includeExperimental: true,
+});
+```
+
+### Option Reference
+
+| Option | Environment Variable | Type | Description |
+|--------|----------------------|------|-------------|
+| `includeExperimental` | `X_GLEAN_INCLUDE_EXPERIMENTAL` | `boolean` | When `true`, sends `X-Glean-Include-Experimental: true` to enable experimental features. |
+
+:::note
+Environment variables take precedence over SDK constructor options when both are set.
+:::
+
+For language-specific details, see the "Experimental Features and Deprecation Testing" section in your SDK's documentation:
+
+- [TypeScript](https://github.com/gleanwork/api-client-typescript#experimental-features-and-deprecation-testing)
+- [Python](https://github.com/gleanwork/api-client-python#experimental-features-and-deprecation-testing)
+- [Go](https://github.com/gleanwork/api-client-go#experimental-features-and-deprecation-testing)
+- [Java](https://github.com/gleanwork/api-client-java#experimental-features-and-deprecation-testing)
+
+---
+
+## From Experimental to Generally Available
+
+Experimental features follow a simple lifecycle:
+
+<Steps titleSize="h3">
+  <Step title="Experimental">
+    The feature is available behind the `X-Glean-Include-Experimental` opt-in. It may change or be removed at any time as we iterate.
+  </Step>
+  <Step title="Feedback & Iteration">
+    We refine the feature based on real usage and your feedback. Shapes, fields, and behavior may still change during this phase.
+  </Step>
+  <Step title="Generally Available">
+    The feature graduates to GA: it becomes available by default (no header required), the **Experimental** tag is removed, and it is covered by our [deprecation policy](/deprecations/overview) going forward.
+  </Step>
+</Steps>
+
+:::tip Give Feedback
+Experimental features are the best time to influence a feature's final shape. Share feedback with your Glean contact so we can incorporate it before general availability.
+:::

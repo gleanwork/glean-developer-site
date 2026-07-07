@@ -111,6 +111,25 @@ function createPreviewNotice({
   );
 }
 
+function createExperimentalAdmonition({ children }: Props) {
+  return `:::experimental\n\n${render(children)}\n\n:::`;
+}
+
+interface ExperimentalNoticeProps {
+  xGleanExperimental?: unknown;
+}
+
+function createExperimentalNotice({
+  xGleanExperimental,
+}: ExperimentalNoticeProps) {
+  return guard(Boolean(xGleanExperimental), () =>
+    createExperimentalAdmonition({
+      children:
+        'This endpoint is experimental. Expect changes and instability. [Learn how experimental APIs work](/experimental/overview).',
+    }),
+  );
+}
+
 function createApiDeprecations(
   method: string,
   endpointPath: string,
@@ -142,6 +161,7 @@ export function customApiMdGenerator({
     'x-deprecated-description': deprecatedDescription,
     'x-visibility': xVisibility,
     'x-beta': xBeta,
+    'x-glean-experimental': xGleanExperimental,
     description,
     method,
     path: endpointPath,
@@ -180,6 +200,7 @@ export function customApiMdGenerator({
           description: deprecatedDescription,
         }),
     createPreviewNotice({ xVisibility, xBeta }),
+    createExperimentalNotice({ xGleanExperimental }),
     createDescription(description),
     requestBody || parameters ? createRequestHeader('Request') : undefined,
     createParamsDetails({ parameters }),
