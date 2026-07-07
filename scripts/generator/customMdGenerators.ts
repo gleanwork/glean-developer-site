@@ -116,16 +116,44 @@ function createExperimentalAdmonition({ children }: Props) {
 }
 
 interface ExperimentalNoticeProps {
-  xGleanExperimental?: unknown;
+  xGleanExperimental?: { id?: string; introduced?: string } | unknown;
+}
+
+/**
+ * Format an ISO date (`YYYY-MM-DD`) as a human-readable string, e.g.
+ * "May 12, 2026". Parsed in UTC so the day doesn't drift across time zones.
+ * Returns `undefined` for missing or unparseable input.
+ */
+function formatIntroducedDate(introduced?: string): string | undefined {
+  if (!introduced) return undefined;
+  const date = new Date(introduced);
+  if (Number.isNaN(date.getTime())) return undefined;
+  return date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    timeZone: 'UTC',
+  });
 }
 
 function createExperimentalNotice({
   xGleanExperimental,
 }: ExperimentalNoticeProps) {
+  const introduced =
+    xGleanExperimental && typeof xGleanExperimental === 'object'
+      ? (xGleanExperimental as { introduced?: string }).introduced
+      : undefined;
+  const introducedDate = formatIntroducedDate(introduced);
+  const introducedSentence = introducedDate
+    ? ` Introduced on ${introducedDate}.`
+    : '';
+
   return guard(Boolean(xGleanExperimental), () =>
     createExperimentalAdmonition({
       children:
-        'This endpoint is experimental. Expect changes and instability. [Learn how experimental APIs work](/experimental/overview).',
+        'Expect changes and instability.' +
+        introducedSentence +
+        ' [Learn how experimental APIs work](/experimental/overview).',
     }),
   );
 }
