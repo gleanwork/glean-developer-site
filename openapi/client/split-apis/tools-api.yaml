@@ -2,11 +2,11 @@ openapi: 3.0.0
 info:
   version: 0.9.0
   title: Glean API - Tools
-  x-source-commit-sha: 33bf057cf0f948a83126e81582717aebdb622bfa
+  x-source-commit-sha: 34d55b64a043a5eac885b2a3a1d3facdd50c852b
   description: API endpoints for Tools
   x-logo:
     url: https://app.glean.com/images/glean-text2.svg
-  x-open-api-commit-sha: f5245e430a3578e1540117c92889ddcf2cb18c90
+  x-open-api-commit-sha: 566e3d392ace2cb8f2cd9a6fd99c9f47b1fee05a
   x-speakeasy-name: Glean API
 servers:
   - url: https://{instance}-be.glean.com
@@ -437,6 +437,214 @@ paths:
                     }
                 }
             }
+  /rest/api/v1/tool-servers/{serverId}/auth:
+    get:
+      tags:
+        - Tools
+      summary: Get end-user authentication status for a tool server.
+      description: |
+        Returns display information and the calling user's current authentication status
+        for the specified tool server.
+      operationId: getToolServerAuthStatus
+      x-visibility: Preview
+      x-glean-experimental:
+        id: 52fde6ec-c18b-4de6-b761-f82008542ae7
+        introduced: '2026-07-02'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolServerAuthStatusResponse'
+        '400':
+          description: Bad Request
+        '401':
+          description: Unauthorized
+        '404':
+          description: Tool server not found
+        '429':
+          description: Too Many Requests
+      security:
+        - APIToken: []
+      x-speakeasy-name-override: retrieveToolServerAuthStatus
+      x-speakeasy-group: client.tools
+      x-codeSamples:
+        - lang: Python
+          label: Python (API Client)
+          source: |-
+            from glean.api_client import Glean
+            import os
+
+
+            with Glean(
+                api_token=os.getenv("GLEAN_API_TOKEN", ""),
+                server_url="https://mycompany-be.glean.com",
+            ) as glean:
+
+                res = glean.client.tools.retrieve_tool_server_auth_status(server_id="<id>")
+
+                # Handle response
+                print(res)
+        - lang: JavaScript
+          label: Typescript (API Client)
+          source: |-
+            import { Glean } from "@gleanwork/api-client";
+
+            const glean = new Glean({
+              apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
+              serverURL: "https://mycompany-be.glean.com",
+            });
+
+            async function run() {
+              const result = await glean.client.tools.retrieveToolServerAuthStatus("<id>");
+
+              console.log(result);
+            }
+
+            run();
+        - lang: Go
+          label: Go (API Client)
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Client.Tools.RetrieveToolServerAuthStatus(ctx, \"<id>\")\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.ToolServerAuthStatusResponse != nil {\n        // handle response\n    }\n}"
+        - lang: Java
+          label: Java (API Client)
+          source: |-
+            package hello.world;
+
+            import com.glean.api_client.glean_api_client.Glean;
+            import com.glean.api_client.glean_api_client.models.operations.GetToolServerAuthStatusResponse;
+            import java.lang.Exception;
+
+            public class Application {
+
+                public static void main(String[] args) throws Exception {
+
+                    Glean sdk = Glean.builder()
+                            .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
+                        .build();
+
+                    GetToolServerAuthStatusResponse res = sdk.client().tools().retrieveToolServerAuthStatus()
+                            .serverId("<id>")
+                            .call();
+
+                    if (res.toolServerAuthStatusResponse().isPresent()) {
+                        System.out.println(res.toolServerAuthStatusResponse().get());
+                    }
+                }
+            }
+    post:
+      tags:
+        - Tools
+      summary: Start the OAuth authorization flow for a tool server.
+      description: |
+        Initiates the third-party OAuth flow for the specified tool server and returns the
+        authorization URL that the client should navigate the end user to. After the OAuth
+        callback completes, the user's browser is redirected back to `returnUrl` with query
+        parameters indicating the result.
+
+        `returnUrl` must match the tenant's configured return URL allowlist; otherwise the
+        request is rejected with 400.
+      operationId: authorizeToolServer
+      x-visibility: Preview
+      x-glean-experimental:
+        id: 1935476e-ecaf-4c1f-a9fd-1e768cf68f30
+        introduced: '2026-07-02'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthorizeToolServerRequest'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthorizeToolServerResponse'
+        '400':
+          description: Invalid request (e.g. returnUrl not in allowlist, unsupported auth type)
+        '401':
+          description: Unauthorized
+        '403':
+          description: User not entitled to the tool server
+        '404':
+          description: Tool server not found
+        '429':
+          description: Too Many Requests
+      security:
+        - APIToken: []
+      x-speakeasy-name-override: authorizeToolServer
+      x-speakeasy-group: client.tools
+      x-codeSamples:
+        - lang: Python
+          label: Python (API Client)
+          source: |-
+            from glean.api_client import Glean
+            import os
+
+
+            with Glean(
+                api_token=os.getenv("GLEAN_API_TOKEN", ""),
+                server_url="https://mycompany-be.glean.com",
+            ) as glean:
+
+                res = glean.client.tools.authorize_tool_server(server_id="<id>", return_url="https://lucky-disadvantage.com")
+
+                # Handle response
+                print(res)
+        - lang: JavaScript
+          label: Typescript (API Client)
+          source: |-
+            import { Glean } from "@gleanwork/api-client";
+
+            const glean = new Glean({
+              apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
+              serverURL: "https://mycompany-be.glean.com",
+            });
+
+            async function run() {
+              const result = await glean.client.tools.authorizeToolServer({
+                returnUrl: "https://lucky-disadvantage.com",
+              }, "<id>");
+
+              console.log(result);
+            }
+
+            run();
+        - lang: Go
+          label: Go (API Client)
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Client.Tools.AuthorizeToolServer(ctx, \"<id>\", components.AuthorizeToolServerRequest{\n        ReturnURL: \"https://lucky-disadvantage.com\",\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.AuthorizeToolServerResponse != nil {\n        // handle response\n    }\n}"
+        - lang: Java
+          label: Java (API Client)
+          source: |-
+            package hello.world;
+
+            import com.glean.api_client.glean_api_client.Glean;
+            import com.glean.api_client.glean_api_client.models.components.AuthorizeToolServerRequest;
+            import com.glean.api_client.glean_api_client.models.operations.AuthorizeToolServerResponse;
+            import java.lang.Exception;
+
+            public class Application {
+
+                public static void main(String[] args) throws Exception {
+
+                    Glean sdk = Glean.builder()
+                            .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
+                        .build();
+
+                    AuthorizeToolServerResponse res = sdk.client().tools().authorizeToolServer()
+                            .serverId("<id>")
+                            .authorizeToolServerRequest(AuthorizeToolServerRequest.builder()
+                                .returnUrl("https://lucky-disadvantage.com")
+                                .build())
+                            .call();
+
+                    if (res.authorizeToolServerResponse().isPresent()) {
+                        System.out.println(res.authorizeToolServerResponse().get());
+                    }
+                }
+            }
 components:
   schemas:
     ActionAuthType:
@@ -450,6 +658,12 @@ components:
         - AUTH_USER_OAUTH
         - AUTH_ADMIN
         - AUTH_NONE
+    ToolServerAuthStatus:
+      type: string
+      description: Authentication status for the calling user.
+      enum:
+        - AWAITING_AUTH
+        - AUTHORIZED
     AuthorizeActionPackRequest:
       type: object
       required:
@@ -460,6 +674,16 @@ components:
           description: |
             URL on the customer's domain to redirect the end user's browser back to after the third-party OAuth
             callback completes. Must be present in the tenant's return URL allowlist.
+    AuthorizeToolServerRequest:
+      type: object
+      required:
+        - returnUrl
+      properties:
+        returnUrl:
+          type: string
+          description: |
+            URL to redirect the end user's browser back to after the OAuth flow completes.
+            Must be present in the tenant's configured return URL allowlist.
     AuthorizeActionPackResponse:
       type: object
       required:
@@ -469,6 +693,16 @@ components:
           type: string
           description: |
             URL that the customer UI should navigate the end user to in order to begin the third-party OAuth flow.
+            After the user consents, control returns to `returnUrl` from the request.
+    AuthorizeToolServerResponse:
+      type: object
+      required:
+        - authorizationUrl
+      properties:
+        authorizationUrl:
+          type: string
+          description: |
+            URL that the client should navigate the end user to in order to begin the OAuth flow.
             After the user consents, control returns to `returnUrl` from the request.
     ToolsCallResponse:
       type: object
@@ -630,6 +864,25 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Tool'
+    ToolServerAuthStatusResponse:
+      type: object
+      required:
+        - authStatus
+        - authType
+      properties:
+        displayName:
+          type: string
+          description: Human-readable name of the tool server.
+        logoUrl:
+          type: string
+          description: Logo URL for the tool server.
+        description:
+          type: string
+          description: Brief description of the tool server.
+        authStatus:
+          $ref: '#/components/schemas/ToolServerAuthStatus'
+        authType:
+          $ref: '#/components/schemas/ActionAuthType'
     ToolsCallParameter:
       required: &ref_2
         - name
