@@ -1,0 +1,236 @@
+invalid_request:
+  meaning: The request could not be processed because the payload, parameters, or request structure is invalid.
+  commonCauses:
+    - The JSON body is malformed or does not match the endpoint schema.
+    - Query parameters or request headers use unsupported values.
+    - The request combines fields that cannot be used together.
+  clientRemediation:
+    - Compare the request against the endpoint documentation and schema.
+    - Check the response `detail` field for request-specific guidance.
+    - Remove unsupported fields or combinations before retrying.
+  retryGuidance: Retrying the same request will not help. Retry only after changing the request.
+  relatedDocs:
+    - title: Platform Search API
+      href: /api/platform-api/search-overview
+missing_required_field:
+  meaning: The request is missing a field that the endpoint requires.
+  commonCauses:
+    - A required top-level property is absent from the request body.
+    - A nested object is present but one of its required properties is missing.
+    - A generated client or integration is sending an incomplete object.
+  clientRemediation:
+    - Add the required field identified by the response `detail` or field-level `errors`.
+    - Regenerate or update client types if they are out of date with the API schema.
+  retryGuidance: Retrying without adding the missing field will continue to fail.
+invalid_parameter:
+  meaning: A request parameter or field is present but has an invalid value.
+  commonCauses:
+    - A field has the wrong type, format, or enum value.
+    - A string, list, or number is outside the allowed range.
+    - A field-level validation error is included in the `errors` array.
+  clientRemediation:
+    - Use the response `detail` and any field-level `errors` to identify the invalid value.
+    - Validate request values before sending them to the API.
+  retryGuidance: Retry only after correcting the invalid value.
+invalid_cursor:
+  meaning: The pagination cursor cannot be used for this request.
+  commonCauses:
+    - The cursor is malformed, truncated, or copied incorrectly.
+    - The cursor came from a different endpoint, query, or request shape.
+    - The client changed pagination-related inputs between requests.
+  clientRemediation:
+    - Use cursors only with the same endpoint and request shape that returned them.
+    - Start a new request and use the fresh cursor returned in that response.
+  retryGuidance: Do not retry with the same cursor. Start pagination again.
+  relatedDocs:
+    - title: Platform Search API
+      href: /api/platform-api/search-overview
+expired_cursor:
+  meaning: The pagination cursor was valid previously but is no longer usable.
+  commonCauses:
+    - The cursor was stored and reused after its validity window ended.
+    - The underlying result set changed enough that the cursor can no longer continue.
+  clientRemediation:
+    - Start a new search or list request and continue from the new cursor.
+    - Avoid persisting cursors as long-lived bookmarks.
+  retryGuidance: Retrying with the expired cursor will fail. Retry from a fresh first page.
+authentication_required:
+  meaning: The API request did not include valid authentication credentials.
+  commonCauses:
+    - The `Authorization` header is missing.
+    - The token is malformed or not recognized.
+    - The request is being sent to the wrong backend domain for the token.
+  clientRemediation:
+    - Include a valid bearer token in the `Authorization` header.
+    - Confirm the token belongs to the Glean instance receiving the request.
+  adminRemediation:
+    - Create or rotate API tokens from the appropriate admin console workflow.
+  retryGuidance: Retry after supplying valid credentials.
+  relatedDocs:
+    - title: Authentication Overview
+      href: /get-started/authentication
+token_expired:
+  meaning: The authentication token was valid but has expired.
+  commonCauses:
+    - An OAuth access token exceeded its lifetime.
+    - A cached token was reused instead of refreshed.
+  clientRemediation:
+    - Refresh the token through the configured authentication flow.
+    - Update token caching so expired tokens are not reused.
+  adminRemediation:
+    - Confirm the integration has an active credential configuration.
+  retryGuidance: Retry after obtaining a fresh token.
+  relatedDocs:
+    - title: Authentication Overview
+      href: /get-started/authentication
+insufficient_permissions:
+  meaning: The caller is authenticated but is not allowed to perform the requested operation.
+  commonCauses:
+    - The token lacks the required scopes or permissions.
+    - The authenticated user or app cannot access the requested resource.
+    - The resource is intentionally hidden from callers without access.
+  clientRemediation:
+    - Check that the integration is using the intended token and scopes.
+    - Use the response `detail` and endpoint documentation to identify required access.
+  adminRemediation:
+    - Grant the needed permissions or use a token associated with an authorized principal.
+  retryGuidance: Retry only after permissions or scopes have been corrected.
+  relatedDocs:
+    - title: Authentication Overview
+      href: /get-started/authentication
+resource_not_found:
+  meaning: The requested resource or endpoint could not be found or is not visible to the caller.
+  commonCauses:
+    - The resource identifier is incorrect.
+    - The resource exists but the caller does not have access.
+    - The endpoint path or HTTP method does not match a supported API operation.
+  clientRemediation:
+    - Verify the endpoint path, resource ID, and HTTP method.
+    - Treat hidden or unauthorized resources as indistinguishable from missing resources unless the endpoint documentation says otherwise.
+  adminRemediation:
+    - Confirm the resource exists and that the caller should have access to it.
+  retryGuidance: Retry only after correcting the resource identifier, endpoint path, or permissions.
+method_not_allowed:
+  meaning: The endpoint exists but does not support the HTTP method used by the request.
+  commonCauses:
+    - The request uses `GET`, `POST`, `PUT`, `PATCH`, or `DELETE` incorrectly for the endpoint.
+    - A client or proxy rewrote the method before forwarding the request.
+  clientRemediation:
+    - Use the HTTP method documented for the endpoint.
+    - Confirm any proxy or API client preserves the intended method.
+  retryGuidance: Retry with the supported method.
+conflict:
+  meaning: The request conflicts with the current state of the resource.
+  commonCauses:
+    - The resource already exists.
+    - The requested update is stale or conflicts with another change.
+    - The operation cannot be completed while the resource is in its current state.
+  clientRemediation:
+    - Fetch the latest resource state before retrying the change.
+    - Adjust the request so it no longer conflicts with existing data.
+  retryGuidance: Retrying unchanged may continue to fail. Retry after reconciling state.
+gone:
+  meaning: The resource or operation is no longer available.
+  commonCauses:
+    - The resource was deleted.
+    - The operation targets an expired or retired object.
+    - The endpoint no longer supports the requested workflow.
+  clientRemediation:
+    - Stop using the stale resource or workflow.
+    - Create a new resource or switch to the replacement documented by the endpoint.
+  retryGuidance: Do not retry the same request unless the resource is recreated or the workflow changes.
+request_timeout:
+  meaning: The server timed out while processing the request.
+  commonCauses:
+    - The request is too broad or expensive to complete within the timeout window.
+    - A transient service or network delay occurred.
+  clientRemediation:
+    - Narrow the request when possible.
+    - Use pagination or smaller batches for large operations.
+  retryGuidance: A retry may succeed if the timeout was transient. Use bounded retries with backoff.
+request_too_large:
+  meaning: The request body is larger than the API accepts.
+  commonCauses:
+    - A batch contains too many items.
+    - A field contains unexpectedly large text or metadata.
+    - The client is sending unnecessary data.
+  clientRemediation:
+    - Reduce the payload size.
+    - Split large batches into smaller requests.
+    - Remove fields the endpoint does not require.
+  retryGuidance: Retry only after reducing the request size.
+rate_limit_exceeded:
+  meaning: The caller has sent too many requests in a time window.
+  commonCauses:
+    - The integration is sending bursts without throttling.
+    - Multiple workers are sharing the same token or tenant limit.
+    - Automatic retries are amplifying traffic.
+  clientRemediation:
+    - Back off before retrying.
+    - Add client-side throttling and jitter.
+    - Avoid retry loops that ignore rate-limit responses.
+  retryGuidance: Retry after waiting. Use exponential backoff with jitter.
+  relatedDocs:
+    - title: Rate Limits
+      href: /get-started/rate-limits
+service_unavailable:
+  meaning: The API is temporarily unable to serve the request.
+  commonCauses:
+    - A transient availability issue is affecting the request.
+    - The service is overloaded or temporarily unavailable.
+  clientRemediation:
+    - Retry with backoff.
+    - Keep retries bounded so clients do not amplify service load.
+  retryGuidance: Retry with exponential backoff and jitter. Escalate if the issue persists.
+internal_error:
+  meaning: The API encountered an unexpected error while processing the request.
+  commonCauses:
+    - A transient server-side problem occurred.
+    - The request triggered a condition the API could not complete.
+  clientRemediation:
+    - Retry once or twice with backoff if the operation is safe to retry.
+    - Record the `request_id` for support if the error persists.
+  adminRemediation:
+    - Share the `request_id`, timestamp, endpoint, and high-level request context with support.
+  retryGuidance: Retry cautiously with backoff. Do not retry indefinitely.
+unprocessable_query:
+  meaning: The API understood the request shape but could not process the query semantics.
+  commonCauses:
+    - The query is unsupported, ambiguous, or cannot be translated for the endpoint.
+    - Query-related options conflict with each other.
+  clientRemediation:
+    - Simplify or rewrite the query.
+    - Check endpoint documentation for supported query features.
+  retryGuidance: Retry only after changing the query.
+  relatedDocs:
+    - title: Platform Search API
+      href: /api/platform-api/search-overview
+invalid_filter:
+  meaning: A filter in the request is not valid for the endpoint or datasource scope.
+  commonCauses:
+    - The filter field name is misspelled.
+    - The field is not supported for the requested datasource or endpoint.
+    - The filter value does not match the expected type or format.
+  clientRemediation:
+    - Check the endpoint documentation for supported filters.
+    - Validate field names and values before sending the request.
+    - Use response `detail` or field-level `errors` to identify the offending filter.
+  retryGuidance: Retry only after correcting or removing the invalid filter.
+  relatedDocs:
+    - title: Platform Search API
+      href: /api/platform-api/search-overview
+invalid_datasource:
+  meaning: The requested datasource scope is unknown, inaccessible, or not valid for the operation.
+  commonCauses:
+    - The datasource type or instance name is misspelled.
+    - The caller does not have access to the datasource.
+    - The request combines datasource scopes that the endpoint cannot process together.
+  clientRemediation:
+    - Verify datasource identifiers against the integration configuration.
+    - Remove inaccessible or unsupported datasource scopes.
+  adminRemediation:
+    - Confirm the datasource is connected and visible to the integration.
+  retryGuidance: Retry only after correcting the datasource scope or access.
+  relatedDocs:
+    - title: Platform Search API
+      href: /api/platform-api/search-overview
