@@ -10,6 +10,7 @@ import { FeatureFlagsContext } from '@site/src/theme/Root';
 import type { Props } from '@theme/DocSidebarItem/Link';
 import experimentalData from '@site/src/data/experimental.json';
 import type { ExperimentalData } from '@site/src/types/experimental';
+import BeakerIcon from '@site/src/components/BeakerIcon';
 
 import styles from './styles.module.css';
 
@@ -79,8 +80,13 @@ export default function DocSidebarItemLink({
         )}
         {label}
         {isExperimental && (
-          <span className={styles.experimentalBadge} title="Experimental">
-            Experimental
+          <span
+            className={styles.experimentalBadge}
+            title="Experimental"
+            aria-label="Experimental"
+            role="img"
+          >
+            <BeakerIcon className={styles.experimentalIcon} />
           </span>
         )}
         {!isInternalLink && <IconExternalLink />}
