@@ -7,7 +7,10 @@ const canonicalErrorUrlBase = 'https://developers.glean.com/errors/';
 
 export interface PlatformProblemDetailCodeSchema {
   enum: string[];
-  [problemDetailMetadataExtension]: Record<string, PlatformProblemDetailMetadata>;
+  [problemDetailMetadataExtension]: Record<
+    string,
+    PlatformProblemDetailMetadata
+  >;
 }
 
 export interface PlatformOpenApiSpec {
@@ -85,7 +88,12 @@ export function buildPlatformErrorsOutput(
   }
 
   validateCatalog(catalog);
-  assertSameCodes('metadata', Object.keys(codeToMetadata), 'enum', codeSchema.enum);
+  assertSameCodes(
+    'metadata',
+    Object.keys(codeToMetadata),
+    'enum',
+    codeSchema.enum,
+  );
   assertSameCodes('remediation', Object.keys(catalog), 'enum', codeSchema.enum);
 
   const errors = codeSchema.enum.map((code) => {
@@ -157,7 +165,13 @@ function loadYamlFile<T>(filePath: string): T {
 function validateCatalog(catalog: PlatformErrorRemediationCatalog) {
   for (const [code, entry] of Object.entries(catalog)) {
     const rawEntry = entry as unknown as Record<string, unknown>;
-    for (const field of ['status', 'title', 'slug', 'canonicalUrl', 'example']) {
+    for (const field of [
+      'status',
+      'title',
+      'slug',
+      'canonicalUrl',
+      'example',
+    ]) {
       if (field in rawEntry) {
         throw new Error(`${code} remediation must not duplicate ${field}`);
       }
@@ -165,15 +179,27 @@ function validateCatalog(catalog: PlatformErrorRemediationCatalog) {
 
     assertNonEmptyString(entry.meaning, `${code}.meaning`);
     assertNonEmptyStringArray(entry.commonCauses, `${code}.commonCauses`);
-    assertNonEmptyStringArray(entry.clientRemediation, `${code}.clientRemediation`);
+    assertNonEmptyStringArray(
+      entry.clientRemediation,
+      `${code}.clientRemediation`,
+    );
     assertNonEmptyString(entry.retryGuidance, `${code}.retryGuidance`);
     if (entry.adminRemediation) {
-      assertNonEmptyStringArray(entry.adminRemediation, `${code}.adminRemediation`);
+      assertNonEmptyStringArray(
+        entry.adminRemediation,
+        `${code}.adminRemediation`,
+      );
     }
     if (entry.relatedDocs) {
       for (const [index, relatedDoc] of entry.relatedDocs.entries()) {
-        assertNonEmptyString(relatedDoc.title, `${code}.relatedDocs.${index}.title`);
-        assertNonEmptyString(relatedDoc.href, `${code}.relatedDocs.${index}.href`);
+        assertNonEmptyString(
+          relatedDoc.title,
+          `${code}.relatedDocs.${index}.title`,
+        );
+        assertNonEmptyString(
+          relatedDoc.href,
+          `${code}.relatedDocs.${index}.href`,
+        );
       }
     }
   }
@@ -194,7 +220,9 @@ function assertSameCodes(
     throw new Error(`missing ${leftName} entries for: ${missing.join(', ')}`);
   }
   if (extra.length > 0) {
-    throw new Error(`${leftName} contains codes missing from ${rightName}: ${extra.join(', ')}`);
+    throw new Error(
+      `${leftName} contains codes missing from ${rightName}: ${extra.join(', ')}`,
+    );
   }
 }
 

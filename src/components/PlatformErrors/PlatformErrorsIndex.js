@@ -10,14 +10,15 @@ export default function PlatformErrorsIndex({ errors }) {
     <main>
       <h1>Platform API Errors</h1>
       <p>
-        Glean Platform API errors use ProblemDetail responses with stable machine-readable
-        codes. Each page explains the public error category, common causes, and safe
-        remediation guidance.
+        Glean Platform API errors use ProblemDetail responses with stable
+        machine-readable codes. Each page explains the public error category,
+        common causes, and safe remediation guidance.
       </p>
       {missingSlug && (
         <div className={styles.missingNotice}>
-          <strong>{missingSlug}</strong> does not have a dedicated error page yet. Use this
-          index to find the closest documented Platform API error code.
+          <strong>{missingSlug}</strong> does not have a dedicated error page
+          yet. Use this index to find the closest documented Platform API error
+          code.
         </div>
       )}
       <table>
