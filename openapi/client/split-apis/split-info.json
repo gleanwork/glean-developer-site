@@ -787,7 +787,7 @@
       "description": "",
       "file": "tools-api.yaml",
       "configId": "tools",
-      "paths": 3,
+      "paths": 4,
       "endpoints": [
         {
           "method": "GET",
@@ -804,6 +804,20 @@
           "operationId": "authorizeActionPack"
         },
         {
+          "method": "GET",
+          "path": "/rest/api/v1/tool-servers/{serverId}/auth",
+          "summary": "Get end-user authentication status for a tool server.",
+          "description": "Returns display information and the calling user's current authentication status\nfor the specified tool server.\n",
+          "operationId": "getToolServerAuthStatus"
+        },
+        {
+          "method": "POST",
+          "path": "/rest/api/v1/tool-servers/{serverId}/auth",
+          "summary": "Start the OAuth authorization flow for a tool server.",
+          "description": "Initiates the third-party OAuth flow for the specified tool server and returns the\nauthorization URL that the client should navigate the end user to. After the OAuth\ncallback completes, the user's browser is redirected back to `returnUrl` with query\nparameters indicating the result.\n\n`returnUrl` must match the tenant's configured return URL allowlist; otherwise the\nrequest is rejected with 400.\n",
+          "operationId": "authorizeToolServer"
+        },
+        {
           "method": "POST",
           "path": "/rest/api/v1/tools/call",
           "summary": "Execute the specified tool",
@@ -818,7 +832,7 @@
           "operationId": "list-available-tools"
         }
       ],
-      "schemas": 11,
+      "schemas": 15,
       "fullyInlined": false,
       "circularReferencesFixed": true
     },

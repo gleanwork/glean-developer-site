@@ -1242,6 +1242,18 @@ const baseSidebars: SidebarsConfig = {
               label: 'Get end-user authentication status for an action pack.',
               className: 'api-method get',
             },
+            {
+              type: 'doc',
+              id: 'api/client-api/tools/authorize-tool-server',
+              label: 'Start the OAuth authorization flow for a tool server.',
+              className: 'api-method post',
+            },
+            {
+              type: 'doc',
+              id: 'api/client-api/tools/get-tool-server-auth-status',
+              label: 'Get end-user authentication status for a tool server.',
+              className: 'api-method get',
+            },
           ],
         },
         {
