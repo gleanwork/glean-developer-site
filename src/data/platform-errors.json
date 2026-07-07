@@ -1,0 +1,675 @@
+{
+  "generatedAt": "2026-07-06T22:47:22.712Z",
+  "totalCount": 20,
+  "errors": [
+    {
+      "code": "invalid_request",
+      "slug": "invalid-request",
+      "status": 400,
+      "title": "Invalid Request",
+      "canonicalUrl": "https://developers.glean.com/errors/invalid-request",
+      "docPath": "docs/errors/invalid-request.mdx",
+      "example": {
+        "type": "https://developers.glean.com/errors/invalid-request",
+        "title": "Invalid Request",
+        "status": 400,
+        "detail": "Human-readable explanation specific to this occurrence.",
+        "code": "invalid_request",
+        "documentation_url": "https://developers.glean.com/errors/invalid-request",
+        "request_id": "req_7f8a9b0c1d2e"
+      },
+      "remediation": {
+        "meaning": "The request could not be processed because the payload, parameters, or request structure is invalid.",
+        "commonCauses": [
+          "The JSON body is malformed or does not match the endpoint schema.",
+          "Query parameters or request headers use unsupported values.",
+          "The request combines fields that cannot be used together."
+        ],
+        "clientRemediation": [
+          "Compare the request against the endpoint documentation and schema.",
+          "Check the response `detail` field for request-specific guidance.",
+          "Remove unsupported fields or combinations before retrying."
+        ],
+        "retryGuidance": "Retrying the same request will not help. Retry only after changing the request.",
+        "relatedDocs": [
+          {
+            "title": "Platform Search API",
+            "href": "/api/platform-api/search-overview"
+          }
+        ]
+      }
+    },
+    {
+      "code": "missing_required_field",
+      "slug": "missing-required-field",
+      "status": 400,
+      "title": "Missing Required Field",
+      "canonicalUrl": "https://developers.glean.com/errors/missing-required-field",
+      "docPath": "docs/errors/missing-required-field.mdx",
+      "example": {
+        "type": "https://developers.glean.com/errors/missing-required-field",
+        "title": "Missing Required Field",
+        "status": 400,
+        "detail": "Human-readable explanation specific to this occurrence.",
+        "code": "missing_required_field",
+        "documentation_url": "https://developers.glean.com/errors/missing-required-field",
+        "request_id": "req_7f8a9b0c1d2e"
+      },
+      "remediation": {
+        "meaning": "The request is missing a field that the endpoint requires.",
+        "commonCauses": [
+          "A required top-level property is absent from the request body.",
+          "A nested object is present but one of its required properties is missing.",
+          "A generated client or integration is sending an incomplete object."
+        ],
+        "clientRemediation": [
+          "Add the required field identified by the response `detail` or field-level `errors`.",
+          "Regenerate or update client types if they are out of date with the API schema."
+        ],
+        "retryGuidance": "Retrying without adding the missing field will continue to fail."
+      }
+    },
+    {
+      "code": "invalid_parameter",
+      "slug": "invalid-parameter",
+      "status": 400,
+      "title": "Invalid Parameter",
+      "canonicalUrl": "https://developers.glean.com/errors/invalid-parameter",
+      "docPath": "docs/errors/invalid-parameter.mdx",
+      "example": {
+        "type": "https://developers.glean.com/errors/invalid-parameter",
+        "title": "Invalid Parameter",
+        "status": 400,
+        "detail": "Human-readable explanation specific to this occurrence.",
+        "code": "invalid_parameter",
+        "documentation_url": "https://developers.glean.com/errors/invalid-parameter",
+        "request_id": "req_7f8a9b0c1d2e"
+      },
+      "remediation": {
+        "meaning": "A request parameter or field is present but has an invalid value.",
+        "commonCauses": [
+          "A field has the wrong type, format, or enum value.",
+          "A string, list, or number is outside the allowed range.",
+          "A field-level validation error is included in the `errors` array."
+        ],
+        "clientRemediation": [
+          "Use the response `detail` and any field-level `errors` to identify the invalid value.",
+          "Validate request values before sending them to the API."
+        ],
+        "retryGuidance": "Retry only after correcting the invalid value."
+      }
+    },
+    {
+      "code": "invalid_cursor",
+      "slug": "invalid-cursor",
+      "status": 400,
+      "title": "Invalid Pagination Cursor",
+      "canonicalUrl": "https://developers.glean.com/errors/invalid-cursor",
+      "docPath": "docs/errors/invalid-cursor.mdx",
+      "example": {
+        "type": "https://developers.glean.com/errors/invalid-cursor",
+        "title": "Invalid Pagination Cursor",
+        "status": 400,
+        "detail": "Human-readable explanation specific to this occurrence.",
+        "code": "invalid_cursor",
+        "documentation_url": "https://developers.glean.com/errors/invalid-cursor",
+        "request_id": "req_7f8a9b0c1d2e"
+      },
+      "remediation": {
+        "meaning": "The pagination cursor cannot be used for this request.",
+        "commonCauses": [
+          "The cursor is malformed, truncated, or copied incorrectly.",
+          "The cursor came from a different endpoint, query, or request shape.",
+          "The client changed pagination-related inputs between requests."
+        ],
+        "clientRemediation": [
+          "Use cursors only with the same endpoint and request shape that returned them.",
+          "Start a new request and use the fresh cursor returned in that response."
+        ],
+        "retryGuidance": "Do not retry with the same cursor. Start pagination again.",
+        "relatedDocs": [
+          {
+            "title": "Platform Search API",
+            "href": "/api/platform-api/search-overview"
+          }
+        ]
+      }
+    },
+    {
+      "code": "expired_cursor",
+      "slug": "expired-cursor",
+      "status": 400,
+      "title": "Expired Pagination Cursor",
+      "canonicalUrl": "https://developers.glean.com/errors/expired-cursor",
+      "docPath": "docs/errors/expired-cursor.mdx",
+      "example": {
+        "type": "https://developers.glean.com/errors/expired-cursor",
+        "title": "Expired Pagination Cursor",
+        "status": 400,
+        "detail": "Human-readable explanation specific to this occurrence.",
+        "code": "expired_cursor",
+        "documentation_url": "https://developers.glean.com/errors/expired-cursor",
+        "request_id": "req_7f8a9b0c1d2e"
+      },
+      "remediation": {
+        "meaning": "The pagination cursor was valid previously but is no longer usable.",
+        "commonCauses": [
+          "The cursor was stored and reused after its validity window ended.",
+          "The underlying result set changed enough that the cursor can no longer continue."
+        ],
+        "clientRemediation": [
+          "Start a new search or list request and continue from the new cursor.",
+          "Avoid persisting cursors as long-lived bookmarks."
+        ],
+        "retryGuidance": "Retrying with the expired cursor will fail. Retry from a fresh first page."
+      }
+    },
+    {
+      "code": "invalid_filter",
+      "slug": "invalid-filter",
+      "status": 400,
+      "title": "Invalid Filter",
+      "canonicalUrl": "https://developers.glean.com/errors/invalid-filter",
+      "docPath": "docs/errors/invalid-filter.mdx",
+      "example": {
+        "type": "https://developers.glean.com/errors/invalid-filter",
+        "title": "Invalid Filter",
+        "status": 400,
+        "detail": "Human-readable explanation specific to this occurrence.",
+        "code": "invalid_filter",
+        "documentation_url": "https://developers.glean.com/errors/invalid-filter",
+        "request_id": "req_7f8a9b0c1d2e"
+      },
+      "remediation": {
+        "meaning": "A filter in the request is not valid for the endpoint or datasource scope.",
+        "commonCauses": [
+          "The filter field name is misspelled.",
+          "The field is not supported for the requested datasource or endpoint.",
+          "The filter value does not match the expected type or format."
+        ],
+        "clientRemediation": [
+          "Check the endpoint documentation for supported filters.",
+          "Validate field names and values before sending the request.",
+          "Use response `detail` or field-level `errors` to identify the offending filter."
+        ],
+        "retryGuidance": "Retry only after correcting or removing the invalid filter.",
+        "relatedDocs": [
+          {
+            "title": "Platform Search API",
+            "href": "/api/platform-api/search-overview"
+          }
+        ]
+      }
+    },
+    {
+      "code": "invalid_datasource",
+      "slug": "invalid-datasource",
+      "status": 400,
+      "title": "Invalid Datasource",
+      "canonicalUrl": "https://developers.glean.com/errors/invalid-datasource",
+      "docPath": "docs/errors/invalid-datasource.mdx",
+      "example": {
+        "type": "https://developers.glean.com/errors/invalid-datasource",
+        "title": "Invalid Datasource",
+        "status": 400,
+        "detail": "Human-readable explanation specific to this occurrence.",
+        "code": "invalid_datasource",
+        "documentation_url": "https://developers.glean.com/errors/invalid-datasource",
+        "request_id": "req_7f8a9b0c1d2e"
+      },
+      "remediation": {
+        "meaning": "The requested datasource scope is unknown, inaccessible, or not valid for the operation.",
+        "commonCauses": [
+          "The datasource type or instance name is misspelled.",
+          "The caller does not have access to the datasource.",
+          "The request combines datasource scopes that the endpoint cannot process together."
+        ],
+        "clientRemediation": [
+          "Verify datasource identifiers against the integration configuration.",
+          "Remove inaccessible or unsupported datasource scopes."
+        ],
+        "adminRemediation": [
+          "Confirm the datasource is connected and visible to the integration."
+        ],
+        "retryGuidance": "Retry only after correcting the datasource scope or access.",
+        "relatedDocs": [
+          {
+            "title": "Platform Search API",
+            "href": "/api/platform-api/search-overview"
+          }
+        ]
+      }
+    },
+    {
+      "code": "authentication_required",
+      "slug": "authentication-required",
+      "status": 401,
+      "title": "Authentication Required",
+      "canonicalUrl": "https://developers.glean.com/errors/authentication-required",
+      "docPath": "docs/errors/authentication-required.mdx",
+      "example": {
+        "type": "https://developers.glean.com/errors/authentication-required",
+        "title": "Authentication Required",
+        "status": 401,
+        "detail": "Human-readable explanation specific to this occurrence.",
+        "code": "authentication_required",
+        "documentation_url": "https://developers.glean.com/errors/authentication-required",
+        "request_id": "req_7f8a9b0c1d2e"
+      },
+      "remediation": {
+        "meaning": "The API request did not include valid authentication credentials.",
+        "commonCauses": [
+          "The `Authorization` header is missing.",
+          "The token is malformed or not recognized.",
+          "The request is being sent to the wrong backend domain for the token."
+        ],
+        "clientRemediation": [
+          "Include a valid bearer token in the `Authorization` header.",
+          "Confirm the token belongs to the Glean instance receiving the request."
+        ],
+        "adminRemediation": [
+          "Create or rotate API tokens from the appropriate admin console workflow."
+        ],
+        "retryGuidance": "Retry after supplying valid credentials.",
+        "relatedDocs": [
+          {
+            "title": "Authentication Overview",
+            "href": "/get-started/authentication"
+          }
+        ]
+      }
+    },
+    {
+      "code": "token_expired",
+      "slug": "token-expired",
+      "status": 401,
+      "title": "Token Expired",
+      "canonicalUrl": "https://developers.glean.com/errors/token-expired",
+      "docPath": "docs/errors/token-expired.mdx",
+      "example": {
+        "type": "https://developers.glean.com/errors/token-expired",
+        "title": "Token Expired",
+        "status": 401,
+        "detail": "Human-readable explanation specific to this occurrence.",
+        "code": "token_expired",
+        "documentation_url": "https://developers.glean.com/errors/token-expired",
+        "request_id": "req_7f8a9b0c1d2e"
+      },
+      "remediation": {
+        "meaning": "The authentication token was valid but has expired.",
+        "commonCauses": [
+          "An OAuth access token exceeded its lifetime.",
+          "A cached token was reused instead of refreshed."
+        ],
+        "clientRemediation": [
+          "Refresh the token through the configured authentication flow.",
+          "Update token caching so expired tokens are not reused."
+        ],
+        "adminRemediation": [
+          "Confirm the integration has an active credential configuration."
+        ],
+        "retryGuidance": "Retry after obtaining a fresh token.",
+        "relatedDocs": [
+          {
+            "title": "Authentication Overview",
+            "href": "/get-started/authentication"
+          }
+        ]
+      }
+    },
+    {
+      "code": "insufficient_permissions",
+      "slug": "insufficient-permissions",
+      "status": 403,
+      "title": "Insufficient Permissions",
+      "canonicalUrl": "https://developers.glean.com/errors/insufficient-permissions",
+      "docPath": "docs/errors/insufficient-permissions.mdx",
+      "example": {
+        "type": "https://developers.glean.com/errors/insufficient-permissions",
+        "title": "Insufficient Permissions",
+        "status": 403,
+        "detail": "Human-readable explanation specific to this occurrence.",
+        "code": "insufficient_permissions",
+        "documentation_url": "https://developers.glean.com/errors/insufficient-permissions",
+        "request_id": "req_7f8a9b0c1d2e"
+      },
+      "remediation": {
+        "meaning": "The caller is authenticated but is not allowed to perform the requested operation.",
+        "commonCauses": [
+          "The token lacks the required scopes or permissions.",
+          "The authenticated user or app cannot access the requested resource.",
+          "The resource is intentionally hidden from callers without access."
+        ],
+        "clientRemediation": [
+          "Check that the integration is using the intended token and scopes.",
+          "Use the response `detail` and endpoint documentation to identify required access."
+        ],
+        "adminRemediation": [
+          "Grant the needed permissions or use a token associated with an authorized principal."
+        ],
+        "retryGuidance": "Retry only after permissions or scopes have been corrected.",
+        "relatedDocs": [
+          {
+            "title": "Authentication Overview",
+            "href": "/get-started/authentication"
+          }
+        ]
+      }
+    },
+    {
+      "code": "resource_not_found",
+      "slug": "resource-not-found",
+      "status": 404,
+      "title": "Resource Not Found",
+      "canonicalUrl": "https://developers.glean.com/errors/resource-not-found",
+      "docPath": "docs/errors/resource-not-found.mdx",
+      "example": {
+        "type": "https://developers.glean.com/errors/resource-not-found",
+        "title": "Resource Not Found",
+        "status": 404,
+        "detail": "Human-readable explanation specific to this occurrence.",
+        "code": "resource_not_found",
+        "documentation_url": "https://developers.glean.com/errors/resource-not-found",
+        "request_id": "req_7f8a9b0c1d2e"
+      },
+      "remediation": {
+        "meaning": "The requested resource or endpoint could not be found or is not visible to the caller.",
+        "commonCauses": [
+          "The resource identifier is incorrect.",
+          "The resource exists but the caller does not have access.",
+          "The endpoint path or HTTP method does not match a supported API operation."
+        ],
+        "clientRemediation": [
+          "Verify the endpoint path, resource ID, and HTTP method.",
+          "Treat hidden or unauthorized resources as indistinguishable from missing resources unless the endpoint documentation says otherwise."
+        ],
+        "adminRemediation": [
+          "Confirm the resource exists and that the caller should have access to it."
+        ],
+        "retryGuidance": "Retry only after correcting the resource identifier, endpoint path, or permissions."
+      }
+    },
+    {
+      "code": "method_not_allowed",
+      "slug": "method-not-allowed",
+      "status": 405,
+      "title": "Method Not Allowed",
+      "canonicalUrl": "https://developers.glean.com/errors/method-not-allowed",
+      "docPath": "docs/errors/method-not-allowed.mdx",
+      "example": {
+        "type": "https://developers.glean.com/errors/method-not-allowed",
+        "title": "Method Not Allowed",
+        "status": 405,
+        "detail": "Human-readable explanation specific to this occurrence.",
+        "code": "method_not_allowed",
+        "documentation_url": "https://developers.glean.com/errors/method-not-allowed",
+        "request_id": "req_7f8a9b0c1d2e"
+      },
+      "remediation": {
+        "meaning": "The endpoint exists but does not support the HTTP method used by the request.",
+        "commonCauses": [
+          "The request uses `GET`, `POST`, `PUT`, `PATCH`, or `DELETE` incorrectly for the endpoint.",
+          "A client or proxy rewrote the method before forwarding the request."
+        ],
+        "clientRemediation": [
+          "Use the HTTP method documented for the endpoint.",
+          "Confirm any proxy or API client preserves the intended method."
+        ],
+        "retryGuidance": "Retry with the supported method."
+      }
+    },
+    {
+      "code": "request_timeout",
+      "slug": "request-timeout",
+      "status": 408,
+      "title": "Request Timeout",
+      "canonicalUrl": "https://developers.glean.com/errors/request-timeout",
+      "docPath": "docs/errors/request-timeout.mdx",
+      "example": {
+        "type": "https://developers.glean.com/errors/request-timeout",
+        "title": "Request Timeout",
+        "status": 408,
+        "detail": "Human-readable explanation specific to this occurrence.",
+        "code": "request_timeout",
+        "documentation_url": "https://developers.glean.com/errors/request-timeout",
+        "request_id": "req_7f8a9b0c1d2e"
+      },
+      "remediation": {
+        "meaning": "The server timed out while processing the request.",
+        "commonCauses": [
+          "The request is too broad or expensive to complete within the timeout window.",
+          "A transient service or network delay occurred."
+        ],
+        "clientRemediation": [
+          "Narrow the request when possible.",
+          "Use pagination or smaller batches for large operations."
+        ],
+        "retryGuidance": "A retry may succeed if the timeout was transient. Use bounded retries with backoff."
+      }
+    },
+    {
+      "code": "request_too_large",
+      "slug": "request-too-large",
+      "status": 413,
+      "title": "Request Too Large",
+      "canonicalUrl": "https://developers.glean.com/errors/request-too-large",
+      "docPath": "docs/errors/request-too-large.mdx",
+      "example": {
+        "type": "https://developers.glean.com/errors/request-too-large",
+        "title": "Request Too Large",
+        "status": 413,
+        "detail": "Human-readable explanation specific to this occurrence.",
+        "code": "request_too_large",
+        "documentation_url": "https://developers.glean.com/errors/request-too-large",
+        "request_id": "req_7f8a9b0c1d2e"
+      },
+      "remediation": {
+        "meaning": "The request body is larger than the API accepts.",
+        "commonCauses": [
+          "A batch contains too many items.",
+          "A field contains unexpectedly large text or metadata.",
+          "The client is sending unnecessary data."
+        ],
+        "clientRemediation": [
+          "Reduce the payload size.",
+          "Split large batches into smaller requests.",
+          "Remove fields the endpoint does not require."
+        ],
+        "retryGuidance": "Retry only after reducing the request size."
+      }
+    },
+    {
+      "code": "conflict",
+      "slug": "conflict",
+      "status": 409,
+      "title": "Conflict",
+      "canonicalUrl": "https://developers.glean.com/errors/conflict",
+      "docPath": "docs/errors/conflict.mdx",
+      "example": {
+        "type": "https://developers.glean.com/errors/conflict",
+        "title": "Conflict",
+        "status": 409,
+        "detail": "Human-readable explanation specific to this occurrence.",
+        "code": "conflict",
+        "documentation_url": "https://developers.glean.com/errors/conflict",
+        "request_id": "req_7f8a9b0c1d2e"
+      },
+      "remediation": {
+        "meaning": "The request conflicts with the current state of the resource.",
+        "commonCauses": [
+          "The resource already exists.",
+          "The requested update is stale or conflicts with another change.",
+          "The operation cannot be completed while the resource is in its current state."
+        ],
+        "clientRemediation": [
+          "Fetch the latest resource state before retrying the change.",
+          "Adjust the request so it no longer conflicts with existing data."
+        ],
+        "retryGuidance": "Retrying unchanged may continue to fail. Retry after reconciling state."
+      }
+    },
+    {
+      "code": "gone",
+      "slug": "gone",
+      "status": 410,
+      "title": "Gone",
+      "canonicalUrl": "https://developers.glean.com/errors/gone",
+      "docPath": "docs/errors/gone.mdx",
+      "example": {
+        "type": "https://developers.glean.com/errors/gone",
+        "title": "Gone",
+        "status": 410,
+        "detail": "Human-readable explanation specific to this occurrence.",
+        "code": "gone",
+        "documentation_url": "https://developers.glean.com/errors/gone",
+        "request_id": "req_7f8a9b0c1d2e"
+      },
+      "remediation": {
+        "meaning": "The resource or operation is no longer available.",
+        "commonCauses": [
+          "The resource was deleted.",
+          "The operation targets an expired or retired object.",
+          "The endpoint no longer supports the requested workflow."
+        ],
+        "clientRemediation": [
+          "Stop using the stale resource or workflow.",
+          "Create a new resource or switch to the replacement documented by the endpoint."
+        ],
+        "retryGuidance": "Do not retry the same request unless the resource is recreated or the workflow changes."
+      }
+    },
+    {
+      "code": "unprocessable_query",
+      "slug": "unprocessable-query",
+      "status": 422,
+      "title": "Unprocessable Query",
+      "canonicalUrl": "https://developers.glean.com/errors/unprocessable-query",
+      "docPath": "docs/errors/unprocessable-query.mdx",
+      "example": {
+        "type": "https://developers.glean.com/errors/unprocessable-query",
+        "title": "Unprocessable Query",
+        "status": 422,
+        "detail": "Human-readable explanation specific to this occurrence.",
+        "code": "unprocessable_query",
+        "documentation_url": "https://developers.glean.com/errors/unprocessable-query",
+        "request_id": "req_7f8a9b0c1d2e"
+      },
+      "remediation": {
+        "meaning": "The API understood the request shape but could not process the query semantics.",
+        "commonCauses": [
+          "The query is unsupported, ambiguous, or cannot be translated for the endpoint.",
+          "Query-related options conflict with each other."
+        ],
+        "clientRemediation": [
+          "Simplify or rewrite the query.",
+          "Check endpoint documentation for supported query features."
+        ],
+        "retryGuidance": "Retry only after changing the query.",
+        "relatedDocs": [
+          {
+            "title": "Platform Search API",
+            "href": "/api/platform-api/search-overview"
+          }
+        ]
+      }
+    },
+    {
+      "code": "rate_limit_exceeded",
+      "slug": "rate-limit-exceeded",
+      "status": 429,
+      "title": "Rate Limit Exceeded",
+      "canonicalUrl": "https://developers.glean.com/errors/rate-limit-exceeded",
+      "docPath": "docs/errors/rate-limit-exceeded.mdx",
+      "example": {
+        "type": "https://developers.glean.com/errors/rate-limit-exceeded",
+        "title": "Rate Limit Exceeded",
+        "status": 429,
+        "detail": "Human-readable explanation specific to this occurrence.",
+        "code": "rate_limit_exceeded",
+        "documentation_url": "https://developers.glean.com/errors/rate-limit-exceeded",
+        "request_id": "req_7f8a9b0c1d2e"
+      },
+      "remediation": {
+        "meaning": "The caller has sent too many requests in a time window.",
+        "commonCauses": [
+          "The integration is sending bursts without throttling.",
+          "Multiple workers are sharing the same token or tenant limit.",
+          "Automatic retries are amplifying traffic."
+        ],
+        "clientRemediation": [
+          "Back off before retrying.",
+          "Add client-side throttling and jitter.",
+          "Avoid retry loops that ignore rate-limit responses."
+        ],
+        "retryGuidance": "Retry after waiting. Use exponential backoff with jitter.",
+        "relatedDocs": [
+          {
+            "title": "Rate Limits",
+            "href": "/get-started/rate-limits"
+          }
+        ]
+      }
+    },
+    {
+      "code": "internal_error",
+      "slug": "internal-error",
+      "status": 500,
+      "title": "Internal Error",
+      "canonicalUrl": "https://developers.glean.com/errors/internal-error",
+      "docPath": "docs/errors/internal-error.mdx",
+      "example": {
+        "type": "https://developers.glean.com/errors/internal-error",
+        "title": "Internal Error",
+        "status": 500,
+        "detail": "Human-readable explanation specific to this occurrence.",
+        "code": "internal_error",
+        "documentation_url": "https://developers.glean.com/errors/internal-error",
+        "request_id": "req_7f8a9b0c1d2e"
+      },
+      "remediation": {
+        "meaning": "The API encountered an unexpected error while processing the request.",
+        "commonCauses": [
+          "A transient server-side problem occurred.",
+          "The request triggered a condition the API could not complete."
+        ],
+        "clientRemediation": [
+          "Retry once or twice with backoff if the operation is safe to retry.",
+          "Record the `request_id` for support if the error persists."
+        ],
+        "adminRemediation": [
+          "Share the `request_id`, timestamp, endpoint, and high-level request context with support."
+        ],
+        "retryGuidance": "Retry cautiously with backoff. Do not retry indefinitely."
+      }
+    },
+    {
+      "code": "service_unavailable",
+      "slug": "service-unavailable",
+      "status": 503,
+      "title": "Service Unavailable",
+      "canonicalUrl": "https://developers.glean.com/errors/service-unavailable",
+      "docPath": "docs/errors/service-unavailable.mdx",
+      "example": {
+        "type": "https://developers.glean.com/errors/service-unavailable",
+        "title": "Service Unavailable",
+        "status": 503,
+        "detail": "Human-readable explanation specific to this occurrence.",
+        "code": "service_unavailable",
+        "documentation_url": "https://developers.glean.com/errors/service-unavailable",
+        "request_id": "req_7f8a9b0c1d2e"
+      },
+      "remediation": {
+        "meaning": "The API is temporarily unable to serve the request.",
+        "commonCauses": [
+          "A transient availability issue is affecting the request.",
+          "The service is overloaded or temporarily unavailable."
+        ],
+        "clientRemediation": [
+          "Retry with backoff.",
+          "Keep retries bounded so clients do not amplify service load."
+        ],
+        "retryGuidance": "Retry with exponential backoff and jitter. Escalate if the issue persists."
+      }
+    }
+  ]
+}

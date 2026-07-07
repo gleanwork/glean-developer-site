@@ -1,0 +1,54 @@
+---
+title: Rate Limit Exceeded
+description: rate_limit_exceeded ProblemDetail reference for the Glean Platform API
+---
+
+# Rate Limit Exceeded
+
+## Code
+
+- `code`: `rate_limit_exceeded`
+- `status`: `429`
+- `url`: `https://developers.glean.com/errors/rate-limit-exceeded`
+
+## What It Means
+
+The caller has sent too many requests in a time window.
+
+## Common Causes
+
+- The integration is sending bursts without throttling.
+- Multiple workers are sharing the same token or tenant limit.
+- Automatic retries are amplifying traffic.
+
+## How To Resolve
+
+### Client Actions
+
+- Back off before retrying.
+- Add client-side throttling and jitter.
+- Avoid retry loops that ignore rate-limit responses.
+
+## Retry Guidance
+
+Retry after waiting. Use exponential backoff with jitter.
+
+## Example Response
+
+```json
+{
+  "type": "https://developers.glean.com/errors/rate-limit-exceeded",
+  "title": "Rate Limit Exceeded",
+  "status": 429,
+  "detail": "Human-readable explanation specific to this occurrence.",
+  "code": "rate_limit_exceeded",
+  "documentation_url": "https://developers.glean.com/errors/rate-limit-exceeded",
+  "request_id": "req_7f8a9b0c1d2e"
+}
+```
+
+
+## Related Docs
+
+- [Rate Limits](/get-started/rate-limits)
+

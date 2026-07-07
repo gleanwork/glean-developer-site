@@ -1,0 +1,47 @@
+---
+title: Expired Pagination Cursor
+description: expired_cursor ProblemDetail reference for the Glean Platform API
+---
+
+# Expired Pagination Cursor
+
+## Code
+
+- `code`: `expired_cursor`
+- `status`: `400`
+- `url`: `https://developers.glean.com/errors/expired-cursor`
+
+## What It Means
+
+The pagination cursor was valid previously but is no longer usable.
+
+## Common Causes
+
+- The cursor was stored and reused after its validity window ended.
+- The underlying result set changed enough that the cursor can no longer continue.
+
+## How To Resolve
+
+### Client Actions
+
+- Start a new search or list request and continue from the new cursor.
+- Avoid persisting cursors as long-lived bookmarks.
+
+## Retry Guidance
+
+Retrying with the expired cursor will fail. Retry from a fresh first page.
+
+## Example Response
+
+```json
+{
+  "type": "https://developers.glean.com/errors/expired-cursor",
+  "title": "Expired Pagination Cursor",
+  "status": 400,
+  "detail": "Human-readable explanation specific to this occurrence.",
+  "code": "expired_cursor",
+  "documentation_url": "https://developers.glean.com/errors/expired-cursor",
+  "request_id": "req_7f8a9b0c1d2e"
+}
+```
+

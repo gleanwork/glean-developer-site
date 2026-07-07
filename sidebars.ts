@@ -48,6 +48,15 @@ const baseSidebars: SidebarsConfig = {
         },
         {
           type: 'doc',
+          id: 'errors/index',
+          label: 'Platform API Errors',
+          customProps: {
+            icon: 'AlertCircle',
+            iconSet: 'feather',
+          },
+        },
+        {
+          type: 'doc',
           id: 'changelog/index',
           label: 'Changelog',
           customProps: {
