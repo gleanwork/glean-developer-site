@@ -2,8 +2,8 @@ openapi: 3.0.0
 info:
   version: '2026-04-01'
   title: Glean Platform API
-  x-source-commit-sha: 33bf057cf0f948a83126e81582717aebdb622bfa
-  x-open-api-commit-sha: f5245e430a3578e1540117c92889ddcf2cb18c90
+  x-source-commit-sha: 36490380aba39f767c75800da51cc926b7c58f58
+  x-open-api-commit-sha: 174a041ef5d07c9ff5b6c8244de3262dbdad2b24
 servers:
   - url: https://{instance}-be.glean.com
     variables:
@@ -70,6 +70,7 @@ paths:
             with Glean(
                 api_token=os.getenv("GLEAN_API_TOKEN", ""),
                 server_url="https://mycompany-be.glean.com",
+                include_experimental=True,
             ) as glean:
 
                 res = glean.agents.search(name="HR Policy Agent")
@@ -84,6 +85,7 @@ paths:
             const glean = new Glean({
               apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
               serverURL: "https://mycompany-be.glean.com",
+              includeExperimental: true,
             });
 
             async function run() {
@@ -97,13 +99,14 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Agents.Search(ctx, components.PlatformAgentsSearchRequest{\n        Name: apiclientgo.Pointer(\"HR Policy Agent\"),\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformAgentsSearchResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Agents.Search(ctx, components.PlatformAgentsSearchRequest{\n        Name: apiclientgo.Pointer(\"HR Policy Agent\"),\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformAgentsSearchResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
             package hello.world;
 
             import com.glean.api_client.glean_api_client.Glean;
+            import com.glean.api_client.glean_api_client.hooks.GleanBuilder;
             import com.glean.api_client.glean_api_client.models.components.PlatformAgentsSearchRequest;
             import com.glean.api_client.glean_api_client.models.errors.PlatformProblemDetailException;
             import com.glean.api_client.glean_api_client.models.operations.PlatformAgentsSearchResponse;
@@ -113,8 +116,9 @@ paths:
 
                 public static void main(String[] args) throws PlatformProblemDetailException, Exception {
 
-                    Glean sdk = Glean.builder()
+                    Glean sdk = GleanBuilder.create()
                             .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
+                            .includeExperimental(true)
                         .build();
 
                     PlatformAgentsSearchRequest req = PlatformAgentsSearchRequest.builder()
@@ -186,6 +190,7 @@ paths:
             with Glean(
                 api_token=os.getenv("GLEAN_API_TOKEN", ""),
                 server_url="https://mycompany-be.glean.com",
+                include_experimental=True,
             ) as glean:
 
                 res = glean.agents.get(agent_id="<id>")
@@ -200,6 +205,7 @@ paths:
             const glean = new Glean({
               apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
               serverURL: "https://mycompany-be.glean.com",
+              includeExperimental: true,
             });
 
             async function run() {
@@ -211,13 +217,14 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Agents.Get(ctx, \"<id>\")\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformAgentGetResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Agents.Get(ctx, \"<id>\")\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformAgentGetResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
             package hello.world;
 
             import com.glean.api_client.glean_api_client.Glean;
+            import com.glean.api_client.glean_api_client.hooks.GleanBuilder;
             import com.glean.api_client.glean_api_client.models.errors.PlatformProblemDetailException;
             import com.glean.api_client.glean_api_client.models.operations.PlatformAgentsGetResponse;
             import java.lang.Exception;
@@ -226,8 +233,9 @@ paths:
 
                 public static void main(String[] args) throws PlatformProblemDetailException, Exception {
 
-                    Glean sdk = Glean.builder()
+                    Glean sdk = GleanBuilder.create()
                             .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
+                            .includeExperimental(true)
                         .build();
 
                     PlatformAgentsGetResponse res = sdk.agents().get()
@@ -302,6 +310,7 @@ paths:
             with Glean(
                 api_token=os.getenv("GLEAN_API_TOKEN", ""),
                 server_url="https://mycompany-be.glean.com",
+                include_experimental=True,
             ) as glean:
 
                 res = glean.agents.get_schemas(agent_id="<id>", include_tools=False)
@@ -316,6 +325,7 @@ paths:
             const glean = new Glean({
               apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
               serverURL: "https://mycompany-be.glean.com",
+              includeExperimental: true,
             });
 
             async function run() {
@@ -327,13 +337,14 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Agents.GetSchemas(ctx, \"<id>\", apiclientgo.Pointer(false))\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformAgentSchemasResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Agents.GetSchemas(ctx, \"<id>\", apiclientgo.Pointer(false))\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformAgentSchemasResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
             package hello.world;
 
             import com.glean.api_client.glean_api_client.Glean;
+            import com.glean.api_client.glean_api_client.hooks.GleanBuilder;
             import com.glean.api_client.glean_api_client.models.errors.PlatformProblemDetailException;
             import com.glean.api_client.glean_api_client.models.operations.PlatformAgentsGetSchemasResponse;
             import java.lang.Exception;
@@ -342,8 +353,9 @@ paths:
 
                 public static void main(String[] args) throws PlatformProblemDetailException, Exception {
 
-                    Glean sdk = Glean.builder()
+                    Glean sdk = GleanBuilder.create()
                             .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
+                            .includeExperimental(true)
                         .build();
 
                     PlatformAgentsGetSchemasResponse res = sdk.agents().getSchemas()
@@ -435,6 +447,7 @@ paths:
             with Glean(
                 api_token=os.getenv("GLEAN_API_TOKEN", ""),
                 server_url="https://mycompany-be.glean.com",
+                include_experimental=True,
             ) as glean:
 
                 res = glean.agents.create_run(agent_id="<id>", messages=[
@@ -454,6 +467,7 @@ paths:
             const glean = new Glean({
               apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
               serverURL: "https://mycompany-be.glean.com",
+              includeExperimental: true,
             });
 
             async function run() {
@@ -472,13 +486,14 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Agents.CreateRun(ctx, \"<id>\", components.PlatformAgentRunCreateRequest{\n        Messages: []components.PlatformMessage{\n            components.PlatformMessage{\n                Role: components.PlatformMessageRoleUser,\n                Content: []components.PlatformMessageTextBlock{},\n            },\n        },\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformAgentRunWaitResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Agents.CreateRun(ctx, \"<id>\", components.PlatformAgentRunCreateRequest{\n        Messages: []components.PlatformMessage{\n            components.PlatformMessage{\n                Role: components.PlatformMessageRoleUser,\n                Content: []components.PlatformMessageTextBlock{},\n            },\n        },\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformAgentRunWaitResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
             package hello.world;
 
             import com.glean.api_client.glean_api_client.Glean;
+            import com.glean.api_client.glean_api_client.hooks.GleanBuilder;
             import com.glean.api_client.glean_api_client.models.components.*;
             import com.glean.api_client.glean_api_client.models.errors.PlatformProblemDetailException;
             import com.glean.api_client.glean_api_client.models.operations.PlatformAgentsCreateRunResponse;
@@ -489,8 +504,9 @@ paths:
 
                 public static void main(String[] args) throws PlatformProblemDetailException, Exception {
 
-                    Glean sdk = Glean.builder()
+                    Glean sdk = GleanBuilder.create()
                             .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
+                            .includeExperimental(true)
                         .build();
 
                     PlatformAgentsCreateRunResponse res = sdk.agents().createRun()
@@ -566,6 +582,7 @@ paths:
             with Glean(
                 api_token=os.getenv("GLEAN_API_TOKEN", ""),
                 server_url="https://mycompany-be.glean.com",
+                include_experimental=True,
             ) as glean:
 
                 res = glean.search.query(query="quarterly planning 2026", page_size=10, datasources=[
@@ -594,6 +611,7 @@ paths:
             const glean = new Glean({
               apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
               serverURL: "https://mycompany-be.glean.com",
+              includeExperimental: true,
             });
 
             async function run() {
@@ -624,13 +642,14 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Search.Query(ctx, components.PlatformSearchRequest{\n        Query: \"quarterly planning 2026\",\n        Datasources: []string{\n            \"confluence\",\n            \"google_drive\",\n        },\n        DatasourceInstances: []string{\n            \"slack_acme\",\n            \"slack_eu\",\n        },\n        Filters: []components.PlatformFilter{\n            components.PlatformFilter{\n                Field: \"type\",\n                Values: []string{\n                    \"spreadsheet\",\n                    \"presentation\",\n                },\n            },\n        },\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformSearchResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Search.Query(ctx, components.PlatformSearchRequest{\n        Query: \"quarterly planning 2026\",\n        Datasources: []string{\n            \"confluence\",\n            \"google_drive\",\n        },\n        DatasourceInstances: []string{\n            \"slack_acme\",\n            \"slack_eu\",\n        },\n        Filters: []components.PlatformFilter{\n            components.PlatformFilter{\n                Field: \"type\",\n                Values: []string{\n                    \"spreadsheet\",\n                    \"presentation\",\n                },\n            },\n        },\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformSearchResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
             package hello.world;
 
             import com.glean.api_client.glean_api_client.Glean;
+            import com.glean.api_client.glean_api_client.hooks.GleanBuilder;
             import com.glean.api_client.glean_api_client.models.components.PlatformFilter;
             import com.glean.api_client.glean_api_client.models.components.PlatformSearchRequest;
             import com.glean.api_client.glean_api_client.models.errors.PlatformProblemDetailException;
@@ -642,8 +661,9 @@ paths:
 
                 public static void main(String[] args) throws PlatformProblemDetailException, Exception {
 
-                    Glean sdk = Glean.builder()
+                    Glean sdk = GleanBuilder.create()
                             .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
+                            .includeExperimental(true)
                         .build();
 
                     PlatformSearchRequest req = PlatformSearchRequest.builder()
