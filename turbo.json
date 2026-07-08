@@ -22,7 +22,7 @@
       "inputs": ["scripts/openapi-capitalize-language.mjs"],
       "outputs": ["openapi/client/client-capitalized.yaml"],
       "env": ["GITHUB_TOKEN"],
-      "cache": true
+      "cache": false
     },
     "//#openapi:break:client": {
       "dependsOn": ["//#openapi:capitalize:client"],
@@ -37,7 +37,7 @@
       "inputs": ["scripts/openapi-capitalize-language.mjs"],
       "outputs": ["openapi/indexing/indexing-capitalized.yaml"],
       "env": ["GITHUB_TOKEN"],
-      "cache": true
+      "cache": false
     },
     "//#openapi:generate:client:activity": {
       "dependsOn": ["//#openapi:break:client"],
@@ -257,12 +257,7 @@
       "cache": false
     },
     "//#docusaurus:build": {
-      "dependsOn": [
-        "//#changelog:aggregate",
-        "//#generate:rss",
-        "//#openapi:clean:after:client",
-        "//#openapi:clean:after:indexing"
-      ],
+      "dependsOn": ["//#changelog:aggregate", "//#generate:rss"],
       "inputs": [
         "docs/**",
         "src/**",
@@ -279,17 +274,8 @@
       "cache": true
     },
     "//#prepare-dev": {
-      "dependsOn": [
-        "//#changelog:aggregate",
-        "//#generate:rss",
-        "//#openapi:clean:after:client",
-        "//#openapi:clean:after:indexing"
-      ],
-      "outputs": [
-        "src/data/changelog.json",
-        "static/changelog.xml",
-        "docs/api/**"
-      ],
+      "dependsOn": ["//#changelog:aggregate", "//#generate:rss"],
+      "outputs": ["src/data/changelog.json", "static/changelog.xml"],
       "cache": true
     },
     "//#dev": {
