@@ -47,7 +47,7 @@ export default function Home() {
   return (
     <>
       <section
-        className={clsx('container', styles.wideContainer, 'margin-top--sm')}
+        className={clsx('container', styles.wideContainer)}
         aria-labelledby="platform-api-banner-title"
       >
         <div className={styles.topBanner}>
