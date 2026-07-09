@@ -38,6 +38,81 @@ export function capitalizeLanguageName(lang) {
   );
 }
 
+const HTTP_METHODS = [
+  'get',
+  'put',
+  'post',
+  'delete',
+  'options',
+  'head',
+  'patch',
+  'trace',
+];
+
+const EXPERIMENTAL_HEADER_NAME = 'X-Glean-Include-Experimental';
+
+/**
+ * Inject the `X-Glean-Include-Experimental` header parameter into every
+ * operation marked with the `x-glean-experimental` vendor extension.
+ *
+ * The SDK code samples (x-codeSamples) already opt in to experimental
+ * features via `includeExperimental: true`, but the cURL snippet is
+ * generated at runtime by docusaurus-theme-openapi-docs from the
+ * operation's declared parameters — so without this header parameter the
+ * generated cURL command would silently omit the opt-in header and fail
+ * against experimental endpoints.
+ *
+ * The non-standard `value` property is intentional: the theme's snippet
+ * generator (ApiExplorer/buildPostmanRequest `setHeaders`) only emits a
+ * header parameter when the parameter object carries a truthy `value`, so
+ * pre-setting it makes the header appear in the generated cURL example.
+ */
+export function injectExperimentalHeaders(apiSpec) {
+  const paths = apiSpec?.paths;
+  if (!paths || typeof paths !== 'object') return;
+
+  for (const [pathKey, pathItem] of Object.entries(paths)) {
+    if (!pathItem || typeof pathItem !== 'object') continue;
+
+    for (const method of HTTP_METHODS) {
+      const operation = pathItem[method];
+      if (
+        !operation ||
+        typeof operation !== 'object' ||
+        !operation['x-glean-experimental']
+      ) {
+        continue;
+      }
+
+      operation.parameters ??= [];
+      const alreadyDeclared = operation.parameters.some(
+        (param) =>
+          param?.in === 'header' &&
+          typeof param?.name === 'string' &&
+          param.name.toLowerCase() === EXPERIMENTAL_HEADER_NAME.toLowerCase(),
+      );
+      if (alreadyDeclared) continue;
+
+      operation.parameters.unshift({
+        in: 'header',
+        name: EXPERIMENTAL_HEADER_NAME,
+        description:
+          'This endpoint is experimental, so requests must include this header set to `true`. See [How experimental APIs work](https://developers.glean.com/experimental/overview) for details.',
+        required: true,
+        schema: {
+          type: 'boolean',
+          default: true,
+        },
+        example: true,
+        value: 'true',
+      });
+      console.log(
+        `   💉 Injected ${EXPERIMENTAL_HEADER_NAME} header on ${method.toUpperCase()} ${pathKey}`,
+      );
+    }
+  }
+}
+
 function processCodeSamples(obj) {
   if (typeof obj !== 'object' || obj === null) return;
 
@@ -105,6 +180,9 @@ export async function capitalizeCodeSamples(inputFile, outputFile) {
 
     console.log('🔤 Processing x-codeSamples...');
     processCodeSamples(apiSpec);
+
+    console.log('🧪 Injecting experimental opt-in headers...');
+    injectExperimentalHeaders(apiSpec);
 
     let output = outputFile;
     if (!output) {
