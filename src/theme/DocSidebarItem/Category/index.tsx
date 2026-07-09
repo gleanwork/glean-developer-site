@@ -157,25 +157,12 @@ export default function DocSidebarItemCategory({
     }
   }, [collapsible, expandedItem, index, setCollapsed, autoCollapseCategories]);
 
-  // Feature-flag gating: hide a category (and its children) when it declares a
-  // `customProps.flag` that isn't enabled. Evaluated at the end so all hooks
-  // above always run in a stable order (see rules of hooks). Enable via Edge
-  // Config or the runtime query param, e.g. `?ff_platform-api=true`.
+  // Feature-flag gating is evaluated after all hooks to preserve hook order.
   const { isEnabled } = React.useContext(FeatureFlagsContext);
   const flag = (item as any).customProps?.flag as string | undefined;
   if (flag && !isEnabled(flag)) {
     return null;
   }
-
-  // Feature-flag-aware label: when a category declares `customProps.flagLabel`
-  // ({ flag, label }) and that flag is enabled, render the alternate label
-  // instead of the default. Lets the same static config show the original
-  // label when the flag is off and a new label when it's on.
-  const flagLabel = (item as any).customProps?.flagLabel as
-    | { flag: string; label: string }
-    | undefined;
-  const label =
-    flagLabel && isEnabled(flagLabel.flag) ? flagLabel.label : item.label;
 
   return (
     <li
@@ -237,12 +224,12 @@ export default function DocSidebarItemCategory({
               className="sidebar-category-icon"
             />
           )}
-          {label}
+          {item.label}
         </Link>
         {href && collapsible && (
           <CollapseButton
             collapsed={collapsed}
-            categoryLabel={label}
+            categoryLabel={item.label}
             onClick={(e) => {
               e.preventDefault();
               updateCollapsed();
