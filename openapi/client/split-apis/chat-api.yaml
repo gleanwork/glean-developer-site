@@ -2,11 +2,11 @@ openapi: 3.0.0
 info:
   version: 0.9.0
   title: Glean API - Chat
-  x-source-commit-sha: 36490380aba39f767c75800da51cc926b7c58f58
+  x-source-commit-sha: 270b693d49bac2f68e751b2345bac0c267741119
   description: API endpoints for Chat
   x-logo:
     url: https://app.glean.com/images/glean-text2.svg
-  x-open-api-commit-sha: 174a041ef5d07c9ff5b6c8244de3262dbdad2b24
+  x-open-api-commit-sha: 592aec2b4913505edb8161645eaf9a72b5286f20
   x-speakeasy-name: Glean API
 servers:
   - url: https://{instance}-be.glean.com
@@ -1677,6 +1677,18 @@ components:
             type: string
             format: binary
           description: Raw files to be uploaded for chat in binary format.
+    AuthContext:
+      x-visibility: Preview
+      x-glean-experimental:
+        id: a7c1d3e5-9f42-4b8a-b6e0-2d4f8a1c3e5b
+        introduced: '2026-07-09'
+      type: object
+      description: |
+        Context for authentication responses, containing identifiers for the entity being authenticated.
+      properties:
+        serverId:
+          type: string
+          description: ID of the MCP server (populated when toolType is MCP).
     CustomFieldValueStr:
       properties:
         strText:
@@ -1702,6 +1714,15 @@ components:
         trackingToken:
           type: string
           description: An opaque token that represents this particular UGC. To be used for `/feedback` reporting.
+    ActionPreview:
+      description: Preview information for an action being executed.
+      properties:
+        markdown:
+          type: string
+          description: Markdown preview describing what the action will do.
+        description:
+          type: string
+          description: Short summary of what this specific tool invocation will do.
     CustomFieldValueHyperlink:
       properties:
         urlAnchor:
@@ -1749,6 +1770,35 @@ components:
         label:
           type: string
           description: User-friendly label associated with the value
+    ServerToolBase:
+      x-visibility: Preview
+      x-glean-experimental:
+        id: 4e3ee791-45e0-4125-845f-4b7701aa983c
+        introduced: '2026-07-02'
+      type: object
+      required:
+        - toolType
+        - requestType
+        - requestId
+      properties:
+        requestType:
+          type: string
+          description: The type of request made to the user.
+          x-enumDescriptions:
+            EXECUTION: Request for approving execution of the tool.
+            AUTHENTICATION_SUGGESTION: Request for authenticating to a tool, provided as a (tool) suggestion.
+            VOTE_SUGGESTION: Suggestion to vote for enabling an available-but-not-enabled tool.
+          enum:
+            - EXECUTION
+            - AUTHENTICATION_SUGGESTION
+            - VOTE_SUGGESTION
+          x-speakeasy-enum-descriptions:
+            EXECUTION: Request for approving execution of the tool.
+            AUTHENTICATION_SUGGESTION: Request for authenticating to a tool, provided as a (tool) suggestion.
+            VOTE_SUGGESTION: Suggestion to vote for enabling an available-but-not-enabled tool.
+        requestId:
+          type: string
+          description: Unique identifier for this request.
     Thumbnail:
       properties:
         photoId:
@@ -2876,6 +2926,77 @@ components:
           items:
             $ref: '#/components/schemas/PossibleValue'
           description: Possible values that the parameter can take.
+    ServerToolResponse:
+      x-visibility: Preview
+      x-glean-experimental:
+        id: 3eae3ee7-2c06-4027-be14-98260a3ce608
+        introduced: '2026-07-02'
+      description: |
+        Response to a server tool request. The applicable fields depend on requestType:
+
+        For EXECUTION requests:
+        - isGranted: whether tool execution is approved
+        - reason: optional explanation
+
+        For AUTHENTICATION_SUGGESTION requests:
+        - isGranted: whether auth completed successfully (true=connected, false=skipped)
+        - authContext: contains serverId or actionPackId for identifying the authenticated entity
+        - reason: optional explanation for skip
+
+        For VOTE_SUGGESTION requests:
+        - voted: whether the user voted for this tool
+      allOf:
+        - $ref: '#/components/schemas/ServerToolBase'
+        - type: object
+          properties:
+            isGranted:
+              type: boolean
+              description: Whether tool request is granted (indicates approval for execution, or completion for auth).
+            grantScope:
+              type: string
+              description: |
+                Scope of the approval grant. Only applicable when isGranted is true and requestType is EXECUTION.
+              default: CURRENT_REQUEST
+              x-enumDescriptions:
+                CURRENT_REQUEST: Approve only the current tool request. Future tool execution requests still require approval.
+                CURRENT_SESSION: Approve the current tool request and auto-approve all future same tool requests in this chat session.
+                ALWAYS: Approve the current tool request and auto-approve all future same tool requests across all chat sessions.
+              enum:
+                - CURRENT_REQUEST
+                - CURRENT_SESSION
+                - ALWAYS
+              x-speakeasy-enum-descriptions:
+                CURRENT_REQUEST: Approve only the current tool request. Future tool execution requests still require approval.
+                CURRENT_SESSION: Approve the current tool request and auto-approve all future same tool requests in this chat session.
+                ALWAYS: Approve the current tool request and auto-approve all future same tool requests across all chat sessions.
+            authContext:
+              $ref: '#/components/schemas/AuthContext'
+              description: Context for AUTHENTICATION_SUGGESTION responses. Required when requestType is AUTHENTICATION_SUGGESTION.
+    ServerToolRequest:
+      x-visibility: Preview
+      x-glean-experimental:
+        id: 8544e887-4569-4b14-bde0-d1be9e90dbc3
+        introduced: '2026-07-02'
+      allOf:
+        - $ref: '#/components/schemas/ServerToolBase'
+        - type: object
+          required:
+            - toolName
+          properties:
+            toolDisplayName:
+              type: string
+              description: Human-readable display name for the tool.
+            serverId:
+              type: string
+              description: |
+                Unique identifier of the tool server. Use with GET /tool-servers/{serverId}/auth
+                to resolve display information and authentication status.
+            toolCta:
+              type: string
+              description: Custom call-to-action (CTA) verb for the approval button (e.g., "Create", "Update", "Send").
+            actionPreview:
+              description: Preview information for this tool request.
+              $ref: '#/components/schemas/ActionPreview'
     ChatRequest:
       allOf:
         - $ref: '#/components/schemas/ChatRequestBase'
@@ -3262,26 +3383,6 @@ components:
           items:
             $ref: '#/components/schemas/CollectionPinMetadata'
           description: List of targets this Collection can be pinned to, excluding the targets this Collection is already pinned to. We also include Collection ID already is pinned to each eligible target, which will be 0 if the target has no pinned Collection.
-    ChatMessageFragment:
-      description: Represents a part of a ChatMessage that originates from a single action/tool. It is designed to support rich data formats beyond simple text, allowing for a more dynamic and interactive chat experience. Each fragment can include various types of content, such as text, search queries, action information, and more. Also, each ChatMessageFragment should only have one of structuredResults, querySuggestion, writeAction, followupAction, agentRecommendation, followupRoutingSuggestion or file.
-      allOf:
-        - $ref: '#/components/schemas/Result'
-        - type: object
-          properties:
-            text:
-              type: string
-            querySuggestion:
-              description: The search queries issued while responding.
-              $ref: '#/components/schemas/QuerySuggestion'
-            file:
-              description: Files referenced in the message fragment. This is used to construct rich-text messages with file references.
-              $ref: '#/components/schemas/ChatFile'
-            action:
-              description: Basic information about an action. This can be used to construct rich-text messages with action references.
-              $ref: '#/components/schemas/ToolInfo'
-            citation:
-              description: Inline citation.
-              $ref: '#/components/schemas/ChatMessageCitation'
     ChatMessage:
       description: A message that is rendered as one coherent unit with one given sender.
       properties:
@@ -3562,6 +3663,32 @@ components:
           description: A URL, generated based on availability, that links to the position of the snippet text or to the nearest header above the snippet text.
           type: string
       type: object
+    ChatMessageFragment:
+      description: Represents a part of a ChatMessage that originates from a single action/tool. It is designed to support rich data formats beyond simple text, allowing for a more dynamic and interactive chat experience. Each fragment can include various types of content, such as text, search queries, action information, and more. Also, each ChatMessageFragment should only have one of structuredResults, querySuggestion, writeAction, followupAction, agentRecommendation, followupRoutingSuggestion or file.
+      allOf:
+        - $ref: '#/components/schemas/Result'
+        - type: object
+          properties:
+            text:
+              type: string
+            querySuggestion:
+              description: The search queries issued while responding.
+              $ref: '#/components/schemas/QuerySuggestion'
+            file:
+              description: Files referenced in the message fragment. This is used to construct rich-text messages with file references.
+              $ref: '#/components/schemas/ChatFile'
+            action:
+              description: Basic information about an action. This can be used to construct rich-text messages with action references.
+              $ref: '#/components/schemas/ToolInfo'
+            citation:
+              description: Inline citation.
+              $ref: '#/components/schemas/ChatMessageCitation'
+            serverToolRequest:
+              description: request to run a tool on server.
+              $ref: '#/components/schemas/ServerToolRequest'
+            serverToolResponse:
+              description: response corresponding to the server tool request.
+              $ref: '#/components/schemas/ServerToolResponse'
     ToolMetadata:
       description: The manifest for a tool that can be used to augment Glean Assistant.
       required:

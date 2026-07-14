@@ -2,8 +2,8 @@ openapi: 3.0.0
 info:
   version: '2026-04-01'
   title: Glean Platform API
-  x-source-commit-sha: 36490380aba39f767c75800da51cc926b7c58f58
-  x-open-api-commit-sha: 174a041ef5d07c9ff5b6c8244de3262dbdad2b24
+  x-source-commit-sha: 270b693d49bac2f68e751b2345bac0c267741119
+  x-open-api-commit-sha: 592aec2b4913505edb8161645eaf9a72b5286f20
 servers:
   - url: https://{instance}-be.glean.com
     variables:
@@ -625,9 +625,6 @@ paths:
                 res = glean.search.query(query="quarterly planning 2026", page_size=10, datasources=[
                     "confluence",
                     "google_drive",
-                ], datasource_instances=[
-                    "slack_acme",
-                    "slack_eu",
                 ], filters=[
                     {
                         "field": "type",
@@ -658,10 +655,6 @@ paths:
                   "confluence",
                   "google_drive",
                 ],
-                datasource_instances: [
-                  "slack_acme",
-                  "slack_eu",
-                ],
                 filters: [
                   {
                     field: "type",
@@ -679,7 +672,7 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Search.Query(ctx, components.PlatformSearchRequest{\n        Query: \"quarterly planning 2026\",\n        Datasources: []string{\n            \"confluence\",\n            \"google_drive\",\n        },\n        DatasourceInstances: []string{\n            \"slack_acme\",\n            \"slack_eu\",\n        },\n        Filters: []components.PlatformFilter{\n            components.PlatformFilter{\n                Field: \"type\",\n                Values: []string{\n                    \"spreadsheet\",\n                    \"presentation\",\n                },\n            },\n        },\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformSearchResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Search.Query(ctx, components.PlatformSearchRequest{\n        Query: \"quarterly planning 2026\",\n        Datasources: []string{\n            \"confluence\",\n            \"google_drive\",\n        },\n        Filters: []components.PlatformFilter{\n            components.PlatformFilter{\n                Field: \"type\",\n                Values: []string{\n                    \"spreadsheet\",\n                    \"presentation\",\n                },\n            },\n        },\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformSearchResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -708,9 +701,6 @@ paths:
                             .datasources(List.of(
                                 "confluence",
                                 "google_drive"))
-                            .datasourceInstances(List.of(
-                                "slack_acme",
-                                "slack_eu"))
                             .filters(List.of(
                                 PlatformFilter.builder()
                                     .field("type")
@@ -1186,12 +1176,21 @@ components:
       additionalProperties: false
       required:
         - query
+      example:
+        query: quarterly planning 2026
+        datasources:
+          - confluence
+          - google_drive
+        filters:
+          - field: type
+            values:
+              - spreadsheet
+              - presentation
       properties:
         query:
           type: string
           description: |
             The search query string. Supports inline operators such as `from:jane type:document app:confluence`. Inline operators are AND'd with structured `filters`.
-          example: quarterly planning 2026
         page_size:
           type: integer
           minimum: 1
@@ -1209,18 +1208,12 @@ components:
             type: string
           description: |
             Restrict results to specific datasources. Requests must not specify both `datasources` and `datasource_instances`.
-          example:
-            - confluence
-            - google_drive
         datasource_instances:
           type: array
           items:
             type: string
           description: |
             Restrict results to specific datasource instances. Values are datasource instance identifiers returned by `GET /api/search/filters`. Requests must not specify both `datasources` and `datasource_instances`.
-          example:
-            - slack_acme
-            - slack_eu
         filters:
           type: array
           items:
