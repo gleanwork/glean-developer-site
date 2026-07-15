@@ -38,8 +38,7 @@ export default function DocSidebarItemLink({
   const isActive = isActiveSidebarItem(item, activePath);
   const isExperimental = isExperimentalItem((item as any).docId);
   const isInternalLink = isInternalUrl(href);
-  // Feature-flag gating: hide a link when it declares a `customProps.flag`
-  // that isn't enabled (e.g. reveal via `?ff_platform-api=true`).
+  // Hide links whose declared feature flag is disabled.
   const { isEnabled } = React.useContext(FeatureFlagsContext);
   const flag = (item as any).customProps?.flag as string | undefined;
   if (flag && !isEnabled(flag)) {
