@@ -450,15 +450,9 @@ const baseSidebars: SidebarsConfig = {
     },
     {
       type: 'category' as const,
-      // Original label when `platform-api` is off/unset; renamed to
-      // 'API Overview' when the flag is enabled (since the guides become
-      // shared across Client + Platform APIs).
-      label: 'Client API',
+      label: 'API Overview',
       collapsible: false,
       collapsed: false,
-      customProps: {
-        flagLabel: { flag: 'platform-api', label: 'API Overview' },
-      },
       items: [
         {
           type: 'category',
@@ -514,12 +508,6 @@ const baseSidebars: SidebarsConfig = {
       label: 'Platform API Reference',
       collapsible: false,
       collapsed: false,
-      // Gated behind the `platform-api` feature flag: when the flag is false or
-      // unset the section is omitted (original sidebar); when enabled (Edge
-      // Config or `?ff_platform-api=true`) it renders.
-      customProps: {
-        flag: 'platform-api',
-      },
       items: [
         {
           type: 'doc',
