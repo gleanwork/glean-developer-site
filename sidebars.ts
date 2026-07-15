@@ -510,6 +510,11 @@ const baseSidebars: SidebarsConfig = {
       collapsed: false,
       items: [
         {
+          type: 'doc',
+          id: 'api/platform-api/platform-overview',
+          label: 'Overview',
+        },
+        {
           type: 'category',
           label: 'Agents',
           items: [

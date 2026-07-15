@@ -46,6 +46,35 @@ export default function Home() {
 
   return (
     <>
+      <section
+        className={clsx('container', styles.wideContainer)}
+        aria-labelledby="platform-api-banner-title"
+      >
+        <div className={styles.topBanner}>
+          <div className={styles.bannerContent}>
+            <span className={styles.badge}>New</span>
+            <div>
+              <h2 id="platform-api-banner-title" className={styles.bannerTitle}>
+                Introducing Glean Platform APIs
+              </h2>
+              <p className={styles.bannerSubtitle}>
+                Build search experiences and run Glean agents in your
+                applications with our new Platform APIs.
+              </p>
+            </div>
+          </div>
+          <Link
+            to="/api/platform-api"
+            className={clsx(
+              'button button--secondary button--lg',
+              styles.bannerButton,
+            )}
+          >
+            Explore Platform APIs
+          </Link>
+        </div>
+      </section>
+
       {/* Dynamic Carousel Section */}
       <CarouselSection />
 
