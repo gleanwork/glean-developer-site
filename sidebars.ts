@@ -567,6 +567,24 @@ const baseSidebars: SidebarsConfig = {
           ],
         },
         {
+          type: 'category',
+          label: 'Skills',
+          items: [
+            {
+              type: 'doc',
+              id: 'api/platform-api/platform-skills-list',
+              label: 'List skills',
+              className: 'api-method get',
+            },
+            {
+              type: 'doc',
+              id: 'api/platform-api/platform-skills-get',
+              label: 'Retrieve skill',
+              className: 'api-method get',
+            },
+          ],
+        },
+        {
           type: 'link',
           href: 'https://developers.glean.com/oas/platform',
           label: 'OpenAPI Spec',
