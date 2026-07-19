@@ -121,12 +121,13 @@ export const QUICKSTART_SNIPPETS: Record<
 with Glean(
     api_token=os.environ["GLEAN_API_TOKEN"],
     server_url=os.environ["GLEAN_SERVER_URL"],
-) as client:
-    response = client.client.chat.create(
-        messages=[{"fragments":
-            [{"text": "What is our vacation policy?"}]}]
+) as glean:
+    results = glean.client.search.query(
+        query="quarterly planning",
+        page_size=10,
     )
-    print(response.text)`,
+    for r in results.results:
+        print(r.title, r.url)`,
   },
   typescript: {
     label: 'TypeScript',
@@ -137,26 +138,21 @@ const client = new Glean({
   serverURL: process.env.GLEAN_SERVER_URL,
 });
 
-const result = await client.client.chat.create({
-  messages: [{
-    fragments: [{ text: "What are our company values?" }]
-  }]
-});`,
+const results = await client.client.search.query({
+  query: "quarterly planning",
+  pageSize: 10,
+});
+
+results.results?.forEach((r) => console.log(r.title));`,
   },
   curl: {
     label: 'cURL',
-    code: `curl -X POST https://your-instance-be.glean.com/rest/api/v1/chat \\
+    code: `curl -X POST https://your-instance-be.glean.com/rest/api/v1/search \\
   -H 'Authorization: Bearer <your_token>' \\
   -H 'Content-Type: application/json' \\
   -d '{
-    "messages": [
-      {
-        "author": "USER",
-        "fragments": [
-          { "text": "What is our vacation policy?" }
-        ]
-      }
-    ]
+    "query": "quarterly planning",
+    "pageSize": 10
   }'`,
   },
 };
@@ -173,16 +169,16 @@ lc_tool = glean_search.as_langchain_tool()
 crew_tool = glean_search.as_crewai_tool()`;
 
 export const SDK_CARDS = [
-  { name: 'Python', dot: '#3572A5', install: 'pip install glean-api-client' },
+  { name: 'Python', icon: 'python', install: 'pip install glean-api-client' },
   {
     name: 'TypeScript',
-    dot: '#3178C6',
+    icon: 'typescript',
     install: 'npm install @gleanwork/api-client',
   },
-  { name: 'Java', dot: '#B07219', install: 'com.glean.api-client' },
+  { name: 'Java', icon: 'java', install: 'com.glean.api-client' },
   {
     name: 'Go',
-    dot: '#00ADD8',
+    icon: 'go',
     install: 'go get github.com/gleanwork/api-client-go',
   },
 ];

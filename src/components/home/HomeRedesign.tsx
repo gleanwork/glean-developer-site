@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Link from '@docusaurus/Link';
 import { getIcon } from '@gleanwork/docusaurus-theme-glean/Icons';
+import { getClientIcon } from '@gleanwork/mcp-config-schema/browser';
 import FeatureFlag from '../FeatureFlag';
 import TerminalPanel from './TerminalPanel';
 import {
@@ -116,12 +117,6 @@ export function HeroCarousel(): React.ReactElement {
             API reference
           </Link>
         </div>
-        <div className={styles.heroLibs}>
-          <span>Client libraries for</span>
-          <span className={styles.heroLibsList}>
-            Python · TypeScript · Java · Go
-          </span>
-        </div>
       </div>
 
       <div>
@@ -217,7 +212,7 @@ const PATHS = [
   },
   {
     title: 'Bring Glean to your IDE',
-    body: 'Claude Code, Cursor, GitHub Copilot, and any MCP host.',
+    body: 'Claude Code, Cursor, Codex, and any MCP host.',
     icon: 'Terminal',
     href: '/guides/mcp',
   },
@@ -273,7 +268,7 @@ export function QuickstartTabs(): React.ReactElement {
             <li>
               <span className={styles.quickstartNum}>3</span>
               <span>
-                Ask your first question — answers come back grounded and
+                Run your first query — results come back ranked and
                 permission-aware.
               </span>
             </li>
@@ -327,7 +322,13 @@ export function SdkGrid(): React.ReactElement {
             to="/libraries/api-clients"
           >
             <span className={styles.sdkName}>
-              <span className={styles.sdkDot} style={{ background: sdk.dot }} />
+              <span className={styles.sdkIcon}>
+                {getIcon(sdk.icon, 'glean', {
+                  width: 18,
+                  height: 18,
+                  color: 'currentColor',
+                })}
+              </span>
               {sdk.name}
             </span>
             <code className={styles.sdkInstall}>{sdk.install}</code>
@@ -343,22 +344,22 @@ const MCP_CARDS = [
     title: 'Claude Code',
     body: 'Install the Glean plugins and search company knowledge from your terminal.',
     href: '/guides/mcp/claude-code',
-    icon: 'claude',
-    iconSet: 'glean' as const,
+    clientId: 'claude-code',
+    mono: false,
   },
   {
     title: 'Cursor',
     body: 'Connect the Glean MCP server to Cursor for context-aware coding.',
     href: '/guides/mcp/cursor',
-    icon: 'mcp',
-    iconSet: 'glean' as const,
+    clientId: 'cursor',
+    mono: true,
   },
   {
-    title: 'GitHub Copilot & any MCP host',
-    body: 'One remote MCP endpoint works across every supported host.',
-    href: '/guides/mcp/supported-hosts',
-    icon: 'plug',
-    iconSet: 'glean' as const,
+    title: 'Codex',
+    body: 'Install the Glean plugins for Codex from the gleanwork marketplace.',
+    href: 'https://github.com/gleanwork/codex-plugins',
+    clientId: 'codex',
+    mono: true,
   },
 ];
 
@@ -369,13 +370,12 @@ export function McpCards(): React.ReactElement {
       <div className={styles.mcpGrid}>
         {MCP_CARDS.map((card) => (
           <Link className={styles.mcpCard} key={card.title} to={card.href}>
-            <span className={styles.mcpIcon}>
-              {getIcon(card.icon, card.iconSet, {
-                width: 20,
-                height: 20,
-                color: 'currentColor',
-              })}
-            </span>
+            <span
+              className={`${styles.mcpIcon} ${card.mono ? styles.mcpIconMono : ''}`}
+              dangerouslySetInnerHTML={{
+                __html: getClientIcon(card.clientId) ?? '',
+              }}
+            />
             <span className={styles.mcpTitle}>
               {card.title}
               <span className={styles.mcpArrow}>
@@ -386,6 +386,10 @@ export function McpCards(): React.ReactElement {
           </Link>
         ))}
       </div>
+      <p className={styles.mcpHostsNote}>
+        Plus GitHub Copilot, Goose, Windsurf, and{' '}
+        <Link to="/guides/mcp/supported-hosts">any MCP host</Link>.
+      </p>
     </section>
   );
 }
