@@ -167,10 +167,10 @@ export function HeroCarousel(): React.ReactElement {
   );
 }
 
-/** Flag-gated cookbook teaser — hidden until the cookbooks flag flips. */
+/** Flag-gated cookbook teaser — hidden until the cookbook flag flips. */
 export function CookbookStrip(): React.ReactElement {
   return (
-    <Link className={styles.cookbookStrip} to="/cookbooks">
+    <Link className={styles.cookbookStrip} to="/cookbook">
       <span className={styles.cookbookStripIcon}>
         {feather('BookOpen', 20)}
       </span>
@@ -433,7 +433,7 @@ export default function HomeRedesign(): React.ReactElement {
     <div className={`${styles.page} home-redesign-root`}>
       <AnnouncementBand />
       <HeroCarousel />
-      <FeatureFlag flag="cookbooks">
+      <FeatureFlag flag="cookbook">
         <CookbookStrip />
       </FeatureFlag>
       <PathCards />
