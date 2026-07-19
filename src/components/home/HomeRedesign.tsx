@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Link from '@docusaurus/Link';
 import { getIcon } from '@gleanwork/docusaurus-theme-glean/Icons';
+import FeatureFlag from '../FeatureFlag';
 import TerminalPanel from './TerminalPanel';
 import {
   AGENTS_BAND_CODE,
@@ -171,28 +172,52 @@ export function HeroCarousel(): React.ReactElement {
   );
 }
 
+/** Flag-gated cookbook teaser — hidden until the cookbooks flag flips. */
+export function CookbookStrip(): React.ReactElement {
+  return (
+    <Link className={styles.cookbookStrip} to="/cookbooks">
+      <span className={styles.cookbookStripIcon}>
+        {feather('BookOpen', 20)}
+      </span>
+      <span className={styles.cookbookStripText}>
+        <span className={styles.cookbookStripTitle}>
+          New: Cookbooks
+          <span className={styles.cookbookStripBadge}>Recipes</span>
+        </span>
+        <span className={styles.cookbookStripBody}>
+          Runnable patterns that go from problem to working demo to scaffolded
+          starter code — auth and permissions laid out for each.
+        </span>
+      </span>
+      <span className={styles.cookbookStripArrow}>
+        {feather('ArrowRight', 18)}
+      </span>
+    </Link>
+  );
+}
+
 const PATHS = [
   {
-    title: 'Quickstart',
-    body: 'Make your first API call in minutes with a token and an SDK.',
-    icon: 'Zap',
+    title: 'Build with the APIs',
+    body: 'Search, chat, and agents from your code — with client libraries for four languages.',
+    icon: 'Code',
     href: '/api-info/client/getting-started/overview',
   },
   {
-    title: 'API reference',
-    body: 'Platform API endpoints for search, chat, and agents.',
-    icon: 'BookOpen',
-    href: '/api/platform-api',
+    title: 'Embed with the Web SDK',
+    body: 'Permission-aware search and chat inside the apps your team already uses.',
+    icon: 'Layout',
+    href: '/libraries/web-sdk/overview',
   },
   {
-    title: 'SDKs',
-    body: 'Official clients for Python, TypeScript, Java, and Go.',
-    icon: 'Package',
-    href: '/libraries/api-clients',
+    title: 'Connect your data',
+    body: 'Bring any source into Glean with the Indexing API and connector framework.',
+    icon: 'Database',
+    href: '/api-info/indexing/getting-started/overview',
   },
   {
-    title: 'MCP & IDEs',
-    body: 'Bring Glean into Claude Code, Cursor, and any MCP host.',
+    title: 'Bring Glean to your IDE',
+    body: 'Claude Code, Cursor, GitHub Copilot, and any MCP host.',
     icon: 'Terminal',
     href: '/guides/mcp',
   },
@@ -293,7 +318,7 @@ export function QuickstartTabs(): React.ReactElement {
 export function SdkGrid(): React.ReactElement {
   return (
     <section className={styles.section}>
-      <h2 className={styles.sectionTitle}>Official SDKs</h2>
+      <h2 className={styles.sectionTitle}>API client libraries</h2>
       <div className={styles.sdkGrid}>
         {SDK_CARDS.map((sdk) => (
           <Link
@@ -404,6 +429,9 @@ export default function HomeRedesign(): React.ReactElement {
     <div className={`${styles.page} home-redesign-root`}>
       <AnnouncementBand />
       <HeroCarousel />
+      <FeatureFlag flag="cookbooks">
+        <CookbookStrip />
+      </FeatureFlag>
       <PathCards />
       <QuickstartTabs />
       <SdkGrid />

@@ -6,6 +6,7 @@
  * - agents:      docs/guides/agents/toolkit.mdx
  * - typescript:  docs/libraries/api-clients/typescript.mdx
  * - curl:        docs/api-info/client/getting-started/basic-usage.mdx
+ * - web sdk:     docs/libraries/web-sdk/components/{chat,autocomplete}.mdx
  */
 
 export type HeroSlide = {
@@ -70,6 +71,25 @@ people_tool = employee_search.as_langchain_tool()
 
 # Use with CrewAI
 crew_tool = glean_search.as_crewai_tool()`,
+  },
+  {
+    surface: 'Web SDK',
+    headline: 'Embed Glean in your apps',
+    subcopy:
+      'Drop permission-aware search and chat into the tools your team already uses — a script tag and two components.',
+    filename: 'embed.html',
+    code: `<script defer
+  src="https://{GLEAN_APP_DOMAIN}/embedded-search-latest.min.js">
+</script>
+
+<script>
+  window.GleanWebSDK.renderSearchBox(searchEl, {
+    onSearch: (query) =>
+      window.GleanWebSDK.renderSearchResults(
+        resultsEl, { query }),
+  });
+  window.EmbeddedSearch.renderChat(chatEl);
+</script>`,
   },
   {
     surface: 'Indexing API',
