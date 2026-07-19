@@ -1,0 +1,177 @@
+---
+title: Embed search & chat in an internal app
+description: >-
+  Put permission-aware Glean search and chat directly inside an internal app
+  with the Web SDK, so your team gets answers where they already work.
+slug: /cookbook/embed-search-chat
+hide_table_of_contents: true
+hide_title: true
+pagination_prev: null
+pagination_next: null
+recipe:
+  id: embed-search-chat
+  surfaces:
+    - web-sdk
+  status: production-pattern
+  category: search
+  level: Beginner
+  levels:
+    minimal: true
+    wow: true
+  time_estimate: '~15 min (minimal)'
+  required_scopes:
+    - SEARCH
+    - CHAT
+  prerequisites:
+    - A Glean instance with content indexed
+    - Your Glean web app domain (typically app.glean.com — see admin/about-glean)
+    - A frontend app or page where you can add a script tag and a container element
+    - 'For token auth only: an admin API key from the Token Management page'
+  demo_queries:
+    - What is our PTO policy?
+    - Who owns the payments service?
+    - Summarize the latest incident review
+  scaffold_actions:
+    - scaffold-web-sdk-embed
+  architecture:
+    - label: Internal app
+      caption: Your existing frontend
+      icon: layout-outlined
+    - label: Glean Web SDK
+      caption: search + chat UI
+      category: search
+      icon: message-with-sparkles
+    - label: Auth
+      caption: SSO or scoped token
+      category: agent
+      icon: verification
+    - label: Glean
+      caption: permission-aware index
+      emphasized: true
+  ai_prompt: |-
+    Embed Glean search and chat in my internal web app using the Glean Web
+    SDK, following the recipe at
+    https://developers.glean.com/cookbook/embed-search-chat
+
+    Steps:
+    1. Ask me for my Glean web app domain (typically app.glean.com).
+    2. Add the Web SDK script tag to the page <head>:
+       <script defer src="https://{GLEAN_APP_DOMAIN}/embedded-search-latest.min.js"></script>
+    3. Add a search box and results container, and render them with
+       window.GleanWebSDK.renderSearchBox(...) and
+       window.GleanWebSDK.renderSearchResults(...).
+    4. Add a chat container (position: relative, display: block, explicit
+       width/height) and render it with
+       window.EmbeddedSearch.renderChat(containerElement).
+    5. Default SSO auth needs no extra configuration. If I ask for
+       server-to-server auth instead, follow
+       https://developers.glean.com/libraries/web-sdk/authentication/server-to-server
+       and keep the API key strictly server-side.
+
+    Verify by running the app and issuing a search; results must respect my
+    Glean permissions.
+  llm_context: >-
+    Embeds Glean search and chat into an existing web app via the Glean Web
+    SDK (script tag, window.GleanWebSDK.renderSearchBox/renderSearchResults,
+    window.EmbeddedSearch.renderChat). Auth is Glean SSO by default or
+    server-to-server tokens minted by a backend holding an admin API key with
+    SEARCH and CHAT scopes. All results are permission-aware per user.
+  go_dependency: false
+  featured: true
+  tags:
+    - embed
+    - web-sdk
+---
+
+import RecipePage from '@site/src/components/Cookbook/RecipePage';
+import {
+  RecipeSection,
+  RecipeArchitecture,
+  RecipePrereqs,
+  RecipeSteps,
+  TakeItFurther,
+} from '@site/src/components/Cookbook/RecipeLayout';
+
+<RecipePage recipeId="embed-search-chat">
+
+<RecipeSection label="Problem">
+
+Your team lives in an internal tool and context-switches to find answers.
+Instead of sending them elsewhere, bring Glean's answers into the app they
+already use — with permissions enforced per user, automatically.
+
+</RecipeSection>
+
+<RecipeArchitecture />
+
+<RecipePrereqs />
+
+<RecipeSteps>
+
+<>
+Include the Web SDK: add the JavaScript client to the `<head>` of your
+page, replacing `GLEAN_APP_DOMAIN` with your Glean web app domain.
+
+```html
+<script
+  defer
+  src="https://{GLEAN_APP_DOMAIN}/embedded-search-latest.min.js"
+></script>
+```
+
+</>
+
+<>
+Render search: add a search box and a results container, then render both
+components. See the [Autocomplete + Search Page guide](/libraries/web-sdk/components/autocomplete)
+for the full options.
+
+```javascript
+window.GleanWebSDK.renderSearchBox(searchBoxElement, {
+  onSearch: (query) => {
+    window.GleanWebSDK.renderSearchResults(resultsElement, { query });
+  },
+});
+```
+
+</>
+
+<>
+Render chat: create a container element with `position: relative`,
+`display: block`, and an explicit width and height, then render Glean Chat
+into it.
+
+```javascript
+window.EmbeddedSearch.renderChat(containerElement);
+```
+
+</>
+
+<>
+Authenticate users: with the default setup, users authenticate through your
+company's SSO — no extra configuration. To skip the SSO prompt (or support
+users without Glean accounts), use
+[server-to-server authentication](/libraries/web-sdk/authentication/server-to-server):
+your backend mints short-lived user tokens with an admin API key
+(`SEARCH` and `CHAT` scopes). Keep that key strictly server-side.
+
+</>
+
+</RecipeSteps>
+
+Try it with a query like **"What is our PTO policy?"** — results reflect
+exactly what the signed-in user is permitted to see.
+
+<TakeItFurther>
+
+<>Hand off context between search and chat so a search result opens a grounded conversation ([separate pages for chat and search](/libraries/web-sdk/components/chat)).</>
+
+<>Scope chat to your app's context by passing an AI App `applicationId` to the chat component.</>
+
+<>Go tokenless for guests with the Web SDK's guest auth provider for public-facing deployments.</>
+
+<>Add the [Modal Search](/libraries/web-sdk/components/modal-search) or [Sidebar](/libraries/web-sdk/components/sidebar) variants for search anywhere in the app.</>
+
+</TakeItFurther>
+
+</RecipePage>

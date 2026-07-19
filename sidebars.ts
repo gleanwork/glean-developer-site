@@ -94,6 +94,31 @@ const baseSidebars: SidebarsConfig = {
       items: [
         {
           type: 'category',
+          label: 'Cookbook',
+          customProps: {
+            icon: 'BookOpen',
+            iconSet: 'feather',
+            flag: 'cookbook',
+          },
+          link: {
+            type: 'doc',
+            id: 'cookbook/index',
+          },
+          items: [
+            {
+              type: 'doc',
+              id: 'cookbook/embed-search-chat',
+              label: 'Embed search & chat',
+            },
+            {
+              type: 'doc',
+              id: 'cookbook/build-engineering-portal',
+              label: 'Build an engineering portal',
+            },
+          ],
+        },
+        {
+          type: 'category',
           label: 'Chat',
           customProps: {
             icon: 'chat',
