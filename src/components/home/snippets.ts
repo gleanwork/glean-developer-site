@@ -2,7 +2,7 @@
  * Code snippets for the homepage redesign — every snippet is sourced from
  * published docs (never invented):
  * - chat/search: docs/libraries/api-clients/python.mdx
- * - indexing:    docs/api-info/indexing/getting-started/index-documents.mdx
+ * - indexing:    scripts/indexing/ (this repo's own glean-indexing-sdk connector)
  * - agents:      docs/guides/agents/toolkit.mdx
  * - typescript:  docs/libraries/api-clients/typescript.mdx
  * - curl:        docs/api-info/client/getting-started/basic-usage.mdx
@@ -92,22 +92,21 @@ crew_tool = glean_search.as_crewai_tool()`,
 </script>`,
   },
   {
-    surface: 'Indexing API',
+    surface: 'Indexing SDK',
     headline: 'Bring any data into Glean',
     subcopy:
-      'Push documents from any source through the indexing API and make them searchable everywhere.',
-    filename: 'index.py',
-    code: `client.indexing.documents.index(request={
-    "document": {
-        "datasource": "gleantest",
-        "objectType": "EngineeringDoc",
-        "id": "blueskytest-1",
-        "title": "Getting started with Blue Sky",
-        "viewURL": "https://bluesky.test/1",
-        "body": {"mimeType": "text/plain",
-            "textContent": "..."},
-    },
-})`,
+      'Build a connector on the open-source indexing SDK — push documents from any source and make them searchable everywhere.',
+    filename: 'connector.py',
+    code: `from glean.indexing.connectors import (
+    BaseDatasourceConnector,
+)
+
+class CatalogConnector(BaseDatasourceConnector):
+    def get_data(self):
+        return load_catalog_pages()
+
+connector = CatalogConnector(name="catalog")
+connector.index_data(mode=IndexingMode.FULL)`,
   },
 ];
 
