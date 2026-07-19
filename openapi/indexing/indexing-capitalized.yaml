@@ -2,7 +2,7 @@ openapi: 3.0.0
 info:
   version: 0.9.0
   title: Glean API
-  x-source-commit-sha: 270b693d49bac2f68e751b2345bac0c267741119
+  x-source-commit-sha: c166707038af061986428f63498621969b336e54
   description: |
     # Introduction
     In addition to the data sources that Glean has built-in support for, Glean also provides a REST API that enables customers to put arbitrary content in the search index. This is useful, for example, for doing permissions-aware search over content in internal tools that reside on-prem as well as for searching over applications that Glean does not currently support first class. In addition these APIs allow the customer to push organization data (people info, organization structure etc) into Glean.
@@ -22,7 +22,7 @@ info:
     These API clients provide type-safe, idiomatic interfaces for working with Glean IndexingAPIs in your language of choice.
   x-logo:
     url: https://app.glean.com/images/glean-text2.svg
-  x-open-api-commit-sha: 592aec2b4913505edb8161645eaf9a72b5286f20
+  x-open-api-commit-sha: 0f4c9f25af773f1d2658a255024b57acb7dcc010
   x-speakeasy-name: Glean API
 servers:
   - url: https://{instance}-be.glean.com
@@ -3829,6 +3829,145 @@ paths:
         - lang: Go
           label: Go (API Client)
           source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Indexing.Documents.DebugEvents(ctx, \"<value>\", components.DebugDocumentLifecycleRequest{\n        ObjectType: \"Article\",\n        DocID: \"art123\",\n        StartDate: apiclientgo.Pointer(\"2025-05-01\"),\n        MaxEvents: apiclientgo.Pointer[int64](50),\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.DebugDocumentLifecycleResponse != nil {\n        // handle response\n    }\n}"
+  /rest/api/index/submissions/{datasourceInstance}/{type}:
+    servers:
+      - url: https://{instance}-be.glean.com
+        variables:
+          instance:
+            default: instance-name
+            description: The instance name (typically the email domain without the TLD) that determines the deployment backend.
+    parameters:
+      - name: datasourceInstance
+        in: path
+        description: Datasource instance that should process the submission
+        required: true
+        schema:
+          type: string
+      - name: type
+        in: path
+        description: Submission type registered for the datasource
+        required: true
+        schema:
+          type: string
+    post:
+      summary: Submit datasource data
+      description: Validates and asynchronously processes a datasource-specific submission.
+      tags:
+        - Datasources
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+        required: true
+        x-exportParamName: SubmissionRequest
+      responses:
+        '202':
+          description: Accepted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  requestId:
+                    type: string
+                required:
+                  - requestId
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '405':
+          description: Method Not Allowed
+        '413':
+          description: Payload Too Large
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          description: Service Unavailable
+      x-speakeasy-name-override: submit
+      x-speakeasy-group: indexing.datasources
+      x-codeSamples:
+        - lang: Python
+          label: Python (API Client)
+          source: |-
+            from glean.api_client import Glean
+            import os
+
+
+            with Glean(
+                api_token=os.getenv("GLEAN_API_TOKEN", ""),
+                server_url="https://mycompany-be.glean.com",
+            ) as glean:
+
+                res = glean.indexing.datasources.submit(datasource_instance="<value>", type_="<value>", request_body={
+                    "key": "<value>",
+                    "key1": "<value>",
+                    "key2": "<value>",
+                })
+
+                # Handle response
+                print(res)
+        - lang: JavaScript
+          label: Typescript (API Client)
+          source: |-
+            import { Glean } from "@gleanwork/api-client";
+
+            const glean = new Glean({
+              apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
+              serverURL: "https://mycompany-be.glean.com",
+            });
+
+            async function run() {
+              const result = await glean.indexing.datasources.submit({
+                "key": "<value>",
+                "key1": "<value>",
+                "key2": "<value>",
+              }, "<value>", "<value>");
+
+              console.log(result);
+            }
+
+            run();
+        - lang: Java
+          label: Java (API Client)
+          source: |-
+            package hello.world;
+
+            import com.glean.api_client.glean_api_client.Glean;
+            import com.glean.api_client.glean_api_client.models.errors.ErrorInfoResponse;
+            import com.glean.api_client.glean_api_client.models.operations.PostRestApiIndexSubmissionsDatasourceInstanceTypeResponse;
+            import java.lang.Exception;
+            import java.util.Map;
+
+            public class Application {
+
+                public static void main(String[] args) throws ErrorInfoResponse, Exception {
+
+                    Glean sdk = Glean.builder()
+                            .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
+                        .build();
+
+                    PostRestApiIndexSubmissionsDatasourceInstanceTypeResponse res = sdk.indexing().datasources().submit()
+                            .datasourceInstance("<value>")
+                            .type("<value>")
+                            .requestBody(Map.ofEntries(
+                                Map.entry("key", "<value>"),
+                                Map.entry("key1", "<value>"),
+                                Map.entry("key2", "<value>")))
+                            .call();
+
+                    if (res.object().isPresent()) {
+                        System.out.println(res.object().get());
+                    }
+                }
+            }
+        - lang: Go
+          label: Go (API Client)
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Indexing.Datasources.Submit(ctx, \"<value>\", \"<value>\", map[string]any{\n        \"key\": \"<value>\",\n        \"key1\": \"<value>\",\n        \"key2\": \"<value>\",\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.Object != nil {\n        // handle response\n    }\n}"
   /rest/api/index/document/{docId}/custom-metadata/{groupName}:
     servers:
       - url: https://{instance}-be.glean.com
