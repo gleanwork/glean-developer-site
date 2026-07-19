@@ -1,0 +1,212 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://developers.glean.com/schemas/recipe.schema.json",
+  "title": "Glean Cookbook Recipe",
+  "description": "The `recipe` frontmatter block of a cookbook recipe MDX file. Generated from src/types/recipe.ts — do not edit by hand.",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+    },
+    "surfaces": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "mcp",
+          "platform-api",
+          "web-sdk",
+          "connector-sdk",
+          "indexing-api",
+          "sdk-client",
+          "actions",
+          "agents"
+        ]
+      }
+    },
+    "status": {
+      "type": "string",
+      "enum": ["showcase", "production-pattern"]
+    },
+    "category": {
+      "type": "string",
+      "enum": ["search", "index", "mcp", "workflow", "agent", "portal"]
+    },
+    "level": {
+      "type": "string",
+      "enum": ["Beginner", "Intermediate", "Advanced"]
+    },
+    "levels": {
+      "type": "object",
+      "properties": {
+        "minimal": {
+          "type": "boolean"
+        },
+        "wow": {
+          "type": "boolean"
+        }
+      },
+      "required": ["minimal", "wow"],
+      "additionalProperties": false
+    },
+    "time_estimate": {
+      "type": "string",
+      "minLength": 1
+    },
+    "required_scopes": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "prerequisites": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "demo_queries": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "code_assets": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "repo_path": {
+            "type": "string",
+            "minLength": 1
+          },
+          "language": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": ["repo_path", "language", "description"],
+        "additionalProperties": false
+      }
+    },
+    "scaffold_actions": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "scaffold-connector",
+          "scaffold-web-sdk-embed",
+          "scaffold-mcp-config",
+          "scaffold-n8n-workflow"
+        ]
+      }
+    },
+    "combines": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "surface": {
+            "type": "string",
+            "minLength": 1
+          },
+          "category": {
+            "type": "string",
+            "enum": ["search", "index", "mcp", "workflow", "agent", "portal"]
+          }
+        },
+        "required": ["title", "surface", "category"],
+        "additionalProperties": false
+      }
+    },
+    "architecture": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string",
+            "minLength": 1
+          },
+          "caption": {
+            "type": "string",
+            "minLength": 1
+          },
+          "category": {
+            "type": "string",
+            "enum": ["search", "index", "mcp", "workflow", "agent", "portal"]
+          },
+          "icon": {
+            "type": "string",
+            "minLength": 1
+          },
+          "emphasized": {
+            "default": false,
+            "type": "boolean"
+          }
+        },
+        "required": ["label", "caption"],
+        "additionalProperties": false
+      }
+    },
+    "ai_prompt": {
+      "type": "string",
+      "minLength": 1
+    },
+    "llm_context": {
+      "type": "string",
+      "minLength": 1
+    },
+    "last_verified": {
+      "type": "string",
+      "format": "date",
+      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+    },
+    "go_dependency": {
+      "default": false,
+      "type": "boolean"
+    },
+    "featured": {
+      "default": false,
+      "type": "boolean"
+    },
+    "tags": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  },
+  "required": [
+    "id",
+    "surfaces",
+    "status",
+    "category",
+    "level",
+    "levels",
+    "time_estimate",
+    "required_scopes",
+    "prerequisites",
+    "ai_prompt"
+  ],
+  "additionalProperties": false
+}
