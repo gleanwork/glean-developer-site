@@ -1556,6 +1556,12 @@ const baseSidebars: SidebarsConfig = {
               label: 'Get datasource config',
               className: 'api-method post',
             },
+            {
+              type: 'doc',
+              id: 'api/indexing-api/submit-datasource-data',
+              label: 'Submit datasource data',
+              className: 'api-method post',
+            },
           ],
         },
         {
