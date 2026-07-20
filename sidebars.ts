@@ -309,7 +309,7 @@ const baseSidebars: SidebarsConfig = {
             {
               type: 'doc',
               id: 'guides/mcp/codex',
-              label: 'Codex Plugins',
+              label: 'Codex Plugin',
             },
           ],
         },

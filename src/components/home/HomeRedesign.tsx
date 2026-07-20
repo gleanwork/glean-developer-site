@@ -390,7 +390,7 @@ const MCP_CARDS = [
   },
   {
     title: 'Codex',
-    body: 'Install the Glean plugins for Codex — enterprise knowledge and dev docs in your terminal.',
+    body: 'Install the Glean plugin for Codex — enterprise knowledge in your terminal.',
     href: '/guides/mcp/codex',
     clientId: 'codex',
     mono: true,
