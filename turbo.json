@@ -1,5 +1,6 @@
 {
   "$schema": "https://turbo.build/schema.json",
+  "globalEnv": ["FF_*", "FEATURE_FLAGS_JSON"],
   "tasks": {
     "//#changelog:aggregate": {
       "inputs": [
@@ -7,6 +8,15 @@
         "packages/changelog-generator/src/**/*.ts"
       ],
       "outputs": ["src/data/changelog.json"],
+      "cache": true
+    },
+    "//#recipes:compile": {
+      "inputs": [
+        "docs/cookbook/**/*.mdx",
+        "src/types/recipe.ts",
+        "scripts/compile-recipes.ts"
+      ],
+      "outputs": ["src/data/recipes.json"],
       "cache": true
     },
     "//#generate:rss": {
@@ -19,7 +29,11 @@
       "cache": true
     },
     "//#docusaurus:build": {
-      "dependsOn": ["//#changelog:aggregate", "//#generate:rss"],
+      "dependsOn": [
+        "//#changelog:aggregate",
+        "//#generate:rss",
+        "//#recipes:compile"
+      ],
       "inputs": [
         "docs/**",
         "src/**",
@@ -36,8 +50,16 @@
       "cache": true
     },
     "//#prepare-dev": {
-      "dependsOn": ["//#changelog:aggregate", "//#generate:rss"],
-      "outputs": ["src/data/changelog.json", "static/changelog.xml"],
+      "dependsOn": [
+        "//#changelog:aggregate",
+        "//#generate:rss",
+        "//#recipes:compile"
+      ],
+      "outputs": [
+        "src/data/changelog.json",
+        "static/changelog.xml",
+        "src/data/recipes.json"
+      ],
       "cache": true
     },
     "//#dev": {
