@@ -449,6 +449,10 @@ export function AgentsBand(): React.ReactElement {
               ),
             )}
           </div>
+          <Link className={styles.agentsCta} to="/guides/agents/toolkit">
+            Explore the agent toolkit
+            {feather('ArrowRight', 16)}
+          </Link>
         </div>
         <TerminalPanel
           className={styles.agentsPanel}
