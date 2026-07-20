@@ -145,6 +145,46 @@ const results = await client.client.search.query({
 
 results.results?.forEach((r) => console.log(r.title));`,
   },
+  go: {
+    label: 'Go',
+    code: `import (
+  apiclientgo "github.com/gleanwork/api-client-go"
+  "github.com/gleanwork/api-client-go/models/components"
+)
+
+s := apiclientgo.New(
+  apiclientgo.WithSecurity(os.Getenv("GLEAN_API_TOKEN")),
+  apiclientgo.WithServerURL(os.Getenv("GLEAN_SERVER_URL")),
+)
+
+res, err := s.Client.Search.Query(ctx, components.SearchRequest{
+  Query:    "quarterly planning",
+  PageSize: apiclientgo.Pointer[int64](10),
+})
+
+for _, r := range res.SearchResponse.Results {
+  fmt.Println(*r.Title, r.URL)
+}`,
+  },
+  java: {
+    label: 'Java',
+    code: `import com.glean.api_client.glean_api_client.Glean;
+import com.glean.api_client.glean_api_client.models.components.SearchRequest;
+
+Glean sdk = Glean.builder()
+    .apiToken(System.getenv("GLEAN_API_TOKEN"))
+    .serverURL(System.getenv("GLEAN_SERVER_URL"))
+    .build();
+
+var res = sdk.client().search().query()
+    .searchRequest(SearchRequest.builder()
+        .query("quarterly planning")
+        .pageSize(10L)
+        .build())
+    .call();
+
+res.searchResponse().ifPresent(System.out::println);`,
+  },
   curl: {
     label: 'cURL',
     code: `curl -X POST https://your-instance-be.glean.com/rest/api/v1/search \\

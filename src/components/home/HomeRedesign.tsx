@@ -236,8 +236,16 @@ export function PathCards(): React.ReactElement {
   );
 }
 
+const QUICKSTART_FILENAMES = {
+  python: 'main.py',
+  typescript: 'main.ts',
+  go: 'main.go',
+  java: 'Main.java',
+  curl: 'terminal',
+} as const;
+
 export function QuickstartTabs(): React.ReactElement {
-  const [lang, setLang] = useState<'python' | 'typescript' | 'curl'>('python');
+  const [lang, setLang] = useState<keyof typeof QUICKSTART_FILENAMES>('python');
   const snippet = QUICKSTART_SNIPPETS[lang];
 
   return (
@@ -296,17 +304,43 @@ export function QuickstartTabs(): React.ReactElement {
           <TerminalPanel
             className={styles.quickstartPanel}
             code={snippet.code}
-            filename={
-              lang === 'curl'
-                ? 'terminal'
-                : lang === 'python'
-                  ? 'main.py'
-                  : 'main.ts'
-            }
+            filename={QUICKSTART_FILENAMES[lang]}
           />
         </div>
       </div>
     </section>
+  );
+}
+
+/** Install command that copies on click without triggering the card link. */
+function SdkInstall({ command }: { command: string }): React.ReactElement {
+  const [copied, setCopied] = useState(false);
+
+  const copy = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    try {
+      await navigator.clipboard.writeText(command);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Clipboard unavailable; the command stays readable on the card.
+    }
+  };
+
+  return (
+    <button
+      aria-label={`Copy "${command}" to clipboard`}
+      className={styles.sdkInstall}
+      onClick={copy}
+      title="Copy to clipboard"
+      type="button"
+    >
+      <code>{command}</code>
+      <span className={copied ? styles.sdkCopyDone : styles.sdkCopy}>
+        {feather(copied ? 'Check' : 'Copy', 13)}
+      </span>
+    </button>
   );
 }
 
@@ -331,7 +365,7 @@ export function SdkGrid(): React.ReactElement {
               </span>
               {sdk.name}
             </span>
-            <code className={styles.sdkInstall}>{sdk.install}</code>
+            <SdkInstall command={sdk.install} />
           </Link>
         ))}
       </div>
