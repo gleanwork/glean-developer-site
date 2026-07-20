@@ -9,6 +9,40 @@ const redirects = [
   ...require('./permalinks.json'),
 ];
 import { getBuildTimeFlags } from './src/utils/buildTimeFlags';
+
+/**
+ * Dark prism theme matched to the TerminalPanel palette (homepage/plugin
+ * pages): #121418 body, #e6e7ea text, strings #d0e26f, keywords #8f94fd,
+ * numbers/constants #ffd4bf — so stock code blocks and terminal panels
+ * read as one family in dark mode.
+ */
+const gleanDarkCodeTheme = {
+  plain: { color: '#e6e7ea', backgroundColor: '#121418' },
+  styles: [
+    {
+      types: ['comment', 'prolog', 'doctype', 'cdata'],
+      style: { color: '#8b8f98', fontStyle: 'italic' as const },
+    },
+    { types: ['punctuation'], style: { color: '#c3c6cc' } },
+    {
+      types: ['string', 'char', 'attr-value', 'template-string', 'inserted'],
+      style: { color: '#d0e26f' },
+    },
+    {
+      types: ['keyword', 'tag', 'operator', 'selector', 'atrule'],
+      style: { color: '#8f94fd' },
+    },
+    {
+      types: ['number', 'boolean', 'constant', 'symbol', 'deleted'],
+      style: { color: '#ffd4bf' },
+    },
+    {
+      types: ['function', 'class-name', 'builtin', 'attr-name'],
+      style: { color: '#a9e0ff' },
+    },
+    { types: ['variable', 'property', 'regex'], style: { color: '#e6e7ea' } },
+  ],
+};
 import { flagsSnapshotToBooleans } from './src/lib/featureFlags';
 
 // Optional environment variable for Google site verification
@@ -135,8 +169,8 @@ const config: Config = {
       ]),
     },
     prism: {
-      theme: prismThemes.github,
-      darkTheme: prismThemes.dracula,
+      theme: gleanDarkCodeTheme,
+      darkTheme: gleanDarkCodeTheme,
       additionalLanguages: ['go', 'java'],
     },
     headTags: [

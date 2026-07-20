@@ -767,3 +767,30 @@ article:has(.plugin-page-root) > header {
    * space; the redesigned homepage has no TOC affordance */
   max-width: 100% !important;
 }
+
+/* ---- Code blocks echo the TerminalPanel chrome in both color modes ----
+ * The prism theme (docusaurus.config.ts) gives every fenced block the
+ * terminal palette (#121418 body); here we add the matching chrome: the
+ * light-mode border/shadow from .terminal, the dark title strip, and a
+ * highlight color that works on the dark body. */
+.theme-code-block {
+  border: 1px solid #1a1b1f;
+  box-shadow: 0 8px 24px -6px rgba(0, 0, 0, 0.15);
+  --docusaurus-highlighted-code-line-bg: rgba(255, 255, 255, 0.08);
+}
+
+[class*='codeBlockTitle'] {
+  background: #16171a;
+  border-bottom: 1px solid #26282e;
+  color: #8b8f98;
+}
+
+html[data-theme='dark'] .theme-code-block {
+  border-color: rgba(255, 255, 255, 0.14);
+  box-shadow: 0 8px 24px -6px rgba(0, 0, 0, 0.5);
+}
+
+html[data-theme='dark'] [class*='codeBlockTitle'] {
+  background: #0c0d10;
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
