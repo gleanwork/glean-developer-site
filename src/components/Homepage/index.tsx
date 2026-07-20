@@ -7,6 +7,7 @@ import CarouselSection from './CarouselSection';
 import CookbookSection from './CookbookSection';
 import IDEPluginSection from './IDEPluginSection';
 import FeatureFlag from '../FeatureFlag';
+import HomeRedesign from '../home/HomeRedesign';
 import { GLEAN_BRAND_COLORS } from '@gleanwork/docusaurus-theme-glean/brandColors';
 
 type Feature = {
@@ -18,7 +19,8 @@ type Feature = {
   color?: string;
 };
 
-export default function Home() {
+/** Current production homepage; served while the home-redesign flag is off. */
+function HomeClassic() {
   const features: Feature[] = [
     {
       title: 'Integrate with AI Tools',
@@ -115,5 +117,14 @@ export default function Home() {
         </div>
       </section>
     </>
+  );
+}
+
+/** Flag switch: home-redesign renders the handoff 1a page; off = classic. */
+export default function Home() {
+  return (
+    <FeatureFlag fallback={<HomeClassic />} flag="home-redesign">
+      <HomeRedesign />
+    </FeatureFlag>
   );
 }

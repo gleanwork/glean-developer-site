@@ -733,3 +733,30 @@ html[class*='docs-doc-id-cookbook'] .theme-doc-footer {
 html[class*='docs-doc-id-cookbook'] main[class*='docMainContainer'] {
   container-type: inline-size;
 }
+
+/* Home redesign: the 1a design opens on the announcement band — hide the
+ * doc-title header only when the redesigned homepage is rendering */
+article:has(.home-redesign-root) > .theme-doc-markdown > header,
+article:has(.home-redesign-root) > header {
+  display: none;
+}
+
+/* Home redesign fills the main column: the doc container's max-width is
+ * sized for text + TOC layouts, which the redesigned homepage doesn't use.
+ * Scoped via :has so it only applies while the redesign is rendering. */
+.container:has(.home-redesign-root) {
+  max-width: 100%;
+}
+
+/* Breadcrumbs render outside the redesign root — align them with the
+ * page's 56px gutter (42px + the container's 14px) */
+.container:has(.home-redesign-root) .theme-doc-breadcrumbs {
+  margin-left: 42px;
+  margin-right: 42px;
+}
+
+.container:has(.home-redesign-root) [class*='docItemCol'] {
+  /* the theme pins the doc column to 75% with !important to reserve TOC
+   * space; the redesigned homepage has no TOC affordance */
+  max-width: 100% !important;
+}
