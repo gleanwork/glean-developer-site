@@ -19,12 +19,10 @@ export interface XGleanDeprecatedEnumValue extends XGleanDeprecatedBase {
 }
 
 export type XGleanDeprecatedArrayElement =
-  | XGleanDeprecatedEnumProperty
-  | XGleanDeprecatedEnumValue;
+  XGleanDeprecatedEnumProperty | XGleanDeprecatedEnumValue;
 
 export type XGleanDeprecated =
-  | XGleanDeprecatedObject
-  | XGleanDeprecatedArrayElement[];
+  XGleanDeprecatedObject | XGleanDeprecatedArrayElement[];
 
 export type DeprecationType = 'endpoint' | 'parameter' | 'field' | 'enum-value';
 
