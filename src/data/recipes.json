@@ -1,6 +1,174 @@
 {
-  "recipes": [],
-  "surfaces": [],
+  "recipes": [
+    {
+      "id": "build-engineering-portal",
+      "surfaces": [
+        "connector-sdk",
+        "indexing-api",
+        "web-sdk",
+        "platform-api"
+      ],
+      "status": "showcase",
+      "category": "portal",
+      "level": "Intermediate",
+      "levels": {
+        "minimal": true,
+        "wow": true
+      },
+      "time_estimate": "~30 min",
+      "required_scopes": [
+        "SEARCH",
+        "CHAT"
+      ],
+      "prerequisites": [
+        "A Glean instance where you can add a custom datasource",
+        "A Glean-issued Indexing API token",
+        "Node.js 18+ to run the portal app locally"
+      ],
+      "demo_queries": [
+        "Who owns the payments service?",
+        "What is the on-call runbook for checkout?",
+        "Show me the docs for the identity service"
+      ],
+      "code_assets": [],
+      "scaffold_actions": [
+        "scaffold-connector",
+        "scaffold-web-sdk-embed"
+      ],
+      "combines": [
+        {
+          "title": "Index a developer catalog",
+          "surface": "Connector SDK",
+          "category": "index"
+        },
+        {
+          "title": "Embed search into the portal",
+          "surface": "Web SDK",
+          "category": "search"
+        },
+        {
+          "title": "Ground chat in the catalog",
+          "surface": "Platform API",
+          "category": "mcp"
+        }
+      ],
+      "architecture": [
+        {
+          "label": "Service catalog",
+          "caption": "YAML + runbooks",
+          "category": "index",
+          "emphasized": false
+        },
+        {
+          "label": "Custom connector",
+          "caption": "Indexing API",
+          "category": "workflow",
+          "icon": "plug",
+          "emphasized": false
+        },
+        {
+          "label": "Glean",
+          "caption": "permission-aware index",
+          "emphasized": true
+        },
+        {
+          "label": "Portal UI",
+          "caption": "Web SDK embed",
+          "category": "portal",
+          "icon": "layout-outlined",
+          "emphasized": false
+        }
+      ],
+      "ai_prompt": "Build the \"Engineering portal with Glean\" flagship recipe from\nhttps://developers.glean.com/cookbook/build-engineering-portal\n\nIt composes two published recipes:\n1. Index the portal's service catalog into Glean with the open-source\n   indexing SDK (see the Index a custom data source recipe and\n   https://developers.glean.com/api-info/indexing/getting-started/overview).\n2. Embed Glean search and chat into the portal UI with the Web SDK (see\n   https://developers.glean.com/cookbook/embed-search-chat).\n\nAsk me for: my Glean instance/backend domain, an Indexing API token, and\nmy Glean web app domain. Verify at the end that a search for a service\nname returns the indexed catalog entry, respecting my permissions.",
+      "llm_context": "Flagship showcase composing the custom-connector and Web SDK embed recipes: a service-catalog portal whose catalog is indexed into Glean via the indexing SDK, with Glean search and chat embedded back into the portal UI. Requires a Glean-issued Indexing API token for the connector and SEARCH/CHAT scopes for the embed.",
+      "go_dependency": false,
+      "featured": false,
+      "tags": [
+        "flagship",
+        "portal"
+      ],
+      "title": "Build an engineering portal",
+      "summary": "The end-to-end showcase — index a developer catalog into Glean, then embed permission-aware search and chat back into the portal your team already uses.",
+      "permalink": "/cookbook/build-engineering-portal"
+    },
+    {
+      "id": "embed-search-chat",
+      "surfaces": [
+        "web-sdk"
+      ],
+      "status": "production-pattern",
+      "category": "search",
+      "level": "Beginner",
+      "levels": {
+        "minimal": true,
+        "wow": true
+      },
+      "time_estimate": "~15 min (minimal)",
+      "required_scopes": [
+        "SEARCH",
+        "CHAT"
+      ],
+      "prerequisites": [
+        "A Glean instance with content indexed",
+        "Your Glean web app domain (typically app.glean.com — see admin/about-glean)",
+        "A frontend app or page where you can add a script tag and a container element",
+        "For token auth only: an admin API key from the Token Management page"
+      ],
+      "demo_queries": [
+        "What is our PTO policy?",
+        "Who owns the payments service?",
+        "Summarize the latest incident review"
+      ],
+      "code_assets": [],
+      "scaffold_actions": [
+        "scaffold-web-sdk-embed"
+      ],
+      "architecture": [
+        {
+          "label": "Internal app",
+          "caption": "Your existing frontend",
+          "icon": "layout-outlined",
+          "emphasized": false
+        },
+        {
+          "label": "Glean Web SDK",
+          "caption": "search + chat UI",
+          "category": "search",
+          "icon": "message-with-sparkles",
+          "emphasized": false
+        },
+        {
+          "label": "Auth",
+          "caption": "SSO or scoped token",
+          "category": "agent",
+          "icon": "verification",
+          "emphasized": false
+        },
+        {
+          "label": "Glean",
+          "caption": "permission-aware index",
+          "emphasized": true
+        }
+      ],
+      "ai_prompt": "Embed Glean search and chat in my internal web app using the Glean Web\nSDK, following the recipe at\nhttps://developers.glean.com/cookbook/embed-search-chat\n\nSteps:\n1. Ask me for my Glean web app domain (typically app.glean.com).\n2. Add the Web SDK script tag to the page <head>:\n   <script defer src=\"https://{GLEAN_APP_DOMAIN}/embedded-search-latest.min.js\"></script>\n3. Add a search box and results container, and render them with\n   window.GleanWebSDK.renderSearchBox(...) and\n   window.GleanWebSDK.renderSearchResults(...).\n4. Add a chat container (position: relative, display: block, explicit\n   width/height) and render it with\n   window.EmbeddedSearch.renderChat(containerElement).\n5. Default SSO auth needs no extra configuration. If I ask for\n   server-to-server auth instead, follow\n   https://developers.glean.com/libraries/web-sdk/authentication/server-to-server\n   and keep the API key strictly server-side.\n\nVerify by running the app and issuing a search; results must respect my\nGlean permissions.",
+      "llm_context": "Embeds Glean search and chat into an existing web app via the Glean Web SDK (script tag, window.GleanWebSDK.renderSearchBox/renderSearchResults, window.EmbeddedSearch.renderChat). Auth is Glean SSO by default or server-to-server tokens minted by a backend holding an admin API key with SEARCH and CHAT scopes. All results are permission-aware per user.",
+      "go_dependency": false,
+      "featured": true,
+      "tags": [
+        "embed",
+        "web-sdk"
+      ],
+      "title": "Embed search & chat in an internal app",
+      "summary": "Put permission-aware Glean search and chat directly inside an internal app with the Web SDK, so your team gets answers where they already work.",
+      "permalink": "/cookbook/embed-search-chat"
+    }
+  ],
+  "surfaces": [
+    "platform-api",
+    "web-sdk",
+    "connector-sdk",
+    "indexing-api"
+  ],
   "generatedAt": "1970-01-01T00:00:00.000Z",
-  "totalRecipes": 0
+  "totalRecipes": 2
 }

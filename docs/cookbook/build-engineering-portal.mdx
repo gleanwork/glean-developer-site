@@ -1,0 +1,162 @@
+---
+title: Build an engineering portal
+description: >-
+  The end-to-end showcase — index a developer catalog into Glean, then embed
+  permission-aware search and chat back into the portal your team already
+  uses.
+slug: /cookbook/build-engineering-portal
+hide_table_of_contents: true
+hide_title: true
+pagination_prev: null
+pagination_next: null
+recipe:
+  id: build-engineering-portal
+  surfaces:
+    - connector-sdk
+    - indexing-api
+    - web-sdk
+    - platform-api
+  status: showcase
+  category: portal
+  level: Intermediate
+  levels:
+    minimal: true
+    wow: true
+  time_estimate: '~30 min'
+  required_scopes:
+    - SEARCH
+    - CHAT
+  prerequisites:
+    - A Glean instance where you can add a custom datasource
+    - A Glean-issued Indexing API token
+    - Node.js 18+ to run the portal app locally
+  demo_queries:
+    - Who owns the payments service?
+    - What is the on-call runbook for checkout?
+    - Show me the docs for the identity service
+  scaffold_actions:
+    - scaffold-connector
+    - scaffold-web-sdk-embed
+  combines:
+    - title: Index a developer catalog
+      surface: Connector SDK
+      category: index
+    - title: Embed search into the portal
+      surface: Web SDK
+      category: search
+    - title: Ground chat in the catalog
+      surface: Platform API
+      category: mcp
+  architecture:
+    - label: Service catalog
+      caption: YAML + runbooks
+      category: index
+    - label: Custom connector
+      caption: Indexing API
+      category: workflow
+      icon: plug
+    - label: Glean
+      caption: permission-aware index
+      emphasized: true
+    - label: Portal UI
+      caption: Web SDK embed
+      category: portal
+      icon: layout-outlined
+  ai_prompt: |-
+    Build the "Engineering portal with Glean" flagship recipe from
+    https://developers.glean.com/cookbook/build-engineering-portal
+
+    It composes two published recipes:
+    1. Index the portal's service catalog into Glean with the open-source
+       indexing SDK (see the Index a custom data source recipe and
+       https://developers.glean.com/api-info/indexing/getting-started/overview).
+    2. Embed Glean search and chat into the portal UI with the Web SDK (see
+       https://developers.glean.com/cookbook/embed-search-chat).
+
+    Ask me for: my Glean instance/backend domain, an Indexing API token, and
+    my Glean web app domain. Verify at the end that a search for a service
+    name returns the indexed catalog entry, respecting my permissions.
+  llm_context: >-
+    Flagship showcase composing the custom-connector and Web SDK embed
+    recipes: a service-catalog portal whose catalog is indexed into Glean via
+    the indexing SDK, with Glean search and chat embedded back into the
+    portal UI. Requires a Glean-issued Indexing API token for the connector
+    and SEARCH/CHAT scopes for the embed.
+  go_dependency: false
+  featured: false
+  tags:
+    - flagship
+    - portal
+---
+
+import RecipePage from '@site/src/components/Cookbook/RecipePage';
+import {
+  RecipeSection,
+  RecipeArchitecture,
+  RecipePrereqs,
+  RecipeSteps,
+  RecipeNote,
+  TakeItFurther,
+} from '@site/src/components/Cookbook/RecipeLayout';
+
+<RecipePage recipeId="build-engineering-portal">
+
+<RecipeSection label="Problem">
+
+Service ownership, on-call, and docs live in a portal nobody can search,
+and the knowledge about those services lives everywhere else. This recipe
+turns a lightweight service-catalog portal into the one-stop shop: its
+catalog becomes searchable in Glean, and Glean's permission-aware search
+and chat come back into the portal itself.
+
+</RecipeSection>
+
+<RecipeArchitecture />
+
+<RecipePrereqs />
+
+<RecipeSteps>
+
+<>
+Index the catalog: follow the connector recipe to push the portal's
+service catalog (services, owners, runbooks) into Glean with the
+[Indexing API](/api-info/indexing/getting-started/overview) and the
+open-source indexing SDK. Verify a service shows up in Glean search.
+
+</>
+
+<>
+Embed search and chat: follow the
+[Embed search & chat recipe](/cookbook/embed-search-chat) inside the
+portal — the Web SDK script tag, a search route, and a chat container.
+
+</>
+
+<>
+Ground answers in the catalog: with the catalog indexed, chat answers
+questions like "who owns the payments service?" from the portal's own
+data — permission-aware, with citations back to the catalog entries.
+
+</>
+
+</RecipeSteps>
+
+<RecipeNote>
+
+The clonable portal starter repo is in progress — until it lands, this
+recipe composes the two linked recipes against your own portal or a plain
+Next.js app.
+
+</RecipeNote>
+
+<TakeItFurther>
+
+<>Add an on-call answer card to the portal backed by a Platform API search call.</>
+
+<>Extend the connector with incremental sync and identity mapping so catalog permissions mirror your org.</>
+
+<>Wire the portal's "ask" box to open Glean Chat with the current service as context.</>
+
+</TakeItFurther>
+
+</RecipePage>

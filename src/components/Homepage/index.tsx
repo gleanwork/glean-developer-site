@@ -4,7 +4,9 @@ import Link from '@docusaurus/Link';
 import styles from './index.module.css';
 import Card from '@theme/Card';
 import CarouselSection from './CarouselSection';
+import CookbookSection from './CookbookSection';
 import IDEPluginSection from './IDEPluginSection';
+import FeatureFlag from '../FeatureFlag';
 import { GLEAN_BRAND_COLORS } from '@gleanwork/docusaurus-theme-glean/brandColors';
 
 type Feature = {
@@ -77,6 +79,11 @@ export default function Home() {
 
       {/* Dynamic Carousel Section */}
       <CarouselSection />
+
+      {/* Cookbook band — renders featured recipes from the compiled schema */}
+      <FeatureFlag flag="cookbook">
+        <CookbookSection />
+      </FeatureFlag>
 
       <hr />
 
