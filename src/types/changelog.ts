@@ -1,9 +1,5 @@
 export type ChangelogImpact =
-  | 'breaking'
-  | 'action_required'
-  | 'deprecated'
-  | 'noteworthy'
-  | 'routine';
+  'breaking' | 'action_required' | 'deprecated' | 'noteworthy' | 'routine';
 
 export interface ChangelogAttention {
   level: Exclude<ChangelogImpact, 'routine'>;
