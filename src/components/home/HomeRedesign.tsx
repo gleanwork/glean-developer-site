@@ -390,8 +390,8 @@ const MCP_CARDS = [
   },
   {
     title: 'Codex',
-    body: 'Install the Glean plugins for Codex from the gleanwork marketplace.',
-    href: 'https://github.com/gleanwork/codex-plugins',
+    body: 'Install the Glean plugin for Codex — enterprise knowledge in your terminal.',
+    href: '/guides/mcp/codex',
     clientId: 'codex',
     mono: true,
   },

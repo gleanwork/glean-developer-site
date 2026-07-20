@@ -1,9 +1,9 @@
 import React from 'react';
 import Link from '@docusaurus/Link';
 import useBaseUrl from '@docusaurus/useBaseUrl';
-import { Steps, Step } from '@theme/Steps';
-import CodeBlock from '@theme/CodeBlock';
-import Frame from '@theme/Frame';
+import { getIcon } from '@gleanwork/docusaurus-theme-glean/Icons';
+import { getClientIcon } from '@gleanwork/mcp-config-schema/browser';
+import TerminalPanel from '../home/TerminalPanel';
 import styles from './styles.module.css';
 
 type PluginStep = {
@@ -19,85 +19,108 @@ type PluginStep = {
 type PluginPageProps = {
   name: string;
   tagline: string;
-  logo: string;
-  accentColor: string;
+  /** Client id from @gleanwork/mcp-config-schema (claude-code, cursor, codex). */
+  clientId: string;
+  /** Monochrome brand marks need inverting in dark mode (cursor, codex). */
+  mono?: boolean;
+  /** Banner heading; defaults to "Glean plugin for <name>". */
+  title?: string;
   steps: PluginStep[];
 };
 
+function StepBody({ step }: { step: PluginStep }): React.ReactElement {
+  const imageUrl = useBaseUrl(step.image ?? '');
+  return (
+    <>
+      <div className={styles.stepLabel}>{step.label}</div>
+      <p className={styles.stepDescription}>{step.description}</p>
+      {step.type === 'cta' ? (
+        <Link className={styles.ctaButton} to={step.ctaHref}>
+          {step.ctaText}
+          {getIcon('ArrowUpRight', 'feather', {
+            width: 16,
+            height: 16,
+            color: 'currentColor',
+          })}
+        </Link>
+      ) : null}
+      {step.type === 'list' ? (
+        <ol className={styles.stepList}>
+          {step.items.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ol>
+      ) : null}
+      {step.type === 'command'
+        ? step.commands.map((cmd) => (
+            <div className={styles.commandBlock} key={cmd.title}>
+              <TerminalPanel
+                className={styles.terminal}
+                code={cmd.code}
+                copy
+                filename={cmd.title}
+              />
+            </div>
+          ))
+        : null}
+      {step.image ? (
+        <img alt={step.label} className={styles.stepImage} src={imageUrl} />
+      ) : null}
+    </>
+  );
+}
+
+/**
+ * Plugin install page in the homepage-redesign design language: token-based
+ * banner with brand lockup, numbered step rail, terminal command panels.
+ */
 export default function PluginPage({
   name,
   tagline,
-  logo,
-  accentColor,
+  clientId,
+  mono = false,
+  title,
   steps,
-}: PluginPageProps) {
+}: PluginPageProps): React.ReactElement {
   return (
-    <div className={styles.page}>
-      {/* Hero */}
-      <div
-        className={styles.hero}
-        style={{ '--plugin-accent': accentColor } as React.CSSProperties}
-      >
-        <div className={styles.heroInner}>
-          <div className={styles.logoRow}>
-            <img
-              src={useBaseUrl('/img/glean-logo-white.svg')}
-              alt="Glean"
-              className={styles.gleanLogo}
-            />
-            <span className={styles.times}>×</span>
-            <img
-              src={useBaseUrl(logo)}
-              alt={name}
-              className={styles.pluginLogo}
-            />
-          </div>
-          <h1 className={styles.heroTitle}>Official Glean Plugin for {name}</h1>
-          <p className={styles.heroTagline}>{tagline}</p>
+    <div className={`${styles.page} plugin-page-root`}>
+      <div className={styles.banner}>
+        <span className={styles.eyebrow}>
+          <span className={styles.eyebrowDot} />
+          Official Glean plugin
+        </span>
+        <div className={styles.lockup}>
+          <span className={styles.brandTile}>
+            {getIcon('glean-logo', 'glean', {
+              width: 26,
+              height: 26,
+              color: 'currentColor',
+            })}
+          </span>
+          <span className={styles.times}>×</span>
+          <span
+            className={`${styles.brandTile} ${mono ? styles.brandTileMono : ''}`}
+            dangerouslySetInnerHTML={{ __html: getClientIcon(clientId) ?? '' }}
+          />
         </div>
+        <h1 className={styles.bannerTitle}>
+          {title ?? `Glean plugin for ${name}`}
+        </h1>
+        <p className={styles.bannerTagline}>{tagline}</p>
       </div>
 
-      <h2>Installation</h2>
-
-      {/* Steps */}
-      <Steps>
+      <div className={styles.sectionLabel}>Installation</div>
+      <div className={styles.stepsWrap}>
+        <div className={styles.stepsRail} />
         {steps.map((step, i) => (
-          <Step key={i} title={step.label} titleSize="h2">
-            <p>{step.description}</p>
-            {step.type === 'cta' && (
-              <Link
-                to={step.ctaHref}
-                className={styles.ctaButton}
-                style={{
-                  backgroundColor: accentColor,
-                  borderColor: accentColor,
-                }}
-              >
-                {step.ctaText}
-              </Link>
-            )}
-            {step.type === 'list' && (
-              <ol>
-                {step.items.map((item, j) => (
-                  <li key={j}>{item}</li>
-                ))}
-              </ol>
-            )}
-            {step.type === 'command' &&
-              step.commands.map((cmd, j) => (
-                <div key={j}>
-                  <p className={styles.commandLabel}>{cmd.title}</p>
-                  <CodeBlock language="bash">{cmd.code}</CodeBlock>
-                </div>
-              ))}
-            {step.image && (
-              <Frame>
-                <img src={useBaseUrl(step.image)} alt={step.label} />
-              </Frame>
-            )}
-          </Step>
+          <div className={styles.stepRow} key={step.label}>
+            <span className={styles.stepNum}>{i + 1}</span>
+            <div className={styles.stepBody}>
+              <StepBody step={step} />
+            </div>
+          </div>
         ))}
-      </Steps>
+      </div>
     </div>
   );
 }

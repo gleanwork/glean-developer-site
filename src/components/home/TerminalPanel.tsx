@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { getIcon } from '@gleanwork/docusaurus-theme-glean/Icons';
 import styles from './HomeRedesign.module.css';
 
 /** Minimal syntax tinting per the handoff token colors. */
@@ -41,6 +42,8 @@ interface TerminalPanelProps {
   label?: string;
   code: string;
   className?: string;
+  /** Show a copy-to-clipboard button in the header. */
+  copy?: boolean;
 }
 
 /** Dark editor/terminal card per the handoff: mac dots, filename, label. */
@@ -49,7 +52,20 @@ export default function TerminalPanel({
   label,
   code,
   className,
+  copy = false,
 }: TerminalPanelProps): React.ReactElement {
+  const [copied, setCopied] = useState(false);
+
+  const copyCode = async () => {
+    try {
+      await navigator.clipboard.writeText(code);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Clipboard unavailable; the code stays selectable.
+    }
+  };
+
   return (
     <div className={`${styles.terminal} ${className ?? ''}`}>
       <div className={styles.terminalHeader}>
@@ -58,6 +74,21 @@ export default function TerminalPanel({
         <span className={styles.dotGreen} />
         <span className={styles.terminalFile}>{filename}</span>
         {label ? <span className={styles.terminalLabel}>{label}</span> : null}
+        {copy ? (
+          <button
+            aria-label="Copy to clipboard"
+            className={`${styles.terminalCopy} ${label ? '' : styles.terminalCopyEnd}`}
+            onClick={copyCode}
+            title="Copy to clipboard"
+            type="button"
+          >
+            {getIcon(copied ? 'Check' : 'Copy', 'feather', {
+              width: 13,
+              height: 13,
+              color: copied ? '#28c840' : 'currentColor',
+            })}
+          </button>
+        ) : null}
       </div>
       <pre className={styles.terminalPre}>{tint(code)}</pre>
     </div>

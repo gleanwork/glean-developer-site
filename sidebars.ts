@@ -306,6 +306,11 @@ const baseSidebars: SidebarsConfig = {
               id: 'guides/mcp/cursor',
               label: 'Cursor Plugin',
             },
+            {
+              type: 'doc',
+              id: 'guides/mcp/codex',
+              label: 'Codex Plugin',
+            },
           ],
         },
         {
