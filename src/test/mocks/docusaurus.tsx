@@ -8,6 +8,26 @@ vi.mock('@site/src/theme/Root', () => ({
   }),
 }));
 
+// Mock Docusaurus Link (the real export fails to transform under vitest)
+vi.mock('@docusaurus/Link', () => ({
+  default: ({ to, href, children, ...rest }: any) => (
+    <a href={to ?? href} {...rest}>
+      {children}
+    </a>
+  ),
+}));
+
+// Mock useBaseUrl (pulls raw-JSX Docusaurus internals under vitest)
+vi.mock('@docusaurus/useBaseUrl', () => ({
+  default: (url: string) => url,
+}));
+
+// Mock theme icons (react-feather bundles its own React copy, which
+// React 19 rejects under vitest; the real build dedupes it fine)
+vi.mock('@gleanwork/docusaurus-theme-glean/Icons', () => ({
+  getIcon: (name: string) => <span data-icon={name} />,
+}));
+
 // Mock Docusaurus Tabs components
 vi.mock('@theme/Tabs', () => ({
   default: ({ children, className }: any) => (
