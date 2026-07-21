@@ -28,44 +28,66 @@ The toolkit provides adapters for major agent frameworks:
 
 | Framework | Installation | Use Case |
 |-----------|-------------|----------|
-| **OpenAI Assistants** | `pip install glean-agent-toolkit[openai]` | Direct API integration with OpenAI |
-| **LangChain** | `pip install glean-agent-toolkit[langchain]` | Rich Python agent ecosystem |
+| **All frameworks** | `pip install "glean-agent-toolkit[all]"` | Full framework support (recommended) |
+| **OpenAI Agents SDK** | `pip install glean-agent-toolkit[openai]` | Build agents with OpenAI's Agents SDK |
+| **LangChain** | `pip install glean-agent-toolkit[langchain]` | LangChain / LangGraph agents |
 | **CrewAI** | `pip install glean-agent-toolkit[crewai]` | Multi-agent collaboration |
 | **Google ADK** | `pip install glean-agent-toolkit[adk]` | Google's Agent Development Kit |
 
 ## Available Tools
 
-The toolkit comes with production-ready tools that connect to Glean's capabilities:
+The toolkit ships nine production-ready tools that connect to Glean's capabilities. The import name is the symbol you import from `glean.agent_toolkit.tools`; the tool name is the identifier exposed to the LLM.
 
-- **`glean_search`**: Search your company's knowledge base
-- **`employee_search`**: Find employees by name, team, department, or expertise
-- **`calendar_search`**: Find meetings and calendar events
-- **`code_search`**: Search your company's source code repositories
-- **`gmail_search`**: Search Gmail messages and conversations
-- **`outlook_search`**: Search Outlook mail and calendar items
-- **`web_search`**: Search the public web for external information
-- **`ai_web_search`**: Query Google Gemini for AI-powered web information
+| Import name | Tool name | Description |
+|-------------|-----------|-------------|
+| **`search`** | `glean_search` | Search internal documents and knowledge bases |
+| **`chat`** | `glean_chat` | Conversational Q&A with Glean Assistant |
+| **`read_document`** | `glean_read_document` | Read full document content by ID or URL |
+| **`web_search`** | `glean_web_search` | Search the public web for external information |
+| **`calendar_search`** | `glean_calendar_search` | Find meetings and calendar events |
+| **`employee_search`** | `glean_employee_search` | Search employees by name, team, or department |
+| **`code_search`** | `glean_code_search` | Search source code repositories |
+| **`gmail_search`** | `glean_gmail_search` | Search Gmail messages and conversations |
+| **`outlook_search`** | `glean_outlook_search` | Search Outlook mail and calendar items |
+
+Import the tools you need:
+
+```python
+from glean.agent_toolkit.tools import search, chat, read_document
+from glean.agent_toolkit.tools import web_search, calendar_search
+from glean.agent_toolkit.tools import employee_search, code_search
+from glean.agent_toolkit.tools import gmail_search, outlook_search
+```
+
+The quickest way to hand every built-in tool to a framework is `get_tools()`, which returns all nine tools already converted for your framework of choice:
+
+```python
+from glean.agent_toolkit import get_tools
+
+# Credentials are read from GLEAN_API_TOKEN and GLEAN_SERVER_URL.
+tools = get_tools("langchain")  # or "openai", "crewai", "adk"
+```
 
 ## Example: Multi-Framework Usage
 
 ```python
-from glean.agent_toolkit.tools import glean_search, employee_search
+from glean.agent_toolkit.tools import search, employee_search
 import os
 
 # Ensure environment variables are set
 os.environ["GLEAN_API_TOKEN"] = "your-api-token"
-os.environ["GLEAN_SERVER_URL"] = "https://your-server-id-be.glean.com"
+os.environ["GLEAN_SERVER_URL"] = "https://your-company-be.glean.com"
 
 # Use with LangChain
-langchain_search = glean_search.as_langchain_tool()
+langchain_search = search.as_langchain_tool()
 langchain_employees = employee_search.as_langchain_tool()
 
 # Use with CrewAI
-crewai_search = glean_search.as_crewai_tool()
+crewai_search = search.as_crewai_tool()
 crewai_employees = employee_search.as_crewai_tool()
 
-# Use with OpenAI Assistants
-openai_search = glean_search.as_openai_tool()
+# Use with OpenAI Agents SDK
+openai_search = search.as_openai_tool()
 openai_employees = employee_search.as_openai_tool()
 ```
 
@@ -105,19 +127,19 @@ crewai_weather = get_weather.as_crewai_tool()
 ## Complete Example: Multi-Agent System
 
 ```python
-from glean.agent_toolkit.tools import glean_search, employee_search, calendar_search
+from glean.agent_toolkit.tools import search, employee_search, calendar_search
 from crewai import Agent, Task, Crew
 import os
 
 os.environ["GLEAN_API_TOKEN"] = "your-api-token"
-os.environ["GLEAN_SERVER_URL"] = "https://your-server-id-be.glean.com"
+os.environ["GLEAN_SERVER_URL"] = "https://your-company-be.glean.com"
 
 # Create agents with different specializations
 researcher = Agent(
     role='Research Specialist',
     goal='Find relevant company information and documents',
     backstory='Expert at searching and analyzing company knowledge',
-    tools=[glean_search.as_crewai_tool()]
+    tools=[search.as_crewai_tool()]
 )
 
 hr_specialist = Agent(
@@ -163,7 +185,7 @@ result = crew.kickoff()
 ### Tool Composition
 
 ```python
-from glean.agent_toolkit.tools import glean_search, employee_search
+from glean.agent_toolkit.tools import search, employee_search
 from glean.agent_toolkit import tool_spec
 
 @tool_spec(
@@ -172,20 +194,22 @@ from glean.agent_toolkit import tool_spec
 )
 def research_and_contact(topic: str) -> dict:
     """Research a topic and find experts."""
-    
-    # Search for documents
-    search_results = glean_search.execute(topic)
-    
+
+    # Calling a tool directly returns a ToolResult envelope:
+    # {"status": "ok" | "error", "result": <payload>, "error": ..., ...}
+    search_response = search(query=topic)
+    search_results = search_response["result"] if search_response["status"] == "ok" else []
+
     # Extract mentioned people from results
     mentioned_people = extract_people_from_results(search_results)
-    
+
     # Find employee details
     experts = []
     for person_name in mentioned_people:
-        employee_info = employee_search.execute(person_name)
-        if employee_info:
-            experts.append(employee_info)
-    
+        employee_response = employee_search(query=person_name)
+        if employee_response["status"] == "ok" and employee_response["result"]:
+            experts.append(employee_response["result"])
+
     return {
         "research_results": search_results,
         "experts": experts,
@@ -201,9 +225,13 @@ def extract_people_from_results(results):
 ### Error Handling and Retries
 
 ```python
-from glean.agent_toolkit.tools import glean_search
+from glean.agent_toolkit.tools import search
 from glean.agent_toolkit import tool_spec
 import time
+
+# Built-in tools return a ToolResult envelope and never raise on API errors;
+# inspect result["status"] and retry on transient error types.
+RETRYABLE = {"timeout", "rate_limit", "api"}
 
 @tool_spec(
     name="robust_search",
@@ -211,19 +239,15 @@ import time
 )
 def robust_search(query: str, max_retries: int = 3) -> dict:
     """Search with retry logic."""
-    
+
     for attempt in range(max_retries):
-        try:
-            return glean_search.execute(query)
-        except Exception as e:
-            if attempt < max_retries - 1:
-                time.sleep(2 ** attempt)  # Exponential backoff
-                continue
-            else:
-                return {
-                    "error": f"Search failed after {max_retries} attempts: {str(e)}",
-                    "results": []
-                }
+        result = search(query=query)
+        if result["status"] == "ok":
+            return result
+        if result["error_type"] in RETRYABLE and attempt < max_retries - 1:
+            time.sleep(2 ** attempt)  # Exponential backoff
+            continue
+        return result
 ```
 
 ## Next Steps

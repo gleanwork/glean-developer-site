@@ -23,15 +23,19 @@ curl -X POST https://customer-be.glean.com/api/index/v1/debug/gleantest/status \
 <TabItem value="python" label="Python">
 
 ```python
-from glean_indexing_api_client.api import troubleshooting_api
-from pprint import pprint
-# Please refer to the Getting Started page for more details on how to setup api_client
-troubleshoot_api = troubleshooting_api.TroubleshootingApi(api_client)
-try:
-    api_response = troubleshoot_api.debug_datasource_status_post("gleantest")
-    pprint(api_response)
-except glean_indexing_api_client.ApiException as e:
-    print("Exception when calling TroubleshootingApi->debug_datasource_status_post: %s\n" % e)
+from glean.api_client import Glean
+import os
+
+with Glean(
+    api_token=os.getenv("GLEAN_INDEXING_API_TOKEN", ""),
+    server_url=os.getenv("GLEAN_SERVER_URL", ""),
+) as client:
+    # Get datasource status
+    try:
+        res = client.indexing.datasource.status(datasource="gleantest")
+        print(res)
+    except Exception as e:
+        print(f"Exception when getting datasource status: {e}")
 ```
 
 </TabItem>

@@ -1,9 +1,10 @@
 /**
  * Code snippets for the homepage redesign — every snippet is sourced from
  * published docs (never invented):
- * - chat/search: docs/libraries/api-clients/python.mdx
+ * - chat/search: gleanwork/api-client-python@v0.15.3 generated docs (query,
+ *                chat.create; answer text lives in messages[].fragments[].text)
  * - indexing:    scripts/indexing/ (this repo's own glean-indexing-sdk connector)
- * - agents:      docs/guides/agents/toolkit.mdx
+ * - agents:      gleanwork/glean-agent-toolkit@0.8.0 (tools module __all__)
  * - typescript:  docs/libraries/api-clients/typescript.mdx
  * - curl:        docs/api-info/client/getting-started/basic-usage.mdx
  * - web sdk:     @gleanwork/web-sdk types (renderSearchBox/renderSearchResults/
@@ -41,7 +42,11 @@ with Glean(
         messages=[{"fragments":
             [{"text": "Summarize the Q3 roadmap"}]}]
     )
-    print(response.text)`,
+    answer = "".join(
+        f.text or ""
+        for m in response.messages or []
+        for f in m.fragments or []
+    )`,
   },
   {
     surface: 'Search API',
@@ -72,16 +77,16 @@ with Glean(
       'Plan, retrieve, and act across your tools — agents reason over the knowledge graph, not just a prompt window.',
     filename: 'agent.py',
     code: `from glean.agent_toolkit.tools import (
-    glean_search,
+    search,
     employee_search,
 )
 
 # Use with LangChain
-search_tool = glean_search.as_langchain_tool()
+search_tool = search.as_langchain_tool()
 people_tool = employee_search.as_langchain_tool()
 
 # Use with CrewAI
-crew_tool = glean_search.as_crewai_tool()`,
+crew_tool = search.as_crewai_tool()`,
   },
   {
     surface: 'Web SDK',
@@ -216,15 +221,15 @@ res.searchResponse().ifPresent(System.out::println);`,
 };
 
 export const AGENTS_BAND_CODE = `from glean.agent_toolkit.tools import (
-    glean_search,
+    search,
     employee_search,
 )
 
 # LangChain
-lc_tool = glean_search.as_langchain_tool()
+lc_tool = search.as_langchain_tool()
 
 # CrewAI
-crew_tool = glean_search.as_crewai_tool()`;
+crew_tool = search.as_crewai_tool()`;
 
 export const SDK_CARDS = [
   { name: 'Python', icon: 'python', install: 'pip install glean-api-client' },

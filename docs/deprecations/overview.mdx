@@ -51,7 +51,7 @@ When we need to make a breaking change, we follow a predictable process:
 
 #### Example:
 
-Consider a field deprecated on **2026-01-01**. The field will be removed on **2026-07-15** (6 months + rounded to the next allowed removal date)
+Consider a field deprecated on **2026-01-01**. The field will be removed on **2026-07-15** (a minimum of 6 months after deprecation, plus a short buffer, rounded up to the next quarterly removal date — removals only happen on **Jan 15, Apr 15, Jul 15, or Oct 15**)
 
 ```
         2026-01-01                                                    2026-07-15
@@ -80,18 +80,20 @@ Consider a field deprecated on **2026-01-01**. The field will be removed on **20
 When you use a deprecated feature, the API response includes an `X-Glean-Deprecated` header:
 
 ```http
-X-Glean-Deprecated: kind=field;name=snippetText;introduced=2026-01-01;removal=2026-07-15;docs=https://developers.glean.com/deprecations
+X-Glean-Deprecated: name=snippetText;kind=property;context=response;schema=SearchResultSnippet;removal=2026-07-15;docs=https://developers.glean.com/deprecations
 ```
 
-The header contains:
+Each deprecated item you use produces its own `X-Glean-Deprecated` header instance. The header value is a semicolon-separated list of `key=value` pairs:
 
 | Field | Description |
 |-------|-------------|
-| `kind` | Type of deprecation: `endpoint`, `field`, or `parameter` |
 | `name` | Name of the deprecated item |
-| `introduced` | Date the deprecation was announced (ISO-8601) |
+| `kind` | Type of deprecation: `endpoint`, `property`, `parameter`, or `enum-value` |
+| `context` | Where the deprecation applies: `request`, `response`, or `endpoint` |
+| `schema` | The schema containing the deprecated property (when applicable) |
 | `removal` | Date the item will be removed (ISO-8601) |
-| `docs` | Link to migration documentation |
+| `docs` | Link to migration documentation (when available) |
+| `value` | The deprecated enum value (only for `enum-value` deprecations) |
 
 :::tip Automated Monitoring
 Parse this header in your integration tests or monitoring to catch deprecations early.

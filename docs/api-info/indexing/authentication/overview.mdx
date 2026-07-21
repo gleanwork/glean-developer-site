@@ -202,20 +202,20 @@ Enable automatic token rotation for enhanced security:
 
 **Using the Rotation API**
 
+The token to rotate is identified by the bearer token in the request, so no request body is required. The current token must be the one being rotated.
+
 ```bash
 curl -X POST https://instance-be.glean.com/api/index/v1/rotatetoken \
   -H 'Authorization: Bearer <CURRENT_TOKEN>' \
-  -H 'Content-Type: application/json' \
-  -d '{
-    "tokenId": "your-token-id"
-  }'
+  -H 'Content-Type: application/json'
 ```
 
 **Response**
 ```json
 {
-  "newToken": "new-rotated-token-value",
-  "expiresAt": "2024-12-31T23:59:59Z"
+  "rawSecret": "new-rotated-token-value",
+  "createdAt": 1735689599,
+  "rotationPeriodMinutes": 1440
 }
 ```
 
@@ -288,9 +288,12 @@ curl -X POST https://instance-be.glean.com/api/index/v1/bulkindexdocuments \
 <TabItem value="document-count" label="Get Document Count">
 
 ```bash
-curl -X GET https://instance-be.glean.com/api/index/v1/getdocumentcount \
+curl -X POST https://instance-be.glean.com/api/index/v1/getdocumentcount \
   -H 'Authorization: Bearer <INDEXING_TOKEN>' \
-  -H 'Content-Type: application/json'
+  -H 'Content-Type: application/json' \
+  -d '{
+    "datasource": "my-datasource"
+  }'
 ```
 
 </TabItem>
@@ -321,28 +324,21 @@ curl -X POST https://instance-be.glean.com/api/index/v1/adddatasource \
 Test your token with a simple document count request:
 
 ```bash
-curl -X GET https://<instance>-be.glean.com/api/index/v1/getdocumentcount \
+curl -X POST https://<instance>-be.glean.com/api/index/v1/getdocumentcount \
   -H 'Authorization: Bearer <YOUR_INDEXING_TOKEN>' \
-  -H 'Content-Type: application/json'
+  -H 'Content-Type: application/json' \
+  -d '{
+    "datasource": "my-datasource"
+  }'
 ```
 
 ### Expected Response
 
-Successful authentication returns document count data:
+Successful authentication returns the document count for the datasource:
 
 ```json
 {
-  "totalDocumentCount": 1234,
-  "datasourceDocumentCounts": [
-    {
-      "datasource": "datasource-1",
-      "documentCount": 567
-    },
-    {
-      "datasource": "datasource-2", 
-      "documentCount": 667
-    }
-  ]
+  "documentCount": 1234
 }
 ```
 

@@ -168,7 +168,7 @@ paths:
   </Step>
 
   <Step title="Authentication Setup">
-    This tool requires OAuth User authentication to access individual users' calendar data.
+    This tool requires OAuth User authentication to access and update individual users' Google Docs documents.
 
     #### Google Cloud Console Setup
     
@@ -190,13 +190,16 @@ paths:
     This URL can be copied from the `Callback URL` field in your tool's `Authentication` section.
 
     #### OAuth Settings in Glean
-    Configure these parameters in Glean:
+    Configure these parameters in Glean's `Authentication` section:
     ```
-    Client URL: https://accounts.google.com/o/oauth2/auth?prompt=consent&access_type=offline
-    Authorization URL: https://accounts.google.com/o/oauth2/auth
-    Token URL: https://accounts.google.com/o/oauth2/token
+    Client URL: https://accounts.google.com/o/oauth2/v2/auth?access_type=offline&prompt=consent
+    Authorization URL: https://oauth2.googleapis.com/token
     Scopes: https://www.googleapis.com/auth/documents
     ```
+
+    :::note
+    In Glean's OAuth configuration, **Client URL** is Google's user-facing authorization endpoint (where users are redirected to grant access), and **Authorization URL** is Google's token endpoint (which Glean calls to exchange the authorization code for a token). There is no separate token URL field.
+    :::
 
     [![Authentication Dialogue Box](./images/google-calendar-events/calendar_action_authentication.png)](./images/google-calendar-events/calendar_action_authentication.png)
 

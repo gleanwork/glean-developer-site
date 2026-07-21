@@ -103,39 +103,40 @@ curl -X POST https://your-instance-be.glean.com/rest/api/v1/search \
 {
   "results": [
     {
-      "id": "doc_123",
-      "title": "Q4 Planning Document", 
+      "title": "Q4 Planning Document",
       "url": "https://company.com/q4-plan",
-      "snippet": "Our Q4 objectives focus on...",
-      "datasource": "confluence",
-      "lastModified": "2024-01-15T10:30:00Z",
-      "permissions": {
-        "canView": true,
-        "canEdit": false
-      },
-      "author": {
-        "name": "Jane Smith",
-        "email": "jane@company.com"
+      "snippets": [
+        { "snippet": "Our Q4 objectives focus on...", "mimeType": "text/plain" }
+      ],
+      "metadata": {
+        "datasource": "confluence",
+        "documentId": "doc_123",
+        "createTime": "2024-01-15T10:30:00Z",
+        "updateTime": "2024-01-15T10:30:00Z",
+        "author": {
+          "name": "Jane Smith"
+        }
       }
     }
   ],
-  "facets": {
-    "datasource": [
-      { "value": "confluence", "count": 15 },
-      { "value": "gdrive", "count": 8 }
-    ],
-    "author": [
-      { "value": "Jane Smith", "count": 3 }
-    ]
-  },
-  "requestId": "req_abc123"
+  "facetResults": [
+    {
+      "sourceName": "datasource",
+      "operatorName": "SelectMultiple",
+      "buckets": [
+        { "value": { "stringValue": "confluence" }, "count": 15 },
+        { "value": { "stringValue": "gdrive" }, "count": 8 }
+      ]
+    }
+  ],
+  "trackingToken": "...",
+  "requestID": "req_abc123"
 }
 ```
 
 **Key Concepts:**
 - **Results**: Array of documents with rich metadata
-- **Facets**: Aggregations for filtering and navigation (e.g., by datasource, author)
-- **Permissions**: User-specific access controls (canView, canEdit)
+- **Facets**: Aggregations for filtering and navigation, returned as a `facetResults` array (e.g., by datasource, author)
 - **Filters**: Narrow results by datasource, author, date, etc.
 - **Ranking**: Results ordered by relevance scoring
 
