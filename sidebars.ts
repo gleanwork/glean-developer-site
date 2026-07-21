@@ -214,7 +214,7 @@ const baseSidebars: SidebarsConfig = {
         },
         {
           type: 'category',
-          label: 'Actions',
+          label: 'Tools',
           customProps: {
             icon: 'Zap',
             iconSet: 'feather',
@@ -222,18 +222,18 @@ const baseSidebars: SidebarsConfig = {
           items: [
             {
               type: 'doc',
-              id: 'guides/actions/overview',
+              id: 'guides/tools/overview',
               label: 'Overview',
             },
             {
               type: 'doc',
-              id: 'guides/actions/authentication',
+              id: 'guides/tools/authentication',
               label: 'Authentication',
             },
             {
               type: 'doc',
-              id: 'guides/actions/create-actions',
-              label: 'Creating Actions',
+              id: 'guides/tools/create-tools',
+              label: 'Creating Tools',
             },
             {
               type: 'category',
@@ -241,34 +241,34 @@ const baseSidebars: SidebarsConfig = {
               items: [
                 {
                   type: 'doc',
-                  id: 'guides/actions/examples/jira-issue-creation',
+                  id: 'guides/tools/examples/jira-issue-creation',
                   label: 'Jira Issue Creation',
                 },
                 {
                   type: 'doc',
-                  id: 'guides/actions/examples/jira-issue-creation-redirect',
+                  id: 'guides/tools/examples/jira-issue-creation-redirect',
                   label: 'Jira Issue Creation Redirect',
                 },
                 {
                   type: 'doc',
-                  id: 'guides/actions/examples/google-calendar-events',
+                  id: 'guides/tools/examples/google-calendar-events',
                   label: 'Google Calendar Events',
                 },
                 {
                   type: 'doc',
-                  id: 'guides/actions/examples/google-docs-update',
+                  id: 'guides/tools/examples/google-docs-update',
                   label: 'Google Docs Update',
                 },
                 {
                   type: 'doc',
-                  id: 'guides/actions/examples/zendesk-ticket-redirection',
+                  id: 'guides/tools/examples/zendesk-ticket-redirection',
                   label: 'Zendesk Ticket Redirection',
                 },
               ],
             },
             {
               type: 'doc',
-              id: 'guides/actions/faq',
+              id: 'guides/tools/faq',
               label: 'FAQ',
             },
           ],

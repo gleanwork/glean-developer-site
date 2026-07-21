@@ -1,25 +1,25 @@
 ---
-title: Zendesk Ticket Redirection Action
-description: Implement a redirect action that enables Glean Assistant to create Zendesk tickets through the native Zendesk interface
+title: Zendesk Ticket Redirection Tool
+description: Implement a redirect tool that enables Glean Assistant to create Zendesk tickets through the native Zendesk interface
 ---
 
 
-# Zendesk Ticket Redirection Action
+# Zendesk Ticket Redirection Tool
 
 ## Overview
 
-This guide demonstrates how to create a redirect action that allows users to create Zendesk tickets through Glean Assistant. This implementation leverages Zendesk's URL-based ticket creation parameters to provide a seamless experience that directs users to the familiar Zendesk interface with pre-populated ticket fields.
+This guide demonstrates how to create a redirect tool that allows users to create Zendesk tickets through Glean Assistant. This implementation leverages Zendesk's URL-based ticket creation parameters to provide a seamless experience that directs users to the familiar Zendesk interface with pre-populated ticket fields.
 
-This is a **redirect action** that directs users to Zendesk's ticket creation interface with pre-populated fields using URL parameters.
+This is a **redirect tool** that directs users to Zendesk's ticket creation interface with pre-populated fields using URL parameters.
 
 ## Prerequisites
 
-Before implementing this action, ensure you have:
+Before implementing this tool, ensure you have:
 
 - Administrator access to your Zendesk and Glean instances
 - Understanding of Zendesk's URL parameter structure and ticket creation interface
 - Access to Zendesk API documentation for field mappings
-- Knowledge of redirect action configuration principles
+- Knowledge of redirect tool configuration principles
 
 ## Implementation Guide
 
@@ -33,7 +33,7 @@ Before implementing this action, ensure you have:
     ```yaml
     openapi: 3.0.0
     info:
-      title: Create Zendesk Ticket Action
+      title: Create Zendesk Ticket Tool
       version: 1.0.0
     servers:
       - url: https://{ZENDESK_SUBDOMAIN}.zendesk.com/agent/tickets/new?
@@ -46,7 +46,7 @@ Before implementing this action, ensure you have:
         post:
           summary: Create a new support ticket in Zendesk
           description: |
-            This action redirects to Zendesk's ticket creation interface with pre-populated fields
+            This tool redirects to Zendesk's ticket creation interface with pre-populated fields
             for efficient ticket creation and management.
           parameters:
             - name: ticket[requester]
@@ -118,7 +118,7 @@ Before implementing this action, ensure you have:
   </Step>
 
   <Step title="URL Construction Strategy">
-    <p>The URL construction process is the core functionality of this redirect action. Understanding how Zendesk processes URL parameters ensures that tickets are created with the correct information.</p>
+    <p>The URL construction process is the core functionality of this redirect tool. Understanding how Zendesk processes URL parameters ensures that tickets are created with the correct information.</p>
 
     <h4>Parameter Structure</h4>
     <p>Zendesk uses a nested parameter structure where ticket fields are prefixed with <code>ticket[]</code>. This format ensures that parameters are properly interpreted by Zendesk's ticket creation interface. For example, <code>ticket[subject]</code> sets the ticket's subject field.</p>
@@ -147,7 +147,7 @@ Before implementing this action, ensure you have:
   </Step>
 
   <Step title="Testing and Deployment">
-    <p>Thorough testing ensures that the redirect action functions correctly across different scenarios and user types.</p>
+    <p>Thorough testing ensures that the redirect tool functions correctly across different scenarios and user types.</p>
 
     <h4>Testing Process</h4>
     
@@ -201,12 +201,12 @@ Before implementing this action, ensure you have:
 ### Security Considerations
 
 <Card title="Security Best Practices" icon="Shield">
-  Important security measures for redirect actions:
+  Important security measures for redirect tools:
 
   - **Domain Validation**: Ensure redirects only target authorized Zendesk instances
   - **Parameter Sanitization**: Clean parameter values to prevent injection attacks
   - **Access Control**: Verify users have appropriate permissions to create tickets
-  - **Audit Logging**: Log action usage for security monitoring and compliance
+  - **Audit Logging**: Log tool usage for security monitoring and compliance
 </Card>
 
 ### Performance Optimization

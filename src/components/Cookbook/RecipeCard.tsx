@@ -13,7 +13,7 @@ export const SURFACE_ICONS: Record<string, string> = {
   mcp: 'GitBranch',
   'platform-api': 'Code',
   'sdk-client': 'Package',
-  actions: 'Zap',
+  tools: 'Zap',
   agents: 'Cpu',
 };
 

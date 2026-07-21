@@ -24,7 +24,7 @@ export const RECIPE_SURFACES = [
   'connector-sdk',
   'indexing-api',
   'sdk-client',
-  'actions',
+  'tools',
   'agents',
 ] as const;
 
@@ -40,7 +40,7 @@ export const RECIPE_SURFACE_LABELS: Record<
   'connector-sdk': 'Connector SDK',
   'indexing-api': 'Indexing API',
   'sdk-client': 'API clients',
-  actions: 'Actions',
+  tools: 'Tools',
   agents: 'Agents',
 };
 

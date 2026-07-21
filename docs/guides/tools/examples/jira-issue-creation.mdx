@@ -1,6 +1,6 @@
 ---
 title: Jira Issue Creation
-description: Implement an execution action that enables Glean Assistant to create Jira issues programmatically with proper user attribution
+description: Implement an execution tool that enables Glean Assistant to create Jira issues programmatically with proper user attribution
 ---
 
 
@@ -8,9 +8,9 @@ description: Implement an execution action that enables Glean Assistant to creat
 
 ## Overview
 
-This guide explains how to create an execution action that allows Glean Assistant to create Jira issues on behalf of users. The implementation uses OAuth-based authentication and ensures proper user attribution for created issues.
+This guide explains how to create an execution tool that allows Glean Assistant to create Jira issues on behalf of users. The implementation uses OAuth-based authentication and ensures proper user attribution for created issues.
 
-This is an **execution action** that performs operations directly by making API calls to Jira through a custom server implementation.
+This is an **execution tool** that performs operations directly by making API calls to Jira through a custom server implementation.
 
 ## Prerequisites
 
@@ -25,9 +25,9 @@ Before beginning this implementation, ensure you have:
 
 <Steps>
   <Step title="Server Implementation">
-    <p>The server implementation handles requests from Glean's actions backend and manages the creation of Jira issues. This implementation includes proper security measures and ensures accurate user attribution.</p>
+    <p>The server implementation handles requests from Glean's tools backend and manages the creation of Jira issues. This implementation includes proper security measures and ensures accurate user attribution.</p>
     
-    <p>Note: This example uses OAuth authentication configured through the Glean Admin UI. When setting up your action, you'll configure OAuth with the following settings:</p>
+    <p>Note: This example uses OAuth authentication configured through the Glean Admin UI. When setting up your tool, you'll configure OAuth with the following settings:</p>
     <ul>
       <li>Client URL: <code>https://auth.atlassian.com/authorize?audience={`{ATLASSIAN-DOMAIN}`}.atlassian.net&prompt=consent</code></li>
       <li>Authorization URL: <code>https://auth.atlassian.com/oauth/token</code></li>
@@ -128,7 +128,7 @@ Before beginning this implementation, ensure you have:
   </Step>
 
   <Step title="API Specification">
-    <p>The OpenAPI specification defines how Glean Assistant interacts with your action server. This specification provides clear guidance for field population and ensures consistent behavior.</p>
+    <p>The OpenAPI specification defines how Glean Assistant interacts with your tool server. This specification provides clear guidance for field population and ensures consistent behavior.</p>
 
     <details>
       <summary>Click to expand the complete OpenAPI specification</summary>
@@ -136,7 +136,7 @@ Before beginning this implementation, ensure you have:
     ```yaml
     openapi: 3.0.0
     info:
-      title: Jira Execution Action
+      title: Jira Execution Tool
       version: 1.0.0
     servers:
       - url: https://{instance-name}-be.glean.com/tools/jira
@@ -219,18 +219,18 @@ Before beginning this implementation, ensure you have:
   </Step>
 
   <Step title="Testing and Deployment">
-    <p>After configuration, thoroughly test the action before deployment.</p>
+    <p>After configuration, thoroughly test the tool before deployment.</p>
 
     <h4>Testing Process</h4>
     
     1. Deploy your server implementation to a publicly accessible endpoint
-    2. Configure the action in Glean with your server URL
+    2. Configure the tool in Glean with your server URL
     3. Test with various user email addresses to verify user attribution
     4. Validate that issues are created with correct project, type, and assignee information
     5. Test error scenarios (invalid users, missing permissions, etc.)
 
     <h4>Deployment Configuration</h4>
-    <p>Once testing is complete, deploy the action to your organization with appropriate access controls.</p>
+    <p>Once testing is complete, deploy the tool to your organization with appropriate access controls.</p>
   </Step>
 </Steps>
 
