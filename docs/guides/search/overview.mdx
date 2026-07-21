@@ -98,29 +98,49 @@ results = response.json().get("results", [])
 for result in results:
     print(f"Title: {result.get('title', 'No title')}")
     print(f"URL: {result.get('url', 'No URL')}")
-    print(f"Snippet: {result.get('snippet', 'No snippet')}")
+    snippets = result.get('snippets', [])
+    if snippets:
+        print(f"Snippet: {snippets[0].get('snippet', '')}")
 ```
 
 ### Filtered Search
 Search with specific filters to narrow results:
 
 ```python
-response = await client.search.search({
-    "query": "quarterly results",
-    "pageSize": 10,
-    "requestOptions": {
-        "facetFilters": [
-            {
-                "facetName": "datasource",
-                "values": ["confluence", "sharepoint"]
-            },
-            {
-                "facetName": "objectType", 
-                "values": ["document"]
-            }
-        ]
-    }
-})
+from glean.api_client import Glean, models
+
+with Glean(api_token=api_token, server_url=server_url) as glean:
+    response = glean.client.search.query(
+        query="quarterly results",
+        page_size=10,
+        request_options=models.SearchRequestOptions(
+            facet_bucket_size=10,
+            facet_filters=[
+                models.FacetFilter(
+                    field_name="app",
+                    values=[
+                        models.FacetFilterValue(
+                            value="confluence",
+                            relation_type=models.RelationType.EQUALS,
+                        ),
+                        models.FacetFilterValue(
+                            value="sharepoint",
+                            relation_type=models.RelationType.EQUALS,
+                        ),
+                    ],
+                ),
+                models.FacetFilter(
+                    field_name="type",
+                    values=[
+                        models.FacetFilterValue(
+                            value="document",
+                            relation_type=models.RelationType.EQUALS,
+                        ),
+                    ],
+                ),
+            ],
+        ),
+    )
 ```
 
 ### Search with Date Filters
@@ -128,21 +148,31 @@ Find recent or time-specific content:
 
 ```python
 from datetime import datetime, timedelta
+from glean.api_client import Glean, models
 
-last_month = datetime.now() - timedelta(days=30)
+last_month = (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")
 
-response = await client.search.search({
-    "query": "product updates",
-    "requestOptions": {
-        "facetFilters": [
-            {
-                "facetName": "updatedAfter",
-                "values": [last_month.isoformat()]
-            }
-        ]
-    }
-})
+with Glean(api_token=api_token, server_url=server_url) as glean:
+    response = glean.client.search.query(
+        query="product updates",
+        request_options=models.SearchRequestOptions(
+            facet_bucket_size=10,
+            facet_filters=[
+                models.FacetFilter(
+                    field_name="last_updated_at",
+                    values=[
+                        models.FacetFilterValue(
+                            value=last_month,
+                            relation_type=models.RelationType.GT,
+                        ),
+                    ],
+                ),
+            ],
+        ),
+    )
 ```
+
+See [Filtering Results](/guides/search/filtering-results) for the full set of `last_updated_at` values, including special ranges like `today` and `past_week`.
 
 ## Advanced Features
 
@@ -150,49 +180,49 @@ response = await client.search.search({
 Implement search suggestions and autocomplete:
 
 ```python
-autocomplete_response = await client.search.autocomplete({
-    "query": "vacat",
-    "maxResults": 5
-})
+with Glean(api_token=api_token, server_url=server_url) as glean:
+    autocomplete_response = glean.client.search.autocomplete(
+        query="vacat",
+        result_size=5,
+    )
 
-for suggestion in autocomplete_response.suggestions:
-    print(f"Suggestion: {suggestion.text}")
+    for r in autocomplete_response.results or []:
+        print(f"Suggestion: {r.result}")
 ```
 
 ### Search Analytics
 Track search performance and user behavior:
 
 ```python
-response = await client.search.search({
-    "query": "benefits",
-    "trackingToken": "user-session-123",
-    "requestOptions": {
-        "enableAnalytics": True
-    }
-})
+from glean.api_client import Glean, models
 
-# Track click events
-await client.activity.activity({
-    "trackingToken": response.trackingToken,
-    "action": "CLICK",
-    "documentId": clicked_result.id
-})
+with Glean(api_token=api_token, server_url=server_url) as glean:
+    response = glean.client.search.query(query="benefits")
+
+    # Each response and each result carries a trackingToken; report result
+    # events back via /feedback to improve ranking quality.
+    clicked_result = response.results[0]
+    glean.client.activity.feedback(feedback1={
+        "tracking_tokens": [clicked_result.tracking_token],
+        "event": models.FeedbackEvent.CLICK,
+    })
 ```
 
 ### Federated Search
 Search across multiple instances or systems:
 
 ```python
-async def federated_search(query: str):
+def federated_search(query: str):
     # Search primary instance
-    primary_results = await primary_client.search.search({"query": query})
-    
+    with Glean(api_token=primary_token, server_url=primary_url) as glean:
+        primary_results = glean.client.search.query(query=query)
+
     # Search secondary instance
-    secondary_results = await secondary_client.search.search({"query": query})
-    
-    # Combine and rank results
-    all_results = primary_results.results + secondary_results.results
-    return sorted(all_results, key=lambda x: x.relevanceScore, reverse=True)
+    with Glean(api_token=secondary_token, server_url=secondary_url) as glean:
+        secondary_results = glean.client.search.query(query=query)
+
+    # Combine result lists; each list arrives ranked by Glean already
+    return (primary_results.results or []) + (secondary_results.results or [])
 ```
 
 ## Building Search Interfaces
@@ -217,9 +247,9 @@ const SearchComponent = () => {
     
     setLoading(true);
     try {
-      const response = await client.search.search({
+      const response = await client.client.search.query({
         query: searchQuery,
-        pageSize: 20
+        pageSize: 20,
       });
       setResults(response.results || []);
     } catch (error) {
@@ -245,8 +275,7 @@ const SearchComponent = () => {
         {results.map((result, index) => (
           <div key={index} className="search-result">
             <h3><a href={result.url}>{result.title}</a></h3>
-            <p>{result.snippet}</p>
-            <small>{result.datasource} • {result.lastModified}</small>
+            <p>{result.snippets?.[0]?.snippet}</p>
           </div>
         ))}
       </div>
@@ -269,21 +298,27 @@ const FilteredSearchComponent = () => {
     
     if (filters.datasources.length > 0) {
       facetFilters.push({
-        facetName: "datasource",
-        values: filters.datasources
+        fieldName: "app",
+        values: filters.datasources.map((d) => ({
+          value: d,
+          relationType: "EQUALS",
+        })),
       });
     }
-    
+
     if (filters.objectTypes.length > 0) {
       facetFilters.push({
-        facetName: "objectType", 
-        values: filters.objectTypes
+        fieldName: "type",
+        values: filters.objectTypes.map((t) => ({
+          value: t,
+          relationType: "EQUALS",
+        })),
       });
     }
-    
-    const response = await client.search.search({
+
+    const response = await client.client.search.query({
       query,
-      requestOptions: { facetFilters }
+      requestOptions: { facetBucketSize: 10, facetFilters },
     });
     
     return response.results;
@@ -297,88 +332,74 @@ const FilteredSearchComponent = () => {
 
 ### Caching Search Results
 ```python
-import asyncio
-from functools import lru_cache
 import hashlib
+import time
 
 class CachedSearchClient:
     def __init__(self, client: Glean):
         self.client = client
         self._cache = {}
     
-    def _cache_key(self, query: str, filters: dict = None) -> str:
-        key_data = f"{query}:{filters or {}}"
-        return hashlib.md5(key_data.encode()).hexdigest()
+    def _cache_key(self, query: str) -> str:
+        return hashlib.md5(query.encode()).hexdigest()
     
-    async def search(self, query: str, filters: dict = None, cache_ttl: int = 300):
-        cache_key = self._cache_key(query, filters)
-        
+    def search(self, query: str, cache_ttl: int = 300):
+        cache_key = self._cache_key(query)
+
         if cache_key in self._cache:
             cached_result, timestamp = self._cache[cache_key]
             if time.time() - timestamp < cache_ttl:
                 return cached_result
-        
-        result = await self.client.search.search({
-            "query": query,
-            "requestOptions": {"facetFilters": filters or []}
-        })
-        
+
+        result = self.client.client.search.query(query=query)
+
         self._cache[cache_key] = (result, time.time())
         return result
 ```
 
 ### Pagination and Infinite Scroll
 ```python
-async def paginated_search(client, query: str, page_size: int = 20):
+def paginated_search(glean, query: str, page_size: int = 20):
     cursor = None
     all_results = []
-    
+
     while True:
-        request = {
-            "query": query,
-            "pageSize": page_size
-        }
-        
-        if cursor:
-            request["cursor"] = cursor
-        
-        response = await client.search.search(request)
+        response = glean.client.search.query(
+            query=query,
+            page_size=page_size,
+            cursor=cursor,
+        )
         all_results.extend(response.results or [])
-        
-        if not response.hasMoreResults:
+
+        if not response.has_more_results:
             break
-            
+
         cursor = response.cursor
-    
+
     return all_results
 ```
 
 ## Error Handling
 
 ```python
-from glean.exceptions import GleanAPIError
-import asyncio
+import time
 
-async def robust_search(client, query: str, max_retries: int = 3):
+from glean.api_client import Glean, errors
+
+def robust_search(glean, query: str, max_retries: int = 3):
     for attempt in range(max_retries):
         try:
-            return await client.search.search({"query": query})
-        except GleanAPIError as e:
+            return glean.client.search.query(query=query)
+        except errors.GleanError as e:
             if e.status_code == 429:  # Rate limited
-                wait_time = 2 ** attempt
-                await asyncio.sleep(wait_time)
+                time.sleep(2 ** attempt)
                 continue
             elif e.status_code >= 500:  # Server error
                 if attempt < max_retries - 1:
-                    await asyncio.sleep(1)
+                    time.sleep(1)
                     continue
             raise e
-        except Exception as e:
-            if attempt < max_retries - 1:
-                await asyncio.sleep(1)
-                continue
-            raise e
-    
+
     raise Exception(f"Search failed after {max_retries} attempts")
 ```
 

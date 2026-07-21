@@ -66,19 +66,17 @@ const response = await client.client.chat.create({
 });
 
 // Streaming responses
-const stream = client.client.chat.stream({
+const stream = await client.client.chat.createStream({
   messages: [{ fragments: [{ text: "What are our priorities?" }] }]
 });
 
-for await (const chunk of stream) {
-  console.log(chunk.text);
-}
+console.log(stream);
 ```
 
 ### Search API
 
 ```typescript
-const results = await client.client.search.search({
+const results = await client.client.search.query({
   query: "quarterly business review",
   pageSize: 10
 });
@@ -110,7 +108,12 @@ export async function POST(request: NextRequest) {
     messages: [{ fragments: [{ text: message }] }]
   });
 
-  return NextResponse.json({ response: response.text });
+  const answer = response.messages
+    ?.flatMap((m) => m.fragments ?? [])
+    .map((f) => f.text ?? '')
+    .join('') ?? '';
+
+  return NextResponse.json({ answer });
 }
 ```
 
@@ -131,7 +134,11 @@ export function ChatComponent({ apiToken, serverURL }) {
     const result = await client.client.chat.create({
       messages: [{ fragments: [{ text: input }] }]
     });
-    setResponse(result.text || '');
+    const answer = result.messages
+      ?.flatMap((m) => m.fragments ?? [])
+      .map((f) => f.text ?? '')
+      .join('') ?? '';
+    setResponse(answer);
   };
 
   return (
@@ -169,7 +176,12 @@ app.post('/api/chat', async (req, res) => {
     messages: [{ fragments: [{ text: message }] }]
   });
 
-  res.json({ response: response.text });
+  const answer = response.messages
+    ?.flatMap((m) => m.fragments ?? [])
+    .map((f) => f.text ?? '')
+    .join('') ?? '';
+
+  res.json({ answer });
 });
 ```
 
@@ -187,11 +199,12 @@ const client = new Glean({
 ### Global Tokens with ActAs
 
 ```typescript
-const response = await client.client.chat.create({
-  messages: [{ fragments: [{ text: "Hello" }] }]
-}, {
-  headers: { "X-Glean-ActAs": "user@company.com" }
-});
+const response = await client.client.chat.create(
+  { messages: [{ fragments: [{ text: "Hello" }] }] },
+  undefined,
+  undefined,
+  { fetchOptions: { headers: { "X-Glean-ActAs": "user@company.com" } } }
+);
 ```
 
 ### OAuth Access Tokens
@@ -212,7 +225,7 @@ const response = await client.client.chat.create(
   { messages: [{ fragments: [{ text: "Hello" }] }] },
   undefined,
   undefined,
-  { headers: { "X-Glean-Auth-Type": "OAUTH" } },
+  { fetchOptions: { headers: { "X-Glean-Auth-Type": "OAUTH" } } },
 );
 ```
 
@@ -277,7 +290,7 @@ app.get('/callback', async (req, res) => {
     { query: 'quarterly reports', pageSize: 10 },
     undefined,
     // Omit these headers when the token is from the Glean Authorization Server.
-    { headers: { 'X-Glean-Auth-Type': 'OAUTH' } },
+    { fetchOptions: { headers: { 'X-Glean-Auth-Type': 'OAUTH' } } },
   );
   res.json(results);
 });
@@ -292,12 +305,24 @@ Access tokens expire. Persist `tokens.refresh_token` and refresh with `client.re
 ## Error Handling
 
 ```typescript
+import { GleanError, GleanDataError } from "@gleanwork/api-client/models/errors";
+
 try {
   const response = await client.client.chat.create({
     messages: [{ fragments: [{ text: "Hello" }] }]
   });
 } catch (error) {
-  console.error('API error:', error);
+  if (error instanceof GleanError) {
+    console.error(error.message);
+    console.error(error.statusCode);
+    console.error(error.body);
+  }
+
+  if (error instanceof GleanDataError) {
+    console.error(error.errorMessages);
+  }
+
+  throw error;
 }
 ```
 
@@ -313,7 +338,7 @@ const MockedGlean = Glean as jest.MockedClass<typeof Glean>;
 
 test('chat service', async () => {
   const mockCreate = jest.fn().mockResolvedValue({
-    text: 'Test response'
+    messages: [{ fragments: [{ text: 'Test response' }] }]
   });
 
   MockedGlean.mockImplementation(() => ({

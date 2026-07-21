@@ -84,11 +84,11 @@ response = client.client.chat.create(
     messages=[{"fragments": [{"text": "Explain our Q4 strategy"}]}]
 )
 
-# Streaming chat for real-time responses
-for chunk in client.client.chat.stream(
+# Streaming chat: create_stream returns the streamed response as text
+response = client.client.chat.create_stream(
     messages=[{"fragments": [{"text": "What are our priorities?"}]}]
-):
-    print(chunk.text, end="", flush=True)
+)
+print(response)
 ```
 
 ### Search API
@@ -96,7 +96,7 @@ for chunk in client.client.chat.stream(
 Integrate enterprise search:
 
 ```python
-results = client.client.search.search(
+results = client.client.search.query(
     query="quarterly business review",
     page_size=10
 )
@@ -111,9 +111,9 @@ for result in results.results:
 Execute pre-built agents:
 
 ```python
-response = client.client.agents.create_and_wait_run(
+response = client.client.agents.run(
     agent_id="your-agent-id",
-    inputs={"query": "Analyze sales performance"}
+    input={"query": "Analyze sales performance"}
 )
 ```
 
@@ -140,7 +140,7 @@ async def chat_endpoint(request: ChatRequest):
         response = client.client.chat.create(
             messages=[{"fragments": [{"text": request.message}]}]
         )
-        return {"response": response.text}
+        return {"response": str(response)}
 ```
 
 ### Django
@@ -162,7 +162,7 @@ def chat_view(request):
             messages=[{"fragments": [{"text": message}]}]
         )
         
-    return JsonResponse({'response': response.text})
+    return JsonResponse({'response': str(response)})
 ```
 
 ### Streamlit
@@ -183,7 +183,7 @@ if user_input:
         response = client.client.chat.create(
             messages=[{"fragments": [{"text": user_input}]}]
         )
-        st.write(response.text)
+        st.write(response)
 ```
 
 ## Authentication
@@ -286,14 +286,25 @@ Access tokens expire. The `token` dict includes `refresh_token` when you request
 ## Error Handling
 
 ```python
-from glean.api_client.exceptions import GleanAPIError
+from glean.api_client import Glean, errors
+import os
 
-try:
-    response = client.client.chat.create(messages=[...])
-except GleanAPIError as e:
-    print(f"API error: {e}")
-except Exception as e:
-    print(f"Unexpected error: {e}")
+with Glean(
+    api_token=os.getenv("GLEAN_API_TOKEN"),
+    server_url=os.getenv("GLEAN_SERVER_URL"),
+) as client:
+    try:
+        response = client.client.search.query(
+            query="quarterly business review",
+            page_size=10,
+        )
+        print(response)
+    except errors.GleanDataError as e:
+        # 403 Permission Denied, 422 Invalid Query
+        print(f"Data error: {e}")
+    except errors.GleanError as e:
+        # Base error for all other API errors (400, 401, 408, 429, 5XX)
+        print(f"API error: {e}")
 ```
 
 ## Testing

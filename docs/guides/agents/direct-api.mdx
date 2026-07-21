@@ -98,7 +98,7 @@ class CustomAgent:
         """Search for relevant documents"""
         with Glean(api_token=self.api_token, server_url=self.server_url) as glean:
             try:
-                response = glean.client.search.search(
+                response = glean.client.search.query(
                     query=query,
                     page_size=page_size
                 )
@@ -197,7 +197,7 @@ class AdvancedAgent:
                 if filters:
                     search_params["request_options"] = {"facet_filters": filters}
                 
-                response = glean.client.search.search(**search_params)
+                response = glean.client.search.query(**search_params)
                 return response.results if hasattr(response, 'results') else []
                 
             except Exception as e:
@@ -266,24 +266,23 @@ class AdvancedAgent:
         """Summarize a list of documents"""
         with Glean(api_token=self.api_token, server_url=self.server_url) as glean:
             try:
-                doc_texts = []
-                for doc in documents[:5]:  # Limit to 5 docs
-                    title = doc.get('title', 'Unknown Document')
-                    snippet = doc.get('snippet', '')
-                    if snippet:
-                        doc_texts.append(f"{title}: {snippet}")
-                
-                if not doc_texts:
+                document_specs = [
+                    {"url": doc["url"]}
+                    for doc in documents[:5]  # Limit to 5 docs
+                    if doc.get("url")
+                ]
+
+                if not document_specs:
                     return "No documents to summarize"
-                
-                content_to_summarize = "\n\n".join(doc_texts)
-                
-                response = glean.client.summarize.summarize(
-                    text=content_to_summarize,
-                    summary_type="brief"
+
+                response = glean.client.documents.summarize(
+                    document_specs=document_specs,
+                    preferred_summary_length=500,
                 )
-                
-                return response.summary if hasattr(response, 'summary') else "Could not generate summary"
+
+                if response.summary and response.summary.text:
+                    return response.summary.text
+                return "Could not generate summary"
                 
             except Exception as e:
                 return f"Summarization error: {e}"

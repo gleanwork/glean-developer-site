@@ -30,85 +30,147 @@ package main
 import (
   "context"
   "fmt"
+  "log"
   "os"
-  glean "github.com/gleanwork/api-client-go"
+
+  apiclientgo "github.com/gleanwork/api-client-go"
+  "github.com/gleanwork/api-client-go/models/components"
 )
 
 func main() {
   ctx := context.Background()
 
-  client := glean.New(
-    glean.WithAPIToken(os.Getenv("GLEAN_API_TOKEN")),
-    glean.WithServerURL(os.Getenv("GLEAN_SERVER_URL")),
+  s := apiclientgo.New(
+    apiclientgo.WithSecurity(os.Getenv("GLEAN_API_TOKEN")),
+    apiclientgo.WithInstance(os.Getenv("GLEAN_INSTANCE")),
   )
 
-  message := glean.ChatMessageFragment{
-    Text: "What are our company values?",
-  }
-
-  res, err := client.Client.Chat.Create(ctx, &glean.ChatRequest{
-    Messages: []glean.ChatMessage{{
-      Fragments: []glean.ChatMessageFragment{message},
-    }},
-  })
-
+  res, err := s.Client.Chat.Create(ctx, components.ChatRequest{
+    Messages: []components.ChatMessage{
+      {
+        Fragments: []components.ChatMessageFragment{
+          {Text: apiclientgo.Pointer("What are our company values?")},
+        },
+      },
+    },
+  }, nil, nil)
   if err != nil {
-    fmt.Printf("Error: %v\n", err)
-    return
+    log.Fatal(err)
   }
 
-  fmt.Println(res.Text)
+  if res.ChatResponse != nil {
+    for _, msg := range res.ChatResponse.Messages {
+      for _, frag := range msg.Fragments {
+        if frag.Text != nil {
+          fmt.Print(*frag.Text)
+        }
+      }
+    }
+    fmt.Println()
+  }
 }
 ```
+
+The unified SDK exposes both the Client and Indexing APIs from a single `*apiclientgo.Glean` value. Client-facing operations (search, chat, retrieval) live under `s.Client`; indexing operations live under `s.Indexing`. Configure the backend with either `apiclientgo.WithInstance("instance-name")` or `apiclientgo.WithServerURL("https://instance-name-be.glean.com")`.
 
 ## Core Features
 
 ### Chat API
 
+Chat responses are returned as a list of messages, each made up of one or more fragments. Concatenate the text fragments to assemble the assistant's reply. The `chatAnswer` helper below is reused by later examples on this page.
+
 ```go
-func chatExample(client *glean.Client) error {
+package main
+
+import (
+  "context"
+  "fmt"
+  "strings"
+
+  apiclientgo "github.com/gleanwork/api-client-go"
+  "github.com/gleanwork/api-client-go/models/components"
+)
+
+// chatAnswer concatenates the text fragments of a chat response.
+func chatAnswer(resp *components.ChatResponse) string {
+  var sb strings.Builder
+  for _, msg := range resp.Messages {
+    for _, frag := range msg.Fragments {
+      if frag.Text != nil {
+        sb.WriteString(*frag.Text)
+      }
+    }
+  }
+  return sb.String()
+}
+
+func chatExample(s *apiclientgo.Glean) error {
   ctx := context.Background()
-  
-  response, err := client.Client.Chat.Create(ctx, &glean.ChatRequest{
-    Messages: []glean.ChatMessage{{
-      Fragments: []glean.ChatMessageFragment{{
-        Text: "Explain our Q4 strategy",
-      }},
-    }},
-  })
-  
+
+  res, err := s.Client.Chat.Create(ctx, components.ChatRequest{
+    Messages: []components.ChatMessage{
+      {
+        Fragments: []components.ChatMessageFragment{
+          {Text: apiclientgo.Pointer("Explain our Q4 strategy")},
+        },
+      },
+    },
+  }, nil, nil)
   if err != nil {
     return err
   }
-  
-  fmt.Println(response.Text)
+
+  if res.ChatResponse != nil {
+    fmt.Println(chatAnswer(res.ChatResponse))
+  }
   return nil
 }
 ```
+
+To stream a response instead of waiting for the full answer, use `s.Client.Chat.CreateStream`, which returns an event stream on `res.ChatRequestStream`.
 
 ### Search API
 
 ```go
-func searchExample(client *glean.Client) error {
+package main
+
+import (
+  "context"
+  "fmt"
+
+  apiclientgo "github.com/gleanwork/api-client-go"
+  "github.com/gleanwork/api-client-go/models/components"
+)
+
+func searchExample(s *apiclientgo.Glean) error {
   ctx := context.Background()
-  
-  results, err := client.Client.Search.Search(ctx, &glean.SearchRequest{
-    Query: "quarterly business review",
-    PageSize: glean.Int(10),
-  })
-  
+
+  res, err := s.Client.Search.Query(ctx, components.SearchRequest{
+    Query:    "quarterly business review",
+    PageSize: apiclientgo.Pointer[int64](10),
+  }, nil)
   if err != nil {
     return err
   }
-  
-  for _, result := range results.Results {
-    fmt.Printf("Title: %s\n", result.Title)
+
+  if res.SearchResponse == nil {
+    return nil
+  }
+
+  for _, result := range res.SearchResponse.Results {
+    title := ""
+    if result.Title != nil {
+      title = *result.Title
+    }
+    fmt.Printf("Title: %s\n", title)
     fmt.Printf("URL: %s\n", result.URL)
   }
-  
+
   return nil
 }
 ```
+
+`SearchResult.Title` is an optional `*string`, so guard against `nil` before dereferencing it. `SearchResult.URL` is a required `string`.
 
 ## Framework Integrations
 
@@ -119,40 +181,47 @@ package main
 
 import (
   "net/http"
+
   "github.com/gin-gonic/gin"
-  glean "github.com/gleanwork/api-client-go"
+  apiclientgo "github.com/gleanwork/api-client-go"
+  "github.com/gleanwork/api-client-go/models/components"
 )
 
 type ChatRequest struct {
   Message string `json:"message"`
 }
 
-func setupRoutes(client *glean.Client) *gin.Engine {
+func setupRoutes(s *apiclientgo.Glean) *gin.Engine {
   r := gin.Default()
-  
+
   r.POST("/chat", func(c *gin.Context) {
     var req ChatRequest
     if err := c.ShouldBindJSON(&req); err != nil {
       c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
       return
     }
-    
-    response, err := client.Client.Chat.Create(c.Request.Context(), &glean.ChatRequest{
-      Messages: []glean.ChatMessage{{
-        Fragments: []glean.ChatMessageFragment{{
-          Text: req.Message,
-        }},
-      }},
-    })
-    
+
+    res, err := s.Client.Chat.Create(c.Request.Context(), components.ChatRequest{
+      Messages: []components.ChatMessage{
+        {
+          Fragments: []components.ChatMessageFragment{
+            {Text: apiclientgo.Pointer(req.Message)},
+          },
+        },
+      },
+    }, nil, nil)
     if err != nil {
       c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
       return
     }
-    
-    c.JSON(http.StatusOK, gin.H{"response": response.Text})
+
+    answer := ""
+    if res.ChatResponse != nil {
+      answer = chatAnswer(res.ChatResponse) // helper defined in the Chat API section
+    }
+    c.JSON(http.StatusOK, gin.H{"response": answer})
   })
-  
+
   return r
 }
 ```
@@ -162,31 +231,38 @@ func setupRoutes(client *glean.Client) *gin.Engine {
 ```go
 import (
   "net/http"
+
   "github.com/labstack/echo/v4"
-  glean "github.com/gleanwork/api-client-go"
+  apiclientgo "github.com/gleanwork/api-client-go"
+  "github.com/gleanwork/api-client-go/models/components"
 )
 
-func chatHandler(client *glean.Client) echo.HandlerFunc {
+func chatHandler(s *apiclientgo.Glean) echo.HandlerFunc {
   return func(c echo.Context) error {
     var req ChatRequest
     if err := c.Bind(&req); err != nil {
       return echo.NewHTTPError(http.StatusBadRequest, err.Error())
     }
-    
-    response, err := client.Client.Chat.Create(c.Request().Context(), &glean.ChatRequest{
-      Messages: []glean.ChatMessage{{
-        Fragments: []glean.ChatMessageFragment{{
-          Text: req.Message,
-        }},
-      }},
-    })
-    
+
+    res, err := s.Client.Chat.Create(c.Request().Context(), components.ChatRequest{
+      Messages: []components.ChatMessage{
+        {
+          Fragments: []components.ChatMessageFragment{
+            {Text: apiclientgo.Pointer(req.Message)},
+          },
+        },
+      },
+    }, nil, nil)
     if err != nil {
       return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
     }
-    
+
+    answer := ""
+    if res.ChatResponse != nil {
+      answer = chatAnswer(res.ChatResponse) // helper defined in the Chat API section
+    }
     return c.JSON(http.StatusOK, map[string]string{
-      "response": response.Text,
+      "response": answer,
     })
   }
 }
@@ -197,40 +273,39 @@ func chatHandler(client *glean.Client) echo.HandlerFunc {
 ### Batch Processing with Goroutines
 
 ```go
-func batchSearch(client *glean.Client, queries []string) ([]glean.SearchResponse, error) {
+func batchSearch(s *apiclientgo.Glean, queries []string) ([]*components.SearchResponse, error) {
   ctx := context.Background()
-  results := make([]glean.SearchResponse, len(queries))
-  errors := make([]error, len(queries))
-  
+  results := make([]*components.SearchResponse, len(queries))
+  errs := make([]error, len(queries))
+
   var wg sync.WaitGroup
-  
+
   for i, query := range queries {
     wg.Add(1)
     go func(index int, q string) {
       defer wg.Done()
-      
-      result, err := client.Client.Search.Search(ctx, &glean.SearchRequest{
+
+      res, err := s.Client.Search.Query(ctx, components.SearchRequest{
         Query: q,
-      })
-      
+      }, nil)
       if err != nil {
-        errors[index] = err
+        errs[index] = err
         return
       }
-      
-      results[index] = *result
+
+      results[index] = res.SearchResponse
     }(i, query)
   }
-  
+
   wg.Wait()
-  
+
   // Check for errors
-  for _, err := range errors {
+  for _, err := range errs {
     if err != nil {
       return nil, err
     }
   }
-  
+
   return results, nil
 }
 ```
@@ -239,31 +314,35 @@ func batchSearch(client *glean.Client, queries []string) ([]glean.SearchResponse
 
 ### User-Scoped Tokens
 
+The API token is supplied through `apiclientgo.WithSecurity`:
+
 ```go
-client := glean.New(
-  glean.WithAPIToken("your-user-token"),
-  glean.WithServerURL("https://your-server-id-be.glean.com"),
+s := apiclientgo.New(
+  apiclientgo.WithSecurity("your-user-token"),
+  apiclientgo.WithServerURL("https://instance-name-be.glean.com"),
 )
 ```
 
 ### Global Tokens with ActAs
 
-Per-request headers are passed with `operations.WithSetHeaders`:
+Per-request headers are passed with `operations.WithSetHeaders`, supplied as trailing options after the request's optional `locale` and `timezoneOffset` parameters:
 
 ```go
 import (
-  glean "github.com/gleanwork/api-client-go"
+  apiclientgo "github.com/gleanwork/api-client-go"
   "github.com/gleanwork/api-client-go/models/components"
   "github.com/gleanwork/api-client-go/models/operations"
 )
 
-response, err := client.Client.Chat.Create(ctx, components.ChatRequest{
-  Messages: []components.ChatMessage{{
-    Fragments: []components.ChatMessageFragment{{
-      Text: glean.String("Hello"),
-    }},
-  }},
-}, nil, operations.WithSetHeaders(map[string]string{
+res, err := s.Client.Chat.Create(ctx, components.ChatRequest{
+  Messages: []components.ChatMessage{
+    {
+      Fragments: []components.ChatMessageFragment{
+        {Text: apiclientgo.Pointer("Hello")},
+      },
+    },
+  },
+}, nil, nil, operations.WithSetHeaders(map[string]string{
   "X-Glean-ActAs": "user@company.com",
 }))
 ```
@@ -273,9 +352,9 @@ response, err := client.Client.Chat.Create(ctx, components.ChatRequest{
 An OAuth access token is a bearer credential, so it goes in the same `WithSecurity` option:
 
 ```go
-client := glean.New(
-  glean.WithSecurity(oauthAccessToken),
-  glean.WithServerURL("https://your-server-id-be.glean.com"),
+s := apiclientgo.New(
+  apiclientgo.WithSecurity(oauthAccessToken),
+  apiclientgo.WithServerURL("https://instance-name-be.glean.com"),
 )
 ```
 
@@ -283,13 +362,14 @@ Tokens issued by the **Glean OAuth Authorization Server** (including tokens obta
 
 ```go
 import (
+  apiclientgo "github.com/gleanwork/api-client-go"
   "github.com/gleanwork/api-client-go/models/components"
   "github.com/gleanwork/api-client-go/models/operations"
 )
 
-results, err := client.Client.Search.Query(ctx, &components.SearchRequest{
+res, err := s.Client.Search.Query(ctx, components.SearchRequest{
   Query: "quarterly reports",
-}, operations.WithSetHeaders(map[string]string{
+}, nil, operations.WithSetHeaders(map[string]string{
   "X-Glean-Auth-Type": "OAUTH",
 }))
 ```
@@ -304,13 +384,12 @@ This example uses [`golang.org/x/oauth2`](https://pkg.go.dev/golang.org/x/oauth2
 package main
 
 import (
-  "context"
   "encoding/json"
   "net/http"
   "os"
 
   "golang.org/x/oauth2"
-  glean "github.com/gleanwork/api-client-go"
+  apiclientgo "github.com/gleanwork/api-client-go"
   "github.com/gleanwork/api-client-go/models/components"
   "github.com/gleanwork/api-client-go/models/operations"
 )
@@ -345,20 +424,20 @@ func main() {
       return
     }
 
-    client := glean.New(
-      glean.WithSecurity(tok.AccessToken),
-      glean.WithServerURL(os.Getenv("GLEAN_SERVER_URL")),
+    s := apiclientgo.New(
+      apiclientgo.WithSecurity(tok.AccessToken),
+      apiclientgo.WithServerURL(os.Getenv("GLEAN_SERVER_URL")),
     )
 
-    results, err := client.Client.Search.Query(ctx, &components.SearchRequest{
+    res, err := s.Client.Search.Query(ctx, components.SearchRequest{
       Query: "quarterly reports",
-    }, // Omit this option when the token is from the Glean Authorization Server.
+    }, nil, // Omit this option when the token is from the Glean Authorization Server.
       operations.WithSetHeaders(map[string]string{"X-Glean-Auth-Type": "OAUTH"}))
     if err != nil {
       http.Error(w, err.Error(), http.StatusInternalServerError)
       return
     }
-    json.NewEncoder(w).Encode(results)
+    json.NewEncoder(w).Encode(res.SearchResponse)
   })
 
   http.ListenAndServe(":8080", nil)
@@ -371,51 +450,92 @@ Access tokens expire. Wrap the token in `conf.TokenSource(ctx, tok)` to refresh 
 
 ## Error Handling
 
+Every operation returns either a response or an error, never both. API errors are returned as `apierrors.APIError`, which carries the HTTP status code and response body. Some operations return more specific typed errors (for example, `Search.Query` may return `apierrors.GleanDataError` for `403`/`422`); use `errors.As` to detect them.
+
 ```go
-func safeChat(client *glean.Client, message string) (string, error) {
+package main
+
+import (
+  "context"
+  "errors"
+  "fmt"
+  "time"
+
+  apiclientgo "github.com/gleanwork/api-client-go"
+  "github.com/gleanwork/api-client-go/models/apierrors"
+  "github.com/gleanwork/api-client-go/models/components"
+)
+
+func safeChat(s *apiclientgo.Glean, message string) (string, error) {
   ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
   defer cancel()
-  
-  response, err := client.Client.Chat.Create(ctx, &glean.ChatRequest{
-    Messages: []glean.ChatMessage{{
-      Fragments: []glean.ChatMessageFragment{{
-        Text: message,
-      }},
-    }},
-  })
-  
+
+  res, err := s.Client.Chat.Create(ctx, components.ChatRequest{
+    Messages: []components.ChatMessage{
+      {
+        Fragments: []components.ChatMessageFragment{
+          {Text: apiclientgo.Pointer(message)},
+        },
+      },
+    },
+  }, nil, nil)
   if err != nil {
+    var apiErr *apierrors.APIError
+    if errors.As(err, &apiErr) {
+      return "", fmt.Errorf("chat failed with status %d: %w", apiErr.StatusCode, apiErr)
+    }
     return "", fmt.Errorf("chat error: %w", err)
   }
-  
-  return response.Text, nil
+
+  if res.ChatResponse == nil {
+    return "", nil
+  }
+  return chatAnswer(res.ChatResponse), nil // helper defined in the Chat API section
 }
 ```
 
 ## Testing
 
+The SDK talks to a standard `net/http` client, so the simplest way to test code that calls Glean is to point the client at an [`httptest`](https://pkg.go.dev/net/http/httptest) server via `WithServerURL` and return canned responses:
+
 ```go
+package main
+
 import (
   "context"
+  "net/http"
+  "net/http/httptest"
   "testing"
+
+  apiclientgo "github.com/gleanwork/api-client-go"
+  "github.com/gleanwork/api-client-go/models/components"
   "github.com/stretchr/testify/assert"
-  "github.com/stretchr/testify/mock"
+  "github.com/stretchr/testify/require"
 )
 
-func TestChatService(t *testing.T) {
-  // Mock implementation
-  mockClient := &MockGleanClient{}
-  
-  expectedResponse := &glean.ChatResponse{
-    Text: "Test response",
-  }
-  
-  mockClient.On("Create", mock.Anything, mock.Anything).Return(expectedResponse, nil)
-  
-  // Test your service here
-  assert.NotNil(t, expectedResponse)
+func TestSearch(t *testing.T) {
+  srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+    w.Header().Set("Content-Type", "application/json")
+    w.Write([]byte(`{"results":[{"title":"Q4 Report","url":"https://example.com/q4"}]}`))
+  }))
+  defer srv.Close()
+
+  s := apiclientgo.New(
+    apiclientgo.WithSecurity("test-token"),
+    apiclientgo.WithServerURL(srv.URL),
+  )
+
+  res, err := s.Client.Search.Query(context.Background(), components.SearchRequest{
+    Query: "quarterly business review",
+  }, nil)
+  require.NoError(t, err)
+  require.NotNil(t, res.SearchResponse)
+  require.Len(t, res.SearchResponse.Results, 1)
+  assert.Equal(t, "https://example.com/q4", res.SearchResponse.Results[0].URL)
 }
 ```
+
+For lower-level control (custom timeouts, transports, or request assertions) you can also supply your own `*http.Client` with `apiclientgo.WithClient`.
 
 ## Additional Resources
 
@@ -451,4 +571,4 @@ func TestChatService(t *testing.T) {
   >
     Go package documentation
   </Card>
-</CardGroup> 
+</CardGroup>

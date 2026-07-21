@@ -45,7 +45,7 @@ import com.glean.api_client.glean_api_client.models.components.*;
 import java.util.List;
 
 public class GleanExample {
-  public static void main(String[] args) {
+  public static void main(String[] args) throws Exception {
     Glean client = Glean.builder()
         .apiToken(System.getenv("GLEAN_API_TOKEN"))
         .serverURL(System.getenv("GLEAN_SERVER_URL"))
@@ -64,7 +64,7 @@ public class GleanExample {
         .call();
 
     if (response.chatResponse().isPresent()) {
-      System.out.println(response.chatResponse().get().text());
+      System.out.println(response.chatResponse().get());
     }
   }
 }
@@ -85,7 +85,7 @@ public class ChatService {
         .build();
   }
   
-  public String sendMessage(String message) {
+  public String sendMessage(String message) throws Exception {
     var response = client.client().chat().create()
         .chatRequest(ChatRequest.builder()
             .messages(List.of(
@@ -99,7 +99,10 @@ public class ChatService {
         .call();
         
     return response.chatResponse()
-        .map(ChatResponse::text)
+        .map(chat -> chat.messages().stream()
+            .flatMap(msg -> msg.fragments().stream())
+            .map(fragment -> fragment.text().orElse(""))
+            .collect(Collectors.joining()))
         .orElse("No response");
   }
 }
@@ -118,11 +121,11 @@ public class SearchService {
         .build();
   }
   
-  public List<SearchResult> search(String query) {
-    var response = client.client().search().search()
+  public List<SearchResult> search(String query) throws Exception {
+    var response = client.client().search().query()
         .searchRequest(SearchRequest.builder()
             .query(query)
-            .pageSize(10)
+            .pageSize(10L)
             .build())
         .call();
         
@@ -197,7 +200,10 @@ public class GleanController {
           .call();
           
       String responseText = response.chatResponse()
-          .map(ChatResponse::text)
+          .map(chat -> chat.messages().stream()
+              .flatMap(msg -> msg.fragments().stream())
+              .map(fragment -> fragment.text().orElse(""))
+              .collect(Collectors.joining()))
           .orElse("No response");
           
       return ResponseEntity.ok(responseText);
@@ -246,6 +252,7 @@ Tokens issued by an **external identity provider** (Google, Okta, Azure, etc.) a
 ```java
 import com.glean.api_client.glean_api_client.utils.HTTPClient;
 import com.glean.api_client.glean_api_client.utils.SpeakeasyHTTPClient;
+import com.glean.api_client.glean_api_client.utils.Utils;
 import java.io.InputStream;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
@@ -254,7 +261,7 @@ HTTPClient oauthClient = new SpeakeasyHTTPClient() {
   @Override
   public HttpResponse<InputStream> send(HttpRequest request)
       throws java.io.IOException, InterruptedException, java.net.URISyntaxException {
-    return super.send(HttpRequest.newBuilder(request, (name, value) -> true)
+    return super.send(Utils.copy(request)
         .header("X-Glean-Auth-Type", "OAUTH")
         .build());
   }
@@ -337,7 +344,8 @@ public class SearchController {
 
   @GetMapping("/search")
   public List<SearchResult> search(
-      @RegisteredOAuth2AuthorizedClient("glean") OAuth2AuthorizedClient authorizedClient) {
+      @RegisteredOAuth2AuthorizedClient("glean") OAuth2AuthorizedClient authorizedClient)
+      throws Exception {
     String accessToken = authorizedClient.getAccessToken().getTokenValue();
 
     // For external-IdP tokens, add a custom HTTPClient that sets
@@ -349,13 +357,13 @@ public class SearchController {
         .build();
 
     return glean.client().search().query()
-        .request(SearchRequest.builder()
+        .searchRequest(SearchRequest.builder()
             .query("quarterly reports")
-            .pageSize(10)
+            .pageSize(10L)
             .build())
         .call()
         .searchResponse()
-        .flatMap(SearchResponse::results)
+        .map(SearchResponse::results)
         .orElse(List.of());
   }
 }
@@ -379,7 +387,10 @@ public String safeChat(Glean client, String message) {
         .call();
         
     return response.chatResponse()
-        .map(ChatResponse::text)
+        .map(chat -> chat.messages().stream()
+            .flatMap(msg -> msg.fragments().stream())
+            .map(fragment -> fragment.text().orElse(""))
+            .collect(Collectors.joining()))
         .orElse("No response");
   } catch (Exception e) {
     System.err.println("API error: " + e.getMessage());
