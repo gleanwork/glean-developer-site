@@ -1,6 +1,8 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import BrowserFrame from '../BrowserFrame';
+import ComponentDemo from './ComponentDemo';
 import {
   MockAutocomplete,
   MockChat,
@@ -127,6 +129,109 @@ describe('WebSdkOverview', () => {
     expect(
       screen.getByText('npm install @gleanwork/web-sdk'),
     ).toBeInTheDocument();
+  });
+});
+
+const sdkMocks = vi.hoisted(() => ({
+  renderChat: vi.fn(),
+  renderSearchBox: vi.fn(),
+  renderSearchResults: vi.fn(),
+  renderRecommendations: vi.fn(),
+  attach: vi.fn(),
+  openSidebar: vi.fn(),
+  renderSettings: vi.fn(),
+}));
+
+vi.mock('@gleanwork/web-sdk', () => ({
+  ...sdkMocks,
+  default: { renderSettings: sdkMocks.renderSettings },
+}));
+
+describe('ComponentDemo', () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+    vi.clearAllMocks();
+  });
+
+  it('shows the mock preview by default', () => {
+    mockMatchMedia(true);
+    render(
+      <ComponentDemo kind="chat">
+        <ChatPreview />
+      </ComponentDemo>,
+    );
+    expect(screen.getByText('Illustrative preview')).toBeInTheDocument();
+    expect(sdkMocks.renderChat).not.toHaveBeenCalled();
+  });
+
+  it('shows the connect card on the Live tab when disconnected', async () => {
+    mockMatchMedia(true);
+    render(
+      <ComponentDemo kind="chat">
+        <ChatPreview />
+      </ComponentDemo>,
+    );
+    await userEvent.click(screen.getByText('Live — your instance'));
+    expect(screen.getByText('Connect your Glean instance')).toBeInTheDocument();
+    expect(sdkMocks.renderChat).not.toHaveBeenCalled();
+  });
+
+  it('rejects a non-Glean backend URL', async () => {
+    mockMatchMedia(true);
+    render(
+      <ComponentDemo kind="chat">
+        <ChatPreview />
+      </ComponentDemo>,
+    );
+    await userEvent.click(screen.getByText('Live — your instance'));
+    await userEvent.type(
+      screen.getByPlaceholderText('https://{company}-be.glean.com/'),
+      'https://evil.example.com/',
+    );
+    await userEvent.click(screen.getByText('Connect'));
+    expect(screen.getByText(/doesn't look like a Glean backend/)).toBeVisible();
+    expect(sdkMocks.renderChat).not.toHaveBeenCalled();
+  });
+
+  it('renders the live widget after connecting with a valid backend', async () => {
+    mockMatchMedia(true);
+    render(
+      <ComponentDemo kind="chat">
+        <ChatPreview />
+      </ComponentDemo>,
+    );
+    await userEvent.click(screen.getByText('Live — your instance'));
+    await userEvent.type(
+      screen.getByPlaceholderText('https://{company}-be.glean.com/'),
+      'https://acme-be.glean.com/',
+    );
+    await userEvent.click(screen.getByText('Connect'));
+    await vi.waitFor(() => {
+      expect(sdkMocks.renderChat).toHaveBeenCalledWith(
+        expect.any(HTMLElement),
+        expect.objectContaining({ backend: 'https://acme-be.glean.com/' }),
+      );
+    });
+    expect(screen.getByText('Disconnect')).toBeInTheDocument();
+    await userEvent.click(screen.getByText('Disconnect'));
+    expect(screen.getByText('Connect your Glean instance')).toBeInTheDocument();
+  });
+
+  it('connects with an empty backend for email discovery', async () => {
+    mockMatchMedia(true);
+    render(
+      <ComponentDemo kind="settings">
+        <SettingsPreview />
+      </ComponentDemo>,
+    );
+    await userEvent.click(screen.getByText('Live — your instance'));
+    await userEvent.click(screen.getByText('Connect'));
+    await vi.waitFor(() => {
+      expect(sdkMocks.renderSettings).toHaveBeenCalledWith(
+        expect.any(HTMLElement),
+        expect.not.objectContaining({ backend: expect.anything() }),
+      );
+    });
   });
 });
 
