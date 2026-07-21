@@ -1,0 +1,289 @@
+<!doctype html>
+<!--
+  Local-only Web SDK fidelity harness — NOT part of the site build.
+
+  Renders all six real Web SDK components against your own Glean instance so
+  the docs' illustrative mocks (src/components/WebSdk/mocks) can be checked
+  against reality. Serve it over http (the SDK needs a real origin):
+
+      python3 -m http.server 4300 -d scripts/websdk-harness
+
+  then open http://localhost:4300, set your app domain (and optionally your
+  backend URL), click "Load SDK", and sign in via SSO when a widget asks.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="robots" content="noindex" />
+    <title>Web SDK fidelity harness</title>
+    <style>
+      body {
+        font-family:
+          Inter,
+          -apple-system,
+          system-ui,
+          sans-serif;
+        margin: 0;
+        background: #f7f8fa;
+        color: #1f2024;
+      }
+      header {
+        position: sticky;
+        top: 0;
+        z-index: 50;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: center;
+        padding: 14px 22px;
+        background: #fff;
+        border-bottom: 1px solid #e7e8ed;
+      }
+      header input {
+        height: 34px;
+        padding: 0 10px;
+        border: 1px solid #c9cbd2;
+        border-radius: 8px;
+        font-size: 13px;
+        min-width: 240px;
+      }
+      header button {
+        height: 34px;
+        padding: 0 16px;
+        border: none;
+        border-radius: 8px;
+        background: #343ced;
+        color: #fff;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      header .status {
+        font-size: 12.5px;
+        color: #565a64;
+      }
+      main {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 28px 22px 80px;
+        display: flex;
+        flex-direction: column;
+        gap: 36px;
+      }
+      section {
+        background: #fff;
+        border: 1px solid #e7e8ed;
+        border-radius: 14px;
+        padding: 20px;
+      }
+      h2 {
+        margin: 0 0 4px;
+        font-size: 17px;
+      }
+      .hint {
+        margin: 0 0 14px;
+        font-size: 12.5px;
+        color: #565a64;
+      }
+      /* Containers per the docs' stated requirements */
+      .widget {
+        position: relative;
+        display: block;
+      }
+      #search-box-container {
+        height: 50px;
+        max-width: 640px;
+      }
+      #search-results-container {
+        height: 560px;
+      }
+      #chat-container {
+        height: 620px;
+      }
+      #recommendations-container {
+        width: 600px;
+        height: 700px;
+      }
+      #settings-container {
+        width: 820px;
+        height: 620px;
+      }
+      #modal-input {
+        width: 420px;
+        height: 40px;
+        padding: 0 12px;
+        border: 1px solid #c9cbd2;
+        border-radius: 10px;
+        font-size: 14px;
+      }
+      #sidebar-button {
+        height: 38px;
+        padding: 0 18px;
+        border: 1px solid #c9cbd2;
+        border-radius: 9999px;
+        background: #fff;
+        font-size: 13.5px;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <input
+        id="app-domain"
+        placeholder="Glean app domain (e.g. app.glean.com)"
+        title="Where your company accesses Glean — hosts embedded-search-latest.min.js"
+      />
+      <input
+        id="backend"
+        placeholder="Backend URL (optional, e.g. https://acme-be.glean.com/)"
+        title="Leave blank to use the SDK's email-based backend discovery"
+      />
+      <button id="load" type="button">Load SDK</button>
+      <span class="status" id="status">SDK not loaded.</span>
+    </header>
+
+    <main>
+      <section>
+        <h2>1 · Search box (renderSearchBox)</h2>
+        <p class="hint">
+          Compare against MockSearchBox / MockAutocomplete — placeholder, focus
+          ring, dropdown anatomy, any AI affordances.
+        </p>
+        <div class="widget" id="search-box-container"></div>
+      </section>
+
+      <section>
+        <h2>2 · Search results (renderSearchResults)</h2>
+        <p class="hint">
+          Compare against MockSearchResults — tab row, result-row anatomy (icon,
+          title, meta, snippet), filters column. Type a query in the box above;
+          the two are wired together.
+        </p>
+        <div class="widget" id="search-results-container"></div>
+      </section>
+
+      <section>
+        <h2>3 · Modal search (attach)</h2>
+        <p class="hint">
+          Compare against MockModalSearch — click the input; note modal size,
+          placement, and default (empty-query) contents.
+        </p>
+        <input id="modal-input" placeholder="Click to open modal search" />
+      </section>
+
+      <section>
+        <h2>4 · Chat (renderChat)</h2>
+        <p class="hint">
+          Compare against MockChat — bubbles vs plain layout, how citations
+          render, input row, assistant labeling.
+        </p>
+        <div class="widget" id="chat-container"></div>
+      </section>
+
+      <section>
+        <h2>5 · Recommendations (renderRecommendations)</h2>
+        <p class="hint">
+          Compare against MockRecommendations — search box on top? heading text?
+          row anatomy?
+        </p>
+        <div class="widget" id="recommendations-container"></div>
+      </section>
+
+      <section>
+        <h2>6 · Settings (renderSettings, beta)</h2>
+        <p class="hint">
+          Compare against MockSettings — what the datasource list actually shows
+          and how connect states render.
+        </p>
+        <div class="widget" id="settings-container"></div>
+      </section>
+
+      <section>
+        <h2>7 · Sidebar (openSidebar, deprecated)</h2>
+        <p class="hint">
+          Compare against MockSidebar — panel width, contents, whether it still
+          matches the "search + recommendations" description.
+        </p>
+        <button id="sidebar-button" type="button">Open sidebar</button>
+      </section>
+    </main>
+
+    <script>
+      const $ = (id) => document.getElementById(id);
+      const status = (msg) => ($('status').textContent = msg);
+
+      // Persist config across reloads
+      for (const key of ['app-domain', 'backend']) {
+        $(key).value = localStorage.getItem('harness:' + key) || '';
+        $(key).addEventListener('change', () =>
+          localStorage.setItem('harness:' + key, $(key).value.trim()),
+        );
+      }
+
+      function commonOptions() {
+        const backend = $('backend').value.trim();
+        return backend ? { backend } : {};
+      }
+
+      let currentQuery = '';
+
+      function renderSearchPair() {
+        const opts = commonOptions();
+        window.GleanWebSDK.renderSearchBox($('search-box-container'), {
+          ...opts,
+          query: currentQuery,
+          onSearch: (query) => {
+            currentQuery = query;
+            renderSearchPair();
+          },
+        });
+        window.GleanWebSDK.renderSearchResults($('search-results-container'), {
+          ...opts,
+          query: currentQuery,
+          onSearch: (query) => {
+            currentQuery = query;
+            renderSearchPair();
+          },
+        });
+      }
+
+      function renderAll() {
+        const opts = commonOptions();
+        renderSearchPair();
+        window.GleanWebSDK.attach($('modal-input'), { ...opts });
+        window.GleanWebSDK.renderChat($('chat-container'), { ...opts });
+        window.GleanWebSDK.renderRecommendations(
+          $('recommendations-container'),
+          { ...opts },
+        );
+        window.GleanWebSDK.renderSettings($('settings-container'), {
+          ...opts,
+        });
+        $('sidebar-button').onclick = () =>
+          window.GleanWebSDK.openSidebar({ ...opts });
+        status('SDK loaded — widgets rendered. Sign in via SSO if prompted.');
+      }
+
+      $('load').addEventListener('click', () => {
+        const domain = $('app-domain').value.trim();
+        if (!domain) {
+          status('Enter your Glean app domain first.');
+          return;
+        }
+        if (window.GleanWebSDK) {
+          renderAll();
+          return;
+        }
+        status('Loading SDK from ' + domain + '…');
+        window.addEventListener('glean:ready', renderAll, { once: true });
+        const script = document.createElement('script');
+        script.src = 'https://' + domain + '/embedded-search-latest.min.js';
+        script.defer = true;
+        script.onerror = () =>
+          status('Failed to load the SDK script from ' + domain);
+        document.head.appendChild(script);
+      });
+    </script>
+  </body>
+</html>
