@@ -285,10 +285,10 @@ curl -X POST https://instance-be.glean.com/api/index/v1/bulkindexdocuments \
 ```
 
 </TabItem>
-<TabItem value="document-count" label="Get Document Count">
+<TabItem value="datasource-config" label="Get Datasource Config">
 
 ```bash
-curl -X POST https://instance-be.glean.com/api/index/v1/getdocumentcount \
+curl -X POST https://instance-be.glean.com/api/index/v1/getdatasourceconfig \
   -H 'Authorization: Bearer <INDEXING_TOKEN>' \
   -H 'Content-Type: application/json' \
   -d '{
@@ -321,10 +321,10 @@ curl -X POST https://instance-be.glean.com/api/index/v1/adddatasource \
 
 ### Quick Verification
 
-Test your token with a simple document count request:
+Test your token with a read-only datasource config request:
 
 ```bash
-curl -X POST https://<instance>-be.glean.com/api/index/v1/getdocumentcount \
+curl -X POST https://<instance>-be.glean.com/api/index/v1/getdatasourceconfig \
   -H 'Authorization: Bearer <YOUR_INDEXING_TOKEN>' \
   -H 'Content-Type: application/json' \
   -d '{
@@ -334,11 +334,13 @@ curl -X POST https://<instance>-be.glean.com/api/index/v1/getdocumentcount \
 
 ### Expected Response
 
-Successful authentication returns the document count for the datasource:
+Successful authentication returns your datasource's configuration:
 
 ```json
 {
-  "documentCount": 1234
+  "name": "my-datasource",
+  "displayName": "My Datasource",
+  "urlRegex": "https://internal.example.com/.*"
 }
 ```
 
