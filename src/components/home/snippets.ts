@@ -25,7 +25,7 @@ export const HERO_SLIDES: HeroSlide[] = [
   {
     surface: 'Chat API',
     primaryHref: '/guides/chat/overview',
-    secondaryHref: '/api/client-api/chat',
+    secondaryHref: '/api/client-api/chat/overview',
     headline: 'Chat grounded in company knowledge',
     subcopy:
       'Ask across every connected app and get permission-aware answers, with citations, in a single API call.',
@@ -45,7 +45,7 @@ with Glean(
   {
     surface: 'Search API',
     primaryHref: '/guides/search/overview',
-    secondaryHref: '/api/client-api/search',
+    secondaryHref: '/api/client-api/search/overview',
     headline: 'Search your entire knowledge graph',
     subcopy:
       'Enterprise search over 100+ connected sources — ranked, permission-aware, and fast, from one query.',
@@ -65,7 +65,7 @@ with Glean(
   {
     surface: 'Agents',
     primaryHref: '/guides/agents/overview',
-    secondaryHref: '/api/client-api/agents',
+    secondaryHref: '/api/client-api/agents/overview',
     headline: "Build agents on your company's knowledge",
     subcopy:
       'Plan, retrieve, and act across your tools — agents reason over the knowledge graph, not just a prompt window.',
