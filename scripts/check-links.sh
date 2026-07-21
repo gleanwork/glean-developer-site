@@ -145,6 +145,11 @@ lychee_cmd=(
 # Add exclusions for known problematic sites (using regex patterns)
 # These are internal Glean sites that require authentication or are private
 lychee_cmd+=(
+  # TEMPORARY: broken host-registry URLs baked into @gleanwork/mcp-config-schema
+  # (rendered on /guides/mcp/supported-hosts). Remove once the registry data is
+  # fixed upstream and the package is bumped past 5.4.0.
+  --exclude "^https://antigravity\.google/docs/"   # Google restructured Antigravity docs (404s)
+  --exclude "^https://cursor\.com/docs/mcp#team-mcp-distribution$" # Anchor removed from Cursor docs
   --exclude "^https://community\.glean\.com/"      # Community forum (auth required)
   --exclude "^https://support\.glean\.com/"        # Support portal (auth required)
   --exclude "^https://app\.glean\.com/"            # Main app (auth required)
