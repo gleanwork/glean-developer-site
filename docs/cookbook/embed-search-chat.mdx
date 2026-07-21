@@ -54,15 +54,19 @@ recipe:
     https://developers.glean.com/cookbook/embed-search-chat
 
     Steps:
-    1. Ask me for my Glean web app domain (typically app.glean.com).
-    2. Add the Web SDK script tag to the page <head>:
+    1. Ask me for my Glean backend URL (https://{instance}-be.glean.com).
+    2. Install the SDK: npm install @gleanwork/web-sdk. (If the app has no
+       build toolchain, fall back to the script tag from my Glean app domain:
        <script defer src="https://{GLEAN_APP_DOMAIN}/embedded-search-latest.min.js"></script>
-    3. Add a search box and results container, and render them with
-       window.GleanWebSDK.renderSearchBox(...) and
-       window.GleanWebSDK.renderSearchResults(...).
+       — the same methods appear on window.GleanWebSDK.)
+    3. Add a search box and results container, then:
+       import { renderSearchBox, renderSearchResults } from "@gleanwork/web-sdk";
+       renderSearchBox(searchBoxElement, { backend, onSearch: (query) =>
+         renderSearchResults(resultsElement, { query }) });
     4. Add a chat container (position: relative, display: block, explicit
-       width/height) and render it with
-       window.EmbeddedSearch.renderChat(containerElement).
+       width/height), then:
+       import { renderChat } from "@gleanwork/web-sdk";
+       renderChat(containerElement, { backend });
     5. Default SSO auth needs no extra configuration. If I ask for
        server-to-server auth instead, follow
        https://developers.glean.com/libraries/web-sdk/authentication/server-to-server
@@ -72,10 +76,12 @@ recipe:
     Glean permissions.
   llm_context: >-
     Embeds Glean search and chat into an existing web app via the Glean Web
-    SDK (script tag, window.GleanWebSDK.renderSearchBox/renderSearchResults,
-    window.EmbeddedSearch.renderChat). Auth is Glean SSO by default or
-    server-to-server tokens minted by a backend holding an admin API key with
-    SEARCH and CHAT scopes. All results are permission-aware per user.
+    SDK npm package @gleanwork/web-sdk (renderSearchBox, renderSearchResults,
+    renderChat named exports; script-tag fallback exposes the same methods on
+    window.GleanWebSDK). Pass the backend option to route users directly to
+    the instance. Auth is Glean SSO by default or server-to-server tokens
+    minted by a backend holding an admin API key with SEARCH and CHAT scopes.
+    All results are permission-aware per user.
   go_dependency: false
   featured: true
   tags:
@@ -179,7 +185,7 @@ exactly what the signed-in user is permitted to see.
 
 <>Hand off context between search and chat so a search result opens a grounded conversation ([separate pages for chat and search](/libraries/web-sdk/components/chat)).</>
 
-<>Scope chat to your app's context by passing an AI App `applicationId` to the chat component.</>
+<>Scope chat to a specific agent by passing its `agentId` to the chat component.</>
 
 <>Go tokenless for guests with the Web SDK's guest auth provider for public-facing deployments.</>
 

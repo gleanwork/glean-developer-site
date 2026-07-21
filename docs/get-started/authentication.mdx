@@ -74,11 +74,13 @@ Glean offers two distinct APIs with different authentication capabilities. Choos
 
 <ApiSupport clientApi={true} />
 
-**OAuth is the recommended method** for Client API integrations. It leverages your existing identity provider and provides seamless authentication without managing additional tokens.
+**OAuth is the recommended method** for Client API integrations. Two options are supported:
+
+- **Glean OAuth Authorization Server** (recommended for new integrations): Glean issues OAuth tokens with Glean-defined scopes via Authorization Code + PKCE. No IdP OAuth setup is required — users are directed through your SSO provider automatically as part of authorization. This is also the mechanism behind the remote MCP server.
+- **IdP-issued tokens**: use OAuth tokens from Google Workspace, Microsoft Entra ID (Azure AD), Okta, or OneLogin if you already operate OAuth in your identity provider.
 
 - Supported APIs: Client API only  
-- Providers: Google Workspace, Azure, Okta, OneLogin  
-- Benefits: No token management, leverages existing auth, full API access  
+- Benefits: No manual token management, standards-based (OAuth 2.0 + PKCE), seamless SSO login  
 
 ### Glean-Issued Tokens
 
@@ -96,8 +98,8 @@ Glean-issued tokens are manually created through the admin console and offer gra
 
 <Card title="Which Authentication Method Should I Use?" icon="HelpCircle">
   **For Client API integrations:**
-  - **Choose OAuth** if you have existing identity provider infrastructure (Google, Azure, Okta, OneLogin)
-  - **Choose Glean tokens** if you need granular scope control or don't have OAuth infrastructure
+  - **Choose OAuth** for new integrations — the Glean OAuth Authorization Server requires no IdP OAuth infrastructure (IdP-issued tokens remain supported if you already run OAuth in Google, Entra ID, Okta, or OneLogin)
+  - **Choose Glean tokens** for server-to-service integrations or when you need admin-managed token lifecycle
   
   **For Indexing API operations:**
   - **Must use Glean tokens** (OAuth is not supported)
@@ -112,11 +114,14 @@ Glean-issued tokens are manually created through the admin console and offer gra
 
 Understanding who can create what type of authentication tokens:
 
-| Role | Client API OAuth | Client API Tokens | Indexing API Tokens |
-|------|------------------|-------------------|---------------------|
-| **Super Admin** | Configure for all | Create any token | Create any token |
-| **Admin** | Configure for all | Create for self only | Cannot create |
-| **API Token Creator** | Cannot configure | Create for self only | Create for self only |
+| Role | Client API Tokens | Indexing API Tokens |
+|------|-------------------|---------------------|
+| **Super Admin** | Create for any scope, including `global` | Create |
+| **Admin** | Create for any scope except `global` | Create |
+| **Setup Admin** | Cannot create | Create (Indexing API only) |
+| **API Token Creator** | Create, scoped to themselves | Create, scoped to themselves |
+
+See the [Administrator Roles matrix](https://docs.glean.com/administration/identity/roles/admin-roles) for the authoritative permission breakdown. OAuth access is configured separately in the Admin console — see the [Client API authentication overview](/api-info/client/authentication/overview).
 
 ---
 
