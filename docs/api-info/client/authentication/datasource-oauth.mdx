@@ -28,7 +28,7 @@ POST /rest/api/v1/checkdatasourceauth?final_redirect_url=https://yourapp.example
 
 The returned `authUrlRelativePath` for each datasource instance automatically includes the redirect, so no additional URL construction is needed beyond the standard flow.
 
-```bash
+```bash snippet=datasource-oauth/snippet-01.sh
 curl -X POST 'https://<instance>-be.glean.com/rest/api/v1/checkdatasourceauth?final_redirect_url=https%3A%2F%2Fyourapp.example.com%2Foauth-complete' \
   -H 'Authorization: Bearer <token>' \
   -H 'Content-Type: application/json'
@@ -58,7 +58,7 @@ The redirect destination is resolved in this order:
   <Step title="Call checkdatasourceauth with final_redirect_url">
     Include the `final_redirect_url` query parameter to specify where users should land after completing OAuth.
 
-```bash
+```bash snippet=datasource-oauth/snippet-02.sh
 curl -X POST 'https://<instance>-be.glean.com/rest/api/v1/checkdatasourceauth?final_redirect_url=https%3A%2F%2Fyourapp.example.com%2Foauth-complete' \
   -H 'Authorization: Bearer <token>' \
   -H 'Content-Type: application/json'
@@ -68,7 +68,7 @@ curl -X POST 'https://<instance>-be.glean.com/rest/api/v1/checkdatasourceauth?fi
   <Step title="Receive the response">
     The response includes datasource instances that need authorization. Each entry contains an `authUrlRelativePath` that already incorporates your redirect URL.
 
-```json
+```json snippet=datasource-oauth/snippet-03.json
 {
   "unauthorizedDatasourceInstances": [
     {

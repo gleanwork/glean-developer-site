@@ -31,14 +31,14 @@ Glean token requests use different headers based on token type:
 <Tabs>
   <TabItem value="user-scoped" label="User-Scoped Token">
 
-  ```bash
+  ```bash snippet=glean-issued/snippet-01.sh
   Authorization: Bearer <user_scoped_token>
   ```
 
   </TabItem>
   <TabItem value="global" label="Global Token">
 
-  ```bash
+  ```bash snippet=glean-issued/snippet-02.sh
   Authorization: Bearer <global_token>
   X-Glean-ActAs: user@company.com
   ```
@@ -69,7 +69,7 @@ Choose the right token type for your use case:
 - **Creation**: Super Admins can create Glean-issued tokens for any user. Admins and API Token Creators can create Glean-issued tokens for themselves only.
 - **Use case**: Applications accessing data as a specific user
 
-```bash
+```bash snippet=glean-issued/snippet-03.sh
 curl -X POST https://instance-be.glean.com/rest/api/v1/search \
   -H 'Authorization: Bearer <USER_TOKEN>' \
   -H 'Content-Type: application/json' \
@@ -86,7 +86,7 @@ curl -X POST https://instance-be.glean.com/rest/api/v1/search \
 - **Creation**: Only Super Admins can create these tokens
 - **Use case**: Applications serving multiple users
 
-```bash
+```bash snippet=glean-issued/snippet-04.sh
 curl -X POST https://instance-be.glean.com/rest/api/v1/search \
   -H 'Authorization: Bearer <GLOBAL_TOKEN>' \
   -H 'X-Glean-ActAs: user@company.com' \
@@ -172,7 +172,7 @@ Scopes control which Client API endpoints your token can access:
 
 ### Search with User-Scoped Token
 
-```bash
+```bash snippet=glean-issued/snippet-05.sh
 curl -X POST https://instance-be.glean.com/rest/api/v1/search \
   -H 'Authorization: Bearer <USER_TOKEN>' \
   -H 'Content-Type: application/json' \
@@ -184,7 +184,7 @@ curl -X POST https://instance-be.glean.com/rest/api/v1/search \
 
 ### Search with Global Token
 
-```bash
+```bash snippet=glean-issued/snippet-06.sh
 curl -X POST https://instance-be.glean.com/rest/api/v1/search \
   -H 'Authorization: Bearer <GLOBAL_TOKEN>' \
   -H 'X-Glean-ActAs: user@company.com' \
@@ -197,7 +197,7 @@ curl -X POST https://instance-be.glean.com/rest/api/v1/search \
 
 ### Chat with Glean Token
 
-```bash
+```bash snippet=glean-issued/snippet-07.sh
 curl -X POST https://instance-be.glean.com/rest/api/v1/chat \
   -H 'Authorization: Bearer <USER_TOKEN>' \
   -H 'Content-Type: application/json' \
@@ -216,7 +216,7 @@ curl -X POST https://instance-be.glean.com/rest/api/v1/chat \
 <Tabs>
   <TabItem value="user-scoped-token" label="User-Scoped Token">
 
-  ```bash
+  ```bash snippet=glean-issued/snippet-08.sh
   curl -X POST https://<instance>-be.glean.com/rest/api/v1/search \
     -H 'Authorization: Bearer <USER_TOKEN>' \
     -H 'Content-Type: application/json' \
@@ -226,7 +226,7 @@ curl -X POST https://instance-be.glean.com/rest/api/v1/chat \
   </TabItem>
   <TabItem value="global-token" label="Global Token">
 
-  ```bash
+  ```bash snippet=glean-issued/snippet-09.sh
   curl -X POST https://<instance>-be.glean.com/rest/api/v1/search \
     -H 'Authorization: Bearer <GLOBAL_TOKEN>' \
     -H 'X-Glean-ActAs: your-email@company.com' \
@@ -241,7 +241,7 @@ curl -X POST https://instance-be.glean.com/rest/api/v1/chat \
 
 Successful authentication returns a 200 status with search results:
 
-```json
+```json snippet=glean-issued/snippet-10.json
 {
   "results": [...],
   "trackingToken": "...",

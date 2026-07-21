@@ -1,0 +1,2 @@
+mkdir GleanSearchWebPart
+cd GleanSearchWebPart

@@ -24,6 +24,26 @@ AVOID RUNNING `pnpm start` - this causes very slow build times, and will interup
 - Prefer default styles rather than creating new ones. Leverage existing CSS classes first, either from infima or via custom defined classes
 - Avoid inline CSS styles
 
+## Code samples (markdown-code)
+
+Code fences in `docs/**/*.mdx` that carry a `snippet=<path>` annotation are
+managed by [markdown-code](https://github.com/scalvert/markdown-code): the
+source of truth is the referenced file under `snippets/`, and CI runs
+`pnpm snippets:check` to block drift.
+
+- To change a managed sample, edit the file under `snippets/` and run
+  `pnpm snippets:sync` to update the fence. Never edit the fence body
+  directly — check will fail.
+- New code fences you author are unmanaged until extracted; run
+  `npx md-code extract` to bring them under management (extraction only
+  inserts the `snippet=` annotation; it never rewrites other content).
+- Config lives in `.markdown-coderc.json`. `docs/api/**` (generated) and
+  `docs/api-info/indexing/documents/permissions.mdx` (uses Docusaurus-only
+  `{#heading-id}` syntax that MDX can't parse) are excluded.
+- Every sample must still be verified against released SDK/API versions
+  before it goes into a snippet file — markdown-code prevents drift between
+  fence and file, not incorrect code.
+
 ## Task-specific skills
 
 Project-local Claude Code skills live under `.claude/skills/`. Load the relevant skill when its scenario triggers:

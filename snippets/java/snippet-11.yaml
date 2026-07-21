@@ -1,0 +1,19 @@
+# application.yml
+spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          glean:
+            provider: glean
+            client-id: ${OAUTH_CLIENT_ID}
+            client-secret: ${OAUTH_CLIENT_SECRET}
+            authorization-grant-type: authorization_code
+            scope: openid,offline_access,SEARCH # SEARCH lets the token call /search; offline_access requests a refresh token
+            redirect-uri: '{baseUrl}/login/oauth2/code/{registrationId}'
+        provider:
+          glean:
+            issuer-uri: ${OAUTH_ISSUER}
+
+glean:
+  server-url: ${GLEAN_SERVER_URL}

@@ -51,7 +51,7 @@ Before starting with the agent, you should test the LLM and embedding NIM micros
 
 1. Set the following environment variables:
 
-   ```bash
+   ```bash snippet=nvidia-example/snippet-01.sh
    export GLEAN_API_KEY="YOUR GLEAN API KEY"
    export GLEAN_API_BASE_URL="https://your-instance-be.glean.com/rest/api/v1"
    export NVIDIA_API_KEY="nvapi-YOUR NVIDIA API KEY"
@@ -59,7 +59,7 @@ Before starting with the agent, you should test the LLM and embedding NIM micros
 
 2. Create a python file called `chatbot.py` to instantiate the LLM and embedding model:
 
-   ```python
+   ```python snippet=nvidia-example/snippet-02.py
    import os
    from langchain_nvidia_ai_endpoints import ChatNVIDIA, NVIDIAEmbeddings
 
@@ -82,7 +82,7 @@ Before starting with the agent, you should test the LLM and embedding NIM micros
 
 3. Ask the foundational LLM a test question by modifying `chatbot.py`, adding the following lines and running it:
 
-   ```python
+   ```python snippet=nvidia-example/snippet-03.py
    response = model.invoke("How do I request access to the company VPN?")
    print(response.content)
    ```
@@ -108,7 +108,7 @@ The following sections explain some core concepts of the `agent.py` application'
 
 This code is responsible for creating the agent:
 
-```python
+```python snippet=nvidia-example/snippet-04.py
 class InfoBotState(BaseModel):
     messages: List[Tuple[str, str]] = None
     glean_query_required: Optional[bool] = None
@@ -141,7 +141,7 @@ Each node represents a function responsible for implementing one of the six step
 
 The source of each function is also available in `glean_example/src/agent.py`. For example, the implementation of `call_bot` is:
 
-```python
+```python snippet=nvidia-example/snippet-05.py
 def summarize_answer(state: InfoBotState):
     """the main agent responsible for taking all the context and answering the question"""
     logger.info("Generate final answer")
@@ -183,7 +183,7 @@ Citation Url:
 
 A main part of this agent is the step that calls the Glean Search API. This RESTful request is implemented in the file `glean_example/src/glean_utils/utils.py`:
 
-```python
+```python snippet=nvidia-example/snippet-06.py
 def glean_search(query, api_key, base_url, **kwargs):
     endpoint = f"{base_url}/search"
 
@@ -232,7 +232,7 @@ def glean_search(query, api_key, base_url, **kwargs):
 
 To try out the agent, you can replace the code in `chatbot.py` with the following code to load the `glean_example` source code and invoke the full agent:
 
-```python
+```python snippet=nvidia-example/snippet-07.py
 from glean_example.src.agent import agent
 
 msg = "What's the latest on the new API project?"

@@ -18,13 +18,13 @@ Glean's Go API client provides idiomatic Go interfaces for integrating enterpris
 
 ## Installation
 
-```bash
+```bash snippet=go/snippet-01.sh
 go get github.com/gleanwork/api-client-go
 ```
 
 ## Quick Start
 
-```go
+```go snippet=go/snippet-02.go
 package main
 
 import (
@@ -79,7 +79,7 @@ The unified SDK exposes both the Client and Indexing APIs from a single `*apicli
 
 Chat responses are returned as a list of messages, each made up of one or more fragments. Concatenate the text fragments to assemble the assistant's reply. The `chatAnswer` helper below is reused by later examples on this page.
 
-```go
+```go snippet=go/snippet-03.go
 package main
 
 import (
@@ -131,7 +131,7 @@ To stream a response instead of waiting for the full answer, use `s.Client.Chat.
 
 ### Search API
 
-```go
+```go snippet=go/snippet-04.go
 package main
 
 import (
@@ -176,7 +176,7 @@ func searchExample(s *apiclientgo.Glean) error {
 
 ### Gin Web Framework
 
-```go
+```go snippet=go/snippet-05.go
 package main
 
 import (
@@ -228,7 +228,7 @@ func setupRoutes(s *apiclientgo.Glean) *gin.Engine {
 
 ### Echo Framework
 
-```go
+```go snippet=go/snippet-06.go
 import (
   "net/http"
 
@@ -272,7 +272,7 @@ func chatHandler(s *apiclientgo.Glean) echo.HandlerFunc {
 
 ### Batch Processing with Goroutines
 
-```go
+```go snippet=go/snippet-07.go
 func batchSearch(s *apiclientgo.Glean, queries []string) ([]*components.SearchResponse, error) {
   ctx := context.Background()
   results := make([]*components.SearchResponse, len(queries))
@@ -316,7 +316,7 @@ func batchSearch(s *apiclientgo.Glean, queries []string) ([]*components.SearchRe
 
 The API token is supplied through `apiclientgo.WithSecurity`:
 
-```go
+```go snippet=go/snippet-08.go
 s := apiclientgo.New(
   apiclientgo.WithSecurity("your-user-token"),
   apiclientgo.WithServerURL("https://instance-name-be.glean.com"),
@@ -327,7 +327,7 @@ s := apiclientgo.New(
 
 Per-request headers are passed with `operations.WithSetHeaders`, supplied as trailing options after the request's optional `locale` and `timezoneOffset` parameters:
 
-```go
+```go snippet=go/snippet-09.go
 import (
   apiclientgo "github.com/gleanwork/api-client-go"
   "github.com/gleanwork/api-client-go/models/components"
@@ -351,7 +351,7 @@ res, err := s.Client.Chat.Create(ctx, components.ChatRequest{
 
 An OAuth access token is a bearer credential, so it goes in the same `WithSecurity` option:
 
-```go
+```go snippet=go/snippet-10.go
 s := apiclientgo.New(
   apiclientgo.WithSecurity(oauthAccessToken),
   apiclientgo.WithServerURL("https://instance-name-be.glean.com"),
@@ -360,7 +360,7 @@ s := apiclientgo.New(
 
 Tokens issued by the **Glean OAuth Authorization Server** (including tokens obtained via Dynamic Client Registration) are detected automatically. Tokens issued by an **external identity provider** (Google, Okta, Azure, etc.) additionally require the `X-Glean-Auth-Type: OAUTH` header on each request:
 
-```go
+```go snippet=go/snippet-11.go
 import (
   apiclientgo "github.com/gleanwork/api-client-go"
   "github.com/gleanwork/api-client-go/models/components"
@@ -380,7 +380,7 @@ See the [OAuth authentication guide](/api-info/client/authentication/oauth) for 
 
 This example uses [`golang.org/x/oauth2`](https://pkg.go.dev/golang.org/x/oauth2). It runs the Authorization Code flow with PKCE (`S256ChallengeOption` / `VerifierOption`) and `AccessTypeOffline` for a refresh token, then passes the access token to the Glean client. Read `AuthURL`/`TokenURL` from the issuer's metadata document.
 
-```go
+```go snippet=go/snippet-12.go
 package main
 
 import (
@@ -452,7 +452,7 @@ Access tokens expire. Wrap the token in `conf.TokenSource(ctx, tok)` to refresh 
 
 Every operation returns either a response or an error, never both. API errors are returned as `apierrors.APIError`, which carries the HTTP status code and response body. Some operations return more specific typed errors (for example, `Search.Query` may return `apierrors.GleanDataError` for `403`/`422`); use `errors.As` to detect them.
 
-```go
+```go snippet=go/snippet-13.go
 package main
 
 import (
@@ -498,7 +498,7 @@ func safeChat(s *apiclientgo.Glean, message string) (string, error) {
 
 The SDK talks to a standard `net/http` client, so the simplest way to test code that calls Glean is to point the client at an [`httptest`](https://pkg.go.dev/net/http/httptest) server via `WithServerURL` and return canned responses:
 
-```go
+```go snippet=go/snippet-14.go
 package main
 
 import (

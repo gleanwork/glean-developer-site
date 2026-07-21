@@ -23,7 +23,7 @@ Glean's official LangChain integration enables you to build powerful AI agents t
 <Tabs>
   <TabItem value="pip" label="pip">
 
-  ```bash 
+  ```bash  snippet=langchain/snippet-01.sh
   pip install -U langchain-glean 
   ```
 
@@ -31,7 +31,7 @@ Glean's official LangChain integration enables you to build powerful AI agents t
 
   <TabItem value="poetry" label="poetry">
 
-  ```bash 
+  ```bash  snippet=langchain/snippet-02.sh
   poetry add langchain-glean 
   ```
 
@@ -39,7 +39,7 @@ Glean's official LangChain integration enables you to build powerful AI agents t
 
   <TabItem value="uv" label="uv">
 
-  ```bash 
+  ```bash  snippet=langchain/snippet-03.sh
   uv add langchain-glean 
   ```
 
@@ -56,7 +56,7 @@ You'll need Glean [API credentials](/get-started/authentication), and specifical
 
 Configure your Glean credentials by setting the following environment variables:
 
-```bash
+```bash snippet=langchain/snippet-04.sh
 export GLEAN_SERVER_URL="https://your-server-id-be.glean.com"
 export GLEAN_API_TOKEN="your-glean-api-token"
 export GLEAN_ACT_AS="user@example.com"  # Optional: Email to act as when making requests
@@ -70,7 +70,7 @@ Find your server URL at [app.glean.com/admin/about-glean](https://app.glean.com/
 
 The `GleanSearchRetriever` allows you to search and retrieve documents from Glean:
 
-```python
+```python snippet=langchain/snippet-05.py
 from langchain_glean.retrievers import GleanSearchRetriever
 
 # Initialize the retriever (will use environment variables)
@@ -91,7 +91,7 @@ for doc in documents:
 
 The `GleanSearchTool` can be used in LangChain agents to search Glean:
 
-```python
+```python snippet=langchain/snippet-06.py
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
 from langchain.agents import AgentExecutor, create_openai_tools_agent
@@ -127,7 +127,7 @@ print(response["output"])
 
 You can integrate the retriever with LangChain chains for more complex workflows:
 
-```python
+```python snippet=langchain/snippet-07.py
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnablePassthrough
@@ -172,7 +172,7 @@ print(result)
 
 You can customize your search by passing additional parameters:
 
-```python
+```python snippet=langchain/snippet-08.py
 # Search with additional parameters
 documents = retriever.invoke(
     "quarterly sales report",
@@ -186,7 +186,7 @@ documents = retriever.invoke(
 
 Configure the retriever with custom settings:
 
-```python
+```python snippet=langchain/snippet-09.py
 # Initialize with custom settings
 retriever = GleanSearchRetriever(
     server_url="https://your-server-id-be.glean.com",  # Override environment variable

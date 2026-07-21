@@ -36,7 +36,7 @@ This guide covers implementing authentication for Glean's **Indexing API**, whic
 
 The Indexing API uses a simple authentication header format since it only supports Glean-issued tokens:
 
-```bash
+```bash snippet=overview/snippet-08.sh
 Authorization: Bearer <indexing_api_token>
 ```
 
@@ -204,14 +204,14 @@ Enable automatic token rotation for enhanced security:
 
 The token to rotate is identified by the bearer token in the request, so no request body is required. The current token must be the one being rotated.
 
-```bash
+```bash snippet=overview/snippet-09.sh
 curl -X POST https://instance-be.glean.com/api/index/v1/rotatetoken \
   -H 'Authorization: Bearer <CURRENT_TOKEN>' \
   -H 'Content-Type: application/json'
 ```
 
 **Response**
-```json
+```json snippet=overview/snippet-10.json
 {
   "rawSecret": "new-rotated-token-value",
   "createdAt": 1735689599,
@@ -234,7 +234,7 @@ curl -X POST https://instance-be.glean.com/api/index/v1/rotatetoken \
 
 All Indexing API requests require a single authentication header:
 
-```bash
+```bash snippet=overview/snippet-11.sh
 Authorization: Bearer <indexing_api_token>
 ```
 
@@ -245,7 +245,7 @@ Replace `instance` with your Glean instance name ([how to find](/get-started/aut
 <Tabs>
 <TabItem value="index-document" label="Index Document">
 
-```bash
+```bash snippet=overview/snippet-12.sh
 curl -X POST https://instance-be.glean.com/api/index/v1/indexdocument \
   -H 'Authorization: Bearer <INDEXING_TOKEN>' \
   -H 'Content-Type: application/json' \
@@ -263,7 +263,7 @@ curl -X POST https://instance-be.glean.com/api/index/v1/indexdocument \
 </TabItem>
 <TabItem value="bulk-index" label="Bulk Index Documents">
 
-```bash
+```bash snippet=overview/snippet-13.sh
 curl -X POST https://instance-be.glean.com/api/index/v1/bulkindexdocuments \
   -H 'Authorization: Bearer <INDEXING_TOKEN>' \
   -H 'Content-Type: application/json' \
@@ -287,7 +287,7 @@ curl -X POST https://instance-be.glean.com/api/index/v1/bulkindexdocuments \
 </TabItem>
 <TabItem value="datasource-config" label="Get Datasource Config">
 
-```bash
+```bash snippet=overview/snippet-14.sh
 curl -X POST https://instance-be.glean.com/api/index/v1/getdatasourceconfig \
   -H 'Authorization: Bearer <INDEXING_TOKEN>' \
   -H 'Content-Type: application/json' \
@@ -299,7 +299,7 @@ curl -X POST https://instance-be.glean.com/api/index/v1/getdatasourceconfig \
 </TabItem>
 <TabItem value="add-datasource" label="Add Datasource">
 
-```bash
+```bash snippet=overview/snippet-15.sh
 curl -X POST https://instance-be.glean.com/api/index/v1/adddatasource \
   -H 'Authorization: Bearer <INDEXING_TOKEN>' \
   -H 'Content-Type: application/json' \
@@ -323,7 +323,7 @@ curl -X POST https://instance-be.glean.com/api/index/v1/adddatasource \
 
 Test your token with a read-only datasource config request:
 
-```bash
+```bash snippet=overview/snippet-16.sh
 curl -X POST https://<instance>-be.glean.com/api/index/v1/getdatasourceconfig \
   -H 'Authorization: Bearer <YOUR_INDEXING_TOKEN>' \
   -H 'Content-Type: application/json' \
@@ -336,7 +336,7 @@ curl -X POST https://<instance>-be.glean.com/api/index/v1/getdatasourceconfig \
 
 Successful authentication returns your datasource's configuration:
 
-```json
+```json snippet=overview/snippet-17.json
 {
   "name": "my-datasource",
   "displayName": "My Datasource",
@@ -348,7 +348,7 @@ Successful authentication returns your datasource's configuration:
 
 Test document indexing with a minimal document:
 
-```bash
+```bash snippet=overview/snippet-18.sh
 curl -X POST https://<instance>-be.glean.com/api/index/v1/indexdocument \
   -H 'Authorization: Bearer <YOUR_INDEXING_TOKEN>' \
   -H 'Content-Type: application/json' \

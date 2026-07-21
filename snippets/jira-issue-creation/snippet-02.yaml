@@ -1,0 +1,79 @@
+openapi: 3.0.0
+info:
+  title: Jira Execution Tool
+  version: 1.0.0
+servers:
+  - url: https://your-tool-server.example.com/tools/jira
+    variables:
+      host:
+        default: your-tool-server.example.com
+        description: The publicly accessible host where your custom tool server is deployed.
+paths:
+  /create_issue:
+    post:
+      summary: Creates an issue or a sub-task from a JSON representation
+      description: |
+        This API allows you to create an issue in Jira.
+      parameters:
+        - name: Glean-User-Email
+          in: header
+          required: true
+          schema:
+            type: string
+          description: Email of the authenticated glean user.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                pid:
+                  x-glean-typehint: 'JiraProjectID'
+                  type: string
+                  description: Project ID where the ticket is created.
+                issuetype:
+                  type: integer
+                  description: The ID corresponding to the type of issue being created.
+                priority:
+                  type: integer
+                  minimum: 1
+                  maximum: 5
+                  description: Numeric priority. 1 (highest) to 5 (lowest).
+                summary:
+                  x-glean-typehint: 'Content'
+                  type: string
+                  description: Title of the issue
+                components:
+                  x-glean-typehint: 'JiraComponentId'
+                  type: string
+                  description: Component name where the ticket should be filed.
+                description:
+                  x-glean-typehint: 'Content'
+                  type: string
+                  description: Body of the issue.
+                assignee:
+                  x-glean-typehint: 'EmailAddress'
+                  type: string
+                  description: User to which the issue is assigned.
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateIssuePostResponse'
+        '400':
+          description: Bad Request
+        '401':
+          description: Not Authorized
+        '409':
+          description: Conflict
+components:
+  schemas:
+    CreateIssuePostResponse:
+      type: object
+      properties:
+        resultURL:
+          type: string
+          description: URL of the created issue.

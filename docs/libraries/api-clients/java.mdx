@@ -22,7 +22,7 @@ Glean's Java API client provides enterprise-ready integration for Java applicati
 
 <Tabs>
   <TabItem value="maven" label="Maven">
-    ```xml
+    ```xml snippet=java/snippet-01.ts
     <dependency>
       <groupId>com.glean.api-client</groupId>
       <artifactId>glean-api-client</artifactId>
@@ -39,7 +39,7 @@ Glean's Java API client provides enterprise-ready integration for Java applicati
 
 ## Quick Start
 
-```java
+```java snippet=java/snippet-02.java
 import com.glean.api_client.glean_api_client.Glean;
 import com.glean.api_client.glean_api_client.models.components.*;
 import java.util.List;
@@ -74,7 +74,7 @@ public class GleanExample {
 
 ### Chat API
 
-```java
+```java snippet=java/snippet-03.java
 public class ChatService {
   private final Glean client;
   
@@ -110,7 +110,7 @@ public class ChatService {
 
 ### Search API
 
-```java
+```java snippet=java/snippet-04.java
 public class SearchService {
   private final Glean client;
   
@@ -140,7 +140,7 @@ public class SearchService {
 
 ### Configuration
 
-```java
+```java snippet=java/snippet-05.java
 @Configuration
 @ConfigurationProperties(prefix = "glean")
 public class GleanConfig {
@@ -171,7 +171,7 @@ public class GleanAutoConfiguration {
 
 ### REST Controller
 
-```java
+```java snippet=java/snippet-06.java
 @RestController
 @RequestMapping("/api")
 public class GleanController {
@@ -218,7 +218,7 @@ public class GleanController {
 
 ### User-Scoped Tokens
 
-```java
+```java snippet=java/snippet-07.java
 Glean client = Glean.builder()
     .apiToken("your-user-token")
     .serverURL("https://your-server-id-be.glean.com")
@@ -227,7 +227,7 @@ Glean client = Glean.builder()
 
 ### Configuration Properties
 
-```yaml
+```yaml snippet=java/snippet-08.yaml
 # application.yml
 glean:
   api-token: ${GLEAN_API_TOKEN}
@@ -238,7 +238,7 @@ glean:
 
 An OAuth access token is a bearer credential, so it goes in the same `apiToken` field:
 
-```java
+```java snippet=java/snippet-09.java
 Glean client = Glean.builder()
     .apiToken(oauthAccessToken)
     .serverURL("https://your-server-id-be.glean.com")
@@ -249,7 +249,7 @@ Tokens issued by the **Glean OAuth Authorization Server** (including tokens obta
 
 Tokens issued by an **external identity provider** (Google, Okta, Azure, etc.) additionally require the `X-Glean-Auth-Type: OAUTH` header on each request. The builder has no per-request header option, so supply a custom HTTP client that adds it:
 
-```java
+```java snippet=java/snippet-10.java
 import com.glean.api_client.glean_api_client.utils.HTTPClient;
 import com.glean.api_client.glean_api_client.utils.SpeakeasyHTTPClient;
 import com.glean.api_client.glean_api_client.utils.Utils;
@@ -280,7 +280,7 @@ See the [OAuth authentication guide](/api-info/client/authentication/oauth) for 
 
 This example uses Spring Security's OAuth2 Client. Point `OAUTH_ISSUER` at the Glean OAuth Authorization Server or your IdP. For a confidential client, enable PKCE with an authorization-request customizer (it is on by default for public clients).
 
-```yaml
+```yaml snippet=java/snippet-11.yaml
 # application.yml
 spring:
   security:
@@ -302,7 +302,7 @@ glean:
   server-url: ${GLEAN_SERVER_URL}
 ```
 
-```java
+```java snippet=java/snippet-12.java
 // SecurityConfig.java — enable PKCE for a confidential client
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -326,7 +326,7 @@ public class SecurityConfig {
 }
 ```
 
-```java
+```java snippet=java/snippet-13.java
 // SearchController.java — exchange the authorized client's token for a Glean call
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
@@ -371,7 +371,7 @@ public class SearchController {
 
 ## Error Handling
 
-```java
+```java snippet=java/snippet-14.java
 public String safeChat(Glean client, String message) {
   try {
     var response = client.client().chat().create()
@@ -403,7 +403,7 @@ public String safeChat(Glean client, String message) {
 
 ### JUnit 5 with Mockito
 
-```java
+```java snippet=java/snippet-15.java
 @ExtendWith(MockitoExtension.class)
 class ChatServiceTest {
   

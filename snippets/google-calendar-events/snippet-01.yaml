@@ -1,0 +1,76 @@
+openapi: 3.0.1
+servers:
+  - url: 'https://www.googleapis.com/calendar/v3/'
+info:
+  title: Google Calendar Events API
+  description: This API returns events on the primary calendar of the currently logged-in user.
+  version: 1.0.0
+paths:
+  /calendars/primary/events:
+    get:
+      summary: List Events
+      description: Retrieves events from the primary calendar.
+      parameters:
+        - name: timeMin
+          in: query
+          description: |
+            Lower bound (exclusive) for an event's start time to filter by. Must be an RFC3339 timestamp with a mandatory time zone offset. Its very important to have timestamp in Z format
+            Example: 2011-06-03T10:00:00Z
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - name: timeMax
+          in: query
+          description: |
+            Upper bound (exclusive) for an event's start time to filter by. Must be an RFC3339 timestamp with a mandatory time zone offset. Its very important to have timestamp in Z format
+            Example: 2011-06-03T10:00:00Z
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - name: q
+          in: query
+          description: Free text search terms to find events that match these terms in various fields such as summary, description, location, etc.
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: A list of events.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          description: Identifier of the event.
+                        status:
+                          type: string
+                          description: Status of the event (confirmed, tentative, cancelled).
+                        summary:
+                          type: string
+                          description: Title of the event.
+                        description:
+                          type: string
+                          description: Description of the event.
+                        start:
+                          type: object
+                          properties:
+                            dateTime:
+                              type: string
+                              format: date-time
+                              description: The start time of the event.
+                        end:
+                          type: object
+                          properties:
+                            dateTime:
+                              type: string
+                              format: date-time
+                              description: The end time of the event.

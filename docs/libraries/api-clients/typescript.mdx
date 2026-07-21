@@ -22,17 +22,17 @@ Glean's TypeScript API client provides full type safety for integrating Glean's 
 
 <Tabs>
   <TabItem value="npm" label="npm">
-    ```bash
+    ```bash snippet=typescript/snippet-01.sh
     npm install @gleanwork/api-client
     ```
   </TabItem>
   <TabItem value="yarn" label="yarn">
-    ```bash
+    ```bash snippet=typescript/snippet-02.sh
     yarn add @gleanwork/api-client
     ```
   </TabItem>
   <TabItem value="pnpm" label="pnpm">
-    ```bash
+    ```bash snippet=typescript/snippet-03.sh
     pnpm add @gleanwork/api-client
     ```
   </TabItem>
@@ -40,7 +40,7 @@ Glean's TypeScript API client provides full type safety for integrating Glean's 
 
 ## Quick Start
 
-```typescript
+```typescript snippet=typescript/snippet-04.ts
 import { Glean } from "@gleanwork/api-client";
 
 const client = new Glean({
@@ -59,7 +59,7 @@ const result = await client.client.chat.create({
 
 ### Chat API
 
-```typescript
+```typescript snippet=typescript/snippet-05.ts
 // Simple chat
 const response = await client.client.chat.create({
   messages: [{ fragments: [{ text: "Explain our Q4 strategy" }] }]
@@ -75,7 +75,7 @@ console.log(stream);
 
 ### Search API
 
-```typescript
+```typescript snippet=typescript/snippet-06.ts
 const results = await client.client.search.query({
   query: "quarterly business review",
   pageSize: 10
@@ -91,7 +91,7 @@ results.results?.forEach(result => {
 
 ### Next.js API Route
 
-```typescript
+```typescript snippet=typescript/snippet-07.ts
 // app/api/chat/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { Glean } from '@gleanwork/api-client';
@@ -119,7 +119,7 @@ export async function POST(request: NextRequest) {
 
 ### React Component
 
-```typescript
+```typescript snippet=typescript/snippet-08.ts
 import React, { useState } from 'react';
 import { Glean } from '@gleanwork/api-client';
 
@@ -157,7 +157,7 @@ export function ChatComponent({ apiToken, serverURL }) {
 
 ### Express.js
 
-```typescript
+```typescript snippet=typescript/snippet-09.ts
 import express from 'express';
 import { Glean } from '@gleanwork/api-client';
 
@@ -189,7 +189,7 @@ app.post('/api/chat', async (req, res) => {
 
 ### User-Scoped Tokens
 
-```typescript
+```typescript snippet=typescript/snippet-10.ts
 const client = new Glean({
   apiToken: "your-user-token",
   serverURL: "https://your-server-id-be.glean.com"
@@ -198,7 +198,7 @@ const client = new Glean({
 
 ### Global Tokens with ActAs
 
-```typescript
+```typescript snippet=typescript/snippet-11.ts
 const response = await client.client.chat.create(
   { messages: [{ fragments: [{ text: "Hello" }] }] },
   undefined,
@@ -211,7 +211,7 @@ const response = await client.client.chat.create(
 
 An OAuth access token is a bearer credential, so it goes in the same `apiToken` field — no separate option is needed:
 
-```typescript
+```typescript snippet=typescript/snippet-12.ts
 const client = new Glean({
   apiToken: oauthAccessToken,
   serverURL: "https://your-server-id-be.glean.com",
@@ -220,7 +220,7 @@ const client = new Glean({
 
 Tokens issued by the **Glean OAuth Authorization Server** (including tokens obtained via Dynamic Client Registration) are detected automatically. Tokens issued by an **external identity provider** (Google, Okta, Azure, etc.) additionally require the `X-Glean-Auth-Type: OAUTH` header on each request:
 
-```typescript
+```typescript snippet=typescript/snippet-13.ts
 const response = await client.client.chat.create(
   { messages: [{ fragments: [{ text: "Hello" }] }] },
   undefined,
@@ -235,7 +235,7 @@ See the [OAuth authentication guide](/api-info/client/authentication/oauth) for 
 
 This example uses [`openid-client`](https://github.com/panva/openid-client) (v6) with Express. It runs the Authorization Code flow with PKCE, then passes the resulting access token to the Glean client. Point `OAUTH_ISSUER` at the Glean OAuth Authorization Server metadata (`https://your-server-id-be.glean.com/.well-known/oauth-authorization-server`) or your IdP's issuer.
 
-```typescript
+```typescript snippet=typescript/snippet-14.ts
 import express from 'express';
 import session from 'express-session';
 import * as client from 'openid-client';
@@ -304,7 +304,7 @@ Access tokens expire. Persist `tokens.refresh_token` and refresh with `client.re
 
 ## Error Handling
 
-```typescript
+```typescript snippet=typescript/snippet-15.ts
 import { GleanError, GleanDataError } from "@gleanwork/api-client/models/errors";
 
 try {
@@ -328,7 +328,7 @@ try {
 
 ## Testing
 
-```typescript
+```typescript snippet=typescript/snippet-16.ts
 import { jest } from '@jest/globals';
 import { Glean } from '@gleanwork/api-client';
 

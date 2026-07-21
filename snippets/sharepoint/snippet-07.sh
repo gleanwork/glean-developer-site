@@ -1,0 +1,1 @@
+gulp package-solution --ship

@@ -1,0 +1,81 @@
+openapi: 3.0.0
+info:
+  title: Create Zendesk Ticket Tool
+  version: 1.0.0
+servers:
+  - url: https://{ZENDESK_SUBDOMAIN}.zendesk.com/agent/tickets/new?
+    variables:
+      ZENDESK_SUBDOMAIN:
+        default: your-subdomain
+        description: Your Zendesk subdomain
+paths:
+  /:
+    post:
+      summary: Create a new support ticket in Zendesk
+      description: |
+        This tool redirects to Zendesk's ticket creation interface with pre-populated fields
+        for efficient ticket creation and management.
+      parameters:
+        - name: ticket[requester]
+          in: query
+          required: true
+          schema:
+            type: string
+            x-glean-typehint: EmailAddress
+          description: Email address of the person requesting support
+        - name: ticket[subject]
+          in: query
+          required: true
+          schema:
+            type: string
+            x-glean-typehint: Content
+          description: Brief summary of the issue or request
+        - name: ticket[description]
+          in: query
+          required: true
+          schema:
+            type: string
+            x-glean-typehint: Content
+          description: Detailed description of the issue or request
+        - name: ticket[priority]
+          in: query
+          schema:
+            type: string
+            enum:
+              - low
+              - normal
+              - high
+              - urgent
+            default: normal
+          description: Priority level of the ticket
+        - name: ticket[type]
+          in: query
+          schema:
+            type: string
+            enum:
+              - question
+              - incident
+              - problem
+              - task
+            default: question
+          description: Type of ticket being created
+        - name: ticket[status]
+          in: query
+          schema:
+            type: string
+            enum:
+              - new
+              - open
+              - pending
+              - hold
+              - solved
+              - closed
+            default: new
+          description: Initial status of the ticket
+      responses:
+        '200':
+          description: Successful redirect to Zendesk ticket creation interface
+          content:
+            text/html:
+              schema:
+                type: string

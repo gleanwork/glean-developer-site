@@ -26,17 +26,17 @@ Glean's Python API client provides a Pythonic interface to Glean's Client API, m
 
 <Tabs>
   <TabItem value="pip" label="pip">
-    ```bash
+    ```bash snippet=python/snippet-01.sh
     pip install glean-api-client
     ```
   </TabItem>
   <TabItem value="poetry" label="poetry">
-    ```bash
+    ```bash snippet=python/snippet-02.sh
     poetry add glean-api-client
     ```
   </TabItem>
   <TabItem value="uv" label="uv">
-    ```bash
+    ```bash snippet=python/snippet-03.sh
     uv add glean-api-client
     ```
   </TabItem>
@@ -46,14 +46,14 @@ Glean's Python API client provides a Pythonic interface to Glean's Client API, m
 
 <Steps>
   <Step title="Set up environment variables">
-    ```bash
+    ```bash snippet=python/snippet-04.sh
     export GLEAN_SERVER_URL="https://your-server-id-be.glean.com"
     export GLEAN_API_TOKEN="your-token-here"
     ```
   </Step>
   
   <Step title="Basic usage">
-    ```python
+    ```python snippet=python/snippet-05.py
     from glean.api_client import Glean
     import os
 
@@ -78,7 +78,7 @@ Glean's Python API client provides a Pythonic interface to Glean's Client API, m
 
 Build conversational AI applications:
 
-```python
+```python snippet=python/snippet-06.py
 # Simple chat
 response = client.client.chat.create(
     messages=[{"fragments": [{"text": "Explain our Q4 strategy"}]}]
@@ -95,7 +95,7 @@ print(response)
 
 Integrate enterprise search:
 
-```python
+```python snippet=python/snippet-07.py
 results = client.client.search.query(
     query="quarterly business review",
     page_size=10
@@ -110,7 +110,7 @@ for result in results.results:
 
 Execute pre-built agents:
 
-```python
+```python snippet=python/snippet-08.py
 response = client.client.agents.run(
     agent_id="your-agent-id",
     input={"query": "Analyze sales performance"}
@@ -121,7 +121,7 @@ response = client.client.agents.run(
 
 ### FastAPI
 
-```python
+```python snippet=python/snippet-09.py
 from fastapi import FastAPI
 from glean.api_client import Glean
 from pydantic import BaseModel
@@ -145,7 +145,7 @@ async def chat_endpoint(request: ChatRequest):
 
 ### Django
 
-```python
+```python snippet=python/snippet-10.py
 from django.http import JsonResponse
 from glean.api_client import Glean
 import json
@@ -167,7 +167,7 @@ def chat_view(request):
 
 ### Streamlit
 
-```python
+```python snippet=python/snippet-11.py
 import streamlit as st
 from glean.api_client import Glean
 
@@ -190,7 +190,7 @@ if user_input:
 
 ### User-Scoped Tokens
 
-```python
+```python snippet=python/snippet-12.py
 client = Glean(
     api_token="your-user-token",
     server_url="https://your-server-id-be.glean.com"
@@ -199,7 +199,7 @@ client = Glean(
 
 ### Global Tokens with ActAs
 
-```python
+```python snippet=python/snippet-13.py
 response = client.client.chat.create(
     messages=[{"fragments": [{"text": "Hello"}]}],
     http_headers={"X-Glean-ActAs": "user@company.com"}
@@ -210,7 +210,7 @@ response = client.client.chat.create(
 
 An OAuth access token is a bearer credential, so it goes in the same `api_token` field:
 
-```python
+```python snippet=python/snippet-14.py
 client = Glean(
     api_token=oauth_access_token,
     server_url="https://your-server-id-be.glean.com",
@@ -219,7 +219,7 @@ client = Glean(
 
 Tokens issued by the **Glean OAuth Authorization Server** (including tokens obtained via Dynamic Client Registration) are detected automatically. Tokens issued by an **external identity provider** (Google, Okta, Azure, etc.) additionally require the `X-Glean-Auth-Type: OAUTH` header on each request:
 
-```python
+```python snippet=python/snippet-15.py
 response = client.client.chat.create(
     messages=[{"fragments": [{"text": "Hello"}]}],
     http_headers={"X-Glean-Auth-Type": "OAUTH"}
@@ -232,7 +232,7 @@ See the [OAuth authentication guide](/api-info/client/authentication/oauth) for 
 
 This example uses [Authlib](https://docs.authlib.org/) with Flask. Setting `code_challenge_method` enables PKCE; Authlib stores the verifier and state in the session and verifies them on the callback. Point `OAUTH_METADATA_URL` at the Glean OAuth Authorization Server metadata (`https://your-server-id-be.glean.com/.well-known/oauth-authorization-server`) or your IdP's discovery document.
 
-```python
+```python snippet=python/snippet-16.py
 import os
 from flask import Flask, jsonify, url_for
 from authlib.integrations.flask_client import OAuth
@@ -285,7 +285,7 @@ Access tokens expire. The `token` dict includes `refresh_token` when you request
 
 ## Error Handling
 
-```python
+```python snippet=python/snippet-17.py
 from glean.api_client import Glean, errors
 import os
 
@@ -311,7 +311,7 @@ with Glean(
 
 ### Unit Testing with Mocks
 
-```python
+```python snippet=python/snippet-18.py
 import pytest
 from unittest.mock import patch, MagicMock
 
