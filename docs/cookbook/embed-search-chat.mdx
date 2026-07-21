@@ -25,7 +25,7 @@ recipe:
   prerequisites:
     - A Glean instance with content indexed
     - Your Glean web app domain (typically app.glean.com — see admin/about-glean)
-    - A frontend app or page where you can add a script tag and a container element
+    - A frontend app or page where you can install an npm package (or add a script tag) and a container element
     - 'For token auth only: an admin API key from the Token Management page'
   demo_queries:
     - What is our PTO policy?
@@ -89,6 +89,7 @@ import {
   RecipeArchitecture,
   RecipePrereqs,
   RecipeSteps,
+  RecipeNote,
   TakeItFurther,
 } from '@site/src/components/Cookbook/RecipeLayout';
 
@@ -109,27 +110,35 @@ already use — with permissions enforced per user, automatically.
 <RecipeSteps>
 
 <>
-Include the Web SDK: add the JavaScript client to the `<head>` of your
-page, replacing `GLEAN_APP_DOMAIN` with your Glean web app domain.
+Install the Web SDK: add the npm package to your app. It ships TypeScript
+types for every component and option.
 
-```html
-<script
-  defer
-  src="https://{GLEAN_APP_DOMAIN}/embedded-search-latest.min.js"
-></script>
+```bash
+npm install @gleanwork/web-sdk
 ```
+
+<RecipeNote>
+No build toolchain (CMS, portal, SharePoint)? Load the SDK from your Glean
+domain with a script tag instead — the same methods appear on
+`window.GleanWebSDK`. See the [Web SDK overview](/libraries/web-sdk/overview).
+</RecipeNote>
 
 </>
 
 <>
 Render search: add a search box and a results container, then render both
-components. See the [Autocomplete + Search Page guide](/libraries/web-sdk/components/autocomplete)
+components. Setting `backend` is recommended — it routes users straight to
+your instance instead of asking for their email. See the
+[Autocomplete + Search Page guide](/libraries/web-sdk/components/autocomplete)
 for the full options.
 
-```javascript
-window.GleanWebSDK.renderSearchBox(searchBoxElement, {
+```typescript
+import { renderSearchBox, renderSearchResults } from '@gleanwork/web-sdk';
+
+renderSearchBox(searchBoxElement, {
+  backend: 'https://{your}-be.glean.com',
   onSearch: (query) => {
-    window.GleanWebSDK.renderSearchResults(resultsElement, { query });
+    renderSearchResults(resultsElement, { query });
   },
 });
 ```
@@ -141,8 +150,12 @@ Render chat: create a container element with `position: relative`,
 `display: block`, and an explicit width and height, then render Glean Chat
 into it.
 
-```javascript
-window.EmbeddedSearch.renderChat(containerElement);
+```typescript
+import { renderChat } from '@gleanwork/web-sdk';
+
+renderChat(containerElement, {
+  backend: 'https://{your}-be.glean.com',
+});
 ```
 
 </>

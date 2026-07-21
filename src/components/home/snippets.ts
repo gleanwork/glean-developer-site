@@ -6,7 +6,8 @@
  * - agents:      docs/guides/agents/toolkit.mdx
  * - typescript:  docs/libraries/api-clients/typescript.mdx
  * - curl:        docs/api-info/client/getting-started/basic-usage.mdx
- * - web sdk:     docs/libraries/web-sdk/components/{chat,autocomplete}.mdx
+ * - web sdk:     @gleanwork/web-sdk types (renderSearchBox/renderSearchResults/
+ *                renderChat named exports; backend is the recommended override)
  */
 
 export type HeroSlide = {
@@ -88,20 +89,23 @@ crew_tool = glean_search.as_crewai_tool()`,
     secondaryHref: '/libraries/web-sdk/components/chat',
     headline: 'Embed Glean in your apps',
     subcopy:
-      'Drop permission-aware search and chat into the tools your team already uses — a script tag and two components.',
-    filename: 'embed.html',
-    code: `<script defer
-  src="https://{GLEAN_APP_DOMAIN}/embedded-search-latest.min.js">
-</script>
+      'Drop permission-aware search and chat into the tools your team already uses — one npm package, two components.',
+    filename: 'embed.ts',
+    code: `import {
+  renderSearchBox,
+  renderSearchResults,
+  renderChat,
+} from "@gleanwork/web-sdk";
 
-<script>
-  window.GleanWebSDK.renderSearchBox(searchEl, {
-    onSearch: (query) =>
-      window.GleanWebSDK.renderSearchResults(
-        resultsEl, { query }),
-  });
-  window.EmbeddedSearch.renderChat(chatEl);
-</script>`,
+renderSearchBox(searchEl, {
+  backend: "https://acme-be.glean.com",
+  onSearch: (query) =>
+    renderSearchResults(resultsEl, { query }),
+});
+
+renderChat(chatEl, {
+  backend: "https://acme-be.glean.com",
+});`,
   },
   {
     surface: 'Indexing SDK',
