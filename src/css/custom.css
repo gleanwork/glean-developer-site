@@ -794,3 +794,87 @@ html[data-theme='dark'] [class*='codeBlockTitle'] {
   background: #0c0d10;
   border-bottom-color: rgba(255, 255, 255, 0.08);
 }
+
+/* ==== Docs design pass: extend the homepage design language sitewide ==== */
+
+/* Typography: headings adopt the display face with neutral tracking.
+ * The id selector out-ranks brand.css `.main-wrapper h1` (0,1,1), which
+ * forces letter-spacing +0.025em — the rule every redesigned surface has
+ * had to defeat individually. Values match what those surfaces already
+ * set, so this is a no-op for them. */
+#__docusaurus .main-wrapper h1,
+#__docusaurus .main-wrapper h2,
+#__docusaurus .main-wrapper h3 {
+  font-family: var(--gdt-font-display);
+  letter-spacing: 0;
+}
+
+/* Tables: hairline borders, rounded corners, quiet header row — the
+ * plugin-page "Which plugin do I need?" treatment, everywhere. */
+.markdown table {
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 1px solid var(--gdt-border-light);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.markdown table th,
+.markdown table td {
+  border: none;
+  border-bottom: 1px solid var(--gdt-border-light);
+}
+
+.markdown table tr:last-child td {
+  border-bottom: none;
+}
+
+.markdown table th {
+  background: var(--gdt-bg-light);
+}
+
+.markdown table tr:nth-child(2n) {
+  background-color: transparent;
+}
+
+/* Admonitions: keep the per-type tint, modernize the box — hairline
+ * outer border, slim accent, rounded corners, no shadow. */
+.markdown .theme-admonition {
+  border: 1px solid var(--gdt-border-light);
+  border-left: 3px solid var(--ifm-alert-border-color);
+  border-radius: 12px;
+  box-shadow: none;
+}
+
+/* Prev/next pagination: path-card treatment with the blue eyebrow. */
+.pagination-nav__link {
+  border: 1px solid var(--gdt-border-light);
+  border-radius: 16px;
+  padding: 16px 20px;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.pagination-nav__link:hover {
+  background: var(--gdt-bg-light);
+  border-color: var(--gdt-border-dark);
+}
+
+.pagination-nav__sublabel {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--gdt-primary);
+}
+
+.pagination-nav__label {
+  font-weight: 600;
+}
+
+/* Inline-title docs: the eyebrow header precedes the markdown h1 — keep
+ * the h1's first-child spacing so no gap opens between them. */
+.markdown > header:first-child + h1 {
+  margin-top: 0;
+}
