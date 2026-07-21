@@ -107,12 +107,15 @@ export function HeroCarousel(): React.ReactElement {
         <div className={styles.heroCtas}>
           <Link
             className={styles.heroPrimary}
-            to="/api-info/client/getting-started/overview"
+            to={HERO_SLIDES[active].primaryHref}
           >
             Start building
             {feather('ArrowRight')}
           </Link>
-          <Link className={styles.heroSecondary} to="/api/platform-api">
+          <Link
+            className={styles.heroSecondary}
+            to={HERO_SLIDES[active].secondaryHref}
+          >
             {feather('BookOpen')}
             API reference
           </Link>
