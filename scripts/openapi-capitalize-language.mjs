@@ -50,6 +50,11 @@ const HTTP_METHODS = [
 ];
 
 const EXPERIMENTAL_HEADER_NAME = 'X-Glean-Include-Experimental';
+const SKILLS_MULTIPART_OPERATION_IDS = new Set([
+  'platform-skills-create',
+  'platform-skills-validate',
+  'platform-skills-create-version',
+]);
 
 /**
  * Inject the `X-Glean-Include-Experimental` header parameter into every
@@ -108,6 +113,82 @@ export function injectExperimentalHeaders(apiSpec) {
       });
       console.log(
         `   💉 Injected ${EXPERIMENTAL_HEADER_NAME} header on ${method.toUpperCase()} ${pathKey}`,
+      );
+    }
+  }
+}
+
+function resolveServerUrl(apiSpec) {
+  const server = apiSpec?.servers?.[0];
+  if (!server?.url) return 'https://instance-name-be.glean.com';
+
+  return server.url.replace(/\{([^}]+)\}/g, (_, variableName) => {
+    return server.variables?.[variableName]?.default ?? variableName;
+  });
+}
+
+function responseContentType(operation) {
+  for (const [status, response] of Object.entries(operation.responses ?? {})) {
+    if (/^2\d\d$/.test(status)) {
+      const contentTypes = Object.keys(response?.content ?? {});
+      if (contentTypes.length > 0) return contentTypes[0];
+    }
+  }
+  return 'application/json';
+}
+
+/**
+ * Add copy-pasteable cURL samples for the Skills multipart upload operations.
+ * The theme's generic snippet generator cannot seed a browser file input, so
+ * its default cURL omits the required form part and sets an unusable multipart
+ * Content-Type without a boundary. An explicit sample lets cURL construct the
+ * multipart body and boundary from the selected file.
+ */
+export function injectSkillsMultipartCurlSamples(apiSpec) {
+  const paths = apiSpec?.paths;
+  if (!paths || typeof paths !== 'object') return;
+
+  const serverUrl = resolveServerUrl(apiSpec);
+
+  for (const [pathKey, pathItem] of Object.entries(paths)) {
+    if (!pathItem || typeof pathItem !== 'object') continue;
+
+    for (const method of HTTP_METHODS) {
+      const operation = pathItem[method];
+      if (
+        !operation ||
+        typeof operation !== 'object' ||
+        !SKILLS_MULTIPART_OPERATION_IDS.has(operation.operationId) ||
+        !operation.requestBody?.content?.['multipart/form-data']
+      ) {
+        continue;
+      }
+
+      operation['x-codeSamples'] ??= [];
+      const alreadyDeclared = operation['x-codeSamples'].some(
+        (sample) => sample?.lang?.toLowerCase() === 'curl',
+      );
+      if (alreadyDeclared) continue;
+
+      const requestPath = pathKey.replace(
+        /\{([^}]+)\}/g,
+        (_, parameterName) => `<${parameterName}>`,
+      );
+      const lines = [
+        `curl -L -X ${method.toUpperCase()} '${serverUrl}${requestPath}' \\`,
+        `  -H 'Accept: ${responseContentType(operation)}' \\`,
+        `  -H '${EXPERIMENTAL_HEADER_NAME}: true' \\`,
+        `  -H 'Authorization: Bearer <token>' \\`,
+        `  -F 'file=@./SKILL.md'`,
+      ];
+
+      operation['x-codeSamples'].push({
+        lang: 'curl',
+        label: 'cURL (multipart upload)',
+        source: lines.join('\n'),
+      });
+      console.log(
+        `   Injected multipart cURL sample on ${method.toUpperCase()} ${pathKey}`,
       );
     }
   }
@@ -177,6 +258,9 @@ export async function capitalizeCodeSamples(inputFile, outputFile) {
   try {
     const fileContent = await readContent(inputFile);
     const apiSpec = yaml.load(fileContent);
+
+    console.log('📦 Injecting Skills multipart cURL samples...');
+    injectSkillsMultipartCurlSamples(apiSpec);
 
     console.log('🔤 Processing x-codeSamples...');
     processCodeSamples(apiSpec);
