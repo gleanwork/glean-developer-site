@@ -6,119 +6,88 @@ icon: 'lightbulb'
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+import { RecommendationsPreview } from '@site/src/components/WebSdk/previews';
 
+The Recommendations component surfaces intelligent, context-aware suggestions for the page the user is currently viewing, with a built-in Glean search box for manual searches.
 
-The Recommendations component provides intelligent, context-aware content suggestions while incorporating search capabilities. This component analyzes the current page content to surface relevant recommendations and enables users to perform manual searches when needed.
+<RecommendationsPreview />
+
+## Install the SDK
+
+<Tabs groupId="websdk-install">
+<TabItem value="npm" label="npm">
+
+```bash snippet=recommendations/snippet-01.sh
+npm install @gleanwork/web-sdk
+```
+
+</TabItem>
+<TabItem value="script" label="Script tag">
+
+Include the JavaScript library in the `<head>` section of your page. Replace `GLEAN_APP_DOMAIN` with your company's Glean web app domain (typically `app.glean.com` or `your-company.glean.com` if you use a custom subdomain).
+
+```html snippet=recommendations/snippet-02.html
+<script
+  defer
+  src="https://{GLEAN_APP_DOMAIN}/embedded-search-latest.min.js"
+></script>
+```
+
+:::info
+The Glean web app domain differs from your company's Glean backend domain
+(find yours at [app.glean.com/admin/about-glean](https://app.glean.com/admin/about-glean) under "Server instance (QE)").
+The same methods are available on `window.GleanWebSDK` once the `glean:ready` event fires.
+:::
+
+</TabItem>
+</Tabs>
+
+## Render recommendations
+
+1. Create a container element with `position: relative`, `display: block`, and a defined width (800px maximum recommended — the widget adjusts to its container).
+
+2. Render the widget into your container:
+
+```typescript snippet=recommendations/snippet-03.ts
+import { renderRecommendations } from '@gleanwork/web-sdk';
+
+renderRecommendations(document.getElementById('recommendations'), {
+  backend: 'https://{your}-be.glean.com/',
+  height: 700,
+  customizations: {
+    border: '1px solid grey',
+    borderRadius: 4,
+    horizontalMargin: 3,
+    verticalMargin: 3,
+    searchBox: {
+      placeholderText: 'Search for anything...',
+    },
+  },
+});
+```
+
+## Options
+
+The most commonly used [`RecommendationsOptions`](https://app.glean.com/meta/browser_api/interfaces/RecommendationsOptions.html):
+
+| Option              | Type                              | Description                                                                                  |
+| ------------------- | --------------------------------- | -------------------------------------------------------------------------------------------- |
+| `height`            | `number`                          | Total widget height in the open state, in pixels. Defaults to `650`.                         |
+| `customizations`    | `RecommendationsBoxCustomizations` | Border, shadow, margins, search-box styling, and the empty-state hint.                       |
+| `sourceDocument`    | `DocumentContext`                 | The document to recommend against. Defaults to the embedding page itself.                    |
+| `onSearch`          | `(query) => void`                 | Invoked when the user performs a search from the built-in box.                               |
+| `datasourcesFilter` | `string[]`                        | Restrict results to specific datasources, e.g. `['jira', 'confluence']`.                     |
+
+All components also accept the common [`Options`](https://app.glean.com/meta/browser_api/interfaces/Options.html) — `backend`, `authToken`, `theme`, `themeVariant`, `locale`, and more.
+
+:::note
+When adding a `boxShadow`, provide enough `verticalMargin` and
+`horizontalMargin` for it to be visible — margin values must be positive and
+apply to both sides of the component.
+:::
+
+## Example
 
 <Frame>
   ![Recommendations Component Demo](../images/recommendations_widget/demo.gif)
 </Frame>
-
-## Implementation Guide
-
-### Adding the JavaScript Client
-
-Include the JavaScript library in your page's `<head>` section. Replace `GLEAN_APP_DOMAIN` with your company's Glean web app domain (typically `app.glean.com` or `your-company.glean.com` for custom subdomains).
-
-:::info
-  The Glean web app domain differs from your company's Glean backend domain
-  (find yours at [app.glean.com/admin/about-glean](https://app.glean.com/admin/about-glean) under "Server instance (QE)").
-:::
-
-<Tabs>
-<TabItem value="html" label="HTML">
-
-```html snippet=recommendations/snippet-01.html
-<script
-    defer
-    src="https://{GLEAN_APP_DOMAIN}/embedded-search-latest.min.js"
-  ></script>
-```
-
-</TabItem>
-</Tabs>
-
-### Component Setup
-
-The Recommendations component requires three key implementation elements:
-
-1. A container element with specific styling requirements
-2. Basic HTML structure
-3. JavaScript initialization code
-
-Here's a complete implementation example:
-
-<Tabs>
-<TabItem value="html-structure" label="HTML Structure">
-
-```html snippet=recommendations/snippet-02.html
-<h2>Glean Recommendations Component</h2>
-<div id="recommendations"></div>
-```
-
-</TabItem>
-<TabItem value="component-styling" label="Component Styling">
-
-```css snippet=recommendations/snippet-03.css
-#recommendations {
-  display: block;
-  position: relative;
-  width: 600px;
-}
-```
-
-</TabItem>
-<TabItem value="implementation" label="Implementation">
-
-```javascript snippet=recommendations/snippet-04.js
-addEventListener('DOMContentLoaded', () => {
-  const recommendationsContainer = document.getElementById('recommendations');
-  GleanWebSDK.renderRecommendations(recommendationsContainer, {
-    height: 700,
-    customizations: {
-      border: '1px solid grey',
-      borderRadius: 4,
-      boxShadow: '2px 2px grey',
-      horizontalMargin: 3,
-      verticalMargin: 3,
-      searchBox: {
-        placeholderText: 'Search for anything...',
-        searchIconUrl: 'https://picsum.photos/18',
-      },
-    },
-  });
-});
-```
-
-</TabItem>
-</Tabs>
-
-## Customization Options
-
-The Recommendations component offers extensive customization capabilities through the [RecommendationsOptions](https://app.glean.com/meta/browser_api/interfaces/RecommendationsOptions.html) interface.
-
-### Dimension Controls
-
-The component's dimensions can be customized in the following ways:
-
-**Height Customization**
-
-- Default height: 650px
-- Override using the [height](https://app.glean.com/meta/browser_api/interfaces/RecommendationsOptions.html#height) option
-- Values are specified in pixels
-
-**Width Configuration**
-
-- Set through the container element's CSS
-- Recommended maximum width: 800px
-- Width adjusts automatically to container size
-
-### Visual Customization
-
-The component's appearance can be refined using [RecommendationsBoxCustomizations](https://app.glean.com/meta/browser_api/interfaces/RecommendationsBoxCustomizations.html):
-
-:::note
-  When implementing visual customizations: - Box-shadow visibility requires
-  appropriate verticalMargin and horizontalMargin settings - Margin values must
-  be positive and are applied to both sides of the component
-:::

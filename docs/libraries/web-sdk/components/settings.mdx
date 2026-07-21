@@ -1,65 +1,92 @@
 ---
 title: 'Glean Settings'
-description: "Integrate Glean settings into an internal application"
+description: 'Integrate Glean settings into an internal application'
 icon: 'settings'
 iconSet: 'feather'
 ---
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+import { SettingsPreview } from '@site/src/components/WebSdk/previews';
 
-Integrate Glean settings into your internal app to allow users to connect certain datasources that require seperate authentication (for example, Slack RTS, GitHub) so Glean can access their private data on their behalf.
+Embed Glean settings in your internal app so users can connect datasources that require separate authentication (for example, Slack RTS or GitHub), letting Glean access their private data on their behalf.
 
-<Frame>
-  ![Glean Settings](../images/sdk-settiings.png)
-</Frame>
-
-:::warning
-It is possible for browser security features to prevent the OAuth popup from informing the SDK that a user has successfully authenticated. For the highest reliability, use the Glean web app or the [`checkdatasourceauth`](/api/client-api/authentication/checkdatasourceauth) API
+:::info Beta
+`renderSettings` is marked experimental in the SDK's type definitions and may
+change at any time.
 :::
 
-## Implementation Guide
+<SettingsPreview />
 
-### Adding the JavaScript Client
+## Install the SDK
 
-First, include the JavaScript library in the `<head>` section of your page. Replace `GLEAN_APP_DOMAIN` with your company's Glean web app domain (typically `app.glean.com` or `your-company.glean.com` if you use a custom subdomain).
+<Tabs groupId="websdk-install">
+<TabItem value="npm" label="npm">
+
+```bash snippet=settings/snippet-01.sh
+npm install @gleanwork/web-sdk
+```
+
+</TabItem>
+<TabItem value="script" label="Script tag">
+
+Include the JavaScript library in the `<head>` section of your page. Replace `GLEAN_APP_DOMAIN` with your company's Glean web app domain (typically `app.glean.com` or `your-company.glean.com` if you use a custom subdomain).
+
+```html snippet=settings/snippet-02.html
+<script
+  defer
+  src="https://{GLEAN_APP_DOMAIN}/embedded-search-latest.min.js"
+></script>
+```
 
 :::info
-  The Glean web app domain differs from your company's Glean backend domain
-  (find yours at [app.glean.com/admin/about-glean](https://app.glean.com/admin/about-glean) under "Server instance (QE)").
+The Glean web app domain differs from your company's Glean backend domain
+(find yours at [app.glean.com/admin/about-glean](https://app.glean.com/admin/about-glean) under "Server instance (QE)").
+The same methods are available on `window.GleanWebSDK` once the `glean:ready` event fires.
 :::
 
-<Tabs>
-<TabItem value="html" label="HTML">
-
-```html snippet=settings/snippet-01.html
-<script
-    defer
-    src="https://{GLEAN_APP_DOMAIN}/embedded-search-latest.min.js"
-  ></script>
-```
-
 </TabItem>
 </Tabs>
 
-### Configuration and Setup
+## Render settings
 
-1. Create a container element with the following required CSS properties:
+1. Create a container element with `position: relative`, `display: block`, and a defined size — at least 800px wide and 600px tall is recommended.
 
-   - `position: relative`
-   - `display: block`
-   - Appropriate sizing and positioning
+2. Render the settings widget into your container:
 
-2. Render Settings into your container:
+```typescript snippet=settings/snippet-03.ts
+import GleanWebSDK from '@gleanwork/web-sdk';
 
-<Tabs>
-<TabItem value="javascript" label="JavaScript">
-
-```javascript snippet=settings/snippet-02.js
-window.GleanWebSDK.renderSettings(containerElement, { /** Options */ });
+GleanWebSDK.renderSettings(document.getElementById('settings'), {
+  backend: 'https://{your}-be.glean.com/',
+});
 ```
 
-</TabItem>
-</Tabs>
+:::note
+Unlike the other components, `renderSettings` is not exported individually —
+call it on the SDK's default export (or on `window.GleanWebSDK` when using
+the script tag).
+:::
 
-For detailed configuration options and customizations, refer to our [renderSettings API documentation](https://app.glean.com/meta/browser_api/interfaces/GleanWebSDK.html#renderSettings).
+For the full surface, see the [renderSettings API documentation](https://app.glean.com/meta/browser_api/interfaces/GleanWebSDK.html#renderSettings).
+
+## Options
+
+[`SettingsOptions`](https://app.glean.com/meta/browser_api/interfaces/SettingsOptions.html):
+
+| Option                          | Type      | Description                                                                  |
+| ------------------------------- | --------- | ---------------------------------------------------------------------------- |
+| `hideUnconfigurableDatasources` | `boolean` | Hide admin-managed datasources that the user cannot configure themselves.    |
+
+All components also accept the common [`Options`](https://app.glean.com/meta/browser_api/interfaces/Options.html) — `backend`, `authToken`, `theme`, `themeVariant`, `locale`, and more.
+
+:::warning
+Browser security features can prevent the OAuth popup from informing the SDK
+that a user has successfully authenticated. For the highest reliability, use
+the Glean web app or the
+[`checkdatasourceauth`](/api/client-api/authentication/checkdatasourceauth) API.
+:::
+
+## Example
+
+<Frame>![Glean Settings](../images/sdk-settiings.png)</Frame>

@@ -6,66 +6,72 @@ icon: 'sidebar'
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+import { SidebarPreview } from '@site/src/components/WebSdk/previews';
 
-The Glean Sidebar provides a unified interface that combines search capabilities, chat functionality, and contextual recommendations, all accessible from a slide-out panel on your page.
-
-<Frame>
-  <div className="grid grid-cols-2 gap-3">
-    ![Sidebar Search Interface](../images/introduction/sidebar-1.png)
-    ![Sidebar Results View](../images/introduction/sidebar-2.png)
-  </div>
-</Frame>
-
-## Implementation Guide
-
-### Adding the JavaScript Client
-
-Include the JavaScript library in your page's `<head>` section. Replace `GLEAN_APP_DOMAIN` with your company's Glean web app domain (typically `app.glean.com` or `your-company.glean.com` for custom subdomains).
-
-:::info
-  The Glean web app domain differs from your company's Glean backend domain
-  (find yours at [app.glean.com/admin/about-glean](https://app.glean.com/admin/about-glean) under "Server instance (QE)").
+:::warning Deprecated
+`openSidebar` is marked deprecated in the SDK's type definitions and will be
+removed in a future version. For new integrations, consider the
+[Recommendations](./recommendations) component for contextual suggestions or
+[Modal Search](./modal-search) for on-demand search.
 :::
 
-<Tabs>
-<TabItem value="html" label="HTML">
+The Glean Sidebar combines search and contextual recommendations in a panel that slides out from the right side of your page.
 
-```html snippet=sidebar/snippet-01.html
+<SidebarPreview />
+
+## Install the SDK
+
+<Tabs groupId="websdk-install">
+<TabItem value="npm" label="npm">
+
+```bash snippet=sidebar/snippet-01.sh
+npm install @gleanwork/web-sdk
+```
+
+</TabItem>
+<TabItem value="script" label="Script tag">
+
+Include the JavaScript library in the `<head>` section of your page. Replace `GLEAN_APP_DOMAIN` with your company's Glean web app domain (typically `app.glean.com` or `your-company.glean.com` if you use a custom subdomain).
+
+```html snippet=sidebar/snippet-02.html
 <script
-    defer
-    src="https://{GLEAN_APP_DOMAIN}/embedded-search-latest.min.js"
-  ></script>
+  defer
+  src="https://{GLEAN_APP_DOMAIN}/embedded-search-latest.min.js"
+></script>
 ```
+
+:::info
+The Glean web app domain differs from your company's Glean backend domain
+(find yours at [app.glean.com/admin/about-glean](https://app.glean.com/admin/about-glean) under "Server instance (QE)").
+The same methods are available on `window.GleanWebSDK` once the `glean:ready` event fires.
+:::
 
 </TabItem>
 </Tabs>
 
-### Basic Setup
+## Open the sidebar
 
-Implementing the Sidebar requires a single method call to [openSidebar](https://app.glean.com/meta/browser_api/interfaces/GleanWebSDK.html#openSidebar). You can trigger this method in response to user actions, such as clicking a button:
+Call [openSidebar](https://app.glean.com/meta/browser_api/interfaces/GleanWebSDK.html#openSidebar) in response to a user action, such as clicking a button:
 
-<Tabs>
-<TabItem value="javascript" label="JavaScript">
+```typescript snippet=sidebar/snippet-03.ts
+import { openSidebar } from '@gleanwork/web-sdk';
 
-```javascript snippet=sidebar/snippet-02.js
-GleanWebSDK.openSidebar();
+openSidebar({
+  backend: 'https://{your}-be.glean.com/',
+});
 ```
 
-</TabItem>
-</Tabs>
+The sidebar closes when the user clicks its close button or presses the escape key.
 
-## Customization Options
+## Options
 
-The Sidebar component can be customized using the [GleanWebSDK.openSidebar](https://app.glean.com/meta/browser_api/interfaces/GleanWebSDK.html#openSidebar) API. This interface provides options for tailoring the sidebar experience to match your application's needs.
+`openSidebar` accepts [`SearchOptions`](https://app.glean.com/meta/browser_api/interfaces/SearchOptions.html):
 
-## Implementation Example
+| Option              | Type              | Description                                                              |
+| ------------------- | ----------------- | ------------------------------------------------------------------------ |
+| `query`             | `string`          | If provided, the sidebar opens showing results for this query.           |
+| `onSearch`          | `(query) => void` | Invoked when the user performs a search.                                 |
+| `datasourcesFilter` | `string[]`        | Restrict results to specific datasources, e.g. `['jira', 'confluence']`. |
+| `filters`           | `FilterValue[]`   | Pinned, non-modifiable filters applied to every search.                  |
 
-Experience a complete working implementation of the Sidebar component in our interactive demo:
-
-<Frame>
-  <iframe
-    src="https://codepen.io/GleanWork/embed/VwWJOjZ?default-tab=js%2Cresult&editable=true"
-    style={{ width: '100%', height: '500px' }}
-    title="Sidebar | Glean"
-  />
-</Frame>
+All components also accept the common [`Options`](https://app.glean.com/meta/browser_api/interfaces/Options.html) — `backend`, `authToken`, `theme`, `themeVariant`, `locale`, and more.

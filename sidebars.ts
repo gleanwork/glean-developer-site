@@ -383,7 +383,7 @@ const baseSidebars: SidebarsConfig = {
                 {
                   type: 'doc',
                   id: 'libraries/web-sdk/components/autocomplete',
-                  label: 'Autocomplete',
+                  label: 'Search Box + Results',
                 },
                 {
                   type: 'doc',
@@ -393,7 +393,7 @@ const baseSidebars: SidebarsConfig = {
                 {
                   type: 'doc',
                   id: 'libraries/web-sdk/components/sidebar',
-                  label: 'Sidebar',
+                  label: 'Sidebar Search',
                 },
                 {
                   type: 'doc',
@@ -429,7 +429,7 @@ const baseSidebars: SidebarsConfig = {
                 {
                   type: 'doc',
                   id: 'libraries/web-sdk/guides/lumapps',
-                  label: 'Lumapps',
+                  label: 'LumApps',
                 },
                 {
                   type: 'doc',
