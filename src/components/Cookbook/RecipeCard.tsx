@@ -5,7 +5,7 @@ import { RECIPE_SURFACE_LABELS, type RecipeRecord } from '../../types/recipe';
 import { CategoryTile } from './categories';
 import styles from './RecipeCard.module.css';
 
-/** Legacy export used by the homepage CookbookSection band. */
+/** Feather icon per surface, for cards that show a surface glyph. */
 export const SURFACE_ICONS: Record<string, string> = {
   'web-sdk': 'Layout',
   'connector-sdk': 'Database',
