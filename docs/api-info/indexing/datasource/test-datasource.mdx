@@ -24,7 +24,7 @@ When setting up the datasource using [`/adddatasource`](/api/indexing-api/add-or
 ```bash
 curl -X POST https://customer-be.glean.com/api/index/v1/adddatasource \
 ...
-	"isTestDatasource" : "true”
+	"isTestDatasource": true
 ...
 ```
 
@@ -32,19 +32,21 @@ curl -X POST https://customer-be.glean.com/api/index/v1/adddatasource \
 <TabItem value="python" label="Python">
 
 ```python
-from glean_indexing_api_client.api import datasources_api
-from glean_indexing_api_client.model.custom_datasource_config import CustomDatasourceConfig
-# Please refer to the Getting Started page for more details on how to setup api_client
-datasource_api = datasources_api.DatasourcesApi(api_client)
+from glean.api_client import Glean
+import os
 
-datasource_config = CustomDatasourceConfig(
-  ...,  # other fields
-  is_test_datasource=True
-)
-try:
-  datasource_api.adddatasource_post(datasource_config)
-except indexing_api.ApiException as e:
-  print('Exception when calling DatasourcesApi->adddatasource_post: %s\\n' % e)
+with Glean(
+    api_token=os.getenv("GLEAN_INDEXING_API_TOKEN", ""),
+    server_url=os.getenv("GLEAN_SERVER_URL", ""),
+) as client:
+    try:
+        client.indexing.datasources.add(
+            name="gleantest",
+            # ... other fields
+            is_test_datasource=True,
+        )
+    except Exception as e:
+        print(f"Exception when adding datasource: {e}")
 ```
 
 </TabItem>
@@ -77,22 +79,23 @@ curl -X POST https://customer-be.glean.com/api/index/v1/betausers \
 <TabItem value="python" label="Python">
 
 ```python
-from glean_indexing_api_client.api import permissions_api
-from glean_indexing_api_client.model.greenlist_users_request import GreenlistUsersRequest
-# Please refer to the Getting Started page for more details on how to setup api_client
-permission_api = permissions_api.PermissionsApi(api_client)
-greenlist_users_request = GreenlistUsersRequest(
-    datasource=“gleantest”,
-    emails=[
-        "user1@example.com",
-        "user2@example.com"
-    ]
-)
+from glean.api_client import Glean
+import os
 
-try:
-    permission_api.betausers_post(greenlist_users_request)
-except glean_indexing_api_client.ApiException as e:
-    print("Exception when calling PermissionsApi->betausers_post: %s\n" % e)
+with Glean(
+    api_token=os.getenv("GLEAN_INDEXING_API_TOKEN", ""),
+    server_url=os.getenv("GLEAN_SERVER_URL", ""),
+) as client:
+    try:
+        client.indexing.permissions.authorize_beta_users(
+            datasource="gleantest",
+            emails=[
+                "user1@example.com",
+                "user2@example.com",
+            ],
+        )
+    except Exception as e:
+        print(f"Exception when authorizing beta users: {e}")
 ```
 
 </TabItem>

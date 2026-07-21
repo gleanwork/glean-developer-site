@@ -27,20 +27,21 @@ curl -X POST https://customer-be.glean.com/api/index/v1/debug/gleantest/user
 <TabItem value="python" label="Python">
 
 ```python
-from glean_indexing_api_client.api import troubleshooting_api
-from glean_indexing_api_client.model.debug_user_request import DebugUserRequest
-from glean_indexing_api_client.model.debug_user_response import DebugUserResponse
-from pprint import pprint
-# Please refer to the Getting Started page for more details on how to setup api_client
-troubleshoot_api = troubleshooting_api.TroubleshootingApi(api_client)
-debug_user_request = DebugUserRequest(
-    email="user1@example.com"
-)
-try:
-    api_response = troubleshoot_api.debug_datasource_user_post("gleantest", debug_user_request)
-    pprint(api_response)
-except glean_indexing_api_client.ApiException as e:
-    print("Exception when calling TroubleshootingApi->debug_datasource_user_post: %s\n" % e)
+from glean.api_client import Glean
+import os
+
+with Glean(
+    api_token=os.getenv("GLEAN_INDEXING_API_TOKEN", ""),
+    server_url=os.getenv("GLEAN_SERVER_URL", ""),
+) as client:
+    try:
+        res = client.indexing.people.debug(
+            datasource="gleantest",
+            email="user1@example.com",
+        )
+        print(res)
+    except Exception as e:
+        print(f"Exception when debugging user: {e}")
 ```
 
 </TabItem>
@@ -50,20 +51,14 @@ except glean_indexing_api_client.ApiException as e:
 
 ```json
 {
-  "userStatus": {
+  "status": {
+    "isActiveUser": true,
     "uploadStatus": "UPLOADED",
-    "uploadTime": "2024-02-08T12:00:00.000Z"
+    "lastUploadedAt": "2024-02-08T12:00:00.000Z"
   },
-  "groups": [
+  "uploadedGroups": [
     {
-      "id": "group1",
       "name": "Engineering"
-    }
-  ],
-  "memberships": [
-    {
-      "groupId": "group1",
-      "userId": "user1@example.com"
     }
   ]
 }

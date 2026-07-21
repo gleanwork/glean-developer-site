@@ -28,22 +28,22 @@ curl -X POST https://customer-be.glean.com/api/index/v1/debug/{datasource}/docum
 <TabItem value="python" label="Python">
 
 ```python
-from glean_indexing_api_client.api import troubleshooting_api
-from glean_indexing_api_client.model.debug_document_request import DebugDocumentRequest
-from glean_indexing_api_client.model.debug_document_response import DebugDocumentResponse
-from pprint import pprint
-# Please refer to the Getting Started page for more details on how to setup api_client
-troubleshoot_api = troubleshooting_api.TroubleshootingApi(api_client)
-debug_document_request = DebugDocumentRequest(
-    datasource="gleantest",
-    object_type="Article",
-    doc_id="art123"
-)
-try:
-    api_response = troubleshoot_api.debug_datasource_document_post(debug_document_request)
-    pprint(api_response)
-except glean_indexing_api_client.ApiException as e:
-    print("Exception when calling TroubleshootingApi->debug_datasource_document_post: %s\n" % e)
+from glean.api_client import Glean
+import os
+
+with Glean(
+    api_token=os.getenv("GLEAN_INDEXING_API_TOKEN", ""),
+    server_url=os.getenv("GLEAN_SERVER_URL", ""),
+) as client:
+    try:
+        res = client.indexing.documents.debug(
+            datasource="gleantest",
+            object_type="Article",
+            doc_id="art123",
+        )
+        print(res)
+    except Exception as e:
+        print(f"Exception when debugging document: {e}")
 ```
 
 </TabItem>
@@ -53,13 +53,14 @@ except glean_indexing_api_client.ApiException as e:
 
 ```json
 {
-  "documentStatus": {
+  "status": {
     "uploadStatus": "UPLOADED",
-    "indexStatus": "INDEXED",
-    "uploadTime": "2024-02-08T12:00:00.000Z",
-    "indexTime": "2024-02-08T12:05:00.000Z"
+    "lastUploadedAt": "2024-02-08T12:00:00.000Z",
+    "indexingStatus": "INDEXED",
+    "lastIndexedAt": "2024-02-08T12:05:00.000Z",
+    "permissionIdentityStatus": "UPLOADED"
   },
-  "permissions": {
+  "uploadedPermissions": {
     "allowAnonymousAccess": false,
     "allowedUsers": [
       {
@@ -70,12 +71,8 @@ except glean_indexing_api_client.ApiException as e:
       }
     ],
     "allowedGroups": [
-      {
-        "id": "group1"
-      }
-    ],
-    "deniedUsers": [],
-    "deniedGroups": []
+      "group1"
+    ]
   }
 }
 ```

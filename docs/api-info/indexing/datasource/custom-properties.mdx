@@ -96,33 +96,34 @@ curl -X POST https://customer-be.glean.com/api/index/v1/adddatasource  \
 <TabItem value="python" label="Python">
 
 ```python
-from glean_indexing_api_client.api import datasources_api
-from glean_indexing_api_client.model.custom_datasource_config import CustomDatasourceConfig
-# Please refer to the Getting Started page for more details on how to setup api_client
-datasource_api = datasources_api.DatasourcesApi(api_client)
+from glean.api_client import Glean
+import os
 
-datasource_config = CustomDatasourceConfig(
-    name="testDatasource",
-    object_definitions=[
-        ObjectDefinition(
-            name="Account",
-            display_label= "Account",
-            property_definitions=[
-                PropertyDefinition(
-                    name="priority",
-                    display_label="Priority",
-                    display_label_plural="Priorities",
-                    property_type="TEXT",
-                    hide_ui_facet=False
-                )
+with Glean(
+    api_token=os.getenv("GLEAN_INDEXING_API_TOKEN", ""),
+    server_url=os.getenv("GLEAN_SERVER_URL", ""),
+) as client:
+    try:
+        client.indexing.datasources.add(
+            name="testDatasource",
+            object_definitions=[
+                {
+                    "name": "Account",
+                    "display_label": "Account",
+                    "property_definitions": [
+                        {
+                            "name": "priority",
+                            "display_label": "Priority",
+                            "display_label_plural": "Priorities",
+                            "property_type": "TEXT",
+                            "hide_ui_facet": False,
+                        }
+                    ],
+                }
             ],
         )
-    ],
-)
-try:
-  datasource_api.adddatasource_post(datasource_config)
-except indexing_api.ApiException as e:
-  print('Exception when calling DatasourcesApi->adddatasource_post: %s\\n' % e)
+    except Exception as e:
+        print(f"Exception when adding datasource: {e}")
 ```
 
 </TabItem>
@@ -148,18 +149,16 @@ curl -X POST https://customer-be.glean.com/api/index/v1/indexdocument \
 -H 'Content-Type : application/json' \
 -d '
 {
-   "document": [
-        {
-            "title": "Account 1",
-            "id": "Account_1",
-            "customProperties": [
-                {
-                    "name": "priority",
-                    "value": "High",
-                }
-            ]
-        }
-   ]
+   "document": {
+        "title": "Account 1",
+        "id": "Account_1",
+        "customProperties": [
+            {
+                "name": "priority",
+                "value": "High"
+            }
+        ]
+   }
 }'
 ```
 
@@ -167,36 +166,27 @@ curl -X POST https://customer-be.glean.com/api/index/v1/indexdocument \
 <TabItem value="python" label="Python">
 
 ```python
-from glean_indexing_api_client.api import documents_api
-from glean_indexing_api_client.model.index_document_request import IndexDocumentRequest
-from glean_indexing_api_client.model.document_definition import DocumentDefinition
-from glean_indexing_api_client.model.content_definition import ContentDefinition
-from glean_indexing_api_client.model.user_reference_definition import (
-    UserReferenceDefinition,
-)
-from glean_indexing_api_client.model.document_permissions_definition import (
-    DocumentPermissionsDefinition,
-)
+from glean.api_client import Glean, models
+import os
 
-request = IndexDocumentRequest(
-    # DocumentDefinition has many fields, we show the usage of a few basic ones.
-    document=DocumentDefinition(
-        title='Account 1',
-        id='Account_1',
-        custom_properties=[
-            CustomProperty(
-                name='priority',
-                value='High'
+with Glean(
+    api_token=os.getenv("GLEAN_INDEXING_API_TOKEN", ""),
+    server_url=os.getenv("GLEAN_SERVER_URL", ""),
+) as client:
+    try:
+        # DocumentDefinition has many fields, we show the usage of a few basic ones.
+        client.indexing.documents.add_or_update(
+            document=models.DocumentDefinition(
+                datasource="testDatasource",
+                title="Account 1",
+                id="Account_1",
+                custom_properties=[
+                    {"name": "priority", "value": "High"},
+                ],
             )
-        ]
-    )
-)
-# Please refer to the Getting Started page for more details on how to setup api_client
-documents_api = documents_api.DocumentsApi(api_client)
-try:
-    documents_api.indexdocument_post(request)
-except indexing_api.ApiException as e:
-    print("Exception when calling DocumentsApi->indexdocument_post: %s\n" % e)
+        )
+    except Exception as e:
+        print(f"Exception when indexing document: {e}")
 ```
 
 </TabItem>
