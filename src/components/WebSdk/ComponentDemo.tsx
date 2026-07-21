@@ -5,18 +5,43 @@ import LiveWidget, { type LiveKind } from './live/LiveWidget';
 import { connect, disconnect, useLiveDemoState } from './live/store';
 import styles from './live/live.module.css';
 
+const GLEAN_URL = /^https:\/\/[^\s/]+\.glean\.com\/?$/i;
+
 function ConnectCard(): React.ReactElement {
+  const [webAppUrl, setWebAppUrl] = useState('');
   const [backend, setBackend] = useState('');
-  const [invalid, setInvalid] = useState(false);
+  const [error, setError] = useState('');
 
   const submit = () => {
-    const value = backend.trim();
-    if (value && !/^https:\/\/[^\s/]+\.glean\.com\/?$/i.test(value)) {
-      setInvalid(true);
+    let app = webAppUrl.trim();
+    const be = backend.trim();
+    if ((app && !GLEAN_URL.test(app)) || (be && !GLEAN_URL.test(be))) {
+      setError(
+        "That doesn't look like a Glean URL — expected something like https://app.glean.com or https://acme-be.glean.com/.",
+      );
       return;
     }
-    connect(value);
+    if (!app && be) {
+      // Derive the web app URL from a conventional {x}-be.glean.com backend.
+      const derived = be.replace(/-be\.glean\.com\/?$/i, '.glean.com');
+      if (derived === be) {
+        setError(
+          'Enter your web app URL too — it cannot be derived from this backend URL.',
+        );
+        return;
+      }
+      app = derived;
+    }
+    if (!app) {
+      setError(
+        'Enter at least your web app URL — the address where you normally access Glean.',
+      );
+      return;
+    }
+    connect(be, app);
   };
+
+  const clearError = () => setError('');
 
   return (
     <div className={styles.connectCard}>
@@ -31,35 +56,47 @@ function ConnectCard(): React.ReactElement {
         <input
           className={styles.connectInput}
           onChange={(e) => {
-            setBackend(e.target.value);
-            setInvalid(false);
+            setWebAppUrl(e.target.value);
+            clearError();
           }}
           onKeyDown={(e) => {
             if (e.key === 'Enter') {
               submit();
             }
           }}
-          placeholder="https://{company}-be.glean.com/"
+          placeholder="Web app URL — https://app.glean.com"
+          value={webAppUrl}
+        />
+      </div>
+      <div className={styles.connectRow}>
+        <input
+          className={styles.connectInput}
+          onChange={(e) => {
+            setBackend(e.target.value);
+            clearError();
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              submit();
+            }
+          }}
+          placeholder="Backend URL (optional) — https://{company}-be.glean.com/"
           value={backend}
         />
         <button className={styles.connectBtn} onClick={submit} type="button">
           Connect
         </button>
       </div>
-      {invalid ? (
-        <p className={styles.liveError}>
-          That doesn&apos;t look like a Glean backend URL — expected something
-          like https://acme-be.glean.com/.
-        </p>
-      ) : null}
+      {error ? <p className={styles.liveError}>{error}</p> : null}
       <p className={styles.connectHint}>
-        Find your backend URL at{' '}
+        The web app URL is where you normally access Glean (often{' '}
+        <code>app.glean.com</code>). Both values are shown at{' '}
         <Link to="https://app.glean.com/admin/about-glean">
           app.glean.com/admin/about-glean
-        </Link>{' '}
-        under &ldquo;Server instance (QE)&rdquo; — or leave it blank and the
-        widget will ask for your work email to locate it. Already signed in to
-        Glean in this browser? The widgets reuse that session automatically.
+        </Link>
+        ; leave the backend blank and the widget will ask for your work email to
+        locate it. Already signed in to Glean in this browser? The widgets reuse
+        that session automatically.
       </p>
     </div>
   );
@@ -74,7 +111,11 @@ function LivePane({ kind }: { kind: LiveKind }): React.ReactElement {
 
   return (
     <>
-      <LiveWidget backend={state.backend} kind={kind} />
+      <LiveWidget
+        backend={state.backend}
+        kind={kind}
+        webAppUrl={state.webAppUrl}
+      />
       <p className={styles.liveCaption}>
         <span className={styles.liveCaptionBadge}>Live</span>
         <span>

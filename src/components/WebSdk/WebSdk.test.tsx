@@ -185,15 +185,15 @@ describe('ComponentDemo', () => {
     );
     await userEvent.click(screen.getByText('Live — your instance'));
     await userEvent.type(
-      screen.getByPlaceholderText('https://{company}-be.glean.com/'),
+      screen.getByPlaceholderText(/Backend URL/),
       'https://evil.example.com/',
     );
     await userEvent.click(screen.getByText('Connect'));
-    expect(screen.getByText(/doesn't look like a Glean backend/)).toBeVisible();
+    expect(screen.getByText(/doesn't look like a Glean URL/)).toBeVisible();
     expect(sdkMocks.renderChat).not.toHaveBeenCalled();
   });
 
-  it('renders the live widget after connecting with a valid backend', async () => {
+  it('derives the web app URL from a conventional backend URL', async () => {
     mockMatchMedia(true);
     render(
       <ComponentDemo kind="chat">
@@ -202,14 +202,17 @@ describe('ComponentDemo', () => {
     );
     await userEvent.click(screen.getByText('Live — your instance'));
     await userEvent.type(
-      screen.getByPlaceholderText('https://{company}-be.glean.com/'),
+      screen.getByPlaceholderText(/Backend URL/),
       'https://acme-be.glean.com/',
     );
     await userEvent.click(screen.getByText('Connect'));
     await vi.waitFor(() => {
       expect(sdkMocks.renderChat).toHaveBeenCalledWith(
         expect.any(HTMLElement),
-        expect.objectContaining({ backend: 'https://acme-be.glean.com/' }),
+        expect.objectContaining({
+          backend: 'https://acme-be.glean.com/',
+          webAppUrl: 'https://acme.glean.com',
+        }),
       );
     });
     expect(screen.getByText('Disconnect')).toBeInTheDocument();
@@ -217,7 +220,7 @@ describe('ComponentDemo', () => {
     expect(screen.getByText('Connect your Glean instance')).toBeInTheDocument();
   });
 
-  it('connects with an empty backend for email discovery', async () => {
+  it('connects with only a web app URL for email discovery', async () => {
     mockMatchMedia(true);
     render(
       <ComponentDemo kind="settings">
@@ -225,13 +228,34 @@ describe('ComponentDemo', () => {
       </ComponentDemo>,
     );
     await userEvent.click(screen.getByText('Live — your instance'));
+    await userEvent.type(
+      screen.getByPlaceholderText(/Web app URL/),
+      'https://app.glean.com',
+    );
     await userEvent.click(screen.getByText('Connect'));
     await vi.waitFor(() => {
       expect(sdkMocks.renderSettings).toHaveBeenCalledWith(
         expect.any(HTMLElement),
-        expect.not.objectContaining({ backend: expect.anything() }),
+        expect.objectContaining({ webAppUrl: 'https://app.glean.com' }),
       );
     });
+    expect(sdkMocks.renderSettings).toHaveBeenCalledWith(
+      expect.any(HTMLElement),
+      expect.not.objectContaining({ backend: expect.anything() }),
+    );
+  });
+
+  it('requires a web app URL when none can be derived', async () => {
+    mockMatchMedia(true);
+    render(
+      <ComponentDemo kind="chat">
+        <ChatPreview />
+      </ComponentDemo>,
+    );
+    await userEvent.click(screen.getByText('Live — your instance'));
+    await userEvent.click(screen.getByText('Connect'));
+    expect(screen.getByText(/Enter at least your web app URL/)).toBeVisible();
+    expect(sdkMocks.renderChat).not.toHaveBeenCalled();
   });
 });
 

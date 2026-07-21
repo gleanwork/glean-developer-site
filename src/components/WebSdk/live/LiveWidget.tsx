@@ -20,9 +20,11 @@ const WIDGET_KEYS: Record<LiveKind, string> = {
 export default function LiveWidget({
   kind,
   backend,
+  webAppUrl,
 }: {
   kind: LiveKind;
   backend: string;
+  webAppUrl: string;
 }): React.ReactElement {
   const stageRef = useRef<HTMLDivElement>(null);
   const secondaryRef = useRef<HTMLDivElement>(null);
@@ -40,6 +42,10 @@ export default function LiveWidget({
         }
         const base = {
           ...(backend ? { backend } : {}),
+          // The npm bundle can't derive the web-app origin the way the
+          // script tag does from its own src — without webAppUrl the widget
+          // iframes resolve against the embedding page and 404.
+          ...(webAppUrl ? { webAppUrl } : {}),
           key: WIDGET_KEYS[kind],
         };
 
@@ -117,12 +123,15 @@ export default function LiveWidget({
     return () => {
       cancelled = true;
     };
-  }, [kind, backend]);
+  }, [kind, backend, webAppUrl]);
 
   const openSidebar = async () => {
     try {
       const sdk = await import('@gleanwork/web-sdk');
-      await sdk.openSidebar(backend ? { backend } : {});
+      await sdk.openSidebar({
+        ...(backend ? { backend } : {}),
+        ...(webAppUrl ? { webAppUrl } : {}),
+      });
     } catch {
       setError('The Web SDK failed to load in this browser.');
     }
