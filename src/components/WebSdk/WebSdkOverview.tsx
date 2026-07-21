@@ -310,7 +310,7 @@ export default function WebSdkOverview(): React.ReactElement {
           </button>
           <Link
             className={styles.secondaryCta}
-            to="https://app.glean.com/meta/browser_api/index.html"
+            to="/libraries/web-sdk/reference/"
           >
             {feather('BookOpen')}
             SDK reference

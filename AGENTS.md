@@ -24,6 +24,15 @@ AVOID RUNNING `pnpm start` - this causes very slow build times, and will interup
 - Prefer default styles rather than creating new ones. Leverage existing CSS classes first, either from infima or via custom defined classes
 - Avoid inline CSS styles
 
+## Web SDK reference (generated)
+
+`docs/libraries/web-sdk/reference/` is generated from the installed
+`@gleanwork/web-sdk` type definitions — do not edit those pages by hand.
+When the `@gleanwork/web-sdk` dependency is bumped, run
+`pnpm websdk:reference:generate` and commit the regenerated pages in the
+same PR (mirrors the OpenAPI pattern). Config lives in `typedoc.json`;
+post-processing in `scripts/websdk-reference-generate.mjs`.
+
 ## Code samples (markdown-code)
 
 Code fences in `docs/**/*.mdx` that carry a `snippet=<path>` annotation are

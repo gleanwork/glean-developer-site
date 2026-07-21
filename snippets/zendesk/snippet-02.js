@@ -3,7 +3,7 @@ function initializeGleanSearch () {
   // Note: This should match the backend URL for your Glean setup
   const backend = '<CHANGEME>';
 
-  // See available customizations here: https://app.glean.com/meta/browser_api/interfaces/SearchBoxCustomizations.html
+  // See available customizations here: https://developers.glean.com/libraries/web-sdk/reference/interfaces/SearchBoxCustomizations
   const customizations = {
     boxShadow: 'none',
     borderRadius: 8,
