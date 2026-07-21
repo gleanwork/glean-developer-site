@@ -1,11 +1,17 @@
 /** Canned, fictional engineering-portal data rendered by the Web SDK mocks.
  * Mirrors the cookbook's engineering-portal story (services, runbooks,
  * ownership, on-call) so the previews and the recipes tell one story.
- * Nothing here touches a Glean backend. */
+ * Nothing here touches a Glean backend.
+ *
+ * Composition is fidelity-checked against real widget captures taken via
+ * scripts/websdk-harness (2026-07-21, SDK 2.4.0). */
 
 export const PORTAL_URL = 'portal.internal/engineering';
 
 export const DEMO_QUERY = 'payments service runbook';
+
+/** The real search box's placeholder text. */
+export const DEMO_PLACEHOLDER = 'Search for anything at Glean';
 
 export type SourceKey = 'confluence' | 'github' | 'slack' | 'jira' | 'people';
 
@@ -29,7 +35,7 @@ export const DEMO_RESULTS: DemoResult[] = [
   {
     title: 'Payments Service — Deploy & Rollback Runbook',
     source: 'confluence',
-    meta: 'Engineering Wiki · Updated 2 days ago',
+    meta: 'Priya Natarajan · Updated 2 days ago · Engineering Wiki',
     snippet: {
       pre: 'Canary the ',
       match: 'payments service',
@@ -49,7 +55,7 @@ export const DEMO_RESULTS: DemoResult[] = [
   {
     title: '#payments-oncall — canary alarm follow-up',
     source: 'slack',
-    meta: 'Thread · Yesterday',
+    meta: 'Marcus Webb · Yesterday',
     snippet: {
       pre: 'The alarm cleared after we rolled back — updating the ',
       match: 'runbook',
@@ -58,27 +64,36 @@ export const DEMO_RESULTS: DemoResult[] = [
   },
 ];
 
-export const DEMO_SUGGESTIONS = [
-  { text: 'payments service runbook', kind: 'search' as const },
-  { text: 'who owns the payments service?', kind: 'ai' as const },
+/** Document suggestions shown in the autocomplete card. */
+export const DEMO_DOC_SUGGESTIONS = [
   {
-    text: 'Payments Service — Deploy & Rollback Runbook',
-    kind: 'doc' as const,
+    title: 'Payments Service — Deploy & Rollback Runbook',
+    source: 'confluence' as SourceKey,
+    meta: 'Engineering Wiki · Updated 2 days ago',
   },
-  { text: 'checkout on-call schedule', kind: 'search' as const },
+  {
+    title: 'payments-service',
+    source: 'github' as SourceKey,
+    meta: 'git.internal/payments-service · 1mo ago',
+  },
 ];
 
-export const DEMO_TABS = ['All', 'Confluence', 'GitHub', 'Slack', 'Jira'];
+/** Filter-operator hint rows, as the real autocomplete shows them. */
+export const DEMO_FILTER_HINTS = [
+  { chip: 'from:', hint: 'teammate' },
+  { chip: 'type:', hint: 'bug, document, message, etc.' },
+  { chip: 'updated:', hint: 'today, past_week, etc.' },
+  { chip: 'app:', hint: 'Drive, Jira, etc.' },
+];
+
+/** Filter chips shown above real search results. */
+export const DEMO_RESULT_CHIPS = ['All filters', 'From: me', 'Updated'];
 
 export const DEMO_CHAT = {
-  question: 'Who owns the payments service?',
+  title: 'Who owns the payments service?',
   answer: [
     'The payments service is owned by the Payments Platform team.',
-    'Priya Natarajan is the tech lead, and Marcus Webb is on call this week.',
-  ],
-  citations: [
-    { title: 'payments-service · CODEOWNERS', source: 'github' as SourceKey },
-    { title: 'On-call schedule — Payments', source: 'confluence' as SourceKey },
+    'Priya Natarajan is the tech lead, and Marcus Webb is on call this week — the deploy and rollback runbook lives in the Engineering Wiki.',
   ],
 };
 
@@ -101,15 +116,8 @@ export const DEMO_RECOMMENDATIONS = [
 ];
 
 export const DEMO_DATASOURCES = [
-  {
-    name: 'GitHub',
-    detail: 'Pull requests and code review activity',
-    connected: true,
-  },
-  {
-    name: 'Slack',
-    detail: 'Private channels and direct messages',
-    connected: false,
-  },
-  { name: 'Jira', detail: 'Issues assigned to you', connected: false },
+  { name: 'GitHub', source: 'github' as SourceKey, connected: true },
+  { name: 'Jira', source: 'jira' as SourceKey, connected: true },
+  { name: 'Slack', source: 'slack' as SourceKey, connected: false },
+  { name: 'Confluence', source: 'confluence' as SourceKey, connected: false },
 ];

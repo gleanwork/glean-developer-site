@@ -51,17 +51,18 @@ describe('Web SDK mocks', () => {
     expect(screen.getByText('payments service runbook')).toBeInTheDocument();
   });
 
-  it('MockAutocomplete shows suggestions including the AI ask', () => {
+  it('MockAutocomplete shows doc suggestions and filter hints', () => {
     render(<MockAutocomplete />);
     expect(
-      screen.getByText('who owns the payments service?'),
+      screen.getByText('Payments Service — Deploy & Rollback Runbook'),
     ).toBeInTheDocument();
-    expect(screen.getByText('Ask AI')).toBeInTheDocument();
+    expect(screen.getByText('from:')).toBeInTheDocument();
   });
 
-  it('MockSearchResults shows tabs and result titles', () => {
+  it('MockSearchResults shows chips, tabs, and result titles', () => {
     render(<MockSearchResults />);
     expect(screen.getByText('All')).toBeInTheDocument();
+    expect(screen.getByText('All filters')).toBeInTheDocument();
     expect(
       screen.getByText('Payments Service — Deploy & Rollback Runbook'),
     ).toBeInTheDocument();
@@ -72,10 +73,11 @@ describe('Web SDK mocks', () => {
     expect(screen.getByText('payments-service')).toBeInTheDocument();
   });
 
-  it('MockSidebar shows contextual recommendations', () => {
+  it('MockSidebar shows the assistant panel with the Chat/Search toggle', () => {
     render(<MockSidebar />);
-    expect(screen.getByText('Related to this page')).toBeInTheDocument();
-    expect(screen.getByText('Checkout — On-call Runbook')).toBeInTheDocument();
+    expect(screen.getByText('Ask Assistant anything')).toBeInTheDocument();
+    expect(screen.getByText('Chat')).toBeInTheDocument();
+    expect(screen.getByText('Reference current page')).toBeInTheDocument();
   });
 
   it('MockRecommendations shows the recommended rows', () => {
@@ -86,10 +88,10 @@ describe('Web SDK mocks', () => {
     ).toBeInTheDocument();
   });
 
-  it('MockSettings shows connected and unconnected datasources', () => {
+  it('MockSettings shows the connector grid with connect states', () => {
     render(<MockSettings />);
-    expect(screen.getByText('Connected accounts')).toBeInTheDocument();
     expect(screen.getByText('Connected')).toBeInTheDocument();
+    expect(screen.getAllByLabelText('Connected').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Connect').length).toBeGreaterThan(0);
   });
 

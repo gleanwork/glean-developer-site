@@ -110,7 +110,7 @@ const TILES: Tile[] = [
   },
   {
     name: 'Sidebar Search',
-    desc: 'A slide-out panel with search and contextual recommendations.',
+    desc: 'A slide-out Glean Assistant panel with chat and search.',
     call: 'openSidebar(options)',
     href: '/libraries/web-sdk/components/sidebar',
     badge: { label: 'Deprecated', warn: true },

@@ -1,6 +1,9 @@
 /* Shared styles for the Web SDK living mocks: fictional engineering-portal
  * previews rendered entirely from canned data (see demoData.ts). Everything
- * uses --gdt tokens so the mocks track light/dark mode. */
+ * uses --gdt tokens so the mocks track light/dark mode.
+ *
+ * Composition is fidelity-checked against real widget captures taken via
+ * scripts/websdk-harness (2026-07-21, SDK 2.4.0). */
 
 /* ---- Portal backdrop (the "host page" the widget embeds into) ---- */
 
@@ -85,6 +88,49 @@
   width: 56%;
 }
 
+/* ---- Datasource tiles (generic stand-ins for real app logos) ---- */
+
+.sourceTile {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: var(--gdt-font-display);
+}
+
+.sourceTileSm {
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  font-size: 9.5px;
+}
+
+.tileConfluence {
+  background: #1d6fb8;
+}
+
+.tileGithub {
+  background: #24292e;
+}
+
+.tileSlack {
+  background: #611f69;
+}
+
+.tileJira {
+  background: #2684ff;
+}
+
+.tilePeople {
+  background: #22c55e;
+}
+
 /* ---- Search input ---- */
 
 .searchInput {
@@ -93,7 +139,7 @@
   gap: 9px;
   height: 40px;
   padding: 0 14px;
-  border-radius: 10px;
+  border-radius: 12px;
   border: 1px solid var(--gdt-border-dark);
   background: var(--gdt-card-bg);
   color: var(--gdt-text-primary);
@@ -131,101 +177,141 @@
   }
 }
 
-/* ---- Suggestion dropdown ---- */
+/* ---- Autocomplete card (input + suggestions in one container, per the
+ * real widget) ---- */
 
-.dropdown {
-  margin-top: 6px;
-  border-radius: 12px;
+.searchCard {
+  border-radius: 16px;
   border: 1px solid var(--gdt-border-light);
   background: var(--gdt-card-bg);
-  box-shadow: 0 12px 28px -8px rgba(0, 0, 0, 0.18);
+  box-shadow: 0 12px 28px -8px rgba(0, 0, 0, 0.14);
+  padding: 6px 0 0;
   overflow: hidden;
 }
 
-.suggestRow {
+.searchCardInput {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 9px 14px;
-  font-size: 12.5px;
-  color: var(--gdt-text-primary);
+  padding: 10px 16px 12px;
   border-bottom: 1px solid var(--gdt-hairline);
+  color: var(--gdt-text-primary);
+  font-size: 13.5px;
 }
 
-.suggestRow:last-child {
-  border-bottom: none;
+.suggestDoc {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 16px;
 }
 
-.suggestRowActive {
-  background: var(--gdt-selected-bg);
+.suggestDocBody {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
 }
 
-.suggestIcon {
-  display: inline-flex;
+.suggestDocTitle {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--gdt-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+html[data-theme='dark'] .suggestDocTitle {
+  color: var(--gdt-info-fg);
+}
+
+.suggestDocMeta {
+  font-size: 11px;
   color: var(--gdt-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.suggestFilter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 16px;
+  font-size: 12px;
+  color: var(--gdt-text-secondary);
+}
+
+.suggestFilterIcon {
+  display: inline-flex;
   flex: none;
 }
 
-.suggestIconAi {
-  color: var(--gdt-primary);
+.filterChip {
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--gdt-bg-mid);
+  color: var(--gdt-text-primary);
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 11px;
 }
 
-.suggestHint {
-  margin-left: auto;
-  font-size: 10.5px;
-  color: var(--gdt-text-secondary);
+.suggestFilterHint {
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-/* ---- Source badges ---- */
+.enterHint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px 10px;
+  font-size: 11px;
+  color: var(--gdt-text-secondary);
+}
 
-.sourceBadge {
+.enterKey {
+  padding: 1px 6px;
+  border-radius: 4px;
+  border: 1px solid var(--gdt-border-light);
+  font-size: 10px;
+}
+
+/* ---- Result chips + tabs + rows ---- */
+
+.chipRow {
+  display: flex;
+  gap: 8px;
+  padding-bottom: 10px;
+}
+
+.resultChip {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  font-size: 10.5px;
-  font-weight: 600;
-  color: var(--gdt-text-secondary);
+  gap: 4px;
+  height: 24px;
+  padding: 0 10px;
+  border-radius: 9999px;
+  background: var(--gdt-bg-mid);
+  color: var(--gdt-text-primary);
+  font-size: 11px;
+  font-weight: 550;
   white-space: nowrap;
 }
-
-.sourceDot {
-  width: 7px;
-  height: 7px;
-  border-radius: 9999px;
-  flex: none;
-}
-
-.sourceDotConfluence {
-  background: #1d6fb8;
-}
-
-.sourceDotGithub {
-  background: #6e5494;
-}
-
-.sourceDotSlack {
-  background: #e01e5a;
-}
-
-.sourceDotJira {
-  background: #2684ff;
-}
-
-.sourceDotPeople {
-  background: #22c55e;
-}
-
-/* ---- Result tabs + rows ---- */
 
 .tabs {
   display: flex;
+  align-items: center;
   gap: 16px;
   padding: 0 2px;
   border-bottom: 1px solid var(--gdt-border-light);
 }
 
 .tab {
+  display: inline-flex;
+  align-items: center;
   padding: 7px 0 8px;
   font-size: 12px;
   color: var(--gdt-text-secondary);
@@ -233,15 +319,15 @@
 }
 
 .tabActive {
-  color: var(--gdt-primary);
+  color: var(--gdt-text-primary);
   font-weight: 650;
-  box-shadow: inset 0 -2px 0 var(--gdt-primary);
+  box-shadow: inset 0 -2px 0 var(--gdt-text-primary);
 }
 
 .resultRow {
   display: flex;
-  flex-direction: column;
-  gap: 3px;
+  align-items: flex-start;
+  gap: 11px;
   padding: 11px 2px;
   border-bottom: 1px solid var(--gdt-hairline);
 }
@@ -250,10 +336,10 @@
   border-bottom: none;
 }
 
-.resultTitleLine {
+.resultBody {
   display: flex;
-  align-items: center;
-  gap: 10px;
+  flex-direction: column;
+  gap: 3px;
   min-width: 0;
 }
 
@@ -290,52 +376,109 @@ html[data-theme='dark'] .resultTitle {
   font-weight: 650;
 }
 
-/* ---- Chat ---- */
+/* ---- Chat (left rail + document-style answer, per the real widget) ---- */
 
-.chat {
+.chatShell {
   display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 16px;
-  background: var(--gdt-card-bg);
   height: 100%;
+  background: var(--gdt-card-bg);
 }
 
-.chatBubbleUser {
-  align-self: flex-end;
-  max-width: 78%;
-  padding: 8px 13px;
-  border-radius: 14px 14px 3px 14px;
-  background: var(--gdt-primary);
-  color: #fff;
-  font-size: 12.5px;
-  line-height: 1.45;
-}
-
-.chatBubbleAssistant {
-  align-self: flex-start;
-  max-width: 88%;
-  padding: 10px 13px;
-  border-radius: 14px 14px 14px 3px;
+.chatRail {
+  flex: none;
+  width: 118px;
+  padding: 12px 10px;
   background: var(--gdt-bg-light);
-  border: 1px solid var(--gdt-hairline);
-  color: var(--gdt-text-primary);
-  font-size: 12.5px;
-  line-height: 1.55;
+  border-right: 1px solid var(--gdt-hairline);
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 7px;
+  overflow: hidden;
 }
 
-.chatAssistantLabel {
+.chatRailItem {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 10.5px;
+  font-size: 11px;
+  color: var(--gdt-text-primary);
+  white-space: nowrap;
+}
+
+.chatRailItemActive {
   font-weight: 650;
-  color: var(--gdt-primary);
+}
+
+.chatRailHeading {
+  margin-top: 8px;
+  font-size: 9.5px;
+  font-weight: 650;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  color: var(--gdt-text-secondary);
+}
+
+.chatRailHistory {
+  font-size: 10.5px;
+  color: var(--gdt-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chatMain {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 12px 16px 14px;
+}
+
+.chatTitleBar {
+  display: flex;
+  align-items: center;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--gdt-hairline);
+}
+
+.chatTitle {
+  flex: 1;
+  text-align: center;
+  font-size: 12px;
+  color: var(--gdt-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chatShare {
+  flex: none;
+  padding: 3px 11px;
+  border-radius: 9999px;
+  border: 1px solid var(--gdt-border-light);
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--gdt-text-primary);
+}
+
+.chatAnswer {
+  flex: 1;
+  padding: 12px 4px;
+  overflow: hidden;
+}
+
+.chatParagraph {
+  margin: 0 0 8px;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--gdt-text-primary);
+}
+
+.chatActions {
+  display: inline-flex;
+  gap: 10px;
+  color: var(--gdt-text-secondary);
+  padding-top: 2px;
 }
 
 .typing {
@@ -373,43 +516,35 @@ html[data-theme='dark'] .resultTitle {
   }
 }
 
-.citations {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 2px;
-}
-
-.citationChip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 3px 9px;
-  border-radius: 9999px;
-  border: 1px solid var(--gdt-border-light);
-  background: var(--gdt-card-bg);
-  font-size: 10.5px;
-  color: var(--gdt-text-primary);
-  white-space: nowrap;
-}
-
 .chatInputRow {
-  margin-top: auto;
+  flex: none;
   display: flex;
   align-items: center;
   gap: 9px;
   height: 38px;
   padding: 0 13px;
-  border-radius: 10px;
+  border-radius: 12px;
   border: 1px solid var(--gdt-border-dark);
   color: var(--gdt-text-secondary);
   font-size: 12.5px;
 }
 
-.chatSend {
+.chatInputIcons {
   margin-left: auto;
   display: inline-flex;
-  color: var(--gdt-primary);
+  align-items: center;
+  gap: 8px;
+}
+
+.sendCircle {
+  width: 22px;
+  height: 22px;
+  border-radius: 9999px;
+  background: var(--gdt-text-primary);
+  color: var(--gdt-card-bg);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* ---- Modal search ---- */
@@ -424,29 +559,44 @@ html[data-theme='dark'] .resultTitle {
 }
 
 .modalBox {
-  width: min(430px, 100%);
+  width: min(440px, 100%);
   height: fit-content;
   border-radius: 14px;
   background: var(--gdt-card-bg);
   box-shadow: 0 24px 48px -12px rgba(0, 0, 0, 0.35);
-  padding: 12px;
+  padding: 12px 0;
 }
 
-/* ---- Sidebar ---- */
+.modalBox > :first-child {
+  margin: 0 12px;
+}
+
+.modalSuggestions {
+  padding-top: 6px;
+}
+
+.poweredBy {
+  padding: 8px 16px 2px;
+  border-top: 1px solid var(--gdt-hairline);
+  text-align: center;
+  font-size: 10px;
+  color: var(--gdt-text-secondary);
+}
+
+/* ---- Sidebar (assistant panel, per the current widget) ---- */
 
 .sidebarPanel {
   position: absolute;
   top: 0;
   right: 0;
   bottom: 0;
-  width: min(260px, 62%);
+  width: min(270px, 64%);
   background: var(--gdt-card-bg);
   border-left: 1px solid var(--gdt-border-light);
   box-shadow: -16px 0 32px -12px rgba(0, 0, 0, 0.2);
-  padding: 14px;
+  padding: 12px 14px 14px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
   animation: mock-slide-in 0.5s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
@@ -461,6 +611,106 @@ html[data-theme='dark'] .resultTitle {
   }
 }
 
+.sidebarHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--gdt-primary);
+}
+
+.sidebarToggle {
+  display: inline-flex;
+  padding: 2px;
+  border-radius: 9999px;
+  background: var(--gdt-bg-mid);
+  margin-left: auto;
+}
+
+.sidebarToggleOpt {
+  padding: 2px 10px;
+  border-radius: 9999px;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--gdt-text-secondary);
+}
+
+.sidebarToggleActive {
+  background: var(--gdt-card-bg);
+  color: var(--gdt-text-primary);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+.sidebarClose {
+  display: inline-flex;
+  color: var(--gdt-text-secondary);
+}
+
+.sidebarHeading {
+  font-family: var(--gdt-font-display);
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  color: var(--gdt-text-primary);
+  padding: 18px 0 0;
+}
+
+.sidebarFooter {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.refToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 10.5px;
+  color: var(--gdt-text-primary);
+}
+
+.refToggleKnob {
+  flex: none;
+  width: 26px;
+  height: 15px;
+  border-radius: 9999px;
+  background: var(--gdt-text-primary);
+  position: relative;
+}
+
+.refToggleKnob::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 11px;
+  height: 11px;
+  border-radius: 9999px;
+  background: var(--gdt-card-bg);
+}
+
+.sidebarInput {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 11px;
+  border-radius: 11px;
+  border: 1px solid var(--gdt-border-dark);
+  color: var(--gdt-text-secondary);
+  font-size: 11.5px;
+}
+
+.sidebarInputIcons {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--gdt-text-secondary);
+}
+
+/* ---- Panels shared ---- */
+
 .panelHeading {
   font-size: 10.5px;
   font-weight: 650;
@@ -471,14 +721,21 @@ html[data-theme='dark'] .resultTitle {
 
 .recRow {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  align-items: flex-start;
+  gap: 9px;
   padding: 8px 0;
   border-bottom: 1px solid var(--gdt-hairline);
 }
 
 .recRow:last-child {
   border-bottom: none;
+}
+
+.recBody {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
 }
 
 .recTitle {
@@ -491,9 +748,6 @@ html[data-theme='dark'] .resultTitle {
 }
 
 .recMetaLine {
-  display: flex;
-  align-items: center;
-  gap: 8px;
   font-size: 10.5px;
   color: var(--gdt-text-secondary);
 }
@@ -509,14 +763,21 @@ html[data-theme='dark'] .resultTitle {
   height: 100%;
 }
 
-/* ---- Settings widget ---- */
+/* ---- Settings widget (connector-card grid, per the real widget) ---- */
 
 .settingsCard {
   display: flex;
   flex-direction: column;
+  gap: 12px;
   padding: 14px 16px;
   background: var(--gdt-card-bg);
   height: 100%;
+}
+
+.settingsSection {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .settingsTitle {
@@ -524,63 +785,56 @@ html[data-theme='dark'] .resultTitle {
   font-size: 13.5px;
   font-weight: 650;
   color: var(--gdt-text-primary);
-  padding-bottom: 4px;
 }
 
-.settingsRow {
+.settingsSub {
+  font-size: 11px;
+  color: var(--gdt-text-secondary);
+}
+
+.settingsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.connectorCard {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 11px 0;
-  border-bottom: 1px solid var(--gdt-hairline);
-}
-
-.settingsRow:last-child {
-  border-bottom: none;
-}
-
-.settingsText {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--gdt-border-light);
+  background: var(--gdt-card-bg);
   min-width: 0;
 }
 
 .settingsName {
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--gdt-text-primary);
-}
-
-.settingsDetail {
-  font-size: 11px;
-  color: var(--gdt-text-secondary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.connectBtn {
-  margin-left: auto;
-  flex: none;
-  padding: 4px 12px;
-  border-radius: 8px;
-  border: 1px solid var(--gdt-border-dark);
-  background: var(--gdt-card-bg);
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--gdt-text-primary);
-}
-
-.connectedBadge {
+.connectedCheck {
   margin-left: auto;
   flex: none;
   display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 11px;
-  font-weight: 600;
   color: var(--gdt-success);
+}
+
+.connectBtn {
+  margin-left: auto;
+  flex: none;
+  padding: 3px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--gdt-border-dark);
+  background: var(--gdt-card-bg);
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--gdt-text-primary);
 }
 
 /* ---- Caption under every mock ---- */

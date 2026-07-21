@@ -3,12 +3,12 @@ import { getIcon } from '@gleanwork/docusaurus-theme-glean/Icons';
 import styles from './mocks.module.css';
 import { SOURCE_LABELS, type DemoResult, type SourceKey } from './demoData';
 
-const SOURCE_DOT_CLASS: Record<SourceKey, string> = {
-  confluence: styles.sourceDotConfluence,
-  github: styles.sourceDotGithub,
-  slack: styles.sourceDotSlack,
-  jira: styles.sourceDotJira,
-  people: styles.sourceDotPeople,
+const SOURCE_TILE_CLASS: Record<SourceKey, string> = {
+  confluence: styles.tileConfluence,
+  github: styles.tileGithub,
+  slack: styles.tileSlack,
+  jira: styles.tileJira,
+  people: styles.tilePeople,
 };
 
 /** True when the user prefers reduced motion. Defaults to true (no motion)
@@ -30,15 +30,22 @@ export function usePrefersReducedMotion(): boolean {
   return reduced;
 }
 
-export function SourceBadge({
+/** Small colored datasource tile (generic stand-in for real app logos). */
+export function SourceTile({
   source,
+  size = 'md',
 }: {
   source: SourceKey;
+  size?: 'sm' | 'md';
 }): React.ReactElement {
   return (
-    <span className={styles.sourceBadge}>
-      <span className={`${styles.sourceDot} ${SOURCE_DOT_CLASS[source]}`} />
-      {SOURCE_LABELS[source]}
+    <span
+      aria-label={SOURCE_LABELS[source]}
+      className={`${styles.sourceTile} ${
+        size === 'sm' ? styles.sourceTileSm : ''
+      } ${SOURCE_TILE_CLASS[source]}`}
+    >
+      {SOURCE_LABELS[source][0]}
     </span>
   );
 }
@@ -71,6 +78,7 @@ export function SearchInput({
   );
 }
 
+/** Result row per the real widget: datasource tile, title, meta, snippet. */
 export function ResultRow({
   result,
 }: {
@@ -78,16 +86,16 @@ export function ResultRow({
 }): React.ReactElement {
   return (
     <div className={styles.resultRow}>
-      <div className={styles.resultTitleLine}>
+      <SourceTile source={result.source} />
+      <div className={styles.resultBody}>
         <span className={styles.resultTitle}>{result.title}</span>
-        <SourceBadge source={result.source} />
+        <span className={styles.resultMeta}>{result.meta}</span>
+        <span className={styles.resultSnippet}>
+          {result.snippet.pre}
+          <span className={styles.snippetMatch}>{result.snippet.match}</span>
+          {result.snippet.post}
+        </span>
       </div>
-      <span className={styles.resultMeta}>{result.meta}</span>
-      <span className={styles.resultSnippet}>
-        {result.snippet.pre}
-        <span className={styles.snippetMatch}>{result.snippet.match}</span>
-        {result.snippet.post}
-      </span>
     </div>
   );
 }
@@ -103,11 +111,11 @@ export function RecRow({
 }): React.ReactElement {
   return (
     <div className={styles.recRow}>
-      <span className={styles.recTitle}>{title}</span>
-      <span className={styles.recMetaLine}>
-        <SourceBadge source={source} />
-        {meta}
-      </span>
+      <SourceTile size="sm" source={source} />
+      <div className={styles.recBody}>
+        <span className={styles.recTitle}>{title}</span>
+        <span className={styles.recMetaLine}>{meta}</span>
+      </div>
     </div>
   );
 }
