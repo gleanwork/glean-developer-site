@@ -91,8 +91,11 @@
         display: block;
       }
       #search-box-container {
-        height: 50px;
+        height: 90px;
         max-width: 640px;
+      }
+      #search-box-section {
+        min-height: 500px;
       }
       #search-results-container {
         height: 560px;
@@ -144,11 +147,12 @@
     </header>
 
     <main>
-      <section>
+      <section id="search-box-section">
         <h2>1 · Search box (renderSearchBox)</h2>
         <p class="hint">
           Compare against MockSearchBox / MockAutocomplete — placeholder, focus
-          ring, dropdown anatomy, any AI affordances.
+          ring, dropdown anatomy, any AI affordances. The section is left tall
+          so the typeahead has room to extend below the box.
         </p>
         <div class="widget" id="search-box-container"></div>
       </section>
@@ -232,7 +236,9 @@
         const opts = commonOptions();
         window.GleanWebSDK.renderSearchBox($('search-box-container'), {
           ...opts,
+          key: 'harness-box',
           query: currentQuery,
+          searchBoxCustomizations: { verticalMargin: 8, horizontalMargin: 8 },
           onSearch: (query) => {
             currentQuery = query;
             renderSearchPair();
@@ -240,7 +246,11 @@
         });
         window.GleanWebSDK.renderSearchResults($('search-results-container'), {
           ...opts,
+          key: 'harness-results',
           query: currentQuery,
+          // Empty query renders a blank frame by default; show home content
+          // so the widget is visible before the first search.
+          showHomePageContent: true,
           onSearch: (query) => {
             currentQuery = query;
             renderSearchPair();
@@ -251,14 +261,21 @@
       function renderAll() {
         const opts = commonOptions();
         renderSearchPair();
-        window.GleanWebSDK.attach($('modal-input'), { ...opts });
-        window.GleanWebSDK.renderChat($('chat-container'), { ...opts });
+        window.GleanWebSDK.attach($('modal-input'), {
+          ...opts,
+          key: 'harness-modal',
+        });
+        window.GleanWebSDK.renderChat($('chat-container'), {
+          ...opts,
+          key: 'harness-chat',
+        });
         window.GleanWebSDK.renderRecommendations(
           $('recommendations-container'),
-          { ...opts },
+          { ...opts, key: 'harness-recs' },
         );
         window.GleanWebSDK.renderSettings($('settings-container'), {
           ...opts,
+          key: 'harness-settings',
         });
         $('sidebar-button').onclick = () =>
           window.GleanWebSDK.openSidebar({ ...opts });
