@@ -43,13 +43,21 @@ const PATH_SCOPES: Record<string, string> = {
 
 /** Scope for the API group being viewed, from the docs path. */
 export function scopeForPath(pathname: string): string | undefined {
-  const match = pathname.match(/\/api\/client-api\/([^/]+)/);
-  return match ? PATH_SCOPES[match[1]] : undefined;
+  const client = pathname.match(/\/api\/client-api\/([^/]+)/);
+  if (client) {
+    return PATH_SCOPES[client[1]];
+  }
+  const platform = pathname.match(/\/api\/platform-api\/platform-([a-z]+)/);
+  if (platform) {
+    return PATH_SCOPES[platform[1]];
+  }
+  return undefined;
 }
 
-/** OAuth is supported on the Client API only. */
+/** OAuth tokens work on the Client and Platform APIs; the Indexing API
+ * requires a Glean-issued token. */
 export function isOAuthEligiblePath(pathname: string): boolean {
-  return /\/api\/client-api\//.test(pathname);
+  return /\/api\/(client-api|platform-api)\//.test(pathname);
 }
 
 function base64Url(bytes: Uint8Array): string {

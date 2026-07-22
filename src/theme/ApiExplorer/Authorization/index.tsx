@@ -3,8 +3,8 @@
  * button: OAuth discovery + Dynamic Client Registration + PKCE against
  * the server URL configured in the explorer's Base URL field. On success
  * the access token is injected into the explorer's bearer-token state
- * (persisted like a pasted token). Client API only — the Indexing API
- * does not accept OAuth tokens.
+ * (persisted like a pasted token). Client and Platform APIs — the
+ * Indexing API requires a Glean-issued token instead.
  */
 import React, { useState } from 'react';
 import { useLocation } from '@docusaurus/router';
