@@ -67,6 +67,21 @@ export function setOverrides(config: LiveDemoConfig): void {
   notify();
 }
 
+const TAB_KEY = 'websdk-live-demo:tab';
+
+/** Sticky tab preference: once a reader uses Live, open Live first on
+ * every component page. No login detection — users self-select. */
+export function getPreferredTab(): 'preview' | 'live' {
+  if (typeof window === 'undefined') {
+    return 'preview';
+  }
+  return window.localStorage.getItem(TAB_KEY) === 'live' ? 'live' : 'preview';
+}
+
+export function setPreferredTab(tab: 'preview' | 'live'): void {
+  window.localStorage.setItem(TAB_KEY, tab);
+}
+
 export function useLiveDemoConfig(): LiveDemoConfig {
   return useSyncExternalStore(
     (cb) => {

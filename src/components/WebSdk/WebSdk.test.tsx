@@ -201,6 +201,37 @@ describe('ComponentDemo', () => {
     expect(screen.getByText(/doesn't look like a Glean URL/)).toBeVisible();
   });
 
+  it('jumps to Live from the mock caption and remembers the choice', async () => {
+    mockMatchMedia(true);
+    const first = render(
+      <ComponentDemo kind="chat">
+        <ChatPreview />
+      </ComponentDemo>,
+    );
+    await userEvent.click(screen.getByText('Try it live \u2192'));
+    await vi.waitFor(() => {
+      expect(sdkMocks.renderChat).toHaveBeenCalled();
+    });
+    first.unmount();
+    // A fresh demo block starts on Live thanks to the sticky preference.
+    render(
+      <ComponentDemo kind="settings">
+        <SettingsPreview />
+      </ComponentDemo>,
+    );
+    await vi.waitFor(() => {
+      expect(sdkMocks.renderSettings).toHaveBeenCalled();
+    });
+    expect(screen.queryByText('Illustrative preview')).not.toBeInTheDocument();
+  });
+
+  it('keeps the caption plain outside a demo block', () => {
+    mockMatchMedia(true);
+    render(<ChatPreview />);
+    expect(screen.getByText('Illustrative preview')).toBeInTheDocument();
+    expect(screen.queryByText('Try it live \u2192')).not.toBeInTheDocument();
+  });
+
   it('applies saved overrides to the live widget', async () => {
     mockMatchMedia(true);
     render(

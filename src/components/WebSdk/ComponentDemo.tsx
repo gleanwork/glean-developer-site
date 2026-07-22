@@ -1,10 +1,13 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from '@docusaurus/Link';
 import BrowserOnly from '@docusaurus/BrowserOnly';
 import LiveWidget, { type LiveKind } from './live/LiveWidget';
+import { LiveTabContext } from './live/LiveTabContext';
 import {
   DEFAULT_WEB_APP_URL,
+  getPreferredTab,
   setOverrides,
+  setPreferredTab,
   useLiveDemoConfig,
 } from './live/store';
 import styles from './live/live.module.css';
@@ -131,26 +134,39 @@ export default function ComponentDemo({
 }): React.ReactElement {
   const [tab, setTab] = useState<'preview' | 'live'>('preview');
 
+  // Readers who have used Live before land on Live everywhere; applied
+  // after mount so SSR and first client render agree.
+  useEffect(() => {
+    setTab(getPreferredTab());
+  }, []);
+
+  const choose = (next: 'preview' | 'live') => {
+    setTab(next);
+    setPreferredTab(next);
+  };
+
   return (
     <div className={styles.demo}>
       <div className={styles.tabRow}>
         <button
           className={`${styles.tab} ${tab === 'preview' ? styles.tabActive : ''}`}
-          onClick={() => setTab('preview')}
+          onClick={() => choose('preview')}
           type="button"
         >
           Preview
         </button>
         <button
           className={`${styles.tab} ${tab === 'live' ? styles.tabActive : ''}`}
-          onClick={() => setTab('live')}
+          onClick={() => choose('live')}
           type="button"
         >
           Live — your instance
         </button>
       </div>
       {tab === 'preview' ? (
-        children
+        <LiveTabContext.Provider value={() => choose('live')}>
+          {children}
+        </LiveTabContext.Provider>
       ) : (
         <BrowserOnly fallback={<div />}>
           {() => <LivePane kind={kind} />}
