@@ -1,36 +1,33 @@
-/** Shared connect-state for the in-page live demos: the reader's Glean
- * backend URL (optional — the SDK falls back to email-based discovery),
- * persisted in localStorage so one connect powers every component page. */
+/** Optional overrides for the in-page live demos. By default the demos
+ * render via https://app.glean.com with no backend — the SDK reuses an
+ * existing glean.com session or runs its own email-based discovery, the
+ * same zero-config path as a script-tag integration. Overrides exist for
+ * custom-subdomain, non-Glean-hosted, and staging deployments, persisted
+ * in localStorage so one configuration covers every component page. */
 
 import { useSyncExternalStore } from 'react';
 
 const KEY = 'websdk-live-demo';
 
-export interface LiveDemoState {
-  connected: boolean;
-  /** Backend URL like https://acme-be.glean.com/ — may be empty, in which
-   * case the widget prompts for the user's email to discover it. */
-  backend: string;
-  /** Web app URL like https://app.glean.com — required by the npm build to
-   * know where the widget iframes are hosted (the script tag derives this
-   * from its own src; the npm bundle cannot). */
+export const DEFAULT_WEB_APP_URL = 'https://app.glean.com';
+
+export interface LiveDemoConfig {
+  /** Web app URL hosting the widget frames. Empty means the default. */
   webAppUrl: string;
+  /** Backend URL override; empty lets the SDK discover it. */
+  backend: string;
 }
 
-const DISCONNECTED: LiveDemoState = {
-  connected: false,
-  backend: '',
-  webAppUrl: '',
-};
+const DEFAULTS: LiveDemoConfig = { webAppUrl: '', backend: '' };
 
-let cached: LiveDemoState = DISCONNECTED;
+let cached: LiveDemoConfig = DEFAULTS;
 let cachedRaw: string | null = null;
 
 const listeners = new Set<() => void>();
 
-function read(): LiveDemoState {
+function read(): LiveDemoConfig {
   if (typeof window === 'undefined') {
-    return DISCONNECTED;
+    return DEFAULTS;
   }
   const raw = window.localStorage.getItem(KEY);
   if (raw === cachedRaw) {
@@ -38,18 +35,17 @@ function read(): LiveDemoState {
   }
   cachedRaw = raw;
   if (!raw) {
-    cached = DISCONNECTED;
+    cached = DEFAULTS;
     return cached;
   }
   try {
     const parsed = JSON.parse(raw);
     cached = {
-      connected: parsed.connected === true,
-      backend: typeof parsed.backend === 'string' ? parsed.backend : '',
       webAppUrl: typeof parsed.webAppUrl === 'string' ? parsed.webAppUrl : '',
+      backend: typeof parsed.backend === 'string' ? parsed.backend : '',
     };
   } catch {
-    cached = DISCONNECTED;
+    cached = DEFAULTS;
   }
   return cached;
 }
@@ -60,24 +56,33 @@ function notify() {
   }
 }
 
-export function connect(backend: string, webAppUrl: string): void {
-  window.localStorage.setItem(
-    KEY,
-    JSON.stringify({
-      connected: true,
-      backend: backend.trim(),
-      webAppUrl: webAppUrl.trim(),
-    }),
-  );
+export function setOverrides(config: LiveDemoConfig): void {
+  const webAppUrl = config.webAppUrl.trim();
+  const backend = config.backend.trim();
+  if (!webAppUrl && !backend) {
+    window.localStorage.removeItem(KEY);
+  } else {
+    window.localStorage.setItem(KEY, JSON.stringify({ webAppUrl, backend }));
+  }
   notify();
 }
 
-export function disconnect(): void {
-  window.localStorage.removeItem(KEY);
-  notify();
+const TAB_KEY = 'websdk-live-demo:tab';
+
+/** Sticky tab preference: once a reader uses Live, open Live first on
+ * every component page. No login detection — users self-select. */
+export function getPreferredTab(): 'preview' | 'live' {
+  if (typeof window === 'undefined') {
+    return 'preview';
+  }
+  return window.localStorage.getItem(TAB_KEY) === 'live' ? 'live' : 'preview';
 }
 
-export function useLiveDemoState(): LiveDemoState {
+export function setPreferredTab(tab: 'preview' | 'live'): void {
+  window.localStorage.setItem(TAB_KEY, tab);
+}
+
+export function useLiveDemoConfig(): LiveDemoConfig {
   return useSyncExternalStore(
     (cb) => {
       listeners.add(cb);
@@ -88,6 +93,6 @@ export function useLiveDemoState(): LiveDemoState {
       };
     },
     read,
-    () => DISCONNECTED,
+    () => DEFAULTS,
   );
 }

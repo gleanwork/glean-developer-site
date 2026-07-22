@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { getIcon } from '@gleanwork/docusaurus-theme-glean/Icons';
+import { LiveTabContext } from '../live/LiveTabContext';
 import styles from './mocks.module.css';
 import { SOURCE_LABELS, type DemoResult, type SourceKey } from './demoData';
 
@@ -160,14 +161,24 @@ export function PortalPage({
   );
 }
 
-/** Honest-labeling caption rendered under every mock. */
+/** Honest-labeling caption rendered under every mock. Inside a demo
+ * block it also offers the jump to the Live tab. */
 export function MockCaption(): React.ReactElement {
+  const goLive = useContext(LiveTabContext);
   return (
     <p className={styles.caption}>
       <span className={styles.captionBadge}>Illustrative preview</span>
       <span>
         Rendered with sample data — in your app, this component renders live
         against your organization&apos;s Glean instance.
+        {goLive ? (
+          <>
+            {' '}
+            <button className={styles.tryLive} onClick={goLive} type="button">
+              Try it live →
+            </button>
+          </>
+        ) : null}
       </span>
     </p>
   );
