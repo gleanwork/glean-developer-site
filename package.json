@@ -59,11 +59,11 @@
     "openapi:clean:before:indexing": "find docs/api/indexing-api -type f ! -name '*-overview.mdx' -delete",
     "openapi:clean:before:platform": "find docs/api/platform-api -type f ! -name '*-overview.mdx' -delete",
     "openapi:transform:all": "pnpm run openapi:transform:client && pnpm run openapi:transform:indexing && pnpm run openapi:transform:platform",
-    "openapi:transform:client": "pnpm run openapi:capitalize:client && pnpm run openapi:break:client",
+    "openapi:transform:client": "pnpm run openapi:capitalize:client && pnpm run openapi:serverurl:client && pnpm run openapi:break:client",
     "openapi:capitalize:client": "node scripts/openapi-capitalize-language.mjs https://gleanwork.github.io/open-api/specs/final/client_rest.yaml openapi/client/client-capitalized.yaml",
     "openapi:break:client": "node scripts/openapi-split-break-circular.mjs openapi/client/client-capitalized.yaml openapi/client/split-apis",
-    "openapi:transform:indexing": "node scripts/openapi-capitalize-language.mjs https://gleanwork.github.io/open-api/specs/final/indexing.yaml openapi/indexing/indexing-capitalized.yaml",
-    "openapi:transform:platform": "node scripts/openapi-capitalize-language.mjs https://gleanwork.github.io/open-api/specs/final/platform.yaml openapi/platform/platform-capitalized.yaml",
+    "openapi:transform:indexing": "node scripts/openapi-capitalize-language.mjs https://gleanwork.github.io/open-api/specs/final/indexing.yaml openapi/indexing/indexing-capitalized.yaml && node scripts/openapi-server-url.mjs openapi/indexing/indexing-capitalized.yaml",
+    "openapi:transform:platform": "node scripts/openapi-capitalize-language.mjs https://gleanwork.github.io/open-api/specs/final/platform.yaml openapi/platform/platform-capitalized.yaml && node scripts/openapi-server-url.mjs openapi/platform/platform-capitalized.yaml",
     "openapi:generate:all": "pnpm run openapi:generate:client && pnpm run openapi:generate:indexing && pnpm run openapi:generate:platform",
     "openapi:generate:client": "npm-run-all \"openapi:generate:client:*\"",
     "openapi:generate:client:activity": "docusaurus gen-api-docs activity",
@@ -91,7 +91,8 @@
     "openapi:clean:after:indexing": "rm -f docs/api/indexing-api/sidebar.ts docs/api/indexing-api/glean-api.info.mdx && find docs/api/indexing-api -type f -name '*.info.mdx' -delete && find docs/api/indexing-api -type f -name '*.tag.mdx' -delete",
     "openapi:clean:after:platform": "rm -f docs/api/platform-api/sidebar.ts docs/api/platform-api/glean-platform-api.info.mdx && find docs/api/platform-api -type f -name '*.info.mdx' -delete && find docs/api/platform-api -type f -name '*.tag.mdx' -delete",
     "icons:sync": "tsx scripts/sync-glean-icons.mts",
-    "websdk:reference:generate": "node scripts/websdk-reference-generate.mjs"
+    "websdk:reference:generate": "node scripts/websdk-reference-generate.mjs",
+    "openapi:serverurl:client": "node scripts/openapi-server-url.mjs openapi/client/client-capitalized.yaml"
   },
   "dependencies": {
     "@docusaurus/core": "^3.10.2",
