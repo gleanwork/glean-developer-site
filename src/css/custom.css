@@ -401,12 +401,112 @@
   display: none;
 }
 
-[data-theme='dark'] .openapi-explorer__request-btn {
-  background-color: var(--glean-client-api-color);
+/* ---- API reference design pass ----
+ * Buttons, section labels, cards, and sidebar affordances aligned with
+ * the gdt design language. Selectors verified against the rendered
+ * explorer DOM. */
+
+/* Page title on API pages matches the docs heading scale */
+.openapi-left-panel__container h1 {
+  font-family: var(--gdt-font-display);
+  font-size: 36px;
+  letter-spacing: -0.8px;
 }
 
-[data-theme='dark'] .openapi-explorer__request-btn:hover {
-  background-color: var(--glean-client-api-color-light);
+/* Send button joins the site's pill-button system (both modes) */
+button.openapi-explorer__request-btn {
+  border-radius: 9999px;
+  border: none;
+  height: 38px;
+  padding: 0 20px;
+  font-family: var(--gdt-font-text);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  background-color: var(--gdt-primary);
+  color: #fff;
+  cursor: pointer;
+}
+
+button.openapi-explorer__request-btn:hover {
+  background-color: var(--gdt-primary-hover);
+}
+
+/* Quiet text-button treatment for the panel's mini actions
+ * (Collapse all / Clear / Edit / Hide) */
+.openapi-explorer__expand-details-btn,
+.openapi-explorer__response-clear-btn,
+.openapi-explorer__floating-btn > button {
+  font-family: var(--gdt-font-text);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--gdt-text-secondary);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.openapi-explorer__expand-details-btn:hover,
+.openapi-explorer__response-clear-btn:hover,
+.openapi-explorer__floating-btn > button:hover {
+  color: var(--gdt-text-primary);
+}
+
+/* Structural labels (Request / Response / Authorization / Query
+ * Parameters / Body) speak the site's eyebrow voice instead of mono */
+.openapi-explorer__request-title,
+.openapi-explorer__response-title,
+.openapi-security__summary-header,
+[class*='openapi-markdown__details-summary-header'] {
+  font-family: var(--gdt-font-text) !important;
+  font-size: 12px !important;
+  font-weight: 650 !important;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--gdt-text-secondary) !important;
+  margin: 0;
+}
+
+/* Accordion titles inside the Request card (Base URL / Auth / …) */
+.openapi-explorer__details-summary {
+  font-family: var(--gdt-font-text);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gdt-text-primary);
+}
+
+/* Auth summary strip matches the card language */
+.openapi-security__summary-container {
+  border-radius: 12px;
+  padding: 10px 16px;
+  background: var(--gdt-bg-light);
+  border: 1px solid var(--gdt-border-light);
+}
+
+/* Sidebar: visible-but-quiet scrollbar, breathing room at the end, and
+ * a bottom fade so the list reads as scrollable instead of clipped */
+nav.menu {
+  padding-bottom: 56px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--gdt-border-dark) transparent;
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 36px), transparent);
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    #000 calc(100% - 36px),
+    transparent
+  );
+}
+
+nav.menu::-webkit-scrollbar {
+  width: 6px;
+}
+
+nav.menu::-webkit-scrollbar-thumb {
+  background: var(--gdt-border-dark);
+  border-radius: 3px;
 }
 
 /* Style APPLICATION/JSON button to be non-interactive */
