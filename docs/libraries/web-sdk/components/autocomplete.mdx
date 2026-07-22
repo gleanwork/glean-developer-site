@@ -1,113 +1,109 @@
 ---
-title: 'Autocomplete'
-description: "Build a custom search interface by combining Glean's Autocomplete and Search Results components"
+title: 'Search Box + Results'
+description: "Build a custom search page by combining Glean's search box and search results components"
 icon: 'magnifying-glass'
 ---
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
+import { AutocompletePreview } from '@site/src/components/WebSdk/previews';
+import ComponentDemo from '@site/src/components/WebSdk/ComponentDemo';
 
+Compose a full search experience from two coordinated components: an autocomplete search box (`renderSearchBox`) and a tabbed results page (`renderSearchResults`). This approach gives you the deepest UI control — you own the page layout, Glean renders the search surfaces.
 
-Create a full-featured search experience by integrating Glean's Autocomplete and Search Results components. This approach enables deep UI customization while maintaining straightforward implementation.
+<ComponentDemo kind="search">
+  <AutocompletePreview />
+</ComponentDemo>
 
-<Frame>
-  <div className="grid grid-cols-2 gap-3">
-    ![Autocomplete Interface](../images/introduction/autocomplete-1.png)
-    ![Search Results Interface](../images/introduction/search-results.png)
-  </div>
-</Frame>
+## Install the SDK
 
-## Implementation Guide
+<Tabs groupId="websdk-install">
+<TabItem value="npm" label="npm">
 
-### Adding the JavaScript Client
+```bash snippet=autocomplete/snippet-01.sh
+npm install @gleanwork/web-sdk
+```
 
-Include the JavaScript library in your page's `<head>` section. Replace `GLEAN_APP_DOMAIN` with your company's Glean web app domain (typically `app.glean.com` or `your-company.glean.com` for custom subdomains).
+</TabItem>
+<TabItem value="script" label="Script tag">
+
+Include the JavaScript library in the `<head>` section of your page. Replace `GLEAN_APP_DOMAIN` with your company's Glean web app domain (typically `app.glean.com` or `your-company.glean.com` if you use a custom subdomain).
+
+```html snippet=autocomplete/snippet-02.html
+<script
+  defer
+  src="https://{GLEAN_APP_DOMAIN}/embedded-search-latest.min.js"
+></script>
+```
 
 :::info
-  The Glean web app domain differs from your company's Glean backend domain
-  (find yours at [app.glean.com/admin/about-glean](https://app.glean.com/admin/about-glean) under "Server instance (QE)").
+The Glean web app domain differs from your company's Glean backend domain
+(find yours at [app.glean.com/admin/about-glean](https://app.glean.com/admin/about-glean) under "Server instance (QE)").
+The same methods are available on `window.GleanWebSDK` once the `glean:ready` event fires.
 :::
-
-<Tabs>
-  <TabItem value="html" label="HTML">
-
-  ```html snippet=autocomplete/snippet-01.html
-  <script
-      defer
-      src="https://{GLEAN_APP_DOMAIN}/embedded-search-latest.min.js"
-    ></script>
-  ```
-
-  </TabItem>
-</Tabs>
-
-### Component Setup
-
-The implementation requires two container elements with specific CSS properties and event handling to coordinate the search experience:
-
-1. Create container elements with the following CSS properties:
-
-   - `position: relative`
-   - `display: block`
-   - Appropriate sizing and positioning
-
-2. Implement the search functionality with event handling:
-
-<Tabs>
-<TabItem value="search-implementation" label="Search Implementation">
-
-```javascript snippet=autocomplete/snippet-02.js
-let currentQuery;
-
-function renderSearchResults() {
-  const resultsElement = this.template.querySelector('search-results');
-  window.GleanWebSDK.renderSearchResults(resultsElement, {
-    onSearch: (query) => {
-      currentQuery = query;
-      renderSearchBox();
-    },
-    query: currentQuery
-  });
-}
-
-function renderSearchBox() {
-  const autocompleteElement = this.template.querySelector('search-box');
-  window.GleanWebSDK.renderSearchBox(autocompleteElement, {
-    onSearch: (query) => {
-      currentQuery = query;
-      renderSearchResults();
-    },
-    query: currentQuery
-  });
-}
-
-renderSearchBox();
-```
 
 </TabItem>
 </Tabs>
 
-## Customization Options
+## Render the search page
 
-### Component APIs
+1. Create two container elements — one for the search box, one for results — each with `position: relative`, `display: block`, and appropriate sizing.
 
-The implementation provides extensive customization options through two primary APIs:
+:::tip Sizing the search box container
+The search box fills its container (minus any margins from
+`searchBoxCustomizations`), so size the container to the box itself — around
+50–90px tall — not to the dropdown. The autocomplete dropdown renders below
+the box and extends past the container's bounds, so make sure no ancestor
+clips it with `overflow: hidden`, and give the search box container a higher
+`z-index` than the content beneath it so the dropdown overlays that content
+instead of rendering behind it.
+:::
 
-- [SearchBox API Documentation](https://app.glean.com/meta/browser_api/interfaces/GleanWebSDK.html#renderSearchBox)
-- [Search Results API Documentation](https://app.glean.com/meta/browser_api/interfaces/GleanWebSDK.html#renderSearchResults)
+2. Render both components, and connect them through their `onSearch` callbacks so a query typed in the box re-renders the results:
 
-### Theming
+```typescript snippet=autocomplete/snippet-03.ts
+import { renderSearchBox, renderSearchResults } from '@gleanwork/web-sdk';
 
-Customize the appearance using [SearchBoxCustomizations](https://app.glean.com/meta/browser_api/interfaces/SearchBoxCustomizations.html). The theming system is regularly expanded with additional options based on customer needs.
+const boxElement = document.getElementById('search-box');
+const resultsElement = document.getElementById('search-results');
 
-## Implementation Example
+let currentQuery = '';
 
-View a complete working implementation of the Autocomplete with Search components in our interactive demo:
+function onSearch(query) {
+  currentQuery = query;
+  renderAll();
+}
 
-<Frame>
-  <iframe
-    src="https://codepen.io/GleanWork/embed/VwWJOjZ?default-tab=js%2Cresult&editable=true"
-    style={{width: '100%', height: '500px'}}
-    title="Autocomplete with Search | Glean"
-  />
-</Frame>
+function renderAll() {
+  renderSearchBox(boxElement, { onSearch, query: currentQuery });
+  renderSearchResults(resultsElement, { onSearch, query: currentQuery });
+}
+
+renderAll();
+```
+
+In a real app you would typically also update the page URL from `onSearch` so searches are linkable and the back button works.
+
+## Options
+
+The search box accepts [`SearchBoxOptions`](/libraries/web-sdk/reference/interfaces/SearchBoxOptions) and the results page accepts [`TabbedSearchOptions`](/libraries/web-sdk/reference/interfaces/TabbedSearchOptions). Commonly used options:
+
+| Option                    | Applies to  | Type            | Description                                                                                    |
+| ------------------------- | ----------- | --------------- | ---------------------------------------------------------------------------------------------- |
+| `onSearch`                | Both        | `(query) => void` | **Required.** Invoked when the user performs a search.                                        |
+| `query`                   | Both        | `string`        | The query text to perform/display.                                                             |
+| `autofocus`               | Search box  | `boolean`       | Focus the box when it first renders. Defaults to `false`.                                      |
+| `searchBoxCustomizations` | Search box  | `SearchBoxCustomizations` | Placeholder text, font size, icon, borders, and margins.                             |
+| `hideAutocomplete`        | Search box  | `boolean`       | Suppress the autocomplete dropdown.                                                            |
+| `datasourcesFilter`       | Both        | `string[]`      | Restrict results to specific datasources, e.g. `['jira', 'confluence']`.                       |
+| `filters`                 | Both        | `FilterValue[]` | Pinned, non-modifiable filters applied to every search.                                        |
+| `showInlineSearchBox`     | Results     | `boolean`       | Render a search box inline above the results.                                                  |
+| `autoExpand`              | Results     | `boolean`       | Grow the results frame to fit content instead of scrolling internally.                         |
+| `hideFiltersColumn`       | Results     | `boolean`       | Hide the righthand filter column.                                                              |
+| `onDatasourceChange`      | Results     | `(datasource) => void` | Invoked when the user switches result tabs.                                             |
+
+All components also accept the common [`Options`](/libraries/web-sdk/reference/interfaces/Options) — `backend`, `authToken`, `theme`, `themeVariant`, `locale`, and more.
+
+## Theming
+
+Customize the search box appearance with [SearchBoxCustomizations](/libraries/web-sdk/reference/interfaces/SearchBoxCustomizations). The theming system is regularly expanded with additional options based on customer needs.

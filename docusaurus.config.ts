@@ -326,6 +326,9 @@ const config: Config = {
     '@gleanwork/docusaurus-theme-glean',
   ],
   markdown: {
+    // .md parses as CommonMark (the generated Web SDK reference relies on
+    // this — raw JSDoc braces would fail MDX's acorn pass); .mdx stays MDX.
+    format: 'detect',
     mermaid: true,
     hooks: {
       onBrokenMarkdownLinks: 'throw',

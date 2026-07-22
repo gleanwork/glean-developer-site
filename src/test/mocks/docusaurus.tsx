@@ -22,6 +22,12 @@ vi.mock('@docusaurus/useBaseUrl', () => ({
   default: (url: string) => url,
 }));
 
+// Mock BrowserOnly (the real export needs the Docusaurus browser context);
+// tests run in jsdom, so render the browser branch directly
+vi.mock('@docusaurus/BrowserOnly', () => ({
+  default: ({ children }: any) => <>{children()}</>,
+}));
+
 // Mock theme icons (react-feather bundles its own React copy, which
 // React 19 rejects under vitest; the real build dedupes it fine)
 vi.mock('@gleanwork/docusaurus-theme-glean/Icons', () => ({
