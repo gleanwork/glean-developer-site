@@ -1,0 +1,225 @@
+---
+title: 'IT helpdesk deflection page — no code, on Lovable'
+description: >-
+  Prompt Lovable into an IT helpdesk deflection page on the Glean Chat API —
+  zero hand-written backend, permissions enforced by Glean.
+slug: /cookbook/no-code-it-helpdesk-lovable
+hide_table_of_contents: true
+hide_title: true
+pagination_prev: null
+pagination_next: null
+recipe:
+  id: no-code-it-helpdesk-lovable
+  surfaces:
+    - platform-api
+  status: showcase
+  category: workflow
+  level: Beginner
+  levels:
+    minimal: true
+    wow: false
+  time_estimate: '~45 min'
+  required_scopes:
+    - CHAT
+  prerequisites:
+    - A Lovable account
+    - A Glean API token with the CHAT scope (kept as a Lovable backend secret)
+  demo_queries:
+    - Where do I reset my SSO password?
+    - How do I request a new laptop?
+  code_assets:
+    - {
+        repo_path: recipes/no-code-it-helpdesk-lovable,
+        language: markdown,
+        description: The exact Lovable prompt + secrets checklist,
+      }
+  ai_prompt: |-
+    I'm using Lovable, not you, to build this — your job is to prepare my
+    inputs per
+    https://developers.glean.com/cookbook/no-code-it-helpdesk-lovable
+
+    1. Generate the Lovable prompt from the recipe's template, filling in
+       my Glean server URL.
+    2. Remind me: token goes in a Lovable backend secret, never in the
+       prompt.
+    3. After Lovable builds it, give me the two demo queries to verify
+       citations and permissions.
+  llm_context: >-
+    This recipe's deliverable is a prompt template, not a runnable
+    project — mirrors no-code-pto-lookup-replit's shape (same Chat API
+    call, same "browser never holds the token" constraint, same citation
+    correction at message.citations[].sourceDocument, not a top-level
+    citedDocuments field) with a different tool and persona so the two
+    don't read as duplicates. Lovable's default stack leans on a
+    connected backend/database integration for server-side secrets
+    rather than a plain Node server, so the prompt asks the agent to set
+    that up rather than assuming a fixed mechanism. Both demo queries are
+    answered by existing seeded Acme corpus documents — no corpus
+    changes were needed.
+  go_dependency: false
+  featured: false
+  tags:
+    - no-code
+    - it
+---
+
+import RecipePage from '@site/src/components/Cookbook/RecipePage';
+import {
+  RecipeSection,
+  RecipePrereqs,
+  RecipeSteps,
+  RecipeNote,
+  TakeItFurther,
+} from '@site/src/components/Cookbook/RecipeLayout';
+
+<RecipePage recipeId="no-code-it-helpdesk-lovable">
+
+<RecipeSection label="Problem">
+
+Half your helpdesk tickets are "how do I reset my SSO password" and "how do
+I get a new laptop" — questions your IT docs already answer. You want a
+page that answers them before a ticket gets filed, without pulling an
+engineer off other work to build it.
+
+</RecipeSection>
+
+<RecipeNote>
+**Not yet tested end-to-end on a live Lovable account.** The prompt below
+states the exact, corrected Chat API shape literally rather than
+describing it in prose, so an agent can't guess wrong — that part is
+verified. Whether Lovable actually produces a working app from it is not,
+since that's outside this cookbook's control.
+</RecipeNote>
+
+<RecipePrereqs />
+
+<RecipeSteps>
+
+<>
+Get your secrets ready before you start.
+
+- **`GLEAN_API_TOKEN`** — Admin Console → Platform → API Tokens → scope it
+  to `CHAT` only.
+- **`GLEAN_INSTANCE`** — the `<instance>` part of your
+  `https://<instance>-be.glean.com` URL.
+
+</>
+
+<>
+Start a new Lovable project and paste this whole block — fill in your
+instance name first.
+
+````text
+Build "Acme IT Deflection Page" — a single-page chat tool that answers
+common IT helpdesk questions (SSO/password resets, laptop issues, VPN
+setup) using the Glean Chat API, so employees get an answer before they
+file a ticket. I don't want to write or review implementation code; you
+own that. I do want to review the running app and its use of secrets.
+
+The browser must never see a Glean API token. If a question calls a
+Glean API from the client, the token is exposed to anyone who opens
+devtools — that's not acceptable here. Route the Glean call through
+whatever server-side mechanism you use for secrets and backend calls
+(you may need to connect a backend/database integration to get one) —
+ask me before you do, and ask me for the two values below when it's
+ready. Don't skip this by calling Glean directly from React.
+
+1. Build a React page: a text input, a submit button, an answer area,
+   and a "Sources" list below the answer. Frame it as "Ask before you
+   file a ticket."
+
+2. Server-side, install `@gleanwork/api-client` (pin the version — do
+   not use a `^` or `latest` range) and construct the client like this:
+
+   ```js
+   import { Glean } from '@gleanwork/api-client';
+
+   const glean = new Glean({
+     apiToken: process.env.GLEAN_API_TOKEN,
+     instance: process.env.GLEAN_INSTANCE, // e.g. "<your-glean-instance>"
+   });
+   ```
+
+   Both `GLEAN_API_TOKEN` and `GLEAN_INSTANCE` must be stored as
+   server-side secrets, never hardcoded and never bundled into the
+   frontend. Stop and ask me for these two values by name before running
+   the app — do not invent placeholder values and move on.
+
+3. Call the Chat API like this — the response shape is specific, follow
+   it exactly rather than guessing at field names:
+
+   ```js
+   const response = await glean.client.chat.create({
+     messages: [{ author: 'USER', fragments: [{ text: question }] }],
+   });
+
+   const messages = response.messages ?? [];
+
+   const answer = messages
+     .flatMap((m) => m.fragments ?? [])
+     .map((f) => f.text ?? '')
+     .join('');
+
+   const citations = messages
+     .flatMap((m) => m.citations ?? [])
+     .map((c) => c.sourceDocument)
+     .filter((doc) => doc?.title && doc?.url);
+   ```
+
+   Note: citations live on `message.citations[].sourceDocument`, not on a
+   top-level `citedDocuments` field — some older examples floating around
+   get this wrong.
+
+4. Frontend: on submit, call your server-side function with the
+   question, render `answer` as text, and render each citation as a link
+   using its `title` and `url`. Show a loading state while waiting. Show
+   the raw error message if the request fails (this is an internal tool
+   — don't hide errors from me while I'm testing it).
+
+5. Give the assistant a short system framing so it stays on-topic: it
+   should present itself as "Acme IT Help" and answer IT/helpdesk
+   questions using only what Glean returns — don't have it improvise
+   troubleshooting steps Glean didn't cite.
+
+6. When you're done, tell me the two things I need to test:
+   - Ask "Where do I reset my SSO password?" and confirm the answer
+     cites the SSO reset guide.
+   - Ask "How do I request a new laptop?" and confirm it cites the IT
+     helpdesk FAQ (loaner laptops, same-day, from the IT desk).
+
+Do not add authentication, a ticketing integration, or user accounts —
+Glean already enforces per-user permissions on the backend token's
+behalf for this demo, and this is a single-tenant internal tool.
+````
+
+<RecipeNote>
+Lovable's default stack leans on a connected backend/database integration
+for anything server-side, including secrets — that surface changes over
+time, so the prompt asks the agent to set one up rather than assuming a
+fixed mechanism. What doesn't change is the constraint: the token never
+reaches the browser.
+</RecipeNote>
+
+</>
+
+<>
+Test with the two demo queries below, then check your browser's Network
+tab to confirm requests to `*.glean.com` originate from your backend, not
+the page itself.
+
+</>
+
+</RecipeSteps>
+
+<TakeItFurther>
+
+<>Scope the `CHAT` token even further if your Glean plan supports
+per-collection tokens, so this tool can only ever answer from IT content.</>
+
+<>Compare this to [`no-code-pto-lookup-replit`](/cookbook/no-code-pto-lookup-replit) — same Chat API call, same "browser never holds the token" constraint, different no-code tool and persona.</>
+
+<>Once your team outgrows the no-code version, [`acme-answers`](/cookbook/acme-answers) shows the same pattern as a hand-written, version-controlled app.</>
+
+</TakeItFurther>
+
+</RecipePage>

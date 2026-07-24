@@ -1,0 +1,225 @@
+---
+title: 'PTO & benefits lookup — no code, on Replit'
+description: >-
+  Prompt Replit Agent into a working HR lookup tool on the Glean Chat API —
+  zero hand-written backend, permissions enforced by Glean.
+slug: /cookbook/no-code-pto-lookup-replit
+hide_table_of_contents: true
+hide_title: true
+pagination_prev: null
+pagination_next: null
+recipe:
+  id: no-code-pto-lookup-replit
+  surfaces:
+    - platform-api
+  status: showcase
+  category: workflow
+  level: Beginner
+  levels:
+    minimal: true
+    wow: false
+  time_estimate: '~45 min'
+  required_scopes:
+    - CHAT
+  prerequisites:
+    - A Replit account with Agent access
+    - A Glean API token with the CHAT scope (kept in Replit Secrets)
+  demo_queries:
+    - What is our PTO policy?
+    - When is open enrollment?
+  code_assets:
+    - {
+        repo_path: recipes/no-code-pto-lookup-replit,
+        language: markdown,
+        description: The exact Replit Agent prompt + secrets checklist,
+      }
+  ai_prompt: |-
+    I'm using Replit Agent, not you, to build this — your job is to prepare
+    my inputs per
+    https://developers.glean.com/cookbook/no-code-pto-lookup-replit
+
+    1. Generate the Replit prompt from the recipe's template, filling in
+       my Glean server URL.
+    2. Remind me: token goes in Replit Secrets as GLEAN_API_TOKEN, never
+       in the prompt.
+    3. After Replit builds it, give me the two demo queries to verify
+       citations and permissions.
+  llm_context: >-
+    This recipe's deliverable is a prompt template, not a runnable project —
+    "building" it means pasting the prompt into Replit Agent, which then
+    writes and runs the actual code. The prompt pins the same Chat API
+    shape used elsewhere in this cookbook: Glean({ apiToken, instance })
+    (never `domain`), chat.create({ messages: [{ author: 'USER',
+    fragments: [{ text }] }] }), and citations at
+    message.citations[].sourceDocument (not a top-level citedDocuments
+    field). The demo query "How do I enroll in the commuter benefit?"
+    from this recipe's source ticket was swapped for "When is open
+    enrollment?" because the seeded Acme benefits guide doesn't mention a
+    commuter benefit — asking the original question would produce no
+    citation or a fabricated answer.
+  go_dependency: false
+  featured: false
+  tags:
+    - no-code
+    - hr
+---
+
+import RecipePage from '@site/src/components/Cookbook/RecipePage';
+import {
+  RecipeSection,
+  RecipePrereqs,
+  RecipeSteps,
+  RecipeNote,
+  TakeItFurther,
+} from '@site/src/components/Cookbook/RecipeLayout';
+
+<RecipePage recipeId="no-code-pto-lookup-replit">
+
+<RecipeSection label="Problem">
+
+Your HR team fields the same PTO and benefits questions on repeat. You want
+a self-serve lookup tool answered from your real HR docs — but nobody on
+the team writes backend code, and you don't want to wait for an engineer
+to have time for it.
+
+</RecipeSection>
+
+<RecipeNote>
+**Not yet tested end-to-end on a live Replit account.** The prompt below
+states the exact, corrected Chat API shape literally rather than
+describing it in prose, so an agent can't guess wrong — that part is
+verified. Whether Replit Agent actually produces a working app from it is
+not, since that's outside this cookbook's control.
+</RecipeNote>
+
+<RecipePrereqs />
+
+<RecipeSteps>
+
+<>
+Get your secrets ready before you start — Replit Agent will ask for them
+mid-build, and you want to paste them into Replit's Secrets tab, not the
+chat.
+
+- **`GLEAN_API_TOKEN`** — Admin Console → Platform → API Tokens → scope it
+  to `CHAT` only.
+- **`GLEAN_INSTANCE`** — the `<instance>` part of your
+  `https://<instance>-be.glean.com` URL.
+
+</>
+
+<>
+Start a new Repl, open Agent, and paste this whole block — fill in your
+instance name first.
+
+````text
+Build "Acme HR Assistant" — a single-page chat tool that answers employee
+questions about PTO and benefits using the Glean Chat API. I don't want to
+write or review implementation code; you own that. I do want to review the
+running app and its use of secrets.
+
+Stack: Node.js + Express backend, plain HTML/CSS/JS frontend (no framework
+needed). The backend is the only thing that talks to Glean — the browser
+never sees a Glean API token.
+
+1. Scaffold an Express server with one route:
+   - GET  /          → serves a static index.html: a text input, a submit
+     button, an answer area, and a "Sources" list below the answer.
+   - POST /api/ask    → body `{ "question": string }`, calls Glean, returns
+     `{ "answer": string, "citations": [{ "title": string, "url": string }] }`.
+
+2. Install `@gleanwork/api-client` (pin the version — do not use a `^` or
+   `latest` range) and construct the client like this:
+
+   ```js
+   import { Glean } from '@gleanwork/api-client';
+
+   const glean = new Glean({
+     apiToken: process.env.GLEAN_API_TOKEN,
+     instance: process.env.GLEAN_INSTANCE, // e.g. "<your-glean-instance>"
+   });
+   ```
+
+   Both `GLEAN_API_TOKEN` and `GLEAN_INSTANCE` must come from Replit
+   Secrets (the padlock icon in the sidebar), never hardcoded and never
+   sent to the browser. Stop and ask me for these two values by name
+   before running the app — do not invent placeholder values and move on.
+
+3. Call the Chat API like this — the response shape is specific, follow it
+   exactly rather than guessing at field names:
+
+   ```js
+   const response = await glean.client.chat.create({
+     messages: [{ author: 'USER', fragments: [{ text: question }] }],
+   });
+
+   const messages = response.messages ?? [];
+
+   const answer = messages
+     .flatMap((m) => m.fragments ?? [])
+     .map((f) => f.text ?? '')
+     .join('');
+
+   const citations = messages
+     .flatMap((m) => m.citations ?? [])
+     .map((c) => c.sourceDocument)
+     .filter((doc) => doc?.title && doc?.url);
+   ```
+
+   Note: citations live on `message.citations[].sourceDocument`, not on a
+   top-level `citedDocuments` field — some older examples floating around
+   get this wrong.
+
+4. Frontend: on submit, POST the question to `/api/ask`, render `answer`
+   as text, and render each citation as a link using its `title` and
+   `url`. Show a loading state while waiting. Show the raw error message
+   if the request fails (this is an internal tool — don't hide errors
+   from me while I'm testing it).
+
+5. Give the assistant a short system framing so it stays on-topic: it
+   should present itself as "Acme HR Assistant" and answer PTO/benefits
+   questions using only what Glean returns — don't have it add HR advice
+   Glean didn't cite.
+
+6. When you're done, tell me the two things I need to test:
+   - Ask "What is our PTO policy?" and confirm the answer cites the PTO
+     policy document.
+   - Ask something outside HR entirely (e.g. "what's our revenue?") and
+     confirm the assistant doesn't fabricate an answer when Glean has
+     nothing relevant to cite.
+
+Do not add authentication, a database, or user accounts — Glean already
+enforces per-user permissions on the backend token's behalf for this demo,
+and this is a single-tenant internal tool.
+````
+
+<RecipeNote>
+The prompt states the exact Chat API call rather than describing it in
+prose. Left to guess, an agent will confidently invent the wrong response
+shape — a top-level `citedDocuments` field is a common wrong guess.
+Pinning the real shape in the prompt itself is what makes this reliable.
+</RecipeNote>
+
+</>
+
+<>
+Test with the two demo queries below, then try one off-topic question to
+confirm the assistant doesn't fabricate an answer when nothing's relevant
+to cite.
+
+</>
+
+</RecipeSteps>
+
+<TakeItFurther>
+
+<>Scope the `CHAT` token even further if your Glean plan supports
+per-collection tokens, so this tool can only ever answer from HR content.</>
+
+<>Compare this to [`no-code-it-helpdesk-lovable`](/cookbook/no-code-it-helpdesk-lovable) — same Chat API call, same "browser never holds the token" constraint, different no-code tool and persona.</>
+
+<>Once your team outgrows the no-code version, [`acme-answers`](/cookbook/acme-answers) shows the same pattern as a hand-written, version-controlled app.</>
+
+</TakeItFurther>
+
+</RecipePage>

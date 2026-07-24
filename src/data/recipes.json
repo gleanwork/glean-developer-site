@@ -473,6 +473,94 @@
       "permalink": "/cookbook/multi-step-agent"
     },
     {
+      "id": "no-code-it-helpdesk-lovable",
+      "surfaces": [
+        "platform-api"
+      ],
+      "status": "showcase",
+      "category": "workflow",
+      "level": "Beginner",
+      "levels": {
+        "minimal": true,
+        "wow": false
+      },
+      "time_estimate": "~45 min",
+      "required_scopes": [
+        "CHAT"
+      ],
+      "prerequisites": [
+        "A Lovable account",
+        "A Glean API token with the CHAT scope (kept as a Lovable backend secret)"
+      ],
+      "demo_queries": [
+        "Where do I reset my SSO password?",
+        "How do I request a new laptop?"
+      ],
+      "code_assets": [
+        {
+          "repo_path": "recipes/no-code-it-helpdesk-lovable",
+          "language": "markdown",
+          "description": "The exact Lovable prompt + secrets checklist"
+        }
+      ],
+      "scaffold_actions": [],
+      "ai_prompt": "I'm using Lovable, not you, to build this — your job is to prepare my\ninputs per\nhttps://developers.glean.com/cookbook/no-code-it-helpdesk-lovable\n\n1. Generate the Lovable prompt from the recipe's template, filling in\n   my Glean server URL.\n2. Remind me: token goes in a Lovable backend secret, never in the\n   prompt.\n3. After Lovable builds it, give me the two demo queries to verify\n   citations and permissions.",
+      "llm_context": "This recipe's deliverable is a prompt template, not a runnable project — mirrors no-code-pto-lookup-replit's shape (same Chat API call, same \"browser never holds the token\" constraint, same citation correction at message.citations[].sourceDocument, not a top-level citedDocuments field) with a different tool and persona so the two don't read as duplicates. Lovable's default stack leans on a connected backend/database integration for server-side secrets rather than a plain Node server, so the prompt asks the agent to set that up rather than assuming a fixed mechanism. Both demo queries are answered by existing seeded Acme corpus documents — no corpus changes were needed.",
+      "go_dependency": false,
+      "featured": false,
+      "tags": [
+        "no-code",
+        "it"
+      ],
+      "title": "IT helpdesk deflection page — no code, on Lovable",
+      "summary": "Prompt Lovable into an IT helpdesk deflection page on the Glean Chat API — zero hand-written backend, permissions enforced by Glean.",
+      "permalink": "/cookbook/no-code-it-helpdesk-lovable"
+    },
+    {
+      "id": "no-code-pto-lookup-replit",
+      "surfaces": [
+        "platform-api"
+      ],
+      "status": "showcase",
+      "category": "workflow",
+      "level": "Beginner",
+      "levels": {
+        "minimal": true,
+        "wow": false
+      },
+      "time_estimate": "~45 min",
+      "required_scopes": [
+        "CHAT"
+      ],
+      "prerequisites": [
+        "A Replit account with Agent access",
+        "A Glean API token with the CHAT scope (kept in Replit Secrets)"
+      ],
+      "demo_queries": [
+        "What is our PTO policy?",
+        "When is open enrollment?"
+      ],
+      "code_assets": [
+        {
+          "repo_path": "recipes/no-code-pto-lookup-replit",
+          "language": "markdown",
+          "description": "The exact Replit Agent prompt + secrets checklist"
+        }
+      ],
+      "scaffold_actions": [],
+      "ai_prompt": "I'm using Replit Agent, not you, to build this — your job is to prepare\nmy inputs per\nhttps://developers.glean.com/cookbook/no-code-pto-lookup-replit\n\n1. Generate the Replit prompt from the recipe's template, filling in\n   my Glean server URL.\n2. Remind me: token goes in Replit Secrets as GLEAN_API_TOKEN, never\n   in the prompt.\n3. After Replit builds it, give me the two demo queries to verify\n   citations and permissions.",
+      "llm_context": "This recipe's deliverable is a prompt template, not a runnable project — \"building\" it means pasting the prompt into Replit Agent, which then writes and runs the actual code. The prompt pins the same Chat API shape used elsewhere in this cookbook: Glean({ apiToken, instance }) (never `domain`), chat.create({ messages: [{ author: 'USER', fragments: [{ text }] }] }), and citations at message.citations[].sourceDocument (not a top-level citedDocuments field). The demo query \"How do I enroll in the commuter benefit?\" from this recipe's source ticket was swapped for \"When is open enrollment?\" because the seeded Acme benefits guide doesn't mention a commuter benefit — asking the original question would produce no citation or a fabricated answer.",
+      "go_dependency": false,
+      "featured": false,
+      "tags": [
+        "no-code",
+        "hr"
+      ],
+      "title": "PTO & benefits lookup — no code, on Replit",
+      "summary": "Prompt Replit Agent into a working HR lookup tool on the Glean Chat API — zero hand-written backend, permissions enforced by Glean.",
+      "permalink": "/cookbook/no-code-pto-lookup-replit"
+    },
+    {
       "id": "permissions-aware-rag",
       "surfaces": [
         "platform-api",
@@ -555,5 +643,5 @@
     "agents"
   ],
   "generatedAt": "1970-01-01T00:00:00.000Z",
-  "totalRecipes": 8
+  "totalRecipes": 10
 }
