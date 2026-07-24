@@ -1,0 +1,223 @@
+---
+title: 'Acme Answers: a company knowledge Q&A page'
+description: >-
+  The hello-world of Glean apps: one page, one input, one permission-aware
+  cited answer — built two ways, with the Web SDK and with the Chat API.
+slug: /cookbook/acme-answers
+hide_table_of_contents: true
+hide_title: true
+pagination_prev: null
+pagination_next: null
+recipe:
+  id: acme-answers
+  surfaces:
+    - platform-api
+    - sdk-client
+    - web-sdk
+  status: showcase
+  category: search
+  level: Beginner
+  levels:
+    minimal: true
+    wow: true
+  time_estimate: '~30 min'
+  required_scopes:
+    - CHAT
+  prerequisites:
+    - A Glean instance with content indexed
+    - An OAuth access token or Glean API token with the CHAT scope
+    - Node 20+ (Chat API path) or any static page (Web SDK path)
+  demo_queries:
+    - What's our PTO policy?
+    - Who owns the payments-service catalog entry?
+  code_assets:
+    - {
+        repo_path: recipes/acme-answers/web-sdk,
+        language: typescript,
+        description: 'Web SDK variant — renderChat in a page',
+      }
+    - {
+        repo_path: recipes/acme-answers/chat-api,
+        language: typescript,
+        description: 'Chat API variant — one chat.create call, citations rendered',
+      }
+  architecture:
+    - label: Acme Answers page
+      caption: single input + answer card
+      icon: layout-outlined
+    - label: 'Path A: Web SDK'
+      caption: renderChat — Glean owns the UI
+      category: search
+    - label: 'Path B: Chat API'
+      caption: chat.create — you own the UI
+      category: agent
+    - label: Glean
+      caption: permission-aware answers with citations
+      emphasized: true
+  ai_prompt: |-
+    Build "Acme Answers", a one-page company Q&A app on Glean, following
+    https://developers.glean.com/cookbook/acme-answers
+
+    1. Ask me which path: (A) Web SDK or (B) Chat API. Build the one I pick.
+    2. Path A: npm install @gleanwork/web-sdk; render a container and call
+       renderChat(el, {}) — SSO auth needs no configuration.
+    3. Path B: npm install @gleanwork/api-client; construct the client with
+       new Glean({ apiToken, instance }) — NOT `domain`, which is not a
+       real SDKOptions field despite appearing in one of the SDK's own
+       bundled example files. POST chat.create with my question as a
+       single USER message; render answer text by joining
+       messages[].fragments[].text, and citations from
+       messages[].citations[].sourceDocument (title + url) — there is no
+       top-level citedDocuments field. Keep the API token server-side.
+    4. Style it as Acme Corp (teal #0E8C84 accent per the brand kit,
+       "Acme Answers" title).
+    5. Verify with "What's our PTO policy?" — the answer must carry
+       citations and respect my permissions. Contrast note for the
+       README: the SDK path ships Glean's full UI free; the API path
+       gives total UI control.
+  llm_context: >-
+    Chat API: POST /rest/api/v1/chat (client SDK glean.client.chat.create).
+    Answer text lives in messages[].fragments[].text (join them); citations
+    live in messages[].citations[].sourceDocument (title, url) — not a
+    top-level citedDocuments field. Client constructor takes apiToken +
+    instance (or serverURL), not domain.
+  go_dependency: false
+  featured: true
+  tags:
+    - starter
+    - dual-implementation
+---
+
+import RecipePage from '@site/src/components/Cookbook/RecipePage';
+import {
+  RecipeSection,
+  RecipeArchitecture,
+  RecipePrereqs,
+  RecipeSteps,
+  RecipeNote,
+  TakeItFurther,
+} from '@site/src/components/Cookbook/RecipeLayout';
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+<RecipePage recipeId="acme-answers">
+
+<RecipeSection label="Problem">
+
+Every team has the same first Glean app: a single page where anyone can ask
+a company question and get a cited, permission-aware answer. There are two
+equally valid ways to build it — this recipe builds both, side by side, so
+you can pick the trade-off that fits your app.
+
+</RecipeSection>
+
+<RecipeArchitecture />
+
+<RecipePrereqs />
+
+<RecipeSteps>
+
+<>
+Pick a path. **Path A (Web SDK)** renders Glean's own chat UI for you —
+fastest to stand up, no backend code. **Path B (Chat API)** calls the Chat
+API directly from your own backend — you own every pixel of the UI and the
+request/response shape. Both reach the same place: a permission-aware,
+cited answer.
+</>
+
+<>
+Build it.
+
+<Tabs>
+<TabItem value="web-sdk" label="Path A: Web SDK">
+
+Install the SDK and render a chat container. That's the entire integration —
+every option on `renderChat` is optional, so `{}` works as-is.
+
+```bash snippet=acme-answers/snippet-01.sh
+npm install @gleanwork/web-sdk
+```
+
+```typescript snippet=acme-answers/snippet-02.ts
+import { renderChat } from '@gleanwork/web-sdk';
+
+const container = document.getElementById('chat');
+renderChat(container, {
+  // backend: 'https://{your}-be.glean.com',
+});
+```
+
+<RecipeNote>
+Setting `backend` is recommended in production — it routes users straight
+to your instance instead of asking for their email.
+</RecipeNote>
+
+</TabItem>
+<TabItem value="chat-api" label="Path B: Chat API">
+
+Install the client, call `chat.create` from your backend, and render the
+answer and citations yourself. Keep the API token server-side.
+
+```bash snippet=acme-answers/snippet-03.sh
+npm install @gleanwork/api-client
+```
+
+```typescript snippet=acme-answers/snippet-04.ts
+import { Glean } from '@gleanwork/api-client';
+
+const glean = new Glean({
+  apiToken: process.env.GLEAN_API_TOKEN,
+  instance: process.env.GLEAN_INSTANCE,
+});
+
+const response = await glean.client.chat.create({
+  messages: [{ author: 'USER', fragments: [{ text: question }] }],
+});
+
+const messages = response.messages ?? [];
+
+const answer = messages
+  .flatMap((message) => message.fragments ?? [])
+  .map((fragment) => fragment.text ?? '')
+  .join('');
+
+const citations = messages
+  .flatMap((message) => message.citations ?? [])
+  .map((citation) => citation.sourceDocument)
+  .filter((document) => document?.title && document?.url);
+```
+
+<RecipeNote>
+The client is constructed with `instance` (or a full `serverURL` override)
+— not `domain`. Citations live per-message in `citations[].sourceDocument`,
+not a top-level `citedDocuments` field.
+</RecipeNote>
+
+</TabItem>
+</Tabs>
+
+</>
+
+<>
+Style it as Acme Corp: a teal accent, a rounded-square logomark, and an
+"Acme Answers" title — see the [brand kit](https://github.com/gleanwork/glean-cookbook/tree/main/brand)
+for the exact tokens.
+</>
+
+</RecipeSteps>
+
+Try it with a query like **"What's our PTO policy?"** — the answer should
+carry citations and reflect exactly what the signed-in user is permitted to
+see.
+
+<TakeItFurther>
+
+<>Swap in a specific agent by passing its `agentId` — to the chat component for Path A, or in the `chat.create` request for Path B.</>
+
+<>Stream responses instead of waiting for the full answer (both the Web SDK and the Chat API support streaming).</>
+
+<>Add follow-up prompt suggestions from the Chat API response's `followUpPrompts`.</>
+
+</TakeItFurther>
+
+</RecipePage>

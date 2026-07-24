@@ -10,9 +10,9 @@ import { CategoryTile, CATEGORY_ICONS } from './categories';
 import styles from './RecipeLayout.module.css';
 import catStyles from './categories.module.css';
 
-/** Base URL for runnable recipe code. One place to change when the repo lands. */
+/** Base URL for runnable recipe code — the glean-cookbook repo (private until launch). */
 export const COOKBOOK_REPO_URL =
-  'https://github.com/gleanwork/cookbook/tree/main';
+  'https://github.com/gleanwork/glean-cookbook/tree/main';
 
 /** Set by RecipeLayout; lets MDX section components read the recipe record. */
 export const RecipeContext = React.createContext<RecipeRecord | null>(null);

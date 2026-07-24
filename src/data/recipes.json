@@ -1,6 +1,83 @@
 {
   "recipes": [
     {
+      "id": "acme-answers",
+      "surfaces": [
+        "platform-api",
+        "sdk-client",
+        "web-sdk"
+      ],
+      "status": "showcase",
+      "category": "search",
+      "level": "Beginner",
+      "levels": {
+        "minimal": true,
+        "wow": true
+      },
+      "time_estimate": "~30 min",
+      "required_scopes": [
+        "CHAT"
+      ],
+      "prerequisites": [
+        "A Glean instance with content indexed",
+        "An OAuth access token or Glean API token with the CHAT scope",
+        "Node 20+ (Chat API path) or any static page (Web SDK path)"
+      ],
+      "demo_queries": [
+        "What's our PTO policy?",
+        "Who owns the payments-service catalog entry?"
+      ],
+      "code_assets": [
+        {
+          "repo_path": "recipes/acme-answers/web-sdk",
+          "language": "typescript",
+          "description": "Web SDK variant — renderChat in a page"
+        },
+        {
+          "repo_path": "recipes/acme-answers/chat-api",
+          "language": "typescript",
+          "description": "Chat API variant — one chat.create call, citations rendered"
+        }
+      ],
+      "scaffold_actions": [],
+      "architecture": [
+        {
+          "label": "Acme Answers page",
+          "caption": "single input + answer card",
+          "icon": "layout-outlined",
+          "emphasized": false
+        },
+        {
+          "label": "Path A: Web SDK",
+          "caption": "renderChat — Glean owns the UI",
+          "category": "search",
+          "emphasized": false
+        },
+        {
+          "label": "Path B: Chat API",
+          "caption": "chat.create — you own the UI",
+          "category": "agent",
+          "emphasized": false
+        },
+        {
+          "label": "Glean",
+          "caption": "permission-aware answers with citations",
+          "emphasized": true
+        }
+      ],
+      "ai_prompt": "Build \"Acme Answers\", a one-page company Q&A app on Glean, following\nhttps://developers.glean.com/cookbook/acme-answers\n\n1. Ask me which path: (A) Web SDK or (B) Chat API. Build the one I pick.\n2. Path A: npm install @gleanwork/web-sdk; render a container and call\n   renderChat(el, {}) — SSO auth needs no configuration.\n3. Path B: npm install @gleanwork/api-client; construct the client with\n   new Glean({ apiToken, instance }) — NOT `domain`, which is not a\n   real SDKOptions field despite appearing in one of the SDK's own\n   bundled example files. POST chat.create with my question as a\n   single USER message; render answer text by joining\n   messages[].fragments[].text, and citations from\n   messages[].citations[].sourceDocument (title + url) — there is no\n   top-level citedDocuments field. Keep the API token server-side.\n4. Style it as Acme Corp (teal #0E8C84 accent per the brand kit,\n   \"Acme Answers\" title).\n5. Verify with \"What's our PTO policy?\" — the answer must carry\n   citations and respect my permissions. Contrast note for the\n   README: the SDK path ships Glean's full UI free; the API path\n   gives total UI control.",
+      "llm_context": "Chat API: POST /rest/api/v1/chat (client SDK glean.client.chat.create). Answer text lives in messages[].fragments[].text (join them); citations live in messages[].citations[].sourceDocument (title, url) — not a top-level citedDocuments field. Client constructor takes apiToken + instance (or serverURL), not domain.",
+      "go_dependency": false,
+      "featured": true,
+      "tags": [
+        "starter",
+        "dual-implementation"
+      ],
+      "title": "Acme Answers: a company knowledge Q&A page",
+      "summary": "The hello-world of Glean apps: one page, one input, one permission-aware cited answer — built two ways, with the Web SDK and with the Chat API.",
+      "permalink": "/cookbook/acme-answers"
+    },
+    {
       "id": "build-engineering-portal",
       "surfaces": [
         "connector-sdk",
@@ -167,8 +244,9 @@
     "platform-api",
     "web-sdk",
     "connector-sdk",
-    "indexing-api"
+    "indexing-api",
+    "sdk-client"
   ],
   "generatedAt": "1970-01-01T00:00:00.000Z",
-  "totalRecipes": 2
+  "totalRecipes": 3
 }
