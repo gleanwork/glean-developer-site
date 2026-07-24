@@ -238,6 +238,77 @@
       "title": "Embed search & chat in an internal app",
       "summary": "Put permission-aware Glean search and chat directly inside an internal app with the Web SDK, so your team gets answers where they already work.",
       "permalink": "/cookbook/embed-search-chat"
+    },
+    {
+      "id": "index-custom-source",
+      "surfaces": [
+        "indexing-api",
+        "connector-sdk"
+      ],
+      "status": "production-pattern",
+      "category": "index",
+      "level": "Intermediate",
+      "levels": {
+        "minimal": true,
+        "wow": true
+      },
+      "time_estimate": "~1 hr",
+      "required_scopes": [
+        "Indexing API token (datasource-scoped)"
+      ],
+      "prerequisites": [
+        "Admin access to create a custom datasource and Indexing API token",
+        "Python 3.10+ (uses glean-indexing-sdk)"
+      ],
+      "demo_queries": [
+        "Who owns the payments-service catalog entry?",
+        "What's the on-call runbook for checkout-service?"
+      ],
+      "code_assets": [
+        {
+          "repo_path": "recipes/index-custom-source",
+          "language": "python",
+          "description": "Custom connector indexing the Acme corpus with per-document permissions"
+        },
+        {
+          "repo_path": "acme-corpus",
+          "language": "json",
+          "description": "The seed dataset itself"
+        }
+      ],
+      "scaffold_actions": [
+        "scaffold-connector"
+      ],
+      "architecture": [
+        {
+          "label": "Acme corpus",
+          "caption": "JSON documents + ACLs",
+          "icon": "layout-outlined",
+          "emphasized": false
+        },
+        {
+          "label": "Indexing SDK",
+          "caption": "bulk index + permissions",
+          "category": "index",
+          "emphasized": false
+        },
+        {
+          "label": "Glean index",
+          "caption": "searchable in minutes",
+          "emphasized": true
+        }
+      ],
+      "ai_prompt": "Index the Acme demo corpus into my Glean instance following\nhttps://developers.glean.com/cookbook/index-custom-source\n\n1. Ask me for my Indexing API token + server URL (env vars only:\n   GLEAN_INDEXING_API_TOKEN, GLEAN_SERVER_URL).\n2. Register the custom datasource per the recipe's CustomDatasourceConfig\n   (glean-indexing-sdk==1.0.0b2, BaseDatasourceConnector.configure_datasource()).\n3. Run the connector from recipes/index-custom-source: bulk-index documents\n   WITH their permissions (DocumentPermissionsDefinition allowed_groups /\n   allowed_users) — never allow-all. Push identities via get_identities()\n   returning DatasourceIdentityDefinitions so ACLs actually evaluate.\n4. Verify: search \"Who owns the payments-service catalog entry?\" as me and\n   as a restricted test user; the restricted user must NOT see the\n   Acme-HR-only documents.\n\nNote: this SDK version has no datasources.delete() call — only per-item\ndeletes (documents, permission users/groups, employees). Don't invent a\nfull datasource-teardown API.",
+      "llm_context": "glean-indexing-sdk==1.0.0b2. BaseDatasourceConnector subclass sets `configuration: CustomDatasourceConfig` and implements transform() -> Sequence[DocumentDefinition]; permissions via DocumentPermissionsDefinition(allowed_groups=[...] | allowed_users=[UserReferenceDefinition(email=...)]). get_identities() returns DatasourceIdentityDefinitions(users, groups, memberships) for ACL evaluation. DocumentDefinition.created_at/updated_at are epoch seconds (int), not ISO strings. No datasources.delete() exists in this SDK version.",
+      "go_dependency": false,
+      "featured": true,
+      "tags": [
+        "indexing",
+        "foundation"
+      ],
+      "title": "Index a custom data source",
+      "summary": "Bring an unsupported source into Glean with the Indexing API — documents, permissions, and people — and see it live in search. This recipe seeds the Acme corpus every other recipe searches.",
+      "permalink": "/cookbook/index-custom-source"
     }
   ],
   "surfaces": [
@@ -248,5 +319,5 @@
     "sdk-client"
   ],
   "generatedAt": "1970-01-01T00:00:00.000Z",
-  "totalRecipes": 3
+  "totalRecipes": 4
 }

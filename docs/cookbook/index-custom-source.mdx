@@ -1,0 +1,246 @@
+---
+title: Index a custom data source
+description: >-
+  Bring an unsupported source into Glean with the Indexing API — documents,
+  permissions, and people — and see it live in search. This recipe seeds the
+  Acme corpus every other recipe searches.
+slug: /cookbook/index-custom-source
+hide_table_of_contents: true
+hide_title: true
+pagination_prev: null
+pagination_next: null
+recipe:
+  id: index-custom-source
+  surfaces:
+    - indexing-api
+    - connector-sdk
+  status: production-pattern
+  category: index
+  level: Intermediate
+  levels:
+    minimal: true
+    wow: true
+  time_estimate: '~1 hr'
+  required_scopes:
+    - Indexing API token (datasource-scoped)
+  prerequisites:
+    - Admin access to create a custom datasource and Indexing API token
+    - Python 3.10+ (uses glean-indexing-sdk)
+  demo_queries:
+    - Who owns the payments-service catalog entry?
+    - What's the on-call runbook for checkout-service?
+  code_assets:
+    - {
+        repo_path: recipes/index-custom-source,
+        language: python,
+        description: 'Custom connector indexing the Acme corpus with per-document permissions',
+      }
+    - {
+        repo_path: acme-corpus,
+        language: json,
+        description: 'The seed dataset itself',
+      }
+  scaffold_actions:
+    - scaffold-connector
+  architecture:
+    - label: Acme corpus
+      caption: JSON documents + ACLs
+      icon: layout-outlined
+    - label: Indexing SDK
+      caption: bulk index + permissions
+      category: index
+    - label: Glean index
+      caption: searchable in minutes
+      emphasized: true
+  ai_prompt: |-
+    Index the Acme demo corpus into my Glean instance following
+    https://developers.glean.com/cookbook/index-custom-source
+
+    1. Ask me for my Indexing API token + server URL (env vars only:
+       GLEAN_INDEXING_API_TOKEN, GLEAN_SERVER_URL).
+    2. Register the custom datasource per the recipe's CustomDatasourceConfig
+       (glean-indexing-sdk==1.0.0b2, BaseDatasourceConnector.configure_datasource()).
+    3. Run the connector from recipes/index-custom-source: bulk-index documents
+       WITH their permissions (DocumentPermissionsDefinition allowed_groups /
+       allowed_users) — never allow-all. Push identities via get_identities()
+       returning DatasourceIdentityDefinitions so ACLs actually evaluate.
+    4. Verify: search "Who owns the payments-service catalog entry?" as me and
+       as a restricted test user; the restricted user must NOT see the
+       Acme-HR-only documents.
+
+    Note: this SDK version has no datasources.delete() call — only per-item
+    deletes (documents, permission users/groups, employees). Don't invent a
+    full datasource-teardown API.
+  llm_context: >-
+    glean-indexing-sdk==1.0.0b2. BaseDatasourceConnector subclass sets
+    `configuration: CustomDatasourceConfig` and implements transform() ->
+    Sequence[DocumentDefinition]; permissions via
+    DocumentPermissionsDefinition(allowed_groups=[...] |
+    allowed_users=[UserReferenceDefinition(email=...)]). get_identities()
+    returns DatasourceIdentityDefinitions(users, groups, memberships) for ACL
+    evaluation. DocumentDefinition.created_at/updated_at are epoch seconds
+    (int), not ISO strings. No datasources.delete() exists in this SDK
+    version.
+  go_dependency: false
+  featured: true
+  tags:
+    - indexing
+    - foundation
+---
+
+import RecipePage from '@site/src/components/Cookbook/RecipePage';
+import {
+  RecipeSection,
+  RecipeArchitecture,
+  RecipePrereqs,
+  RecipeSteps,
+  RecipeNote,
+  TakeItFurther,
+} from '@site/src/components/Cookbook/RecipeLayout';
+
+<RecipePage recipeId="index-custom-source">
+
+<RecipeSection label="Problem">
+
+Most of what your company knows lives somewhere Glean doesn't crawl out of
+the box — an internal wiki, a service catalog, a bespoke database. The
+Indexing API brings any of it in, with real per-document permissions from
+day one, so search results respect who's allowed to see what.
+
+</RecipeSection>
+
+<RecipeArchitecture />
+
+<RecipePrereqs />
+
+<RecipeSteps>
+
+<>
+Install the SDK and register the datasource. A datasource is a
+`CustomDatasourceConfig` — a name, a display name, a category, and the
+object types it will contain.
+
+```bash snippet=index-custom-source/snippet-01.sh
+pip install glean-indexing-sdk==1.0.0b2
+```
+
+```python snippet=index-custom-source/snippet-02.py
+from glean.api_client.models import DatasourceCategory, ObjectDefinition
+from glean.indexing.connectors import BaseDatasourceConnector
+from glean.indexing.models import CustomDatasourceConfig
+
+class AcmeCorpusConnector(BaseDatasourceConnector[dict]):
+    configuration: CustomDatasourceConfig = CustomDatasourceConfig(
+        name="acme_corpus",
+        display_name="Acme Corpus",
+        datasource_category=DatasourceCategory.KNOWLEDGE_HUB,
+        url_regex="https://portal.acme.internal/.*",
+        is_entity_datasource=False,
+        is_test_datasource=False,
+        is_user_referenced_by_email=True,
+        object_definitions=[
+            ObjectDefinition(
+                name="document",
+                display_label="Document",
+                doc_category=DatasourceCategory.KNOWLEDGE_HUB,
+            ),
+        ],
+    )
+```
+
+</>
+
+<>
+Transform your source data into `DocumentDefinition`s — and give each one a
+real permission block. This is the part teams skip and regret: an
+`allow_anonymous_access` shortcut means every document is visible to
+everyone, forever.
+
+```python snippet=index-custom-source/snippet-03.py
+from glean.indexing.models import ContentDefinition, DocumentDefinition
+from glean.api_client.models import DocumentPermissionsDefinition, UserReferenceDefinition
+
+def transform(self, data):
+    return [
+        DocumentDefinition(
+            id=item["id"],
+            title=item["title"],
+            datasource=self.name,
+            view_url=item["view_url"],
+            object_type="document",
+            body=ContentDefinition(mime_type="text/plain", text_content=item["body"]),
+            permissions=DocumentPermissionsDefinition(allowed_groups=item["groups"]),
+            created_at=item["created_at_epoch_seconds"],
+            updated_at=item["updated_at_epoch_seconds"],
+        )
+        for item in data
+    ]
+```
+
+<RecipeNote>
+`DocumentDefinition.created_at`/`updated_at` are epoch seconds (an `int`),
+not ISO date strings — a detail the API's own bundled examples don't always
+make obvious. Convert before constructing the object, or Glean will reject
+the payload.
+</RecipeNote>
+
+</>
+
+<>
+Push the identities those permissions reference. If any document uses
+`allowed_groups`, override `get_identities()` to also supply the matching
+users, groups, and memberships — Glean can't evaluate a group ACL it's
+never heard of.
+
+```python snippet=index-custom-source/snippet-04.py
+from glean.api_client.models import (
+    DatasourceBulkMembershipDefinition,
+    DatasourceGroupDefinition,
+    DatasourceUserDefinition,
+)
+from glean.indexing.models import DatasourceIdentityDefinitions
+
+def get_identities(self):
+    return DatasourceIdentityDefinitions(
+        users=[DatasourceUserDefinition(email="dana.okafor@acme.example.com", name="Dana Okafor")],
+        groups=[DatasourceGroupDefinition(name="Acme-HR")],
+        memberships=[
+            DatasourceBulkMembershipDefinition(
+                member_user_id="dana.okafor@acme.example.com",
+                member_group_name="Acme-HR",
+            ),
+        ],
+    )
+```
+
+</>
+
+<>
+Register the datasource and run the connector.
+
+```python snippet=index-custom-source/snippet-05.py
+connector = AcmeCorpusConnector("acme_corpus", MyDataClient())
+connector.configure_datasource()
+connector.index_data()
+```
+
+</>
+
+</RecipeSteps>
+
+Verify with **"Who owns the payments-service catalog entry?"** — as
+yourself, then as a user in a group that isn't granted access to a
+restricted document. The restricted user should see nothing for that
+document; everyone else should see it, cited.
+
+<TakeItFurther>
+
+<>Add incremental sync by implementing `get_data(since=...)` and calling `index_data(mode=IndexingMode.INCREMENTAL)`.</>
+
+<>Index structured entities (people, assets) alongside documents with `BasePeopleConnector`.</>
+
+<>Watch [Datasource Debugging](/api-info/indexing/debugging/datasource-status) to confirm documents and permissions landed as expected.</>
+
+</TakeItFurther>
+
+</RecipePage>
