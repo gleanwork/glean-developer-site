@@ -1,0 +1,222 @@
+---
+title: Permissions-aware RAG
+description: >-
+  Use Glean Search as the retrieval layer for your own LLM app — every chunk
+  ACL-filtered per user before it ever reaches the model.
+slug: /cookbook/permissions-aware-rag
+hide_table_of_contents: true
+hide_title: true
+pagination_prev: null
+pagination_next: null
+recipe:
+  id: permissions-aware-rag
+  surfaces:
+    - platform-api
+    - sdk-client
+  status: production-pattern
+  category: search
+  level: Intermediate
+  levels:
+    minimal: true
+    wow: true
+  time_estimate: '~1 hr'
+  required_scopes:
+    - SEARCH
+  prerequisites:
+    - A Glean token with SEARCH scope (global/admin token for the act-as permissions demo)
+    - An LLM API key (any provider; example uses Claude)
+    - Python 3.10+ or Node 20+
+  demo_queries:
+    - What's our PTO policy?
+    - What are the engineering compensation bands?
+  code_assets:
+    - {
+        repo_path: recipes/permissions-aware-rag/python,
+        language: python,
+        description: 'search.query → snippets → LLM with citations',
+      }
+    - {
+        repo_path: recipes/permissions-aware-rag/typescript,
+        language: typescript,
+        description: 'Same flow in TypeScript',
+      }
+  architecture:
+    - label: Your app
+      caption: any LLM app
+      icon: layout-outlined
+    - label: Glean Search API
+      caption: ACL-filtered retrieval
+      category: search
+      emphasized: true
+    - label: Your LLM
+      caption: answers from permitted context only
+      category: agent
+  ai_prompt: |-
+    Build permissions-aware RAG on Glean following
+    https://developers.glean.com/cookbook/permissions-aware-rag
+
+    1. Retrieval: glean.client.search.query(query=..., page_size=8) — use
+       the Client API's search.query (glean.client.search), NOT the newer
+       top-level glean.search.query(), which is a separate data-retrieval
+       API. Collect title, url, and snippets[].text from each result —
+       snippets are the chunks.
+    2. Prompt the LLM with ONLY those snippets; require inline [n] citations
+       mapped back to the result URLs.
+    3. Enforce per-user: pass an X-Glean-Act-As: <email> HTTP header (not a
+       query parameter or SDK option) to impersonate a specific user with a
+       global/admin token. Demo with two users where the restricted one
+       gets "I don't have information on that" for HR-only queries.
+    4. README must state the differentiator: no vector DB, no ACL
+       mirroring, no re-sync — Glean is the governed retrieval layer.
+
+    Use claude-sonnet-5 via the anthropic SDK if I don't specify a
+    provider; keep the LLM call swappable.
+  llm_context: >-
+    Client API search: glean.client.search.query(query, page_size,
+    http_headers). Result shape: results[].title, results[].url,
+    results[].snippets[].text (the modern field; .snippet is legacy).
+    Per-user enforcement is the X-Glean-Act-As HTTP header on a
+    global/admin token, not an SDK parameter.
+  go_dependency: false
+  featured: true
+  tags:
+    - rag
+    - differentiator
+---
+
+import RecipePage from '@site/src/components/Cookbook/RecipePage';
+import {
+  RecipeSection,
+  RecipeArchitecture,
+  RecipePrereqs,
+  RecipeSteps,
+  RecipeNote,
+  TakeItFurther,
+} from '@site/src/components/Cookbook/RecipeLayout';
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+<RecipePage recipeId="permissions-aware-rag">
+
+<RecipeSection label="Problem">
+
+Building RAG over your own content usually means standing up a vector DB,
+mirroring every source system's ACLs into it, and keeping that mirror in
+sync forever — get any of that wrong and you leak documents. Glean is
+already the permission-aware index of your company's content. Use its
+Search API as retrieval and skip all three problems.
+
+</RecipeSection>
+
+<RecipeArchitecture />
+
+<RecipePrereqs />
+
+<RecipeSteps>
+
+<>
+Retrieve: call Search with the question, and pull `title`, `url`, and each
+result's `snippets[].text` — these are your chunks. This is the same
+Client API endpoint (`glean.client.*`) used throughout this cookbook, not
+the newer top-level data-retrieval API.
+
+<Tabs>
+<TabItem value="python" label="Python">
+
+```python snippet=permissions-aware-rag/snippet-01.py
+glean = Glean(api_token=..., instance=...)
+
+response = glean.client.search.query(query=question, page_size=8)
+
+sources = [
+    {"title": r.title, "url": r.url, "text": "\n".join(s.text for s in r.snippets if s.text)}
+    for r in response.results or []
+    if r.title and r.snippets
+]
+```
+
+</TabItem>
+<TabItem value="typescript" label="TypeScript">
+
+```typescript snippet=permissions-aware-rag/snippet-02.ts
+const glean = new Glean({ apiToken: ..., instance: ... });
+
+const response = await glean.client.search.query({ query: question, pageSize: 8 });
+
+const sources = (response.results ?? [])
+  .filter((r) => r.title && r.snippets)
+  .map((r) => ({
+    title: r.title!,
+    url: r.url,
+    text: r.snippets!.map((s) => s.text ?? '').join('\n'),
+  }));
+```
+
+</TabItem>
+</Tabs>
+
+</>
+
+<>
+Answer: send the LLM only the retrieved sources, numbered, and require
+inline `[n]` citations. If retrieval comes back empty, say so — don't let
+the model answer from its own training data.
+
+```python snippet=permissions-aware-rag/snippet-03.py
+prompt = f"""Answer using ONLY the numbered sources below. Cite inline like [1].
+If the sources don't cover the question, say you don't have information on that.
+
+Sources:
+{numbered_sources}
+
+Question: {question}"""
+
+message = anthropic_client.messages.create(
+    model="claude-sonnet-5",
+    max_tokens=1024,
+    messages=[{"role": "user", "content": prompt}],
+)
+```
+
+<RecipeNote>
+Any LLM provider works here — Glean did the governed retrieval, the model
+just reads what it's given.
+</RecipeNote>
+
+</>
+
+<>
+Enforce per-user permissions: with a **global/admin** Glean token, add an
+`X-Glean-Act-As: user@company.com` header to impersonate a specific user.
+This is a raw HTTP header, not a SDK parameter or query argument — a
+detail easy to get wrong if you go looking for an `actAs` option that
+doesn't exist.
+
+```python snippet=permissions-aware-rag/snippet-04.py
+response = glean.client.search.query(
+    query=question,
+    page_size=8,
+    http_headers={"X-Glean-Act-As": "marcus.webb@acme.example.com"},
+)
+```
+
+</>
+
+</RecipeSteps>
+
+Try it with **"What are the engineering compensation bands?"** acting as a
+user in `Acme-Engineering` only, then again as a user in `Acme-HR` — the
+first should get "I don't have information on that," the second should get
+a cited answer.
+
+<TakeItFurther>
+
+<>Add a re-ranking pass over snippets before they reach the LLM for higher-precision citations.</>
+
+<>Cache retrieval results per session to cut latency on follow-up questions in the same conversation.</>
+
+<>Swap in [Glean Chat](/cookbook/acme-answers) instead of a raw LLM call if you want Glean to also own the generation step.</>
+
+</TakeItFurther>
+
+</RecipePage>
