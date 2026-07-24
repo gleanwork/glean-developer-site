@@ -357,6 +357,77 @@
       "permalink": "/cookbook/index-custom-source"
     },
     {
+      "id": "multi-step-agent",
+      "surfaces": [
+        "agents",
+        "tools"
+      ],
+      "status": "production-pattern",
+      "category": "agent",
+      "level": "Advanced",
+      "levels": {
+        "minimal": true,
+        "wow": true
+      },
+      "time_estimate": "~2 hr",
+      "required_scopes": [
+        "AGENTS",
+        "TOOLS"
+      ],
+      "prerequisites": [
+        "Agent builder access in your Glean instance",
+        "Permission to register a custom tool (or admin help)",
+        "A Glean token with AGENTS scope for API invocation"
+      ],
+      "demo_queries": [
+        "Summarize open payments incidents and file a tracking ticket"
+      ],
+      "code_assets": [
+        {
+          "repo_path": "recipes/multi-step-agent/tool-server",
+          "language": "python",
+          "description": "Governed custom Tool — files an incident ticket, restricted to Acme-Engineering"
+        },
+        {
+          "repo_path": "recipes/multi-step-agent/invoke-agent",
+          "language": "python",
+          "description": "Invoke the agent via agents.run, demo both the permitted and denied branches"
+        }
+      ],
+      "scaffold_actions": [],
+      "architecture": [
+        {
+          "label": "Agent",
+          "caption": "plan → retrieve → act",
+          "category": "agent",
+          "emphasized": true
+        },
+        {
+          "label": "Glean retrieval",
+          "caption": "grounded in the index",
+          "category": "search",
+          "emphasized": false
+        },
+        {
+          "label": "Custom tool",
+          "caption": "governed write action",
+          "category": "workflow",
+          "emphasized": false
+        }
+      ],
+      "ai_prompt": "Build the governed multi-step agent from\nhttps://developers.glean.com/cookbook/multi-step-agent\n\n1. Register the recipe's custom tool (an incident-ticket-creation HTTP\n   tool) in the Glean admin console (Admin > Platform > Tools > Add) —\n   this is a manual/admin-console step, there is no API to create a\n   tool. Upload the recipe's openapi.yaml as the tool's API spec.\n2. Create an agent in the Agent Builder (also a UI step, not an API\n   call): instructions from the recipe, retrieval on, the tool\n   attached. Copy the agent's ID.\n3. Invoke via glean.client.agents.run(agent_id=..., messages=[...],\n   http_headers={\"X-Glean-Act-As\": email}) — NOT chat.create's\n   ChatMessage/ChatMessageFragment shape; agents use Message/\n   MessageTextBlock instead. run_stream() returns raw SSE text (a\n   string), not a parsed event iterator — use run() unless you're\n   ready to parse SSE yourself.\n4. Demo both branches by running as two different users: a permitted\n   user (Acme-Engineering) gets the ticket filed; a non-permitted\n   user gets a graceful no-write fallback summary because the tool\n   server returned 403 and the agent's own instructions handle that\n   case.",
+      "llm_context": "Agents API: glean.client.agents.run(agent_id, messages, http_headers) -> AgentRunWaitResponse{run.status, messages}. messages use Message(role, content=[MessageTextBlock(text, type=ContentType.TEXT)]) — distinct from chat.create's ChatMessage/ChatMessageFragment. run_stream() returns a raw SSE string, not an iterator. Tools are registered via the admin console (upload an OpenAPI spec), not an API call. Per-user identity for a run uses the X-Glean-Act-As header on a global/admin token, same as Search. Custom tool servers receive the acting user's email via the Glean-User-Email header, which is where tool-level authorization (governance) is actually enforced for scratch-built tools.",
+      "go_dependency": false,
+      "featured": true,
+      "tags": [
+        "agents",
+        "governance"
+      ],
+      "title": "Multi-step agent with governed tools",
+      "summary": "Build a Glean agent that plans, retrieves, and acts through a governed custom tool — with a safe fallback when the tool is denied.",
+      "permalink": "/cookbook/multi-step-agent"
+    },
+    {
       "id": "permissions-aware-rag",
       "surfaces": [
         "platform-api",
@@ -434,8 +505,10 @@
     "web-sdk",
     "connector-sdk",
     "indexing-api",
-    "sdk-client"
+    "sdk-client",
+    "tools",
+    "agents"
   ],
   "generatedAt": "1970-01-01T00:00:00.000Z",
-  "totalRecipes": 6
+  "totalRecipes": 7
 }
