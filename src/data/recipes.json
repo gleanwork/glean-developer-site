@@ -169,6 +169,52 @@
       "permalink": "/cookbook/build-engineering-portal"
     },
     {
+      "id": "connect-mcp-hosts",
+      "surfaces": [
+        "mcp"
+      ],
+      "status": "production-pattern",
+      "category": "mcp",
+      "level": "Beginner",
+      "levels": {
+        "minimal": true,
+        "wow": false
+      },
+      "time_estimate": "~15 min",
+      "required_scopes": [
+        "MCP"
+      ],
+      "prerequisites": [
+        "Glean MCP server enabled for your deployment (admin toggle)",
+        "At least one MCP host installed (Claude Code, Cursor, or Claude Desktop)"
+      ],
+      "demo_queries": [
+        "Who's on call for payments-service?",
+        "Summarize PAY-2114"
+      ],
+      "code_assets": [
+        {
+          "repo_path": "recipes/connect-mcp-hosts",
+          "language": "json",
+          "description": "Host config snippets for all three hosts"
+        }
+      ],
+      "scaffold_actions": [
+        "scaffold-mcp-config"
+      ],
+      "ai_prompt": "Connect me to the Glean remote MCP server following\nhttps://developers.glean.com/cookbook/connect-mcp-hosts\n\n1. Detect which MCP hosts I have installed (Claude Code, Cursor, Claude\n   Desktop).\n2. Use the MCP Configurator flow from https://developers.glean.com/guides/mcp\n   to add the remote server for each — OAuth is the primary auth; do NOT\n   tell me I need an API token. The Configurator URL pattern is\n   https://app.glean.com/settings/install?mcpConfigure=true&mcpHost=<slug>\n   (slugs: claude-code, cursor, claude-desktop).\n3. Note that Claude Code and Cursor connect natively over HTTP\n   (type: \"http\"), while Claude Desktop is stdio-only and needs the\n   mcp-remote bridge (type: \"stdio\", command npx mcp-remote <url>) —\n   don't write an http config for Claude Desktop, it won't work.\n4. Verify per host by asking \"Who's on call for payments-service?\" and\n   confirming a Glean-cited answer.",
+      "llm_context": "Glean MCP server URL: https://{instance}-be.glean.com/mcp/{server-name} (default server-name is \"default\"). Claude Code and Cursor support native HTTP transport with a Bearer auth header. Claude Desktop only supports stdio and requires the mcp-remote bridge (npx mcp-remote <url> --header \"Authorization: Bearer <token>\"). Never reference @gleanwork/mcp-server (deprecated local package) or tell users an API token is required — OAuth via the MCP Configurator is primary.",
+      "go_dependency": false,
+      "featured": false,
+      "tags": [
+        "mcp",
+        "starter"
+      ],
+      "title": "Connect Glean MCP to your AI tools",
+      "summary": "Point Claude Code, Cursor, and Claude Desktop at your Glean MCP endpoint and run one enterprise task from each — same context, three surfaces.",
+      "permalink": "/cookbook/connect-mcp-hosts"
+    },
+    {
       "id": "embed-search-chat",
       "surfaces": [
         "web-sdk"
@@ -383,6 +429,7 @@
     }
   ],
   "surfaces": [
+    "mcp",
     "platform-api",
     "web-sdk",
     "connector-sdk",
@@ -390,5 +437,5 @@
     "sdk-client"
   ],
   "generatedAt": "1970-01-01T00:00:00.000Z",
-  "totalRecipes": 5
+  "totalRecipes": 6
 }
