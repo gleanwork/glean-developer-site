@@ -1,0 +1,187 @@
+---
+title: Call a Glean agent from an A2A client
+description: >-
+  Discover a published Glean agent's A2A card and run it from any A2A
+  client — multi-turn, streamed, permission-aware.
+slug: /cookbook/a2a-client
+hide_table_of_contents: true
+hide_title: true
+pagination_prev: null
+pagination_next: null
+recipe:
+  id: a2a-client
+  surfaces:
+    - agents
+    - platform-api
+  status: production-pattern
+  category: agent
+  level: Intermediate
+  levels:
+    minimal: true
+    wow: false
+  time_estimate: '~45 min'
+  required_scopes:
+    - Agent-scoped Client API token (AGENTS)
+  prerequisites:
+    - A published auto agent with a chat-message trigger (text input only)
+    - The agent's A2A card URL + bearer token from the agent Share dialog
+    - Python 3.10+ with a2a-sdk pinned < 1.0 (server speaks A2A 0.3 today)
+  demo_queries:
+    - Who owns the payments service?
+  code_assets:
+    - {
+        repo_path: recipes/a2a-client,
+        language: python,
+        description: 'Card discovery → message/send → multi-turn via contextId → streaming',
+      }
+  ai_prompt: |-
+    Build an A2A client for a Glean agent following
+    https://developers.glean.com/cookbook/a2a-client
+
+    1. Ask me for the agent card URL and bearer token (from the agent's
+       Share → A2A dialog).
+    2. Pin a2a-sdk BELOW 1.0 (e.g. a2a-sdk==0.3.26) — Glean serves A2A
+       spec 0.3 (message/send, message/stream, tasks/get); 1.x clients
+       will not interop until the server upgrades. Note this in the
+       README.
+    3. IMPORTANT: a2a-sdk's own A2AClient class (the one matching
+       message/send naming) is marked [DEPRECATED] even in the pinned
+       0.3.x release, with a runtime warning to use ClientFactory
+       instead. Use ClientFactory + Client.send_message() — do not use
+       A2AClient.
+    4. Resolve the card (A2ACardResolver, bearer token via the httpx
+       client's headers), verify card.url contains /a2a/agents/.
+    5. Client.send_message() is always an async iterator that yields
+       either a Message directly, or (Task, UpdateEvent) tuples for
+       task-based agents — handle both. Send a question (message/send
+       via a streaming=False client), then a follow-up reusing the
+       response's context_id to prove multi-turn, then a long question
+       via a streaming=True client. Errors: 404 = flag off or agent not
+       eligible; 403 = token scopes.
+  llm_context: >-
+    Per-agent A2A endpoints: /rest/api/v1/a2a/agents/{agentId} (JSON-RPC)
+    and .../agent-card.json. GA, on by default
+    (a2aPerAgentServerEnabled). Eligible: published auto agents,
+    chat-message trigger, text-only. Server is A2A spec 0.3 via a2a-go;
+    upgrade to 1.x tracked internally (EN-1972098). a2a-sdk's A2AClient
+    class is deprecated even at 0.3.26 — use ClientFactory/
+    Client.send_message() instead, which unifies streaming and
+    non-streaming behind one async-iterator method controlled by
+    ClientConfig(streaming=bool). Message text is at
+    message.parts[i].root.text; Task-based replies put it in
+    task.history[-1].
+  go_dependency: false
+  featured: false
+  tags:
+    - a2a
+    - interop
+---
+
+import RecipePage from '@site/src/components/Cookbook/RecipePage';
+import {
+  RecipeSection,
+  RecipePrereqs,
+  RecipeSteps,
+  RecipeNote,
+  TakeItFurther,
+} from '@site/src/components/Cookbook/RecipeLayout';
+
+<RecipePage recipeId="a2a-client">
+
+<RecipeSection label="Problem">
+
+You've already built a Glean agent. A2A (Agent2Agent) lets any
+A2A-compliant client — not just Glean's own UI — discover and run it,
+multi-turn and streamed, with Glean's permissions still enforced.
+
+</RecipeSection>
+
+<RecipePrereqs />
+
+<RecipeSteps>
+
+<>
+Pin your dependency, then resolve the agent's card. **Glean's per-agent
+A2A server speaks spec 0.3** — pin `a2a-sdk` below 1.0 or your client
+won't interoperate.
+
+```bash snippet=a2a-client/snippet-01.sh
+pip install "a2a-sdk==0.3.26" httpx
+```
+
+```python snippet=a2a-client/snippet-02.py
+import httpx
+from a2a.client import A2ACardResolver
+
+async with httpx.AsyncClient(headers={"Authorization": f"Bearer {token}"}) as httpx_client:
+    resolver = A2ACardResolver(httpx_client, base_url, agent_card_path=card_path)
+    card = await resolver.get_agent_card()
+    assert "/a2a/agents/" in card.url
+```
+
+<RecipeNote>
+`a2a-sdk`'s own `A2AClient` class — the one whose method names literally
+match `message/send`/`message/stream` — is marked `[DEPRECATED]` even in
+this pinned 0.3.26 release, with a runtime warning to use `ClientFactory`
+instead. This recipe uses `ClientFactory` throughout.
+</RecipeNote>
+
+</>
+
+<>
+Send a message, then a follow-up reusing `context_id` to prove multi-turn.
+`send_message()` is always an async iterator — no separate method for
+streaming; that's controlled by `ClientConfig(streaming=...)`.
+
+```python snippet=a2a-client/snippet-03.py
+from a2a.client import ClientConfig, ClientFactory
+from a2a.client.helpers import create_text_message_object
+from a2a.types import Message, Role
+
+client = ClientFactory(ClientConfig(httpx_client=httpx_client, streaming=False)).create(card)
+question = create_text_message_object(role=Role.user, content="Who owns the payments service?")
+
+context_id = None
+async for event in client.send_message(question):
+    message = event if isinstance(event, Message) else event[0].history[-1]
+    context_id = message.context_id
+    print("".join(p.root.text for p in message.parts if p.root.kind == "text"))
+
+follow_up = create_text_message_object(role=Role.user, content="Who's on call for it this week?")
+follow_up.context_id = context_id
+async for event in client.send_message(follow_up):
+    ...  # same context — the agent remembers turn 1
+```
+
+</>
+
+<>
+Stream a long answer with a second client built for streaming.
+
+```python snippet=a2a-client/snippet-04.py
+stream_client = ClientFactory(ClientConfig(httpx_client=httpx_client, streaming=True)).create(card)
+async for event in stream_client.send_message(long_question):
+    ...  # print incrementally as chunks arrive
+```
+
+</>
+
+</RecipeSteps>
+
+Try it with **"Who owns the payments service?"** — the answer should
+respect the permissions of whoever the agent's token represents. A `404`
+means the A2A flag is off or the agent isn't eligible (published, auto,
+chat-message trigger, text-only); `403` means the token's scopes are
+wrong.
+
+<TakeItFurther>
+
+<>Handle the `Task`-based response shape explicitly if your agent uses tool calls that return structured artifacts, not just text.</>
+
+<>Watch for the `a2a-sdk` 1.x upgrade path once Glean's server moves past spec 0.3 — the pinning caveat in this recipe is temporary.</>
+
+<>Combine with [connect-mcp-hosts](/cookbook/connect-mcp-hosts) to compare calling the same agent via MCP vs. A2A.</>
+
+</TakeItFurther>
+
+</RecipePage>
