@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import Link from '@docusaurus/Link';
 import { getIcon } from '@gleanwork/docusaurus-theme-glean/Icons';
 import {
   RECIPE_STATUS_LABELS,
@@ -282,8 +281,10 @@ interface RecipeLayoutProps {
 
 /**
  * Recipe detail template per design handoff 4b: gradient header banner
- * (breadcrumb, category tile, title, meta pills) and a main + sticky-rail
- * grid. Body sections come from the recipe MDX via the section components.
+ * (category tile, title, meta pills) and a main + sticky-rail grid. The
+ * native theme breadcrumb (rendered above this component) handles
+ * back-navigation to /cookbook. Body sections come from the recipe MDX via
+ * the section components.
  */
 export default function RecipeLayout({
   recipe,
@@ -293,11 +294,6 @@ export default function RecipeLayout({
     <RecipeContext.Provider value={recipe}>
       <div className={styles.page}>
         <div className={styles.banner}>
-          <div className={styles.breadcrumb}>
-            <Link to="/cookbook">Cookbook</Link>
-            <span className={styles.breadcrumbSep}>/</span>
-            {recipe.title}
-          </div>
           <div className={styles.bannerMain}>
             <CategoryTile
               category={recipe.category}
