@@ -32,7 +32,7 @@ export default function RecipeCard({
   return (
     <Link className={styles.card} to={recipe.permalink}>
       <div className={styles.tileRow}>
-        <CategoryTile category={recipe.category} />
+        <CategoryTile category={recipe.category} iconOverride={recipe.icon} />
       </div>
       <span className={styles.title}>{recipe.title}</span>
       <p className={styles.summary}>{recipe.summary}</p>

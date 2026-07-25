@@ -90,14 +90,14 @@ describe('RecipeIndex', () => {
     expect(screen.getByText('3 recipes')).toBeInTheDocument();
   });
 
-  it('filters via a single-select chip and hides the flagship when unmatched', async () => {
+  it('filters grid cards via a single-select chip, keeping the flagship pinned', async () => {
     const user = userEvent.setup();
     render(<RecipeIndex {...props} />);
 
     await user.click(screen.getByRole('button', { name: 'Indexing API' }));
     expect(screen.queryByText('Embed search & chat')).not.toBeInTheDocument();
-    expect(screen.queryByText('End-to-end build')).not.toBeInTheDocument();
-    expect(screen.getByText('1 recipe')).toBeInTheDocument();
+    expect(screen.getByText('End-to-end build')).toBeInTheDocument();
+    expect(screen.getByText('2 recipes')).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'All' }));
     expect(screen.getByText('End-to-end build')).toBeInTheDocument();

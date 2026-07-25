@@ -42,7 +42,7 @@ export default function RecipeIndex({
     [gridRecipes, activeFilter],
   );
 
-  const flagshipVisible = flagship ? matches(flagship, activeFilter) : false;
+  const flagshipVisible = Boolean(flagship);
   const count = visibleRecipes.length + (flagshipVisible ? 1 : 0);
 
   return (

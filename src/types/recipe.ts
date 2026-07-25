@@ -107,6 +107,8 @@ export const recipeMetaSchema = z.strictObject({
     wow: z.boolean(),
   }),
   time_estimate: z.string().min(1),
+  /** Explicit icon name; overrides the category's default glyph on cards and the hero banner. */
+  icon: z.string().min(1).optional(),
   required_scopes: z.array(z.string().min(1)),
   prerequisites: z.array(z.string().min(1)).min(1),
   demo_queries: z.array(z.string().min(1)).default([]),

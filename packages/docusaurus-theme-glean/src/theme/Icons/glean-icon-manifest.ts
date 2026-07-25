@@ -190,6 +190,7 @@ export const GLEAN_ICON_MAP = {
   npm: { file: 'npm.svg', path: '/img/glean/' },
   pypi: { file: 'pypi.svg', path: '/img/glean/' },
   python: { file: 'python.svg', path: '/img/glean/' },
+  replit: { file: 'replit.svg', path: '/img/glean/icons/' },
   typescript: { file: 'typescript.svg', path: '/img/glean/' },
 } as const;
 

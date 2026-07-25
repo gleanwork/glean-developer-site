@@ -299,7 +299,12 @@ export default function RecipeLayout({
             {recipe.title}
           </div>
           <div className={styles.bannerMain}>
-            <CategoryTile category={recipe.category} iconSize={26} size={52} />
+            <CategoryTile
+              category={recipe.category}
+              iconOverride={recipe.icon}
+              iconSize={26}
+              size={52}
+            />
             <div>
               <h1 className={styles.bannerTitle}>{recipe.title}</h1>
               <p className={styles.bannerDesc}>{recipe.summary}</p>

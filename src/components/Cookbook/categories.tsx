@@ -1,5 +1,7 @@
 import type React from 'react';
+import useBaseUrl from '@docusaurus/useBaseUrl';
 import { getIcon } from '@gleanwork/docusaurus-theme-glean/Icons';
+import { BRAND_ICON_SRC } from './brandIcons';
 import styles from './categories.module.css';
 
 /**
@@ -25,6 +27,9 @@ export function categoryTileClass(category: string): string {
 
 interface CategoryTileProps {
   category: string;
+  /** Explicit per-recipe icon override — a brand key (BRAND_ICON_SRC), a
+   * glean-icon-manifest name, or unset to fall back to the category glyph. */
+  iconOverride?: string;
   /** Tile square size in px (44 on index cards, 52 on the detail banner). */
   size?: number;
   iconSize?: number;
@@ -32,9 +37,13 @@ interface CategoryTileProps {
 
 export function CategoryTile({
   category,
+  iconOverride,
   size = 44,
   iconSize = 21,
 }: CategoryTileProps): React.ReactElement {
+  const brandSrc = iconOverride ? BRAND_ICON_SRC[iconOverride] : undefined;
+  const brandUrl = useBaseUrl(brandSrc ?? '');
+
   return (
     <span
       className={categoryTileClass(category)}
@@ -44,11 +53,25 @@ export function CategoryTile({
         borderRadius: Math.round(size * 0.27),
       }}
     >
-      {getIcon(CATEGORY_ICONS[category] ?? 'glean-app', 'glean', {
-        width: iconSize,
-        height: iconSize,
-        color: 'currentColor',
-      })}
+      {brandSrc ? (
+        <img
+          src={brandUrl}
+          alt=""
+          width={iconSize}
+          height={iconSize}
+          style={{ objectFit: 'contain' }}
+        />
+      ) : (
+        getIcon(
+          iconOverride ?? CATEGORY_ICONS[category] ?? 'glean-app',
+          'glean',
+          {
+            width: iconSize,
+            height: iconSize,
+            color: 'currentColor',
+          },
+        )
+      )}
     </span>
   );
 }

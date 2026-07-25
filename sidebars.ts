@@ -1,4 +1,5 @@
 import type { SidebarsConfig } from '@docusaurus/plugin-content-docs';
+import recipesData from './src/data/recipes.json';
 
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
 
@@ -104,18 +105,18 @@ const baseSidebars: SidebarsConfig = {
             type: 'doc',
             id: 'cookbook/index',
           },
-          items: [
-            {
-              type: 'doc',
-              id: 'cookbook/embed-search-chat',
-              label: 'Embed search & chat',
-            },
-            {
-              type: 'doc',
-              id: 'cookbook/build-engineering-portal',
-              label: 'Build an engineering portal',
-            },
-          ],
+          // Generated from the compiled recipe registry so this list can
+          // never drift from the real set of recipe pages again (it used to
+          // hardcode 2 of 10). Collapsed by default like its sibling
+          // categories below; auto-expands to show siblings when you're on
+          // a recipe page, same as Chat/Search/Agents/etc. No `label` here
+          // on purpose — Docusaurus falls back to each doc's own
+          // `sidebar_label` frontmatter (short, sidebar-friendly) instead of
+          // the full page title, which is often too long for the rail.
+          items: recipesData.recipes.map((recipe) => ({
+            type: 'doc' as const,
+            id: `cookbook/${recipe.id}`,
+          })),
         },
         {
           type: 'category',
