@@ -109,13 +109,14 @@ const baseSidebars: SidebarsConfig = {
           // never drift from the real set of recipe pages again (it used to
           // hardcode 2 of 10). Collapsed by default like its sibling
           // categories below; auto-expands to show siblings when you're on
-          // a recipe page, same as Chat/Search/Agents/etc. No `label` here
-          // on purpose — Docusaurus falls back to each doc's own
-          // `sidebar_label` frontmatter (short, sidebar-friendly) instead of
-          // the full page title, which is often too long for the rail.
+          // a recipe page, same as Chat/Search/Agents/etc. Recipe .mdx files
+          // carry no frontmatter (metadata lives in the registry), so the
+          // short sidebar label is set explicitly here rather than relying
+          // on Docusaurus's own `sidebar_label` frontmatter fallback.
           items: recipesData.recipes.map((recipe) => ({
             type: 'doc' as const,
             id: `cookbook/${recipe.id}`,
+            label: recipe.sidebarLabel ?? recipe.title,
           })),
         },
         {

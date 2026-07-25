@@ -3,15 +3,18 @@ import { z } from 'zod';
 /**
  * Recipe schema — the single source of truth for the Cookbooks section.
  *
- * A recipe is authored as one MDX file in `docs/cookbook/`. The page-level
- * Docusaurus fields (`title`, `description`) double as the recipe's title and
- * summary; everything else lives in a nested `recipe:` frontmatter block so
- * recipe fields never collide with Docusaurus frontmatter.
+ * A recipe's metadata lives in `glean-cookbook`'s `registry.json`, synced
+ * locally to `data/cookbook-registry.json` (see `scripts/sync-registry.mjs`).
+ * The matching `docs/cookbook/{id}.mdx` file is prose-only — no metadata
+ * frontmatter — and is matched to its registry entry by filename === id.
  *
  * Consumed by:
  * - `scripts/compile-recipes.ts` → `src/data/recipes.json` (build-failing validation)
  * - the Cookbook components (index cards, filters, detail right rail)
- * - the glean-cookbook plugin (scaffold actions, ai_prompt)
+ * - the glean-cookbook plugin (scaffold actions, aiPrompt)
+ *
+ * Field names are camelCase since this is a genuine JSON data store shared
+ * across repos and consumers, not Docusaurus frontmatter.
  *
  * `schemas/recipe.schema.json` is generated from this file via
  * `pnpm recipes:schema` — do not edit that artifact by hand.
@@ -25,7 +28,7 @@ export const RECIPE_SURFACES = [
    * launched at developers.glean.com/api/platform-api and needed the name. */
   'client-api',
   /** The new data-first retrieval surface (glean.search.query() et al.) —
-   * Experimental as of its 2026-07 launch; see llm_context on recipes using it
+   * Experimental as of its 2026-07 launch; see llmContext on recipes using it
    * for the X-Glean-Include-Experimental opt-in requirement. */
   'platform-api',
   'web-sdk',
@@ -81,7 +84,7 @@ export const RECIPE_CATEGORIES = [
 export const RECIPE_LEVELS = ['Beginner', 'Intermediate', 'Advanced'] as const;
 
 export const recipeCodeAssetSchema = z.strictObject({
-  repo_path: z.string().min(1),
+  repoPath: z.string().min(1),
   language: z.string().min(1),
   description: z.string().min(1),
 });
@@ -107,6 +110,10 @@ export const recipeMetaSchema = z.strictObject({
   id: z
     .string()
     .regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, 'id must be a kebab-case slug'),
+  title: z.string().min(1),
+  description: z.string().min(1),
+  /** Short label for the doc sidebar; falls back to `title` when omitted. */
+  sidebarLabel: z.string().min(1).optional(),
   surfaces: z.array(z.enum(RECIPE_SURFACES)).min(1),
   status: z.enum(RECIPE_STATUSES),
   category: z.enum(RECIPE_CATEGORIES),
@@ -115,42 +122,29 @@ export const recipeMetaSchema = z.strictObject({
     minimal: z.boolean(),
     wow: z.boolean(),
   }),
-  time_estimate: z.string().min(1),
+  timeEstimate: z.string().min(1),
   /** Explicit icon name; overrides the category's default glyph on cards and the hero banner. */
   icon: z.string().min(1).optional(),
-  required_scopes: z.array(z.string().min(1)),
+  requiredScopes: z.array(z.string().min(1)),
   prerequisites: z.array(z.string().min(1)).min(1),
-  demo_queries: z.array(z.string().min(1)).default([]),
-  code_assets: z.array(recipeCodeAssetSchema).default([]),
-  scaffold_actions: z.array(z.enum(RECIPE_SCAFFOLD_ACTIONS)).default([]),
+  demoQueries: z.array(z.string().min(1)).default([]),
+  codeAssets: z.array(recipeCodeAssetSchema).default([]),
+  scaffoldActions: z.array(z.enum(RECIPE_SCAFFOLD_ACTIONS)).default([]),
   combines: z.array(recipeCombinesSchema).optional(),
   architecture: z.array(recipeArchitectureNodeSchema).optional(),
-  ai_prompt: z.string().min(1),
-  llm_context: z.string().min(1).optional(),
-  last_verified: z.iso.date().optional(),
-  go_dependency: z.boolean().default(false),
+  aiPrompt: z.string().min(1),
+  llmContext: z.string().min(1).optional(),
+  lastVerified: z.iso.date().optional(),
+  goDependency: z.boolean().default(false),
   featured: z.boolean().default(false),
   tags: z.array(z.string().min(1)).default([]),
 });
 
-/**
- * Frontmatter of a recipe MDX file: Docusaurus page fields we rely on plus
- * the nested recipe block. Other Docusaurus frontmatter keys are allowed.
- */
-export const recipeFrontmatterSchema = z.looseObject({
-  title: z.string().min(1),
-  description: z.string().min(1),
-  recipe: recipeMetaSchema,
-});
-
 export type RecipeCodeAsset = z.infer<typeof recipeCodeAssetSchema>;
 export type RecipeMeta = z.infer<typeof recipeMetaSchema>;
-export type RecipeFrontmatter = z.infer<typeof recipeFrontmatterSchema>;
 
 /** The flat, compiled record consumed by components and the plugin. */
 export type RecipeRecord = RecipeMeta & {
-  title: string;
-  summary: string;
   /** Site-relative permalink to the recipe page, e.g. `/cookbook/embed-search-chat`. */
   permalink: string;
 };
@@ -175,26 +169,24 @@ function formatIssues(error: z.ZodError): string[] {
 }
 
 /**
- * Validates a recipe MDX file's frontmatter and composes the flat record.
- * `expectedId` is the file's basename; it must match `recipe.id` so slugs,
- * filenames, and permalinks never drift.
+ * Validates one `registry.json` entry and composes the flat record.
+ * `expectedId` is the matching `docs/cookbook/{id}.mdx` file's basename; it
+ * must match `id` so slugs, filenames, and permalinks never drift.
  */
-export function parseRecipeFrontmatter(
-  frontmatter: unknown,
+export function parseRecipeEntry(
+  entry: unknown,
   expectedId?: string,
 ): RecipeValidationResult {
-  const parsed = recipeFrontmatterSchema.safeParse(frontmatter);
+  const parsed = recipeMetaSchema.safeParse(entry);
   if (!parsed.success) {
     return { success: false, errors: formatIssues(parsed.error) };
   }
 
-  const { title, description, recipe } = parsed.data;
+  const recipe = parsed.data;
   if (expectedId !== undefined && recipe.id !== expectedId) {
     return {
       success: false,
-      errors: [
-        `recipe.id: "${recipe.id}" must match the file name "${expectedId}"`,
-      ],
+      errors: [`id: "${recipe.id}" must match the file name "${expectedId}"`],
     };
   }
 
@@ -202,8 +194,6 @@ export function parseRecipeFrontmatter(
     success: true,
     record: {
       ...recipe,
-      title,
-      summary: description,
       permalink: `/cookbook/${recipe.id}`,
     },
   };

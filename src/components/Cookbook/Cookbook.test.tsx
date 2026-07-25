@@ -10,21 +10,21 @@ function makeRecipe(overrides: Partial<RecipeRecord>): RecipeRecord {
   return {
     id: 'embed-search-chat',
     title: 'Embed search & chat',
-    summary: 'Put Glean search and chat inside an internal app.',
+    description: 'Put Glean search and chat inside an internal app.',
     permalink: '/cookbook/embed-search-chat',
     surfaces: ['web-sdk'],
     status: 'production-pattern',
     category: 'search',
     level: 'Beginner',
     levels: { minimal: true, wow: true },
-    time_estimate: '~15 min (minimal)',
-    required_scopes: ['SEARCH'],
+    timeEstimate: '~15 min (minimal)',
+    requiredScopes: ['SEARCH'],
     prerequisites: ['A Glean instance'],
-    demo_queries: [],
-    code_assets: [],
-    scaffold_actions: [],
-    ai_prompt: 'Build the recipe.',
-    go_dependency: false,
+    demoQueries: [],
+    codeAssets: [],
+    scaffoldActions: [],
+    aiPrompt: 'Build the recipe.',
+    goDependency: false,
     featured: false,
     tags: [],
     ...overrides,
@@ -124,10 +124,10 @@ describe('RecipeLayout', () => {
     render(
       <RecipeLayout
         recipe={makeRecipe({
-          required_scopes: ['SEARCH', 'CHAT'],
-          code_assets: [
+          requiredScopes: ['SEARCH', 'CHAT'],
+          codeAssets: [
             {
-              repo_path: 'recipes/embed-search-chat/minimal',
+              repoPath: 'recipes/embed-search-chat/minimal',
               language: 'TypeScript',
               description: 'Starter repo',
             },

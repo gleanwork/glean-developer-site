@@ -36,7 +36,7 @@ export default function RecipeCard({
         <CategoryTile category={recipe.category} iconOverride={recipe.icon} />
       </div>
       <span className={styles.title}>{recipe.title}</span>
-      <p className={styles.summary}>{recipe.summary}</p>
+      <p className={styles.summary}>{recipe.description}</p>
       <div className={styles.footer}>
         <span className={styles.metaItem}>
           {getIcon('Clock', 'feather', {
@@ -44,7 +44,7 @@ export default function RecipeCard({
             height: 14,
             color: 'currentColor',
           })}
-          {recipe.time_estimate.replace(/\s*\(.*\)$/, '')}
+          {recipe.timeEstimate.replace(/\s*\(.*\)$/, '')}
         </span>
         <span className={styles.dot}>·</span>
         <span>{recipe.level}</span>

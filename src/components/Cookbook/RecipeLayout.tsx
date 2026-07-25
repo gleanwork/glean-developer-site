@@ -43,7 +43,7 @@ function ActionCard({ recipe }: { recipe: RecipeRecord }): React.ReactElement {
 
   const copyPrompt = async () => {
     try {
-      await navigator.clipboard.writeText(recipe.ai_prompt);
+      await navigator.clipboard.writeText(recipe.aiPrompt);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
@@ -51,7 +51,7 @@ function ActionCard({ recipe }: { recipe: RecipeRecord }): React.ReactElement {
     }
   };
 
-  const starter = recipe.code_assets[0];
+  const starter = recipe.codeAssets[0];
 
   return (
     <div className={styles.actionCard}>
@@ -70,7 +70,7 @@ function ActionCard({ recipe }: { recipe: RecipeRecord }): React.ReactElement {
       {starter ? (
         <a
           className={styles.secondaryAction}
-          href={`${COOKBOOK_REPO_URL}/${starter.repo_path}`}
+          href={`${COOKBOOK_REPO_URL}/${starter.repoPath}`}
           rel="noopener noreferrer"
           target="_blank"
         >
@@ -307,11 +307,11 @@ export default function RecipeLayout({
             />
             <div>
               <h1 className={styles.bannerTitle}>{recipe.title}</h1>
-              <p className={styles.bannerDesc}>{recipe.summary}</p>
+              <p className={styles.bannerDesc}>{recipe.description}</p>
             </div>
           </div>
           <div className={styles.metaRow}>
-            {metaPill('Clock', recipe.time_estimate.replace(/\s*\(.*\)$/, ''))}
+            {metaPill('Clock', recipe.timeEstimate.replace(/\s*\(.*\)$/, ''))}
             {metaPill('TrendingUp', recipe.level)}
           </div>
         </div>
@@ -342,17 +342,17 @@ export default function RecipeLayout({
                 <div className={`${styles.glanceRow} ${styles.glanceRowLast}`}>
                   <span className={styles.glanceKey}>Time</span>
                   <span className={styles.glanceVal}>
-                    {recipe.time_estimate}
+                    {recipe.timeEstimate}
                   </span>
                 </div>
               </div>
             </div>
 
-            {recipe.required_scopes.length > 0 ? (
+            {recipe.requiredScopes.length > 0 ? (
               <div className={styles.railCard}>
                 <div className={styles.railLabel}>Required scopes</div>
                 <div className={styles.scopes}>
-                  {recipe.required_scopes.map((scope) => (
+                  {recipe.requiredScopes.map((scope) => (
                     <span className={styles.scopeChip} key={scope}>
                       {scope}
                     </span>
@@ -361,15 +361,15 @@ export default function RecipeLayout({
               </div>
             ) : null}
 
-            {recipe.code_assets.length > 0 ? (
+            {recipe.codeAssets.length > 0 ? (
               <div className={styles.railCard}>
                 <div className={styles.railLabel}>Code assets</div>
                 <div className={styles.assets}>
-                  {recipe.code_assets.map((asset) => (
+                  {recipe.codeAssets.map((asset) => (
                     <a
                       className={styles.assetRow}
-                      href={`${COOKBOOK_REPO_URL}/${asset.repo_path}`}
-                      key={asset.repo_path}
+                      href={`${COOKBOOK_REPO_URL}/${asset.repoPath}`}
+                      key={asset.repoPath}
                       rel="noopener noreferrer"
                       target="_blank"
                     >

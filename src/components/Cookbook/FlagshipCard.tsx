@@ -24,7 +24,7 @@ export default function FlagshipCard({
       <div>
         <div className={styles.pill}>End-to-end build</div>
         <h2 className={styles.title}>{recipe.title}</h2>
-        <p className={styles.body}>{recipe.summary}</p>
+        <p className={styles.body}>{recipe.description}</p>
         <span className={styles.cta}>
           Open the build guide
           {getIcon('ArrowRight', 'feather', {
