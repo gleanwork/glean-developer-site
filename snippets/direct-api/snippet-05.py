@@ -10,14 +10,15 @@ class CustomAgent:
             raise ValueError("GLEAN_API_TOKEN and GLEAN_SERVER_URL must be set")
     
     def search_documents(self, query: str, page_size: int = 5):
-        """Search for relevant documents"""
+        """Search for relevant documents via the Platform API's data-first
+        retrieval method (requires X_GLEAN_INCLUDE_EXPERIMENTAL=true)."""
         with Glean(api_token=self.api_token, server_url=self.server_url) as glean:
             try:
-                response = glean.client.search.query(
+                response = glean.search.query(
                     query=query,
                     page_size=page_size
                 )
-                return response.results if hasattr(response, 'results') else []
+                return response.results or []
             except Exception as e:
                 print(f"Search error: {e}")
                 return []
@@ -26,11 +27,13 @@ class CustomAgent:
         """Generate response using chat API"""
         with Glean(api_token=self.api_token, server_url=self.server_url) as glean:
             try:
-                # Prepare context from search results
+                # Prepare context from search results. Each result's
+                # snippets is a plain list[str] on the Platform API -- no
+                # nested .text/.snippet objects to unwrap.
                 context = ""
                 if search_results:
                     context = "\n".join([
-                        f"- {result.get('title', '')}: {result.get('snippet', '')}"
+                        f"- {result.title}: {' '.join(result.snippets or [])}"
                         for result in search_results[:3]
                     ])
                 

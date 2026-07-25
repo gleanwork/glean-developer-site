@@ -4,7 +4,7 @@
       "id": "a2a-client",
       "surfaces": [
         "agents",
-        "platform-api"
+        "client-api"
       ],
       "status": "production-pattern",
       "category": "agent",
@@ -49,7 +49,7 @@
     {
       "id": "acme-answers",
       "surfaces": [
-        "platform-api",
+        "client-api",
         "sdk-client",
         "web-sdk"
       ],
@@ -130,7 +130,7 @@
         "connector-sdk",
         "indexing-api",
         "web-sdk",
-        "platform-api"
+        "client-api"
       ],
       "status": "showcase",
       "category": "portal",
@@ -172,7 +172,7 @@
         },
         {
           "title": "Ground chat in the catalog",
-          "surface": "Platform API",
+          "surface": "Client API",
           "category": "mcp"
         }
       ],
@@ -479,7 +479,7 @@
     {
       "id": "no-code-it-helpdesk-lovable",
       "surfaces": [
-        "platform-api"
+        "client-api"
       ],
       "status": "showcase",
       "category": "workflow",
@@ -524,7 +524,7 @@
     {
       "id": "no-code-pto-lookup-replit",
       "surfaces": [
-        "platform-api"
+        "client-api"
       ],
       "status": "showcase",
       "category": "workflow",
@@ -585,6 +585,7 @@
       ],
       "prerequisites": [
         "A Glean token with SEARCH scope (global/admin token for the act-as permissions demo)",
+        "X_GLEAN_INCLUDE_EXPERIMENTAL=true set (the Platform API is Experimental as of its 2026-07 launch)",
         "An LLM API key (any provider; example uses Claude)",
         "Python 3.10+ or Node 20+"
       ],
@@ -596,7 +597,7 @@
         {
           "repo_path": "recipes/permissions-aware-rag/python",
           "language": "python",
-          "description": "search.query → snippets → LLM with citations"
+          "description": "Platform API search.query → snippets → LLM with citations"
         },
         {
           "repo_path": "recipes/permissions-aware-rag/typescript",
@@ -613,7 +614,7 @@
           "emphasized": false
         },
         {
-          "label": "Glean Search API",
+          "label": "Glean Platform API",
           "caption": "ACL-filtered retrieval",
           "category": "search",
           "emphasized": true
@@ -625,8 +626,8 @@
           "emphasized": false
         }
       ],
-      "ai_prompt": "Build permissions-aware RAG on Glean following\nhttps://developers.glean.com/cookbook/permissions-aware-rag\n\n1. Retrieval: glean.client.search.query(query=..., page_size=8) — use\n   the Client API's search.query (glean.client.search), NOT the newer\n   top-level glean.search.query(), which is a separate data-retrieval\n   API. Collect title, url, and snippets[].text from each result —\n   snippets are the chunks.\n2. Prompt the LLM with ONLY those snippets; require inline [n] citations\n   mapped back to the result URLs.\n3. Enforce per-user: pass an X-Glean-Act-As: <email> HTTP header (not a\n   query parameter or SDK option) to impersonate a specific user with a\n   global/admin token. Demo with two users where the restricted one\n   gets \"I don't have information on that\" for HR-only queries.\n4. README must state the differentiator: no vector DB, no ACL\n   mirroring, no re-sync — Glean is the governed retrieval layer.\n\nUse claude-sonnet-5 via the anthropic SDK if I don't specify a\nprovider; keep the LLM call swappable.",
-      "llm_context": "Client API search: glean.client.search.query(query, page_size, http_headers). Result shape: results[].title, results[].url, results[].snippets[].text (the modern field; .snippet is legacy). Per-user enforcement is the X-Glean-Act-As HTTP header on a global/admin token, not an SDK parameter.",
+      "ai_prompt": "Build permissions-aware RAG on Glean following\nhttps://developers.glean.com/cookbook/permissions-aware-rag\n\n1. Retrieval: glean.search.query(query=..., page_size=8) — the\n   top-level Platform API method, NOT glean.client.search.query(),\n   which is a different, older surface (the Client API). The Platform\n   API is Experimental as of its 2026-07 launch: set\n   X_GLEAN_INCLUDE_EXPERIMENTAL=true as an env var or every call fails\n   — there's no argument for this on search.query() itself. Collect\n   title, url, and snippets from each result — snippets is a plain\n   string[] here (no .text unwrap needed, unlike the Client API).\n2. Prompt the LLM with ONLY those snippets; require inline [n] citations\n   mapped back to the result URLs.\n3. Enforce per-user: pass an X-Glean-Act-As: <email> HTTP header (not a\n   query parameter or SDK option) to impersonate a specific user with a\n   global/admin token. Demo with two users where the restricted one\n   gets \"I don't have information on that\" for HR-only queries.\n4. README must state the differentiator: no vector DB, no ACL\n   mirroring, no re-sync — Glean is the governed retrieval layer.\n\nUse claude-sonnet-5 via the anthropic SDK if I don't specify a\nprovider; keep the LLM call swappable.",
+      "llm_context": "Platform API search (data-first retrieval, distinct from the Client API's glean.client.search.query): glean.search.query(query, page_size, http_headers) -> PlatformSearchResponse. Result shape: results[].title, results[].url, results[].snippets (string[], not snippet objects). Experimental since its 2026-07-14 public launch — requires X_GLEAN_INCLUDE_EXPERIMENTAL=true (env var, read automatically by the SDK) on every call or it 4xxs. Per-user enforcement is still the X-Glean-Act-As HTTP header on a global/admin token, not an SDK parameter, same as the Client API.",
       "go_dependency": false,
       "featured": true,
       "tags": [
@@ -634,12 +635,13 @@
         "differentiator"
       ],
       "title": "Permissions-aware RAG",
-      "summary": "Use Glean Search as the retrieval layer for your own LLM app — every chunk ACL-filtered per user before it ever reaches the model.",
+      "summary": "Use Glean's Platform API as the retrieval layer for your own LLM app — every chunk ACL-filtered per user before it ever reaches the model.",
       "permalink": "/cookbook/permissions-aware-rag"
     }
   ],
   "surfaces": [
     "mcp",
+    "client-api",
     "platform-api",
     "web-sdk",
     "connector-sdk",

@@ -11,6 +11,7 @@ export const SURFACE_ICONS: Record<string, string> = {
   'connector-sdk': 'Database',
   'indexing-api': 'Database',
   mcp: 'GitBranch',
+  'client-api': 'Code',
   'platform-api': 'Code',
   'sdk-client': 'Package',
   tools: 'Zap',

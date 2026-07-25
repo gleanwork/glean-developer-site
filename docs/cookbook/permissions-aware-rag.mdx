@@ -2,7 +2,7 @@
 title: Permissions-aware RAG
 sidebar_label: Permissions-Aware RAG
 description: >-
-  Use Glean Search as the retrieval layer for your own LLM app — every chunk
+  Use Glean's Platform API as the retrieval layer for your own LLM app — every chunk
   ACL-filtered per user before it ever reaches the model.
 slug: /cookbook/permissions-aware-rag
 hide_table_of_contents: true
@@ -25,6 +25,7 @@ recipe:
     - SEARCH
   prerequisites:
     - A Glean token with SEARCH scope (global/admin token for the act-as permissions demo)
+    - X_GLEAN_INCLUDE_EXPERIMENTAL=true set (the Platform API is Experimental as of its 2026-07 launch)
     - An LLM API key (any provider; example uses Claude)
     - Python 3.10+ or Node 20+
   demo_queries:
@@ -34,7 +35,7 @@ recipe:
     - {
         repo_path: recipes/permissions-aware-rag/python,
         language: python,
-        description: 'search.query → snippets → LLM with citations',
+        description: 'Platform API search.query → snippets → LLM with citations',
       }
     - {
         repo_path: recipes/permissions-aware-rag/typescript,
@@ -45,7 +46,7 @@ recipe:
     - label: Your app
       caption: any LLM app
       icon: layout-outlined
-    - label: Glean Search API
+    - label: Glean Platform API
       caption: ACL-filtered retrieval
       category: search
       emphasized: true
@@ -56,11 +57,14 @@ recipe:
     Build permissions-aware RAG on Glean following
     https://developers.glean.com/cookbook/permissions-aware-rag
 
-    1. Retrieval: glean.client.search.query(query=..., page_size=8) — use
-       the Client API's search.query (glean.client.search), NOT the newer
-       top-level glean.search.query(), which is a separate data-retrieval
-       API. Collect title, url, and snippets[].text from each result —
-       snippets are the chunks.
+    1. Retrieval: glean.search.query(query=..., page_size=8) — the
+       top-level Platform API method, NOT glean.client.search.query(),
+       which is a different, older surface (the Client API). The Platform
+       API is Experimental as of its 2026-07 launch: set
+       X_GLEAN_INCLUDE_EXPERIMENTAL=true as an env var or every call fails
+       — there's no argument for this on search.query() itself. Collect
+       title, url, and snippets from each result — snippets is a plain
+       string[] here (no .text unwrap needed, unlike the Client API).
     2. Prompt the LLM with ONLY those snippets; require inline [n] citations
        mapped back to the result URLs.
     3. Enforce per-user: pass an X-Glean-Act-As: <email> HTTP header (not a
@@ -73,11 +77,15 @@ recipe:
     Use claude-sonnet-5 via the anthropic SDK if I don't specify a
     provider; keep the LLM call swappable.
   llm_context: >-
-    Client API search: glean.client.search.query(query, page_size,
-    http_headers). Result shape: results[].title, results[].url,
-    results[].snippets[].text (the modern field; .snippet is legacy).
-    Per-user enforcement is the X-Glean-Act-As HTTP header on a
-    global/admin token, not an SDK parameter.
+    Platform API search (data-first retrieval, distinct from the Client
+    API's glean.client.search.query): glean.search.query(query, page_size,
+    http_headers) -> PlatformSearchResponse. Result shape: results[].title,
+    results[].url, results[].snippets (string[], not snippet objects).
+    Experimental since its 2026-07-14 public launch — requires
+    X_GLEAN_INCLUDE_EXPERIMENTAL=true (env var, read automatically by the
+    SDK) on every call or it 4xxs. Per-user enforcement is still the
+    X-Glean-Act-As HTTP header on a global/admin token, not an SDK
+    parameter, same as the Client API.
   go_dependency: false
   featured: true
   tags:
@@ -105,7 +113,7 @@ Building RAG over your own content usually means standing up a vector DB,
 mirroring every source system's ACLs into it, and keeping that mirror in
 sync forever — get any of that wrong and you leak documents. Glean is
 already the permission-aware index of your company's content. Use its
-Search API as retrieval and skip all three problems.
+Platform API as retrieval and skip all three problems.
 
 </RecipeSection>
 
@@ -117,9 +125,11 @@ Search API as retrieval and skip all three problems.
 
 <>
 Retrieve: call Search with the question, and pull `title`, `url`, and each
-result's `snippets[].text` — these are your chunks. This is the same
-Client API endpoint (`glean.client.*`) used throughout this cookbook, not
-the newer top-level data-retrieval API.
+result's `snippets` — these are your chunks, and they come back as a plain
+list of strings. This is `glean.search.query()`, the **Platform API**'s
+top-level search method — a different, newer surface from the Client API
+(`glean.client.*`) used elsewhere in this cookbook, and **Experimental**:
+every call needs `X_GLEAN_INCLUDE_EXPERIMENTAL=true` set, or it fails.
 
 <Tabs>
 <TabItem value="python" label="Python">
@@ -127,10 +137,10 @@ the newer top-level data-retrieval API.
 ```python snippet=permissions-aware-rag/snippet-01.py
 glean = Glean(api_token=..., instance=...)
 
-response = glean.client.search.query(query=question, page_size=8)
+response = glean.search.query(query=question, page_size=8)
 
 sources = [
-    {"title": r.title, "url": r.url, "text": "\n".join(s.text for s in r.snippets if s.text)}
+    {"title": r.title, "url": r.url, "text": "\n".join(s for s in r.snippets if s)}
     for r in response.results or []
     if r.title and r.snippets
 ]
@@ -142,19 +152,28 @@ sources = [
 ```typescript snippet=permissions-aware-rag/snippet-02.ts
 const glean = new Glean({ apiToken: ..., instance: ... });
 
-const response = await glean.client.search.query({ query: question, pageSize: 8 });
+const response = await glean.search.query({ query: question, page_size: 8 });
 
 const sources = (response.results ?? [])
   .filter((r) => r.title && r.snippets)
   .map((r) => ({
     title: r.title!,
     url: r.url,
-    text: r.snippets!.map((s) => s.text ?? '').join('\n'),
+    text: r.snippets!.filter(Boolean).join('\n'),
   }));
 ```
 
 </TabItem>
 </Tabs>
+
+<RecipeNote>
+The Platform API launched publicly in July 2026 but is still Experimental
+— set `X_GLEAN_INCLUDE_EXPERIMENTAL=true` as an environment variable (the
+SDK reads it automatically; there's no per-call argument for this). Skip
+it and every call fails. Verified with a real HTTP round-trip against a
+local test server — headers, request body, and response parsing all
+confirmed — but not yet against a live Glean instance.
+</RecipeNote>
 
 </>
 
@@ -194,7 +213,7 @@ detail easy to get wrong if you go looking for an `actAs` option that
 doesn't exist.
 
 ```python snippet=permissions-aware-rag/snippet-04.py
-response = glean.client.search.query(
+response = glean.search.query(
     query=question,
     page_size=8,
     http_headers={"X-Glean-Act-As": "marcus.webb@acme.example.com"},
