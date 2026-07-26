@@ -22,10 +22,8 @@ import { z } from 'zod';
 
 export const RECIPE_SURFACES = [
   'mcp',
-  /** The legacy Client/REST SDK surface (glean.client.*) — chat, search, agents
-   * as shaped for building your own UI. Was named 'platform-api' until the
-   * real "Platform API" (data-first retrieval, glean.search.* et al.) publicly
-   * launched at developers.glean.com/api/platform-api and needed the name. */
+  /** The Client/REST SDK surface (glean.client.*) — chat, search, agents
+   * as shaped for building your own UI. Distinct from 'platform-api' below. */
   'client-api',
   /** The new data-first retrieval surface (glean.search.query() et al.) —
    * Experimental as of its 2026-07 launch; see llmContext on recipes using it
