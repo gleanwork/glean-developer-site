@@ -48,8 +48,11 @@ Build it.
 <Tabs>
 <TabItem value="web-sdk" label="Path A: Web SDK">
 
-Install the SDK and render a chat container. That's the entire integration —
-every option on `renderChat` is optional, so `{}` works as-is.
+Install the SDK and render into a sized container — `#chat` needs
+`position: relative`, `display: block`, and an explicit width/height, or
+nothing renders. `initialMessage` opens straight into a real cited answer
+instead of an empty landing screen, which doubles as your on-load
+verification.
 
 ```bash snippet=acme-answers/snippet-01.sh
 npm install @gleanwork/web-sdk
@@ -58,9 +61,12 @@ npm install @gleanwork/web-sdk
 ```typescript snippet=acme-answers/snippet-02.ts
 import { renderChat } from '@gleanwork/web-sdk';
 
+// #chat needs position: relative, display: block, and an explicit
+// width/height (~480px tall reads as a proper panel) or nothing renders.
 const container = document.getElementById('chat');
 renderChat(container, {
   // backend: 'https://{your}-be.glean.com',
+  initialMessage: "What's our PTO policy?",
 });
 ```
 
@@ -116,9 +122,11 @@ not a top-level `citedDocuments` field.
 </>
 
 <>
-Style it as Acme Corp: a teal accent, a rounded-square logomark, and an
-"Acme Answers" title — see the [brand kit](https://github.com/gleanwork/glean-cookbook/tree/main/brand)
-for the exact tokens.
+Style it as Acme Corp: teal (`#0E8C84`) as the primary accent, the real
+logomark in the header — not a plain colored square — and an "Acme
+Answers" title. The [brand kit](https://github.com/gleanwork/glean-cookbook/tree/main/brand)
+has the actual SVG (`logomark-light.svg`/`logomark-dark.svg`) and full
+token set; embed the real mark rather than approximating it.
 </>
 
 </RecipeSteps>
