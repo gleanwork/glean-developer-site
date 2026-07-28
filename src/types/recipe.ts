@@ -69,6 +69,36 @@ export const RECIPE_SCAFFOLD_ACTIONS = [
   'scaffold-n8n-workflow',
 ] as const;
 
+/**
+ * What credential a recipe needs — declared as data so the plugin can
+ * generate the right auth guidance per recipe instead of one universal flow.
+ * - `web-sdk-cookie`: Web SDK default SSO, no explicit credential handling.
+ * - `client-api-oauth-or-token`: a Client API bearer credential is needed;
+ *   Glean supports getting one via IdP OAuth, Glean OAS, or a Glean Token —
+ *   which of those is available is a runtime/tenant question, not a
+ *   per-recipe one, so recipes just declare that they need *a* credential.
+ * - `indexing-token`: Indexing API operations accept Glean-issued tokens
+ *   only — OAuth does not apply here regardless of tenant configuration.
+ * - `custom`: the recipe's own aiPrompt already fully specifies a bespoke
+ *   credential step (e.g. a per-agent bearer token, a third-party tool's
+ *   secret store) — the shared detection chain doesn't apply.
+ */
+export const RECIPE_AUTH_METHODS = [
+  'none',
+  'web-sdk-cookie',
+  'client-api-oauth-or-token',
+  'indexing-token',
+  'custom',
+] as const;
+
+export const RECIPE_LANGUAGES = [
+  'typescript',
+  'javascript',
+  'python',
+  'go',
+  'java',
+] as const;
+
 /** Visual category — drives the pastel tile color and icon (design handoff). */
 export const RECIPE_CATEGORIES = [
   'search',
@@ -92,6 +122,8 @@ export const recipeCombinesSchema = z.strictObject({
   title: z.string().min(1),
   surface: z.string().min(1),
   category: z.enum(RECIPE_CATEGORIES),
+  /** For compound recipes where each combined step uses a different language. */
+  language: z.enum(RECIPE_LANGUAGES).optional(),
 });
 
 /** One node in the architecture flow diagram. */
@@ -124,6 +156,10 @@ export const recipeMetaSchema = z.strictObject({
   /** Explicit icon name; overrides the category's default glyph on cards and the hero banner. */
   icon: z.string().min(1).optional(),
   requiredScopes: z.array(z.string().min(1)),
+  /** Which credential category this recipe needs — drives the plugin's generated auth guidance. */
+  authMethod: z.array(z.enum(RECIPE_AUTH_METHODS)).min(1),
+  /** Language(s) this recipe can be built in. Omit for recipes with no applicable build language (pure config, or a third-party no-code tool's own stack). Multiple entries means the AI should ask which one. */
+  languages: z.array(z.enum(RECIPE_LANGUAGES)).min(1).optional(),
   prerequisites: z.array(z.string().min(1)).min(1),
   demoQueries: z.array(z.string().min(1)).default([]),
   codeAssets: z.array(recipeCodeAssetSchema).default([]),

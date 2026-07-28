@@ -14,6 +14,7 @@ function validEntry() {
     levels: { minimal: true, wow: true },
     timeEstimate: '~15 min (minimal)',
     requiredScopes: ['search:read', 'chat:write'],
+    authMethod: ['web-sdk-cookie'],
     prerequisites: ['A Glean instance with content indexed'],
     aiPrompt: 'Build the embed-search-chat recipe from developers.glean.com.',
   };
