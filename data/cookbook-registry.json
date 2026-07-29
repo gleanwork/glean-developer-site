@@ -31,6 +31,30 @@
         "description": "Card discovery → message/send → multi-turn via contextId → streaming"
       }
     ],
+    "steps": [
+      {
+        "title": "Scaffold the project",
+        "command": "npx tiged --mode=git gleanwork/glean-cookbook/recipes/a2a-client a2a-client"
+      },
+      {
+        "title": "Install dependencies",
+        "command": "cd a2a-client && pip install -r requirements.txt",
+        "description": "Pins a2a-sdk below 1.0 — Glean serves A2A spec 0.3 today; 1.x clients won't interop until the server upgrades."
+      },
+      {
+        "title": "Set credentials",
+        "command": "cp .env.example .env",
+        "description": "Fill in GLEAN_A2A_CARD_URL and GLEAN_A2A_TOKEN from the agent's Share → A2A dialog — this is a per-agent bearer token, not the general Glean OAuth/token chain."
+      },
+      {
+        "title": "Run it",
+        "command": "python main.py"
+      },
+      {
+        "title": "Verify",
+        "description": "Confirm a real answer to \"Who owns the payments service?\", a follow-up reusing the same context_id to prove multi-turn, and a streaming response — all three paths this recipe exercises."
+      }
+    ],
     "scaffoldActions": [],
     "architecture": [],
     "aiPrompt": "Build an A2A client for a Glean agent following\nhttps://developers.glean.com/cookbook/a2a-client\n\n1. Ask me for the agent card URL and bearer token (from the agent's\n   Share → A2A dialog).\n2. Pin a2a-sdk BELOW 1.0 (e.g. a2a-sdk==0.3.26) — Glean serves A2A\n   spec 0.3 (message/send, message/stream, tasks/get); 1.x clients\n   will not interop until the server upgrades. Note this in the\n   README.\n3. IMPORTANT: a2a-sdk's own A2AClient class (the one matching\n   message/send naming) is marked [DEPRECATED] even in the pinned\n   0.3.x release, with a runtime warning to use ClientFactory\n   instead. Use ClientFactory + Client.send_message() — do not use\n   A2AClient.\n4. Resolve the card (A2ACardResolver, bearer token via the httpx\n   client's headers), verify card.url contains /a2a/agents/.\n5. Client.send_message() is always an async iterator that yields\n   either a Message directly, or (Task, UpdateEvent) tuples for\n   task-based agents — handle both. Send a question (message/send\n   via a streaming=False client), then a follow-up reusing the\n   response's context_id to prove multi-turn, then a long question\n   via a streaming=True client. Errors: 404 = flag off or agent not\n   eligible; 403 = token scopes.",
@@ -75,7 +99,7 @@
         "steps": [
           {
             "title": "Scaffold the project",
-            "command": "npx tiged gleanwork/glean-cookbook/recipes/acme-answers/web-sdk acme-answers"
+            "command": "npx tiged --mode=git gleanwork/glean-cookbook/recipes/acme-answers/web-sdk acme-answers"
           },
           {
             "title": "Install dependencies",
@@ -102,7 +126,7 @@
         "steps": [
           {
             "title": "Scaffold the project",
-            "command": "npx tiged gleanwork/glean-cookbook/recipes/acme-answers/chat-api acme-answers"
+            "command": "npx tiged --mode=git gleanwork/glean-cookbook/recipes/acme-answers/chat-api acme-answers"
           },
           {
             "title": "Install dependencies",
@@ -276,6 +300,29 @@
         "description": "Host config snippets for all three hosts"
       }
     ],
+    "steps": [
+      {
+        "title": "Detect installed hosts",
+        "description": "Check for Claude Code, Cursor, and Claude Desktop on this machine."
+      },
+      {
+        "title": "Resolve your Glean backend",
+        "description": "Ask for your work email, POST it to https://app.glean.com/config/search, and extract {instance} from the subdomain of the returned queryURL — the same chain cookbook-conventions' auth section uses. The MCP server URL is https://{instance}-be.glean.com/mcp/default."
+      },
+      {
+        "title": "Configure each detected host",
+        "command": "npx -y @gleanwork/configure-mcp-server remote --url https://{instance}-be.glean.com/mcp/default --client <host>",
+        "description": "--client values: claude-code, cursor, claude-desktop. This is the real, GA, first-party CLI for this job — it handles OAuth with Dynamic Client Registration by default. Don't hand-walk a Configurator URL or ask for an API token."
+      },
+      {
+        "title": "Restart the host app",
+        "description": "Cursor and Claude Code pick up the new server on restart; Claude Desktop needs the hammer icon to confirm Glean tools are available."
+      },
+      {
+        "title": "Verify",
+        "description": "Per host, ask \"Who's on call for payments-service?\" and confirm a real, Glean-cited answer."
+      }
+    ],
     "scaffoldActions": ["scaffold-mcp-config"],
     "aiPrompt": "Connect me to the Glean remote MCP server following\nhttps://developers.glean.com/cookbook/connect-mcp-hosts\n\n1. Detect which MCP hosts I have installed (Claude Code, Cursor, Claude\n   Desktop).\n2. Resolve my Glean backend the same way the cookbook-conventions auth\n   chain does: ask for my work email, POST it to\n   https://app.glean.com/config/search, and extract {instance} from the\n   subdomain of the returned queryURL. The MCP server URL is\n   https://{instance}-be.glean.com/mcp/default.\n3. For each detected host, run the real, first-party configurator —\n   don't hand-walk a Configurator URL or ask me for an API token, this\n   CLI does the whole job including OAuth with Dynamic Client\n   Registration by default:\n   npx -y @gleanwork/configure-mcp-server remote --url <mcp-server-url> --client <host>\n   (--client values: claude-code, cursor, claude-desktop)\n4. Tell me to restart the host app afterward — Cursor and Claude Code\n   pick up the new server on restart; Claude Desktop needs the hammer\n   icon to confirm Glean tools are available.\n5. Verify per host by asking \"Who's on call for payments-service?\" and\n   confirming a Glean-cited answer.",
     "llmContext": "Glean MCP server URL: https://{instance}-be.glean.com/mcp/{server-name} (default server-name is \"default\"). @gleanwork/configure-mcp-server (npx -y @gleanwork/configure-mcp-server remote --url <url> --client <host>) is the real, GA, first-party CLI for wiring this up -- it handles OAuth with Dynamic Client Registration by default and writes the correct host-specific config (Claude Code/Cursor connect natively over HTTP; Claude Desktop is stdio-only, so the CLI wires the mcp-remote bridge automatically). Never reference @gleanwork/mcp-server (deprecated local package), never hand-walk the app.glean.com/settings/install MCP Configurator URL pattern when this CLI exists, and never tell users an API token is required by default -- pass --token only if a host genuinely doesn't support OAuth.",
@@ -382,6 +429,30 @@
         "description": "The seed dataset itself"
       }
     ],
+    "steps": [
+      {
+        "title": "Scaffold the project",
+        "description": "connector.py resolves the corpus via a relative path two levels up (Path(__file__).parent.parent.parent / \"acme-corpus\") — scaffold both directories preserving that same nesting, not flattened into one directory.",
+        "command": "mkdir -p index-custom-source/recipes/index-custom-source index-custom-source/acme-corpus\nnpx tiged --mode=git gleanwork/glean-cookbook/recipes/index-custom-source index-custom-source/recipes/index-custom-source\nnpx tiged --mode=git gleanwork/glean-cookbook/acme-corpus index-custom-source/acme-corpus"
+      },
+      {
+        "title": "Install dependencies",
+        "command": "cd index-custom-source/recipes/index-custom-source && pip install -r requirements.txt"
+      },
+      {
+        "title": "Set credentials",
+        "description": "Export GLEAN_INDEXING_API_TOKEN and GLEAN_SERVER_URL — this recipe has no .env.example, it reads directly from the environment (see indexing-token in cookbook-conventions)."
+      },
+      {
+        "title": "Run it",
+        "command": "python seed.py",
+        "description": "Registers the custom datasource and bulk-indexes documents/people with real per-document permissions — never allow-all."
+      },
+      {
+        "title": "Verify",
+        "description": "Search \"Who owns the payments-service catalog entry?\" as yourself and as a restricted test user — the restricted user must not see Acme-HR-only documents."
+      }
+    ],
     "scaffoldActions": ["scaffold-connector"],
     "architecture": [
       {
@@ -443,6 +514,42 @@
         "repoPath": "recipes/multi-step-agent/invoke-agent",
         "language": "python",
         "description": "Invoke the agent via agents.run, demo both the permitted and denied branches"
+      }
+    ],
+    "steps": [
+      {
+        "title": "Scaffold the project",
+        "command": "npx tiged --mode=git gleanwork/glean-cookbook/recipes/multi-step-agent multi-step-agent"
+      },
+      {
+        "title": "Install dependencies",
+        "command": "cd multi-step-agent/tool-server && pip install -r requirements.txt && cd ../invoke-agent && pip install -r requirements.txt"
+      },
+      {
+        "title": "Run the tool server",
+        "command": "cd multi-step-agent/tool-server && python server.py",
+        "description": "Listens on port 8080. Keep this running in its own terminal — the agent calls it over HTTP once registered."
+      },
+      {
+        "title": "Register the tool",
+        "description": "Manual, UI-only step — there is no API to create a tool. In Admin > Platform > Tools > Add, register the tool and upload multi-step-agent/tool-server/openapi.yaml as its API spec."
+      },
+      {
+        "title": "Create the agent",
+        "description": "Manual, UI-only step. In Agent Builder: paste the recipe's instructions, turn retrieval on, attach the tool you just registered. Copy the agent's ID for the next step."
+      },
+      {
+        "title": "Set credentials",
+        "command": "cd multi-step-agent/invoke-agent && cp .env.example .env",
+        "description": "Fill in GLEAN_API_TOKEN, GLEAN_INSTANCE, and GLEAN_AGENT_ID (the ID from the previous step)."
+      },
+      {
+        "title": "Run it",
+        "command": "python main.py"
+      },
+      {
+        "title": "Verify",
+        "description": "Run as a permitted user (Acme-Engineering) and confirm the ticket actually gets filed; run as a non-permitted user and confirm a graceful no-write fallback summary instead of a hard failure."
       }
     ],
     "scaffoldActions": [],
@@ -579,12 +686,64 @@
       {
         "repoPath": "recipes/permissions-aware-rag/python",
         "language": "python",
-        "description": "Platform API search.query → snippets → LLM with citations"
+        "description": "Platform API search.query → snippets → LLM with citations",
+        "steps": [
+          {
+            "title": "Scaffold the project",
+            "command": "npx tiged --mode=git gleanwork/glean-cookbook/recipes/permissions-aware-rag/python permissions-aware-rag"
+          },
+          {
+            "title": "Install dependencies",
+            "command": "cd permissions-aware-rag && pip install -r requirements.txt"
+          },
+          {
+            "title": "Set credentials",
+            "command": "cp .env.example .env",
+            "description": "Fill in GLEAN_API_TOKEN, GLEAN_INSTANCE, and ANTHROPIC_API_KEY, then export them into your shell — unlike the TypeScript variant, this one reads the environment directly and does not load .env automatically."
+          },
+          {
+            "title": "Run it",
+            "command": "python main.py \"What's our PTO policy?\""
+          },
+          {
+            "title": "Verify",
+            "description": "Confirm the printed answer carries numbered citations with real titles and URLs. Re-run with --act-as <restricted-user-email> (requires a global/admin token) and confirm an HR-only query returns no fabricated answer for that user."
+          }
+        ]
       },
       {
         "repoPath": "recipes/permissions-aware-rag/typescript",
         "language": "typescript",
-        "description": "Same flow in TypeScript"
+        "description": "Same flow in TypeScript",
+        "steps": [
+          {
+            "title": "Scaffold the project",
+            "command": "npx tiged --mode=git gleanwork/glean-cookbook/recipes/permissions-aware-rag/typescript permissions-aware-rag"
+          },
+          {
+            "title": "Install dependencies",
+            "command": "cd permissions-aware-rag && npm install"
+          },
+          {
+            "title": "Set credentials",
+            "command": "cp .env.example .env",
+            "description": "Fill in GLEAN_API_TOKEN, GLEAN_INSTANCE, and ANTHROPIC_API_KEY — loaded automatically via dotenv in this variant."
+          },
+          {
+            "title": "Run it",
+            "command": "npm start -- \"What's our PTO policy?\""
+          },
+          {
+            "title": "Verify",
+            "description": "Confirm the printed answer carries numbered citations with real titles and URLs. Re-run with -- \"<question>\" --act-as <restricted-user-email> (requires a global/admin token) and confirm an HR-only query returns no fabricated answer for that user."
+          }
+        ]
+      }
+    ],
+    "steps": [
+      {
+        "title": "Pick a language",
+        "description": "Both variants implement the same flow — pick whichever fits your app's stack."
       }
     ],
     "scaffoldActions": [],

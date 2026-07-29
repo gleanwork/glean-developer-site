@@ -215,6 +215,8 @@ export function RecipePrereqs(): React.ReactElement {
 const VARIANT_LABEL_WORDS: Record<string, string> = {
   sdk: 'SDK',
   api: 'API',
+  typescript: 'TypeScript',
+  javascript: 'JavaScript',
 };
 
 /** Last path segment of a codeAsset's repoPath, title-cased ("web-sdk" -> "Web SDK"). */
