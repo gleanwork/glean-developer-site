@@ -34,7 +34,10 @@
         "Python 3.10+ with a2a-sdk pinned < 1.0 (server speaks A2A 0.3 today)"
       ],
       "demoQueries": [
-        "Who owns the payments service?"
+        {
+          "query": "Who owns the payments service?",
+          "expectedBehavior": "Returns a non-empty answer naming a real owner from the seeded Acme corpus, delivered via the A2A message/send response (a Message or Task, not an error) — and the scripted follow-up turn carries the same context_id, proving multi-turn works."
+        }
       ],
       "codeAssets": [
         {
@@ -115,8 +118,14 @@
         "Node 20+ (Chat API path) or any static page (Web SDK path)"
       ],
       "demoQueries": [
-        "What's our PTO policy?",
-        "Who owns the payments-service catalog entry?"
+        {
+          "query": "What's our PTO policy?",
+          "expectedBehavior": "Answer cites the PTO policy document (title + url), with a non-empty, deduped citations list — no leaked step-narration text prepended to the answer."
+        },
+        {
+          "query": "Who owns the payments-service catalog entry?",
+          "expectedBehavior": "Answer names the real owner from the seeded payments-service catalog entry and cites that document."
+        }
       ],
       "codeAssets": [
         {
@@ -166,12 +175,13 @@
             },
             {
               "title": "Run it",
+              "description": "Leaves the server running so you can try it yourself at http://localhost:3000 — stop it (Ctrl-C) before the deterministic verify step below, which starts its own instance.",
               "command": "npm start"
             },
             {
               "title": "Verify",
-              "description": "Confirm the response carries a real answer and non-empty, deduped citations.",
-              "command": "curl -s -X POST http://localhost:3000/api/ask -H \"Content-Type: application/json\" -d '{\"question\": \"What'\"'\"'s our PTO policy?\"}'"
+              "description": "Starts the server itself, runs both demo queries for real, and asserts the response shape (non-empty answer, non-empty deduped citations with title+url) — exits non-zero on any failure. Do not report this recipe as done until this passes.",
+              "command": "npm run verify"
             }
           ]
         }
@@ -258,9 +268,18 @@
         "Node.js 18+ to run the portal app locally"
       ],
       "demoQueries": [
-        "Who's on call for payments-service?",
-        "What's the deploy and rollback process for payments-service?",
-        "Summarize PAY-2114"
+        {
+          "query": "Who's on call for payments-service?",
+          "expectedBehavior": "Answer names the current on-call owner from the indexed developer catalog, with a citation to that catalog entry."
+        },
+        {
+          "query": "What's the deploy and rollback process for payments-service?",
+          "expectedBehavior": "Answer describes the real deploy/rollback steps from the indexed runbook, with a citation — not a generic, made-up process."
+        },
+        {
+          "query": "Summarize PAY-2114",
+          "expectedBehavior": "Answer summarizes the real indexed PAY-2114 incident ticket content, with a citation to it — not a fabricated summary."
+        }
       ],
       "codeAssets": [],
       "scaffoldActions": [
@@ -314,7 +333,7 @@
           "emphasized": false
         }
       ],
-      "aiPrompt": "Build the \"Engineering portal with Glean\" flagship recipe from\nhttps://developers.glean.com/cookbook/build-engineering-portal\n\nIt composes two building blocks:\n1. Index the portal's service catalog into Glean with the open-source\n   indexing SDK (follow\n   https://developers.glean.com/api-info/indexing/getting-started/overview).\n2. Embed Glean search and chat into the portal UI with the Web SDK (see\n   https://developers.glean.com/cookbook/embed-search-chat — same\n   container sizing and initialMessage guidance applies here).\n\nStyle the portal shell itself per the house style below (real logomark,\nteal accent) so the catalog UI and the embedded search/chat feel like one\ncohesive app, not two mismatched pieces bolted together.\n\nAsk me for: my Glean instance/backend domain, an Indexing API token, and\nmy Glean web app domain. Verify at the end that a search for a service\nname returns the indexed catalog entry, respecting my permissions.",
+      "aiPrompt": "Build the \"Engineering portal with Glean\" flagship recipe from\nhttps://developers.glean.com/cookbook/build-engineering-portal\n\nIt composes two building blocks:\n1. Index the portal's service catalog into Glean with the open-source\n   indexing SDK (follow\n   https://developers.glean.com/api-info/indexing/getting-started/overview).\n2. Embed Glean search and chat into the portal UI with the Web SDK (see\n   https://developers.glean.com/cookbook/embed-search-chat — same\n   container sizing and initialMessage guidance applies here).\n\nStyle the portal shell itself per the house style below (real logomark,\nteal accent) so the catalog UI and the embedded search/chat feel like one\ncohesive app, not two mismatched pieces bolted together.\n\nAsk me for: my Glean instance/backend domain, an Indexing API token, and\nmy Glean web app domain. See Verify below for what a correct build must do.",
       "llmContext": "Flagship showcase composing the custom-connector and Web SDK embed recipes: a service-catalog portal whose catalog is indexed into Glean via the indexing SDK, with Glean search and chat embedded back into the portal UI. Requires a Glean-issued Indexing API token for the connector and SEARCH/CHAT scopes for the embed.",
       "goDependency": false,
       "featured": false,
@@ -352,8 +371,14 @@
         "At least one MCP host installed (Claude Code, Cursor, or Claude Desktop)"
       ],
       "demoQueries": [
-        "Who's on call for payments-service?",
-        "Summarize PAY-2114"
+        {
+          "query": "Who's on call for payments-service?",
+          "expectedBehavior": "The MCP host's chat surfaces a cited answer naming the current on-call owner, same shape as the Chat API path — MCP is a transport, not a different answer."
+        },
+        {
+          "query": "Summarize PAY-2114",
+          "expectedBehavior": "The MCP host's chat returns a cited summary of the real PAY-2114 incident, not a fabricated one."
+        }
       ],
       "codeAssets": [
         {
@@ -435,9 +460,18 @@
         "For token auth only: an admin API key from the Token Management page"
       ],
       "demoQueries": [
-        "What's our PTO policy?",
-        "Who owns the payments-service catalog entry?",
-        "Summarize PAY-2114"
+        {
+          "query": "What's our PTO policy?",
+          "expectedBehavior": "Embedded chat cites the PTO policy document, with a non-empty, deduped citations list — same answer shape as the standalone acme-answers recipe, since it's the same underlying Chat surface."
+        },
+        {
+          "query": "Who owns the payments-service catalog entry?",
+          "expectedBehavior": "Embedded chat names the real owner from the seeded payments-service catalog entry and cites it."
+        },
+        {
+          "query": "Summarize PAY-2114",
+          "expectedBehavior": "Embedded chat returns a cited summary of the real PAY-2114 incident, not a fabricated one."
+        }
       ],
       "codeAssets": [],
       "scaffoldActions": [
@@ -470,7 +504,7 @@
           "emphasized": true
         }
       ],
-      "aiPrompt": "Embed Glean search and chat in my internal web app using the Glean Web\nSDK, following the recipe at\nhttps://developers.glean.com/cookbook/embed-search-chat\n\nSteps:\n1. Ask me for my Glean backend URL (https://{instance}-be.glean.com).\n2. Install the SDK: npm install @gleanwork/web-sdk. (If the app has no\n   build toolchain, fall back to the script tag from my Glean app domain:\n   <script defer src=\"https://{GLEAN_APP_DOMAIN}/embedded-search-latest.min.js\"></script>\n   — the same methods appear on window.GleanWebSDK.)\n3. Add a search box and results container, then:\n   import { renderSearchBox, renderSearchResults } from \"@gleanwork/web-sdk\";\n   renderSearchBox(searchBoxElement, { backend, onSearch: (query) =>\n     renderSearchResults(resultsElement, { query }) });\n4. Add a chat container: position: relative, display: block, width: 100%,\n   height: 480px — any shorter and long answers scroll awkwardly, any\n   taller and you get dead space below Glean's own chat landing view. Then:\n   import { renderChat } from \"@gleanwork/web-sdk\";\n   renderChat(containerElement, { backend, initialMessage: \"What's our PTO policy?\" });\n   initialMessage opens straight into a real cited answer instead of an\n   empty landing screen, and doubles as your on-load verification.\n5. Default SSO auth needs no extra configuration. If I ask for\n   server-to-server auth instead, follow\n   https://developers.glean.com/libraries/web-sdk/authentication/server-to-server\n   and keep the API key strictly server-side.\n\nVerify by running the app and issuing a search; results must respect my\nGlean permissions.",
+      "aiPrompt": "Embed Glean search and chat in my internal web app using the Glean Web\nSDK, following the recipe at\nhttps://developers.glean.com/cookbook/embed-search-chat\n\nSteps:\n1. Ask me for my Glean backend URL (https://{instance}-be.glean.com).\n2. Install the SDK: npm install @gleanwork/web-sdk. (If the app has no\n   build toolchain, fall back to the script tag from my Glean app domain:\n   <script defer src=\"https://{GLEAN_APP_DOMAIN}/embedded-search-latest.min.js\"></script>\n   — the same methods appear on window.GleanWebSDK.)\n3. Add a search box and results container, then:\n   import { renderSearchBox, renderSearchResults } from \"@gleanwork/web-sdk\";\n   renderSearchBox(searchBoxElement, { backend, onSearch: (query) =>\n     renderSearchResults(resultsElement, { query }) });\n4. Add a chat container: position: relative, display: block, width: 100%,\n   height: 480px — any shorter and long answers scroll awkwardly, any\n   taller and you get dead space below Glean's own chat landing view. Then:\n   import { renderChat } from \"@gleanwork/web-sdk\";\n   renderChat(containerElement, { backend, initialMessage: \"What's our PTO policy?\" });\n   initialMessage opens straight into a real cited answer instead of an\n   empty landing screen, and doubles as your on-load verification.\n5. Default SSO auth needs no extra configuration. If I ask for\n   server-to-server auth instead, follow\n   https://developers.glean.com/libraries/web-sdk/authentication/server-to-server\n   and keep the API key strictly server-side.\n\nSee Verify below for what a correct build must do.",
       "llmContext": "Embeds Glean search and chat into an existing web app via the Glean Web SDK npm package @gleanwork/web-sdk (renderSearchBox, renderSearchResults, renderChat named exports; script-tag fallback exposes the same methods on window.GleanWebSDK). Pass the backend option to route users directly to the instance. Auth is Glean SSO by default or server-to-server tokens minted by a backend holding an admin API key with SEARCH and CHAT scopes. All results are permission-aware per user.",
       "goDependency": false,
       "featured": true,
@@ -512,8 +546,14 @@
         "Python 3.10+ (uses glean-indexing-sdk)"
       ],
       "demoQueries": [
-        "Who owns the payments-service catalog entry?",
-        "What's the on-call runbook for checkout-service?"
+        {
+          "query": "Who owns the payments-service catalog entry?",
+          "expectedBehavior": "After indexing, Glean search/chat surfaces the custom-connector-indexed catalog document as a citation, naming the real owner — proving the connector's documents (not just seeded native ones) are searchable and permissions-scoped."
+        },
+        {
+          "query": "What's the on-call runbook for checkout-service?",
+          "expectedBehavior": "Glean search/chat surfaces the custom-connector-indexed checkout-service runbook document as a citation."
+        }
       ],
       "codeAssets": [
         {
@@ -618,7 +658,10 @@
         "A Glean token with AGENTS scope for API invocation"
       ],
       "demoQueries": [
-        "Summarize open payments incidents and file a tracking ticket"
+        {
+          "query": "Summarize open payments incidents and file a tracking ticket",
+          "expectedBehavior": "Run as an Acme-Engineering user (e.g. marcus.webb@acme.example.com): the agent summarizes open incidents and the governed tool call succeeds (200, a real ticket ID comes back). Run as a non-Engineering user (e.g. dana.okafor@acme.example.com): the tool server returns 403 and the agent falls back to a read-only summary instead of failing the whole run — the governance check must actually run, not be assumed."
+        }
       ],
       "codeAssets": [
         {
@@ -728,8 +771,14 @@
         "A Glean API token with the CHAT scope (kept as a Lovable backend secret)"
       ],
       "demoQueries": [
-        "Where do I reset my SSO password?",
-        "How do I request a new laptop?"
+        {
+          "query": "Where do I reset my SSO password?",
+          "expectedBehavior": "Answer cites the SSO password reset guide."
+        },
+        {
+          "query": "How do I request a new laptop?",
+          "expectedBehavior": "Answer cites the IT helpdesk FAQ (loaner laptops, same-day, from the IT desk)."
+        }
       ],
       "codeAssets": [
         {
@@ -739,7 +788,7 @@
         }
       ],
       "scaffoldActions": [],
-      "aiPrompt": "I'm using Lovable, not you, to build this — your job is to prepare my\ninputs per\nhttps://developers.glean.com/cookbook/no-code-it-helpdesk-lovable\n\n1. Generate the Lovable prompt from the recipe's template, filling in\n   my Glean server URL.\n2. Remind me: token goes in a Lovable backend secret, never in the\n   prompt.\n3. After Lovable builds it, give me the two demo queries to verify\n   citations and permissions.",
+      "aiPrompt": "I'm using Lovable, not you, to build this — your job is to prepare my\ninputs per\nhttps://developers.glean.com/cookbook/no-code-it-helpdesk-lovable\n\n1. Generate the Lovable prompt from the recipe's template, filling in\n   my Glean server URL.\n2. Remind me: token goes in a Lovable backend secret, never in the\n   prompt.\n3. After Lovable builds it, hand it back to me — see Verify below for\n   the exact queries to test and what a correct result looks like.",
       "llmContext": "This recipe's deliverable is a prompt template, not a runnable project — mirrors no-code-pto-lookup-replit's shape (same Chat API call, same \"browser never holds the token\" constraint, same citation correction: filter to messageType === 'CONTENT' before joining fragments[].text, and read citations from fragments[].citation.sourceDocument — not the deprecated message.citations[] field, which wasn't populated at all on a live test response) with a different tool and persona so the two don't read as duplicates. Lovable's default stack leans on a connected backend/database integration for server-side secrets rather than a plain Node server, so the prompt asks the agent to set that up rather than assuming a fixed mechanism. Both demo queries are answered by existing seeded Acme corpus documents — no corpus changes were needed.",
       "goDependency": false,
       "featured": false,
@@ -778,8 +827,14 @@
         "A Glean API token with the CHAT scope (kept in Replit Secrets)"
       ],
       "demoQueries": [
-        "What is our PTO policy?",
-        "When is open enrollment?"
+        {
+          "query": "What is our PTO policy?",
+          "expectedBehavior": "Answer cites the PTO policy document."
+        },
+        {
+          "query": "When is open enrollment?",
+          "expectedBehavior": "Answer cites the benefits guide and states open enrollment runs in November."
+        }
       ],
       "codeAssets": [
         {
@@ -789,7 +844,7 @@
         }
       ],
       "scaffoldActions": [],
-      "aiPrompt": "I'm using Replit Agent, not you, to build this — your job is to prepare\nmy inputs per\nhttps://developers.glean.com/cookbook/no-code-pto-lookup-replit\n\n1. Generate the Replit prompt from the recipe's template, filling in\n   my Glean server URL.\n2. Remind me: token goes in Replit Secrets as GLEAN_API_TOKEN, never\n   in the prompt.\n3. After Replit builds it, give me the two demo queries to verify\n   citations and permissions.",
+      "aiPrompt": "I'm using Replit Agent, not you, to build this — your job is to prepare\nmy inputs per\nhttps://developers.glean.com/cookbook/no-code-pto-lookup-replit\n\n1. Generate the Replit prompt from the recipe's template, filling in\n   my Glean server URL.\n2. Remind me: token goes in Replit Secrets as GLEAN_API_TOKEN, never\n   in the prompt.\n3. After Replit builds it, hand it back to me — see Verify below for\n   the exact queries to test and what a correct result looks like.",
       "llmContext": "This recipe's deliverable is a prompt template, not a runnable project — \"building\" it means pasting the prompt into Replit Agent, which then writes and runs the actual code. The prompt pins the same Chat API shape used elsewhere in this cookbook: Glean({ apiToken, instance }) (never `domain`), chat.create({ messages: [{ author: 'USER', fragments: [{ text }] }] }), filtering the response to messageType === 'CONTENT' before joining fragments[].text (a real response can include earlier step-narration messages), and reading citations from fragments[].citation.sourceDocument — not the deprecated message.citations[] field, which wasn't populated at all on a live test response. The demo query \"How do I enroll in the commuter benefit?\" from this recipe's source ticket was swapped for \"When is open enrollment?\" because the seeded Acme benefits guide doesn't mention a commuter benefit — asking the original question would produce no citation or a fabricated answer.",
       "goDependency": false,
       "featured": false,
@@ -834,8 +889,14 @@
         "Python 3.10+ or Node 20+"
       ],
       "demoQueries": [
-        "What's our PTO policy?",
-        "What are the engineering compensation bands?"
+        {
+          "query": "What's our PTO policy?",
+          "expectedBehavior": "Any user gets a cited answer — this doc is broadly readable, so permissions don't restrict it."
+        },
+        {
+          "query": "What are the engineering compensation bands?",
+          "expectedBehavior": "A user with access to the compensation-bands doc gets a cited answer; a user without that access gets no citation for it and the LLM must not fabricate an answer from the missing context. search.query has to respect the caller's real Glean permissions for both cases — that's the actual thing this recipe verifies."
+        }
       ],
       "codeAssets": [
         {

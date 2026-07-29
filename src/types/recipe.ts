@@ -173,6 +173,19 @@ export const recipeArchitectureNodeSchema = z.strictObject({
   emphasized: z.boolean().default(false),
 });
 
+/**
+ * One demo query paired with the checkable behavior a correct build must
+ * produce for it — the eval data an agent (or a recipe's own `verify`
+ * script) runs against a real, live build before declaring the recipe done.
+ * `expectedBehavior` is prose for a human/agent to judge against, not a
+ * machine-parsed assertion — recipes with an executable verify script
+ * encode their own concrete checks in code, using this as the source query.
+ */
+export const recipeDemoQuerySchema = z.strictObject({
+  query: z.string().min(1),
+  expectedBehavior: z.string().min(1),
+});
+
 export const recipeMetaSchema = z.strictObject({
   id: z
     .string()
@@ -200,7 +213,7 @@ export const recipeMetaSchema = z.strictObject({
   /** Language(s) this recipe can be built in. Omit for recipes with no applicable build language (pure config, or a third-party no-code tool's own stack). Multiple entries means the AI should ask which one. */
   languages: z.array(z.enum(RECIPE_LANGUAGES)).min(1).optional(),
   prerequisites: z.array(z.string().min(1)).min(1),
-  demoQueries: z.array(z.string().min(1)).default([]),
+  demoQueries: z.array(recipeDemoQuerySchema).default([]),
   codeAssets: z.array(recipeCodeAssetSchema).default([]),
   scaffoldActions: z.array(z.enum(RECIPE_SCAFFOLD_ACTIONS)).default([]),
   /** Top-level runnable steps for `buildMethod: 'scaffold'` recipes with no variant split; variant-specific steps live on `codeAssets[].steps` instead. */
@@ -216,6 +229,7 @@ export const recipeMetaSchema = z.strictObject({
 });
 
 export type RecipeCodeAsset = z.infer<typeof recipeCodeAssetSchema>;
+export type RecipeDemoQuery = z.infer<typeof recipeDemoQuerySchema>;
 export type RecipeMeta = z.infer<typeof recipeMetaSchema>;
 
 /** The flat, compiled record consumed by components and the plugin. */
