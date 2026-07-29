@@ -259,16 +259,40 @@ function StepRow({
 }
 
 /**
- * Numbered vertical timeline, rendered from `recipe.steps` (and, for
- * recipes with more than one variant, `recipe.codeAssets[].steps` as a
- * tabbed choice) — the same real, runnable data the generated plugin skill
- * renders from, instead of a second hand-authored copy.
+ * Numbered vertical timeline. Recipes with `recipe.steps`/
+ * `codeAssets[].steps` (and, for recipes with more than one variant, a
+ * tabbed choice) render from that data — the same real, runnable source
+ * the generated plugin skill renders from. Recipes not yet migrated to
+ * that data fall back to hand-authored JSX children.
  */
-export function RecipeSteps(): React.ReactElement {
+export function RecipeSteps({
+  children,
+}: {
+  children?: React.ReactNode;
+}): React.ReactElement {
   const recipe = useRecipe('RecipeSteps');
   const variantsWithSteps = (recipe.codeAssets ?? []).filter(
     (asset) => asset.steps && asset.steps.length > 0,
   );
+  const hasStepsData =
+    (recipe.steps && recipe.steps.length > 0) || variantsWithSteps.length > 0;
+
+  if (!hasStepsData) {
+    const steps = React.Children.toArray(children);
+    return (
+      <RecipeSection label="Steps">
+        <div className={styles.stepsWrap}>
+          <div className={styles.stepsRail} />
+          {steps.map((step, i) => (
+            <div className={styles.stepRow} key={i}>
+              <span className={styles.stepNum}>{i + 1}</span>
+              <div className={styles.stepBody}>{step}</div>
+            </div>
+          ))}
+        </div>
+      </RecipeSection>
+    );
+  }
 
   return (
     <RecipeSection label="Steps">

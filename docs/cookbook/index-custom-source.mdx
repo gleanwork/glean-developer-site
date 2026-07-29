@@ -11,7 +11,6 @@ import {
   RecipeArchitecture,
   RecipePrereqs,
   RecipeSteps,
-  RecipeNote,
   TakeItFurther,
 } from '@site/src/components/Cookbook/RecipeLayout';
 
@@ -30,125 +29,7 @@ day one, so search results respect who's allowed to see what.
 
 <RecipePrereqs />
 
-<RecipeSteps>
-
-<>
-Install the SDK and register the datasource. A datasource is a
-`CustomDatasourceConfig` — a name, a display name, a category, and the
-object types it will contain.
-
-```bash snippet=index-custom-source/snippet-01.sh
-pip install glean-indexing-sdk==1.0.0b2
-```
-
-```python snippet=index-custom-source/snippet-02.py
-from glean.api_client.models import DatasourceCategory, ObjectDefinition
-from glean.indexing.connectors import BaseDatasourceConnector
-from glean.indexing.models import CustomDatasourceConfig
-
-class AcmeCorpusConnector(BaseDatasourceConnector[dict]):
-    configuration: CustomDatasourceConfig = CustomDatasourceConfig(
-        name="acme_corpus",
-        display_name="Acme Corpus",
-        datasource_category=DatasourceCategory.KNOWLEDGE_HUB,
-        url_regex="https://portal.acme.internal/.*",
-        is_entity_datasource=False,
-        is_test_datasource=False,
-        is_user_referenced_by_email=True,
-        object_definitions=[
-            ObjectDefinition(
-                name="document",
-                display_label="Document",
-                doc_category=DatasourceCategory.KNOWLEDGE_HUB,
-            ),
-        ],
-    )
-```
-
-</>
-
-<>
-Transform your source data into `DocumentDefinition`s — and give each one a
-real permission block. This is the part teams skip and regret: an
-`allow_anonymous_access` shortcut means every document is visible to
-everyone, forever.
-
-```python snippet=index-custom-source/snippet-03.py
-from glean.indexing.models import ContentDefinition, DocumentDefinition
-from glean.api_client.models import DocumentPermissionsDefinition, UserReferenceDefinition
-
-def transform(self, data):
-    return [
-        DocumentDefinition(
-            id=item["id"],
-            title=item["title"],
-            datasource=self.name,
-            view_url=item["view_url"],
-            object_type="document",
-            body=ContentDefinition(mime_type="text/plain", text_content=item["body"]),
-            permissions=DocumentPermissionsDefinition(allowed_groups=item["groups"]),
-            created_at=item["created_at_epoch_seconds"],
-            updated_at=item["updated_at_epoch_seconds"],
-        )
-        for item in data
-    ]
-```
-
-<RecipeNote>
-`DocumentDefinition.created_at`/`updated_at` are epoch seconds (an `int`),
-not ISO date strings — a detail the API's own bundled examples don't always
-make obvious. Convert before constructing the object, or Glean will reject
-the payload.
-</RecipeNote>
-
-</>
-
-<>
-Push the identities those permissions reference. If any document uses
-`allowed_groups`, override `get_identities()` to also supply the matching
-users, groups, and memberships — Glean can't evaluate a group ACL it's
-never heard of.
-
-```python snippet=index-custom-source/snippet-04.py
-from glean.api_client.models import (
-    DatasourceBulkMembershipDefinition,
-    DatasourceGroupDefinition,
-    DatasourceUserDefinition,
-)
-from glean.indexing.models import DatasourceIdentityDefinitions
-
-def get_identities(self):
-    return DatasourceIdentityDefinitions(
-        users=[DatasourceUserDefinition(email="dana.okafor@acme.example.com", name="Dana Okafor")],
-        groups=[DatasourceGroupDefinition(name="Acme-HR")],
-        memberships=[
-            DatasourceBulkMembershipDefinition(
-                member_user_id="dana.okafor@acme.example.com",
-                member_group_name="Acme-HR",
-            ),
-        ],
-    )
-```
-
-</>
-
-<>
-Register the datasource and run the connector.
-
-```python snippet=index-custom-source/snippet-05.py
-connector = AcmeCorpusConnector("acme_corpus", MyDataClient())
-connector.configure_datasource()
-connector.index_data()
-```
-
-</>
-
-</RecipeSteps>
-
-Verify with **"Who owns the payments-service catalog entry?"** — as
-yourself, then as a user in a group that isn't granted access to a
-restricted document. The restricted user should see nothing for that
-document; everyone else should see it, cited.
+<RecipeSteps />
 
 <TakeItFurther>
 

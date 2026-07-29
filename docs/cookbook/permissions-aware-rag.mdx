@@ -11,11 +11,8 @@ import {
   RecipeArchitecture,
   RecipePrereqs,
   RecipeSteps,
-  RecipeNote,
   TakeItFurther,
 } from '@site/src/components/Cookbook/RecipeLayout';
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
 
 <RecipePage recipeId="permissions-aware-rag">
 
@@ -33,113 +30,7 @@ Platform API as retrieval and skip all three problems.
 
 <RecipePrereqs />
 
-<RecipeSteps>
-
-<>
-Retrieve: call Search with the question, and pull `title`, `url`, and each
-result's `snippets` — these are your chunks, and they come back as a plain
-list of strings. This is `glean.search.query()`, the **Platform API**'s
-top-level search method — a different, newer surface from the Client API
-(`glean.client.*`) used elsewhere in this cookbook, and **Experimental**:
-every call needs `X_GLEAN_INCLUDE_EXPERIMENTAL=true` set, or it fails.
-
-<Tabs>
-<TabItem value="python" label="Python">
-
-```python snippet=permissions-aware-rag/snippet-01.py
-glean = Glean(api_token=..., instance=...)
-
-response = glean.search.query(query=question, page_size=8)
-
-sources = [
-    {"title": r.title, "url": r.url, "text": "\n".join(s for s in r.snippets if s)}
-    for r in response.results or []
-    if r.title and r.snippets
-]
-```
-
-</TabItem>
-<TabItem value="typescript" label="TypeScript">
-
-```typescript snippet=permissions-aware-rag/snippet-02.ts
-const glean = new Glean({ apiToken: ..., instance: ... });
-
-const response = await glean.search.query({ query: question, page_size: 8 });
-
-const sources = (response.results ?? [])
-  .filter((r) => r.title && r.snippets)
-  .map((r) => ({
-    title: r.title!,
-    url: r.url,
-    text: r.snippets!.filter(Boolean).join('\n'),
-  }));
-```
-
-</TabItem>
-</Tabs>
-
-<RecipeNote>
-The Platform API launched publicly in July 2026 but is still Experimental
-— set `X_GLEAN_INCLUDE_EXPERIMENTAL=true` as an environment variable (the
-SDK reads it automatically; there's no per-call argument for this). Skip
-it and every call fails. Verified with a real HTTP round-trip against a
-local test server — headers, request body, and response parsing all
-confirmed — but not yet against a live Glean instance.
-</RecipeNote>
-
-</>
-
-<>
-Answer: send the LLM only the retrieved sources, numbered, and require
-inline `[n]` citations. If retrieval comes back empty, say so — don't let
-the model answer from its own training data.
-
-```python snippet=permissions-aware-rag/snippet-03.py
-prompt = f"""Answer using ONLY the numbered sources below. Cite inline like [1].
-If the sources don't cover the question, say you don't have information on that.
-
-Sources:
-{numbered_sources}
-
-Question: {question}"""
-
-message = anthropic_client.messages.create(
-    model="claude-sonnet-5",
-    max_tokens=1024,
-    messages=[{"role": "user", "content": prompt}],
-)
-```
-
-<RecipeNote>
-Any LLM provider works here — Glean did the governed retrieval, the model
-just reads what it's given.
-</RecipeNote>
-
-</>
-
-<>
-Enforce per-user permissions: with a **global/admin** Glean token, add an
-`X-Glean-Act-As: user@company.com` header to impersonate a specific user.
-This is a raw HTTP header, not a SDK parameter or query argument — a
-detail easy to get wrong if you go looking for an `actAs` option that
-doesn't exist.
-
-```python snippet=permissions-aware-rag/snippet-04.py
-response = glean.search.query(
-    query=question,
-    page_size=8,
-    http_headers={"X-Glean-Act-As": "marcus.webb@acme.example.com"},
-)
-```
-
-</>
-
-</RecipeSteps>
-
-Try it with **"What are the engineering compensation bands?"** acting as a
-user in `Acme-Engineering` only, then again as a user in `Acme-HR` — the
-first should get "I don't have information on that," the second should get
-a cited answer.
+<RecipeSteps />
 
 <TakeItFurther>
 

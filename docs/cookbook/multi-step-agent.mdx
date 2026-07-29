@@ -11,7 +11,6 @@ import {
   RecipeArchitecture,
   RecipePrereqs,
   RecipeSteps,
-  RecipeNote,
   TakeItFurther,
 } from '@site/src/components/Cookbook/RecipeLayout';
 
@@ -30,77 +29,7 @@ instead of a hard failure.
 
 <RecipePrereqs />
 
-<RecipeSteps>
-
-<>
-Register the Tool. This is an admin-console step — **Admin console →
-Platform → Tools → Add** — not an API call; there's no SDK method to
-create a tool. Upload an OpenAPI spec for a single endpoint, following
-this repo's own [Jira issue-creation example](/guides/tools/examples/jira-issue-creation).
-
-```python snippet=multi-step-agent/snippet-01.py
-@app.route("/file_incident_ticket", methods=["POST"])
-def file_incident_ticket():
-    user_email = request.headers.get("Glean-User-Email")
-    if user_email not in ENGINEERING_EMAILS:
-        return jsonify({"error": "Not authorized"}), 403
-
-    # ...file the ticket...
-    return jsonify({"resultURL": ticket_url}), 200
-```
-
-<RecipeNote>
-Glean forwards the identity of whichever user's context an agent run is
-impersonating via the `Glean-User-Email` header. That's where you enforce
-governance for a scratch-built tool — there's no built-in "restrict to a
-group" toggle for it in the admin UI as of this writing.
-</RecipeNote>
-
-</>
-
-<>
-Build the agent. Also a UI step, in the **Agent Builder** — give it
-instructions that name the fallback explicitly ("if the tool returns
-403/not-authorized, summarize instead of failing"), turn retrieval on, and
-attach the tool.
-
-</>
-
-<>
-Invoke it. Agents use a different message shape than the Chat API —
-`Message`/`MessageTextBlock`, not `ChatMessage`/`ChatMessageFragment`.
-
-```python snippet=multi-step-agent/snippet-02.py
-from glean.api_client import Glean
-from glean.api_client.models import ContentType, Message, MessageTextBlock
-
-glean = Glean(api_token=..., instance=...)
-
-response = glean.client.agents.run(
-    agent_id=agent_id,
-    messages=[Message(role="USER", content=[MessageTextBlock(text=question, type=ContentType.TEXT)])],
-    http_headers={"X-Glean-Act-As": "marcus.webb@acme.example.com"},
-)
-
-print(response.run.status)
-for message in response.messages or []:
-    print(message.role, "".join(b.text for b in message.content or []))
-```
-
-<RecipeNote>
-`run_stream()` exists, but returns the raw SSE response as a plain string
-— not a parsed event iterator. `run()` (wait-for-completion) is simpler
-and is what this recipe uses.
-</RecipeNote>
-
-</>
-
-</RecipeSteps>
-
-Run the same question as two different users via `X-Glean-Act-As`: as
-**Marcus Webb** (Acme-Engineering), the agent files the ticket. As **Dana
-Okafor** (Acme-HR), the tool returns 403 and the agent falls back to a
-summary — both branches visible in the run's `messages`.
+<RecipeSteps />
 
 <TakeItFurther>
 

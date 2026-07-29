@@ -10,7 +10,6 @@ import {
   RecipeSection,
   RecipePrereqs,
   RecipeSteps,
-  RecipeNote,
   TakeItFurther,
 } from '@site/src/components/Cookbook/RecipeLayout';
 
@@ -27,78 +26,7 @@ per-host reimplementation, no separate index.
 
 <RecipePrereqs />
 
-<RecipeSteps>
-
-<>
-Open the **MCP Configurator** for each host you use: in Glean, go to your
-profile icon → **Your Settings** → **Install** tab → **MCP Configurator** —
-or jump straight to a host's page. The Configurator authenticates via
-**OAuth**; you won't need an API token for supported hosts.
-
-- [Claude Code](https://app.glean.com/settings/install?mcpConfigure=true&mcpHost=claude-code)
-- [Cursor](https://app.glean.com/settings/install?mcpConfigure=true&mcpHost=cursor)
-- [Claude Desktop](https://app.glean.com/settings/install?mcpConfigure=true&mcpHost=claude-desktop)
-
-See the [MCP guide](/guides/mcp) for the full flow and supported hosts.
-
-</>
-
-<>
-Understand what the Configurator writes, and why it differs by host. Claude
-Code and Cursor connect to the remote server natively over HTTP:
-
-```json snippet=connect-mcp-hosts/snippet-01.json
-{
-  "mcpServers": {
-    "glean": {
-      "type": "http",
-      "url": "https://{instance}-be.glean.com/mcp/default",
-      "headers": { "Authorization": "Bearer ${GLEAN_API_TOKEN}" }
-    }
-  }
-}
-```
-
-Claude Desktop only supports stdio, so it needs the
-[`mcp-remote`](https://www.npmjs.com/package/mcp-remote) bridge instead — the
-Configurator handles this automatically:
-
-```json snippet=connect-mcp-hosts/snippet-02.json
-{
-  "mcpServers": {
-    "glean": {
-      "type": "stdio",
-      "command": "npx",
-      "args": [
-        "-y",
-        "mcp-remote",
-        "https://{instance}-be.glean.com/mcp/default",
-        "--header",
-        "Authorization: Bearer ${GLEAN_API_TOKEN}"
-      ]
-    }
-  }
-}
-```
-
-<RecipeNote>
-Find your server URL at `app.glean.com/admin/about-glean`, under Server
-instance. `recipes/connect-mcp-hosts/generate-configs.mjs` in the cookbook
-repo generates exactly these two shapes from `@gleanwork/mcp-config-schema`
-— the same library the Configurator itself uses — if you want to see the
-logic behind the difference.
-</RecipeNote>
-
-</>
-
-<>
-Verify from each connected host with the same task: **"Who's on call for
-payments-service?"** Confirm the answer is Glean-cited and consistent
-across hosts.
-
-</>
-
-</RecipeSteps>
+<RecipeSteps />
 
 <TakeItFurther>
 
