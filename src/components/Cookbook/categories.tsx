@@ -132,6 +132,8 @@ export function CategoryTile({
         width: size,
         height: size,
         borderRadius: Math.round(size * 0.27),
+        ...(brandIcon?.tileBg ? { background: brandIcon.tileBg } : {}),
+        ...(brandIcon?.tileFg ? { color: brandIcon.tileFg } : {}),
       }}
     >
       {content}
