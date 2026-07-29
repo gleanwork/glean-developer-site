@@ -6,18 +6,17 @@
  * - `adaptive: true` (default): the SVG is fetched and inlined
  *   (`dangerouslySetInnerHTML`) with `fill="currentColor"`, so it recolors
  *   to match the tile's color exactly like any other Glean glyph. Use this
- *   for flat, single-color marks (the source file should already declare
- *   `fill="currentColor"` on its paths). Checked directly against the real
- *   render size (21-26px): a flat single-hue mark has no internal
- *   luminance variation to fall back on, so it only reads cleanly against
- *   a genuinely high-contrast background — a low-contrast pastel category
- *   tile (e.g. the "agent" category's dark-gold-on-pale-yellow) turns it to
- *   mud regardless of which single hue it's recolored to. Set `tileBg` /
- *   `tileFg` to override the tile's own background/foreground with a
- *   higher-contrast pair instead of inheriting the category's pastel
- *   scheme — matching how the mark's own source (a2a-protocol.org) renders
- *   it at this exact size: white on solid brand blue, not blended into a
- *   pastel tile.
+ *   only for a flat, single-color mark that's *simple* enough to survive
+ *   21-26px anti-aliasing (the tile's real render size) — checked directly
+ *   by testing the same source artwork at 90px vs 400px: fine geometry
+ *   (e.g. a letterform's counter/hole) can be genuinely present in the file
+ *   and still disappear under anti-aliasing at tile size, on any background,
+ *   in any color. That's a hard resolution floor, not a contrast problem —
+ *   `tileBg`/`tileFg` (below) fixes contrast, not detail. Before adding an
+ *   entry here, render the actual candidate file at ~24px and crop-zoom the
+ *   *screenshot* (not a live-rendered preview at a different size) to
+ *   confirm it survives — don't assume detail that reads fine at preview
+ *   size will read fine at tile size.
  * - `adaptive: false`: rendered via a plain `<img>` instead, preserving the
  *   source file's own colors exactly. `getIcon(..., 'glean', ...)` force-
  *   recolors every SVG it fetches to `currentColor` — fine for flat marks,
@@ -31,17 +30,12 @@ export interface BrandIconEntry {
   src: string;
   adaptive?: boolean;
   /** Overrides the tile's background/foreground instead of inheriting the
-   * category's pastel scheme — see `adaptive` above for why. */
+   * category's pastel scheme — fixes low contrast, not insufficient detail
+   * (see `adaptive` above). */
   tileBg?: string;
   tileFg?: string;
 }
 
 export const BRAND_ICON_SRC: Record<string, BrandIconEntry> = {
   lovable: { src: '/img/cookbook/lovable.svg', adaptive: false },
-  a2a: {
-    src: '/img/cookbook/a2a.svg',
-    adaptive: true,
-    tileBg: '#2874d7',
-    tileFg: '#ffffff',
-  },
 };
