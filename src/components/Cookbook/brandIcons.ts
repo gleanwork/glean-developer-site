@@ -10,4 +10,5 @@
  */
 export const BRAND_ICON_SRC: Record<string, string> = {
   lovable: '/img/cookbook/lovable.svg',
+  a2a: '/img/cookbook/a2a.svg',
 };

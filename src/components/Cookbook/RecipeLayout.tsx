@@ -227,7 +227,8 @@ function humanizeVariantLabel(repoPath: string): string {
     .split('-')
     .map(
       (word) =>
-        VARIANT_LABEL_WORDS[word] ?? word.charAt(0).toUpperCase() + word.slice(1),
+        VARIANT_LABEL_WORDS[word] ??
+        word.charAt(0).toUpperCase() + word.slice(1),
     )
     .join(' ');
 }
