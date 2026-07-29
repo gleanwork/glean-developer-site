@@ -93,6 +93,10 @@
         ]
       }
     },
+    "buildMethod": {
+      "type": "string",
+      "enum": ["scaffold", "integrate", "third-party-build"]
+    },
     "languages": {
       "minItems": 1,
       "type": "array",
@@ -134,6 +138,29 @@
           "description": {
             "type": "string",
             "minLength": 1
+          },
+          "steps": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "title": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "description": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "command": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": ["title"],
+              "additionalProperties": false
+            }
           }
         },
         "required": ["repoPath", "language", "description"],
@@ -151,6 +178,29 @@
           "scaffold-mcp-config",
           "scaffold-n8n-workflow"
         ]
+      }
+    },
+    "steps": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1
+          },
+          "command": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": ["title"],
+        "additionalProperties": false
       }
     },
     "combines": {
@@ -251,6 +301,7 @@
     "timeEstimate",
     "requiredScopes",
     "authMethod",
+    "buildMethod",
     "prerequisites",
     "aiPrompt"
   ],

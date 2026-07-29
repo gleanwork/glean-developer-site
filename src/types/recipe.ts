@@ -99,6 +99,27 @@ export const RECIPE_LANGUAGES = [
   'java',
 ] as const;
 
+/**
+ * How a recipe actually gets built — declared as data so the plugin can
+ * generate the right kind of guidance instead of always regenerating code
+ * from a hand-written description of it.
+ * - `scaffold`: deterministic, runnable steps — copying already-verified
+ *   files, invoking an existing CLI (e.g. `@gleanwork/configure-mcp-server`),
+ *   running an install command. No fixed target codebase shape needed;
+ *   there's nothing for an LLM to re-derive.
+ * - `integrate`: genuinely needs AI judgment because there's no fixed
+ *   target — reads and adapts to the user's own existing code/environment
+ *   (e.g. embedding into an app whose structure isn't known in advance).
+ * - `third-party-build`: the deliverable is a prompt handed off to another
+ *   AI tool (Lovable, Replit) that builds the actual app — nothing of ours
+ *   to scaffold or adapt.
+ */
+export const RECIPE_BUILD_METHODS = [
+  'scaffold',
+  'integrate',
+  'third-party-build',
+] as const;
+
 /** Visual category — drives the pastel tile color and icon (design handoff). */
 export const RECIPE_CATEGORIES = [
   'search',
@@ -111,10 +132,26 @@ export const RECIPE_CATEGORIES = [
 
 export const RECIPE_LEVELS = ['Beginner', 'Intermediate', 'Advanced'] as const;
 
+/**
+ * One step in a `buildMethod: 'scaffold'` recipe's real, runnable sequence.
+ * `command` is a literal, copy-pasteable string when the step is one (a
+ * scaffold invocation, an install command, a CLI call) — omitted for
+ * guidance-only steps that have no command (e.g. "ask which path you want").
+ * Rendered by both the generated plugin skill and the recipe's dev site page
+ * from this one source, instead of two independently hand-authored copies.
+ */
+export const recipeStepSchema = z.strictObject({
+  title: z.string().min(1),
+  description: z.string().min(1).optional(),
+  command: z.string().min(1).optional(),
+});
+
 export const recipeCodeAssetSchema = z.strictObject({
   repoPath: z.string().min(1),
   language: z.string().min(1),
   description: z.string().min(1),
+  /** Steps specific to this variant, for recipes with more than one (e.g. Web SDK vs. Chat API). */
+  steps: z.array(recipeStepSchema).min(1).optional(),
 });
 
 /** One row in the flagship "Combines N recipes" list. */
@@ -158,12 +195,16 @@ export const recipeMetaSchema = z.strictObject({
   requiredScopes: z.array(z.string().min(1)),
   /** Which credential category this recipe needs — drives the plugin's generated auth guidance. */
   authMethod: z.array(z.enum(RECIPE_AUTH_METHODS)).min(1),
+  /** How this recipe actually gets built — drives whether it renders from `steps` or from `aiPrompt`. */
+  buildMethod: z.enum(RECIPE_BUILD_METHODS),
   /** Language(s) this recipe can be built in. Omit for recipes with no applicable build language (pure config, or a third-party no-code tool's own stack). Multiple entries means the AI should ask which one. */
   languages: z.array(z.enum(RECIPE_LANGUAGES)).min(1).optional(),
   prerequisites: z.array(z.string().min(1)).min(1),
   demoQueries: z.array(z.string().min(1)).default([]),
   codeAssets: z.array(recipeCodeAssetSchema).default([]),
   scaffoldActions: z.array(z.enum(RECIPE_SCAFFOLD_ACTIONS)).default([]),
+  /** Top-level runnable steps for `buildMethod: 'scaffold'` recipes with no variant split; variant-specific steps live on `codeAssets[].steps` instead. */
+  steps: z.array(recipeStepSchema).min(1).optional(),
   combines: z.array(recipeCombinesSchema).optional(),
   architecture: z.array(recipeArchitectureNodeSchema).optional(),
   aiPrompt: z.string().min(1),

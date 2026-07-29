@@ -16,6 +16,7 @@
     "icon": "double-arrow",
     "requiredScopes": ["Agent-scoped Client API token (AGENTS)"],
     "authMethod": ["custom"],
+    "buildMethod": "scaffold",
     "languages": ["python"],
     "prerequisites": [
       "A published auto agent with a chat-message trigger (text input only)",
@@ -55,6 +56,7 @@
     "icon": "qna",
     "requiredScopes": ["CHAT"],
     "authMethod": ["web-sdk-cookie", "client-api-oauth-or-token"],
+    "buildMethod": "scaffold",
     "languages": ["typescript"],
     "prerequisites": [
       "A Glean instance with content indexed",
@@ -69,12 +71,64 @@
       {
         "repoPath": "recipes/acme-answers/web-sdk",
         "language": "typescript",
-        "description": "Web SDK variant — renderChat in a page"
+        "description": "Web SDK variant — renderChat in a page",
+        "steps": [
+          {
+            "title": "Scaffold the project",
+            "command": "npx tiged gleanwork/glean-cookbook/recipes/acme-answers/web-sdk acme-answers"
+          },
+          {
+            "title": "Install dependencies",
+            "command": "cd acme-answers && npm install"
+          },
+          {
+            "title": "Credentials",
+            "description": "Default SSO auth needs no configuration — the Web SDK relies on the user's existing browser session with Glean."
+          },
+          {
+            "title": "Run it",
+            "command": "npm run dev"
+          },
+          {
+            "title": "Verify",
+            "description": "Open the printed local URL and ask \"What's our PTO policy?\" — confirm a real, cited answer renders inside Glean's chat UI."
+          }
+        ]
       },
       {
         "repoPath": "recipes/acme-answers/chat-api",
         "language": "typescript",
-        "description": "Chat API variant — one chat.create call, citations rendered"
+        "description": "Chat API variant — one chat.create call, citations rendered",
+        "steps": [
+          {
+            "title": "Scaffold the project",
+            "command": "npx tiged gleanwork/glean-cookbook/recipes/acme-answers/chat-api acme-answers"
+          },
+          {
+            "title": "Install dependencies",
+            "command": "cd acme-answers && npm install"
+          },
+          {
+            "title": "Set credentials",
+            "command": "cp .env.example .env",
+            "description": "Fill in GLEAN_API_TOKEN and GLEAN_INSTANCE — see the client-api-oauth-or-token auth section in cookbook-conventions for how to get a token."
+          },
+          {
+            "title": "Run it",
+            "command": "npm start"
+          },
+          {
+            "title": "Verify",
+            "command": "curl -s -X POST http://localhost:3000/api/ask -H \"Content-Type: application/json\" -d '{\"question\": \"What'\"'\"'s our PTO policy?\"}'",
+            "description": "Confirm the response carries a real answer and non-empty, deduped citations."
+          }
+        ]
+      }
+    ],
+    "steps": [
+      {
+        "title": "Pick a path",
+        "description": "Path A (Web SDK) renders Glean's own chat UI for you — fastest to stand up, no backend code. Path B (Chat API) calls the Chat API directly from your own backend — you own every pixel of the UI and the request/response shape. Both reach the same place: a permission-aware, cited answer."
       }
     ],
     "scaffoldActions": [],
@@ -127,6 +181,7 @@
       "web-sdk-cookie",
       "client-api-oauth-or-token"
     ],
+    "buildMethod": "integrate",
     "languages": ["python", "typescript"],
     "prerequisites": [
       "A Glean instance where you can add a custom datasource",
@@ -205,6 +260,7 @@
     "timeEstimate": "~15 min",
     "requiredScopes": ["MCP"],
     "authMethod": ["custom"],
+    "buildMethod": "scaffold",
     "prerequisites": [
       "Glean MCP server enabled for your deployment (admin toggle)",
       "At least one MCP host installed (Claude Code, Cursor, or Claude Desktop)"
@@ -244,6 +300,7 @@
     "icon": "plug",
     "requiredScopes": ["SEARCH", "CHAT"],
     "authMethod": ["web-sdk-cookie", "client-api-oauth-or-token"],
+    "buildMethod": "integrate",
     "languages": ["typescript", "javascript"],
     "prerequisites": [
       "A Glean instance with content indexed",
@@ -303,6 +360,7 @@
     "timeEstimate": "~1 hr",
     "requiredScopes": ["Indexing API token (datasource-scoped)"],
     "authMethod": ["indexing-token"],
+    "buildMethod": "scaffold",
     "languages": ["python"],
     "prerequisites": [
       "Admin access to create a custom datasource and Indexing API token",
@@ -365,6 +423,7 @@
     "icon": "assistant-tools",
     "requiredScopes": ["AGENTS", "TOOLS"],
     "authMethod": ["client-api-oauth-or-token"],
+    "buildMethod": "scaffold",
     "languages": ["python"],
     "prerequisites": [
       "Agent builder access in your Glean instance",
@@ -428,6 +487,7 @@
     "icon": "lovable",
     "requiredScopes": ["CHAT"],
     "authMethod": ["custom"],
+    "buildMethod": "third-party-build",
     "prerequisites": [
       "A Lovable account",
       "A Glean API token with the CHAT scope (kept as a Lovable backend secret)"
@@ -467,6 +527,7 @@
     "icon": "replit",
     "requiredScopes": ["CHAT"],
     "authMethod": ["custom"],
+    "buildMethod": "third-party-build",
     "prerequisites": [
       "A Replit account with Agent access",
       "A Glean API token with the CHAT scope (kept in Replit Secrets)"
@@ -502,6 +563,7 @@
     "timeEstimate": "~1 hr",
     "requiredScopes": ["SEARCH"],
     "authMethod": ["client-api-oauth-or-token"],
+    "buildMethod": "scaffold",
     "languages": ["python", "typescript"],
     "prerequisites": [
       "A Glean token with SEARCH scope (global/admin token for the act-as permissions demo)",

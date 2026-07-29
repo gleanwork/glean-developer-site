@@ -24,6 +24,7 @@
       "authMethod": [
         "custom"
       ],
+      "buildMethod": "scaffold",
       "languages": [
         "python"
       ],
@@ -80,6 +81,7 @@
         "web-sdk-cookie",
         "client-api-oauth-or-token"
       ],
+      "buildMethod": "scaffold",
       "languages": [
         "typescript"
       ],
@@ -96,15 +98,67 @@
         {
           "repoPath": "recipes/acme-answers/web-sdk",
           "language": "typescript",
-          "description": "Web SDK variant — renderChat in a page"
+          "description": "Web SDK variant — renderChat in a page",
+          "steps": [
+            {
+              "title": "Scaffold the project",
+              "command": "npx tiged gleanwork/glean-cookbook/recipes/acme-answers/web-sdk acme-answers"
+            },
+            {
+              "title": "Install dependencies",
+              "command": "cd acme-answers && npm install"
+            },
+            {
+              "title": "Credentials",
+              "description": "Default SSO auth needs no configuration — the Web SDK relies on the user's existing browser session with Glean."
+            },
+            {
+              "title": "Run it",
+              "command": "npm run dev"
+            },
+            {
+              "title": "Verify",
+              "description": "Open the printed local URL and ask \"What's our PTO policy?\" — confirm a real, cited answer renders inside Glean's chat UI."
+            }
+          ]
         },
         {
           "repoPath": "recipes/acme-answers/chat-api",
           "language": "typescript",
-          "description": "Chat API variant — one chat.create call, citations rendered"
+          "description": "Chat API variant — one chat.create call, citations rendered",
+          "steps": [
+            {
+              "title": "Scaffold the project",
+              "command": "npx tiged gleanwork/glean-cookbook/recipes/acme-answers/chat-api acme-answers"
+            },
+            {
+              "title": "Install dependencies",
+              "command": "cd acme-answers && npm install"
+            },
+            {
+              "title": "Set credentials",
+              "description": "Fill in GLEAN_API_TOKEN and GLEAN_INSTANCE — see the client-api-oauth-or-token auth section in cookbook-conventions for how to get a token.",
+              "command": "cp .env.example .env"
+            },
+            {
+              "title": "Run it",
+              "command": "npm start"
+            },
+            {
+              "title": "Verify",
+              "description": "Confirm the response carries a real answer and non-empty, deduped citations.",
+              "command": "curl -s -X POST http://localhost:3000/api/ask -H \"Content-Type: application/json\" -d '{\"question\": \"What'\"'\"'s our PTO policy?\"}'"
+            }
+          ]
         }
       ],
       "scaffoldActions": [],
+      "steps": [
+        {
+          "title": "Pick a path",
+          "description": "Path A (Web SDK) renders Glean's own chat UI for you — fastest to stand up, no backend code. Path B (Chat API) calls the Chat API directly from your own backend — you own every pixel of the UI and the request/response shape. Both reach the same place: a permission-aware, cited answer."
+        }
+      ],
       "architecture": [
         {
           "label": "Acme Answers page",
@@ -130,8 +184,9 @@
           "emphasized": true
         }
       ],
-      "aiPrompt": "Build \"Acme Answers\", a one-page company Q&A app on Glean, following\nhttps://developers.glean.com/cookbook/acme-answers\n\n1. Ask me which path: (A) Web SDK or (B) Chat API. Build the one I pick.\n2. Path A: npm install @gleanwork/web-sdk; create a container with\n   position: relative, display: block, width: 100%, height: 480px, then\n   renderChat(el, { initialMessage: \"What's our PTO policy?\" }) — SSO\n   auth needs no configuration. Passing initialMessage opens straight\n   into a real cited answer instead of an empty landing screen, and\n   doubles as your on-load verification.\n3. Path B: npm install @gleanwork/api-client; construct the client with\n   new Glean({ apiToken, instance }) — NOT `domain`, which is not a\n   real SDKOptions field despite appearing in one of the SDK's own\n   bundled example files. POST chat.create with my question as a\n   single USER message; render answer text by joining\n   messages[].fragments[].text, and citations from\n   messages[].citations[].sourceDocument (title + url) — there is no\n   top-level citedDocuments field. Keep the API token server-side.\n4. Style it as Acme Corp per the house style below: the real logomark\n   in the header (not a plain colored square), teal (#0E8C84) as the\n   primary accent, \"Acme Answers\" title.\n5. Verify with \"What's our PTO policy?\" — the answer must carry\n   citations and respect my permissions. Contrast note for the\n   README: the SDK path ships Glean's full UI free; the API path\n   gives total UI control.",
-      "llmContext": "Chat API: POST /rest/api/v1/chat (client SDK glean.client.chat.create). Answer text lives in messages[].fragments[].text (join them); citations live in messages[].citations[].sourceDocument (title, url) — not a top-level citedDocuments field. Client constructor takes apiToken + instance (or serverURL), not domain.",
+      "aiPrompt": "Build \"Acme Answers\", a one-page company Q&A app on Glean, following\nhttps://developers.glean.com/cookbook/acme-answers\n\n1. Ask me which path: (A) Web SDK or (B) Chat API. Build the one I pick.\n2. Path A: npm install @gleanwork/web-sdk; create a container with\n   position: relative, display: block, width: 100%, height: 480px, then\n   renderChat(el, { initialMessage: \"What's our PTO policy?\" }) — SSO\n   auth needs no configuration. Passing initialMessage opens straight\n   into a real cited answer instead of an empty landing screen, and\n   doubles as your on-load verification.\n3. Path B: npm install @gleanwork/api-client; construct the client with\n   new Glean({ apiToken, instance }) — NOT `domain`, which is not a\n   real SDKOptions field despite appearing in one of the SDK's own\n   bundled example files. POST chat.create with my question as a\n   single USER message; the response can include earlier step-narration\n   messages (search/read progress) ahead of the real answer — filter to\n   messageType === 'CONTENT', then join those messages' fragments[].text\n   for the answer. Citations live per-fragment at fragments[].citation\n   .sourceDocument (title + url) — not a top-level citedDocuments field,\n   and not the older message.citations[] field, which is deprecated and\n   wasn't populated at all on a live test response. Dedupe citations by\n   url since the same source is commonly cited by more than one\n   fragment. Keep the API token server-side.\n4. Style it as Acme Corp per the house style below: the real logomark\n   in the header (not a plain colored square), teal (#0E8C84) as the\n   primary accent, \"Acme Answers\" title.\n5. Verify with \"What's our PTO policy?\" — the answer must carry\n   citations and respect my permissions. Contrast note for the\n   README: the SDK path ships Glean's full UI free; the API path\n   gives total UI control.",
+      "llmContext": "Chat API: POST /rest/api/v1/chat (client SDK glean.client.chat.create). A real response can include earlier UPDATE-type messages narrating search/read steps ahead of the answer — filter to messageType === 'CONTENT' before joining fragments[].text, or that narration text ends up prepended to the answer. Citations live per-fragment at fragments[].citation.sourceDocument (title, url), not a top-level citedDocuments field and not the older message.citations[] field — that field is deprecated (removal scheduled 2026-10-15) and, verified live, wasn't populated at all on an agentic chat response even though real citations existed. Dedupe citations by url since the same source is commonly cited by more than one fragment. Client constructor takes apiToken + instance (or serverURL), not domain.",
+      "lastVerified": "2026-07-28",
       "goDependency": false,
       "featured": true,
       "tags": [
@@ -168,6 +223,7 @@
         "web-sdk-cookie",
         "client-api-oauth-or-token"
       ],
+      "buildMethod": "integrate",
       "languages": [
         "python",
         "typescript"
@@ -266,6 +322,7 @@
       "authMethod": [
         "custom"
       ],
+      "buildMethod": "scaffold",
       "prerequisites": [
         "Glean MCP server enabled for your deployment (admin toggle)",
         "At least one MCP host installed (Claude Code, Cursor, or Claude Desktop)"
@@ -319,6 +376,7 @@
         "web-sdk-cookie",
         "client-api-oauth-or-token"
       ],
+      "buildMethod": "integrate",
       "languages": [
         "typescript",
         "javascript"
@@ -398,6 +456,7 @@
       "authMethod": [
         "indexing-token"
       ],
+      "buildMethod": "scaffold",
       "languages": [
         "python"
       ],
@@ -478,6 +537,7 @@
       "authMethod": [
         "client-api-oauth-or-token"
       ],
+      "buildMethod": "scaffold",
       "languages": [
         "python"
       ],
@@ -555,6 +615,7 @@
       "authMethod": [
         "custom"
       ],
+      "buildMethod": "third-party-build",
       "prerequisites": [
         "A Lovable account",
         "A Glean API token with the CHAT scope (kept as a Lovable backend secret)"
@@ -572,7 +633,7 @@
       ],
       "scaffoldActions": [],
       "aiPrompt": "I'm using Lovable, not you, to build this — your job is to prepare my\ninputs per\nhttps://developers.glean.com/cookbook/no-code-it-helpdesk-lovable\n\n1. Generate the Lovable prompt from the recipe's template, filling in\n   my Glean server URL.\n2. Remind me: token goes in a Lovable backend secret, never in the\n   prompt.\n3. After Lovable builds it, give me the two demo queries to verify\n   citations and permissions.",
-      "llmContext": "This recipe's deliverable is a prompt template, not a runnable project — mirrors no-code-pto-lookup-replit's shape (same Chat API call, same \"browser never holds the token\" constraint, same citation correction at message.citations[].sourceDocument, not a top-level citedDocuments field) with a different tool and persona so the two don't read as duplicates. Lovable's default stack leans on a connected backend/database integration for server-side secrets rather than a plain Node server, so the prompt asks the agent to set that up rather than assuming a fixed mechanism. Both demo queries are answered by existing seeded Acme corpus documents — no corpus changes were needed.",
+      "llmContext": "This recipe's deliverable is a prompt template, not a runnable project — mirrors no-code-pto-lookup-replit's shape (same Chat API call, same \"browser never holds the token\" constraint, same citation correction: filter to messageType === 'CONTENT' before joining fragments[].text, and read citations from fragments[].citation.sourceDocument — not the deprecated message.citations[] field, which wasn't populated at all on a live test response) with a different tool and persona so the two don't read as duplicates. Lovable's default stack leans on a connected backend/database integration for server-side secrets rather than a plain Node server, so the prompt asks the agent to set that up rather than assuming a fixed mechanism. Both demo queries are answered by existing seeded Acme corpus documents — no corpus changes were needed.",
       "goDependency": false,
       "featured": false,
       "tags": [
@@ -604,6 +665,7 @@
       "authMethod": [
         "custom"
       ],
+      "buildMethod": "third-party-build",
       "prerequisites": [
         "A Replit account with Agent access",
         "A Glean API token with the CHAT scope (kept in Replit Secrets)"
@@ -621,7 +683,7 @@
       ],
       "scaffoldActions": [],
       "aiPrompt": "I'm using Replit Agent, not you, to build this — your job is to prepare\nmy inputs per\nhttps://developers.glean.com/cookbook/no-code-pto-lookup-replit\n\n1. Generate the Replit prompt from the recipe's template, filling in\n   my Glean server URL.\n2. Remind me: token goes in Replit Secrets as GLEAN_API_TOKEN, never\n   in the prompt.\n3. After Replit builds it, give me the two demo queries to verify\n   citations and permissions.",
-      "llmContext": "This recipe's deliverable is a prompt template, not a runnable project — \"building\" it means pasting the prompt into Replit Agent, which then writes and runs the actual code. The prompt pins the same Chat API shape used elsewhere in this cookbook: Glean({ apiToken, instance }) (never `domain`), chat.create({ messages: [{ author: 'USER', fragments: [{ text }] }] }), and citations at message.citations[].sourceDocument (not a top-level citedDocuments field). The demo query \"How do I enroll in the commuter benefit?\" from this recipe's source ticket was swapped for \"When is open enrollment?\" because the seeded Acme benefits guide doesn't mention a commuter benefit — asking the original question would produce no citation or a fabricated answer.",
+      "llmContext": "This recipe's deliverable is a prompt template, not a runnable project — \"building\" it means pasting the prompt into Replit Agent, which then writes and runs the actual code. The prompt pins the same Chat API shape used elsewhere in this cookbook: Glean({ apiToken, instance }) (never `domain`), chat.create({ messages: [{ author: 'USER', fragments: [{ text }] }] }), filtering the response to messageType === 'CONTENT' before joining fragments[].text (a real response can include earlier step-narration messages), and reading citations from fragments[].citation.sourceDocument — not the deprecated message.citations[] field, which wasn't populated at all on a live test response. The demo query \"How do I enroll in the commuter benefit?\" from this recipe's source ticket was swapped for \"When is open enrollment?\" because the seeded Acme benefits guide doesn't mention a commuter benefit — asking the original question would produce no citation or a fabricated answer.",
       "goDependency": false,
       "featured": false,
       "tags": [
@@ -653,6 +715,7 @@
       "authMethod": [
         "client-api-oauth-or-token"
       ],
+      "buildMethod": "scaffold",
       "languages": [
         "python",
         "typescript"
@@ -722,6 +785,6 @@
     "tools",
     "agents"
   ],
-  "generatedAt": "1970-01-01T00:00:00.000Z",
+  "generatedAt": "2026-07-28T00:00:00.000Z",
   "totalRecipes": 10
 }

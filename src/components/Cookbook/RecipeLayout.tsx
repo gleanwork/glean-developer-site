@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { getIcon } from '@gleanwork/docusaurus-theme-glean/Icons';
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
 import {
   RECIPE_STATUS_LABELS,
   RECIPE_SURFACE_LABELS,
@@ -210,24 +212,99 @@ export function RecipePrereqs(): React.ReactElement {
   );
 }
 
-/** Numbered vertical timeline; each child is one step. */
-export function RecipeSteps({
-  children,
+const VARIANT_LABEL_WORDS: Record<string, string> = {
+  sdk: 'SDK',
+  api: 'API',
+};
+
+/** Last path segment of a codeAsset's repoPath, title-cased ("web-sdk" -> "Web SDK"). */
+function humanizeVariantLabel(repoPath: string): string {
+  return repoPath
+    .split('/')
+    .pop()!
+    .split('-')
+    .map(
+      (word) =>
+        VARIANT_LABEL_WORDS[word] ?? word.charAt(0).toUpperCase() + word.slice(1),
+    )
+    .join(' ');
+}
+
+/** One numbered row in a steps timeline. */
+function StepRow({
+  index,
+  step,
 }: {
-  children: React.ReactNode;
+  index: number;
+  step: { title: string; description?: string; command?: string };
 }): React.ReactElement {
-  const steps = React.Children.toArray(children);
+  return (
+    <div className={styles.stepRow}>
+      <span className={styles.stepNum}>{index}</span>
+      <div className={styles.stepBody}>
+        <p>
+          <strong>{step.title}</strong>
+        </p>
+        {step.description && <p>{step.description}</p>}
+        {step.command && (
+          <pre className={styles.stepCommand}>
+            <code>{step.command}</code>
+          </pre>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Numbered vertical timeline, rendered from `recipe.steps` (and, for
+ * recipes with more than one variant, `recipe.codeAssets[].steps` as a
+ * tabbed choice) — the same real, runnable data the generated plugin skill
+ * renders from, instead of a second hand-authored copy.
+ */
+export function RecipeSteps(): React.ReactElement {
+  const recipe = useRecipe('RecipeSteps');
+  const variantsWithSteps = (recipe.codeAssets ?? []).filter(
+    (asset) => asset.steps && asset.steps.length > 0,
+  );
+
   return (
     <RecipeSection label="Steps">
-      <div className={styles.stepsWrap}>
-        <div className={styles.stepsRail} />
-        {steps.map((step, i) => (
-          <div className={styles.stepRow} key={i}>
-            <span className={styles.stepNum}>{i + 1}</span>
-            <div className={styles.stepBody}>{step}</div>
+      {recipe.steps && recipe.steps.length > 0 && (
+        <div className={styles.stepsWrap}>
+          <div className={styles.stepsRail} />
+          {recipe.steps.map((step, i) => (
+            <StepRow key={step.title} index={i + 1} step={step} />
+          ))}
+        </div>
+      )}
+      {variantsWithSteps.length > 1 ? (
+        <Tabs>
+          {variantsWithSteps.map((asset) => (
+            <TabItem
+              key={asset.repoPath}
+              value={asset.repoPath}
+              label={humanizeVariantLabel(asset.repoPath)}
+            >
+              <div className={styles.stepsWrap}>
+                <div className={styles.stepsRail} />
+                {asset.steps!.map((step, i) => (
+                  <StepRow key={step.title} index={i + 1} step={step} />
+                ))}
+              </div>
+            </TabItem>
+          ))}
+        </Tabs>
+      ) : (
+        variantsWithSteps.map((asset) => (
+          <div className={styles.stepsWrap} key={asset.repoPath}>
+            <div className={styles.stepsRail} />
+            {asset.steps!.map((step, i) => (
+              <StepRow key={step.title} index={i + 1} step={step} />
+            ))}
           </div>
-        ))}
-      </div>
+        ))
+      )}
     </RecipeSection>
   );
 }

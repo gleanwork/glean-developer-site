@@ -11,11 +11,8 @@ import {
   RecipeArchitecture,
   RecipePrereqs,
   RecipeSteps,
-  RecipeNote,
   TakeItFurther,
 } from '@site/src/components/Cookbook/RecipeLayout';
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
 
 <RecipePage recipeId="acme-answers">
 
@@ -32,108 +29,7 @@ you can pick the trade-off that fits your app.
 
 <RecipePrereqs />
 
-<RecipeSteps>
-
-<>
-Pick a path. **Path A (Web SDK)** renders Glean's own chat UI for you —
-fastest to stand up, no backend code. **Path B (Chat API)** calls the Chat
-API directly from your own backend — you own every pixel of the UI and the
-request/response shape. Both reach the same place: a permission-aware,
-cited answer.
-</>
-
-<>
-Build it.
-
-<Tabs>
-<TabItem value="web-sdk" label="Path A: Web SDK">
-
-Install the SDK and render into a sized container — `#chat` needs
-`position: relative`, `display: block`, and an explicit width/height, or
-nothing renders. `initialMessage` opens straight into a real cited answer
-instead of an empty landing screen, which doubles as your on-load
-verification.
-
-```bash snippet=acme-answers/snippet-01.sh
-npm install @gleanwork/web-sdk
-```
-
-```typescript snippet=acme-answers/snippet-02.ts
-import { renderChat } from '@gleanwork/web-sdk';
-
-// #chat needs position: relative, display: block, and an explicit
-// width/height (~480px tall reads as a proper panel) or nothing renders.
-const container = document.getElementById('chat');
-renderChat(container, {
-  // backend: 'https://{your}-be.glean.com',
-  initialMessage: "What's our PTO policy?",
-});
-```
-
-<RecipeNote>
-Setting `backend` is recommended in production — it routes users straight
-to your instance instead of asking for their email.
-</RecipeNote>
-
-</TabItem>
-<TabItem value="chat-api" label="Path B: Chat API">
-
-Install the client, call `chat.create` from your backend, and render the
-answer and citations yourself. Keep the API token server-side.
-
-```bash snippet=acme-answers/snippet-03.sh
-npm install @gleanwork/api-client
-```
-
-```typescript snippet=acme-answers/snippet-04.ts
-import { Glean } from '@gleanwork/api-client';
-
-const glean = new Glean({
-  apiToken: process.env.GLEAN_API_TOKEN,
-  instance: process.env.GLEAN_INSTANCE,
-});
-
-const response = await glean.client.chat.create({
-  messages: [{ author: 'USER', fragments: [{ text: question }] }],
-});
-
-const messages = response.messages ?? [];
-
-const answer = messages
-  .flatMap((message) => message.fragments ?? [])
-  .map((fragment) => fragment.text ?? '')
-  .join('');
-
-const citations = messages
-  .flatMap((message) => message.citations ?? [])
-  .map((citation) => citation.sourceDocument)
-  .filter((document) => document?.title && document?.url);
-```
-
-<RecipeNote>
-The client is constructed with `instance` (or a full `serverURL` override)
-— not `domain`. Citations live per-message in `citations[].sourceDocument`,
-not a top-level `citedDocuments` field.
-</RecipeNote>
-
-</TabItem>
-</Tabs>
-
-</>
-
-<>
-Style it as Acme Corp: teal (`#0E8C84`) as the primary accent, the real
-logomark in the header — not a plain colored square — and an "Acme
-Answers" title. The [brand kit](https://github.com/gleanwork/glean-cookbook/tree/main/brand)
-has the actual SVG (`logomark-light.svg`/`logomark-dark.svg`) and full
-token set; embed the real mark rather than approximating it.
-</>
-
-</RecipeSteps>
-
-Try it with a query like **"What's our PTO policy?"** — the answer should
-carry citations and reflect exactly what the signed-in user is permitted to
-see.
+<RecipeSteps />
 
 <TakeItFurther>
 
