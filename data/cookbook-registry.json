@@ -838,5 +838,155 @@
     "goDependency": false,
     "featured": true,
     "tags": ["rag", "differentiator"]
+  },
+  {
+    "id": "onboarding-hub",
+    "title": "Onboarding Hub: gamified day-one onboarding for new hires",
+    "description": "Alex Kim's day-one hub — checklist, progress, milestone badges, and contextual Glean chat — built two ways with the Web SDK and Platform Chat.",
+    "sidebarLabel": "Onboarding Hub",
+    "surfaces": ["web-sdk", "platform-api"],
+    "status": "showcase",
+    "category": "portal",
+    "level": "Intermediate",
+    "levels": {
+      "minimal": true,
+      "wow": true
+    },
+    "timeEstimate": "~45 min",
+    "icon": "layout-outlined",
+    "requiredScopes": ["CHAT", "SEARCH"],
+    "authMethod": ["web-sdk-cookie", "client-api-oauth-or-token"],
+    "buildMethod": "scaffold",
+    "languages": ["typescript"],
+    "prerequisites": [
+      "A Glean instance with the Acme corpus indexed (see acme-corpus/)",
+      "Path A: any static page host — Web SDK uses SSO cookie auth",
+      "Path B: a Glean API token with CHAT scope and X_GLEAN_INCLUDE_EXPERIMENTAL=true (Platform Chat is experimental)",
+      "Node 20+"
+    ],
+    "demoQueries": [
+      {
+        "query": "What should Alex do on day one?",
+        "expectedBehavior": "Answer lists Alex Kim's pending onboarding steps (security training, benefits enrollment, 1:1 with Priya, architecture walkthrough) with a citation to the onboarding checklist document."
+      },
+      {
+        "query": "What onboarding steps do I still need to finish?",
+        "expectedBehavior": "Same pending items as the day-one query, permission-aware to Alex's checklist."
+      },
+      {
+        "query": "How do I set up VPN?",
+        "expectedBehavior": "Cited answer from the VPN setup guide with real title and url."
+      },
+      {
+        "query": "What's our PTO policy?",
+        "expectedBehavior": "Cited answer from hr-pto-policy with real title and url."
+      }
+    ],
+    "codeAssets": [
+      {
+        "repoPath": "recipes/onboarding-hub/web-sdk",
+        "language": "typescript",
+        "description": "Web SDK variant — checklist + renderChat",
+        "steps": [
+          {
+            "title": "Scaffold the project",
+            "command": "npx tiged --mode=git gleanwork/glean-cookbook/recipes/onboarding-hub/web-sdk onboarding-hub"
+          },
+          {
+            "title": "Install dependencies",
+            "command": "cd onboarding-hub && npm install"
+          },
+          {
+            "title": "Credentials",
+            "description": "Default SSO auth needs no configuration — the Web SDK relies on the user's existing browser session with Glean."
+          },
+          {
+            "title": "Run it",
+            "command": "npm run dev"
+          },
+          {
+            "title": "Verify",
+            "description": "Open the printed local URL. Confirm the checklist shows 5 done / 4 pending, click Ask about this on a step, and ask \"What should Alex do on day one?\" for a cited answer."
+          }
+        ]
+      },
+      {
+        "repoPath": "recipes/onboarding-hub/platform-chat",
+        "language": "typescript",
+        "description": "Platform Chat variant — POST /api/chat, you own the UI",
+        "steps": [
+          {
+            "title": "Scaffold the project",
+            "command": "npx tiged --mode=git gleanwork/glean-cookbook/recipes/onboarding-hub/platform-chat onboarding-hub"
+          },
+          {
+            "title": "Install dependencies",
+            "command": "cd onboarding-hub && npm install"
+          },
+          {
+            "title": "Set credentials",
+            "command": "cp .env.example .env",
+            "description": "Fill in GLEAN_API_TOKEN and GLEAN_INSTANCE. Set GLEAN_USE_FIXTURE=true for contract-only verification without a live handler."
+          },
+          {
+            "title": "Run it",
+            "command": "npm start"
+          },
+          {
+            "title": "Verify",
+            "command": "npm run verify:fixture",
+            "description": "Runs fixture-mode contract verification. For live verification against your instance, set GLEAN_USE_FIXTURE=false and ensure the experimental /api/chat handler is enabled."
+          }
+        ]
+      }
+    ],
+    "steps": [
+      {
+        "title": "Pick a path",
+        "description": "Path A (Web SDK) renders Glean's chat UI via renderChat — fastest for a portal page with SSO. Path B (Platform Chat) calls POST /api/chat from your backend — you own every pixel and parse OpenAI Responses-style output with citation annotations."
+      }
+    ],
+    "scaffoldActions": [],
+    "combines": [
+      {
+        "title": "Embed search & chat",
+        "surface": "Web SDK",
+        "category": "search",
+        "language": "typescript"
+      },
+      {
+        "title": "Build a chatbot",
+        "surface": "Platform Chat",
+        "category": "portal",
+        "language": "typescript"
+      }
+    ],
+    "architecture": [
+      {
+        "label": "Onboarding Hub",
+        "caption": "checklist + progress + chat",
+        "icon": "layout-outlined"
+      },
+      {
+        "label": "Path A: Web SDK",
+        "caption": "renderChat — Glean owns chat UI",
+        "category": "search"
+      },
+      {
+        "label": "Path B: Platform Chat",
+        "caption": "POST /api/chat — you own the UI",
+        "category": "portal"
+      },
+      {
+        "label": "Glean",
+        "caption": "permission-aware cited answers",
+        "emphasized": true
+      }
+    ],
+    "aiPrompt": "Build the Acme Corp Onboarding Hub following\nhttps://developers.glean.com/cookbook/onboarding-hub\n\n1. Ask me which path: (A) Web SDK or (B) Platform Chat. Build the one I pick.\n2. Checklist: seed Alex Kim's 9 onboarding steps from the Acme corpus\n   (5 done, 4 pending). Use localStorage for completion toggles,\n   a progress ring, and milestone badges (IT/HR/Team/Engineering).\n3. Each pending step gets an \"Ask about this\" button that seeds a\n   contextual chat question.\n4. Path A: renderChat in a #chat container (SSO cookie). Re-mount\n   with initialMessage when Ask about this is clicked.\n5. Path B: server-side POST /api/chat with { input: question,\n   stream: false, store: true } and X_GLEAN_INCLUDE_EXPERIMENTAL=true.\n   Parse output[0].content[0].text and annotations[].sources[] for\n   citations — NOT Client API chat.create fragment parsing. Keep the\n   token server-side. Show an escalate affordance (#hr-help / #it-help)\n   when the answer is empty or low-confidence.\n6. Done state: when all steps complete, show a summary + next resources.\n7. Style as Acme Corp: teal #0E8C84, Inter, logomark in nav.\n8. Verify with \"What should Alex do on day one?\" — cited answer must\n   reference pending checklist items.",
+    "llmContext": "Platform Chat (Path B): POST /api/chat, OpenAI Responses-style. Request: { input: string, stream?: boolean, store?: boolean }. Response: output[].content[].text + annotations[].sources[] (document/person/file/custom_entity). Experimental — requires X_GLEAN_INCLUDE_EXPERIMENTAL=true and backend platform.apiMigratedEndpointsEnabled. Platform scope is CHAT_WRITE (registry uses cookbook-style CHAT). No scoping/inclusion filter fields in OpenAPI — soft-scope via corpus framing only. Until @gleanwork/api-client ships glean.chat.create, use fetch against /api/chat. Path A: Web SDK renderChat with SSO cookie; all ChatOptions fields optional. Do NOT teach Client API glean.client.chat.create or messageType === 'CONTENT' fragment parsing in this recipe.",
+    "goDependency": false,
+    "featured": false,
+    "tags": ["dual-implementation", "portal"]
   }
 ]
