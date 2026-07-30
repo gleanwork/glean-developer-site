@@ -4,10 +4,7 @@
     "title": "Call a Glean agent from an A2A client",
     "description": "Discover a published Glean agent's A2A card and run it from any A2A client — multi-turn, streamed, permission-aware.",
     "sidebarLabel": "A2A Client",
-    "surfaces": [
-      "agents",
-      "client-api"
-    ],
+    "surfaces": ["agents", "client-api"],
     "status": "production-pattern",
     "category": "agent",
     "level": "Intermediate",
@@ -17,16 +14,10 @@
     },
     "timeEstimate": "~45 min",
     "icon": "double-arrow",
-    "requiredScopes": [
-      "Agent-scoped Client API token (AGENTS)"
-    ],
-    "authMethod": [
-      "custom"
-    ],
+    "requiredScopes": ["Agent-scoped Client API token (AGENTS)"],
+    "authMethod": ["custom"],
     "buildMethod": "scaffold",
-    "languages": [
-      "python"
-    ],
+    "languages": ["python"],
     "prerequisites": [
       "A published auto agent with a chat-message trigger (text input only)",
       "The agent's A2A card URL + bearer token from the agent Share dialog",
@@ -75,21 +66,14 @@
     "llmContext": "Per-agent A2A endpoints: /rest/api/v1/a2a/agents/{agentId} (JSON-RPC) and .../agent-card.json. GA, on by default (a2aPerAgentServerEnabled). Eligible: published auto agents, chat-message trigger, text-only. Server is A2A spec 0.3 via a2a-go; upgrade to 1.x tracked internally (EN-1972098). a2a-sdk's A2AClient class is deprecated even at 0.3.26 — use ClientFactory/ Client.send_message() instead, which unifies streaming and non-streaming behind one async-iterator method controlled by ClientConfig(streaming=bool). Message text is at message.parts[i].root.text; Task-based replies put it in task.history[-1].",
     "goDependency": false,
     "featured": false,
-    "tags": [
-      "a2a",
-      "interop"
-    ]
+    "tags": ["a2a", "interop"]
   },
   {
     "id": "acme-answers",
     "title": "Acme Answers: a company knowledge Q&A page",
     "description": "The hello-world of Glean apps: one page, one input, one permission-aware cited answer — built two ways, with the Web SDK and with the Chat API.",
     "sidebarLabel": "Acme Answers",
-    "surfaces": [
-      "client-api",
-      "sdk-client",
-      "web-sdk"
-    ],
+    "surfaces": ["client-api", "sdk-client", "web-sdk"],
     "status": "showcase",
     "category": "search",
     "level": "Beginner",
@@ -99,17 +83,10 @@
     },
     "timeEstimate": "~30 min",
     "icon": "qna",
-    "requiredScopes": [
-      "CHAT"
-    ],
-    "authMethod": [
-      "web-sdk-cookie",
-      "client-api-oauth-or-token"
-    ],
+    "requiredScopes": ["CHAT"],
+    "authMethod": ["web-sdk-cookie", "client-api-oauth-or-token"],
     "buildMethod": "scaffold",
-    "languages": [
-      "typescript"
-    ],
+    "languages": ["typescript"],
     "prerequisites": [
       "A Glean instance with content indexed",
       "An OAuth access token or Glean API token with the CHAT scope",
@@ -217,10 +194,7 @@
     "llmContext": "Chat API: POST /rest/api/v1/chat (client SDK glean.client.chat.create). A real response can include earlier UPDATE-type messages narrating search/read steps ahead of the answer — filter to messageType === 'CONTENT' before joining fragments[].text, or that narration text ends up prepended to the answer. Citations live per-fragment at fragments[].citation.sourceDocument (title, url), not a top-level citedDocuments field and not the older message.citations[] field — that field is deprecated (removal scheduled 2026-10-15) and, verified live, wasn't populated at all on an agentic chat response even though real citations existed. Dedupe citations by url since the same source is commonly cited by more than one fragment. Client constructor takes apiToken + instance (or serverURL), not domain.",
     "goDependency": false,
     "featured": true,
-    "tags": [
-      "starter",
-      "dual-implementation"
-    ],
+    "tags": ["starter", "dual-implementation"],
     "lastVerified": "2026-07-28"
   },
   {
@@ -228,12 +202,7 @@
     "title": "Build an engineering portal",
     "description": "The end-to-end showcase — index a developer catalog into Glean, then embed permission-aware search and chat back into the portal your team already uses.",
     "sidebarLabel": "Engineering Portal",
-    "surfaces": [
-      "connector-sdk",
-      "indexing-api",
-      "web-sdk",
-      "client-api"
-    ],
+    "surfaces": ["connector-sdk", "indexing-api", "web-sdk", "client-api"],
     "status": "showcase",
     "category": "portal",
     "level": "Intermediate",
@@ -242,20 +211,14 @@
       "wow": true
     },
     "timeEstimate": "~30 min",
-    "requiredScopes": [
-      "SEARCH",
-      "CHAT"
-    ],
+    "requiredScopes": ["SEARCH", "CHAT"],
     "authMethod": [
       "indexing-token",
       "web-sdk-cookie",
       "client-api-oauth-or-token"
     ],
     "buildMethod": "integrate",
-    "languages": [
-      "python",
-      "typescript"
-    ],
+    "languages": ["python", "typescript"],
     "prerequisites": [
       "A Glean instance where you can add a custom datasource",
       "A Glean-issued Indexing API token",
@@ -275,10 +238,7 @@
         "expectedBehavior": "Answer summarizes the real indexed PAY-2114 incident ticket content, with a citation to it — not a fabricated summary."
       }
     ],
-    "scaffoldActions": [
-      "scaffold-connector",
-      "scaffold-web-sdk-embed"
-    ],
+    "scaffoldActions": ["scaffold-connector", "scaffold-web-sdk-embed"],
     "combines": [
       {
         "title": "Index a developer catalog",
@@ -327,19 +287,14 @@
     "llmContext": "Flagship showcase composing the custom-connector and Web SDK embed recipes: a service-catalog portal whose catalog is indexed into Glean via the indexing SDK, with Glean search and chat embedded back into the portal UI. Requires a Glean-issued Indexing API token for the connector and SEARCH/CHAT scopes for the embed.",
     "goDependency": false,
     "featured": false,
-    "tags": [
-      "flagship",
-      "portal"
-    ]
+    "tags": ["flagship", "portal"]
   },
   {
     "id": "connect-mcp-hosts",
     "title": "Connect Glean MCP to your AI tools",
     "description": "Point Claude Code, Cursor, and Claude Desktop at your Glean MCP endpoint and run one enterprise task from each — same context, three surfaces.",
     "sidebarLabel": "Connect MCP",
-    "surfaces": [
-      "mcp"
-    ],
+    "surfaces": ["mcp"],
     "status": "production-pattern",
     "category": "mcp",
     "level": "Beginner",
@@ -348,12 +303,8 @@
       "wow": false
     },
     "timeEstimate": "~15 min",
-    "requiredScopes": [
-      "MCP"
-    ],
-    "authMethod": [
-      "custom"
-    ],
+    "requiredScopes": ["MCP"],
+    "authMethod": ["custom"],
     "buildMethod": "scaffold",
     "prerequisites": [
       "Glean MCP server enabled for your deployment (admin toggle)",
@@ -399,26 +350,19 @@
         "description": "Per host, ask \"Who's on call for payments-service?\" and confirm a real, Glean-cited answer."
       }
     ],
-    "scaffoldActions": [
-      "scaffold-mcp-config"
-    ],
+    "scaffoldActions": ["scaffold-mcp-config"],
     "aiPrompt": "Connect me to the Glean remote MCP server following\nhttps://developers.glean.com/cookbook/connect-mcp-hosts\n\n1. Detect which MCP hosts I have installed (Claude Code, Cursor, Claude\n   Desktop).\n2. Resolve my Glean backend the same way the cookbook-conventions auth\n   chain does: ask for my work email, POST it to\n   https://app.glean.com/config/search, and extract {instance} from the\n   subdomain of the returned queryURL. The MCP server URL is\n   https://{instance}-be.glean.com/mcp/default.\n3. For each detected host, run the real, first-party configurator —\n   don't hand-walk a Configurator URL or ask me for an API token, this\n   CLI does the whole job including OAuth with Dynamic Client\n   Registration by default:\n   npx -y @gleanwork/configure-mcp-server remote --url <mcp-server-url> --client <host>\n   (--client values: claude-code, cursor, claude-desktop)\n4. Tell me to restart the host app afterward — Cursor and Claude Code\n   pick up the new server on restart; Claude Desktop needs the hammer\n   icon to confirm Glean tools are available.\n5. Verify per host by asking \"Who's on call for payments-service?\" and\n   confirming a Glean-cited answer.",
     "llmContext": "Glean MCP server URL: https://{instance}-be.glean.com/mcp/{server-name} (default server-name is \"default\"). @gleanwork/configure-mcp-server (npx -y @gleanwork/configure-mcp-server remote --url <url> --client <host>) is the real, GA, first-party CLI for wiring this up -- it handles OAuth with Dynamic Client Registration by default and writes the correct host-specific config (Claude Code/Cursor connect natively over HTTP; Claude Desktop is stdio-only, so the CLI wires the mcp-remote bridge automatically). Never reference @gleanwork/mcp-server (deprecated local package), never hand-walk the app.glean.com/settings/install MCP Configurator URL pattern when this CLI exists, and never tell users an API token is required by default -- pass --token only if a host genuinely doesn't support OAuth.",
     "goDependency": false,
     "featured": false,
-    "tags": [
-      "mcp",
-      "starter"
-    ]
+    "tags": ["mcp", "starter"]
   },
   {
     "id": "embed-search-chat",
     "title": "Embed search & chat in an internal app",
     "description": "Put permission-aware Glean search and chat directly inside an internal app with the Web SDK, so your team gets answers where they already work.",
     "sidebarLabel": "Embed Search & Chat",
-    "surfaces": [
-      "web-sdk"
-    ],
+    "surfaces": ["web-sdk"],
     "status": "production-pattern",
     "category": "search",
     "level": "Beginner",
@@ -428,19 +372,10 @@
     },
     "timeEstimate": "~15 min (minimal)",
     "icon": "deep-research",
-    "requiredScopes": [
-      "SEARCH",
-      "CHAT"
-    ],
-    "authMethod": [
-      "web-sdk-cookie",
-      "client-api-oauth-or-token"
-    ],
+    "requiredScopes": ["SEARCH", "CHAT"],
+    "authMethod": ["web-sdk-cookie", "client-api-oauth-or-token"],
     "buildMethod": "integrate",
-    "languages": [
-      "typescript",
-      "javascript"
-    ],
+    "languages": ["typescript", "javascript"],
     "prerequisites": [
       "A Glean instance with content indexed",
       "Your Glean web app domain (typically app.glean.com — see admin/about-glean)",
@@ -461,9 +396,7 @@
         "expectedBehavior": "Embedded chat returns a cited summary of the real PAY-2114 incident, not a fabricated one."
       }
     ],
-    "scaffoldActions": [
-      "scaffold-web-sdk-embed"
-    ],
+    "scaffoldActions": ["scaffold-web-sdk-embed"],
     "architecture": [
       {
         "label": "Internal app",
@@ -492,20 +425,14 @@
     "llmContext": "Embeds Glean search and chat into an existing web app via the Glean Web SDK npm package @gleanwork/web-sdk (renderSearchBox, renderSearchResults, renderChat named exports; script-tag fallback exposes the same methods on window.GleanWebSDK). Pass the backend option to route users directly to the instance. Auth is Glean SSO by default or server-to-server tokens minted by a backend holding an admin API key with SEARCH and CHAT scopes. All results are permission-aware per user.",
     "goDependency": false,
     "featured": true,
-    "tags": [
-      "embed",
-      "web-sdk"
-    ]
+    "tags": ["embed", "web-sdk"]
   },
   {
     "id": "index-custom-source",
     "title": "Index a custom data source",
     "description": "Bring an unsupported source into Glean with the Indexing API — documents, permissions, and people — and see it live in search. This recipe seeds the Acme corpus every other recipe searches.",
     "sidebarLabel": "Index Custom Source",
-    "surfaces": [
-      "indexing-api",
-      "connector-sdk"
-    ],
+    "surfaces": ["indexing-api", "connector-sdk"],
     "status": "production-pattern",
     "category": "index",
     "level": "Intermediate",
@@ -515,16 +442,10 @@
     },
     "timeEstimate": "~1 hr",
     "icon": "sources",
-    "requiredScopes": [
-      "Indexing API token (datasource-scoped)"
-    ],
-    "authMethod": [
-      "indexing-token"
-    ],
+    "requiredScopes": ["Indexing API token (datasource-scoped)"],
+    "authMethod": ["indexing-token"],
     "buildMethod": "scaffold",
-    "languages": [
-      "python"
-    ],
+    "languages": ["python"],
     "prerequisites": [
       "Admin access to create a custom datasource and Indexing API token",
       "Python 3.10+ (uses glean-indexing-sdk)"
@@ -575,9 +496,7 @@
         "description": "Search \"Who owns the payments-service catalog entry?\" as yourself and as a restricted test user — the restricted user must not see Acme-HR-only documents."
       }
     ],
-    "scaffoldActions": [
-      "scaffold-connector"
-    ],
+    "scaffoldActions": ["scaffold-connector"],
     "architecture": [
       {
         "label": "Acme corpus",
@@ -599,20 +518,14 @@
     "llmContext": "glean-indexing-sdk==1.0.0b2. BaseDatasourceConnector subclass sets `configuration: CustomDatasourceConfig` and implements transform() -> Sequence[DocumentDefinition]; permissions via DocumentPermissionsDefinition(allowed_groups=[...] | allowed_users=[UserReferenceDefinition(email=...)]). get_identities() returns DatasourceIdentityDefinitions(users, groups, memberships) for ACL evaluation. DocumentDefinition.created_at/updated_at are epoch seconds (int), not ISO strings. No datasources.delete() exists in this SDK version.",
     "goDependency": false,
     "featured": true,
-    "tags": [
-      "indexing",
-      "foundation"
-    ]
+    "tags": ["indexing", "foundation"]
   },
   {
     "id": "multi-step-agent",
     "title": "Multi-step agent with governed tools",
     "description": "Build a Glean agent that plans, retrieves, and acts through a governed custom tool — with a safe fallback when the tool is denied.",
     "sidebarLabel": "Multi-Step Agent",
-    "surfaces": [
-      "agents",
-      "tools"
-    ],
+    "surfaces": ["agents", "tools"],
     "status": "production-pattern",
     "category": "agent",
     "level": "Advanced",
@@ -622,17 +535,10 @@
     },
     "timeEstimate": "~2 hr",
     "icon": "agent",
-    "requiredScopes": [
-      "AGENTS",
-      "TOOLS"
-    ],
-    "authMethod": [
-      "client-api-oauth-or-token"
-    ],
+    "requiredScopes": ["AGENTS", "TOOLS"],
+    "authMethod": ["client-api-oauth-or-token"],
     "buildMethod": "scaffold",
-    "languages": [
-      "python"
-    ],
+    "languages": ["python"],
     "prerequisites": [
       "Agent builder access in your Glean instance",
       "Permission to register a custom tool (or admin help)",
@@ -715,19 +621,14 @@
     "llmContext": "Agents API: glean.client.agents.run(agent_id, messages, http_headers) -> AgentRunWaitResponse{run.status, messages}. messages use Message(role, content=[MessageTextBlock(text, type=ContentType.TEXT)]) — distinct from chat.create's ChatMessage/ChatMessageFragment. run_stream() returns a raw SSE string, not an iterator. Tools are registered via the admin console (upload an OpenAPI spec), not an API call. Per-user identity for a run uses the X-Glean-Act-As header on a global/admin token, same as Search. Custom tool servers receive the acting user's email via the Glean-User-Email header, which is where tool-level authorization (governance) is actually enforced for scratch-built tools.",
     "goDependency": false,
     "featured": true,
-    "tags": [
-      "agents",
-      "governance"
-    ]
+    "tags": ["agents", "governance"]
   },
   {
     "id": "no-code-it-helpdesk-lovable",
     "title": "IT helpdesk deflection page — no code, on Lovable",
     "description": "Prompt Lovable into an IT helpdesk deflection page on the Glean Chat API — zero hand-written backend, permissions enforced by Glean.",
     "sidebarLabel": "IT Helpdesk (Lovable)",
-    "surfaces": [
-      "client-api"
-    ],
+    "surfaces": ["client-api"],
     "status": "showcase",
     "category": "workflow",
     "level": "Beginner",
@@ -737,12 +638,8 @@
     },
     "timeEstimate": "~45 min",
     "icon": "lovable",
-    "requiredScopes": [
-      "CHAT"
-    ],
-    "authMethod": [
-      "custom"
-    ],
+    "requiredScopes": ["CHAT"],
+    "authMethod": ["custom"],
     "buildMethod": "third-party-build",
     "prerequisites": [
       "A Lovable account",
@@ -770,19 +667,14 @@
     "llmContext": "This recipe's deliverable is a prompt template, not a runnable project — mirrors no-code-pto-lookup-replit's shape (same Chat API call, same \"browser never holds the token\" constraint, same citation correction: filter to messageType === 'CONTENT' before joining fragments[].text, and read citations from fragments[].citation.sourceDocument — not the deprecated message.citations[] field, which wasn't populated at all on a live test response) with a different tool and persona so the two don't read as duplicates. Lovable's default stack leans on a connected backend/database integration for server-side secrets rather than a plain Node server, so the prompt asks the agent to set that up rather than assuming a fixed mechanism. Both demo queries are answered by existing seeded Acme corpus documents — no corpus changes were needed.",
     "goDependency": false,
     "featured": false,
-    "tags": [
-      "no-code",
-      "it"
-    ]
+    "tags": ["no-code", "it"]
   },
   {
     "id": "no-code-pto-lookup-replit",
     "title": "PTO & benefits lookup — no code, on Replit",
     "description": "Prompt Replit Agent into a working HR lookup tool on the Glean Chat API — zero hand-written backend, permissions enforced by Glean.",
     "sidebarLabel": "PTO Lookup (Replit)",
-    "surfaces": [
-      "client-api"
-    ],
+    "surfaces": ["client-api"],
     "status": "showcase",
     "category": "workflow",
     "level": "Beginner",
@@ -792,12 +684,8 @@
     },
     "timeEstimate": "~45 min",
     "icon": "replit",
-    "requiredScopes": [
-      "CHAT"
-    ],
-    "authMethod": [
-      "custom"
-    ],
+    "requiredScopes": ["CHAT"],
+    "authMethod": ["custom"],
     "buildMethod": "third-party-build",
     "prerequisites": [
       "A Replit account with Agent access",
@@ -825,20 +713,14 @@
     "llmContext": "This recipe's deliverable is a prompt template, not a runnable project — \"building\" it means pasting the prompt into Replit Agent, which then writes and runs the actual code. The prompt pins the same Chat API shape used elsewhere in this cookbook: Glean({ apiToken, instance }) (never `domain`), chat.create({ messages: [{ author: 'USER', fragments: [{ text }] }] }), filtering the response to messageType === 'CONTENT' before joining fragments[].text (a real response can include earlier step-narration messages), and reading citations from fragments[].citation.sourceDocument — not the deprecated message.citations[] field, which wasn't populated at all on a live test response. The demo query \"How do I enroll in the commuter benefit?\" from this recipe's source ticket was swapped for \"When is open enrollment?\" because the seeded Acme benefits guide doesn't mention a commuter benefit — asking the original question would produce no citation or a fabricated answer.",
     "goDependency": false,
     "featured": false,
-    "tags": [
-      "no-code",
-      "hr"
-    ]
+    "tags": ["no-code", "hr"]
   },
   {
     "id": "permissions-aware-rag",
     "title": "Permissions-aware RAG",
     "description": "Use Glean's Platform API as the retrieval layer for your own LLM app — every chunk ACL-filtered per user before it ever reaches the model.",
     "sidebarLabel": "Permissions-Aware RAG",
-    "surfaces": [
-      "platform-api",
-      "sdk-client"
-    ],
+    "surfaces": ["platform-api", "sdk-client"],
     "status": "production-pattern",
     "category": "search",
     "level": "Intermediate",
@@ -848,17 +730,10 @@
     },
     "timeEstimate": "~1 hr",
     "icon": "badge",
-    "requiredScopes": [
-      "SEARCH"
-    ],
-    "authMethod": [
-      "client-api-oauth-or-token"
-    ],
+    "requiredScopes": ["SEARCH"],
+    "authMethod": ["client-api-oauth-or-token"],
     "buildMethod": "scaffold",
-    "languages": [
-      "python",
-      "typescript"
-    ],
+    "languages": ["python", "typescript"],
     "prerequisites": [
       "A Glean token with SEARCH scope (global/admin token for the act-as permissions demo)",
       "X_GLEAN_INCLUDE_EXPERIMENTAL=true set (the Platform API is Experimental as of its 2026-07 launch)",
@@ -962,19 +837,14 @@
     "llmContext": "Platform API search (data-first retrieval, distinct from the Client API's glean.client.search.query): glean.search.query(query, page_size, http_headers) -> PlatformSearchResponse. Result shape: results[].title, results[].url, results[].snippets (string[], not snippet objects). Experimental since its 2026-07-14 public launch — requires X_GLEAN_INCLUDE_EXPERIMENTAL=true (env var, read automatically by the SDK) on every call or it 4xxs. Per-user enforcement is still the X-Glean-Act-As HTTP header on a global/admin token, not an SDK parameter, same as the Client API.",
     "goDependency": false,
     "featured": true,
-    "tags": [
-      "rag",
-      "differentiator"
-    ]
+    "tags": ["rag", "differentiator"]
   },
   {
     "id": "customer-360",
     "title": "Acme Account Journey: Customer 360 for sales",
     "description": "Sam Reyes's Globex account page — KPI header, parallel Platform Search tiles, journey summary, and saved prompts — built two ways with Platform Search+Chat and Platform Agents.",
     "sidebarLabel": "Account Journey",
-    "surfaces": [
-      "platform-api"
-    ],
+    "surfaces": ["platform-api"],
     "status": "showcase",
     "category": "workflow",
     "level": "Intermediate",
@@ -984,18 +854,10 @@
     },
     "timeEstimate": "~1 hr",
     "icon": "layout-outlined",
-    "requiredScopes": [
-      "SEARCH",
-      "CHAT",
-      "AGENTS"
-    ],
-    "authMethod": [
-      "client-api-oauth-or-token"
-    ],
+    "requiredScopes": ["SEARCH", "CHAT", "AGENTS"],
+    "authMethod": ["client-api-oauth-or-token"],
     "buildMethod": "scaffold",
-    "languages": [
-      "typescript"
-    ],
+    "languages": ["typescript"],
     "prerequisites": [
       "A Glean instance with the Acme corpus indexed (see acme-corpus/)",
       "Path A: a Glean API token with SEARCH and CHAT scopes",
@@ -1131,10 +993,6 @@
     "llmContext": "Platform-only recipe. Search: glean.search.query -> POST /api/search, results[].title/url/snippets (string[]). Chat: fetch POST /api/chat (until glean.chat.create ships); request {input, stream:false, store:true}; response output[].content[] type=output_text with annotations[].sources[]. Agents: glean.agents.createRun(request, agentId) -> POST /api/agents/{agent_id}/runs; stream:false returns PlatformAgentRunWaitResponse synchronously (no polling); messages use role USER|GLEAN_AI and content[{text,type:text}]. Experimental opt-in via X_GLEAN_INCLUDE_EXPERIMENTAL. Do NOT teach glean.client.chat.create, glean.client.search.query, or glean.client.agents.run. Tokens server-side only. Corpus: sales-globex-account-notes, sales-globex-renewal-status, sales-globex-security-questionnaire. Persona: sam.reyes@acme.example.com.",
     "goDependency": false,
     "featured": false,
-    "tags": [
-      "dual-implementation",
-      "sales",
-      "platform-api"
-    ]
+    "tags": ["dual-implementation", "sales", "platform-api"]
   }
 ]
