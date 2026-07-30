@@ -994,6 +994,180 @@
         "differentiator"
       ],
       "permalink": "/cookbook/permissions-aware-rag"
+    },
+    {
+      "id": "customer-360",
+      "title": "Acme Account Journey: Customer 360 for sales",
+      "description": "Sam Reyes's Globex account page — KPI header, parallel Platform Search tiles, journey summary, and saved prompts — built two ways with Platform Search+Chat and Platform Agents.",
+      "sidebarLabel": "Account Journey",
+      "surfaces": [
+        "platform-api"
+      ],
+      "status": "showcase",
+      "category": "workflow",
+      "level": "Intermediate",
+      "levels": {
+        "minimal": true,
+        "wow": true
+      },
+      "timeEstimate": "~1 hr",
+      "icon": "layout-outlined",
+      "requiredScopes": [
+        "SEARCH",
+        "CHAT",
+        "AGENTS"
+      ],
+      "authMethod": [
+        "client-api-oauth-or-token"
+      ],
+      "buildMethod": "scaffold",
+      "languages": [
+        "typescript"
+      ],
+      "prerequisites": [
+        "A Glean instance with the Acme corpus indexed (see acme-corpus/)",
+        "Path A: a Glean API token with SEARCH and CHAT scopes",
+        "Path B: a Glean API token with SEARCH and AGENTS scopes (tiles still use Platform Search)",
+        "X_GLEAN_INCLUDE_EXPERIMENTAL=true (Platform Search, Chat, and Agents are experimental)",
+        "Path B: an Account Brief agent in Agent Builder; set GLEAN_AGENT_ID server-side",
+        "Node 20+"
+      ],
+      "demoQueries": [
+        {
+          "query": "What's the status of the Globex renewal?",
+          "expectedBehavior": "Answer cites sales-globex-renewal-status with renewal date 2026-09-30, on-track status, and open items (DPA / procurement)."
+        },
+        {
+          "query": "Customer summary for Globex",
+          "expectedBehavior": "Synthesis cites account notes and renewal (ARR, seats, owner Sam Reyes, renewal date)."
+        },
+        {
+          "query": "What are the renewal risks for Globex?",
+          "expectedBehavior": "Cites renewal open items; overall risk stated as low is a fact from the corpus, not missing evidence."
+        }
+      ],
+      "codeAssets": [
+        {
+          "repoPath": "recipes/customer-360/platform-search-chat",
+          "language": "typescript",
+          "description": "Path A — parallel Platform Search tiles + Platform Chat synthesis",
+          "steps": [
+            {
+              "title": "Scaffold the project",
+              "command": "npx tiged --mode=git gleanwork/glean-cookbook/recipes/customer-360/platform-search-chat customer-360"
+            },
+            {
+              "title": "Install dependencies",
+              "command": "cd customer-360 && npm install"
+            },
+            {
+              "title": "Set credentials",
+              "description": "Fill in GLEAN_API_TOKEN and GLEAN_INSTANCE. Set GLEAN_USE_FIXTURE=true for contract-only verification without live Platform handlers.",
+              "command": "cp .env.example .env"
+            },
+            {
+              "title": "Run it",
+              "command": "npm start"
+            },
+            {
+              "title": "Verify",
+              "description": "Runs fixture-mode contract verification for /api/account tiles and the three demo chat queries.",
+              "command": "npm run verify:fixture"
+            }
+          ]
+        },
+        {
+          "repoPath": "recipes/customer-360/platform-agents",
+          "language": "typescript",
+          "description": "Path B — Platform Agents createRun for prescriptive account briefs",
+          "steps": [
+            {
+              "title": "Scaffold the project",
+              "command": "npx tiged --mode=git gleanwork/glean-cookbook/recipes/customer-360/platform-agents customer-360"
+            },
+            {
+              "title": "Install dependencies",
+              "command": "cd customer-360 && npm install"
+            },
+            {
+              "title": "Set credentials",
+              "description": "Fill in GLEAN_API_TOKEN, GLEAN_INSTANCE, and GLEAN_AGENT_ID (Account Brief agent). Use GLEAN_USE_FIXTURE=true until the agent exists.",
+              "command": "cp .env.example .env"
+            },
+            {
+              "title": "Run it",
+              "command": "npm start"
+            },
+            {
+              "title": "Verify",
+              "description": "Fixture-first verification. Optional: npm run verify:live checks agents.get / getSchemas before createRun.",
+              "command": "npm run verify:fixture"
+            }
+          ]
+        }
+      ],
+      "scaffoldActions": [],
+      "steps": [
+        {
+          "title": "Pick a path",
+          "description": "Path A (Platform Search + Chat) builds an open-ended explorable dashboard: parallel search.query tiles and POST /api/chat for journey summary and saved prompts. Path B (Platform Agents) keeps the same page UX but runs synthesis through glean.agents.createRun against a template Account Brief agent."
+        }
+      ],
+      "combines": [
+        {
+          "title": "Permissions-aware RAG",
+          "surface": "Platform Search",
+          "category": "search",
+          "language": "typescript"
+        },
+        {
+          "title": "Platform Chat synthesis",
+          "surface": "Platform Chat",
+          "category": "workflow",
+          "language": "typescript"
+        },
+        {
+          "title": "Platform Agents createRun",
+          "surface": "Platform Agents",
+          "category": "agent",
+          "language": "typescript"
+        }
+      ],
+      "architecture": [
+        {
+          "label": "Globex account page",
+          "caption": "KPIs + tiles + journey + prompts",
+          "icon": "layout-outlined",
+          "emphasized": false
+        },
+        {
+          "label": "Path A: Search + Chat",
+          "caption": "glean.search.query + POST /api/chat",
+          "category": "search",
+          "emphasized": false
+        },
+        {
+          "label": "Path B: Agents",
+          "caption": "glean.agents.createRun",
+          "category": "agent",
+          "emphasized": false
+        },
+        {
+          "label": "Glean Platform API",
+          "caption": "permission-aware retrieval + synthesis",
+          "emphasized": true
+        }
+      ],
+      "aiPrompt": "Build the Acme Account Journey (Customer 360) following\nhttps://developers.glean.com/cookbook/customer-360\n\n1. Ask me which path: (A) Platform Search + Chat or (B) Platform Agents.\n   Build the one I pick. Do NOT use Client API chat.create, client.search.query,\n   or client.agents.run.\n2. Single Globex account page for Sam Reyes: KPI header (ARR $840k, renewal\n   2026-09-30, risk low, 1,200 seats), three source tiles, journey summary,\n   saved-prompt buttons (Customer summary, Renewal risks), drill-in chat.\n3. Path A: parallel glean.search.query for account notes / renewal / security\n   tiles; journey + prompts + follow-ups via server-side POST /api/chat with\n   { input, stream: false, store: true } and X_GLEAN_INCLUDE_EXPERIMENTAL.\n   Parse output_text + annotations[].sources[]. Keep the token server-side.\n4. Path B: same page UX; synthesis via glean.agents.createRun({ messages,\n   stream: false }, GLEAN_AGENT_ID). Fixture-first verify; document Agent\n   Builder Account Brief prereq. Failure UX if agent missing/unauthorized.\n5. Empty tiles show \"no recent activity\". Low renewal risk is a corpus fact,\n   not missing evidence.\n6. Style as Acme Corp: teal #0E8C84, Inter.\n7. Verify with the three demo queries against acme-corpus Globex docs.",
+      "llmContext": "Platform-only recipe. Search: glean.search.query -> POST /api/search, results[].title/url/snippets (string[]). Chat: fetch POST /api/chat (until glean.chat.create ships); request {input, stream:false, store:true}; response output[].content[] type=output_text with annotations[].sources[]. Agents: glean.agents.createRun(request, agentId) -> POST /api/agents/{agent_id}/runs; stream:false returns PlatformAgentRunWaitResponse synchronously (no polling); messages use role USER|GLEAN_AI and content[{text,type:text}]. Experimental opt-in via X_GLEAN_INCLUDE_EXPERIMENTAL. Do NOT teach glean.client.chat.create, glean.client.search.query, or glean.client.agents.run. Tokens server-side only. Corpus: sales-globex-account-notes, sales-globex-renewal-status, sales-globex-security-questionnaire. Persona: sam.reyes@acme.example.com.",
+      "goDependency": false,
+      "featured": false,
+      "tags": [
+        "dual-implementation",
+        "sales",
+        "platform-api"
+      ],
+      "permalink": "/cookbook/customer-360"
     }
   ],
   "surfaces": [
@@ -1008,5 +1182,5 @@
     "agents"
   ],
   "generatedAt": "2026-07-28T00:00:00.000Z",
-  "totalRecipes": 10
+  "totalRecipes": 11
 }
