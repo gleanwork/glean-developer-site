@@ -196,6 +196,59 @@ describe('RecipeLayout', () => {
     ).toHaveLength(3);
   });
 
+  it('presents terminal and in-session setup as a choice, not extra steps', async () => {
+    const user = userEvent.setup();
+    render(
+      <RecipeLayout
+        plugin={plugin}
+        recipe={makeRecipe({ buildMethod: 'scaffold' })}
+      >
+        <p>Body</p>
+      </RecipeLayout>,
+    );
+    await user.click(screen.getByRole('button', { name: /Run this recipe/ }));
+
+    // Only the selected path's commands are shown — otherwise a reader sees
+    // four commands and can't tell that two of them are an alternative.
+    expect(
+      screen.getByText(
+        'claude plugin marketplace add gleanwork/glean-cookbook',
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText('/plugin marketplace add gleanwork/glean-cookbook'),
+    ).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'In Claude Code' }));
+    expect(
+      screen.getByText('/plugin marketplace add gleanwork/glean-cookbook'),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(
+        'claude plugin marketplace add gleanwork/glean-cookbook',
+      ),
+    ).not.toBeInTheDocument();
+  });
+
+  it('offers no install-path choice for a host that only has one', async () => {
+    const user = userEvent.setup();
+    render(
+      <RecipeLayout
+        plugin={plugin}
+        recipe={makeRecipe({ buildMethod: 'scaffold' })}
+      >
+        <p>Body</p>
+      </RecipeLayout>,
+    );
+    await user.click(screen.getByRole('button', { name: /Run this recipe/ }));
+    await user.click(screen.getByRole('tab', { name: /Cursor/ }));
+
+    expect(
+      screen.queryByRole('button', { name: 'Terminal' }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByText(/Import from Repo/)).toBeInTheDocument();
+  });
+
   it('switches host, and each host gets its own install and invoke syntax', async () => {
     const user = userEvent.setup();
     render(

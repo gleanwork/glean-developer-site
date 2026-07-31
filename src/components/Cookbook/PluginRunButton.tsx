@@ -20,7 +20,14 @@ import styles from './RecipeLayout.module.css';
  * classes so the control looks like the buttons that were already here.
  */
 
-function CopyRow({ code }: { code: string }): React.ReactElement {
+function CopyRow({
+  code,
+  index,
+}: {
+  code: string;
+  /** 1-based position when a path has several commands; omitted for one. */
+  index?: number;
+}): React.ReactElement {
   const [copied, setCopied] = useState(false);
 
   const copy = async () => {
@@ -36,6 +43,7 @@ function CopyRow({ code }: { code: string }): React.ReactElement {
 
   return (
     <div className={styles.hostCommand}>
+      {index ? <span className={styles.hostCommandNum}>{index}</span> : null}
       <pre>
         <code>{code}</code>
       </pre>
@@ -55,18 +63,66 @@ function CopyRow({ code }: { code: string }): React.ReactElement {
   );
 }
 
-function Step({ step }: { step: PluginHostStep }): React.ReactElement {
+/** Numbers commands only when there's a sequence, so two steps don't read as two options. */
+function StepBody({ step }: { step: PluginHostStep }): React.ReactElement {
+  const numbered = (step.commands?.length ?? 0) > 1;
   return (
-    <div className={styles.hostStep}>
-      <div className={styles.hostStepLabel}>{step.label}</div>
-      {step.commands?.map((command) => (
-        <CopyRow code={command} key={command} />
+    <>
+      {step.commands?.map((command, i) => (
+        <CopyRow
+          code={command}
+          index={numbered ? i + 1 : undefined}
+          key={command}
+        />
       ))}
       {step.instructions?.map((line) => (
         <p className={styles.hostStepNote} key={line}>
           {line}
         </p>
       ))}
+    </>
+  );
+}
+
+/**
+ * Install section. Terminal and in-session setup are alternatives, not extra
+ * work, so when a host supports both they go behind a picker — stacking them
+ * reads as four commands to run instead of two.
+ */
+function Install({
+  host,
+  plugin,
+}: {
+  host: PluginHost;
+  plugin: CookbookPlugin;
+}): React.ReactElement {
+  const paths = host.install(plugin);
+  const [pathId, setPathId] = useState(paths[0].id);
+  // Host switches change which paths exist; fall back rather than render blank.
+  const path = paths.find((p) => p.id === pathId) ?? paths[0];
+
+  return (
+    <div className={styles.hostStep}>
+      <div className={styles.hostStepHeader}>
+        <span className={styles.hostStepLabel}>Install the plugin</span>
+        {paths.length > 1 ? (
+          <span className={styles.pathToggle}>
+            {paths.map((candidate) => (
+              <button
+                className={`${styles.pathOption} ${
+                  candidate.id === path.id ? styles.pathOptionActive : ''
+                }`}
+                key={candidate.id}
+                onClick={() => setPathId(candidate.id)}
+                type="button"
+              >
+                {candidate.label}
+              </button>
+            ))}
+          </span>
+        ) : null}
+      </div>
+      <StepBody step={path} />
     </div>
   );
 }
@@ -161,8 +217,13 @@ export default function PluginRunButton({
             ))}
           </div>
 
-          <Step step={host.install(plugin)} />
-          <Step step={host.invoke(plugin, recipeId)} />
+          <Install host={host} plugin={plugin} />
+
+          <div className={styles.hostStep}>
+            <div className={styles.hostStepLabel}>Run the recipe</div>
+            <StepBody step={host.invoke(plugin, recipeId)} />
+          </div>
+
           <p className={styles.hostStepNote}>{POST_INSTALL_NOTE[host.id]}</p>
         </li>
       </ul>

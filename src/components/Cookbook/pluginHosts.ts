@@ -32,13 +32,23 @@ import type { CookbookPlugin } from '../../types/recipe';
 export interface PluginHostStep {
   label: string;
   /**
-   * One copy field per command. Never join several into one block: each is a
-   * separate invocation that can fail on its own, and a multi-line paste is
-   * not something you'd hand someone to run in a terminal.
+   * One copy field per command, rendered as a numbered sequence. Never join
+   * several into one block: each is a separate invocation that can fail on
+   * its own, and a multi-line paste is not something you'd hand someone to
+   * run in a terminal.
    */
   commands?: string[];
-  /** Click-through steps, for hosts with no CLI. */
+  /** Click-through steps, for a path with no command to copy. */
   instructions?: string[];
+}
+
+/**
+ * Most hosts can be set up either from a shell or from inside a running
+ * session. These are alternatives — you pick one — so they're presented as a
+ * choice rather than stacked, which would read as more steps to run.
+ */
+export interface PluginInstallPath extends PluginHostStep {
+  id: 'terminal' | 'in-session' | 'ui';
 }
 
 export interface PluginHost {
@@ -47,7 +57,8 @@ export interface PluginHost {
   label: string;
   /** Monochrome marks need inverting in dark mode. */
   mono?: boolean;
-  install: (plugin: CookbookPlugin) => PluginHostStep;
+  /** One entry renders directly; several render behind a path picker. */
+  install: (plugin: CookbookPlugin) => PluginInstallPath[];
   /** How to run the recipe once installed. */
   invoke: (plugin: CookbookPlugin, recipeId: string) => PluginHostStep;
 }
@@ -56,16 +67,24 @@ export const PLUGIN_HOSTS: PluginHost[] = [
   {
     id: 'claude-code',
     label: 'Claude Code',
-    install: ({ repo, pluginName, marketplaceName }) => ({
-      label: 'Install the plugin',
-      commands: [
-        `claude plugin marketplace add ${repo}`,
-        `claude plugin install ${pluginName}@${marketplaceName}`,
-      ],
-      instructions: [
-        'Run in a terminal. Inside a session, use /plugin marketplace add and /plugin install instead.',
-      ],
-    }),
+    install: ({ repo, pluginName, marketplaceName }) => [
+      {
+        id: 'terminal',
+        label: 'Terminal',
+        commands: [
+          `claude plugin marketplace add ${repo}`,
+          `claude plugin install ${pluginName}@${marketplaceName}`,
+        ],
+      },
+      {
+        id: 'in-session',
+        label: 'In Claude Code',
+        commands: [
+          `/plugin marketplace add ${repo}`,
+          `/plugin install ${pluginName}@${marketplaceName}`,
+        ],
+      },
+    ],
     invoke: ({ pluginName }, recipeId) => ({
       label: 'Run the recipe',
       commands: [`/${pluginName}:${recipeId}`],
@@ -75,14 +94,24 @@ export const PLUGIN_HOSTS: PluginHost[] = [
     id: 'codex',
     label: 'Codex',
     mono: true,
-    install: ({ repo, pluginName, marketplaceName }) => ({
-      label: 'Install the plugin',
-      commands: [
-        `codex plugin marketplace add ${repo}`,
-        `codex plugin add ${pluginName}@${marketplaceName}`,
-      ],
-      instructions: ['Run in a terminal. Inside a session, use /plugins.'],
-    }),
+    install: ({ repo, pluginName, marketplaceName }) => [
+      {
+        id: 'terminal',
+        label: 'Terminal',
+        commands: [
+          `codex plugin marketplace add ${repo}`,
+          `codex plugin add ${pluginName}@${marketplaceName}`,
+        ],
+      },
+      {
+        id: 'in-session',
+        label: 'In Codex',
+        commands: ['/plugins'],
+        instructions: [
+          `Opens the plugin browser — switch to the ${marketplaceName} tab and install ${pluginName}.`,
+        ],
+      },
+    ],
     invoke: (_plugin, recipeId) => ({
       label: 'Run the recipe',
       commands: [`$${recipeId}`],
@@ -93,13 +122,17 @@ export const PLUGIN_HOSTS: PluginHost[] = [
     id: 'cursor',
     label: 'Cursor',
     mono: true,
-    install: ({ repo }) => ({
-      label: 'Add the marketplace',
-      instructions: [
-        'Open Dashboard → Plugins → Add Marketplace → Import from Repo.',
-        `Point it at ${repo}, then install the plugin from Customize.`,
-      ],
-    }),
+    // Cursor has no plugin CLI, so there is no choice to offer here.
+    install: ({ repo }) => [
+      {
+        id: 'ui',
+        label: 'In Cursor',
+        instructions: [
+          'Open Dashboard → Plugins → Add Marketplace → Import from Repo.',
+          `Point it at ${repo}, then install the plugin from Customize.`,
+        ],
+      },
+    ],
     invoke: (_plugin, recipeId) => ({
       label: 'Run the recipe',
       commands: [`/${recipeId}`],
