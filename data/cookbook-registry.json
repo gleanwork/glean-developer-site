@@ -320,13 +320,7 @@
         "expectedBehavior": "The MCP host's chat returns a cited summary of the real PAY-2114 incident, not a fabricated one."
       }
     ],
-    "codeAssets": [
-      {
-        "repoPath": "recipes/connect-mcp-hosts",
-        "language": "json",
-        "description": "Host config snippets for all three hosts"
-      }
-    ],
+    "codeAssets": [],
     "steps": [
       {
         "title": "Detect installed hosts",
@@ -334,7 +328,7 @@
       },
       {
         "title": "Resolve your Glean backend",
-        "description": "Ask for your work email, POST it to https://app.glean.com/config/search, and extract {instance} from the subdomain of the returned queryURL — the same chain cookbook-conventions' auth section uses. The MCP server URL is https://{instance}-be.glean.com/mcp/default."
+        "description": "Find resolve-backend.mjs bundled with this plugin (a sibling of skills/, under scripts/) and run it with the user's work email — don't hand-derive the config/search call from memory, since getting it wrong silently resolves to the wrong tenant (see cookbook-conventions' auth section). It prints {instance, backend, oauthAvailable}. The MCP server URL is {backend}/mcp/default."
       },
       {
         "title": "Configure each detected host",
@@ -350,8 +344,8 @@
         "description": "Per host, ask \"Who's on call for payments-service?\" and confirm a real, Glean-cited answer."
       }
     ],
-    "scaffoldActions": ["scaffold-mcp-config"],
-    "aiPrompt": "Connect me to the Glean remote MCP server following\nhttps://developers.glean.com/cookbook/connect-mcp-hosts\n\n1. Detect which MCP hosts I have installed (Claude Code, Cursor, Claude\n   Desktop).\n2. Resolve my Glean backend the same way the cookbook-conventions auth\n   chain does: ask for my work email, POST it to\n   https://app.glean.com/config/search, and extract {instance} from the\n   subdomain of the returned queryURL. The MCP server URL is\n   https://{instance}-be.glean.com/mcp/default.\n3. For each detected host, run the real, first-party configurator —\n   don't hand-walk a Configurator URL or ask me for an API token, this\n   CLI does the whole job including OAuth with Dynamic Client\n   Registration by default:\n   npx -y @gleanwork/configure-mcp-server remote --url <mcp-server-url> --client <host>\n   (--client values: claude-code, cursor, claude-desktop)\n4. Tell me to restart the host app afterward — Cursor and Claude Code\n   pick up the new server on restart; Claude Desktop needs the hammer\n   icon to confirm Glean tools are available.\n5. Verify per host by asking \"Who's on call for payments-service?\" and\n   confirming a Glean-cited answer.",
+    "scaffoldActions": [],
+    "aiPrompt": "Connect me to the Glean remote MCP server following\nhttps://developers.glean.com/cookbook/connect-mcp-hosts\n\n1. Detect which MCP hosts I have installed (Claude Code, Cursor, Claude\n   Desktop).\n2. Resolve my Glean backend by running scripts/resolve-backend.mjs\n   (bundled with this plugin) with my work email — don't hand-derive\n   the config/search call from memory. It prints\n   {instance, backend, oauthAvailable}. The MCP server URL is\n   {backend}/mcp/default.\n3. For each detected host, run the real, first-party configurator —\n   don't hand-walk a Configurator URL or ask me for an API token, this\n   CLI does the whole job including OAuth with Dynamic Client\n   Registration by default:\n   npx -y @gleanwork/configure-mcp-server remote --url <mcp-server-url> --client <host>\n   (--client values: claude-code, cursor, claude-desktop)\n4. Tell me to restart the host app afterward — Cursor and Claude Code\n   pick up the new server on restart; Claude Desktop needs the hammer\n   icon to confirm Glean tools are available.\n5. Verify per host by asking \"Who's on call for payments-service?\" and\n   confirming a Glean-cited answer.",
     "llmContext": "Glean MCP server URL: https://{instance}-be.glean.com/mcp/{server-name} (default server-name is \"default\"). @gleanwork/configure-mcp-server (npx -y @gleanwork/configure-mcp-server remote --url <url> --client <host>) is the real, GA, first-party CLI for wiring this up -- it handles OAuth with Dynamic Client Registration by default and writes the correct host-specific config (Claude Code/Cursor connect natively over HTTP; Claude Desktop is stdio-only, so the CLI wires the mcp-remote bridge automatically). Never reference @gleanwork/mcp-server (deprecated local package), never hand-walk the app.glean.com/settings/install MCP Configurator URL pattern when this CLI exists, and never tell users an API token is required by default -- pass --token only if a host genuinely doesn't support OAuth.",
     "goDependency": false,
     "featured": false,

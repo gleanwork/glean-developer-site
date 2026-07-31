@@ -239,11 +239,28 @@ export type RecipeRecord = RecipeMeta & {
 };
 
 /** Shape of the generated `src/data/recipes.json`. */
+/**
+ * Where the cookbook plugin lives, synced from the marketplace manifest
+ * pluginpack generates in glean-cookbook (see scripts/sync-registry.mjs).
+ * Recipe pages print these verbatim in install and invocation commands, so
+ * they're derived rather than hardcoded — renaming the plugin upstream must
+ * not leave this site printing the old namespace.
+ */
+export type CookbookPlugin = {
+  /** Marketplace name users install from: `<plugin>@<marketplaceName>`. */
+  marketplaceName: string;
+  /** Plugin name, and the skill namespace on hosts that namespace them. */
+  pluginName: string;
+  /** GitHub `owner/repo` slug users add as a marketplace source. */
+  repo: string;
+};
+
 export type RecipesData = {
   recipes: RecipeRecord[];
   surfaces: string[];
   generatedAt: string;
   totalRecipes: number;
+  plugin: CookbookPlugin;
 };
 
 export type RecipeValidationResult =

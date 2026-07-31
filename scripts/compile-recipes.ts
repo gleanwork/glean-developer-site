@@ -2,7 +2,11 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { parseRecipeEntry } from '../src/types/recipe';
 import { RECIPE_SURFACES } from '../src/types/recipe';
-import type { RecipeRecord, RecipesData } from '../src/types/recipe';
+import type {
+  CookbookPlugin,
+  RecipeRecord,
+  RecipesData,
+} from '../src/types/recipe';
 
 /**
  * Compiles cookbook recipes into src/data/recipes.json.
@@ -22,6 +26,7 @@ import type { RecipeRecord, RecipesData } from '../src/types/recipe';
 
 const repoRoot = path.resolve(import.meta.dirname, '..');
 const registryFile = path.join(repoRoot, 'data', 'cookbook-registry.json');
+const pluginFile = path.join(repoRoot, 'data', 'cookbook-plugin.json');
 const recipesDir = path.join(repoRoot, 'docs', 'cookbook');
 const outputFile = path.join(repoRoot, 'src', 'data', 'recipes.json');
 
@@ -41,6 +46,28 @@ function main(): void {
       `${path.relative(repoRoot, registryFile)} must be a JSON array of recipe entries.`,
     );
     process.exit(1);
+  }
+
+  // Plugin coordinates come from glean-cookbook's generated marketplace
+  // manifest (see scripts/sync-registry.mjs). Required, not optional: recipe
+  // pages print these in install/invocation commands, and a page that silently
+  // rendered without them would show a broken command rather than nothing.
+  if (!fs.existsSync(pluginFile)) {
+    console.error(
+      `Plugin coordinates not found at ${path.relative(repoRoot, pluginFile)}. Run \`pnpm registry:sync\` first.`,
+    );
+    process.exit(1);
+  }
+  const plugin = JSON.parse(
+    fs.readFileSync(pluginFile, 'utf8'),
+  ) as CookbookPlugin;
+  for (const field of ['marketplaceName', 'pluginName', 'repo'] as const) {
+    if (!plugin[field]) {
+      console.error(
+        `${path.relative(repoRoot, pluginFile)} is missing "${field}".`,
+      );
+      process.exit(1);
+    }
   }
 
   const pageIds = new Set(
@@ -118,6 +145,7 @@ function main(): void {
       ? new Date(`${latestVerified}T00:00:00.000Z`).toISOString()
       : new Date(0).toISOString(),
     totalRecipes: records.length,
+    plugin,
   };
 
   fs.mkdirSync(path.dirname(outputFile), { recursive: true });
