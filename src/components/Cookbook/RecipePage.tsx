@@ -21,9 +21,8 @@ export default function RecipePage({
   recipeId,
   children,
 }: RecipePageProps): React.ReactElement {
-  const recipe = (recipesData as RecipesData).recipes.find(
-    (r) => r.id === recipeId,
-  );
+  const data = recipesData as RecipesData;
+  const recipe = data.recipes.find((r) => r.id === recipeId);
 
   if (!recipe) {
     throw new Error(
@@ -33,5 +32,9 @@ export default function RecipePage({
     );
   }
 
-  return <RecipeLayout recipe={recipe}>{children}</RecipeLayout>;
+  return (
+    <RecipeLayout plugin={data.plugin} recipe={recipe}>
+      {children}
+    </RecipeLayout>
+  );
 }

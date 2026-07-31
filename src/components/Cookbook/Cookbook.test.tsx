@@ -19,6 +19,11 @@ function makeRecipe(overrides: Partial<RecipeRecord>): RecipeRecord {
     levels: { minimal: true, wow: true },
     timeEstimate: '~15 min (minimal)',
     requiredScopes: ['SEARCH'],
+    // Both are required on RecipeRecord. The `...overrides` spread below
+    // defeats TypeScript's missing-property check on this literal, so leaving
+    // them out compiled fine while silently exercising `undefined`.
+    authMethod: ['web-sdk-cookie'],
+    buildMethod: 'integrate',
     prerequisites: ['A Glean instance'],
     demoQueries: [],
     codeAssets: [],
@@ -119,10 +124,17 @@ describe('FlagshipCard', () => {
   });
 });
 
+const plugin = {
+  marketplaceName: 'glean-cookbook',
+  pluginName: 'cookbook',
+  repo: 'gleanwork/glean-cookbook',
+};
+
 describe('RecipeLayout', () => {
   it('renders the banner, meta pills, and rail from the record', () => {
     render(
       <RecipeLayout
+        plugin={plugin}
         recipe={makeRecipe({
           requiredScopes: ['SEARCH', 'CHAT'],
           codeAssets: [
@@ -138,15 +150,92 @@ describe('RecipeLayout', () => {
       </RecipeLayout>,
     );
 
-    expect(
-      screen.getByRole('button', { name: /Run minimal demo/ }),
-    ).toBeInTheDocument();
-    expect(screen.getByText('Scaffold starter code')).toBeInTheDocument();
+    expect(screen.getByText('View source')).toBeInTheDocument();
     expect(screen.getByText('SEARCH')).toBeInTheDocument();
     expect(screen.getByText('CHAT')).toBeInTheDocument();
     expect(screen.getByText('Starter repo')).toBeInTheDocument();
     expect(screen.getByText('At a glance')).toBeInTheDocument();
     expect(screen.getByText('Beginner')).toBeInTheDocument();
     expect(screen.getByText('Body content')).toBeInTheDocument();
+  });
+
+  it('offers the plugin run button for scaffold recipes, not a prompt copy', async () => {
+    const user = userEvent.setup();
+    render(
+      <RecipeLayout
+        plugin={plugin}
+        recipe={makeRecipe({ buildMethod: 'scaffold' })}
+      >
+        <p>Body</p>
+      </RecipeLayout>,
+    );
+
+    const run = screen.getByRole('button', { name: /Run this recipe/ });
+    expect(run).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByText(/Copy build prompt/)).not.toBeInTheDocument();
+
+    await user.click(run);
+    expect(run).toHaveAttribute('aria-expanded', 'true');
+
+    // Claude Code is the default host; both commands come from the synced
+    // plugin coordinates rather than a hardcoded name.
+    expect(
+      screen.getByText(/claude plugin install cookbook@glean-cookbook/),
+    ).toBeInTheDocument();
+    expect(screen.getByText('/cookbook:embed-search-chat')).toBeInTheDocument();
+
+    // Each command is its own copy field. Joining the two install commands
+    // into one block would hand someone a multi-line paste where either half
+    // can fail independently.
+    const marketplaceAdd = screen.getByText(
+      'claude plugin marketplace add gleanwork/glean-cookbook',
+    );
+    expect(marketplaceAdd.textContent).not.toContain('plugin install');
+    expect(
+      screen.getAllByRole('button', { name: /Copy to clipboard/ }),
+    ).toHaveLength(3);
+  });
+
+  it('switches host, and each host gets its own install and invoke syntax', async () => {
+    const user = userEvent.setup();
+    render(
+      <RecipeLayout
+        plugin={plugin}
+        recipe={makeRecipe({ buildMethod: 'scaffold' })}
+      >
+        <p>Body</p>
+      </RecipeLayout>,
+    );
+    await user.click(screen.getByRole('button', { name: /Run this recipe/ }));
+
+    await user.click(screen.getByRole('tab', { name: /Codex/ }));
+    expect(
+      screen.getByText(/codex plugin add cookbook@glean-cookbook/),
+    ).toBeInTheDocument();
+    // Codex uses $, not the / prefix Claude Code and Cursor use.
+    expect(screen.getByText('$embed-search-chat')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('tab', { name: /Cursor/ }));
+    // Cursor has no plugin CLI at all — UI steps instead of a command.
+    expect(screen.queryByText(/cursor plugin/)).not.toBeInTheDocument();
+    expect(screen.getByText(/Import from Repo/)).toBeInTheDocument();
+    expect(screen.getByText('/embed-search-chat')).toBeInTheDocument();
+  });
+
+  it('keeps copy-prompt for recipes whose mechanism really is prose', () => {
+    render(
+      <RecipeLayout
+        plugin={plugin}
+        recipe={makeRecipe({ buildMethod: 'third-party-build' })}
+      >
+        <p>Body</p>
+      </RecipeLayout>,
+    );
+
+    expect(
+      screen.getByRole('button', { name: /Copy build prompt/ }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/Run this recipe/)).not.toBeInTheDocument();
+    expect(screen.getByText(/Lovable or Replit/)).toBeInTheDocument();
   });
 });

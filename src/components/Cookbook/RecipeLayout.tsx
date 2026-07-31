@@ -5,8 +5,10 @@ import TabItem from '@theme/TabItem';
 import {
   RECIPE_STATUS_LABELS,
   RECIPE_SURFACE_LABELS,
+  type CookbookPlugin,
   type RecipeRecord,
 } from '../../types/recipe';
+import PluginRunButton from './PluginRunButton';
 import { CategoryTile, CATEGORY_ICONS } from './categories';
 import styles from './RecipeLayout.module.css';
 import catStyles from './categories.module.css';
@@ -39,7 +41,25 @@ function metaPill(icon: string, text: string): React.ReactElement {
   );
 }
 
-function ActionCard({ recipe }: { recipe: RecipeRecord }): React.ReactElement {
+/**
+ * Rail actions, branching on `buildMethod`.
+ *
+ * `scaffold` recipes have real, verified commands — the page renders them in
+ * `RecipeSteps`, and the plugin runs them. Those recipes get the plugin run
+ * button; copying `aiPrompt` for them would offer a worse, drift-prone path
+ * than the page it sits on.
+ *
+ * `integrate` and `third-party-build` recipes have no fixed target to copy
+ * into (or hand off to Lovable/Replit), so prose genuinely is the mechanism
+ * and copy-prompt stays — just labelled for what it does.
+ */
+function ActionCard({
+  recipe,
+  plugin,
+}: {
+  recipe: RecipeRecord;
+  plugin: CookbookPlugin;
+}): React.ReactElement {
   const [copied, setCopied] = useState(false);
 
   const copyPrompt = async () => {
@@ -52,52 +72,50 @@ function ActionCard({ recipe }: { recipe: RecipeRecord }): React.ReactElement {
     }
   };
 
-  const starter = recipe.codeAssets[0];
+  const source = recipe.codeAssets[0];
+  const isScaffold = recipe.buildMethod === 'scaffold';
 
   return (
     <div className={styles.actionCard}>
-      <button
-        className={styles.primaryAction}
-        onClick={copyPrompt}
-        type="button"
-      >
-        {getIcon('Play', 'feather', {
-          width: 16,
-          height: 16,
-          color: 'currentColor',
-        })}
-        {copied ? 'Prompt copied!' : 'Run minimal demo'}
-      </button>
-      {starter ? (
-        <a
-          className={styles.secondaryAction}
-          href={`${COOKBOOK_REPO_URL}/${starter.repoPath}`}
-          rel="noopener noreferrer"
-          target="_blank"
-        >
-          {getIcon('Plus', 'feather', {
-            width: 16,
-            height: 16,
-            color: 'currentColor',
-          })}
-          Scaffold starter code
-        </a>
+      {isScaffold ? (
+        <PluginRunButton plugin={plugin} recipeId={recipe.id} />
       ) : (
         <button
-          className={styles.secondaryAction}
+          className={styles.primaryAction}
           onClick={copyPrompt}
           type="button"
         >
-          {getIcon('Plus', 'feather', {
+          {getIcon('Copy', 'feather', {
             width: 16,
             height: 16,
             color: 'currentColor',
           })}
-          Scaffold starter code
+          {copied ? 'Prompt copied' : 'Copy build prompt'}
         </button>
       )}
+
+      {source ? (
+        <a
+          className={styles.secondaryAction}
+          href={`${COOKBOOK_REPO_URL}/${source.repoPath}`}
+          rel="noopener noreferrer"
+          target="_blank"
+        >
+          {getIcon('Code', 'feather', {
+            width: 16,
+            height: 16,
+            color: 'currentColor',
+          })}
+          View source
+        </a>
+      ) : null}
+
       <p className={styles.actionHint}>
-        Copies a prompt your AI assistant can build from.
+        {isScaffold
+          ? 'Runs the recipe through the Glean cookbook plugin.'
+          : recipe.buildMethod === 'third-party-build'
+            ? 'Paste into Lovable or Replit to build the app.'
+            : 'Paste into Claude Code, Cursor, or Codex.'}
       </p>
     </div>
   );
@@ -380,6 +398,8 @@ export function TakeItFurther({
 
 interface RecipeLayoutProps {
   recipe: RecipeRecord;
+  /** Plugin coordinates from recipes.json, for the rail's run button. */
+  plugin: CookbookPlugin;
   children: React.ReactNode;
 }
 
@@ -392,6 +412,7 @@ interface RecipeLayoutProps {
  */
 export default function RecipeLayout({
   recipe,
+  plugin,
   children,
 }: RecipeLayoutProps): React.ReactElement {
   return (
@@ -420,7 +441,7 @@ export default function RecipeLayout({
           <div className={styles.main}>{children}</div>
 
           <div className={styles.rail}>
-            <ActionCard recipe={recipe} />
+            <ActionCard plugin={plugin} recipe={recipe} />
 
             <div className={styles.railCard}>
               <div className={styles.railLabel}>At a glance</div>
