@@ -8,13 +8,10 @@
     "status": "production-pattern",
     "category": "agent",
     "level": "Intermediate",
-    "levels": {
-      "minimal": true,
-      "wow": false
-    },
+    "levels": { "minimal": true, "wow": false },
     "timeEstimate": "~45 min",
     "icon": "double-arrow",
-    "requiredScopes": ["Agent-scoped Client API token (AGENTS)"],
+    "requiredScopes": ["AGENTS"],
     "authMethod": ["custom"],
     "buildMethod": "scaffold",
     "languages": ["python"],
@@ -51,10 +48,7 @@
         "command": "cp .env.example .env",
         "description": "Fill in GLEAN_A2A_CARD_URL and GLEAN_A2A_TOKEN from the agent's Share → A2A dialog — this is a per-agent bearer token, not the general Glean OAuth/token chain."
       },
-      {
-        "title": "Run it",
-        "command": "python main.py"
-      },
+      { "title": "Run it", "command": "python main.py" },
       {
         "title": "Verify",
         "description": "Confirm a real answer to \"Who owns the payments service?\", a follow-up reusing the same context_id to prove multi-turn, and a streaming response — all three paths this recipe exercises."
@@ -77,10 +71,7 @@
     "status": "showcase",
     "category": "search",
     "level": "Beginner",
-    "levels": {
-      "minimal": true,
-      "wow": true
-    },
+    "levels": { "minimal": true, "wow": true },
     "timeEstimate": "~30 min",
     "icon": "qna",
     "requiredScopes": ["CHAT"],
@@ -120,10 +111,7 @@
             "title": "Credentials",
             "description": "Default SSO auth needs no configuration — the Web SDK relies on the user's existing browser session with Glean."
           },
-          {
-            "title": "Run it",
-            "command": "npm run dev"
-          },
+          { "title": "Run it", "command": "npm run dev" },
           {
             "title": "Verify",
             "description": "Open the printed local URL and ask \"What's our PTO policy?\" — confirm a real, cited answer renders inside Glean's chat UI."
@@ -146,7 +134,7 @@
           {
             "title": "Set credentials",
             "command": "cp .env.example .env",
-            "description": "Fill in GLEAN_API_TOKEN and GLEAN_INSTANCE — see the client-api-oauth-or-token auth section in cookbook-conventions for how to get a token."
+            "description": "Fill in GLEAN_API_TOKEN and GLEAN_INSTANCE — the Authentication section below covers how to get a token."
           },
           {
             "title": "Run it",
@@ -206,10 +194,7 @@
     "status": "showcase",
     "category": "portal",
     "level": "Intermediate",
-    "levels": {
-      "minimal": true,
-      "wow": true
-    },
+    "levels": { "minimal": true, "wow": true },
     "timeEstimate": "~30 min",
     "requiredScopes": ["SEARCH", "CHAT"],
     "authMethod": [
@@ -298,10 +283,7 @@
     "status": "production-pattern",
     "category": "mcp",
     "level": "Beginner",
-    "levels": {
-      "minimal": true,
-      "wow": false
-    },
+    "levels": { "minimal": true, "wow": false },
     "timeEstimate": "~15 min",
     "requiredScopes": ["MCP"],
     "authMethod": ["custom"],
@@ -328,7 +310,7 @@
       },
       {
         "title": "Resolve your Glean backend",
-        "description": "Find resolve-backend.mjs bundled with this plugin (a sibling of skills/, under scripts/) and run it with the user's work email — don't hand-derive the config/search call from memory, since getting it wrong silently resolves to the wrong tenant (see cookbook-conventions' auth section). It prints {instance, backend, oauthAvailable}. The MCP server URL is {backend}/mcp/default."
+        "description": "Resolve the backend from the user's work email — the Authentication section below has the exact command. The MCP server URL is {backend}/mcp/default."
       },
       {
         "title": "Configure each detected host",
@@ -345,7 +327,7 @@
       }
     ],
     "scaffoldActions": [],
-    "aiPrompt": "Connect me to the Glean remote MCP server following\nhttps://developers.glean.com/cookbook/connect-mcp-hosts\n\n1. Detect which MCP hosts I have installed (Claude Code, Cursor, Claude\n   Desktop).\n2. Resolve my Glean backend by running scripts/resolve-backend.mjs\n   (bundled with this plugin) with my work email — don't hand-derive\n   the config/search call from memory. It prints\n   {instance, backend, oauthAvailable}. The MCP server URL is\n   {backend}/mcp/default.\n3. For each detected host, run the real, first-party configurator —\n   don't hand-walk a Configurator URL or ask me for an API token, this\n   CLI does the whole job including OAuth with Dynamic Client\n   Registration by default:\n   npx -y @gleanwork/configure-mcp-server remote --url <mcp-server-url> --client <host>\n   (--client values: claude-code, cursor, claude-desktop)\n4. Tell me to restart the host app afterward — Cursor and Claude Code\n   pick up the new server on restart; Claude Desktop needs the hammer\n   icon to confirm Glean tools are available.\n5. Verify per host by asking \"Who's on call for payments-service?\" and\n   confirming a Glean-cited answer.",
+    "aiPrompt": "Connect me to the Glean remote MCP server following\nhttps://developers.glean.com/cookbook/connect-mcp-hosts\n\n1. Detect which MCP hosts I have installed (Claude Code, Cursor, Claude\n   Desktop).\n2. Resolve my Glean backend from my work email using the command in\n   this skill's Authentication section. The MCP server URL is\n   {backend}/mcp/default.\n3. For each detected host, run the real, first-party configurator —\n   don't hand-walk a Configurator URL or ask me for an API token, this\n   CLI does the whole job including OAuth with Dynamic Client\n   Registration by default:\n   npx -y @gleanwork/configure-mcp-server remote --url <mcp-server-url> --client <host>\n   (--client values: claude-code, cursor, claude-desktop)\n4. Tell me to restart the host app afterward — Cursor and Claude Code\n   pick up the new server on restart; Claude Desktop needs the hammer\n   icon to confirm Glean tools are available.\n5. Verify per host by asking \"Who's on call for payments-service?\" and\n   confirming a Glean-cited answer.",
     "llmContext": "Glean MCP server URL: https://{instance}-be.glean.com/mcp/{server-name} (default server-name is \"default\"). @gleanwork/configure-mcp-server (npx -y @gleanwork/configure-mcp-server remote --url <url> --client <host>) is the real, GA, first-party CLI for wiring this up -- it handles OAuth with Dynamic Client Registration by default and writes the correct host-specific config (Claude Code/Cursor connect natively over HTTP; Claude Desktop is stdio-only, so the CLI wires the mcp-remote bridge automatically). Never reference @gleanwork/mcp-server (deprecated local package), never hand-walk the app.glean.com/settings/install MCP Configurator URL pattern when this CLI exists, and never tell users an API token is required by default -- pass --token only if a host genuinely doesn't support OAuth.",
     "goDependency": false,
     "featured": false,
@@ -360,10 +342,7 @@
     "status": "production-pattern",
     "category": "search",
     "level": "Beginner",
-    "levels": {
-      "minimal": true,
-      "wow": true
-    },
+    "levels": { "minimal": true, "wow": true },
     "timeEstimate": "~15 min (minimal)",
     "icon": "deep-research",
     "requiredScopes": ["SEARCH", "CHAT"],
@@ -430,13 +409,10 @@
     "status": "production-pattern",
     "category": "index",
     "level": "Intermediate",
-    "levels": {
-      "minimal": true,
-      "wow": true
-    },
+    "levels": { "minimal": true, "wow": true },
     "timeEstimate": "~1 hr",
     "icon": "sources",
-    "requiredScopes": ["Indexing API token (datasource-scoped)"],
+    "requiredScopes": ["INDEXING"],
     "authMethod": ["indexing-token"],
     "buildMethod": "scaffold",
     "languages": ["python"],
@@ -478,7 +454,7 @@
       },
       {
         "title": "Set credentials",
-        "description": "Export GLEAN_INDEXING_API_TOKEN and GLEAN_SERVER_URL — this recipe has no .env.example, it reads directly from the environment (see indexing-token in cookbook-conventions)."
+        "description": "Export GLEAN_INDEXING_API_TOKEN and GLEAN_SERVER_URL — this recipe has no .env.example, it reads directly from the environment (see the Authentication section below)."
       },
       {
         "title": "Run it",
@@ -523,10 +499,7 @@
     "status": "production-pattern",
     "category": "agent",
     "level": "Advanced",
-    "levels": {
-      "minimal": true,
-      "wow": true
-    },
+    "levels": { "minimal": true, "wow": true },
     "timeEstimate": "~2 hr",
     "icon": "agent",
     "requiredScopes": ["AGENTS", "TOOLS"],
@@ -583,10 +556,7 @@
         "command": "cd multi-step-agent/invoke-agent && cp .env.example .env",
         "description": "Fill in GLEAN_API_TOKEN, GLEAN_INSTANCE, and GLEAN_AGENT_ID (the ID from the previous step)."
       },
-      {
-        "title": "Run it",
-        "command": "python main.py"
-      },
+      { "title": "Run it", "command": "python main.py" },
       {
         "title": "Verify",
         "description": "Run as a permitted user (Acme-Engineering) and confirm the ticket actually gets filed; run as a non-permitted user and confirm a graceful no-write fallback summary instead of a hard failure."
@@ -626,10 +596,7 @@
     "status": "showcase",
     "category": "workflow",
     "level": "Beginner",
-    "levels": {
-      "minimal": true,
-      "wow": false
-    },
+    "levels": { "minimal": true, "wow": false },
     "timeEstimate": "~45 min",
     "icon": "lovable",
     "requiredScopes": ["CHAT"],
@@ -672,10 +639,7 @@
     "status": "showcase",
     "category": "workflow",
     "level": "Beginner",
-    "levels": {
-      "minimal": true,
-      "wow": false
-    },
+    "levels": { "minimal": true, "wow": false },
     "timeEstimate": "~45 min",
     "icon": "replit",
     "requiredScopes": ["CHAT"],
@@ -718,10 +682,7 @@
     "status": "production-pattern",
     "category": "search",
     "level": "Intermediate",
-    "levels": {
-      "minimal": true,
-      "wow": true
-    },
+    "levels": { "minimal": true, "wow": true },
     "timeEstimate": "~1 hr",
     "icon": "badge",
     "requiredScopes": ["SEARCH"],

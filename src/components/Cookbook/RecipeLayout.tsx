@@ -72,7 +72,10 @@ function ActionCard({
     }
   };
 
-  const source = recipe.codeAssets[0];
+  // Link the recipe directory rather than a single codeAsset: recipes with a
+  // path or language split have several, and linking only the first hid the
+  // others once the separate code-assets card went away.
+  const hasSource = recipe.codeAssets.length > 0;
   const isScaffold = recipe.buildMethod === 'scaffold';
 
   return (
@@ -94,10 +97,10 @@ function ActionCard({
         </button>
       )}
 
-      {source ? (
+      {hasSource ? (
         <a
           className={styles.secondaryAction}
-          href={`${COOKBOOK_REPO_URL}/${source.repoPath}`}
+          href={`${COOKBOOK_REPO_URL}/recipes/${recipe.id}`}
           rel="noopener noreferrer"
           target="_blank"
         >
@@ -477,30 +480,6 @@ export default function RecipeLayout({
                     <span className={styles.scopeChip} key={scope}>
                       {scope}
                     </span>
-                  ))}
-                </div>
-              </div>
-            ) : null}
-
-            {recipe.codeAssets.length > 0 ? (
-              <div className={styles.railCard}>
-                <div className={styles.railLabel}>Code assets</div>
-                <div className={styles.assets}>
-                  {recipe.codeAssets.map((asset) => (
-                    <a
-                      className={styles.assetRow}
-                      href={`${COOKBOOK_REPO_URL}/${asset.repoPath}`}
-                      key={asset.repoPath}
-                      rel="noopener noreferrer"
-                      target="_blank"
-                    >
-                      <span>{asset.description}</span>
-                      {getIcon('ExternalLink', 'feather', {
-                        width: 14,
-                        height: 14,
-                        color: 'currentColor',
-                      })}
-                    </a>
                   ))}
                 </div>
               </div>

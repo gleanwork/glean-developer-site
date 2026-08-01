@@ -150,10 +150,16 @@ describe('RecipeLayout', () => {
       </RecipeLayout>,
     );
 
-    expect(screen.getByText('View source')).toBeInTheDocument();
+    // View source points at the recipe directory, not codeAssets[0]: recipes
+    // with a variant split have several assets, and there is no longer a
+    // separate card listing the rest.
+    expect(screen.getByText('View source').closest('a')).toHaveAttribute(
+      'href',
+      'https://github.com/gleanwork/glean-cookbook/tree/main/recipes/embed-search-chat',
+    );
+    expect(screen.queryByText('Code assets')).not.toBeInTheDocument();
     expect(screen.getByText('SEARCH')).toBeInTheDocument();
     expect(screen.getByText('CHAT')).toBeInTheDocument();
-    expect(screen.getByText('Starter repo')).toBeInTheDocument();
     expect(screen.getByText('At a glance')).toBeInTheDocument();
     expect(screen.getByText('Beginner')).toBeInTheDocument();
     expect(screen.getByText('Body content')).toBeInTheDocument();
