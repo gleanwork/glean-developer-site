@@ -460,15 +460,11 @@ const baseSidebars: SidebarsConfig = {
             // `indexing-sdk` flag (FF_INDEXING_SDK=true locally) to show it.
             flag: 'indexing-sdk',
           },
-          link: {
-            type: 'doc',
-            id: 'libraries/indexing-sdk/index',
-          },
           items: [
             {
               type: 'doc',
-              id: 'libraries/indexing-sdk/connector-builder',
-              label: 'Connector Builder',
+              id: 'libraries/indexing-sdk/index',
+              label: 'Overview',
             },
             {
               type: 'doc',

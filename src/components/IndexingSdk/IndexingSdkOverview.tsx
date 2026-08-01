@@ -28,6 +28,38 @@ $ claude plugin install glean-connector-builder@glean-indexing-sdk
 ● Phase 1 tests: 8 passed, 0 failed
 ● Ready to index — run it when you are`;
 
+const PROMPTS = [
+  'I want to push my Webex data to Glean. Build a connector for me.',
+  'Build a connector for our internal wiki at wiki.acme.com. It has a REST API with cursor pagination, and each page carries a list of groups that can read it.',
+];
+
+/** The skills that coordinate the build, in roughly the order they run. */
+const SKILLS: { name: string; covers: string }[] = [
+  {
+    name: 'connector-builder',
+    covers: 'Top-level workflow coordinating the rest.',
+  },
+  {
+    name: 'connector-api-exploration',
+    covers: "Reading and confirming the source's API documentation.",
+  },
+  {
+    name: 'connector-auth',
+    covers: 'Authentication patterns for source systems.',
+  },
+  {
+    name: 'connector-pull',
+    covers: 'Data clients, pagination, rate limiting.',
+  },
+  { name: 'connector-push', covers: 'Uploading documents and identities.' },
+  { name: 'connector-testing', covers: 'The three-phase testing workflow.' },
+  { name: 'connector-observability', covers: 'Logging and metrics wiring.' },
+  {
+    name: 'connector-deployment',
+    covers: 'Generating and applying deployment artifacts.',
+  },
+];
+
 const AGENT_STAGES = [
   {
     owner: 'you' as const,
@@ -139,12 +171,6 @@ interface Capability {
 }
 
 const CAPABILITIES: Capability[] = [
-  {
-    name: 'Connector Builder',
-    desc: 'The agent plugin that builds a connector from a description of your source.',
-    href: '/libraries/indexing-sdk/connector-builder',
-    icon: 'Terminal',
-  },
   {
     name: 'Connector types',
     desc: 'Four base classes: in-memory, sync streaming, async streaming, and people.',
@@ -262,13 +288,21 @@ export default function IndexingSdkOverview(): React.ReactElement {
             before anything reaches your index.
           </p>
           <div className={styles.heroCtas}>
-            <Link
+            <button
               className={styles.heroPrimary}
-              to="/libraries/indexing-sdk/connector-builder"
+              onClick={() => {
+                const reduced =
+                  typeof window.matchMedia === 'function' &&
+                  window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+                document
+                  .getElementById('install')
+                  ?.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth' });
+              }}
+              type="button"
             >
               Install the plugin
               {icon('ArrowRight', 17)}
-            </Link>
+            </button>
             <Link
               className={styles.heroSecondary}
               to="/libraries/indexing-sdk/quickstart"
@@ -287,13 +321,34 @@ export default function IndexingSdkOverview(): React.ReactElement {
         </div>
       </div>
 
-      <section className={styles.section}>
+      <section className={styles.section} id="install">
         <h2 className={styles.sectionTitle}>Install the Connector Builder</h2>
         <p className={styles.sectionSub}>
           Point your agent&apos;s plugin host at the SDK repository, which
           doubles as the marketplace.
         </p>
         <AgentInstall />
+
+        <h3 className={styles.subHeading}>Then describe your source</h3>
+        <div className={styles.prompts}>
+          {PROMPTS.map((prompt) => (
+            <p className={styles.prompt} key={prompt}>
+              {prompt}
+            </p>
+          ))}
+        </div>
+        <p className={styles.tableNote}>
+          The agent asks for whatever scope it still needs, confirms a plan with
+          you, generates the connector, and runs the mocked and recorded test
+          phases before offering to index anything. Hosts pull from the
+          repository, so updating is a marketplace refresh rather than a rebuild
+          &mdash;{' '}
+          <code>claude plugin marketplace update glean-indexing-sdk</code>, then{' '}
+          <code>
+            claude plugin update glean-connector-builder@glean-indexing-sdk
+          </code>
+          .
+        </p>
       </section>
 
       <section className={styles.section}>
@@ -303,6 +358,26 @@ export default function IndexingSdkOverview(): React.ReactElement {
           result; the agent does the reading, wiring, and iterating.
         </p>
         <Stages stages={AGENT_STAGES} />
+
+        <h3 className={styles.subHeading}>The eight skills</h3>
+        <div className={styles.skillGrid}>
+          {SKILLS.map((skill) => (
+            <div className={styles.skillRow} key={skill.name}>
+              <code className={styles.skillName}>{skill.name}</code>
+              <span className={styles.skillCovers}>{skill.covers}</span>
+            </div>
+          ))}
+        </div>
+        <p className={styles.tableNote}>
+          They encode the same guidance as these docs &mdash; notably crawl
+          semantics, the rule most easily got wrong: a full crawl must cover the
+          entire confirmed scope before completing, because stale-document
+          deletion removes anything absent from the run. The sources live in{' '}
+          <Link to="https://github.com/gleanwork/glean-indexing-sdk/tree/main/skills">
+            <code>skills/</code>
+          </Link>{' '}
+          if you want to add one.
+        </p>
       </section>
 
       <section className={styles.section}>
