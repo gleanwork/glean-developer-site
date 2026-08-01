@@ -1,0 +1,108 @@
+---
+title: Connector Builder
+description: Build a Glean connector with a coding agent - install the plugin straight from the SDK repository
+---
+
+import AgentInstall from '@site/src/components/IndexingSdk/AgentInstall';
+
+Connector Builder is an agent plugin that builds a connector for you: it reads
+your source's API documentation, confirms a plan, generates the connector
+against the Indexing SDK, and tests it before anything reaches your index.
+
+The `gleanwork/glean-indexing-sdk` repository doubles as the plugin marketplace:
+the plugin artifacts are generated and committed there, so a host installs by
+pointing at the repo.
+
+## Install
+
+<AgentInstall />
+
+:::info
+All three hosts read their marketplace manifest from the root of the repository
+you point them at, and none accept an `owner/repo/subpath` form — which is why
+the manifests live at the repo root and the emitted plugin content is committed
+alongside them.
+:::
+
+## Use it
+
+Describe what you want indexed:
+
+```text
+I want to push my Webex data to Glean. Build a connector for me.
+```
+
+Or be specific about what you already know:
+
+```text
+Build a connector for our internal wiki at wiki.acme.com. It has a REST API
+with cursor pagination, and each page carries a list of groups that can read it.
+```
+
+The agent asks for whatever scope it still needs, confirms a plan with you,
+generates the connector, and runs the mocked and recorded test phases before
+offering to index anything.
+
+## What's included
+
+Eight skills coordinate the build:
+
+| Skill | Covers |
+|---|---|
+| `connector-builder` | Top-level workflow coordinating the rest. |
+| `connector-api-exploration` | Reading and confirming the source's API documentation. |
+| `connector-auth` | Authentication patterns for source systems. |
+| `connector-pull` | Data clients, pagination, rate limiting. |
+| `connector-push` | Uploading documents and identities. |
+| `connector-testing` | The three-phase testing workflow. |
+| `connector-observability` | Logging and metrics wiring. |
+| `connector-deployment` | Generating and applying deployment artifacts. |
+
+The skills encode the same guidance as the rest of these docs — notably crawl
+semantics, the rule most easily got wrong: a full crawl must cover the entire
+confirmed scope before completing, because stale-document deletion removes
+anything absent from the run. See
+[Indexing modes](/libraries/indexing-sdk/concepts/indexing-modes).
+
+## Update
+
+Hosts pull from the repo, so updating is a marketplace refresh — no rebuild:
+
+```bash
+claude plugin marketplace update glean-indexing-sdk
+claude plugin update glean-connector-builder@glean-indexing-sdk
+```
+
+## What to check in generated code
+
+An agent produces a plausible connector quickly. These are the places a
+plausible connector is most often wrong:
+
+- **Permissions.** Are real ACLs attached, and does `get_identities()` push the
+  users and groups they reference? An allow-all default is the most
+  consequential thing to miss. See
+  [Permissions](/libraries/indexing-sdk/permissions).
+- **Full-crawl completeness.** Does the data client raise on a failed page,
+  rather than returning what it has? A short result set deletes documents as
+  stale. See [Error handling](/libraries/indexing-sdk/push/error-handling).
+- **Timestamps.** `created_at` and `updated_at` must be epoch seconds, not ISO
+  strings. This fails silently — documents just sort wrong.
+- **Rate limiting.** Configured against your source's real quota, not left at
+  the conservative default of one retry. See
+  [Rate limiting](/libraries/indexing-sdk/pull/rate-limiting).
+- **Incremental crawls.** If the connector claims incremental support, does it
+  override `_get_last_crawl_timestamp()`? Without that, `since` is always
+  `None`. See [Indexing modes](/libraries/indexing-sdk/concepts/indexing-modes).
+
+Run [Phase 2 integration tests](/libraries/indexing-sdk/testing/integration)
+against the real source before deploying. Generated code is written against the
+source's *documentation*; Phase 2 is what checks it against the source's actual
+responses.
+
+## Contributing a skill
+
+Skills live in [`skills/`](https://github.com/gleanwork/glean-indexing-sdk/tree/main/skills)
+in the SDK repository. Editing one changes its source and the three emitted
+copies under `build/`; regenerate with `npm run build:plugins` rather than
+editing anything under `build/` directly. CI fails if the committed output
+drifts from the sources.

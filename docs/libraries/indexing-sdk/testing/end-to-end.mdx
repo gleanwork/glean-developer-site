@@ -1,0 +1,125 @@
+---
+title: End-to-end testing
+description: Phase 3 - run a connector against a real source and a real Glean instance
+---
+
+Phase 3 removes all mocking. The connector fetches from your real source and
+uploads to whatever `GLEAN_SERVER_URL` points at.
+
+```python
+from glean.indexing.testing import TestConfig, TestHarness
+
+harness = TestHarness(
+    connector=my_connector,
+    config=TestConfig.from_yaml("testing_config.yaml"),
+    clients={"data_client": real_data_client},
+)
+
+result = harness.run_end_to_end()
+```
+
+:::danger
+**This writes real documents to a real Glean instance.** The harness does not
+sandbox the datasource — your connector's own datasource name is used as-is, and
+`run_id_prefix` is logged but does not namespace anything. Point
+`GLEAN_SERVER_URL` at a dedicated test instance. There is no automatic cleanup
+and no guard against a production URL. Tracked in
+[issue #112](https://github.com/gleanwork/glean-indexing-sdk/issues/112).
+:::
+
+## Before you run it
+
+- `GLEAN_SERVER_URL` points at a **test** instance, verified by eye, not by memory.
+- `GLEAN_INDEXING_API_TOKEN` is scoped to the test datasource.
+- `max_items` is set low in `TestConfig` so a mistake stays small.
+- You know how you'll clean up.
+
+Per-client `max_items` limits are applied in Phase 3 too, which is the main thing
+standing between a typo and a full production crawl. Keep them small.
+
+## What it returns
+
+`run_end_to_end()` returns an `IndexingWaitResult`, or `None` if the connector
+uploaded no documents. Because indexing is asynchronous, an accepted upload is
+not yet a searchable document — the result reflects the indexing outcome, not
+just the HTTP response.
+
+```python
+result = harness.run_end_to_end()
+
+if result is None:
+    raise AssertionError("connector uploaded nothing")
+```
+
+## Verifying documents landed
+
+Poll indexing status for specific documents:
+
+```python
+from glean.api_client.models import DebugDocumentRequest
+from glean.indexing.testing import poll_documents_status
+
+snapshot = poll_documents_status(
+    "company_wiki",
+    [DebugDocumentRequest(object_type="article", doc_id="page_123")],
+)
+print(snapshot.result)
+```
+
+`check_documents_status()` is the single-shot variant. Or from the shell:
+
+```bash
+glean-index-status --datasource company_wiki --document article page_123 --poll
+```
+
+See [Status and debugging](/libraries/indexing-sdk/status-and-debugging).
+
+## Verifying permissions
+
+This is the one check only Phase 3 can make: query Glean as a restricted user and
+confirm they cannot see documents they shouldn't.
+
+```python
+from glean.indexing.push import StatusClient
+
+status = StatusClient(datasource="company_wiki")
+status.check_document_access(...)
+```
+
+Then search as that user. Search results are the ground truth — an upload that
+succeeded with a correct-looking ACL can still be wrong if the identity graph is
+incomplete.
+
+## Cleaning up
+
+Nothing is cleaned up for you. Write teardown that deletes what the test
+created:
+
+```python
+from glean.indexing.push import PushUploader
+
+uploader = PushUploader(datasource="company_wiki")
+for doc_id in created_ids:
+    uploader.delete_document(object_type="article", doc_id=doc_id)
+```
+
+Identity records need explicit deletion too: `delete_user()`, `delete_group()`,
+`delete_membership()`.
+
+:::info
+There is no API to delete a datasource *registration*. Teardown removes
+documents, identities, and employees; the empty datasource remains. Re-running
+the connector repopulates it. To remove the datasource entirely, use the Glean
+admin console.
+:::
+
+## When to run it
+
+Phase 3 is slow, needs credentials, and mutates real state — so it doesn't
+belong in a per-commit pipeline. Run it:
+
+- Before first deploying a new connector.
+- After changing `transform()` or the permission model.
+- On a nightly or pre-release schedule against a test instance.
+
+Keep Phases 1 and 2 as the fast feedback loop.

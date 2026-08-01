@@ -755,6 +755,19 @@ article:has(.web-sdk-root) > header {
   display: none;
 }
 
+/* Indexing SDK overview: the hero carries the title — hide the duplicate
+ * doc-title header above it. Only the overview renders this root class; the
+ * interior SDK pages are conventional MDX and keep their title and TOC. */
+article:has(.indexing-sdk-root) > .theme-doc-markdown > header,
+article:has(.indexing-sdk-root) > header {
+  display: none;
+}
+
+/* The overview has no TOC affordance — reclaim the column the theme reserves. */
+.container:has(.indexing-sdk-root) [class*='docItemCol'] {
+  max-width: 100% !important;
+}
+
 /* Home redesign fills the main column: the doc container's max-width is
  * sized for text + TOC layouts, which the redesigned homepage doesn't use.
  * Scoped via :has so it only applies while the redesign is rendering. */

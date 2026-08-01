@@ -1,0 +1,128 @@
+---
+title: Data clients
+description: BasePullHttpStreamingDataClient - paginated HTTP data clients with no boilerplate
+---
+
+A data client is the source-facing half of a connector. At minimum it
+implements `get_source_data()`:
+
+```python
+from glean.indexing.connectors import BaseDataClient
+
+
+class WikiDataClient(BaseDataClient[WikiPage]):
+    def get_source_data(self, since=None, **kwargs):
+        return fetch_all_pages()
+```
+
+That's fine for small sources. For a paginated HTTP API, the SDK gives you a
+base class that already knows how to page.
+
+## BasePullHttpStreamingDataClient
+
+`BasePullHttpStreamingDataClient` combines
+[`PullHttpClient`](/libraries/indexing-sdk/pull/http-client) with
+[pagination](/libraries/indexing-sdk/pull/pagination) and yields records one at
+a time. For a well-behaved JSON API you often need no method body at all:
+
+```python
+from glean.indexing.recipes.pull import BasePullHttpStreamingDataClient, PullOptions
+
+
+class ArticleDataClient(BasePullHttpStreamingDataClient[Article]):
+    def __init__(self, token: str):
+        super().__init__(
+            base_url="https://api.example.com/v2",
+            path="/articles",
+            items_key="items",
+            pagination="link",
+            page_size=100,
+            headers={"Authorization": f"Bearer {token}"},
+            options=PullOptions(timeout_seconds=30.0),
+        )
+```
+
+It subclasses `BaseStreamingDataClient`, so it belongs with
+`BaseStreamingDatasourceConnector` — see
+[Connector types](/libraries/indexing-sdk/concepts/connector-types).
+
+## Constructor reference
+
+| Argument | Default | Purpose |
+|---|---|---|
+| `base_url` | — | Base URL for relative paths. |
+| `path` | — | Endpoint path to fetch. |
+| `items_key` | `"items"` | Key holding the record array. Set to `None` if the body *is* the array. |
+| `pagination` | `"link"` | One of `"link"`, `"offset"`, `"cursor"`, `"none"`. |
+| `params` | `None` | Static query parameters sent on every request. |
+| `page_size` | `None` | Page size. Required and must be positive for offset pagination. |
+| `max_items` | `None` | Stop after N records. Invaluable for local development. |
+| `offset_param` / `limit_param` | `"offset"` / `"limit"` | Parameter names for offset pagination. |
+| `start_offset` | `0` | Starting offset. |
+| `cursor_param` / `cursor_key` | `"cursor"` / `"next_cursor"` | Request parameter and response key for cursor pagination. |
+| `initial_cursor` | `None` | Cursor for the first request. |
+| `headers` | `None` | Default headers. |
+| `options` | `PullOptions()` | Timeout, retry, and redaction behavior. |
+| `rate_limiter` | `None` | See [Rate limiting](/libraries/indexing-sdk/pull/rate-limiting). |
+| `observability` | `None` | Emits fetch-started and fetch-completed events. |
+| `client` | `None` | Bring your own `httpx.Client`. |
+| `timeout_seconds` | `None` | Per-request override. |
+
+Invalid combinations fail at construction, not mid-crawl: offset pagination
+without a positive `page_size` raises `ValueError`, as does a negative
+`max_items`.
+
+## Extracting records
+
+`items_key` controls where records are read from.
+
+```python
+# {"items": [...]}          → items_key="items"  (default)
+# [...]                     → items_key=None
+# {"data": {"records": []}} → override get_source_data
+```
+
+If the value at `items_key` isn't a list, the client raises `TypeError` naming
+the key and the type it actually found — a fast failure when a source changes
+its envelope.
+
+## Customizing
+
+Everything above is a starting point. Override `get_source_data()` when your
+source needs something the base class doesn't model, and reuse `self.http`:
+
+```python
+class ArticleDataClient(BasePullHttpStreamingDataClient[Article]):
+    def get_source_data(self, **kwargs):
+        for article in super().get_source_data(**kwargs):
+            detail = self.http.get(f"/articles/{article['id']}")
+            yield {**article, "body": detail.json_dict()["body"]}
+```
+
+That pattern — list endpoint for discovery, detail endpoint for content — is
+common, and the N+1 request cost is exactly why you want a
+[rate limiter](/libraries/indexing-sdk/pull/rate-limiting) configured.
+
+## Cleaning up
+
+The client owns an HTTP connection. Close it when the crawl finishes:
+
+```python
+try:
+    connector.index_data(mode=IndexingMode.FULL)
+finally:
+    data_client.close()
+```
+
+## Limiting work during development
+
+`max_items` caps the number of records fetched, which keeps iteration fast while
+you're still shaping `transform()`:
+
+```python
+ArticleDataClient(token, max_items=25)
+```
+
+The [test harness](/libraries/indexing-sdk/testing/integration) applies its own
+per-client `max_items` from `TestConfig`, so you don't have to hardcode this for
+tests.

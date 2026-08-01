@@ -1,0 +1,127 @@
+---
+title: Deployment overview
+description: Generate Docker and Terraform for a Glean connector with glean-deploy
+---
+
+import { Stages } from '@site/src/components/IndexingSdk/diagrams';
+
+A connector is a batch job: it runs on a schedule, pulls from a source, pushes to
+Glean, and exits. `glean-deploy` generates the scaffolding for that — a
+Dockerfile, an entrypoint, and Terraform for a Kubernetes CronJob on GKE or EKS.
+
+```bash
+glean-deploy init --cloud gcp --connector-class CompanyWikiConnector
+```
+
+:::danger
+**The generated infrastructure has not been validated against a real cloud
+account.** Two known issues affect it today:
+
+- The AWS IRSA trust policy uses the wrong OIDC condition-key format and is
+  likely to fail at runtime
+  ([issue #103](https://github.com/gleanwork/glean-indexing-sdk/issues/103)).
+- The GCP service account is granted secret access at **project** scope rather
+  than scoped to the connector's own secrets
+  ([issue #105](https://github.com/gleanwork/glean-indexing-sdk/issues/105)).
+
+Treat the output as a starting point to review, not as production-ready IaC. Have
+someone who owns the target account read the Terraform before applying it.
+Broader validation is tracked in
+[issue #104](https://github.com/gleanwork/glean-indexing-sdk/issues/104).
+:::
+
+## What gets generated
+
+| File | Purpose |
+|---|---|
+| `glean_deployment.yaml` | Deployment configuration — you edit this. |
+| `Dockerfile` | Container image for the connector. |
+| `.dockerignore` | Build context exclusions. |
+| `run.py` | Entrypoint that imports and runs your connector. |
+| `main.tf`, `variables.tf` | Terraform for the CronJob, service account, and secrets. |
+| `.env.example` | Template for connector credentials. |
+
+Options for `init`:
+
+| Flag | Default | Purpose |
+|---|---|---|
+| `--cloud` | required | `gcp` or `aws`. |
+| `--connector-name` | current directory name | Used for resource naming. |
+| `--connector-class` | `MyConnector` | Class the entrypoint instantiates. |
+| `--connector-module` | `connector` | Module to import it from. |
+| `--output-dir` | `.` | Where to write. |
+
+## Configuration
+
+`glean_deployment.yaml` drives generation. The placeholders written by `init`
+must be replaced before anything works.
+
+| Key | Default | Notes |
+|---|---|---|
+| `connector_name` | — | Resource naming. |
+| `connector_class` / `connector_module` | — | What the entrypoint imports. |
+| `cloud` | — | `gcp` or `aws`. |
+| `region` | `us-central1` / `us-east-1` | Cloud region. |
+| `cluster_name` | placeholder | Target Kubernetes cluster. |
+| `namespace` | `default` | Kubernetes namespace. |
+| `cpu` | `500m` | Pod CPU request/limit. |
+| `memory` | — | Pod memory request/limit. |
+| `cron_schedule` | — | Standard cron expression. |
+| `indexing_mode` | — | `full` or `incremental`. |
+| `project_id`, `artifact_registry_repo`, `service_account_name` | — | GCP only. |
+| `account_id`, `ecr_repo`, `iam_role_name` | — | AWS only. |
+
+A common pattern is two CronJobs from one image: incremental on a short schedule,
+full nightly. See
+[Indexing modes](/libraries/indexing-sdk/concepts/indexing-modes).
+
+## Workflow
+
+<Stages stages={[
+  { title: <>Generate &mdash; <code>glean-deploy init</code></>, body: <>Writes the Dockerfile, entrypoint, Terraform, and config template.</> },
+  { title: <>Configure</>, body: <>Edit <code>glean_deployment.yaml</code> (cluster, region, registry, schedule), then <code>cp .env.example .env</code> and fill in credentials.</> },
+  { title: <>Build and push &mdash; <code>glean-deploy build --push</code></>, body: <>Builds the container image and pushes it to your registry.</> },
+  { title: <>Upload secrets &mdash; <code>glean-deploy secrets upload</code></>, body: <>Reads <code>.env</code> and writes to Secret Manager (GCP) or Secrets Manager (AWS). <code>secrets list</code> and <code>secrets delete</code> are also available.</> },
+  { title: <>Apply &mdash; <code>glean-deploy apply</code></>, body: <>Runs Terraform. Read the plan first &mdash; see the warning below.</> },
+  { title: <>Verify</>, body: <><code>glean-deploy status</code> and <code>glean-deploy logs --follow</code>, then confirm documents landed with <code>glean-index-status</code>. A CronJob that exits zero has not necessarily indexed anything.</> },
+]} />
+
+:::warning
+`apply` runs `terraform apply -auto-approve` with **no confirmation prompt**,
+unlike `destroy` which requires two. Run `terraform plan` in the generated
+directory and read it before applying. Tracked in
+[issue #111](https://github.com/gleanwork/glean-indexing-sdk/issues/111).
+:::
+
+## Secrets
+
+Credentials are read from the environment at runtime and injected from the cloud
+secret store. Never bake them into the image or commit `.env`.
+
+Deployment-control variables are filtered out rather than uploaded as connector
+secrets. That filter is a blocklist, so a newly added config key could be treated
+as a secret unexpectedly — review `secrets list` output after upgrading
+([issue #120](https://github.com/gleanwork/glean-indexing-sdk/issues/120)).
+
+The generated Terraform grants the connector's service account access to those
+secrets — subject to the GCP project-scope caveat above. Review and tighten that
+binding.
+
+## Teardown
+
+```bash
+glean-deploy destroy
+```
+
+Requires two confirmations. `--keep-secrets` preserves stored secrets.
+
+## Running elsewhere
+
+Nothing about the SDK requires Kubernetes. A connector is a Python process that
+needs two environment variables, so it runs anywhere: a cron entry on a VM, a
+Lambda or Cloud Run job, an Airflow task, a GitHub Actions schedule.
+
+The generated Dockerfile is useful even if you discard the Terraform. What
+matters is that the job runs on a schedule, has credentials, exits non-zero on
+failure, and is monitored — see
+[Observability](/libraries/indexing-sdk/observability).

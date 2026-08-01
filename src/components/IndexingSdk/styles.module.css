@@ -1,0 +1,1047 @@
+/* Indexing SDK docs — design language shared with the homepage redesign (1a),
+ * the Web SDK overview, and plugin pages. Token-based, light-first; dark mode
+ * maps through --gdt-*.
+ *
+ * Two kinds of consumer:
+ *   1. IndexingSdkOverview — a designed single-component page (hero, capability
+ *      grid, comparison), mirroring WebSdkOverview.
+ *   2. diagrams.tsx — showcase elements embedded in otherwise-conventional MDX
+ *      docs pages, the way ComponentDemo is on the Web SDK component pages.
+ *
+ * Visual identity: the SDK is the "index" surface, so it borrows the index
+ * category tint (--gdt-cat-index-*) the same way cookbook recipes do. Blue
+ * (--gdt-primary) marks the code you write; green marks what the SDK does for
+ * you. That pairing is load-bearing in Pipeline and repeats in Stages.
+ */
+
+.page {
+  margin: 0;
+  font-family: var(--gdt-font-text);
+}
+
+/* ------------------------------------------------------- overview: sections */
+
+.section {
+  margin-top: 52px;
+}
+
+.sectionTitle {
+  font-family: var(--gdt-font-display);
+  font-size: 26px;
+  letter-spacing: -0.5px;
+  font-weight: 700;
+  margin: 0 0 6px;
+}
+
+.sectionSub {
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: var(--gdt-text-secondary);
+  margin: 0 0 20px;
+  max-width: 660px;
+}
+
+/* ----------------------------------------------------------- overview: hero */
+
+.hero {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+  align-items: center;
+  padding: 20px 0 6px;
+}
+
+@media (max-width: 996px) {
+  .hero {
+    grid-template-columns: 1fr;
+    gap: 26px;
+  }
+}
+
+.heroEyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--gdt-primary);
+  margin-bottom: 14px;
+}
+
+.eyebrowDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 9999px;
+  background: var(--gdt-primary);
+}
+
+.heroTitle {
+  font-family: var(--gdt-font-display);
+  font-size: 38px;
+  line-height: 1.1;
+  letter-spacing: -0.8px;
+  font-weight: 700;
+  margin: 0 0 12px;
+}
+
+@media (max-width: 996px) {
+  .heroTitle {
+    font-size: 30px;
+  }
+}
+
+.heroSub {
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--gdt-text-secondary);
+  margin: 0;
+  max-width: 540px;
+}
+
+.heroCtas {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.heroPrimary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 46px;
+  padding: 0 22px;
+  border-radius: 9999px;
+  background: var(--gdt-primary);
+  color: #fff;
+  font-size: 14.5px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: background 0.15s ease;
+}
+
+.heroPrimary:hover {
+  background: var(--gdt-primary-hover);
+  color: #fff;
+  text-decoration: none;
+}
+
+.heroSecondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 46px;
+  padding: 0 22px;
+  border-radius: 9999px;
+  background: var(--gdt-card-bg);
+  border: 1px solid var(--gdt-border-dark);
+  color: var(--gdt-text-primary);
+  font-size: 14.5px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: background 0.15s ease;
+}
+
+.heroSecondary:hover {
+  background: #f4f4fb;
+  color: var(--gdt-text-primary);
+  text-decoration: none;
+}
+
+html[data-theme='dark'] .heroSecondary:hover {
+  background: var(--ifm-color-emphasis-200);
+}
+
+.install {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--gdt-border-light);
+  background: var(--gdt-bg-light);
+  cursor: pointer;
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 13px;
+  color: var(--gdt-text-primary);
+  margin-top: 16px;
+}
+
+.install:hover {
+  border-color: var(--gdt-border-dark);
+}
+
+.install code {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 13px;
+}
+
+.installCopy {
+  display: inline-flex;
+  color: var(--gdt-text-secondary);
+}
+
+.installCopyDone {
+  display: inline-flex;
+  color: var(--gdt-success);
+}
+
+/* -------------------------------------------- overview: capability grid */
+
+.capGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+@media (max-width: 996px) {
+  .capGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 700px) {
+  .capGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.capCard {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 16px;
+  border-radius: 14px;
+  border: 1px solid var(--gdt-border-light);
+  background: var(--gdt-card-bg);
+  text-decoration: none;
+  color: var(--gdt-text-primary);
+  transition:
+    border-color 0.15s ease,
+    transform 0.15s ease;
+}
+
+.capCard:hover {
+  text-decoration: none;
+  color: var(--gdt-text-primary);
+  border-color: var(--gdt-primary);
+  transform: translateY(-1px);
+}
+
+.capHead {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.capIcon {
+  width: 30px;
+  height: 30px;
+  flex: none;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--gdt-cat-index-bg);
+  color: var(--gdt-cat-index-fg);
+}
+
+.capTitle {
+  font-size: 14.5px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.capBody {
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--gdt-text-secondary);
+}
+
+.capApi {
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 11.5px;
+  color: var(--gdt-text-secondary);
+  margin-top: auto;
+  padding-top: 8px;
+}
+
+/* ------------------------------------------- overview: comparison table */
+
+.table {
+  border: 1px solid var(--gdt-border-light);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.tableHead,
+.tableRow {
+  display: grid;
+  gap: 14px;
+  padding: 11px 16px;
+  align-items: baseline;
+}
+
+.tableHead {
+  background: var(--gdt-bg-light);
+  border-bottom: 1px solid var(--gdt-border-light);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--gdt-text-secondary);
+}
+
+.tableRow {
+  border-bottom: 1px solid var(--gdt-hairline);
+  font-size: 13.5px;
+  line-height: 1.55;
+}
+
+.tableRow:last-child {
+  border-bottom: none;
+}
+
+.compareGrid {
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr) minmax(0, 1fr);
+}
+
+.compareFeature {
+  font-weight: 500;
+}
+
+.compareCell {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  color: var(--gdt-text-secondary);
+  font-size: 13px;
+}
+
+.compareCell svg {
+  flex: none;
+  margin-top: 2px;
+}
+
+.compareYes {
+  color: var(--gdt-text-primary);
+}
+
+@media (max-width: 900px) {
+  .compareGrid {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .tableHead.compareGrid {
+    display: none;
+  }
+
+  .compareFeature {
+    font-weight: 600;
+  }
+}
+
+.tableNote {
+  font-size: 13.5px;
+  line-height: 1.65;
+  color: var(--gdt-text-secondary);
+  margin: 16px 0 0;
+}
+
+/* ============================================================================
+ * Showcase elements embedded in MDX docs pages. These sit in normal article
+ * flow, so they carry their own vertical rhythm.
+ * ==========================================================================*/
+
+/* ------------------------------------------------------------- pipeline */
+
+.canvas {
+  padding: 26px 22px;
+  margin: 0 0 1.6rem;
+  border-radius: 18px;
+  border: 1px solid var(--gdt-border-light);
+  background-color: var(--gdt-bg-light);
+  background-image: radial-gradient(#e0e2ea 1px, transparent 1px);
+  background-size: 16px 16px;
+}
+
+html[data-theme='dark'] .canvas {
+  background-image: radial-gradient(
+    var(--ifm-color-emphasis-300) 1px,
+    transparent 1px
+  );
+}
+
+.flow {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+}
+
+.flowArrow {
+  display: flex;
+  align-items: center;
+  padding: 0 4px;
+  color: var(--gdt-primary);
+}
+
+.node {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 12px;
+  border-radius: 14px;
+  border: 1px solid var(--gdt-border-light);
+  background: var(--gdt-card-bg);
+  text-align: center;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* Owner ring: blue = you write it, green = the SDK does it. */
+.nodeYou {
+  border: 1.5px solid var(--gdt-primary);
+  box-shadow: 0 8px 18px -6px rgba(52, 60, 237, 0.3);
+}
+
+.nodeSdk {
+  border: 1.5px solid var(--gdt-cat-index-fg);
+}
+
+.nodeIcon {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--gdt-bg-mid);
+  color: var(--gdt-text-primary);
+}
+
+.nodeYou .nodeIcon {
+  background: var(--gdt-primary);
+  color: #fff;
+}
+
+.nodeSdk .nodeIcon {
+  background: var(--gdt-cat-index-bg);
+  color: var(--gdt-cat-index-fg);
+}
+
+.nodeLabel {
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.nodeLabel code {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 13px;
+}
+
+.nodeCaption {
+  font-size: 11.5px;
+  line-height: 1.4;
+  color: var(--gdt-text-secondary);
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--gdt-border-light);
+}
+
+.legendItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12.5px;
+  color: var(--gdt-text-secondary);
+}
+
+.legendSwatch {
+  width: 11px;
+  height: 11px;
+  border-radius: 4px;
+  flex: none;
+}
+
+.swatchYou {
+  background: var(--gdt-primary);
+}
+
+.swatchSdk {
+  background: var(--gdt-cat-index-fg);
+}
+
+.swatchExternal {
+  background: var(--gdt-border-dark);
+}
+
+@media (max-width: 760px) {
+  .flow {
+    flex-direction: column;
+  }
+
+  .flowArrow {
+    justify-content: center;
+    padding: 6px 0;
+    transform: rotate(90deg);
+  }
+}
+
+/* ---------------------------------------------------- lifecycle stages */
+
+.stages {
+  position: relative;
+  padding-left: 38px;
+  margin: 0 0 1.6rem;
+}
+
+.stagesRail {
+  position: absolute;
+  left: 11px;
+  top: 10px;
+  bottom: 10px;
+  width: 2px;
+  background: var(--gdt-border-light);
+}
+
+.stage {
+  position: relative;
+  margin-bottom: 18px;
+}
+
+.stage:last-child {
+  margin-bottom: 0;
+}
+
+.stageNum {
+  position: absolute;
+  left: -38px;
+  width: 24px;
+  height: 24px;
+  border-radius: 9999px;
+  background: var(--gdt-primary);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.stageNumSdk {
+  background: var(--gdt-cat-index-fg);
+}
+
+.stageTitle {
+  font-size: 14.5px;
+  font-weight: 600;
+  margin: 2px 0 3px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.stageTitle code {
+  background: var(--gdt-bg-mid);
+  border: none;
+  padding: 1px 6px;
+  border-radius: 5px;
+  font-size: 13px;
+}
+
+.stageOwner {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 8px;
+  border-radius: 9999px;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.ownerYou {
+  background: var(--gdt-selected-bg);
+  color: var(--gdt-primary);
+}
+
+.ownerSdk {
+  background: var(--gdt-cat-index-bg);
+  color: var(--gdt-cat-index-fg);
+}
+
+.stageBody {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--gdt-text-secondary);
+  margin: 0;
+}
+
+.stageBody code {
+  background: var(--gdt-bg-mid);
+  border: none;
+  padding: 1px 5px;
+  border-radius: 5px;
+  font-size: 12.5px;
+}
+
+/* -------------------------------------------------------- phase cards */
+
+.phaseGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin: 0 0 1.6rem;
+}
+
+@media (max-width: 996px) {
+  .phaseGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.phaseCard {
+  display: flex;
+  flex-direction: column;
+  border-radius: 16px;
+  border: 1px solid var(--gdt-border-light);
+  background: var(--gdt-card-bg);
+  padding: 18px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.06);
+  text-decoration: none;
+  color: var(--gdt-text-primary);
+  transition:
+    border-color 0.15s ease,
+    transform 0.15s ease;
+}
+
+.phaseCard:hover {
+  text-decoration: none;
+  color: var(--gdt-text-primary);
+  border-color: var(--gdt-primary);
+  transform: translateY(-1px);
+}
+
+.phaseHead {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 12px;
+}
+
+.phaseNum {
+  width: 24px;
+  height: 24px;
+  flex: none;
+  border-radius: 8px;
+  background: var(--gdt-selected-bg);
+  color: var(--gdt-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.phaseName {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.phaseArrow {
+  margin-left: auto;
+  color: var(--gdt-text-secondary);
+  display: inline-flex;
+}
+
+.phaseCard:hover .phaseArrow {
+  color: var(--gdt-primary);
+}
+
+.phaseRows {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 12px;
+}
+
+.phaseRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--gdt-hairline);
+  font-size: 12.5px;
+}
+
+.phaseRow:last-child {
+  border-bottom: none;
+}
+
+.phaseRowKey {
+  color: var(--gdt-text-secondary);
+}
+
+.phaseRowVal {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 500;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 9999px;
+  flex: none;
+}
+
+.dotReal {
+  background: var(--gdt-success);
+}
+
+.dotMock {
+  background: var(--gdt-border-dark);
+}
+
+.phaseBody {
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--gdt-text-secondary);
+  margin: 0 0 12px;
+}
+
+.phaseAsk {
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid var(--gdt-hairline);
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--gdt-text-primary);
+  font-style: italic;
+}
+
+/* ---------------------------------------------------- connector matrix */
+
+.matrix {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+  margin: 0 0 1.6rem;
+}
+
+@media (max-width: 900px) {
+  .matrix {
+    grid-template-columns: 1fr;
+  }
+}
+
+.matrixCard {
+  border-radius: 16px;
+  border: 1px solid var(--gdt-border-light);
+  background: var(--gdt-card-bg);
+  padding: 18px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.06);
+}
+
+.matrixHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.matrixIcon {
+  width: 32px;
+  height: 32px;
+  flex: none;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--gdt-cat-index-bg);
+  color: var(--gdt-cat-index-fg);
+}
+
+.matrixName {
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.matrixWhen {
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--gdt-text-primary);
+  margin: 0 0 12px;
+}
+
+.matrixMeta {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--gdt-hairline);
+}
+
+.matrixMetaRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 0;
+  font-size: 12.5px;
+  border-bottom: 1px solid var(--gdt-hairline);
+}
+
+.matrixMetaRow:last-child {
+  border-bottom: none;
+}
+
+.matrixMetaKey {
+  color: var(--gdt-text-secondary);
+}
+
+.matrixMetaVal {
+  font-weight: 500;
+  text-align: right;
+}
+
+.matrixMetaVal code {
+  background: var(--gdt-bg-mid);
+  border: none;
+  padding: 1px 5px;
+  border-radius: 5px;
+  font-size: 11.5px;
+}
+
+/* ============================================================================
+ * Agent install block — the primary CTA on the overview.
+ * ==========================================================================*/
+
+.installBlock {
+  border-radius: 16px;
+  border: 1px solid var(--gdt-border-light);
+  background: var(--gdt-card-bg);
+  padding: 16px;
+  margin: 0 0 1.6rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.06);
+}
+
+.hostTabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 14px;
+}
+
+.hostTab {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 13px;
+  border-radius: 9px;
+  border: 1px solid transparent;
+  background: none;
+  color: var(--gdt-text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.hostTab:hover {
+  background: var(--gdt-bg-mid);
+}
+
+.hostTabActive {
+  border-color: var(--gdt-border-dark);
+  background: var(--gdt-bg-mid);
+  color: var(--gdt-text-primary);
+}
+
+.hostIcon {
+  display: inline-flex;
+  width: 16px;
+  height: 16px;
+  flex: none;
+}
+
+.hostIcon svg {
+  width: 100%;
+  height: 100%;
+}
+
+html[data-theme='dark'] .hostIconMono svg {
+  filter: invert(1) hue-rotate(180deg);
+}
+
+/* Cursor has no plugin CLI — click-through steps instead of a command. */
+.hostSteps {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px 18px;
+  border-radius: 12px;
+  background: var(--gdt-bg-light);
+}
+
+.hostStep {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 13.5px;
+  line-height: 1.55;
+}
+
+.hostStepNum {
+  width: 20px;
+  height: 20px;
+  flex: none;
+  margin-top: 1px;
+  border-radius: 9999px;
+  background: var(--gdt-primary);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.hostStepNote {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: var(--gdt-text-secondary);
+}
+
+.hostStepNote svg {
+  flex: none;
+}
+
+.installFooter {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--gdt-hairline);
+}
+
+.installFooterItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--gdt-text-secondary);
+}
+
+.installFooterItem svg {
+  flex: none;
+  color: var(--gdt-text-secondary);
+}
+
+.installFooterItem code {
+  background: var(--gdt-bg-mid);
+  border: none;
+  padding: 1px 6px;
+  border-radius: 5px;
+  font-size: 12px;
+  color: var(--gdt-text-primary);
+}
+
+/* Two-path split: agent (recommended) vs by hand. */
+.paths {
+  display: grid;
+  grid-template-columns: 1.25fr 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+@media (max-width: 996px) {
+  .paths {
+    grid-template-columns: 1fr;
+  }
+}
+
+.pathCard {
+  border-radius: 16px;
+  border: 1px solid var(--gdt-border-light);
+  background: var(--gdt-card-bg);
+  padding: 20px;
+}
+
+.pathCardMuted {
+  background: var(--gdt-bg-light);
+}
+
+.pathBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 22px;
+  padding: 0 10px;
+  margin-bottom: 10px;
+  border-radius: 9999px;
+  background: var(--gdt-selected-bg);
+  color: var(--gdt-primary);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.pathBadgeMuted {
+  background: var(--gdt-bg-mid);
+  color: var(--gdt-text-secondary);
+}
+
+.pathTitle {
+  font-family: var(--gdt-font-display);
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.2px;
+  margin: 0 0 6px;
+}
+
+.pathBody {
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--gdt-text-secondary);
+  margin: 0 0 14px;
+}
+
+.pathLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--gdt-primary);
+  text-decoration: none;
+}
+
+.pathLink:hover {
+  text-decoration: underline;
+  color: var(--gdt-primary);
+}

@@ -1,0 +1,200 @@
+---
+title: Observability
+description: Structured logging, metrics, and cloud provider plugins for Glean connectors
+---
+
+Every connector base class creates a `ConnectorObservability` instance and wires
+it into the indexing lifecycle. You get stage timings, item counts, and
+structured logs without adding any instrumentation.
+
+```python
+connector.index_data(mode=IndexingMode.FULL)
+print(connector.observability.get_metrics_summary())
+```
+
+## What you get for free
+
+`index_data()` times each stage separately and records counts:
+
+| Metric | Meaning |
+|---|---|
+| `data_fetch` | Time in your data client. |
+| `data_transform` | Time in `transform()`. |
+| `data_upload` | Time uploading to Glean. |
+| `items_fetched` | Records returned by the source. |
+| `documents_transformed` | Documents produced by `transform()`. |
+| `documents_indexed` | Documents handed to the uploader. |
+| `indexing_errors` | Incremented when the run raises. |
+
+Separate stage timings are the main diagnostic tool for a slow connector — see
+[Batching and throughput](/libraries/indexing-sdk/push/batching).
+
+The uploader and the pull HTTP client add more when wired up: upload batch
+sizes, throughput, API request latency and counts, retries, and crawl
+success/failure.
+
+## Structured logging
+
+```python
+from glean.indexing.observability import setup_connector_logging
+
+setup_connector_logging("company_wiki", log_level="INFO")
+```
+
+Structured JSON logging is on by default, which is what makes logs queryable
+once shipped to an aggregator — "show me every event for document `page_123`"
+needs fields, not prose.
+
+| Argument | Default | Purpose |
+|---|---|---|
+| `connector_name` | — | Identifies the connector in every record. |
+| `log_level` | `"INFO"` | Standard level name. |
+| `log_format` | `None` | Custom format string; overrides structured logging. |
+| `use_structured_logging` | `True` | Emit JSON. |
+| `formatter` | `None` | Custom `logging.Formatter`; overrides the two above. |
+| `extra_handlers` | `None` | Additional handlers. |
+| `logger_provider` | `None` | A cloud logging provider. |
+
+`StructuredFormatter` and `CompactStructuredFormatter` are available if you want
+to attach them elsewhere.
+
+## Metrics providers
+
+`MetricsProvider` is the extension point. The default is
+`NoOpMetricsProvider` — metrics are recorded in-process for
+`get_metrics_summary()` but not exported.
+
+```python
+from glean.indexing.observability import ConnectorObservability, InMemoryMetricsProvider
+
+observability = ConnectorObservability(
+    connector_name="company_wiki",
+    datasource="company_wiki",
+    crawl_mode="full",
+    metrics_provider=InMemoryMetricsProvider(),
+)
+```
+
+| Provider | Use |
+|---|---|
+| `NoOpMetricsProvider` | Default. No export. |
+| `InMemoryMetricsProvider` | Local development and tests. Exposes `get_metrics()` and `get_metric_history()`. |
+| `CloudWatchMetricsProvider` | AWS. Requires the `aws` extra. |
+| `CloudMonitoringProvider` | GCP. Requires the `gcp` extra. |
+
+Each observability instance gets a `run_id` (a UUID unless you pass one), which
+is how you correlate every log line and metric from a single crawl.
+
+:::warning
+`InMemoryMetricsProvider` has a data race under concurrent uploads, and parallel
+uploads are on by default (`upload_max_workers=5`). Counters can undercount.
+It's fine for Phase 1 tests; don't assert on exact counts under concurrency.
+`NoOpMetricsProvider` and the cloud providers are unaffected. Tracked in
+[issue #107](https://github.com/gleanwork/glean-indexing-sdk/issues/107).
+:::
+
+## AWS
+
+```bash
+pip install "glean-indexing-sdk[aws]"
+```
+
+```python
+from glean.indexing.observability import ConnectorObservability, setup_connector_logging
+from glean.indexing.observability.plugins.aws import (
+    CloudWatchLogsProvider,
+    CloudWatchMetricsProvider,
+)
+
+setup_connector_logging(
+    "company_wiki",
+    logger_provider=CloudWatchLogsProvider(log_group="/glean/connectors"),
+)
+
+observability = ConnectorObservability(
+    connector_name="company_wiki",
+    metrics_provider=CloudWatchMetricsProvider(
+        namespace="GleanConnectors",
+        region_name="us-east-1",
+        dimensions={"connector": "company_wiki"},
+    ),
+)
+```
+
+## GCP
+
+```bash
+pip install "glean-indexing-sdk[gcp]"
+```
+
+```python
+from glean.indexing.observability.plugins.gcp import (
+    CloudLoggingProvider,
+    CloudMonitoringProvider,
+)
+```
+
+:::info
+The plugin packages import lazily. If the extra isn't installed, importing the
+plugin module emits a `UserWarning` naming the missing extra rather than raising
+— so a misconfigured deployment degrades to no telemetry instead of crashing.
+Check for that warning if metrics stop appearing.
+:::
+
+:::warning
+The cloud provider plugins are currently tested only against mocks, never
+against real CloudWatch or Cloud Monitoring APIs. Validate them in a staging
+environment before relying on them for production alerting. Tracked in
+[issue #108](https://github.com/gleanwork/glean-indexing-sdk/issues/108).
+:::
+
+## Custom providers
+
+Subclass `MetricsProvider` and implement `emit_metric()` and `flush()`:
+
+```python
+from glean.indexing.observability import MetricsProvider, MetricType
+
+
+class StatsdMetricsProvider(MetricsProvider):
+    def emit_metric(self, name, value, metric_type=MetricType.GAUGE, labels=None):
+        ...
+
+    def flush(self) -> None:
+        ...
+```
+
+`record_counter()`, `record_gauge()`, and `record_histogram()` are provided on
+the base class in terms of `emit_metric()`.
+
+## Manual instrumentation
+
+```python
+obs = connector.observability
+
+obs.start_timer("enrichment")
+enrich(documents)
+obs.end_timer("enrichment")
+
+obs.record_metric("enriched_documents", len(documents))
+obs.increment_counter("enrichment_failures")
+```
+
+`PerformanceTracker` (context manager), `@with_observability` (class decorator
+for automatic method logging), and `@track_crawl_progress` are also available.
+
+:::info
+Custom fields passed to structured logging cannot collide with reserved
+`LogRecord` attribute names — `ConnectorObservability` raises `ValueError`
+listing the conflicts rather than producing corrupted records.
+:::
+
+## What to alert on
+
+- `indexing_errors` above zero, or a non-zero process exit.
+- A crawl that hasn't succeeded within its expected window.
+- `documents_indexed` dropping sharply run over run — the signal for a partial
+  crawl that's about to delete documents as stale.
+
+That last one is the alert worth having. See
+[Indexing modes](/libraries/indexing-sdk/concepts/indexing-modes).
