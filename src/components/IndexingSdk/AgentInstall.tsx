@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { getClientIcon } from '@gleanwork/mcp-config-schema/browser';
 import TerminalPanel from '../home/TerminalPanel';
 import { icon } from './diagrams';
+import { tintSession } from './tintSession';
 import styles from './styles.module.css';
 
 /**
@@ -109,6 +110,7 @@ export default function AgentInstall(): React.ReactElement {
           copy
           filename="terminal"
           label={host.label}
+          tinter={tintSession}
         />
       ) : (
         <div className={styles.hostSteps}>

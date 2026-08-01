@@ -11,6 +11,7 @@ import {
   TESTING_PHASES,
   icon,
 } from './diagrams';
+import { tintSession } from './tintSession';
 import styles from './styles.module.css';
 
 const HERO_CODE = `$ claude plugin marketplace add gleanwork/glean-indexing-sdk
@@ -317,6 +318,7 @@ export default function IndexingSdkOverview(): React.ReactElement {
             code={HERO_CODE}
             filename="terminal"
             label="Connector Builder"
+            tinter={tintSession}
           />
         </div>
       </div>
