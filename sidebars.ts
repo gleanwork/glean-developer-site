@@ -454,6 +454,151 @@ const baseSidebars: SidebarsConfig = {
         },
         {
           type: 'category',
+          label: 'Indexing SDK',
+          customProps: {
+            // Gated until the glean-indexing-sdk 1.0.0 release. Enable the
+            // `indexing-sdk` flag (FF_INDEXING_SDK=true locally) to show it.
+            flag: 'indexing-sdk',
+          },
+          link: {
+            type: 'doc',
+            id: 'libraries/indexing-sdk/index',
+          },
+          items: [
+            {
+              type: 'doc',
+              id: 'libraries/indexing-sdk/connector-builder',
+              label: 'Connector Builder',
+            },
+            {
+              type: 'doc',
+              id: 'libraries/indexing-sdk/quickstart',
+              label: 'Quickstart',
+            },
+            {
+              type: 'category',
+              label: 'Concepts',
+              items: [
+                {
+                  type: 'doc',
+                  id: 'libraries/indexing-sdk/concepts/architecture',
+                  label: 'Architecture',
+                },
+                {
+                  type: 'doc',
+                  id: 'libraries/indexing-sdk/concepts/connector-types',
+                  label: 'Connector Types',
+                },
+                {
+                  type: 'doc',
+                  id: 'libraries/indexing-sdk/concepts/indexing-modes',
+                  label: 'Indexing Modes',
+                },
+              ],
+            },
+            {
+              type: 'category',
+              label: 'Pull Integrations',
+              items: [
+                {
+                  type: 'doc',
+                  id: 'libraries/indexing-sdk/pull/data-clients',
+                  label: 'Data Clients',
+                },
+                {
+                  type: 'doc',
+                  id: 'libraries/indexing-sdk/pull/http-client',
+                  label: 'HTTP Client',
+                },
+                {
+                  type: 'doc',
+                  id: 'libraries/indexing-sdk/pull/pagination',
+                  label: 'Pagination',
+                },
+                {
+                  type: 'doc',
+                  id: 'libraries/indexing-sdk/pull/rate-limiting',
+                  label: 'Rate Limiting',
+                },
+              ],
+            },
+            {
+              type: 'category',
+              label: 'Push & Indexing',
+              items: [
+                {
+                  type: 'doc',
+                  id: 'libraries/indexing-sdk/push/uploader',
+                  label: 'PushUploader',
+                },
+                {
+                  type: 'doc',
+                  id: 'libraries/indexing-sdk/push/batching',
+                  label: 'Batching & Throughput',
+                },
+                {
+                  type: 'doc',
+                  id: 'libraries/indexing-sdk/push/error-handling',
+                  label: 'Error Handling',
+                },
+              ],
+            },
+            {
+              type: 'doc',
+              id: 'libraries/indexing-sdk/permissions',
+              label: 'Permissions',
+            },
+            {
+              type: 'category',
+              label: 'Testing',
+              items: [
+                {
+                  type: 'doc',
+                  id: 'libraries/indexing-sdk/testing/overview',
+                  label: 'Overview',
+                },
+                {
+                  type: 'doc',
+                  id: 'libraries/indexing-sdk/testing/unit',
+                  label: 'Unit Testing',
+                },
+                {
+                  type: 'doc',
+                  id: 'libraries/indexing-sdk/testing/integration',
+                  label: 'Integration Testing',
+                },
+                {
+                  type: 'doc',
+                  id: 'libraries/indexing-sdk/testing/end-to-end',
+                  label: 'End-to-End Testing',
+                },
+              ],
+            },
+            {
+              type: 'doc',
+              id: 'libraries/indexing-sdk/observability',
+              label: 'Observability',
+            },
+            {
+              type: 'doc',
+              id: 'libraries/indexing-sdk/status-and-debugging',
+              label: 'Status & Debugging',
+            },
+            {
+              type: 'category',
+              label: 'Deployment',
+              items: [
+                {
+                  type: 'doc',
+                  id: 'libraries/indexing-sdk/deployment/overview',
+                  label: 'Overview',
+                },
+              ],
+            },
+          ],
+        },
+        {
+          type: 'category',
           label: 'API Clients',
           items: [
             {
