@@ -184,6 +184,15 @@ export const recipeArchitectureNodeSchema = z.strictObject({
 export const recipeDemoQuerySchema = z.strictObject({
   query: z.string().min(1),
   expectedBehavior: z.string().min(1),
+  /**
+   * Set when this query's answer is expected to *differ* by the caller's
+   * permissions — one user gets a cited answer, another gets nothing. A verify
+   * script needs to know which query that is, and it can't be inferred from
+   * `expectedBehavior`: that's prose, and matching on it misfires (a query
+   * whose behavior reads "permissions don't restrict it" matched a naive
+   * /permission/ test and then demanded a refusal for a public document).
+   */
+  permissionDifferentiated: z.boolean().optional(),
 });
 
 export const recipeMetaSchema = z.strictObject({

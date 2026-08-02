@@ -1,13 +1,12 @@
 /** Canned, fictional engineering-portal data rendered by the Web SDK mocks.
- * Mirrors the cookbook's Acme Corp story (services, runbooks, ownership,
- * on-call — see brand/FICTION.md in the glean-cookbook repo) so the
- * previews and the recipes tell one story. Nothing here touches a Glean
- * backend.
+ * Mirrors the sample corpus the glean-cookbook repo's index-custom-source
+ * recipe seeds (services, runbooks, ownership, on-call) so the previews and
+ * the recipes tell one story. Nothing here touches a Glean backend.
  *
  * Composition is fidelity-checked against real widget captures taken via
  * scripts/websdk-harness (2026-07-21, SDK 2.4.0). */
 
-export const PORTAL_URL = 'portal.acme.internal';
+export const PORTAL_URL = 'portal.sample.internal';
 
 export const DEMO_QUERY = 'payments service runbook';
 

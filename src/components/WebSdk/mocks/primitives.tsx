@@ -136,7 +136,7 @@ export function PortalPage({
       <div className={styles.portalNav}>
         <span className={styles.portalLogo}>
           <span className={styles.portalLogoMark} />
-          Acme Corp
+          Sample Corp
         </span>
         <span className={styles.portalNavLinks}>
           <span
