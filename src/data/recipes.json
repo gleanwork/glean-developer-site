@@ -639,12 +639,12 @@
         "Agent builder access in your Glean instance",
         "Permission to register a custom tool (or admin help)",
         "A Glean token with AGENTS scope for API invocation",
-        "Two real users on your instance: one who should be allowed to file tickets, one who shouldn't"
+        "Your own email, to put on (and take off) the tool server's allow-list between the two runs"
       ],
       "demoQueries": [
         {
           "query": "Summarize our open incidents and file a tracking ticket",
-          "expectedBehavior": "Run as the user on the tool server's allow-list: the agent summarizes and the governed tool call succeeds (200, a real ticket id). Run as a user not on it: the tool returns 403 and the agent falls back to a read-only summary rather than failing the run. The governance check must actually fire, not be assumed."
+          "expectedBehavior": "With your email on the tool server's allow-list: the agent summarizes and the governed tool call succeeds (200, a real ticket id). With it removed: the tool returns 403 and the agent falls back to a read-only summary rather than failing the run. The governance check must actually fire, not be assumed."
         }
       ],
       "codeAssets": [
@@ -667,7 +667,7 @@
         },
         {
           "title": "Set the tool server's allow-list",
-          "description": "Set AUTHORIZED_EMAILS to two real users on your instance: one who should be able to file tickets, one who shouldn't. The server refuses to start on an empty allow-list, since that denies everyone and makes the permitted branch unobservable.",
+          "description": "Set AUTHORIZED_EMAILS to your own email for the first run. You'll remove it for the second run to see the denied branch — changing the allow-list is how both governance paths get demonstrated, since the agent always runs as you. The server refuses to start on an empty allow-list, since that denies everyone and makes the permitted branch unobservable.",
           "command": "cd multi-step-agent/tool-server && cp .env.example .env"
         },
         {
@@ -685,7 +685,7 @@
         },
         {
           "title": "Set credentials",
-          "description": "Fill in GLEAN_API_TOKEN, GLEAN_INSTANCE, GLEAN_AGENT_ID (the ID from the previous step), and the two user emails — GLEAN_PERMITTED_USER_EMAIL must be on the tool server's allow-list, GLEAN_DENIED_USER_EMAIL must not be.",
+          "description": "Fill in GLEAN_API_TOKEN, GLEAN_INSTANCE, and GLEAN_AGENT_ID (the ID from the previous step).",
           "command": "cd multi-step-agent/invoke-agent && cp .env.example .env"
         },
         {
@@ -695,7 +695,7 @@
         },
         {
           "title": "Verify",
-          "description": "Confirm the permitted user's ticket actually gets filed, and that the denied user gets a graceful no-write fallback summary instead of a hard failure."
+          "description": "With your email on the allow-list, confirm the ticket actually gets filed. Then restart the tool server without it and confirm the agent produces a read-only fallback summary instead of a hard failure."
         }
       ],
       "architecture": [
@@ -718,8 +718,8 @@
           "emphasized": false
         }
       ],
-      "aiPrompt": "Build the governed multi-step agent from\nhttps://developers.glean.com/cookbook/multi-step-agent\n\n1. Register the recipe's custom tool (an incident-ticket-creation HTTP\n   tool) in the Glean admin console (Admin > Platform > Tools > Add) —\n   this is a manual/admin-console step, there is no API to create a\n   tool. Upload the recipe's openapi.yaml as the tool's API spec.\n2. Create an agent in the Agent Builder (also a UI step, not an API\n   call): instructions from the recipe, retrieval on, the tool\n   attached. Copy the agent's ID.\n3. Invoke via glean.client.agents.run(agent_id=..., messages=[...],\n   http_headers={\"X-Glean-ActAs\": email}) — NOT chat.create's\n   ChatMessage/ChatMessageFragment shape; agents use Message/\n   MessageTextBlock instead. run_stream() returns raw SSE text (a\n   string), not a parsed event iterator — use run() unless you're\n   ready to parse SSE yourself.\n4. Demo both branches by running as two real users on my instance,\n   supplied as GLEAN_PERMITTED_USER_EMAIL and GLEAN_DENIED_USER_EMAIL.\n   The tool server's own allow-list is AUTHORIZED_EMAILS, so put the\n   permitted user on it and leave the denied one off. The permitted\n   user gets the ticket filed; the denied one gets a graceful no-write\n   fallback summary, because the tool server returned 403 and the\n   agent's own instructions handle that case. Don't hardcode either\n   email -- there's no seeded cast to draw one from.",
-      "llmContext": "Agents API: glean.client.agents.run(agent_id, messages, http_headers) -> AgentRunWaitResponse{run.status, messages}. messages use Message(role, content=[MessageTextBlock(text, type=ContentType.TEXT)]) — distinct from chat.create's ChatMessage/ChatMessageFragment. run_stream() returns a raw SSE string, not an iterator. Tools are registered via the admin console (upload an OpenAPI spec), not an API call. Per-user identity for a run uses the X-Glean-ActAs header on a global/admin token, same as Search. Custom tool servers receive the acting user's email via the Glean-User-Email header, which is where tool-level authorization (governance) is actually enforced for scratch-built tools.",
+      "aiPrompt": "Build the governed multi-step agent from\nhttps://developers.glean.com/cookbook/multi-step-agent\n\n1. Register the recipe's custom tool (an incident-ticket-creation HTTP\n   tool) in the Glean admin console (Admin > Platform > Tools > Add) —\n   this is a manual/admin-console step, there is no API to create a\n   tool. Upload the recipe's openapi.yaml as the tool's API spec.\n2. Create an agent in the Agent Builder (also a UI step, not an API\n   call): instructions from the recipe, retrieval on, the tool\n   attached. Copy the agent's ID.\n3. Invoke via glean.client.agents.run(agent_id=..., messages=[...])\n   — the agent runs as whoever my credential belongs to, so send no\n   impersonation header and don't ask me for an admin token. NOT\n   chat.create's\n   ChatMessage/ChatMessageFragment shape; agents use Message/\n   MessageTextBlock instead. run_stream() returns raw SSE text (a\n   string), not a parsed event iterator — use run() unless you're\n   ready to parse SSE yourself.\n4. Demo both governance branches by changing the tool server's\n   AUTHORIZED_EMAILS allow-list between runs, not by impersonating\n   anyone: once with my email on it (the ticket is filed), once\n   without (the tool returns 403 and the agent's own instructions\n   produce a read-only summary rather than failing the run). Glean\n   forwards my identity to the tool as the Glean-User-Email header,\n   which is where that authorization is enforced.",
+      "llmContext": "Agents API: glean.client.agents.run(agent_id, messages) -> AgentRunWaitResponse{run.status, messages}. messages use Message(role, content=[MessageTextBlock(text, type=ContentType.TEXT)]) — distinct from chat.create's ChatMessage/ChatMessageFragment. run_stream() returns a raw SSE string, not an iterator. Tools are registered via the admin console (upload an OpenAPI spec), not an API call. A run executes as the identity behind the credential; there is no impersonation header to add and no admin token needed. Custom tool servers receive the acting user's email via the Glean-User-Email header, which is where tool-level authorization (governance) is actually enforced for scratch-built tools.",
       "goDependency": false,
       "featured": true,
       "tags": [
@@ -908,7 +908,7 @@
             },
             {
               "title": "Verify",
-              "description": "Confirm the printed answer carries numbered citations with real titles and URLs. Re-run with --act-as <restricted-user-email> (requires a global/admin token) and confirm an HR-only query returns no fabricated answer for that user."
+              "description": "Confirm the printed answer carries numbered citations with real titles and URLs. Then ask for something another team owns: retrieval returns nothing and the app must say so rather than answering from the model's own knowledge."
             }
           ]
         },
@@ -936,7 +936,7 @@
             },
             {
               "title": "Verify",
-              "description": "Confirm the printed answer carries numbered citations with real titles and URLs. Re-run with -- \"<question>\" --act-as <restricted-user-email> (requires a global/admin token) and confirm an HR-only query returns no fabricated answer for that user."
+              "description": "Confirm the printed answer carries numbered citations with real titles and URLs. Then ask for something another team owns: retrieval returns nothing and the app must say so rather than answering from the model's own knowledge."
             }
           ]
         }
@@ -968,8 +968,8 @@
           "emphasized": false
         }
       ],
-      "aiPrompt": "Build permissions-aware RAG on Glean following\nhttps://developers.glean.com/cookbook/permissions-aware-rag\n\n1. Retrieval: glean.search.query(query=..., page_size=8) — the\n   top-level Platform API method, NOT glean.client.search.query(),\n   which is a different, older surface (the Client API). The Platform\n   API is Experimental as of its 2026-07 launch: set\n   X_GLEAN_INCLUDE_EXPERIMENTAL=true as an env var or every call fails\n   — there's no argument for this on search.query() itself. Collect\n   title, url, and snippets from each result — snippets is a plain\n   string[] here (no .text unwrap needed, unlike the Client API).\n2. Prompt the LLM with ONLY those snippets; require inline [n] citations\n   mapped back to the result URLs.\n3. Per-user enforcement needs no code at all: the caller's own\n   credential IS the permission boundary, so results are already\n   filtered to what that person can see. With a token from the Glean\n   Authorization Server, send no extra headers — no X-Glean-Auth-Type,\n   no X-Glean-ActAs. Do not add impersonation. (Those exist for\n   different setups: an external-IdP token needs X-Glean-Auth-Type:\n   OAUTH, and a service architecture holding one global token adds\n   X-Glean-ActAs to impersonate per request. Neither is this recipe.)\n4. Because retrieval is already filtered, the code that matters is what\n   happens when it comes back EMPTY: the app must say it has no\n   information, never answer from the model's own knowledge. A confident\n   answer with no sources is the failure mode this whole architecture\n   exists to prevent.\n5. README must state the differentiator: no vector DB, no ACL\n   mirroring, no re-sync — Glean is the governed retrieval layer.\n\nUse claude-sonnet-5 via the anthropic SDK if I don't specify a\nprovider; keep the LLM call swappable.",
-      "llmContext": "Platform API search (data-first retrieval, distinct from the Client API's glean.client.search.query): glean.search.query(query, page_size, http_headers) -> PlatformSearchResponse. Result shape: results[].title, results[].url, results[].snippets (string[], not snippet objects). Experimental since its 2026-07-14 public launch — requires X_GLEAN_INCLUDE_EXPERIMENTAL=true (env var, read automatically by the SDK) on every call or it 4xxs. Per-user enforcement is still the X-Glean-ActAs HTTP header on a global/admin token, not an SDK parameter, same as the Client API. Per-user filtering needs no headers: with a token from the Glean Authorization Server the caller's own credential is the permission boundary. Do not add X-Glean-ActAs -- that is for a service architecture holding one global token, it applies to global tokens only, and it is spelled X-Glean-ActAs rather than the plausible-looking X-Glean-Act-As (Glean's own Web SDK bundle and every doc occurrence use the former; a global token sent the latter fails with 400 Required header missing). X-Glean-Auth-Type: OAUTH is likewise only needed for external-IdP tokens. The verifiable claim for this recipe is that an empty retrieval produces a refusal rather than a fabricated answer.",
+      "aiPrompt": "Build permissions-aware RAG on Glean following\nhttps://developers.glean.com/cookbook/permissions-aware-rag\n\n1. Retrieval: glean.search.query(query=..., page_size=8) — the\n   top-level Platform API method, NOT glean.client.search.query(),\n   which is a different, older surface (the Client API). The Platform\n   API is Experimental as of its 2026-07 launch: set\n   X_GLEAN_INCLUDE_EXPERIMENTAL=true as an env var or every call fails\n   — there's no argument for this on search.query() itself. Collect\n   title, url, and snippets from each result — snippets is a plain\n   string[] here (no .text unwrap needed, unlike the Client API).\n2. Prompt the LLM with ONLY those snippets; require inline [n] citations\n   mapped back to the result URLs.\n3. Per-user enforcement needs no code at all: the caller's own\n   credential IS the permission boundary, so results come back already\n   filtered to what that person can see. Send no extra headers, and do\n   not add impersonation of any kind.\n4. Because retrieval is already filtered, the code that matters is what\n   happens when it comes back EMPTY: the app must say it has no\n   information, never answer from the model's own knowledge. A confident\n   answer with no sources is the failure mode this whole architecture\n   exists to prevent.\n5. README must state the differentiator: no vector DB, no ACL\n   mirroring, no re-sync — Glean is the governed retrieval layer.\n\nUse claude-sonnet-5 via the anthropic SDK if I don't specify a\nprovider; keep the LLM call swappable.",
+      "llmContext": "Platform API search (data-first retrieval, distinct from the Client API's glean.client.search.query): glean.search.query(query, page_size, http_headers) -> PlatformSearchResponse. Result shape: results[].title, results[].url, results[].snippets (string[], not snippet objects). Experimental since its 2026-07-14 public launch — requires X_GLEAN_INCLUDE_EXPERIMENTAL=true (env var, read automatically by the SDK) on every call or it 4xxs. Per-user filtering needs no headers: with a token from the Glean Authorization Server the caller's own credential is the permission boundary. Send no impersonation header; that belongs to a different architecture and does not apply here. The verifiable claim for this recipe is that an empty retrieval produces a refusal rather than a fabricated answer.",
       "goDependency": false,
       "featured": true,
       "tags": [
