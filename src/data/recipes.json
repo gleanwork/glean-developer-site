@@ -31,7 +31,7 @@
       "prerequisites": [
         "A published auto agent with a chat-message trigger (text input only)",
         "The agent's A2A card URL + bearer token from the agent Share dialog",
-        "Python 3.10+ with a2a-sdk pinned < 1.0 (server speaks A2A 0.3 today)"
+        "uv with a2a-sdk pinned < 1.0 (server speaks A2A 0.3 today)"
       ],
       "demoQueries": [
         {
@@ -53,18 +53,14 @@
           "command": "npx tiged --mode=git gleanwork/glean-cookbook/recipes/a2a-client a2a-client"
         },
         {
-          "title": "Install dependencies",
-          "description": "Pins a2a-sdk below 1.0 — Glean serves A2A spec 0.3 today; 1.x clients won't interop until the server upgrades.",
-          "command": "cd a2a-client && pip install -r requirements.txt"
-        },
-        {
           "title": "Set credentials",
           "description": "Fill in GLEAN_A2A_CARD_URL and GLEAN_A2A_TOKEN from the agent's Share → A2A dialog — this is a per-agent bearer token, not the general Glean OAuth/token chain.",
           "command": "cp .env.example .env"
         },
         {
           "title": "Run it",
-          "command": "python main.py"
+          "description": "Dependencies are declared inline (PEP 723) and locked, so uv installs them into an isolated environment on first run — no requirements.txt, venv, or activate step.",
+          "command": "cd a2a-client && uv run main.py"
         },
         {
           "title": "Verify",
@@ -536,7 +532,7 @@
       ],
       "prerequisites": [
         "Admin access to create a custom datasource and Indexing API token",
-        "Python 3.10+ (uses glean-indexing-sdk)"
+        "uv (uses glean-indexing-sdk)"
       ],
       "demoQueries": [
         {
@@ -570,17 +566,13 @@
           "command": "mkdir -p index-custom-source/recipes/index-custom-source index-custom-source/acme-corpus\nnpx tiged --mode=git gleanwork/glean-cookbook/recipes/index-custom-source index-custom-source/recipes/index-custom-source\nnpx tiged --mode=git gleanwork/glean-cookbook/acme-corpus index-custom-source/acme-corpus"
         },
         {
-          "title": "Install dependencies",
-          "command": "cd index-custom-source/recipes/index-custom-source && pip install -r requirements.txt"
-        },
-        {
           "title": "Set credentials",
           "description": "Export GLEAN_INDEXING_API_TOKEN and GLEAN_SERVER_URL — this recipe has no .env.example, it reads directly from the environment (see the Authentication section below)."
         },
         {
           "title": "Run it",
-          "description": "Registers the custom datasource and bulk-indexes documents/people with real per-document permissions — never allow-all.",
-          "command": "python seed.py"
+          "description": "Dependencies are declared inline (PEP 723) and locked, so uv installs them into an isolated environment on first run — no requirements.txt, venv, or activate step.",
+          "command": "cd index-custom-source/recipes/index-custom-source && uv run seed.py"
         },
         {
           "title": "Verify",
@@ -675,13 +667,9 @@
           "command": "npx tiged --mode=git gleanwork/glean-cookbook/recipes/multi-step-agent multi-step-agent"
         },
         {
-          "title": "Install dependencies",
-          "command": "cd multi-step-agent/tool-server && pip install -r requirements.txt && cd ../invoke-agent && pip install -r requirements.txt"
-        },
-        {
           "title": "Run the tool server",
           "description": "Listens on port 8080. Keep this running in its own terminal — the agent calls it over HTTP once registered.",
-          "command": "cd multi-step-agent/tool-server && python server.py"
+          "command": "cd multi-step-agent/tool-server && uv run server.py"
         },
         {
           "title": "Register the tool",
@@ -698,7 +686,8 @@
         },
         {
           "title": "Run it",
-          "command": "python main.py"
+          "description": "Dependencies are declared inline (PEP 723) and locked, so uv installs them into an isolated environment on first run — no requirements.txt, venv, or activate step.",
+          "command": "cd multi-step-agent/invoke-agent && uv run main.py"
         },
         {
           "title": "Verify",
@@ -880,7 +869,7 @@
         "A Glean token with SEARCH scope (global/admin token for the act-as permissions demo)",
         "X_GLEAN_INCLUDE_EXPERIMENTAL=true set (the Platform API is Experimental as of its 2026-07 launch)",
         "An LLM API key (any provider; example uses Claude)",
-        "Python 3.10+ or Node 20+"
+        "uv (for the Python path) or Node 20+"
       ],
       "demoQueries": [
         {
@@ -903,17 +892,14 @@
               "command": "npx tiged --mode=git gleanwork/glean-cookbook/recipes/permissions-aware-rag/python permissions-aware-rag"
             },
             {
-              "title": "Install dependencies",
-              "command": "cd permissions-aware-rag && pip install -r requirements.txt"
-            },
-            {
               "title": "Set credentials",
               "description": "Fill in GLEAN_API_TOKEN, GLEAN_INSTANCE, and ANTHROPIC_API_KEY, then export them into your shell — unlike the TypeScript variant, this one reads the environment directly and does not load .env automatically.",
               "command": "cp .env.example .env"
             },
             {
               "title": "Run it",
-              "command": "python main.py \"What's our PTO policy?\""
+              "description": "Dependencies are declared inline in main.py (PEP 723), so uv resolves and installs them into an isolated environment on first run — there's no requirements.txt, venv, or activate step.",
+              "command": "cd permissions-aware-rag && uv run main.py \"What's our PTO policy?\""
             },
             {
               "title": "Verify",
