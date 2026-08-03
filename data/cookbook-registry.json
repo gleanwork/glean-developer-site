@@ -12,18 +12,19 @@
     "timeEstimate": "~45 min",
     "icon": "double-arrow",
     "requiredScopes": ["AGENTS"],
-    "authMethod": ["custom"],
+    "authMethod": ["client-api-oauth-or-token"],
     "buildMethod": "scaffold",
     "languages": ["python"],
     "prerequisites": [
       "A published auto agent with a chat-message trigger (text input only)",
-      "The agent's A2A card URL + bearer token from the agent Share dialog",
-      "uv with a2a-sdk pinned < 1.0 (server speaks A2A 0.3 today)"
+      "Its agent id, from the Agent Builder URL or agents/search",
+      "An OAuth access token or Glean API token with the AGENTS scope",
+      "uv (a2a-sdk is pinned < 1.0 — see below)"
     ],
     "demoQueries": [
       {
         "query": "Who owns our most critical service?",
-        "expectedBehavior": "The agent returns a non-empty answer via the A2A message/send response (a Message or Task, not an error), and the scripted follow-up carries the same context_id, proving multi-turn works."
+        "expectedBehavior": "The agent returns a non-empty answer via the A2A message/send response (a Message or Task, not an error), the scripted follow-up carries the same context_id proving multi-turn works, and the streamed turn prints its answer once rather than repeating it per event."
       }
     ],
     "codeAssets": [
@@ -56,10 +57,11 @@
     "scaffoldActions": [],
     "architecture": [],
     "aiPrompt": "Build an A2A client for a Glean agent following\nhttps://developers.glean.com/cookbook/a2a-client\n\n1. Ask me for the agent card URL and bearer token (from the agent's\n   Share → A2A dialog).\n2. Pin a2a-sdk BELOW 1.0 (e.g. a2a-sdk==0.3.26) — Glean serves A2A\n   spec 0.3 (message/send, message/stream, tasks/get); 1.x clients\n   will not interop until the server upgrades. Note this in the\n   README.\n3. IMPORTANT: a2a-sdk's own A2AClient class (the one matching\n   message/send naming) is marked [DEPRECATED] even in the pinned\n   0.3.x release, with a runtime warning to use ClientFactory\n   instead. Use ClientFactory + Client.send_message() — do not use\n   A2AClient.\n4. Resolve the card (A2ACardResolver, bearer token via the httpx\n   client's headers), verify card.url contains /a2a/agents/.\n5. Client.send_message() is always an async iterator that yields\n   either a Message directly, or (Task, UpdateEvent) tuples for\n   task-based agents — handle both. Send a question (message/send\n   via a streaming=False client), then a follow-up reusing the\n   response's context_id to prove multi-turn, then a long question\n   via a streaming=True client. Errors: 404 = flag off or agent not\n   eligible; 403 = token scopes.",
-    "llmContext": "Per-agent A2A endpoints: /rest/api/v1/a2a/agents/{agentId} (JSON-RPC) and .../agent-card.json. GA, on by default (a2aPerAgentServerEnabled). Eligible: published auto agents, chat-message trigger, text-only. Server is A2A spec 0.3 via a2a-go; upgrade to 1.x tracked internally (EN-1972098). a2a-sdk's A2AClient class is deprecated even at 0.3.26 — use ClientFactory/ Client.send_message() instead, which unifies streaming and non-streaming behind one async-iterator method controlled by ClientConfig(streaming=bool). Message text is at message.parts[i].root.text; Task-based replies put it in task.history[-1].",
+    "llmContext": "Per-agent A2A endpoints: /rest/api/v1/a2a/agents/{agentId} (JSON-RPC) and .../agent-card.json. Verified live. An ordinary credential with the AGENTS scope is enough for both card discovery and message/send -- a per-agent token from the agent's Share dialog also works but is not required. Eligible agents: published auto agents, chat-message trigger, text-only; most agents on an instance return 404 for the card. CRITICAL version trap: the agent card advertises protocolVersion 1.0, but the server only implements the 0.3 JSON-RPC method names (message/send, message/stream, tasks/get). Verified by probing directly: SendMessage, v1/SendMessage and a2a.v1.A2AService/SendMessage all return -32601 method not found. So a2a-sdk must be pinned < 1.0 -- 1.x emits the 1.0 names and every call fails. a2a-sdk 1.x also replaced the Pydantic types with protobuf ones, so it is a migration rather than a bump. a2a-sdk's A2AClient class is deprecated even at 0.3.26 -- use ClientFactory / Client.send_message() instead, which unifies streaming and non-streaming behind one async-iterator method controlled by ClientConfig(streaming=bool). Task replies put the answer in task.artifacts[].parts[].root.text, NOT task.history[-1]: history held only the message we sent, so reading history[-1] echoes the user's own question back as the answer. Streaming events carry the answer accumulated so far rather than a delta, so print the difference or the whole answer repeats once per event. Set an explicit httpx timeout: the 5s default is far below the 20-60s a real agent takes, and it surfaces as an opaque client timeout.",
     "goDependency": false,
     "featured": false,
-    "tags": ["a2a", "interop"]
+    "tags": ["a2a", "interop"],
+    "lastVerified": "2026-08-02"
   },
   {
     "id": "build-engineering-portal",
