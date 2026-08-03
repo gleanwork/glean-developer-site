@@ -8,7 +8,10 @@
     "status": "production-pattern",
     "category": "agent",
     "level": "Intermediate",
-    "levels": { "minimal": true, "wow": false },
+    "levels": {
+      "minimal": true,
+      "wow": false
+    },
     "timeEstimate": "~45 min",
     "icon": "double-arrow",
     "requiredScopes": ["AGENTS"],
@@ -72,7 +75,10 @@
     "status": "showcase",
     "category": "portal",
     "level": "Intermediate",
-    "levels": { "minimal": true, "wow": true },
+    "levels": {
+      "minimal": true,
+      "wow": true
+    },
     "timeEstimate": "~30 min",
     "requiredScopes": ["SEARCH", "CHAT"],
     "authMethod": [
@@ -162,7 +168,10 @@
     "status": "showcase",
     "category": "search",
     "level": "Beginner",
-    "levels": { "minimal": true, "wow": true },
+    "levels": {
+      "minimal": true,
+      "wow": true
+    },
     "timeEstimate": "~30 min",
     "icon": "qna",
     "requiredScopes": ["CHAT"],
@@ -202,7 +211,10 @@
             "title": "Credentials",
             "description": "Default SSO auth needs no configuration — the Web SDK relies on the user's existing browser session with Glean."
           },
-          { "title": "Run it", "command": "npm run dev" },
+          {
+            "title": "Run it",
+            "command": "npm run dev"
+          },
           {
             "title": "Verify",
             "description": "Open the printed local URL and ask \"What's our PTO policy?\" — confirm a real, cited answer renders inside Glean's chat UI."
@@ -285,7 +297,10 @@
     "status": "production-pattern",
     "category": "mcp",
     "level": "Beginner",
-    "levels": { "minimal": true, "wow": false },
+    "levels": {
+      "minimal": true,
+      "wow": false
+    },
     "timeEstimate": "~15 min",
     "requiredScopes": ["MCP"],
     "authMethod": ["custom"],
@@ -337,6 +352,100 @@
     "lastVerified": "2026-08-02"
   },
   {
+    "id": "customer-360",
+    "title": "Customer 360: an account page built from your own content",
+    "description": "One page per account — status, risks, and a drill-in chat — assembled from whatever your instance already knows about that customer. No CRM export, no separate index.",
+    "sidebarLabel": "Customer 360",
+    "surfaces": ["platform-api"],
+    "status": "showcase",
+    "category": "workflow",
+    "level": "Intermediate",
+    "levels": {
+      "minimal": true,
+      "wow": true
+    },
+    "timeEstimate": "~1 hr",
+    "icon": "layout-outlined",
+    "requiredScopes": ["SEARCH", "CHAT", "AGENTS"],
+    "authMethod": ["client-api-oauth-or-token"],
+    "buildMethod": "integrate",
+    "languages": ["typescript"],
+    "prerequisites": [
+      "An OAuth access token or Glean API token with the SEARCH and CHAT scopes",
+      "X_GLEAN_INCLUDE_EXPERIMENTAL=true set (the Platform API is Experimental as of its 2026-07 launch)",
+      "An account name your instance has content about — the app is built around it",
+      "Node 20+, and a page you can serve with a small server so the token stays server-side"
+    ],
+    "demoQueries": [
+      {
+        "query": "What's the status of our renewal with that account?",
+        "expectedBehavior": "Returns a non-empty answer citing real documents about the account you built the page around. Substitute the account name when you ask it — the page is built around whichever one you pick, so there is no fixed query text here."
+      },
+      {
+        "query": "Give me a customer summary",
+        "expectedBehavior": "Synthesizes across more than one source, with a citation per claim, rather than restating a single document."
+      },
+      {
+        "query": "What are the renewal risks?",
+        "expectedBehavior": "Either names risks grounded in cited content, or says it has none to report. It must not infer risk the sources don't support — an account with no recorded risk is a real answer, not a gap to fill."
+      }
+    ],
+    "steps": [
+      {
+        "title": "Pick a path",
+        "description": "Path A (Platform Search + Chat) builds an open-ended explorable dashboard: parallel search.query tiles and POST /api/chat for journey summary and saved prompts. Path B (Platform Agents) keeps the same page UX but runs synthesis through glean.agents.createRun against a template Account Brief agent."
+      }
+    ],
+    "scaffoldActions": [],
+    "combines": [
+      {
+        "title": "Permissions-aware RAG",
+        "surface": "Platform Search",
+        "category": "search",
+        "language": "typescript"
+      },
+      {
+        "title": "Platform Chat synthesis",
+        "surface": "Platform Chat",
+        "category": "workflow",
+        "language": "typescript"
+      },
+      {
+        "title": "Platform Agents createRun",
+        "surface": "Platform Agents",
+        "category": "agent",
+        "language": "typescript"
+      }
+    ],
+    "architecture": [
+      {
+        "label": "Account page",
+        "caption": "KPIs + tiles + journey + prompts",
+        "icon": "layout-outlined"
+      },
+      {
+        "label": "Path A: Search + Chat",
+        "caption": "glean.search.query + POST /api/chat",
+        "category": "search"
+      },
+      {
+        "label": "Path B: Agents",
+        "caption": "glean.agents.createRun",
+        "category": "agent"
+      },
+      {
+        "label": "Glean Platform API",
+        "caption": "permission-aware retrieval + synthesis",
+        "emphasized": true
+      }
+    ],
+    "aiPrompt": "Build a Customer 360 account page on Glean following\nhttps://developers.glean.com/cookbook/customer-360\n\n1. Ask me which path: (A) Platform Search + Chat or (B) Platform Agents.\n   Build the one I pick. Do NOT use Client API chat.create,\n   client.search.query, or client.agents.run.\n2. Ask me which account to build the page around, and which of my own\n   sources cover it. Do not invent an account, and do not hardcode\n   figures like ARR, seat count or renewal date — read them from\n   retrieval, and leave a field blank when nothing supports it.\n3. Layout: a KPI header, source tiles for the retrieved documents, a\n   synthesized journey summary, saved-prompt buttons, and a drill-in\n   chat. Empty tiles read \"no recent activity\" rather than \"0\".\n4. Path A: parallel glean.search.query calls for the tiles; summary\n   and follow-ups via a server-side POST /api/chat with\n   { input, stream: false, store: true } and\n   X_GLEAN_INCLUDE_EXPERIMENTAL. Parse output_text plus\n   annotations[].sources[]. The token never reaches the browser.\n5. Path B: same page; synthesis via glean.agents.createRun({ messages,\n   stream: false }, GLEAN_AGENT_ID). Document the Agent Builder\n   prerequisite, and degrade gracefully if the agent is missing or\n   unauthorized rather than failing the page.\n6. Whatever the path: when retrieval returns nothing for a tile or a\n   prompt, say so. Never let the model answer from its own knowledge —\n   a confident, uncited claim about a real customer is the worst\n   possible output for this app.\n7. Style it per the house style below: the real Glean logomark, Glean\n   Blue (#343ced) as the accent.\n8. Verify with the demo queries against the account I chose.",
+    "llmContext": "Platform-only recipe. Search: glean.search.query -> POST /api/search, results[].title/url/snippets (string[]). Chat: fetch POST /api/chat (until glean.chat.create ships); request {input, stream:false, store:true}; response output[].content[] type=output_text with annotations[].sources[]. Agents: glean.agents.createRun(request, agentId) -> POST /api/agents/{agent_id}/runs; stream:false returns PlatformAgentRunWaitResponse synchronously (no polling); messages use role USER|GLEAN_AI and content[{text,type:text}]. Experimental opt-in via X_GLEAN_INCLUDE_EXPERIMENTAL. Do NOT teach glean.client.chat.create, glean.client.search.query, or glean.client.agents.run. Tokens server-side only. The account and its facts come from the reader's own instance: nothing here may hardcode an account name, ARR, seat count or renewal date. An earlier draft of this recipe was written against a demo corpus that no longer exists, which made the page display one fictional customer's numbers regardless of what was retrieved. Treat an empty retrieval as a first-class state and render it as such -- for an app that speaks about named customers, an uncited claim is worse than a blank field.",
+    "goDependency": false,
+    "featured": false,
+    "tags": ["dual-implementation", "sales", "platform-api"]
+  },
+  {
     "id": "embed-search-chat",
     "title": "Embed search & chat in an internal app",
     "description": "Put permission-aware Glean search and chat directly inside an internal app with the Web SDK, so your team gets answers where they already work.",
@@ -345,7 +454,10 @@
     "status": "production-pattern",
     "category": "search",
     "level": "Beginner",
-    "levels": { "minimal": true, "wow": true },
+    "levels": {
+      "minimal": true,
+      "wow": true
+    },
     "timeEstimate": "~15 min (minimal)",
     "icon": "deep-research",
     "requiredScopes": ["SEARCH", "CHAT"],
@@ -494,7 +606,10 @@
     "status": "production-pattern",
     "category": "agent",
     "level": "Advanced",
-    "levels": { "minimal": true, "wow": true },
+    "levels": {
+      "minimal": true,
+      "wow": true
+    },
     "timeEstimate": "~2 hr",
     "icon": "agent",
     "requiredScopes": ["AGENTS", "TOOLS"],
@@ -597,7 +712,10 @@
     "status": "showcase",
     "category": "workflow",
     "level": "Beginner",
-    "levels": { "minimal": true, "wow": false },
+    "levels": {
+      "minimal": true,
+      "wow": false
+    },
     "timeEstimate": "~45 min",
     "icon": "lovable",
     "requiredScopes": ["CHAT"],
@@ -640,7 +758,10 @@
     "status": "showcase",
     "category": "workflow",
     "level": "Beginner",
-    "levels": { "minimal": true, "wow": false },
+    "levels": {
+      "minimal": true,
+      "wow": false
+    },
     "timeEstimate": "~45 min",
     "icon": "replit",
     "requiredScopes": ["CHAT"],
@@ -675,6 +796,99 @@
     "tags": ["no-code", "hr"]
   },
   {
+    "id": "onboarding-hub",
+    "title": "Onboarding Hub: a day-one checklist grounded in your own docs",
+    "description": "A guided first-week hub for new hires: a checklist with progress, and every step able to answer itself from your own onboarding content.",
+    "sidebarLabel": "Onboarding Hub",
+    "surfaces": ["web-sdk", "platform-api"],
+    "status": "showcase",
+    "category": "portal",
+    "level": "Intermediate",
+    "levels": {
+      "minimal": true,
+      "wow": true
+    },
+    "timeEstimate": "~45 min",
+    "icon": "layout-outlined",
+    "requiredScopes": ["CHAT"],
+    "authMethod": ["web-sdk-cookie", "client-api-oauth-or-token"],
+    "buildMethod": "integrate",
+    "languages": ["typescript"],
+    "prerequisites": [
+      "A Glean instance with your onboarding content indexed",
+      "For the Platform Chat path: a token with the CHAT scope, plus X_GLEAN_INCLUDE_EXPERIMENTAL=true",
+      "For the Web SDK path: nothing beyond SSO — the browser session carries the identity",
+      "Node 20+ for the Platform path, or any static page for the Web SDK path"
+    ],
+    "demoQueries": [
+      {
+        "query": "What should I do on my first day?",
+        "expectedBehavior": "Returns a cited answer drawn from your own onboarding documents, and the checklist reflects steps that actually appear in them rather than a hardcoded list."
+      },
+      {
+        "query": "How do I set up VPN?",
+        "expectedBehavior": "Returns a cited answer from your own IT documentation. This is the kind of question almost every company's onboarding content covers, so it works without seeding anything."
+      },
+      {
+        "query": "What's our PTO policy?",
+        "expectedBehavior": "Returns a cited answer respecting the asker's permissions — the same question from two people with different access should not return content either of them can't see."
+      },
+      {
+        "query": "Ask about a step your docs don't cover",
+        "expectedBehavior": "The hub says it has nothing on that and offers the escalation affordance, rather than inventing a plausible-sounding onboarding step.",
+        "permissionDifferentiated": false
+      }
+    ],
+    "steps": [
+      {
+        "title": "Pick a path",
+        "description": "Path A (Web SDK) renders Glean's chat UI via renderChat — fastest for a portal page with SSO. Path B (Platform Chat) calls POST /api/chat from your backend — you own every pixel and parse OpenAI Responses-style output with citation annotations."
+      }
+    ],
+    "scaffoldActions": [],
+    "combines": [
+      {
+        "title": "Embed search & chat",
+        "surface": "Web SDK",
+        "category": "search",
+        "language": "typescript"
+      },
+      {
+        "title": "Build a chatbot",
+        "surface": "Platform Chat",
+        "category": "portal",
+        "language": "typescript"
+      }
+    ],
+    "architecture": [
+      {
+        "label": "Onboarding Hub",
+        "caption": "checklist + progress + chat",
+        "icon": "layout-outlined"
+      },
+      {
+        "label": "Path A: Web SDK",
+        "caption": "renderChat — Glean owns chat UI",
+        "category": "search"
+      },
+      {
+        "label": "Path B: Platform Chat",
+        "caption": "POST /api/chat — you own the UI",
+        "category": "portal"
+      },
+      {
+        "label": "Glean",
+        "caption": "permission-aware cited answers",
+        "emphasized": true
+      }
+    ],
+    "aiPrompt": "Build an Onboarding Hub on Glean following\nhttps://developers.glean.com/cookbook/onboarding-hub\n\n1. Ask me which path: (A) Web SDK or (B) Platform Chat. Build the one\n   I pick.\n2. Build the checklist from MY onboarding content, not a fixed list:\n   retrieve the onboarding docs my instance has and derive the steps\n   from them. Ask me if you can't find any. Do not hardcode a named\n   new hire or a step count.\n3. Completion state in localStorage, with a progress ring and\n   milestone badges grouped by the categories my own docs suggest.\n4. Each step gets an \"Ask about this\" button that seeds a contextual\n   question about that step.\n5. Path A: renderChat in a sized #chat container (SSO cookie, no\n   credential handling). Re-mount with initialMessage when \"Ask about\n   this\" is clicked.\n6. Path B: server-side POST /api/chat with { input, stream: false,\n   store: true } and X_GLEAN_INCLUDE_EXPERIMENTAL=true. Parse\n   output[0].content[0].text plus annotations[].sources[] for\n   citations — NOT Client API chat.create fragment parsing. The token\n   stays server-side.\n7. When an answer comes back empty or uncited, show the escalation\n   affordance (an IT or HR channel) instead of rendering nothing, and\n   never let the model answer an onboarding question from its own\n   knowledge. A new hire cannot tell an invented process from a real\n   one, which makes fabrication the most damaging failure here.\n8. Style it per the house style below: the real Glean logomark, Glean\n   Blue (#343ced) as the accent.\n9. Verify with the demo queries against my own content.",
+    "llmContext": "Platform Chat (Path B): POST /api/chat, OpenAI Responses-style. Request: { input: string, stream?: boolean, store?: boolean }. Response: output[].content[].text + annotations[].sources[] (document/person/file/custom_entity). Experimental — requires X_GLEAN_INCLUDE_EXPERIMENTAL=true and backend platform.apiMigratedEndpointsEnabled. Platform scope is CHAT_WRITE (registry uses cookbook-style CHAT). No scoping/inclusion filter fields in OpenAPI — soft-scope via corpus framing only. Until @gleanwork/api-client ships glean.chat.create, use fetch against /api/chat. Path A: Web SDK renderChat with SSO cookie; all ChatOptions fields optional. Do NOT teach Client API glean.client.chat.create or messageType === 'CONTENT' fragment parsing in this recipe. The checklist and its steps must be derived from the reader's own onboarding content. An earlier draft seeded a named new hire's nine steps from a demo corpus that no longer exists, which made the hub display one fictional person's checklist on every instance. Ask rather than invent, and treat an empty or uncited answer as a state to render -- a new hire cannot distinguish an invented process from a real one.",
+    "goDependency": false,
+    "featured": false,
+    "tags": ["dual-implementation", "portal"]
+  },
+  {
     "id": "permissions-aware-retrieval",
     "title": "Ground your own LLM app in Glean",
     "description": "Use Glean's Platform API as the retrieval layer for your own LLM app — every result ACL-filtered for the caller before it ever reaches the model.",
@@ -683,7 +897,10 @@
     "status": "production-pattern",
     "category": "search",
     "level": "Intermediate",
-    "levels": { "minimal": true, "wow": true },
+    "levels": {
+      "minimal": true,
+      "wow": true
+    },
     "timeEstimate": "~1 hr",
     "icon": "badge",
     "requiredScopes": ["SEARCH"],
