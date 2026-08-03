@@ -184,6 +184,8 @@ export const recipeArchitectureNodeSchema = z.strictObject({
 export const recipeDemoQuerySchema = z.strictObject({
   query: z.string().min(1),
   expectedBehavior: z.string().min(1),
+  /** Marks a query whose point is what the user *cannot* see — the answer changes with the caller's permissions, or an empty retrieval must produce a refusal rather than a fabrication. Present in the cookbook's own recipe schema; accepted here so a recipe that declares it doesn't fail compilation. */
+  permissionDifferentiated: z.boolean().optional(),
 });
 
 export const recipeMetaSchema = z.strictObject({

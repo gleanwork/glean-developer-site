@@ -986,6 +986,154 @@
         "differentiator"
       ],
       "permalink": "/cookbook/permissions-aware-rag"
+    },
+    {
+      "id": "rfp-responder",
+      "title": "Answer an RFP or security questionnaire",
+      "description": "Turn a customer questionnaire into grounded, cited draft answers — where every claim carries a source, unsupported rows route to a human, and nothing reaches the customer without approval.",
+      "sidebarLabel": "RFP responder",
+      "surfaces": [
+        "platform-api"
+      ],
+      "status": "showcase",
+      "category": "workflow",
+      "level": "Intermediate",
+      "levels": {
+        "minimal": true,
+        "wow": true
+      },
+      "timeEstimate": "~45 min",
+      "icon": "qna",
+      "requiredScopes": [
+        "CHAT"
+      ],
+      "authMethod": [
+        "client-api-oauth-or-token"
+      ],
+      "buildMethod": "scaffold",
+      "languages": [
+        "typescript"
+      ],
+      "prerequisites": [
+        "A Glean instance with your company content indexed",
+        "Your own OAuth access token or Glean API token with the CHAT scope (no admin or global token — the app runs as you)",
+        "X_GLEAN_INCLUDE_EXPERIMENTAL=true (the Platform API is Experimental as of its 2026-07 launch)",
+        "Node 20+"
+      ],
+      "demoQueries": [
+        {
+          "query": "Draft answers to the Globex security questionnaire",
+          "expectedBehavior": "All 20 rows are parsed across 4 tabs, the one exact duplicate is merged, and each row is classified by the evidence behind it: strongly grounded rows get a cited draft, adjacent-evidence rows are flagged for verification, and rows the corpus cannot support are left blank and routed to an SME. No row receives a fluent answer without a citation."
+        },
+        {
+          "query": "Do you conduct independent penetration testing at least annually?",
+          "expectedBehavior": "The corpus contains no pen-testing evidence, so the model returns INSUFFICIENT_EVIDENCE and the row renders as 'needs SME' with no draft text. Accepting it is refused by the API. This is the behaviour to check first — an RFP tool that answers this question anyway is worse than no tool."
+        },
+        {
+          "query": "Describe your self-service credential reset flow.",
+          "expectedBehavior": "Retrieval finds an internal IT support article that is genuinely on-topic, so the row is flagged weak rather than strong: the answer is drafted but labelled as resting on internal documentation that a person must clear before it goes to a customer. Topicality and approval are scored separately."
+        },
+        {
+          "query": "Run the same questionnaire as a user outside the sales group",
+          "expectedBehavior": "The Globex security response summary is restricted to the Sample-Sales group, so a caller outside it retrieves nothing and those rows collapse to 'needs SME' rather than being answered from elsewhere. Your own credential is the permission boundary — there is no impersonation — so content you cannot see can never be laundered into a customer-facing document. A single identity cannot show 'user A sees it, user B doesn't'; what it can show is that empty retrieval produces a refusal instead of a fabrication, which is the property that actually protects people.",
+          "permissionDifferentiated": true
+        }
+      ],
+      "codeAssets": [
+        {
+          "repoPath": "recipes/rfp-responder",
+          "language": "typescript",
+          "description": "Parse + dedup -> batched Chat calls -> review grid with evidence classification -> approval gate -> structure-preserving export"
+        }
+      ],
+      "scaffoldActions": [],
+      "steps": [
+        {
+          "title": "Scaffold the project",
+          "command": "npx tiged --mode=git gleanwork/glean-cookbook/recipes/rfp-responder rfp-responder"
+        },
+        {
+          "title": "Install dependencies",
+          "command": "cd rfp-responder && npm install"
+        },
+        {
+          "title": "Try it with no credentials",
+          "description": "Runs the whole flow against recorded responses and asserts the failure contract: no ungrounded row carries an answer, every answered row carries a citation, and export is gated on approval.",
+          "command": "npm run verify:fixture"
+        },
+        {
+          "title": "Set credentials",
+          "description": "Fill in GLEAN_INSTANCE and your own GLEAN_API_TOKEN. The app runs as you; there is no act-as.",
+          "command": "cp .env.example .env"
+        },
+        {
+          "title": "Run it",
+          "command": "npm start"
+        },
+        {
+          "title": "Verify",
+          "description": "Load the questionnaire, confirm the column mapping, and draft. Check that a supported question (SOC 2, encryption at rest) returns a cited answer, and that an unsupported one (ISO 27001, RTO/RPO) is left blank and assigned to an SME rather than answered."
+        }
+      ],
+      "combines": [
+        {
+          "title": "Permissions-aware retrieval",
+          "surface": "Platform API",
+          "category": "search",
+          "language": "typescript"
+        }
+      ],
+      "architecture": [
+        {
+          "label": "Questionnaire",
+          "caption": "xlsx / docx / CSV",
+          "category": "workflow",
+          "icon": "layout-outlined",
+          "emphasized": false
+        },
+        {
+          "label": "Parse + dedup",
+          "caption": "exact merges only",
+          "category": "workflow",
+          "emphasized": false
+        },
+        {
+          "label": "Platform Chat",
+          "caption": "one call per question",
+          "category": "search",
+          "emphasized": false
+        },
+        {
+          "label": "Glean",
+          "caption": "permission-aware index",
+          "emphasized": true
+        },
+        {
+          "label": "Evidence check",
+          "caption": "topicality + approval",
+          "category": "workflow",
+          "icon": "badge",
+          "emphasized": false
+        },
+        {
+          "label": "Review + approve",
+          "caption": "human gate, audit log",
+          "category": "portal",
+          "emphasized": false
+        }
+      ],
+      "aiPrompt": "Build an RFP and security-questionnaire responder on the Glean Platform API, following the rfp-responder recipe. Parse a questionnaire into rows, deduplicate only exact matches (near-duplicate merging is unsafe: 'encrypted at rest' and 'encrypted in transit' score highly similar but are different controls), then run one Chat call per unique question with instructions that constrain the answer to retrieved evidence and return INSUFFICIENT_EVIDENCE when the evidence is absent. Classify every row on two independent axes -- whether the citation is topically relevant, and whether its source is on a declared approved-for-external-use list -- and never render a draft answer for a row with no citation. Route unsupported rows to a human SME. Gate export behind an explicit confirmation and record an approval log.",
+      "llmContext": "Platform Chat: POST /api/chat with { input, stream: false, store: true }; parse output[].content[] where type === 'output_text' for .text and .annotations[].sources[] { title, url }. Requires X-GLEAN-INCLUDE-EXPERIMENTAL: true and platform.apiMigratedEndpointsEnabled. Auth is the caller's own OAuth token or API token with CHAT scope -- impersonation/act-as was removed from the cookbook recipes, so these apps are single-user and the caller's credential is the permission boundary. Two design findings worth carrying into similar builds: (1) lexical similarity cannot dedupe security questionnaires -- on the sample corpus the unsafe pair (at-rest vs in-transit encryption) scores 0.60 while the true duplicates score 0.29-0.30, so only exact matches can be merged automatically; (2) topicality and approval-for-external-use are independent -- an internal IT article can be the single most on-topic document for a question and still be unusable as customer-facing evidence, so approval must be declared rather than inferred from a relevance score.",
+      "goDependency": false,
+      "featured": false,
+      "tags": [
+        "rfp",
+        "questionnaire",
+        "citations",
+        "human-in-the-loop",
+        "workflow"
+      ],
+      "permalink": "/cookbook/rfp-responder"
     }
   ],
   "surfaces": [
@@ -1000,7 +1148,7 @@
     "agents"
   ],
   "generatedAt": "2026-07-28T00:00:00.000Z",
-  "totalRecipes": 10,
+  "totalRecipes": 11,
   "plugin": {
     "marketplaceName": "glean-cookbook",
     "pluginName": "cookbook",
