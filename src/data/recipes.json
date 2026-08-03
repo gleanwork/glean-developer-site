@@ -507,6 +507,168 @@
       "permalink": "/cookbook/embed-search-chat"
     },
     {
+      "id": "incident-copilot",
+      "title": "On-call copilot with a real approval gate",
+      "description": "Triage an incident from your own runbooks and past incidents, propose one pre-registered action, and let a human approve it — where the gate refuses the wrong person, expiry escalates instead of auto-approving, and every attempt is audited.",
+      "sidebarLabel": "Incident copilot",
+      "surfaces": [
+        "platform-api",
+        "agents",
+        "tools"
+      ],
+      "status": "showcase",
+      "category": "agent",
+      "level": "Advanced",
+      "levels": {
+        "minimal": true,
+        "wow": true
+      },
+      "timeEstimate": "~1.5 hr",
+      "icon": "badge",
+      "requiredScopes": [
+        "SEARCH",
+        "CHAT",
+        "AGENTS"
+      ],
+      "authMethod": [
+        "client-api-oauth-or-token"
+      ],
+      "buildMethod": "scaffold",
+      "languages": [
+        "typescript"
+      ],
+      "prerequisites": [
+        "A Glean instance with engineering content indexed — a service catalog, runbooks, and at least one past incident review",
+        "Your own OAuth access token or Glean API token with SEARCH and CHAT scopes (add AGENTS for the agent-orchestrated path)",
+        "X_GLEAN_INCLUDE_EXPERIMENTAL=true (the Platform API is Experimental as of its 2026-07 launch)",
+        "Node 20+"
+      ],
+      "demoQueries": [
+        {
+          "query": "Triage the payments canary alarm",
+          "expectedBehavior": "The copilot acks in the channel, resolves payments-service to its on-call engineer and owner from the service catalog, fans out retrieval, and posts a triage card. The past canary incident is cited as the precedent that supports a probable cause; the deploy runbook is cited only as the basis for the proposed action. One pre-registered action is offered, awaiting approval, with an expiry deadline."
+        },
+        {
+          "query": "Triage an alarm with no matching past incident",
+          "expectedBehavior": "The deploy runbook is the single highest-scoring document retrieved, so a relevance-ranked copilot would blame a deploy — but no deploy is in flight and no past incident matches the signature. This copilot asserts no cause, and the mutating action (draft a fix) is downgraded to filing a ticket, visibly and in the audit log, because you cannot draft a fix for a cause nobody established."
+        },
+        {
+          "query": "Approve the proposed action as someone who is not on call",
+          "expectedBehavior": "Refused with 403 and audited against that actor. The allowed set is the on-call engineer and service owner read from the service catalog, not a config file. The incident stays awaiting approval. Note the recipe implements authorization, not authentication — see the README.",
+          "permissionDifferentiated": true
+        },
+        {
+          "query": "Let the approval window expire",
+          "expectedBehavior": "The proposal escalates to the escalation target named in the service catalog and is NOT executed. Auto-approving on timeout would invert the point of a gate. The escalation is audited and posted to the channel."
+        },
+        {
+          "query": "Have the Glean agent propose an action that is not registered",
+          "expectedBehavior": "The proposal is refused at proposal time and audited, and no approval card is offered. An agent that can describe arbitrary actions into existence is an agent with production access, whatever its prompt says."
+        }
+      ],
+      "codeAssets": [
+        {
+          "repoPath": "recipes/incident-copilot",
+          "language": "typescript",
+          "description": "Webhook → service registry → retrieval fan-out → evidence classification → triage card → approval gate (authz, expiry, escalation, audit) → pre-registered actions → postmortem timeline. Both orchestrators render into one shell."
+        }
+      ],
+      "scaffoldActions": [],
+      "steps": [
+        {
+          "title": "Scaffold the project",
+          "command": "npx tiged --mode=git gleanwork/glean-cookbook/recipes/incident-copilot incident-copilot"
+        },
+        {
+          "title": "Install dependencies",
+          "command": "cd incident-copilot && npm install"
+        },
+        {
+          "title": "Watch the governance hold, with no credentials",
+          "description": "Replays recorded responses and asserts the parts that matter: the gate refuses the wrong actor, expiry escalates without executing, an unregistered action is refused, a mutating action with no supported cause is downgraded, and every attempt is audited.",
+          "command": "npm run verify:fixture"
+        },
+        {
+          "title": "Set credentials",
+          "description": "Fill in GLEAN_INSTANCE and your own GLEAN_API_TOKEN. Optionally set GLEAN_AGENT_ID for the agent-orchestrated path, and INCIDENT_ACTOR to change who the dashboard acts as.",
+          "command": "cp .env.example .env"
+        },
+        {
+          "title": "Run it",
+          "command": "npm start"
+        },
+        {
+          "title": "Verify",
+          "description": "Fire the sample alarm and check three things: the probable cause cites a past incident rather than a runbook, approving as someone who is not on call returns 403, and forcing expiry escalates without executing anything."
+        }
+      ],
+      "combines": [
+        {
+          "title": "Multi-step agent with governed tools",
+          "surface": "Agents API",
+          "category": "agent",
+          "language": "typescript"
+        },
+        {
+          "title": "Permissions-aware retrieval",
+          "surface": "Platform API",
+          "category": "search",
+          "language": "typescript"
+        }
+      ],
+      "architecture": [
+        {
+          "label": "PagerDuty webhook",
+          "caption": "severity + service filter",
+          "category": "workflow",
+          "icon": "plug",
+          "emphasized": false
+        },
+        {
+          "label": "Service registry",
+          "caption": "owner, runbook, escalation",
+          "category": "index",
+          "emphasized": false
+        },
+        {
+          "label": "Glean",
+          "caption": "permission-aware index",
+          "emphasized": true
+        },
+        {
+          "label": "Evidence check",
+          "caption": "precedent vs procedure",
+          "category": "search",
+          "icon": "badge",
+          "emphasized": false
+        },
+        {
+          "label": "Approval gate",
+          "caption": "authz, expiry, audit",
+          "category": "portal",
+          "emphasized": false
+        },
+        {
+          "label": "Governed actions",
+          "caption": "pre-registered only",
+          "category": "agent",
+          "emphasized": false
+        }
+      ],
+      "aiPrompt": "Build an on-call incident copilot on the Glean Platform API following the incident-copilot recipe. Resolve the alarming service to its owner, on-call engineer and escalation path from an indexed service catalog before retrieving anything. Fan out retrieval, then classify every retrieved document by the role it can play in an argument: a past incident with a matching alarm signature is a precedent and is the only thing that may support a claim about cause; a runbook is procedure and may only license a proposed action; everything else is context. Do not rank probable cause by relevance -- on a real corpus the runbook outranks the precedent because it is dense with the alarm's own vocabulary while containing no information about why anything broke. Assert no cause when no precedent matches. Gate every action behind a human: restrict approval to the on-call engineer and service owners from the catalog, expire unapproved proposals into an escalation that does not execute, allow only pre-registered actions, require an evidence-supported cause before any mutating action, and write an audit entry for every attempt including refusals and failures.",
+      "llmContext": "Platform Search POST /api/search -> results[].{title,url,snippets}. Platform Chat POST /api/chat with { input, stream: false, store: true } -> output[].content[] where type === 'output_text', with .annotations[].sources[]. Platform Agents POST /api/agents/{agent_id}/runs with { messages: [{role:'USER',content:[{text,type:'text'}]}], stream: false } -> messages[].content[].text, synchronous, no polling. All require X-GLEAN-INCLUDE-EXPERIMENTAL: true and platform.apiMigratedEndpointsEnabled. Auth is the caller's own token; impersonation/act-as was removed from the cookbook recipes, so actions cannot execute as the approving user and the approval gate is an app-level policy check -- say so rather than implying per-person enforcement. Design findings worth carrying over: (1) relevance is not evidence -- classify documents by evidentiary role, because a runbook always outranks the precedent for alarm-shaped queries; (2) a mutating action requires an evidence-supported cause, or the same relevance-is-not-evidence mistake reappears in the action choice; (3) expiry must escalate rather than auto-approve; (4) authorization (who may approve) and authentication (proving who you are) are different problems and this recipe only implements the first.",
+      "goDependency": false,
+      "featured": true,
+      "tags": [
+        "incident-response",
+        "human-in-the-loop",
+        "governed-actions",
+        "audit",
+        "agent"
+      ],
+      "permalink": "/cookbook/incident-copilot"
+    },
+    {
       "id": "index-custom-source",
       "title": "Index a custom data source",
       "description": "Bring an unsupported source into Glean with the Indexing API — documents, permissions, and people — and see it live in search. This recipe seeds the Acme corpus every other recipe searches.",
@@ -1148,7 +1310,7 @@
     "agents"
   ],
   "generatedAt": "2026-07-28T00:00:00.000Z",
-  "totalRecipes": 11,
+  "totalRecipes": 12,
   "plugin": {
     "marketplaceName": "glean-cookbook",
     "pluginName": "cookbook",
