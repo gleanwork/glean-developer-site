@@ -37,7 +37,7 @@ export default function RecipePage({
     <>
       {/* Recipe .mdx files carry no frontmatter, so Docusaurus falls back to
           the doc id for <title> and emits no description — every recipe page
-          would otherwise present itself as "permissions-aware-rag" in browser
+          would otherwise present itself as "permissions-aware-retrieval" in browser
           tabs, search results, and link previews. Setting both here keeps the
           registry the one source, the same way the sidebar labels do. */}
       <Head>

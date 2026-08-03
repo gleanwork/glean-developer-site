@@ -843,10 +843,10 @@
       "permalink": "/cookbook/no-code-pto-lookup-replit"
     },
     {
-      "id": "permissions-aware-rag",
-      "title": "Permissions-aware RAG",
-      "description": "Use Glean's Platform API as the retrieval layer for your own LLM app — every chunk ACL-filtered per user before it ever reaches the model.",
-      "sidebarLabel": "Permissions-Aware RAG",
+      "id": "permissions-aware-retrieval",
+      "title": "Ground your own LLM app in Glean",
+      "description": "Use Glean's Platform API as the retrieval layer for your own LLM app — every result ACL-filtered for the caller before it ever reaches the model.",
+      "sidebarLabel": "Permissions-aware retrieval",
       "surfaces": [
         "platform-api",
         "sdk-client"
@@ -890,13 +890,13 @@
       ],
       "codeAssets": [
         {
-          "repoPath": "recipes/permissions-aware-rag/python",
+          "repoPath": "recipes/permissions-aware-retrieval/python",
           "language": "python",
           "description": "Platform API search.query → snippets → LLM with citations",
           "steps": [
             {
               "title": "Scaffold the project",
-              "command": "npx tiged --mode=git gleanwork/glean-cookbook/recipes/permissions-aware-rag/python permissions-aware-rag"
+              "command": "npx tiged --mode=git gleanwork/glean-cookbook/recipes/permissions-aware-retrieval/python permissions-aware-retrieval"
             },
             {
               "title": "Set credentials",
@@ -906,7 +906,7 @@
             {
               "title": "Run it",
               "description": "Dependencies are declared inline in main.py (PEP 723), so uv resolves and installs them into an isolated environment on first run — there's no requirements.txt, venv, or activate step.",
-              "command": "cd permissions-aware-rag && uv run main.py \"What's our PTO policy?\""
+              "command": "cd permissions-aware-retrieval && uv run main.py \"What's our PTO policy?\""
             },
             {
               "title": "Verify",
@@ -915,17 +915,17 @@
           ]
         },
         {
-          "repoPath": "recipes/permissions-aware-rag/typescript",
+          "repoPath": "recipes/permissions-aware-retrieval/typescript",
           "language": "typescript",
           "description": "Same flow in TypeScript",
           "steps": [
             {
               "title": "Scaffold the project",
-              "command": "npx tiged --mode=git gleanwork/glean-cookbook/recipes/permissions-aware-rag/typescript permissions-aware-rag"
+              "command": "npx tiged --mode=git gleanwork/glean-cookbook/recipes/permissions-aware-retrieval/typescript permissions-aware-retrieval"
             },
             {
               "title": "Install dependencies",
-              "command": "cd permissions-aware-rag && npm install"
+              "command": "cd permissions-aware-retrieval && npm install"
             },
             {
               "title": "Set credentials",
@@ -970,15 +970,16 @@
           "emphasized": false
         }
       ],
-      "aiPrompt": "Build permissions-aware RAG on Glean following\nhttps://developers.glean.com/cookbook/permissions-aware-rag\n\n1. Retrieval: glean.search.query(query=..., page_size=8) — the\n   top-level Platform API method, NOT glean.client.search.query(),\n   which is a different, older surface (the Client API). The Platform\n   API is Experimental as of its 2026-07 launch: set\n   X_GLEAN_INCLUDE_EXPERIMENTAL=true as an env var or every call fails\n   — there's no argument for this on search.query() itself. Collect\n   title, url, and snippets from each result — snippets is a plain\n   string[] here (no .text unwrap needed, unlike the Client API).\n2. Prompt the LLM with ONLY those snippets; require inline [n] citations\n   mapped back to the result URLs.\n3. Per-user enforcement needs no code at all: the caller's own\n   credential IS the permission boundary, so results come back already\n   filtered to what that person can see. Send no extra headers, and do\n   not add impersonation of any kind.\n4. Because retrieval is already filtered, the code that matters is what\n   happens when it comes back EMPTY: the app must say it has no\n   information, never answer from the model's own knowledge. A confident\n   answer with no sources is the failure mode this whole architecture\n   exists to prevent.\n5. README must state the differentiator: no vector DB, no ACL\n   mirroring, no re-sync — Glean is the governed retrieval layer.\n\nUse claude-sonnet-5 via the anthropic SDK if I don't specify a\nprovider; keep the LLM call swappable.",
+      "aiPrompt": "Ground my own LLM app in Glean, with retrieval filtered to the\ncaller's permissions, following\nhttps://developers.glean.com/cookbook/permissions-aware-retrieval\n\n1. Retrieval: glean.search.query(query=..., page_size=8) — the\n   top-level Platform API method, NOT glean.client.search.query(),\n   which is a different, older surface (the Client API). The Platform\n   API is Experimental as of its 2026-07 launch: set\n   X_GLEAN_INCLUDE_EXPERIMENTAL=true as an env var or every call fails\n   — there's no argument for this on search.query() itself. Collect\n   title, url, and snippets from each result — snippets is a plain\n   string[] here (no .text unwrap needed, unlike the Client API).\n2. Prompt the LLM with ONLY those snippets; require inline [n] citations\n   mapped back to the result URLs.\n3. Per-user enforcement needs no code at all: the caller's own\n   credential IS the permission boundary, so results come back already\n   filtered to what that person can see. Send no extra headers, and do\n   not add impersonation of any kind.\n4. Because retrieval is already filtered, the code that matters is what\n   happens when it comes back EMPTY: the app must say it has no\n   information, never answer from the model's own knowledge. A confident\n   answer with no sources is the failure mode this whole architecture\n   exists to prevent.\n5. README must state the differentiator: no vector DB, no ACL\n   mirroring, no re-sync — Glean is the governed retrieval layer.\n\nUse claude-sonnet-5 via the anthropic SDK if I don't specify a\nprovider; keep the LLM call swappable.",
       "llmContext": "Platform API search (data-first retrieval, distinct from the Client API's glean.client.search.query): glean.search.query(query, page_size, http_headers) -> PlatformSearchResponse. Result shape: results[].title, results[].url, results[].snippets (string[], not snippet objects). Experimental since its 2026-07-14 public launch — requires X_GLEAN_INCLUDE_EXPERIMENTAL=true (env var, read automatically by the SDK) on every call or it 4xxs. Per-user filtering needs no headers: with a token from the Glean Authorization Server the caller's own credential is the permission boundary. Send no impersonation header; that belongs to a different architecture and does not apply here. The verifiable claim for this recipe is that an empty retrieval produces a refusal rather than a fabricated answer.",
       "goDependency": false,
       "featured": true,
       "tags": [
         "rag",
+        "retrieval",
         "differentiator"
       ],
-      "permalink": "/cookbook/permissions-aware-rag"
+      "permalink": "/cookbook/permissions-aware-retrieval"
     }
   ],
   "surfaces": [
