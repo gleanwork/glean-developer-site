@@ -1,16 +1,16 @@
 ---
 title: Deployment overview
-description: Generate Docker and Terraform for a Glean connector with glean-deploy
+description: Generate Docker and Terraform for a Glean connector with glean-idx deploy
 ---
 
 import { Stages } from '@site/src/components/IndexingSdk/diagrams';
 
 A connector is a batch job: it runs on a schedule, pulls from a source, pushes to
-Glean, and exits. `glean-deploy` generates the scaffolding for that — a
+Glean, and exits. `glean-idx deploy` generates the scaffolding for that — a
 Dockerfile, an entrypoint, and Terraform for a Kubernetes CronJob on GKE or EKS.
 
 ```bash
-glean-deploy init --cloud gcp --connector-class CompanyWikiConnector
+glean-idx deploy init --cloud gcp --connector-class CompanyWikiConnector
 ```
 
 :::danger
@@ -78,12 +78,12 @@ full nightly. See
 ## Workflow
 
 <Stages stages={[
-  { title: <>Generate &mdash; <code>glean-deploy init</code></>, body: <>Writes the Dockerfile, entrypoint, Terraform, and config template.</> },
+  { title: <>Generate &mdash; <code>glean-idx deploy init</code></>, body: <>Writes the Dockerfile, entrypoint, Terraform, and config template.</> },
   { title: <>Configure</>, body: <>Edit <code>glean_deployment.yaml</code> (cluster, region, registry, schedule), then <code>cp .env.example .env</code> and fill in credentials.</> },
-  { title: <>Build and push &mdash; <code>glean-deploy build --push</code></>, body: <>Builds the container image and pushes it to your registry.</> },
-  { title: <>Upload secrets &mdash; <code>glean-deploy secrets upload</code></>, body: <>Reads <code>.env</code> and writes to Secret Manager (GCP) or Secrets Manager (AWS). <code>secrets list</code> and <code>secrets delete</code> are also available.</> },
-  { title: <>Apply &mdash; <code>glean-deploy apply</code></>, body: <>Runs Terraform. Read the plan first &mdash; see the warning below.</> },
-  { title: <>Verify</>, body: <><code>glean-deploy status</code> and <code>glean-deploy logs --follow</code>, then confirm documents landed with <code>glean-index-status</code>. A CronJob that exits zero has not necessarily indexed anything.</> },
+  { title: <>Build and push &mdash; <code>glean-idx deploy build --push</code></>, body: <>Builds the container image and pushes it to your registry.</> },
+  { title: <>Upload secrets &mdash; <code>glean-idx deploy secrets upload</code></>, body: <>Reads <code>.env</code> and writes to Secret Manager (GCP) or Secrets Manager (AWS). <code>secrets list</code> and <code>secrets delete</code> are also available.</> },
+  { title: <>Apply &mdash; <code>glean-idx deploy apply</code></>, body: <>Runs Terraform. Read the plan first &mdash; see the warning below.</> },
+  { title: <>Verify</>, body: <><code>glean-idx deploy status</code> and <code>glean-idx deploy logs --follow</code>, then confirm documents landed with <code>glean-idx document status</code>. A CronJob that exits zero has not necessarily indexed anything.</> },
 ]} />
 
 :::warning
@@ -110,7 +110,7 @@ binding.
 ## Teardown
 
 ```bash
-glean-deploy destroy
+glean-idx deploy destroy
 ```
 
 Requires two confirmations. `--keep-secrets` preserves stored secrets.

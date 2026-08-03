@@ -472,6 +472,11 @@ const baseSidebars: SidebarsConfig = {
               label: 'Quickstart',
             },
             {
+              type: 'doc',
+              id: 'libraries/indexing-sdk/cli',
+              label: 'CLI',
+            },
+            {
               type: 'category',
               label: 'Concepts',
               items: [

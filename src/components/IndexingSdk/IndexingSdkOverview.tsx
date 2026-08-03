@@ -214,14 +214,14 @@ const CAPABILITIES: Capability[] = [
   {
     name: 'Status & debugging',
     desc: 'Answer "why is my document not in search?" without guessing.',
-    api: 'glean-index-status',
+    api: 'glean-idx document',
     href: '/libraries/indexing-sdk/status-and-debugging',
     icon: 'Search',
   },
   {
     name: 'Deployment',
     desc: 'Generate Docker and Terraform for a scheduled job on AWS or GCP.',
-    api: 'glean-deploy',
+    api: 'glean-idx deploy',
     href: '/libraries/indexing-sdk/deployment/overview',
     icon: 'Cloud',
   },
@@ -240,7 +240,7 @@ const COMPARE: {
   { feature: 'Structured logging and metrics', sdk: true, api: false },
   {
     feature: 'Deployment scaffolding',
-    sdk: 'glean-deploy generates it',
+    sdk: 'glean-idx deploy generates it',
     api: false,
   },
 ] as never;
