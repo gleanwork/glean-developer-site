@@ -6,6 +6,15 @@
  *
  * - registry.json -> data/cookbook-registry.json (recipe metadata; the single
  *   source of truth, consumed by scripts/compile-recipes.ts)
+ * - recipes/<id>/page.md -> docs/cookbook/<id>.mdx (the prose, composed into a page
+ *   here. Prose lives beside the code it documents so a recipe and its page change
+ *   in one PR, in one repo.)
+ *
+ *   The contract with the cookbook is SECTION NAMES, not component names. That file
+ *   is plain markdown with `## Problem`, an optional `## Steps` and
+ *   `## Take it further`; this script decides which component renders each and in
+ *   what order. Presentation stays in this repo, so renaming a component is a change
+ *   here rather than a breaking change to thirteen files in another repository.
  * - .claude-plugin/marketplace.json -> data/cookbook-plugin.json (the plugin's
  *   marketplace/plugin names, which the recipe pages print in install and
  *   invocation commands)
@@ -33,6 +42,13 @@ import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 
 const REPO = 'gleanwork/glean-cookbook';
+
+/**
+ * Branch to sync from; defaults to the repo default. Set GLEAN_COOKBOOK_REF to
+ * preview a cookbook branch's pages before they land, since otherwise the only way
+ * to see how a recipe change renders is to merge it first.
+ */
+const REF = process.env.GLEAN_COOKBOOK_REF ?? '';
 const REGISTRY_PATH = 'registry.json';
 // Claude Code's manifest specifically: all three targets carry the same
 // marketplace and plugin names, and this one has the broadest schema.
@@ -43,7 +59,7 @@ const pluginFile = path.join(repoRoot, 'data', 'cookbook-plugin.json');
 
 async function fetchViaToken(token, sourcePath) {
   const response = await fetch(
-    `https://api.github.com/repos/${REPO}/contents/${sourcePath}`,
+    `https://api.github.com/repos/${REPO}/contents/${sourcePath}${REF ? `?ref=${REF}` : ''}`,
     {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -63,7 +79,12 @@ async function fetchViaToken(token, sourcePath) {
 function fetchViaGhCli(sourcePath) {
   const base64 = execFileSync(
     'gh',
-    ['api', `repos/${REPO}/contents/${sourcePath}`, '--jq', '.content'],
+    [
+      'api',
+      `repos/${REPO}/contents/${sourcePath}${REF ? `?ref=${REF}` : ''}`,
+      '--jq',
+      '.content',
+    ],
     { encoding: 'utf8' },
   )
     .trim()
@@ -119,6 +140,124 @@ export function extractPluginCoordinates(raw) {
   };
 }
 
+const pagesDir = path.join(repoRoot, 'docs', 'cookbook');
+
+/** Section headings the cookbook supplies; everything else passes through as prose. */
+const KNOWN_SECTIONS = ['Problem', 'Steps', 'Take it further'];
+
+/** Splits `## Heading` sections out of plain markdown. */
+function parseSections(markdown) {
+  const heads = [...markdown.matchAll(/^## (.+)$/gm)].map((match) => ({
+    title: match[1].trim(),
+    start: match.index,
+    bodyAt: match.index + match[0].length,
+  }));
+  return heads.map((head, i) => ({
+    title: head.title,
+    body: markdown
+      .slice(
+        head.bodyAt,
+        i + 1 < heads.length ? heads[i + 1].start : markdown.length,
+      )
+      .trim(),
+  }));
+}
+
+/**
+ * Splits a markdown ordered list into its top-level items.
+ *
+ * Fence state is tracked because step bodies contain code blocks, and a line inside
+ * a fence must never be read as starting a new item.
+ */
+function splitOrderedList(markdown) {
+  const items = [];
+  let current = null;
+  let inFence = false;
+  for (const line of markdown.split('\n')) {
+    if (/^\s*```/.test(line)) inFence = !inFence;
+    if (!inFence && /^\d+\.\s/.test(line)) {
+      if (current) items.push(current.join('\n'));
+      current = [line.replace(/^\d+\.\s/, '')];
+    } else if (current) {
+      // Continuation lines sit indented under the marker; strip one level so fences
+      // and admonitions inside a step land at column zero for MDX.
+      current.push(line.startsWith('   ') ? line.slice(3) : line);
+    }
+  }
+  if (current) items.push(current.join('\n'));
+  return items.map((item) => item.trim()).filter(Boolean);
+}
+
+/**
+ * The page Docusaurus sees. Layout order is decided here, not upstream: the
+ * data-driven blocks take no content, so the cookbook never mentions them.
+ */
+function renderPage(recipeId, markdown) {
+  const sections = parseSections(markdown);
+  const find = (title) => sections.find((section) => section.title === title);
+  const problem = find('Problem');
+  const steps = find('Steps');
+  const further = find('Take it further');
+
+  const parts = [];
+  if (problem) {
+    parts.push(
+      `<RecipeSection label="Problem">\n\n${problem.body}\n\n</RecipeSection>`,
+    );
+  }
+  parts.push('<RecipeArchitecture />', '<RecipePrereqs />');
+  // RecipeSteps renders the registry's structured steps when a recipe has them and
+  // falls back to these children when it does not. Each markdown list item becomes
+  // its own child, because the component numbers rows from React children — the
+  // whole list arriving as a single <ol> collapses four steps into one row.
+  if (steps) {
+    const rows = splitOrderedList(steps.body)
+      .map((item) => `<>\n\n${item}\n\n</>`)
+      .join('\n\n');
+    parts.push(`<RecipeSteps>\n\n${rows}\n\n</RecipeSteps>`);
+  } else {
+    parts.push('<RecipeSteps />');
+  }
+  for (const section of sections) {
+    if (KNOWN_SECTIONS.includes(section.title)) continue;
+    parts.push(
+      `<RecipeSection label="${section.title}">\n\n${section.body}\n\n</RecipeSection>`,
+    );
+  }
+  if (further) {
+    parts.push(`<TakeItFurther>\n\n${further.body}\n\n</TakeItFurther>`);
+  }
+  parts.push('<RecipeDemoQueries />');
+
+  return `---
+# GENERATED by \`pnpm registry:sync\` from recipes/${recipeId}/page.md in
+# gleanwork/glean-cookbook. Do not edit here — edits are overwritten on the next
+# sync. That file is plain markdown; the components below and their order are chosen
+# by scripts/sync-registry.mjs in this repo.
+hide_table_of_contents: true
+hide_title: true
+pagination_prev: null
+pagination_next: null
+---
+
+import RecipePage from '@site/src/components/Cookbook/RecipePage';
+import {
+  RecipeSection,
+  RecipeArchitecture,
+  RecipePrereqs,
+  RecipeSteps,
+  RecipeDemoQueries,
+  TakeItFurther,
+} from '@site/src/components/Cookbook/RecipeLayout';
+
+<RecipePage recipeId="${recipeId}">
+
+${parts.join('\n\n')}
+
+</RecipePage>
+`;
+}
+
 async function main() {
   console.log(`📡 Fetching ${REGISTRY_PATH} from ${REPO}...`);
   if (!process.env.GITHUB_TOKEN) {
@@ -140,6 +279,28 @@ async function main() {
   console.log(
     `✅ Wrote ${parsed.length} recipe(s) to ${path.relative(repoRoot, registryFile)}`,
   );
+
+  console.log(`📡 Fetching ${parsed.length} page bodies from ${REPO}...`);
+  fs.mkdirSync(pagesDir, { recursive: true });
+  const written = new Set();
+  for (const entry of parsed) {
+    const markdown = await fetchSource(`recipes/${entry.id}/page.md`);
+    fs.writeFileSync(
+      path.join(pagesDir, `${entry.id}.mdx`),
+      renderPage(entry.id, markdown),
+    );
+    written.add(entry.id);
+  }
+  // A page with no upstream recipe is a leftover from a rename or retirement, and
+  // would otherwise fail recipes:compile with a confusing message.
+  for (const file of fs.readdirSync(pagesDir)) {
+    if (!file.endsWith('.mdx') || file === 'index.mdx') continue;
+    if (!written.has(file.replace(/\.mdx$/, ''))) {
+      fs.rmSync(path.join(pagesDir, file));
+      console.log(`🗑  Removed ${file} — no matching recipe upstream`);
+    }
+  }
+  console.log(`✅ Wrote ${written.size} recipe page(s) to docs/cookbook/`);
 
   console.log(`📡 Fetching ${MARKETPLACE_PATH} from ${REPO}...`);
   const coordinates = extractPluginCoordinates(
