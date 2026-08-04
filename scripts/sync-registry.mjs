@@ -164,6 +164,22 @@ function parseSections(markdown) {
 }
 
 /**
+ * Strips markdown-code `snippet=` directives from fence info strings.
+ *
+ * Those are an authoring mechanism: upstream, md-code keeps each fenced block in sync
+ * with a real file it can lint, and validates that there. The source files live in the
+ * cookbook, so carrying the directive here would point at paths this repo does not
+ * have — and md-code reports a missing snippet without failing, so it would go
+ * unnoticed. The rendered page only needs the language.
+ */
+function stripSnippetDirectives(markdown) {
+  return markdown.replace(
+    /^(\s*```[\w-]*)\s+snippet=[^\s`]+\s*$/gm,
+    (_match, fence) => fence,
+  );
+}
+
+/**
  * Splits a markdown ordered list into its top-level items.
  *
  * Fence state is tracked because step bodies contain code blocks, and a line inside
@@ -193,7 +209,7 @@ function splitOrderedList(markdown) {
  * data-driven blocks take no content, so the cookbook never mentions them.
  */
 function renderPage(recipeId, markdown) {
-  const sections = parseSections(markdown);
+  const sections = parseSections(stripSnippetDirectives(markdown));
   const find = (title) => sections.find((section) => section.title === title);
   const problem = find('Problem');
   const steps = find('Steps');
