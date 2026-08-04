@@ -265,6 +265,11 @@ export type CookbookPlugin = {
 };
 
 export type RecipesData = {
+  /**
+   * Marker emitted as the first key of the generated file, so anyone opening it
+   * sees that it is generated before they see recipe data. Unused at runtime.
+   */
+  _generated?: string;
   recipes: RecipeRecord[];
   surfaces: string[];
   generatedAt: string;

@@ -61,30 +61,44 @@ Project-local Claude Code skills live under `.claude/skills/`. Load the relevant
 
 ## Cookbook recipes
 
-Recipes live in `docs/cookbook/*.mdx` — one file per recipe. The frontmatter
-`recipe:` block is the machine-readable schema record (validated by
-`src/types/recipe.ts`; JSON Schema artifact at `schemas/recipe.schema.json`);
-the MDX body is the prose. `pnpm recipes:compile` validates every recipe and
-emits `src/data/recipes.json`, which drives the `/cookbook` index, the recipe
-right rail, and the homepage band. Validation failures fail the build.
+**Recipe metadata is not in this repo.** It is authored in
+[`gleanwork/glean-cookbook`](https://github.com/gleanwork/glean-cookbook), one file
+per recipe at `recipes/<id>/recipe.json`. That repo is the source of truth, and it
+also holds the runnable code each recipe scaffolds.
+
+This repo holds the prose page and two generated derivatives:
+
+| path | what it is |
+| --- | --- |
+| `docs/cookbook/<id>.mdx` | the prose page. **No metadata frontmatter** — matched to its registry entry by filename |
+| `data/cookbook-registry.json` | **generated** — a sync of the cookbook's built `registry.json` |
+| `src/data/recipes.json` | **generated** — compiled from that sync by `pnpm recipes:compile` |
+
+Do not edit the two generated files. They are committed and not gitignored, so they
+look editable, and a recipe added to them renders correctly — then disappears on the
+next sync, which writes whatever upstream says. Four pull requests did this before
+`scripts/check-generated-recipe-data.mjs` existed to fail CI on it.
 
 To add a recipe:
 
-1. Create `docs/cookbook/<id>.mdx`. The filename must equal `recipe.id`
-   (kebab-case). Copy the frontmatter shape from
-   `docs/cookbook/embed-search-chat.mdx`.
-2. Set page `title`/`description` — they double as the recipe's title and
-   summary. Put everything else in the `recipe:` block (personas, surfaces,
-   status, levels, time_estimate, required_scopes, prerequisites,
-   demo_queries, code_assets, scaffold_actions, ai_prompt, llm_context, tags).
-3. Wrap the body in `<RecipePage recipeId="<id>">` and use the standard
-   sections: Problem, Architecture (mermaid), Prerequisites, Steps
-   (`<Steps>`/`<Step>`), Extensions (wow).
-4. Only document verified APIs — source code samples from the published
-   guides (e.g. `docs/libraries/web-sdk/`), never from memory. Scope names,
-   endpoints, and function names must exist in the docs.
-5. `featured: true` surfaces the recipe on the homepage band (max 3 shown);
-   a `flagship` tag renders the flagship card treatment.
-6. Verify with `pnpm recipes:compile`, `pnpm test`, and `pnpm build`
-   (the Cookbooks nav/band are gated behind the `cookbook` feature flag —
-   build with `FF_COOKBOOKS=true` to see them).
+1. **In `glean-cookbook`:** add `recipes/<id>/recipe.json` (schema:
+   `schemas/recipe.schema.json`, generated from this repo's `src/types/recipe.ts` —
+   field names are camelCase), add the runnable code under `recipes/<id>/`, then
+   `npm run build:registry` and `npm run validate:registry`.
+2. **Here:** `pnpm registry:sync`, then `pnpm recipes:compile`.
+3. **Here:** add `docs/cookbook/<id>.mdx`. Wrap the body in
+   `<RecipePage recipeId="<id>">` and use the standard sections — `RecipeSection`
+   (Problem), `RecipeArchitecture`, `RecipePrereqs`, `RecipeSteps`,
+   `RecipeDemoQueries`, `TakeItFurther`. Copy the shape from
+   `docs/cookbook/embed-search-chat.mdx`. Title, description, prerequisites, steps
+   and demo queries all render from the registry, so do not restate them in prose.
+4. Verify with `pnpm recipes:compile`, `pnpm test`, and `pnpm build`. The Cookbooks
+   nav and homepage band are behind the `cookbook` feature flag — build with
+   `FF_COOKBOOKS=true` to see them.
+
+Only document verified APIs. Source samples from the published guides (e.g.
+`docs/libraries/web-sdk/`), never from memory: scope names, endpoints and function
+names must exist in the docs. A recipe's `demoQueries` are the eval data its
+verification harness runs, so they must be answerable on a reader's own instance —
+never against a seeded demo corpus.
+
