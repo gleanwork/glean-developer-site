@@ -1,0 +1,122 @@
+---
+title: Status and debugging
+description: Answer "why isn't my document in Glean search?" with glean-idx and StatusClient
+---
+
+import { Stages } from '@site/src/components/IndexingSdk/diagrams';
+
+Indexing is asynchronous. An upload that returns success has been *accepted*,
+not indexed — documents become searchable some time later. Most "the connector
+is broken" reports are really one of four things, and this sequence separates
+them.
+
+## Why isn't my document in search?
+
+Work through it in order. Each step rules out one layer.
+
+<Stages stages={[
+  { title: <>Did the connector actually upload it?</>, body: <>Run against a recording mock and print <code>result.documents_posted</code>. If the document isn&rsquo;t there, the bug is in your data client or <code>transform()</code>, not in Glean. Stop here.</> },
+  { title: <>Has it finished indexing?</>, body: <>Run <code>glean-idx document status --poll</code>. If it&rsquo;s still pending, wait &mdash; large uploads take longer.</> },
+  { title: <>Is the datasource healthy?</>, body: <><code>glean-idx datasource status</code> reports uploaded and indexed counts side by side. A gap between them points at rejected documents rather than slow indexing.</> },
+  { title: <>Can the user see it?</>, body: <>If the document is indexed but one person can&rsquo;t find it, it&rsquo;s a permissions problem. <code>glean-idx document access --user them@example.com</code> answers it directly &mdash; a correct-looking ACL is still wrong if the identities it names were never pushed.</> },
+]} />
+
+## StatusClient
+
+Read-only wrappers over the debug endpoints:
+
+```python
+from glean.indexing.push import StatusClient
+
+status = StatusClient(datasource="company_wiki")
+
+status.get_datasource_status()      # counts and datasource state
+status.get_documents_status(...)    # per-document indexing status
+status.check_document_access(...)   # whether a user can access a document
+```
+
+The constructor takes the same optional overrides as `PushUploader`: `retries`,
+`server_url`, `timeout_ms`, `http_headers`. Credentials come from the
+environment.
+
+## The CLI
+
+The SDK ships one CLI, `glean-idx`. This needs only credentials, so it runs
+anywhere — including with no install:
+
+```bash
+glean-idx document status \
+  --datasource company_wiki \
+  --document article page_123 \
+  --document article page_124 \
+  --poll
+```
+
+`--document` takes two values: object type and document ID. Repeat it for
+multiple documents. `--poll` checks every 30 seconds for up to five minutes
+instead of once.
+
+In Python:
+
+```python
+from glean.api_client.models import DebugDocumentRequest
+from glean.indexing.testing import check_documents_status, poll_documents_status
+
+snapshot = poll_documents_status(
+    "company_wiki",
+    [DebugDocumentRequest(object_type="article", doc_id="page_123")],
+)
+print(snapshot.result)
+```
+
+This is worth wiring into a deployment smoke test — index a known document, then
+confirm it becomes searchable before declaring the rollout good.
+
+## Common causes
+
+| Symptom | Likely cause |
+|---|---|
+| Document never appears | Never uploaded. Check `documents_posted` in a mocked run first. |
+| Appears, then disappears | A later **full** crawl didn't include it, so it was deleted as stale. |
+| Indexed but not findable by a user | ACL doesn't cover them, or the identity graph is incomplete. |
+| Indexed but body is empty | `ContentDefinition` missing, wrong `mime_type`, or empty `text_content`. |
+| Wrong sort order or "updated" date | `created_at` / `updated_at` passed as ISO strings instead of epoch seconds. |
+| Upload succeeds, count doesn't grow | Documents rejected server-side. Check `get_datasource_status()`. |
+
+## Documents disappearing is usually stale deletion
+
+If documents vanish after a scheduled run, the cause is almost always a full
+crawl that fetched an incomplete result set. A full crawl deletes anything it
+didn't include.
+
+Look for a partial fetch that was allowed to complete successfully — a source
+error swallowed inside a paging loop, an auth token expiring mid-crawl, a
+`max_items` left set from local testing. Alert on `documents_indexed` dropping
+sharply between runs; that catches it before the deletion propagates. See
+[Indexing modes](/libraries/indexing-sdk/concepts/indexing-modes).
+
+## Tracing a document through the logs
+
+With [structured logging](/libraries/indexing-sdk/observability) enabled, every
+crawl carries a `run_id` and lifecycle events are emitted per batch. In your log
+aggregator, filter by document ID or `run_id` to see whether a document was
+fetched, transformed, and which batch carried it.
+
+For per-document lifecycle events server-side:
+
+```python
+from glean.indexing.push import PushUploader
+
+PushUploader(datasource="company_wiki").get_document_lifecycle_events(...)
+```
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Indexing API debugging" icon="Book" href="/api-info/indexing/debugging/datasource-status">
+    The underlying debug endpoints.
+  </Card>
+  <Card title="Observability" icon="Activity" href="/libraries/indexing-sdk/observability">
+    Logging and metrics setup.
+  </Card>
+</CardGroup>

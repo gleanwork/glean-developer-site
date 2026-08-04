@@ -1,0 +1,127 @@
+---
+title: Pagination
+description: Link header, offset, and cursor pagination in the Glean Indexing SDK pull recipes
+---
+
+`BasePullHttpStreamingDataClient` supports four pagination modes. Set
+`pagination=` and the matching parameters; the client walks pages and yields
+records until the source runs out or `max_items` is reached.
+
+| Mode | Use when the API… |
+|---|---|
+| `"link"` | Returns an RFC 5988 `Link` header with `rel="next"`. |
+| `"offset"` | Takes numeric `offset` and `limit` parameters. |
+| `"cursor"` | Returns an opaque cursor token in the response body. |
+| `"none"` | Returns everything in one response. |
+
+## Link header
+
+The default. GitHub, GitLab, and most APIs that follow RFC 5988 use this.
+
+```python
+super().__init__(
+    base_url="https://api.example.com/v2",
+    path="/articles",
+    pagination="link",
+    page_size=100,
+)
+```
+
+The client reads `Link` (case-insensitively), finds the `rel="next"` URL, and
+follows it as an absolute URL. Query parameters from the first request are not
+re-applied, because the `next` URL already carries them.
+
+The parser tolerates the messy variants seen in the wild: commas inside URLs,
+`rel=next` unquoted, and multi-valued rels like `rel="next prev"`.
+
+## Offset
+
+```python
+super().__init__(
+    base_url="https://api.example.com/v2",
+    path="/articles",
+    pagination="offset",
+    page_size=100,        # required, must be > 0
+    offset_param="offset",
+    limit_param="limit",
+    start_offset=0,
+)
+```
+
+Each request sends `?limit=100&offset=N`, incrementing by `page_size`. Paging
+stops when a page comes back empty.
+
+:::warning
+Offset pagination is unstable against a source being written to during the
+crawl. Inserting a record on page 1 shifts everything, so a record can be
+skipped or seen twice. If the source offers cursor or link pagination, prefer
+it.
+:::
+
+## Cursor
+
+```python
+super().__init__(
+    base_url="https://api.example.com/v2",
+    path="/articles",
+    pagination="cursor",
+    cursor_param="cursor",       # request parameter name
+    cursor_key="next_cursor",    # response body key
+    page_size=100,
+)
+```
+
+After each page, the client reads `cursor_key` from the response body and sends
+it as `cursor_param` on the next request.
+
+Paging stops when the cursor is missing, empty, not a string, or **identical to
+the previous cursor**. That last check is a deliberate guard against a source
+that echoes the same token forever, which would otherwise spin indefinitely.
+
+## None
+
+```python
+super().__init__(base_url="...", path="/config", pagination="none", items_key=None)
+```
+
+One request, all records.
+
+## Limiting total records
+
+`max_items` applies across pages in every mode:
+
+```python
+super().__init__(..., pagination="link", page_size=100, max_items=250)
+```
+
+The client trims the final page so exactly 250 records are yielded, then stops
+requesting. `max_items=0` yields nothing without issuing a request.
+
+## Non-standard pagination
+
+If your source does something else — a page number, a timestamp watermark, a
+`has_more` boolean — override `get_source_data()` and drive `self.http`
+yourself:
+
+```python
+class ArticleDataClient(BasePullHttpStreamingDataClient[Article]):
+    def get_source_data(self, **kwargs):
+        page = 1
+        while True:
+            response = self.http.get(self.path, params={"page": page, "per_page": 100})
+            body = response.json_dict()
+            yield from body["items"]
+            if not body.get("has_more"):
+                return
+            page += 1
+```
+
+You keep retries, backoff, rate limiting, and redaction from `PullHttpClient`;
+you replace only the paging loop.
+
+:::danger
+Whatever loop you write must terminate on a source that misbehaves. Bound it —
+by page count, by a repeated-token check, or by `max_items` — so a stuck API
+can't turn into an infinite crawl. On a full crawl, a loop that exits early
+also deletes documents as stale.
+:::

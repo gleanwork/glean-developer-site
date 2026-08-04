@@ -1,0 +1,222 @@
+---
+title: Quickstart
+description: Install the Glean Indexing SDK and index your first document
+---
+
+import { ConnectorPipeline } from '@site/src/components/IndexingSdk/diagrams';
+
+A connector is two classes: a **data client** that fetches records from your
+source, and a **connector** that turns them into Glean documents. This page
+builds both and indexes a document you can find in search.
+
+<ConnectorPipeline />
+
+## Install
+
+```bash
+pip install glean-indexing-sdk
+```
+
+Optional cloud observability plugins:
+
+```bash
+pip install "glean-indexing-sdk[aws]"   # CloudWatch logs + metrics
+pip install "glean-indexing-sdk[gcp]"   # Cloud Logging + Cloud Monitoring
+```
+
+## Set your credentials
+
+The SDK reads these from the environment. Never hardcode them.
+
+```bash
+export GLEAN_SERVER_URL="https://your-company-be.glean.com"
+export GLEAN_INDEXING_API_TOKEN="your-indexing-api-token"
+```
+
+:::info
+`GLEAN_INSTANCE` is still accepted as a deprecated fallback, but new connectors
+should use `GLEAN_SERVER_URL`. A missing variable raises
+`MissingEnvironmentVariableError` when the client is constructed, not part-way
+through an upload.
+:::
+
+## Prefer a ready-made dataset?
+
+The rest of this page has you write a small data client over invented data, which
+is the fastest way to see the shape of a connector. If you would rather index
+something with a real permission model already in it — 29 documents, six groups,
+a few deliberately restricted files, and one restricted to named users rather than
+a group — there is a complete runnable example you can copy instead:
+
+```bash
+npx tiged --mode=git gleanwork/glean-cookbook/examples/sample-catalog sample-catalog
+cd sample-catalog && cat README.md
+```
+
+It registers as a [test datasource](/api-info/indexing/datasource/test-datasource),
+so ranking signals are off and nothing is visible until you allow-list yourself —
+which makes it safe to run against an instance other people search. Come back here
+for the concepts; that example is just content to point them at.
+
+## Write a data client
+
+A data client implements one method, `get_source_data()`. The `since` argument
+is populated on [incremental crawls](/libraries/indexing-sdk/concepts/indexing-modes).
+
+```python
+from typing import Any, Optional, Sequence, TypedDict
+
+from glean.indexing.connectors import BaseDataClient
+
+
+class WikiPage(TypedDict):
+    id: str
+    title: str
+    content: str
+    author: str
+    updated_at: str
+    url: str
+
+
+class WikiDataClient(BaseDataClient[WikiPage]):
+    def __init__(self, base_url: str, api_token: str):
+        self.base_url = base_url
+        self.api_token = api_token
+
+    def get_source_data(self, since: Optional[str] = None, **kwargs: Any) -> Sequence[WikiPage]:
+        # Replace with a real API call against your source.
+        return [
+            {
+                "id": "page_123",
+                "title": "Engineering Onboarding Guide",
+                "content": "Welcome to the engineering team...",
+                "author": "jane.smith@company.com",
+                "updated_at": "2026-02-01T14:30:00Z",
+                "url": f"{self.base_url}/pages/123",
+            }
+        ]
+```
+
+## Write a connector
+
+The connector declares its datasource configuration and maps source records to
+`DocumentDefinition` objects.
+
+```python
+from datetime import datetime
+from typing import List
+
+from glean.indexing.connectors import BaseDatasourceConnector
+from glean.indexing.models import (
+    ContentDefinition,
+    CustomDatasourceConfig,
+    DocumentDefinition,
+    UserReferenceDefinition,
+)
+
+
+class CompanyWikiConnector(BaseDatasourceConnector[WikiPage]):
+    configuration = CustomDatasourceConfig(
+        name="company_wiki",
+        display_name="Company Wiki",
+        url_regex=r"https://wiki\.company\.com/.*",
+        is_user_referenced_by_email=True,
+    )
+
+    def transform(self, data: Sequence[WikiPage]) -> List[DocumentDefinition]:
+        return [
+            DocumentDefinition(
+                id=page["id"],
+                title=page["title"],
+                datasource=self.name,
+                view_url=page["url"],
+                body=ContentDefinition(mime_type="text/plain", text_content=page["content"]),
+                author=UserReferenceDefinition(email=page["author"]),
+                updated_at=int(
+                    datetime.fromisoformat(page["updated_at"].replace("Z", "+00:00")).timestamp()
+                ),
+            )
+            for page in data
+        ]
+```
+
+:::warning
+`created_at` and `updated_at` are **integers** — Unix epoch seconds. Passing an
+ISO 8601 string is the most common first-connector mistake, and it surfaces
+later as documents sorting or displaying with the wrong date rather than as an
+upload error.
+:::
+
+## Test it before you push
+
+Run the connector against a recording mock. No network, no credentials.
+
+```python
+from glean.indexing.testing import StaticDataClient, run_connector
+
+result = run_connector(CompanyWikiConnector("company_wiki", StaticDataClient([
+    {
+        "id": "page_123",
+        "title": "Engineering Onboarding Guide",
+        "content": "Welcome...",
+        "author": "jane.smith@company.com",
+        "updated_at": "2026-02-01T14:30:00Z",
+        "url": "https://wiki.company.com/pages/123",
+    }
+])))
+
+result.assert_documents_posted(count=1, datasource="company_wiki")
+```
+
+See [Testing](/libraries/indexing-sdk/testing/overview) for the full
+three-phase workflow.
+
+## Register and index
+
+`configure_datasource()` registers the datasource with Glean. You only need it
+on the first run or when the configuration changes.
+
+```python
+from glean.indexing.models import IndexingMode
+
+connector = CompanyWikiConnector(
+    name="company_wiki",
+    data_client=WikiDataClient(base_url="https://wiki.company.com", api_token="..."),
+)
+
+connector.configure_datasource()
+connector.index_data(mode=IndexingMode.FULL)
+```
+
+## Verify it landed
+
+Indexing is asynchronous — an accepted upload is not yet a searchable
+document. Check status from the CLI:
+
+```bash
+glean-idx document status --datasource company_wiki --document article page_123 --poll
+```
+
+Then search Glean for a phrase from the document body. If it isn't there, work
+through [Status and debugging](/libraries/indexing-sdk/status-and-debugging)
+rather than re-running blindly.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Connector types" icon="GitBranch" href="/libraries/indexing-sdk/concepts/connector-types">
+    Streaming and async variants for larger datasets.
+  </Card>
+  <Card title="Permissions" icon="Lock" href="/libraries/indexing-sdk/permissions">
+    Index documents with real ACLs and verify enforcement.
+  </Card>
+  <Card title="Pull integrations" icon="Download" href="/libraries/indexing-sdk/pull/http-client">
+    HTTP client, pagination, and rate limiting.
+  </Card>
+  <Card title="Deployment" icon="Cloud" href="/libraries/indexing-sdk/deployment/overview">
+    Run your connector on a schedule.
+  </Card>
+  <Card title="Sample dataset" icon="Database" href="https://github.com/gleanwork/glean-cookbook/tree/main/examples/sample-catalog">
+    A runnable connector over 29 documents with real ACLs.
+  </Card>
+</CardGroup>

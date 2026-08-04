@@ -1,0 +1,159 @@
+---
+title: Integration testing
+description: Phase 2 - run against the real source API with record and replay, and a mocked Glean client
+---
+
+
+:::tip Run this from the CLI
+`glean-idx test --phase integration` runs this phase without writing a test file.
+See the [CLI reference](/libraries/indexing-sdk/cli).
+:::
+
+Phase 2 hits your **real source API** while keeping Glean mocked. The first run
+records every response to NDJSON on disk; later runs replay from those files
+without touching the network.
+
+That combination is what makes it useful: you validate your data client against
+responses the source actually produced, then re-run those exact responses
+forever, offline and deterministically.
+
+```python
+from glean.indexing.testing import TestConfig, TestHarness
+
+harness = TestHarness(
+    connector=my_connector,
+    config=TestConfig.from_yaml("testing_config.yaml"),
+    clients={"data_client": real_data_client},
+)
+
+result = harness.run_integration_test()
+result.assert_documents_posted()
+```
+
+## Registering clients
+
+`clients` maps **connector attribute names** to data client instances:
+
+```python
+harness = TestHarness(
+    connector=my_connector,
+    clients={
+        "data_client": articles_client,
+        "comments_client": comments_client,
+    },
+)
+```
+
+Each key must name a real attribute on the connector; a typo raises
+`AttributeError` rather than silently skipping that client. Clients you don't
+register are left untouched — they'll hit the real API on every run without being
+recorded.
+
+## Configuration
+
+`testing_config.yaml` at the connector root, with a top-level `testing:` key:
+
+```yaml title="testing_config.yaml"
+testing:
+  cache_dir: .glean_test_cache/
+  use_cache: true
+  refresh_cache: false
+  run_id_prefix: sdk_test
+  clients:
+    data_client:
+      max_items: 5
+    comments_client:
+      max_items: 20
+  negative_test_identities:
+    - contractor@example.com
+    - external-partners
+```
+
+| Key | Default | Purpose |
+|---|---|---|
+| `cache_dir` | `.glean_test_cache/` | Where NDJSON fixtures are written. |
+| `use_cache` | `true` | Replay from cache when a valid fixture exists. |
+| `refresh_cache` | `false` | Force re-recording even on a cache hit. |
+| `run_id_prefix` | `sdk_test` | Prefix for Phase 3 upload run IDs. |
+| `clients.<name>.max_items` | `5` | Records/replays at most N items for that client. `null` disables the cap. |
+| `negative_test_identities` | `[]` | Identities that must **not** appear in any document ACL. |
+
+Load it explicitly, or build one in process:
+
+```python
+config = TestConfig.from_yaml("testing_config.yaml")
+config = TestConfig(cache_dir=".glean_test_cache/", use_cache=True)
+```
+
+A missing file raises `FileNotFoundError`; a file without the `testing:` key
+raises `KeyError` naming the keys it did find.
+
+## Record and replay
+
+On the first run, each registered client is wrapped in a recording wrapper that
+forwards to the real API and writes items to NDJSON. On later runs, a replay
+wrapper serves those items from disk.
+
+To re-record after the source changes, set `config.refresh_cache = True` or
+delete `cache_dir`.
+
+The cache manifest tracks the SDK version used to record. A fixture recorded by
+a different version won't be replayed silently.
+
+:::warning
+Recorded fixtures contain **real data from your source**. Review them before
+committing: they may contain names, email addresses, or internal content. Either
+scrub them, or add `cache_dir` to `.gitignore` and accept that CI records on
+first run.
+:::
+
+## Keeping fixtures small
+
+`max_items` defaults to 5 per client — deliberately small. The point of Phase 2
+is validating response *shape*, not volume, and small fixtures stay reviewable
+and cheap to commit.
+
+Raise it for a client whose pagination you specifically want to exercise:
+
+```yaml
+clients:
+  articles_client:
+    max_items: 250     # spans several pages
+```
+
+## Asserting permissions
+
+Identities in `negative_test_identities` are checked against every transformed
+document's ACL after the run. If one appears, the test fails.
+
+This is the cheapest real permissions test you can run: it uses
+production-shaped data, needs no Glean instance, and catches "this ACL field was
+`null` so we defaulted to allow-all" before it reaches an index.
+
+You can also assert positively:
+
+```python
+from glean.indexing.testing import extract_permission_refs
+
+result = harness.run_integration_test()
+refs = extract_permission_refs(result.documents_posted)
+
+assert "engineering" in refs.group_ids
+assert "contractor@example.com" not in refs.user_ids
+```
+
+## In CI
+
+Commit the fixtures and CI replays them — no source credentials in CI,
+deterministic runs. If you'd rather not commit real data, run Phase 2 locally
+only and keep CI on Phase 1.
+
+## What to test here
+
+- Pagination actually terminates, and covers every page.
+- Fields you assumed were always present sometimes aren't.
+- Rate limiting and retries behave against real response headers.
+- Permission payloads map correctly from real ACL data.
+
+What Phase 2 still can't tell you is whether Glean accepts and indexes your
+documents. That's [Phase 3](/libraries/indexing-sdk/testing/end-to-end).

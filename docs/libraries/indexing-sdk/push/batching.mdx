@@ -1,0 +1,93 @@
+---
+title: Batching and throughput
+description: Tuning batch size, byte limits, timeouts, and upload concurrency in the Glean Indexing SDK
+---
+
+The defaults work for most connectors. Reach for these knobs when a crawl is
+timing out, running too slowly, or overwhelming your source.
+
+| Knob | Where | Default | Reach for it when… |
+|---|---|---|---|
+| `connector.batch_size` | Connector attribute | `1000` | Batches time out — **lower** it. |
+| `max_batch_bytes` | `PushUploader` argument | `5 MiB` | Rarely. This tracks the API payload limit. |
+| `upload_timeout_ms` | `ConnectorOptions` | client default | Large batches hit timeouts. |
+| `upload_max_workers` | `ConnectorOptions` | `5` | Many small batches over a high-latency link. |
+
+## Find the bottleneck first
+
+Before tuning anything, look at where time is going. The SDK times fetch,
+transform, and upload separately:
+
+```python
+connector.index_data(mode=IndexingMode.FULL)
+print(connector.observability.get_metrics_summary())
+```
+
+| Dominant stage | Likely fix |
+|---|---|
+| `data_fetch` | Source API is slow or rate-limited. Tune [rate limiting](/libraries/indexing-sdk/pull/rate-limiting), reduce N+1 detail calls, or use a streaming connector to overlap work. |
+| `data_transform` | Expensive work in `transform()` — HTML parsing, regex, per-document network calls. Move network calls into the data client. |
+| `data_upload` | Tune the knobs below. |
+
+Tuning upload concurrency when 90% of wall-clock is `data_fetch` accomplishes
+nothing. See [Observability](/libraries/indexing-sdk/observability).
+
+## Batch size
+
+Batches close on whichever limit hits first: `batch_size` documents or
+`max_batch_bytes` serialized bytes.
+
+```python
+connector = WikiConnector(name="wiki", data_client=client)
+connector.batch_size = 250
+```
+
+Lower `batch_size` when your documents are large. A connector indexing full page
+bodies will hit the 5 MiB byte cap long before 1000 documents, so the count
+limit is doing nothing and you're paying serialization cost to discover that
+each time. Setting `batch_size` closer to what actually fits makes batching
+cheaper and upload sizes more predictable.
+
+Raising `batch_size` above 1000 is rarely useful — the byte cap almost always
+binds first.
+
+## Timeouts
+
+A batch that exceeds the request timeout fails and retries the whole batch,
+which is expensive. If you see timeouts, do one of:
+
+```python
+# Give large batches longer.
+connector.index_data(options=ConnectorOptions(upload_timeout_ms=120_000))
+
+# Or make the batches smaller.
+connector.batch_size = 250
+```
+
+Smaller batches are usually the better answer. They fail cheaper, retry faster,
+and give more granular progress in logs.
+
+## Concurrency
+
+`upload_max_workers` controls how many middle pages upload at once:
+
+```python
+connector.index_data(options=ConnectorOptions(upload_max_workers=10))
+```
+
+The first and last pages are always sequential — the first opens the upload
+session, the last closes it and triggers stale-document deletion.
+
+Concurrency helps when you're latency-bound: many small batches, each spending
+most of its time waiting on the network. It doesn't help when you're
+bandwidth-bound or when the source is the bottleneck. Set it to `1` to serialize
+uploads while debugging.
+
+## Memory
+
+For in-memory connectors, peak memory holds every source record and every
+transformed document simultaneously. If a full crawl gets OOM-killed, the fix
+isn't a smaller batch size — batching happens after transform. Switch to a
+[streaming connector](/libraries/indexing-sdk/concepts/connector-types), which
+transforms and uploads one batch at a time and keeps memory bounded regardless
+of total document count.

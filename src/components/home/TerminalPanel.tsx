@@ -44,6 +44,12 @@ interface TerminalPanelProps {
   className?: string;
   /** Show a copy-to-clipboard button in the header. */
   copy?: boolean;
+  /**
+   * Override the syntax tinting. The default `tint` is a source-code tinter —
+   * pass your own for content that isn't code, where colouring language
+   * keywords and numerals is wrong.
+   */
+  tinter?: (code: string) => React.ReactNode[];
 }
 
 /** Dark editor/terminal card per the handoff: mac dots, filename, label. */
@@ -53,6 +59,7 @@ export default function TerminalPanel({
   code,
   className,
   copy = false,
+  tinter = tint,
 }: TerminalPanelProps): React.ReactElement {
   const [copied, setCopied] = useState(false);
 
@@ -90,7 +97,7 @@ export default function TerminalPanel({
           </button>
         ) : null}
       </div>
-      <pre className={styles.terminalPre}>{tint(code)}</pre>
+      <pre className={styles.terminalPre}>{tinter(code)}</pre>
     </div>
   );
 }
