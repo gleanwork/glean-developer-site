@@ -46,6 +46,24 @@ periodic cadence to reconcile drift.
 
 ## Incremental crawls
 
+:::note[The connector-building skills generate full crawls only]
+
+If you are building a connector with the SDK's skills, they will not write
+incremental logic for you, and that is deliberate — `connector-builder` records
+incremental crawl as developer-owned follow-up after a full crawl works end to end,
+and `connector-pull` will not implement it unless you ask. Incremental is harder to
+validate: it needs a durable checkpoint *and* a reliable source-side deletion signal
+before it is correct rather than merely faster.
+
+Whether it is available at all depends on the source. A modified-since filter is
+usually offered per object type, so one endpoint may support it while another in the
+same API does not, and a connector can end up incremental for some objects and full
+for the rest.
+
+Everything below is the developer-owned path.
+
+:::
+
 An incremental crawl passes a `since` timestamp down to your data client so you
 can query only what changed:
 
