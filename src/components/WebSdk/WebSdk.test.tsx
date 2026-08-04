@@ -38,11 +38,11 @@ function mockMatchMedia(matches: boolean) {
 describe('BrowserFrame', () => {
   it('renders the URL pill and its children', () => {
     render(
-      <BrowserFrame url="portal.acme.internal">
+      <BrowserFrame url="portal.sample.internal">
         <div>widget goes here</div>
       </BrowserFrame>,
     );
-    expect(screen.getByText('portal.acme.internal')).toBeInTheDocument();
+    expect(screen.getByText('portal.sample.internal')).toBeInTheDocument();
     expect(screen.getByText('widget goes here')).toBeInTheDocument();
   });
 });

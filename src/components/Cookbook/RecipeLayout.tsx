@@ -233,6 +233,50 @@ export function RecipePrereqs(): React.ReactElement {
   );
 }
 
+/**
+ * The queries a reader should actually try, from the registry's `demoQueries`.
+ *
+ * Data-driven like `RecipePrereqs`, and for the same reason: these are the exact
+ * queries the verify harness runs, so a page that restated them in prose would
+ * drift from what is actually checked. Until this existed, `demoQueries` was
+ * compiled into recipes.json and rendered nowhere -- a reader finished a recipe
+ * with no idea what to test.
+ */
+export function RecipeDemoQueries(): React.ReactElement | null {
+  const recipe = useRecipe('RecipeDemoQueries');
+  if (recipe.demoQueries.length === 0) return null;
+
+  return (
+    <RecipeSection label="Try it">
+      <div className={styles.prereqList}>
+        {recipe.demoQueries.map((demo) => (
+          <div className={styles.prereqRow} key={demo.query}>
+            {getIcon('Search', 'feather', {
+              width: 18,
+              height: 18,
+              color: 'var(--gdt-primary)',
+            })}
+            <div>
+              <p>
+                <strong>{demo.query}</strong>
+              </p>
+              <p>{demo.expectedBehavior}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+      {recipe.lastVerified && (
+        <p>
+          <em>
+            Each of these was run against a live Glean instance on{' '}
+            {recipe.lastVerified}.
+          </em>
+        </p>
+      )}
+    </RecipeSection>
+  );
+}
+
 const VARIANT_LABEL_WORDS: Record<string, string> = {
   sdk: 'SDK',
   api: 'API',

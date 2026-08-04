@@ -8,22 +8,26 @@
     "status": "production-pattern",
     "category": "agent",
     "level": "Intermediate",
-    "levels": { "minimal": true, "wow": false },
+    "levels": {
+      "minimal": true,
+      "wow": false
+    },
     "timeEstimate": "~45 min",
     "icon": "double-arrow",
     "requiredScopes": ["AGENTS"],
-    "authMethod": ["custom"],
+    "authMethod": ["client-api-oauth-or-token"],
     "buildMethod": "scaffold",
     "languages": ["python"],
     "prerequisites": [
       "A published auto agent with a chat-message trigger (text input only)",
-      "The agent's A2A card URL + bearer token from the agent Share dialog",
-      "Python 3.10+ with a2a-sdk pinned < 1.0 (server speaks A2A 0.3 today)"
+      "Its agent id, from the Agent Builder URL or agents/search",
+      "An OAuth access token or Glean API token with the AGENTS scope",
+      "uv (a2a-sdk is pinned < 1.0 — see below)"
     ],
     "demoQueries": [
       {
-        "query": "Who owns the payments service?",
-        "expectedBehavior": "Returns a non-empty answer naming a real owner from the seeded Acme corpus, delivered via the A2A message/send response (a Message or Task, not an error) — and the scripted follow-up turn carries the same context_id, proving multi-turn works."
+        "query": "Who owns our most critical service?",
+        "expectedBehavior": "The agent returns a non-empty answer via the A2A message/send response (a Message or Task, not an error), the scripted follow-up carries the same context_id proving multi-turn works, and the streamed turn prints its answer once rather than repeating it per event."
       }
     ],
     "codeAssets": [
@@ -39,16 +43,15 @@
         "command": "npx tiged --mode=git gleanwork/glean-cookbook/recipes/a2a-client a2a-client"
       },
       {
-        "title": "Install dependencies",
-        "command": "cd a2a-client && pip install -r requirements.txt",
-        "description": "Pins a2a-sdk below 1.0 — Glean serves A2A spec 0.3 today; 1.x clients won't interop until the server upgrades."
-      },
-      {
         "title": "Set credentials",
         "command": "cp .env.example .env",
         "description": "Fill in GLEAN_A2A_CARD_URL and GLEAN_A2A_TOKEN from the agent's Share → A2A dialog — this is a per-agent bearer token, not the general Glean OAuth/token chain."
       },
-      { "title": "Run it", "command": "python main.py" },
+      {
+        "title": "Run it",
+        "command": "cd a2a-client && uv run main.py",
+        "description": "Dependencies are declared inline (PEP 723) and locked, so uv installs them into an isolated environment on first run — no requirements.txt, venv, or activate step."
+      },
       {
         "title": "Verify",
         "description": "Confirm a real answer to \"Who owns the payments service?\", a follow-up reusing the same context_id to prove multi-turn, and a streaming response — all three paths this recipe exercises."
@@ -57,133 +60,11 @@
     "scaffoldActions": [],
     "architecture": [],
     "aiPrompt": "Build an A2A client for a Glean agent following\nhttps://developers.glean.com/cookbook/a2a-client\n\n1. Ask me for the agent card URL and bearer token (from the agent's\n   Share → A2A dialog).\n2. Pin a2a-sdk BELOW 1.0 (e.g. a2a-sdk==0.3.26) — Glean serves A2A\n   spec 0.3 (message/send, message/stream, tasks/get); 1.x clients\n   will not interop until the server upgrades. Note this in the\n   README.\n3. IMPORTANT: a2a-sdk's own A2AClient class (the one matching\n   message/send naming) is marked [DEPRECATED] even in the pinned\n   0.3.x release, with a runtime warning to use ClientFactory\n   instead. Use ClientFactory + Client.send_message() — do not use\n   A2AClient.\n4. Resolve the card (A2ACardResolver, bearer token via the httpx\n   client's headers), verify card.url contains /a2a/agents/.\n5. Client.send_message() is always an async iterator that yields\n   either a Message directly, or (Task, UpdateEvent) tuples for\n   task-based agents — handle both. Send a question (message/send\n   via a streaming=False client), then a follow-up reusing the\n   response's context_id to prove multi-turn, then a long question\n   via a streaming=True client. Errors: 404 = flag off or agent not\n   eligible; 403 = token scopes.",
-    "llmContext": "Per-agent A2A endpoints: /rest/api/v1/a2a/agents/{agentId} (JSON-RPC) and .../agent-card.json. GA, on by default (a2aPerAgentServerEnabled). Eligible: published auto agents, chat-message trigger, text-only. Server is A2A spec 0.3 via a2a-go; upgrade to 1.x tracked internally (EN-1972098). a2a-sdk's A2AClient class is deprecated even at 0.3.26 — use ClientFactory/ Client.send_message() instead, which unifies streaming and non-streaming behind one async-iterator method controlled by ClientConfig(streaming=bool). Message text is at message.parts[i].root.text; Task-based replies put it in task.history[-1].",
+    "llmContext": "Per-agent A2A endpoints: /rest/api/v1/a2a/agents/{agentId} (JSON-RPC) and .../agent-card.json. Verified live. An ordinary credential with the AGENTS scope is enough for both card discovery and message/send -- a per-agent token from the agent's Share dialog also works but is not required. Eligible agents: published auto agents, chat-message trigger, text-only; most agents on an instance return 404 for the card. CRITICAL version trap: the agent card advertises protocolVersion 1.0, but the server only implements the 0.3 JSON-RPC method names (message/send, message/stream, tasks/get). Verified by probing directly: SendMessage, v1/SendMessage and a2a.v1.A2AService/SendMessage all return -32601 method not found. So a2a-sdk must be pinned < 1.0 -- 1.x emits the 1.0 names and every call fails. a2a-sdk 1.x also replaced the Pydantic types with protobuf ones, so it is a migration rather than a bump. a2a-sdk's A2AClient class is deprecated even at 0.3.26 -- use ClientFactory / Client.send_message() instead, which unifies streaming and non-streaming behind one async-iterator method controlled by ClientConfig(streaming=bool). Task replies put the answer in task.artifacts[].parts[].root.text, NOT task.history[-1]: history held only the message we sent, so reading history[-1] echoes the user's own question back as the answer. Streaming events carry the answer accumulated so far rather than a delta, so print the difference or the whole answer repeats once per event. Set an explicit httpx timeout: the 5s default is far below the 20-60s a real agent takes, and it surfaces as an opaque client timeout.",
     "goDependency": false,
     "featured": false,
-    "tags": ["a2a", "interop"]
-  },
-  {
-    "id": "acme-answers",
-    "title": "Acme Answers: a company knowledge Q&A page",
-    "description": "The hello-world of Glean apps: one page, one input, one permission-aware cited answer — built two ways, with the Web SDK and with the Chat API.",
-    "sidebarLabel": "Acme Answers",
-    "surfaces": ["client-api", "sdk-client", "web-sdk"],
-    "status": "showcase",
-    "category": "search",
-    "level": "Beginner",
-    "levels": { "minimal": true, "wow": true },
-    "timeEstimate": "~30 min",
-    "icon": "qna",
-    "requiredScopes": ["CHAT"],
-    "authMethod": ["web-sdk-cookie", "client-api-oauth-or-token"],
-    "buildMethod": "scaffold",
-    "languages": ["typescript"],
-    "prerequisites": [
-      "A Glean instance with content indexed",
-      "An OAuth access token or Glean API token with the CHAT scope",
-      "Node 20+ (Chat API path) or any static page (Web SDK path)"
-    ],
-    "demoQueries": [
-      {
-        "query": "What's our PTO policy?",
-        "expectedBehavior": "Answer cites the PTO policy document (title + url), with a non-empty, deduped citations list — no leaked step-narration text prepended to the answer."
-      },
-      {
-        "query": "Who owns the payments-service catalog entry?",
-        "expectedBehavior": "Answer names the real owner from the seeded payments-service catalog entry and cites that document."
-      }
-    ],
-    "codeAssets": [
-      {
-        "repoPath": "recipes/acme-answers/web-sdk",
-        "language": "typescript",
-        "description": "Web SDK variant — renderChat in a page",
-        "steps": [
-          {
-            "title": "Scaffold the project",
-            "command": "npx tiged --mode=git gleanwork/glean-cookbook/recipes/acme-answers/web-sdk acme-answers"
-          },
-          {
-            "title": "Install dependencies",
-            "command": "cd acme-answers && npm install"
-          },
-          {
-            "title": "Credentials",
-            "description": "Default SSO auth needs no configuration — the Web SDK relies on the user's existing browser session with Glean."
-          },
-          { "title": "Run it", "command": "npm run dev" },
-          {
-            "title": "Verify",
-            "description": "Open the printed local URL and ask \"What's our PTO policy?\" — confirm a real, cited answer renders inside Glean's chat UI."
-          }
-        ]
-      },
-      {
-        "repoPath": "recipes/acme-answers/chat-api",
-        "language": "typescript",
-        "description": "Chat API variant — one chat.create call, citations rendered",
-        "steps": [
-          {
-            "title": "Scaffold the project",
-            "command": "npx tiged --mode=git gleanwork/glean-cookbook/recipes/acme-answers/chat-api acme-answers"
-          },
-          {
-            "title": "Install dependencies",
-            "command": "cd acme-answers && npm install"
-          },
-          {
-            "title": "Set credentials",
-            "command": "cp .env.example .env",
-            "description": "Fill in GLEAN_API_TOKEN and GLEAN_INSTANCE — the Authentication section below covers how to get a token."
-          },
-          {
-            "title": "Run it",
-            "command": "npm start",
-            "description": "Leaves the server running so you can try it yourself at http://localhost:3000 — stop it (Ctrl-C) before the deterministic verify step below, which starts its own instance."
-          },
-          {
-            "title": "Verify",
-            "command": "npm run verify",
-            "description": "Starts the server itself, runs both demo queries for real, and asserts the response shape (non-empty answer, non-empty deduped citations with title+url) — exits non-zero on any failure. Do not report this recipe as done until this passes."
-          }
-        ]
-      }
-    ],
-    "steps": [
-      {
-        "title": "Pick a path",
-        "description": "Path A (Web SDK) renders Glean's own chat UI for you — fastest to stand up, no backend code. Path B (Chat API) calls the Chat API directly from your own backend — you own every pixel of the UI and the request/response shape. Both reach the same place: a permission-aware, cited answer."
-      }
-    ],
-    "scaffoldActions": [],
-    "architecture": [
-      {
-        "label": "Acme Answers page",
-        "caption": "single input + answer card",
-        "icon": "layout-outlined"
-      },
-      {
-        "label": "Path A: Web SDK",
-        "caption": "renderChat — Glean owns the UI",
-        "category": "search"
-      },
-      {
-        "label": "Path B: Chat API",
-        "caption": "chat.create — you own the UI",
-        "category": "agent"
-      },
-      {
-        "label": "Glean",
-        "caption": "permission-aware answers with citations",
-        "emphasized": true
-      }
-    ],
-    "aiPrompt": "Build \"Acme Answers\", a one-page company Q&A app on Glean, following\nhttps://developers.glean.com/cookbook/acme-answers\n\n1. Ask me which path: (A) Web SDK or (B) Chat API. Build the one I pick.\n2. Path A: npm install @gleanwork/web-sdk; create a container with\n   position: relative, display: block, width: 100%, height: 480px, then\n   renderChat(el, { initialMessage: \"What's our PTO policy?\" }) — SSO\n   auth needs no configuration. Passing initialMessage opens straight\n   into a real cited answer instead of an empty landing screen, and\n   doubles as your on-load verification.\n3. Path B: npm install @gleanwork/api-client; construct the client with\n   new Glean({ apiToken, instance }) — NOT `domain`, which is not a\n   real SDKOptions field despite appearing in one of the SDK's own\n   bundled example files. POST chat.create with my question as a\n   single USER message; the response can include earlier step-narration\n   messages (search/read progress) ahead of the real answer — filter to\n   messageType === 'CONTENT', then join those messages' fragments[].text\n   for the answer. Citations live per-fragment at fragments[].citation\n   .sourceDocument (title + url) — not a top-level citedDocuments field,\n   and not the older message.citations[] field, which is deprecated and\n   wasn't populated at all on a live test response. Dedupe citations by\n   url since the same source is commonly cited by more than one\n   fragment. Keep the API token server-side.\n4. Style it as Acme Corp per the house style below: the real logomark\n   in the header (not a plain colored square), teal (#0E8C84) as the\n   primary accent, \"Acme Answers\" title.\n5. Verify with \"What's our PTO policy?\" — the answer must carry\n   citations and respect my permissions. Contrast note for the\n   README: the SDK path ships Glean's full UI free; the API path\n   gives total UI control.",
-    "llmContext": "Chat API: POST /rest/api/v1/chat (client SDK glean.client.chat.create). A real response can include earlier UPDATE-type messages narrating search/read steps ahead of the answer — filter to messageType === 'CONTENT' before joining fragments[].text, or that narration text ends up prepended to the answer. Citations live per-fragment at fragments[].citation.sourceDocument (title, url), not a top-level citedDocuments field and not the older message.citations[] field — that field is deprecated (removal scheduled 2026-10-15) and, verified live, wasn't populated at all on an agentic chat response even though real citations existed. Dedupe citations by url since the same source is commonly cited by more than one fragment. Client constructor takes apiToken + instance (or serverURL), not domain.",
-    "goDependency": false,
-    "featured": true,
-    "tags": ["starter", "dual-implementation"],
-    "lastVerified": "2026-07-28"
+    "tags": ["a2a", "interop"],
+    "lastVerified": "2026-08-02"
   },
   {
     "id": "build-engineering-portal",
@@ -194,7 +75,10 @@
     "status": "showcase",
     "category": "portal",
     "level": "Intermediate",
-    "levels": { "minimal": true, "wow": true },
+    "levels": {
+      "minimal": true,
+      "wow": true
+    },
     "timeEstimate": "~30 min",
     "requiredScopes": ["SEARCH", "CHAT"],
     "authMethod": [
@@ -211,16 +95,16 @@
     ],
     "demoQueries": [
       {
-        "query": "Who's on call for payments-service?",
-        "expectedBehavior": "Answer names the current on-call owner from the indexed developer catalog, with a citation to that catalog entry."
+        "query": "How do I find out who is on call?",
+        "expectedBehavior": "Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content. Asked this way rather than \"who's on call this week?\" deliberately: the live roster is answered by a schedule tool with no citable document, so the direct question intermittently returns an answer with no citations, or no answer at all. Verified live -- three runs of the direct form produced all three outcomes; this form returned 3-4 citations every time."
       },
       {
-        "query": "What's the deploy and rollback process for payments-service?",
-        "expectedBehavior": "Answer describes the real deploy/rollback steps from the indexed runbook, with a citation — not a generic, made-up process."
+        "query": "How do I deploy a service?",
+        "expectedBehavior": "Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content."
       },
       {
-        "query": "Summarize PAY-2114",
-        "expectedBehavior": "Answer summarizes the real indexed PAY-2114 incident ticket content, with a citation to it — not a fabricated summary."
+        "query": "What's our incident response process?",
+        "expectedBehavior": "Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content."
       }
     ],
     "scaffoldActions": ["scaffold-connector", "scaffold-web-sdk-embed"],
@@ -269,10 +153,140 @@
       }
     ],
     "aiPrompt": "Build the \"Engineering portal with Glean\" flagship recipe from\nhttps://developers.glean.com/cookbook/build-engineering-portal\n\nIt composes two building blocks:\n1. Index the portal's service catalog into Glean with the open-source\n   indexing SDK (follow\n   https://developers.glean.com/api-info/indexing/getting-started/overview).\n2. Embed Glean search and chat into the portal UI with the Web SDK (see\n   https://developers.glean.com/cookbook/embed-search-chat — same\n   container sizing and initialMessage guidance applies here).\n\nStyle the portal shell itself per the house style below (real logomark,\nteal accent) so the catalog UI and the embedded search/chat feel like one\ncohesive app, not two mismatched pieces bolted together.\n\nAsk me for: my Glean instance/backend domain, an Indexing API token, and\nmy Glean web app domain. See Verify below for what a correct build must do.",
-    "llmContext": "Flagship showcase composing the custom-connector and Web SDK embed recipes: a service-catalog portal whose catalog is indexed into Glean via the indexing SDK, with Glean search and chat embedded back into the portal UI. Requires a Glean-issued Indexing API token for the connector and SEARCH/CHAT scopes for the embed.",
+    "llmContext": "Flagship showcase composing the custom-connector and Web SDK embed recipes: a service-catalog portal whose catalog is indexed into Glean via the indexing SDK, with Glean search and chat embedded back into the portal UI. Requires a Glean-issued Indexing API token for the connector and SEARCH/CHAT scopes for the embed. A chat run that invoked a server tool can return HTTP 200 with the run unfinished: the CONTENT message is present but its fragments carry no text, the final message is a SERVER_TOOL, and no error field appears anywhere. Verified live at roughly one run in four for a tool-invoking question. Treat an empty joined answer as a failure and surface it -- rendering the empty string shows a blank answer panel and reads as a broken app.",
     "goDependency": false,
     "featured": false,
-    "tags": ["flagship", "portal"]
+    "tags": ["flagship", "portal"],
+    "lastVerified": "2026-08-02"
+  },
+  {
+    "id": "company-answers",
+    "title": "Company Answers: a cited Q&A page on your own content",
+    "description": "The hello-world of Glean apps: one page, one input, one permission-aware cited answer — built two ways, with the Web SDK and with the Chat API.",
+    "sidebarLabel": "Company Answers",
+    "surfaces": ["client-api", "sdk-client", "web-sdk"],
+    "status": "showcase",
+    "category": "search",
+    "level": "Beginner",
+    "levels": {
+      "minimal": true,
+      "wow": true
+    },
+    "timeEstimate": "~30 min",
+    "icon": "qna",
+    "requiredScopes": ["CHAT"],
+    "authMethod": ["web-sdk-cookie", "client-api-oauth-or-token"],
+    "buildMethod": "scaffold",
+    "languages": ["typescript"],
+    "prerequisites": [
+      "A Glean instance with content indexed",
+      "An OAuth access token or Glean API token with the CHAT scope",
+      "Node 20+ (Chat API path) or any static page (Web SDK path)"
+    ],
+    "demoQueries": [
+      {
+        "query": "What's our PTO policy?",
+        "expectedBehavior": "Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content."
+      },
+      {
+        "query": "How do I request time off?",
+        "expectedBehavior": "Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content."
+      }
+    ],
+    "codeAssets": [
+      {
+        "repoPath": "recipes/company-answers/web-sdk",
+        "language": "typescript",
+        "description": "Web SDK variant — renderChat in a page",
+        "steps": [
+          {
+            "title": "Scaffold the project",
+            "command": "npx tiged --mode=git gleanwork/glean-cookbook/recipes/company-answers/web-sdk company-answers"
+          },
+          {
+            "title": "Install dependencies",
+            "command": "cd company-answers && npm install"
+          },
+          {
+            "title": "Credentials",
+            "description": "Default SSO auth needs no configuration — the Web SDK relies on the user's existing browser session with Glean."
+          },
+          {
+            "title": "Run it",
+            "command": "npm run dev"
+          },
+          {
+            "title": "Verify",
+            "description": "Open the printed local URL and ask \"What's our PTO policy?\" — confirm a real, cited answer renders inside Glean's chat UI."
+          }
+        ]
+      },
+      {
+        "repoPath": "recipes/company-answers/chat-api",
+        "language": "typescript",
+        "description": "Chat API variant — one chat.create call, citations rendered",
+        "steps": [
+          {
+            "title": "Scaffold the project",
+            "command": "npx tiged --mode=git gleanwork/glean-cookbook/recipes/company-answers/chat-api company-answers"
+          },
+          {
+            "title": "Install dependencies",
+            "command": "cd company-answers && npm install"
+          },
+          {
+            "title": "Set credentials",
+            "command": "cp .env.example .env",
+            "description": "Fill in GLEAN_API_TOKEN and GLEAN_INSTANCE — the Authentication section below covers how to get a token."
+          },
+          {
+            "title": "Run it",
+            "command": "npm start",
+            "description": "Leaves the server running so you can try it yourself at http://localhost:3000 — stop it (Ctrl-C) before the deterministic verify step below, which starts its own instance."
+          },
+          {
+            "title": "Verify",
+            "command": "npm run verify",
+            "description": "Starts the server itself, runs both demo queries for real, and asserts the response shape (non-empty answer, non-empty deduped citations with title+url) — exits non-zero on any failure. Do not report this recipe as done until this passes."
+          }
+        ]
+      }
+    ],
+    "steps": [
+      {
+        "title": "Pick a path",
+        "description": "Path A (Web SDK) renders Glean's own chat UI for you — fastest to stand up, no backend code. Path B (Chat API) calls the Chat API directly from your own backend — you own every pixel of the UI and the request/response shape. Both reach the same place: a permission-aware, cited answer."
+      }
+    ],
+    "scaffoldActions": [],
+    "architecture": [
+      {
+        "label": "Company Answers page",
+        "caption": "single input + answer card",
+        "icon": "layout-outlined"
+      },
+      {
+        "label": "Path A: Web SDK",
+        "caption": "renderChat — Glean owns the UI",
+        "category": "search"
+      },
+      {
+        "label": "Path B: Chat API",
+        "caption": "chat.create — you own the UI",
+        "category": "agent"
+      },
+      {
+        "label": "Glean",
+        "caption": "permission-aware answers with citations",
+        "emphasized": true
+      }
+    ],
+    "aiPrompt": "Build \"Company Answers\", a one-page company Q&A app on Glean, following\nhttps://developers.glean.com/cookbook/company-answers\n\n1. Ask me which path: (A) Web SDK or (B) Chat API. Build the one I pick.\n2. Path A: npm install @gleanwork/web-sdk; create a container with\n   position: relative, display: block, width: 100%, height: 480px, then\n   renderChat(el, { initialMessage: \"What's our PTO policy?\" }) — SSO\n   auth needs no configuration. Passing initialMessage opens straight\n   into a real cited answer instead of an empty landing screen, and\n   doubles as your on-load verification.\n3. Path B: npm install @gleanwork/api-client; construct the client with\n   new Glean({ apiToken, instance }) — NOT `domain`, which is not a\n   real SDKOptions field despite appearing in one of the SDK's own\n   bundled example files. POST chat.create with my question as a\n   single USER message; the response can include earlier step-narration\n   messages (search/read progress) ahead of the real answer — filter to\n   messageType === 'CONTENT', then join those messages' fragments[].text\n   for the answer. Citations live per-fragment at fragments[].citation\n   .sourceDocument (title + url) — not a top-level citedDocuments field,\n   and not the older message.citations[] field, which is deprecated and\n   wasn't populated at all on a live test response. Dedupe citations by\n   url since the same source is commonly cited by more than one\n   fragment. Keep the API token server-side.\n4. Style it per the house style below: the real Glean logomark in the\n   header (not a plain colored square), Glean Blue (#343ced) as the\n   primary accent, \"Company Answers\" title.\n5. Verify with \"What's our PTO policy?\" — the answer must carry\n   citations and respect my permissions. Contrast note for the\n   README: the SDK path ships Glean's full UI free; the API path\n   gives total UI control.",
+    "llmContext": "Chat API: POST /rest/api/v1/chat (client SDK glean.client.chat.create). A real response can include earlier UPDATE-type messages narrating search/read steps ahead of the answer — filter to messageType === 'CONTENT' before joining fragments[].text, or that narration text ends up prepended to the answer. Citations live per-fragment at fragments[].citation.sourceDocument (title, url), not a top-level citedDocuments field and not the older message.citations[] field — that field is deprecated (removal scheduled 2026-10-15) and, verified live, wasn't populated at all on an agentic chat response even though real citations existed. Dedupe citations by url since the same source is commonly cited by more than one fragment. Client constructor takes apiToken + instance (or serverURL), not domain. A chat run that invoked a server tool can return HTTP 200 with the run unfinished: the CONTENT message is present but its fragments carry no text, the final message is a SERVER_TOOL, and no error field appears anywhere. Verified live at roughly one run in four for a tool-invoking question. Treat an empty joined answer as a failure and surface it -- rendering the empty string shows a blank answer panel and reads as a broken app.",
+    "goDependency": false,
+    "featured": true,
+    "tags": ["starter", "dual-implementation"],
+    "lastVerified": "2026-08-02"
   },
   {
     "id": "connect-mcp-hosts",
@@ -283,7 +297,10 @@
     "status": "production-pattern",
     "category": "mcp",
     "level": "Beginner",
-    "levels": { "minimal": true, "wow": false },
+    "levels": {
+      "minimal": true,
+      "wow": false
+    },
     "timeEstimate": "~15 min",
     "requiredScopes": ["MCP"],
     "authMethod": ["custom"],
@@ -294,12 +311,12 @@
     ],
     "demoQueries": [
       {
-        "query": "Who's on call for payments-service?",
-        "expectedBehavior": "The MCP host's chat surfaces a cited answer naming the current on-call owner, same shape as the Chat API path — MCP is a transport, not a different answer."
+        "query": "What does our team own?",
+        "expectedBehavior": "The MCP host's chat returns an answer grounded in your Glean content, with citations, proving the server is connected and authenticated."
       },
       {
-        "query": "Summarize PAY-2114",
-        "expectedBehavior": "The MCP host's chat returns a cited summary of the real PAY-2114 incident, not a fabricated one."
+        "query": "Summarize our most recent incident review",
+        "expectedBehavior": "The host returns a cited summary grounded in your own content — not a fabricated one. If it answers without citations, the MCP server is not actually being consulted."
       }
     ],
     "codeAssets": [],
@@ -331,7 +348,102 @@
     "llmContext": "Glean MCP server URL: https://{instance}-be.glean.com/mcp/{server-name} (default server-name is \"default\"). @gleanwork/configure-mcp-server (npx -y @gleanwork/configure-mcp-server remote --url <url> --client <host>) is the real, GA, first-party CLI for wiring this up -- it handles OAuth with Dynamic Client Registration by default and writes the correct host-specific config (Claude Code/Cursor connect natively over HTTP; Claude Desktop is stdio-only, so the CLI wires the mcp-remote bridge automatically). Never reference @gleanwork/mcp-server (deprecated local package), never hand-walk the app.glean.com/settings/install MCP Configurator URL pattern when this CLI exists, and never tell users an API token is required by default -- pass --token only if a host genuinely doesn't support OAuth.",
     "goDependency": false,
     "featured": false,
-    "tags": ["mcp", "starter"]
+    "tags": ["mcp", "starter"],
+    "lastVerified": "2026-08-02"
+  },
+  {
+    "id": "customer-360",
+    "title": "Customer 360: an account page built from your own content",
+    "description": "One page per account — status, risks, and a drill-in chat — assembled from whatever your instance already knows about that customer. No CRM export, no separate index.",
+    "sidebarLabel": "Customer 360",
+    "surfaces": ["platform-api"],
+    "status": "showcase",
+    "category": "workflow",
+    "level": "Intermediate",
+    "levels": {
+      "minimal": true,
+      "wow": true
+    },
+    "timeEstimate": "~1 hr",
+    "icon": "layout-outlined",
+    "requiredScopes": ["SEARCH", "CHAT", "AGENTS"],
+    "authMethod": ["client-api-oauth-or-token"],
+    "buildMethod": "integrate",
+    "languages": ["typescript"],
+    "prerequisites": [
+      "An OAuth access token or Glean API token with the SEARCH and CHAT scopes",
+      "X_GLEAN_INCLUDE_EXPERIMENTAL=true set (the Platform API is Experimental as of its 2026-07 launch)",
+      "An account name your instance has content about — the app is built around it",
+      "Node 20+, and a page you can serve with a small server so the token stays server-side"
+    ],
+    "demoQueries": [
+      {
+        "query": "What's the status of our renewal with that account?",
+        "expectedBehavior": "Returns a non-empty answer citing real documents about the account you built the page around. Substitute the account name when you ask it — the page is built around whichever one you pick, so there is no fixed query text here."
+      },
+      {
+        "query": "Give me a customer summary",
+        "expectedBehavior": "Synthesizes across more than one source, with a citation per claim, rather than restating a single document."
+      },
+      {
+        "query": "What are the renewal risks?",
+        "expectedBehavior": "Either names risks grounded in cited content, or says it has none to report. It must not infer risk the sources don't support — an account with no recorded risk is a real answer, not a gap to fill."
+      }
+    ],
+    "steps": [
+      {
+        "title": "Pick a path",
+        "description": "Path A (Platform Search + Chat) builds an open-ended explorable dashboard: parallel search.query tiles and POST /api/chat for journey summary and saved prompts. Path B (Platform Agents) keeps the same page UX but runs synthesis through glean.agents.createRun against a template Account Brief agent."
+      }
+    ],
+    "scaffoldActions": [],
+    "combines": [
+      {
+        "title": "Permissions-aware RAG",
+        "surface": "Platform Search",
+        "category": "search",
+        "language": "typescript"
+      },
+      {
+        "title": "Platform Chat synthesis",
+        "surface": "Platform Chat",
+        "category": "workflow",
+        "language": "typescript"
+      },
+      {
+        "title": "Platform Agents createRun",
+        "surface": "Platform Agents",
+        "category": "agent",
+        "language": "typescript"
+      }
+    ],
+    "architecture": [
+      {
+        "label": "Account page",
+        "caption": "KPIs + tiles + journey + prompts",
+        "icon": "layout-outlined"
+      },
+      {
+        "label": "Path A: Search + Chat",
+        "caption": "glean.search.query + POST /api/chat",
+        "category": "search"
+      },
+      {
+        "label": "Path B: Agents",
+        "caption": "glean.agents.createRun",
+        "category": "agent"
+      },
+      {
+        "label": "Glean Platform API",
+        "caption": "permission-aware retrieval + synthesis",
+        "emphasized": true
+      }
+    ],
+    "aiPrompt": "Build a Customer 360 account page on Glean following\nhttps://developers.glean.com/cookbook/customer-360\n\n1. Ask me which path: (A) Platform Search + Chat or (B) Platform Agents.\n   Build the one I pick. Do NOT use Client API chat.create,\n   client.search.query, or client.agents.run.\n2. Ask me which account to build the page around, and which of my own\n   sources cover it. Do not invent an account, and do not hardcode\n   figures like ARR, seat count or renewal date — read them from\n   retrieval, and leave a field blank when nothing supports it.\n3. Layout: a KPI header, source tiles for the retrieved documents, a\n   synthesized journey summary, saved-prompt buttons, and a drill-in\n   chat. Empty tiles read \"no recent activity\" rather than \"0\".\n4. Path A: parallel glean.search.query calls for the tiles; summary\n   and follow-ups via a server-side POST /api/chat with\n   { input, stream: false, store: true } and\n   X_GLEAN_INCLUDE_EXPERIMENTAL. Parse output_text plus\n   annotations[].sources[]. The token never reaches the browser.\n5. Path B: same page; synthesis via glean.agents.createRun({ messages,\n   stream: false }, GLEAN_AGENT_ID). Document the Agent Builder\n   prerequisite, and degrade gracefully if the agent is missing or\n   unauthorized rather than failing the page.\n6. Whatever the path: when retrieval returns nothing for a tile or a\n   prompt, say so. Never let the model answer from its own knowledge —\n   a confident, uncited claim about a real customer is the worst\n   possible output for this app.\n7. Style it per the house style below: the real Glean logomark, Glean\n   Blue (#343ced) as the accent.\n8. Verify with the demo queries against the account I chose.",
+    "llmContext": "Platform-only recipe. Search: glean.search.query -> POST /api/search, results[].title/url/snippets (string[]). Chat: fetch POST /api/chat (until glean.chat.create ships); request {input, stream:false, store:true}; response output[].content[] type=output_text with annotations[].sources[]. Agents: glean.agents.createRun(request, agentId) -> POST /api/agents/{agent_id}/runs; stream:false returns PlatformAgentRunWaitResponse synchronously (no polling); messages use role USER|GLEAN_AI and content[{text,type:text}]. Experimental opt-in via X_GLEAN_INCLUDE_EXPERIMENTAL. Do NOT teach glean.client.chat.create, glean.client.search.query, or glean.client.agents.run. Tokens server-side only. The account and its facts come from the reader's own instance: nothing here may hardcode an account name, ARR, seat count or renewal date. An earlier draft of this recipe was written against a demo corpus that no longer exists, which made the page display one fictional customer's numbers regardless of what was retrieved. Treat an empty retrieval as a first-class state and render it as such -- for an app that speaks about named customers, an uncited claim is worse than a blank field.",
+    "goDependency": false,
+    "featured": false,
+    "tags": ["dual-implementation", "sales", "platform-api"]
   },
   {
     "id": "embed-search-chat",
@@ -342,7 +454,10 @@
     "status": "production-pattern",
     "category": "search",
     "level": "Beginner",
-    "levels": { "minimal": true, "wow": true },
+    "levels": {
+      "minimal": true,
+      "wow": true
+    },
     "timeEstimate": "~15 min (minimal)",
     "icon": "deep-research",
     "requiredScopes": ["SEARCH", "CHAT"],
@@ -358,15 +473,15 @@
     "demoQueries": [
       {
         "query": "What's our PTO policy?",
-        "expectedBehavior": "Embedded chat cites the PTO policy document, with a non-empty, deduped citations list — same answer shape as the standalone acme-answers recipe, since it's the same underlying Chat surface."
+        "expectedBehavior": "Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content."
       },
       {
-        "query": "Who owns the payments-service catalog entry?",
-        "expectedBehavior": "Embedded chat names the real owner from the seeded payments-service catalog entry and cites it."
+        "query": "Who should I ask about billing?",
+        "expectedBehavior": "Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content."
       },
       {
-        "query": "Summarize PAY-2114",
-        "expectedBehavior": "Embedded chat returns a cited summary of the real PAY-2114 incident, not a fabricated one."
+        "query": "Summarize our latest product update",
+        "expectedBehavior": "Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content."
       }
     ],
     "scaffoldActions": ["scaffold-web-sdk-embed"],
@@ -395,100 +510,11 @@
       }
     ],
     "aiPrompt": "Embed Glean search and chat in my internal web app using the Glean Web\nSDK, following the recipe at\nhttps://developers.glean.com/cookbook/embed-search-chat\n\nSteps:\n1. Ask me for my Glean backend URL (https://{instance}-be.glean.com).\n2. Install the SDK: npm install @gleanwork/web-sdk. (If the app has no\n   build toolchain, fall back to the script tag from my Glean app domain:\n   <script defer src=\"https://{GLEAN_APP_DOMAIN}/embedded-search-latest.min.js\"></script>\n   — the same methods appear on window.GleanWebSDK.)\n3. Add a search box and results container, then:\n   import { renderSearchBox, renderSearchResults } from \"@gleanwork/web-sdk\";\n   renderSearchBox(searchBoxElement, { backend, onSearch: (query) =>\n     renderSearchResults(resultsElement, { query }) });\n4. Add a chat container: position: relative, display: block, width: 100%,\n   height: 480px — any shorter and long answers scroll awkwardly, any\n   taller and you get dead space below Glean's own chat landing view. Then:\n   import { renderChat } from \"@gleanwork/web-sdk\";\n   renderChat(containerElement, { backend, initialMessage: \"What's our PTO policy?\" });\n   initialMessage opens straight into a real cited answer instead of an\n   empty landing screen, and doubles as your on-load verification.\n5. Default SSO auth needs no extra configuration. If I ask for\n   server-to-server auth instead, follow\n   https://developers.glean.com/libraries/web-sdk/authentication/server-to-server\n   and keep the API key strictly server-side.\n\nSee Verify below for what a correct build must do.",
-    "llmContext": "Embeds Glean search and chat into an existing web app via the Glean Web SDK npm package @gleanwork/web-sdk (renderSearchBox, renderSearchResults, renderChat named exports; script-tag fallback exposes the same methods on window.GleanWebSDK). Pass the backend option to route users directly to the instance. Auth is Glean SSO by default or server-to-server tokens minted by a backend holding an admin API key with SEARCH and CHAT scopes. All results are permission-aware per user.",
+    "llmContext": "Embeds Glean search and chat into an existing web app via the Glean Web SDK npm package @gleanwork/web-sdk (renderSearchBox, renderSearchResults, renderChat named exports; script-tag fallback exposes the same methods on window.GleanWebSDK). Pass the backend option to route users directly to the instance. Auth is Glean SSO by default or server-to-server tokens minted by a backend holding an admin API key with SEARCH and CHAT scopes. All results are permission-aware per user. A chat run that invoked a server tool can return HTTP 200 with the run unfinished: the CONTENT message is present but its fragments carry no text, the final message is a SERVER_TOOL, and no error field appears anywhere. Verified live at roughly one run in four for a tool-invoking question. Treat an empty joined answer as a failure and surface it -- rendering the empty string shows a blank answer panel and reads as a broken app.",
     "goDependency": false,
     "featured": true,
-    "tags": ["embed", "web-sdk"]
-  },
-  {
-    "id": "index-custom-source",
-    "title": "Index a custom data source",
-    "description": "Bring an unsupported source into Glean with the Indexing API — documents, permissions, and people — and see it live in search. This recipe seeds the Acme corpus every other recipe searches.",
-    "sidebarLabel": "Index Custom Source",
-    "surfaces": ["indexing-api", "connector-sdk"],
-    "status": "production-pattern",
-    "category": "index",
-    "level": "Intermediate",
-    "levels": { "minimal": true, "wow": true },
-    "timeEstimate": "~1 hr",
-    "icon": "sources",
-    "requiredScopes": ["INDEXING"],
-    "authMethod": ["indexing-token"],
-    "buildMethod": "scaffold",
-    "languages": ["python"],
-    "prerequisites": [
-      "Admin access to create a custom datasource and Indexing API token",
-      "Python 3.10+ (uses glean-indexing-sdk)"
-    ],
-    "demoQueries": [
-      {
-        "query": "Who owns the payments-service catalog entry?",
-        "expectedBehavior": "After indexing, Glean search/chat surfaces the custom-connector-indexed catalog document as a citation, naming the real owner — proving the connector's documents (not just seeded native ones) are searchable and permissions-scoped."
-      },
-      {
-        "query": "What's the on-call runbook for checkout-service?",
-        "expectedBehavior": "Glean search/chat surfaces the custom-connector-indexed checkout-service runbook document as a citation."
-      }
-    ],
-    "codeAssets": [
-      {
-        "repoPath": "recipes/index-custom-source",
-        "language": "python",
-        "description": "Custom connector indexing the Acme corpus with per-document permissions"
-      },
-      {
-        "repoPath": "acme-corpus",
-        "language": "json",
-        "description": "The seed dataset itself"
-      }
-    ],
-    "steps": [
-      {
-        "title": "Scaffold the project",
-        "description": "connector.py resolves the corpus via a relative path two levels up (Path(__file__).parent.parent.parent / \"acme-corpus\") — scaffold both directories preserving that same nesting, not flattened into one directory.",
-        "command": "mkdir -p index-custom-source/recipes/index-custom-source index-custom-source/acme-corpus\nnpx tiged --mode=git gleanwork/glean-cookbook/recipes/index-custom-source index-custom-source/recipes/index-custom-source\nnpx tiged --mode=git gleanwork/glean-cookbook/acme-corpus index-custom-source/acme-corpus"
-      },
-      {
-        "title": "Install dependencies",
-        "command": "cd index-custom-source/recipes/index-custom-source && pip install -r requirements.txt"
-      },
-      {
-        "title": "Set credentials",
-        "description": "Export GLEAN_INDEXING_API_TOKEN and GLEAN_SERVER_URL — this recipe has no .env.example, it reads directly from the environment (see the Authentication section below)."
-      },
-      {
-        "title": "Run it",
-        "command": "python seed.py",
-        "description": "Registers the custom datasource and bulk-indexes documents/people with real per-document permissions — never allow-all."
-      },
-      {
-        "title": "Verify",
-        "description": "Search \"Who owns the payments-service catalog entry?\" as yourself and as a restricted test user — the restricted user must not see Acme-HR-only documents."
-      }
-    ],
-    "scaffoldActions": ["scaffold-connector"],
-    "architecture": [
-      {
-        "label": "Acme corpus",
-        "caption": "JSON documents + ACLs",
-        "icon": "layout-outlined"
-      },
-      {
-        "label": "Indexing SDK",
-        "caption": "bulk index + permissions",
-        "category": "index"
-      },
-      {
-        "label": "Glean index",
-        "caption": "searchable in minutes",
-        "emphasized": true
-      }
-    ],
-    "aiPrompt": "Index the Acme demo corpus into my Glean instance following\nhttps://developers.glean.com/cookbook/index-custom-source\n\n1. Ask me for my Indexing API token + server URL (env vars only:\n   GLEAN_INDEXING_API_TOKEN, GLEAN_SERVER_URL).\n2. Register the custom datasource per the recipe's CustomDatasourceConfig\n   (glean-indexing-sdk==1.0.0b2, BaseDatasourceConnector.configure_datasource()).\n3. Run the connector from recipes/index-custom-source: bulk-index documents\n   WITH their permissions (DocumentPermissionsDefinition allowed_groups /\n   allowed_users) — never allow-all. Push identities via get_identities()\n   returning DatasourceIdentityDefinitions so ACLs actually evaluate.\n4. Verify: search \"Who owns the payments-service catalog entry?\" as me and\n   as a restricted test user; the restricted user must NOT see the\n   Acme-HR-only documents.\n\nNote: this SDK version has no datasources.delete() call — only per-item\ndeletes (documents, permission users/groups, employees). Don't invent a\nfull datasource-teardown API.",
-    "llmContext": "glean-indexing-sdk==1.0.0b2. BaseDatasourceConnector subclass sets `configuration: CustomDatasourceConfig` and implements transform() -> Sequence[DocumentDefinition]; permissions via DocumentPermissionsDefinition(allowed_groups=[...] | allowed_users=[UserReferenceDefinition(email=...)]). get_identities() returns DatasourceIdentityDefinitions(users, groups, memberships) for ACL evaluation. DocumentDefinition.created_at/updated_at are epoch seconds (int), not ISO strings. No datasources.delete() exists in this SDK version.",
-    "goDependency": false,
-    "featured": true,
-    "tags": ["indexing", "foundation"]
+    "tags": ["embed", "web-sdk"],
+    "lastVerified": "2026-08-02"
   },
   {
     "id": "multi-step-agent",
@@ -499,7 +525,10 @@
     "status": "production-pattern",
     "category": "agent",
     "level": "Advanced",
-    "levels": { "minimal": true, "wow": true },
+    "levels": {
+      "minimal": true,
+      "wow": true
+    },
     "timeEstimate": "~2 hr",
     "icon": "agent",
     "requiredScopes": ["AGENTS", "TOOLS"],
@@ -509,19 +538,20 @@
     "prerequisites": [
       "Agent builder access in your Glean instance",
       "Permission to register a custom tool (or admin help)",
-      "A Glean token with AGENTS scope for API invocation"
+      "A Glean token with AGENTS scope for API invocation",
+      "Your own email, to put on (and take off) the tool server's allow-list between the two runs"
     ],
     "demoQueries": [
       {
-        "query": "Summarize open payments incidents and file a tracking ticket",
-        "expectedBehavior": "Run as an Acme-Engineering user (e.g. marcus.webb@acme.example.com): the agent summarizes open incidents and the governed tool call succeeds (200, a real ticket ID comes back). Run as a non-Engineering user (e.g. dana.okafor@acme.example.com): the tool server returns 403 and the agent falls back to a read-only summary instead of failing the whole run — the governance check must actually run, not be assumed."
+        "query": "Summarize our open incidents and file a tracking ticket",
+        "expectedBehavior": "With your email on the tool server's allow-list: the agent summarizes and the governed tool call succeeds (200, a real ticket id). With it removed: the tool returns 403 and the agent falls back to a read-only summary rather than failing the run. The governance check must actually fire, not be assumed."
       }
     ],
     "codeAssets": [
       {
         "repoPath": "recipes/multi-step-agent/tool-server",
         "language": "python",
-        "description": "Governed custom Tool — files an incident ticket, restricted to Acme-Engineering"
+        "description": "Governed custom Tool — files an incident ticket, restricted to one group"
       },
       {
         "repoPath": "recipes/multi-step-agent/invoke-agent",
@@ -535,12 +565,13 @@
         "command": "npx tiged --mode=git gleanwork/glean-cookbook/recipes/multi-step-agent multi-step-agent"
       },
       {
-        "title": "Install dependencies",
-        "command": "cd multi-step-agent/tool-server && pip install -r requirements.txt && cd ../invoke-agent && pip install -r requirements.txt"
+        "title": "Set the tool server's allow-list",
+        "command": "cd multi-step-agent/tool-server && cp .env.example .env",
+        "description": "Set AUTHORIZED_EMAILS to your own email for the first run. You'll remove it for the second run to see the denied branch — changing the allow-list is how both governance paths get demonstrated, since the agent always runs as you. The server refuses to start on an empty allow-list, since that denies everyone and makes the permitted branch unobservable."
       },
       {
         "title": "Run the tool server",
-        "command": "cd multi-step-agent/tool-server && python server.py",
+        "command": "cd multi-step-agent/tool-server && uv run server.py",
         "description": "Listens on port 8080. Keep this running in its own terminal — the agent calls it over HTTP once registered."
       },
       {
@@ -556,10 +587,14 @@
         "command": "cd multi-step-agent/invoke-agent && cp .env.example .env",
         "description": "Fill in GLEAN_API_TOKEN, GLEAN_INSTANCE, and GLEAN_AGENT_ID (the ID from the previous step)."
       },
-      { "title": "Run it", "command": "python main.py" },
+      {
+        "title": "Run it",
+        "command": "cd multi-step-agent/invoke-agent && uv run main.py",
+        "description": "Dependencies are declared inline (PEP 723) and locked, so uv installs them into an isolated environment on first run — no requirements.txt, venv, or activate step."
+      },
       {
         "title": "Verify",
-        "description": "Run as a permitted user (Acme-Engineering) and confirm the ticket actually gets filed; run as a non-permitted user and confirm a graceful no-write fallback summary instead of a hard failure."
+        "description": "With your email on the allow-list, confirm the ticket actually gets filed. Then restart the tool server without it and confirm the agent produces a read-only fallback summary instead of a hard failure."
       }
     ],
     "scaffoldActions": [],
@@ -581,8 +616,8 @@
         "category": "workflow"
       }
     ],
-    "aiPrompt": "Build the governed multi-step agent from\nhttps://developers.glean.com/cookbook/multi-step-agent\n\n1. Register the recipe's custom tool (an incident-ticket-creation HTTP\n   tool) in the Glean admin console (Admin > Platform > Tools > Add) —\n   this is a manual/admin-console step, there is no API to create a\n   tool. Upload the recipe's openapi.yaml as the tool's API spec.\n2. Create an agent in the Agent Builder (also a UI step, not an API\n   call): instructions from the recipe, retrieval on, the tool\n   attached. Copy the agent's ID.\n3. Invoke via glean.client.agents.run(agent_id=..., messages=[...],\n   http_headers={\"X-Glean-Act-As\": email}) — NOT chat.create's\n   ChatMessage/ChatMessageFragment shape; agents use Message/\n   MessageTextBlock instead. run_stream() returns raw SSE text (a\n   string), not a parsed event iterator — use run() unless you're\n   ready to parse SSE yourself.\n4. Demo both branches by running as two different users: a permitted\n   user (Acme-Engineering) gets the ticket filed; a non-permitted\n   user gets a graceful no-write fallback summary because the tool\n   server returned 403 and the agent's own instructions handle that\n   case.",
-    "llmContext": "Agents API: glean.client.agents.run(agent_id, messages, http_headers) -> AgentRunWaitResponse{run.status, messages}. messages use Message(role, content=[MessageTextBlock(text, type=ContentType.TEXT)]) — distinct from chat.create's ChatMessage/ChatMessageFragment. run_stream() returns a raw SSE string, not an iterator. Tools are registered via the admin console (upload an OpenAPI spec), not an API call. Per-user identity for a run uses the X-Glean-Act-As header on a global/admin token, same as Search. Custom tool servers receive the acting user's email via the Glean-User-Email header, which is where tool-level authorization (governance) is actually enforced for scratch-built tools.",
+    "aiPrompt": "Build the governed multi-step agent from\nhttps://developers.glean.com/cookbook/multi-step-agent\n\n1. Register the recipe's custom tool (an incident-ticket-creation HTTP\n   tool) in the Glean admin console (Admin > Platform > Tools > Add) —\n   this is a manual/admin-console step, there is no API to create a\n   tool. Upload the recipe's openapi.yaml as the tool's API spec.\n2. Create an agent in the Agent Builder (also a UI step, not an API\n   call): instructions from the recipe, retrieval on, the tool\n   attached. Copy the agent's ID.\n3. Invoke via glean.client.agents.run(agent_id=..., messages=[...])\n   — the agent runs as whoever my credential belongs to, so send no\n   impersonation header and don't ask me for an admin token. NOT\n   chat.create's\n   ChatMessage/ChatMessageFragment shape; agents use Message/\n   MessageTextBlock instead. run_stream() returns raw SSE text (a\n   string), not a parsed event iterator — use run() unless you're\n   ready to parse SSE yourself.\n4. Demo both governance branches by changing the tool server's\n   AUTHORIZED_EMAILS allow-list between runs, not by impersonating\n   anyone: once with my email on it (the ticket is filed), once\n   without (the tool returns 403 and the agent's own instructions\n   produce a read-only summary rather than failing the run). Glean\n   forwards my identity to the tool as the Glean-User-Email header,\n   which is where that authorization is enforced.",
+    "llmContext": "Agents API: glean.client.agents.run(agent_id, messages) -> AgentRunWaitResponse{run.status, messages}. messages use Message(role, content=[MessageTextBlock(text, type=ContentType.TEXT)]) — distinct from chat.create's ChatMessage/ChatMessageFragment. run_stream() returns a raw SSE string, not an iterator. Tools are registered via the admin console (upload an OpenAPI spec), not an API call. A run executes as the identity behind the credential; there is no impersonation header to add and no admin token needed. Custom tool servers receive the acting user's email via the Glean-User-Email header, which is where tool-level authorization (governance) is actually enforced for scratch-built tools.",
     "goDependency": false,
     "featured": true,
     "tags": ["agents", "governance"]
@@ -596,7 +631,10 @@
     "status": "showcase",
     "category": "workflow",
     "level": "Beginner",
-    "levels": { "minimal": true, "wow": false },
+    "levels": {
+      "minimal": true,
+      "wow": false
+    },
     "timeEstimate": "~45 min",
     "icon": "lovable",
     "requiredScopes": ["CHAT"],
@@ -609,11 +647,11 @@
     "demoQueries": [
       {
         "query": "Where do I reset my SSO password?",
-        "expectedBehavior": "Answer cites the SSO password reset guide."
+        "expectedBehavior": "Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content."
       },
       {
         "query": "How do I request a new laptop?",
-        "expectedBehavior": "Answer cites the IT helpdesk FAQ (loaner laptops, same-day, from the IT desk)."
+        "expectedBehavior": "Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content."
       }
     ],
     "codeAssets": [
@@ -625,7 +663,7 @@
     ],
     "scaffoldActions": [],
     "aiPrompt": "I'm using Lovable, not you, to build this — your job is to prepare my\ninputs per\nhttps://developers.glean.com/cookbook/no-code-it-helpdesk-lovable\n\n1. Generate the Lovable prompt from the recipe's template, filling in\n   my Glean server URL.\n2. Remind me: token goes in a Lovable backend secret, never in the\n   prompt.\n3. After Lovable builds it, hand it back to me — see Verify below for\n   the exact queries to test and what a correct result looks like.",
-    "llmContext": "This recipe's deliverable is a prompt template, not a runnable project — mirrors no-code-pto-lookup-replit's shape (same Chat API call, same \"browser never holds the token\" constraint, same citation correction: filter to messageType === 'CONTENT' before joining fragments[].text, and read citations from fragments[].citation.sourceDocument — not the deprecated message.citations[] field, which wasn't populated at all on a live test response) with a different tool and persona so the two don't read as duplicates. Lovable's default stack leans on a connected backend/database integration for server-side secrets rather than a plain Node server, so the prompt asks the agent to set that up rather than assuming a fixed mechanism. Both demo queries are answered by existing seeded Acme corpus documents — no corpus changes were needed.",
+    "llmContext": "This recipe's deliverable is a prompt template, not a runnable project — mirrors no-code-pto-lookup-replit's shape (same Chat API call, same \"browser never holds the token\" constraint, same citation correction: filter to messageType === 'CONTENT' before joining fragments[].text, and read citations from fragments[].citation.sourceDocument — not the deprecated message.citations[] field, which wasn't populated at all on a live test response) with a different tool and persona so the two don't read as duplicates. Lovable's default stack leans on a connected backend/database integration for server-side secrets rather than a plain Node server, so the prompt asks the agent to set that up rather than assuming a fixed mechanism. Both demo queries are the kind almost every company's IT documentation answers, so the recipe works against the reader's own instance with no seeding. A chat run that invoked a server tool can return HTTP 200 with the run unfinished: the CONTENT message is present but its fragments carry no text, the final message is a SERVER_TOOL, and no error field appears anywhere. Verified live at roughly one run in four for a tool-invoking question. Treat an empty joined answer as a failure and surface it -- rendering the empty string shows a blank answer panel and reads as a broken app.",
     "goDependency": false,
     "featured": false,
     "tags": ["no-code", "it"]
@@ -639,7 +677,10 @@
     "status": "showcase",
     "category": "workflow",
     "level": "Beginner",
-    "levels": { "minimal": true, "wow": false },
+    "levels": {
+      "minimal": true,
+      "wow": false
+    },
     "timeEstimate": "~45 min",
     "icon": "replit",
     "requiredScopes": ["CHAT"],
@@ -652,11 +693,11 @@
     "demoQueries": [
       {
         "query": "What is our PTO policy?",
-        "expectedBehavior": "Answer cites the PTO policy document."
+        "expectedBehavior": "Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content."
       },
       {
         "query": "When is open enrollment?",
-        "expectedBehavior": "Answer cites the benefits guide and states open enrollment runs in November."
+        "expectedBehavior": "Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content."
       }
     ],
     "codeAssets": [
@@ -668,21 +709,117 @@
     ],
     "scaffoldActions": [],
     "aiPrompt": "I'm using Replit Agent, not you, to build this — your job is to prepare\nmy inputs per\nhttps://developers.glean.com/cookbook/no-code-pto-lookup-replit\n\n1. Generate the Replit prompt from the recipe's template, filling in\n   my Glean server URL.\n2. Remind me: token goes in Replit Secrets as GLEAN_API_TOKEN, never\n   in the prompt.\n3. After Replit builds it, hand it back to me — see Verify below for\n   the exact queries to test and what a correct result looks like.",
-    "llmContext": "This recipe's deliverable is a prompt template, not a runnable project — \"building\" it means pasting the prompt into Replit Agent, which then writes and runs the actual code. The prompt pins the same Chat API shape used elsewhere in this cookbook: Glean({ apiToken, instance }) (never `domain`), chat.create({ messages: [{ author: 'USER', fragments: [{ text }] }] }), filtering the response to messageType === 'CONTENT' before joining fragments[].text (a real response can include earlier step-narration messages), and reading citations from fragments[].citation.sourceDocument — not the deprecated message.citations[] field, which wasn't populated at all on a live test response. The demo query \"How do I enroll in the commuter benefit?\" from this recipe's source ticket was swapped for \"When is open enrollment?\" because the seeded Acme benefits guide doesn't mention a commuter benefit — asking the original question would produce no citation or a fabricated answer.",
+    "llmContext": "This recipe's deliverable is a prompt template, not a runnable project — \"building\" it means pasting the prompt into Replit Agent, which then writes and runs the actual code. The prompt pins the same Chat API shape used elsewhere in this cookbook: Glean({ apiToken, instance }) (never `domain`), chat.create({ messages: [{ author: 'USER', fragments: [{ text }] }] }), filtering the response to messageType === 'CONTENT' before joining fragments[].text (a real response can include earlier step-narration messages), and reading citations from fragments[].citation.sourceDocument — not the deprecated message.citations[] field, which wasn't populated at all on a live test response. The demo query \"How do I enroll in the commuter benefit?\" from this recipe's source ticket was swapped for \"When is open enrollment?\" because it is too company-specific to assume any instance documents it — asking the original question would produce no citation or a fabricated answer. A chat run that invoked a server tool can return HTTP 200 with the run unfinished: the CONTENT message is present but its fragments carry no text, the final message is a SERVER_TOOL, and no error field appears anywhere. Verified live at roughly one run in four for a tool-invoking question. Treat an empty joined answer as a failure and surface it -- rendering the empty string shows a blank answer panel and reads as a broken app.",
     "goDependency": false,
     "featured": false,
     "tags": ["no-code", "hr"]
   },
   {
-    "id": "permissions-aware-rag",
-    "title": "Permissions-aware RAG",
-    "description": "Use Glean's Platform API as the retrieval layer for your own LLM app — every chunk ACL-filtered per user before it ever reaches the model.",
-    "sidebarLabel": "Permissions-Aware RAG",
+    "id": "onboarding-hub",
+    "title": "Onboarding Hub: a day-one checklist grounded in your own docs",
+    "description": "A guided first-week hub for new hires: a checklist with progress, and every step able to answer itself from your own onboarding content.",
+    "sidebarLabel": "Onboarding Hub",
+    "surfaces": ["web-sdk", "platform-api"],
+    "status": "showcase",
+    "category": "portal",
+    "level": "Intermediate",
+    "levels": {
+      "minimal": true,
+      "wow": true
+    },
+    "timeEstimate": "~45 min",
+    "icon": "layout-outlined",
+    "requiredScopes": ["CHAT"],
+    "authMethod": ["web-sdk-cookie", "client-api-oauth-or-token"],
+    "buildMethod": "integrate",
+    "languages": ["typescript"],
+    "prerequisites": [
+      "A Glean instance with your onboarding content indexed",
+      "For the Platform Chat path: a token with the CHAT scope, plus X_GLEAN_INCLUDE_EXPERIMENTAL=true",
+      "For the Web SDK path: nothing beyond SSO — the browser session carries the identity",
+      "Node 20+ for the Platform path, or any static page for the Web SDK path"
+    ],
+    "demoQueries": [
+      {
+        "query": "What should I do on my first day?",
+        "expectedBehavior": "Returns a cited answer drawn from your own onboarding documents, and the checklist reflects steps that actually appear in them rather than a hardcoded list."
+      },
+      {
+        "query": "How do I set up VPN?",
+        "expectedBehavior": "Returns a cited answer from your own IT documentation. This is the kind of question almost every company's onboarding content covers, so it works without seeding anything."
+      },
+      {
+        "query": "What's our PTO policy?",
+        "expectedBehavior": "Returns a cited answer respecting the asker's permissions — the same question from two people with different access should not return content either of them can't see."
+      },
+      {
+        "query": "Ask about a step your docs don't cover",
+        "expectedBehavior": "The hub says it has nothing on that and offers the escalation affordance, rather than inventing a plausible-sounding onboarding step.",
+        "permissionDifferentiated": false
+      }
+    ],
+    "steps": [
+      {
+        "title": "Pick a path",
+        "description": "Path A (Web SDK) renders Glean's chat UI via renderChat — fastest for a portal page with SSO. Path B (Platform Chat) calls POST /api/chat from your backend — you own every pixel and parse OpenAI Responses-style output with citation annotations."
+      }
+    ],
+    "scaffoldActions": [],
+    "combines": [
+      {
+        "title": "Embed search & chat",
+        "surface": "Web SDK",
+        "category": "search",
+        "language": "typescript"
+      },
+      {
+        "title": "Build a chatbot",
+        "surface": "Platform Chat",
+        "category": "portal",
+        "language": "typescript"
+      }
+    ],
+    "architecture": [
+      {
+        "label": "Onboarding Hub",
+        "caption": "checklist + progress + chat",
+        "icon": "layout-outlined"
+      },
+      {
+        "label": "Path A: Web SDK",
+        "caption": "renderChat — Glean owns chat UI",
+        "category": "search"
+      },
+      {
+        "label": "Path B: Platform Chat",
+        "caption": "POST /api/chat — you own the UI",
+        "category": "portal"
+      },
+      {
+        "label": "Glean",
+        "caption": "permission-aware cited answers",
+        "emphasized": true
+      }
+    ],
+    "aiPrompt": "Build an Onboarding Hub on Glean following\nhttps://developers.glean.com/cookbook/onboarding-hub\n\n1. Ask me which path: (A) Web SDK or (B) Platform Chat. Build the one\n   I pick.\n2. Build the checklist from MY onboarding content, not a fixed list:\n   retrieve the onboarding docs my instance has and derive the steps\n   from them. Ask me if you can't find any. Do not hardcode a named\n   new hire or a step count.\n3. Completion state in localStorage, with a progress ring and\n   milestone badges grouped by the categories my own docs suggest.\n4. Each step gets an \"Ask about this\" button that seeds a contextual\n   question about that step.\n5. Path A: renderChat in a sized #chat container (SSO cookie, no\n   credential handling). Re-mount with initialMessage when \"Ask about\n   this\" is clicked.\n6. Path B: server-side POST /api/chat with { input, stream: false,\n   store: true } and X_GLEAN_INCLUDE_EXPERIMENTAL=true. Parse\n   output[0].content[0].text plus annotations[].sources[] for\n   citations — NOT Client API chat.create fragment parsing. The token\n   stays server-side.\n7. When an answer comes back empty or uncited, show the escalation\n   affordance (an IT or HR channel) instead of rendering nothing, and\n   never let the model answer an onboarding question from its own\n   knowledge. A new hire cannot tell an invented process from a real\n   one, which makes fabrication the most damaging failure here.\n8. Style it per the house style below: the real Glean logomark, Glean\n   Blue (#343ced) as the accent.\n9. Verify with the demo queries against my own content.",
+    "llmContext": "Platform Chat (Path B): POST /api/chat, OpenAI Responses-style. Request: { input: string, stream?: boolean, store?: boolean }. Response: output[].content[].text + annotations[].sources[] (document/person/file/custom_entity). Experimental — requires X_GLEAN_INCLUDE_EXPERIMENTAL=true and backend platform.apiMigratedEndpointsEnabled. Platform scope is CHAT_WRITE (registry uses cookbook-style CHAT). No scoping/inclusion filter fields in OpenAPI — soft-scope via corpus framing only. Until @gleanwork/api-client ships glean.chat.create, use fetch against /api/chat. Path A: Web SDK renderChat with SSO cookie; all ChatOptions fields optional. Do NOT teach Client API glean.client.chat.create or messageType === 'CONTENT' fragment parsing in this recipe. The checklist and its steps must be derived from the reader's own onboarding content. An earlier draft seeded a named new hire's nine steps from a demo corpus that no longer exists, which made the hub display one fictional person's checklist on every instance. Ask rather than invent, and treat an empty or uncited answer as a state to render -- a new hire cannot distinguish an invented process from a real one.",
+    "goDependency": false,
+    "featured": false,
+    "tags": ["dual-implementation", "portal"]
+  },
+  {
+    "id": "permissions-aware-retrieval",
+    "title": "Ground your own LLM app in Glean",
+    "description": "Use Glean's Platform API as the retrieval layer for your own LLM app — every result ACL-filtered for the caller before it ever reaches the model.",
+    "sidebarLabel": "Permissions-aware retrieval",
     "surfaces": ["platform-api", "sdk-client"],
     "status": "production-pattern",
     "category": "search",
     "level": "Intermediate",
-    "levels": { "minimal": true, "wow": true },
+    "levels": {
+      "minimal": true,
+      "wow": true
+    },
     "timeEstimate": "~1 hr",
     "icon": "badge",
     "requiredScopes": ["SEARCH"],
@@ -690,34 +827,31 @@
     "buildMethod": "scaffold",
     "languages": ["python", "typescript"],
     "prerequisites": [
-      "A Glean token with SEARCH scope (global/admin token for the act-as permissions demo)",
+      "An OAuth access token or Glean API token with the SEARCH scope (your own — no global/admin token needed)",
       "X_GLEAN_INCLUDE_EXPERIMENTAL=true set (the Platform API is Experimental as of its 2026-07 launch)",
       "An LLM API key (any provider; example uses Claude)",
-      "Python 3.10+ or Node 20+"
+      "uv (for the Python path) or Node 20+"
     ],
     "demoQueries": [
       {
         "query": "What's our PTO policy?",
-        "expectedBehavior": "Any user gets a cited answer — this doc is broadly readable, so permissions don't restrict it."
+        "expectedBehavior": "Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content."
       },
       {
-        "query": "What are the engineering compensation bands?",
-        "expectedBehavior": "A user with access to the compensation-bands doc gets a cited answer; a user without that access gets no citation for it and the LLM must not fabricate an answer from the missing context. search.query has to respect the caller's real Glean permissions for both cases — that's the actual thing this recipe verifies."
+        "query": "Ask for something you personally don't have access to (another team's compensation review, an HR case file)",
+        "expectedBehavior": "Retrieval returns nothing, so the app must say it has no information rather than answering from the model's own knowledge. This is the property that matters: your credential is the permission boundary, and an empty retrieval must produce a refusal, not a confident fabrication.",
+        "permissionDifferentiated": true
       }
     ],
     "codeAssets": [
       {
-        "repoPath": "recipes/permissions-aware-rag/python",
+        "repoPath": "recipes/permissions-aware-retrieval/python",
         "language": "python",
         "description": "Platform API search.query → snippets → LLM with citations",
         "steps": [
           {
             "title": "Scaffold the project",
-            "command": "npx tiged --mode=git gleanwork/glean-cookbook/recipes/permissions-aware-rag/python permissions-aware-rag"
-          },
-          {
-            "title": "Install dependencies",
-            "command": "cd permissions-aware-rag && pip install -r requirements.txt"
+            "command": "npx tiged --mode=git gleanwork/glean-cookbook/recipes/permissions-aware-retrieval/python permissions-aware-retrieval"
           },
           {
             "title": "Set credentials",
@@ -726,26 +860,27 @@
           },
           {
             "title": "Run it",
-            "command": "python main.py \"What's our PTO policy?\""
+            "command": "cd permissions-aware-retrieval && uv run main.py \"What's our PTO policy?\"",
+            "description": "Dependencies are declared inline in main.py (PEP 723), so uv resolves and installs them into an isolated environment on first run — there's no requirements.txt, venv, or activate step."
           },
           {
             "title": "Verify",
-            "description": "Confirm the printed answer carries numbered citations with real titles and URLs. Re-run with --act-as <restricted-user-email> (requires a global/admin token) and confirm an HR-only query returns no fabricated answer for that user."
+            "description": "Confirm the printed answer carries numbered citations with real titles and URLs. Then ask for something another team owns: retrieval returns nothing and the app must say so rather than answering from the model's own knowledge."
           }
         ]
       },
       {
-        "repoPath": "recipes/permissions-aware-rag/typescript",
+        "repoPath": "recipes/permissions-aware-retrieval/typescript",
         "language": "typescript",
         "description": "Same flow in TypeScript",
         "steps": [
           {
             "title": "Scaffold the project",
-            "command": "npx tiged --mode=git gleanwork/glean-cookbook/recipes/permissions-aware-rag/typescript permissions-aware-rag"
+            "command": "npx tiged --mode=git gleanwork/glean-cookbook/recipes/permissions-aware-retrieval/typescript permissions-aware-retrieval"
           },
           {
             "title": "Install dependencies",
-            "command": "cd permissions-aware-rag && npm install"
+            "command": "cd permissions-aware-retrieval && npm install"
           },
           {
             "title": "Set credentials",
@@ -758,7 +893,7 @@
           },
           {
             "title": "Verify",
-            "description": "Confirm the printed answer carries numbered citations with real titles and URLs. Re-run with -- \"<question>\" --act-as <restricted-user-email> (requires a global/admin token) and confirm an HR-only query returns no fabricated answer for that user."
+            "description": "Confirm the printed answer carries numbered citations with real titles and URLs. Then ask for something another team owns: retrieval returns nothing and the app must say so rather than answering from the model's own knowledge."
           }
         ]
       }
@@ -788,10 +923,10 @@
         "category": "agent"
       }
     ],
-    "aiPrompt": "Build permissions-aware RAG on Glean following\nhttps://developers.glean.com/cookbook/permissions-aware-rag\n\n1. Retrieval: glean.search.query(query=..., page_size=8) — the\n   top-level Platform API method, NOT glean.client.search.query(),\n   which is a different, older surface (the Client API). The Platform\n   API is Experimental as of its 2026-07 launch: set\n   X_GLEAN_INCLUDE_EXPERIMENTAL=true as an env var or every call fails\n   — there's no argument for this on search.query() itself. Collect\n   title, url, and snippets from each result — snippets is a plain\n   string[] here (no .text unwrap needed, unlike the Client API).\n2. Prompt the LLM with ONLY those snippets; require inline [n] citations\n   mapped back to the result URLs.\n3. Enforce per-user: pass an X-Glean-Act-As: <email> HTTP header (not a\n   query parameter or SDK option) to impersonate a specific user with a\n   global/admin token. Demo with two users where the restricted one\n   gets \"I don't have information on that\" for HR-only queries.\n4. README must state the differentiator: no vector DB, no ACL\n   mirroring, no re-sync — Glean is the governed retrieval layer.\n\nUse claude-sonnet-5 via the anthropic SDK if I don't specify a\nprovider; keep the LLM call swappable.",
-    "llmContext": "Platform API search (data-first retrieval, distinct from the Client API's glean.client.search.query): glean.search.query(query, page_size, http_headers) -> PlatformSearchResponse. Result shape: results[].title, results[].url, results[].snippets (string[], not snippet objects). Experimental since its 2026-07-14 public launch — requires X_GLEAN_INCLUDE_EXPERIMENTAL=true (env var, read automatically by the SDK) on every call or it 4xxs. Per-user enforcement is still the X-Glean-Act-As HTTP header on a global/admin token, not an SDK parameter, same as the Client API.",
+    "aiPrompt": "Ground my own LLM app in Glean, with retrieval filtered to the\ncaller's permissions, following\nhttps://developers.glean.com/cookbook/permissions-aware-retrieval\n\n1. Retrieval: glean.search.query(query=..., page_size=8) — the\n   top-level Platform API method, NOT glean.client.search.query(),\n   which is a different, older surface (the Client API). The Platform\n   API is Experimental as of its 2026-07 launch: set\n   X_GLEAN_INCLUDE_EXPERIMENTAL=true as an env var or every call fails\n   — there's no argument for this on search.query() itself. Collect\n   title, url, and snippets from each result — snippets is a plain\n   string[] here (no .text unwrap needed, unlike the Client API).\n2. Prompt the LLM with ONLY those snippets; require inline [n] citations\n   mapped back to the result URLs.\n3. Per-user enforcement needs no code at all: the caller's own\n   credential IS the permission boundary, so results come back already\n   filtered to what that person can see. Send no extra headers, and do\n   not add impersonation of any kind.\n4. Because retrieval is already filtered, the code that matters is what\n   happens when it comes back EMPTY: the app must say it has no\n   information, never answer from the model's own knowledge. A confident\n   answer with no sources is the failure mode this whole architecture\n   exists to prevent.\n5. README must state the differentiator: no vector DB, no ACL\n   mirroring, no re-sync — Glean is the governed retrieval layer.\n\nUse claude-sonnet-5 via the anthropic SDK if I don't specify a\nprovider; keep the LLM call swappable.",
+    "llmContext": "Platform API search (data-first retrieval, distinct from the Client API's glean.client.search.query): glean.search.query(query, page_size, http_headers) -> PlatformSearchResponse. Result shape: results[].title, results[].url, results[].snippets (string[], not snippet objects). Experimental since its 2026-07-14 public launch — requires X_GLEAN_INCLUDE_EXPERIMENTAL=true (env var, read automatically by the SDK) on every call or it 4xxs. Per-user filtering needs no headers: with a token from the Glean Authorization Server the caller's own credential is the permission boundary. Send no impersonation header; that belongs to a different architecture and does not apply here. The verifiable claim for this recipe is that an empty retrieval produces a refusal rather than a fabricated answer.",
     "goDependency": false,
     "featured": true,
-    "tags": ["rag", "differentiator"]
+    "tags": ["rag", "retrieval", "differentiator"]
   }
 ]
