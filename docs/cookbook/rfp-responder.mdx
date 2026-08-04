@@ -1,0 +1,100 @@
+---
+hide_table_of_contents: true
+hide_title: true
+pagination_prev: null
+pagination_next: null
+---
+
+import RecipePage from '@site/src/components/Cookbook/RecipePage';
+import {
+  RecipeSection,
+  RecipePrereqs,
+  RecipeSteps,
+  TakeItFurther,
+  RecipeDemoQueries,
+} from '@site/src/components/Cookbook/RecipeLayout';
+
+<RecipePage recipeId="rfp-responder">
+
+<RecipeSection label="Problem">
+
+A security questionnaire arrives with 200 rows. The answers all exist somewhere —
+in last quarter's SOC 2 report, in a policy doc, in the response you sent a
+different customer in March. Someone spends a week finding them again.
+
+Everyone has seen an RFP bot that drafts those answers. The hard part isn't
+drafting. It's what happens on the rows where the evidence isn't there, because a
+fluent, confident, wrong answer about your own security controls doesn't get
+caught in review — it gets pasted into a customer's document over your signature.
+
+So this recipe is built around the failure contract rather than the happy path.
+Only permitted, approved evidence enters the prompt. Every claim keeps its
+citation. Missing evidence stays unanswered. A person approves before anything
+leaves.
+
+</RecipeSection>
+
+<RecipePrereqs />
+
+<RecipeSteps />
+
+<RecipeSection label="Two things that surprised us">
+
+Both look fine in a demo and fail in production, so they're worth carrying into
+anything similar you build.
+
+**Lexical similarity cannot deduplicate a security questionnaire.** The obvious
+design scores question similarity and merges above a threshold. On the sample
+questionnaire, "is customer data encrypted **at rest**?" and "is customer data
+encrypted **in transit**?" score **0.60** — while two genuine duplicates,
+"is customer data encrypted at rest?" and "describe your at-rest encryption,
+including key length," score **0.29**. The false positive outranks the true
+positive. No threshold is safe: any cutoff that catches the real duplicate also
+merges two different security controls. So only normalized-exact matches merge
+automatically, and similarity is used purely to *order* a manual-merge list for
+the reviewer. The cross-tab exact repeat — the common real-world case — is still
+handled for free.
+
+**Topicality and approval are independent.** Asked to "describe your self-service
+credential reset flow," retrieval surfaces an internal IT support article. That
+citation is genuinely excellent — it is literally about credential resets. It is
+also unusable as evidence in a customer's questionnaire, because it's internal
+operational guidance, not a reviewed statement of a control. No relevance score
+catches this, because the problem isn't linguistic. So the recipe scores two
+separate axes, and approval is *declared* in a list a customer owns rather than
+inferred: **strong** means an approved source that answers directly, **weak**
+means on-topic-but-internal or approved-but-adjacent, and **none** means no draft
+at all.
+
+</RecipeSection>
+
+<RecipeSection label="Permissions">
+
+The app runs as you. There's no impersonation and no act-as, which makes it
+single-user — and makes the guarantee real: content you can't see can't reach the
+customer's document. Empty retrieval produces a refusal, not an answer from the
+model's own knowledge.
+
+The sample corpus demonstrates it. The a customer security response summary is
+restricted to a single group; run as someone outside it and every security row
+collapses to "needs SME" instead of quietly answering from somewhere else.
+
+</RecipeSection>
+
+<TakeItFurther>
+
+<>Add an xlsx and docx reader so real questionnaires can be uploaded directly — the parser here reads CSV to keep the interesting logic legible.</>
+
+<>Write answers back into the source document with a custom tool instead of exporting, keeping the confirm step and the approval log.</>
+
+<>Give the answer library its own access control before sharing it across a team. It's a cache of retrieved content, so it can leak across the permission boundary the rest of the app respects.</>
+
+<>Route "needs SME" rows to their owners automatically, and track which ones came back — the assignment field here is deliberately inert.</>
+
+<>Combine with [permissions-aware retrieval](/cookbook/permissions-aware-retrieval) to see the same refusal property in a smaller, single-question app.</>
+
+</TakeItFurther>
+
+<RecipeDemoQueries />
+
+</RecipePage>

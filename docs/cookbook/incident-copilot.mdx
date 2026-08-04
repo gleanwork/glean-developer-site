@@ -1,0 +1,114 @@
+---
+hide_table_of_contents: true
+hide_title: true
+pagination_prev: null
+pagination_next: null
+---
+
+import RecipePage from '@site/src/components/Cookbook/RecipePage';
+import {
+  RecipeSection,
+  RecipePrereqs,
+  RecipeSteps,
+  TakeItFurther,
+  RecipeDemoQueries,
+} from '@site/src/components/Cookbook/RecipeLayout';
+
+<RecipePage recipeId="incident-copilot">
+
+<RecipeSection label="Problem">
+
+An alarm fires at 3am. Everything the responder needs already exists — the runbook,
+the review of the last time this happened, who owns the service, what it depends on
+— scattered across systems they now have to search one at a time, while the graphs
+get worse.
+
+The retrieval is the easy part. What makes an incident copilot safe to point at a
+production service is everything that refuses: a gate that turns away the wrong
+person, an expiry that escalates instead of quietly approving itself, an action
+registry the planner cannot talk its way out of, and an audit entry for every
+attempt including the ones that were refused.
+
+</RecipeSection>
+
+<RecipePrereqs />
+
+<RecipeSteps />
+
+<RecipeSection label="Relevance is not evidence">
+
+The obvious way to build "probable cause, ranked by evidence" is to rank retrieved
+documents by relevance and explain the top one. That produces confident wrong root
+causes, and it does so structurally rather than occasionally.
+
+A canary alarm on a payments service retrieves the deploy-and-rollback runbook at or
+near the top of any ranking, because that runbook is _dense with the alarm's own
+vocabulary_ — canary, rollout, error rate, authorization failure rate. It is
+genuinely the most relevant document in the corpus. It also contains nothing about
+why this particular deploy broke. It is procedure.
+
+Measured on the sample corpus:
+
+| Alarm                     | Top-scoring document           | Score    | Matching precedent            |
+| ------------------------- | ------------------------------ | -------- | ----------------------------- |
+| canary, deploy in flight  | past incident review           | 1.00     | yes — cause asserted          |
+| queue saturation, no deploy | **deploy & rollback runbook** | **0.40** | no (0.20) — no cause asserted |
+
+On the second alarm the runbook outranks everything, and there is no deploy in
+flight. A relevance-ranked copilot tells the on-call engineer that a deploy caused an
+incident which happened while nothing was deploying.
+
+So documents carry an **evidentiary role**, and roles have different powers. A
+`precedent` — a past incident whose signature matches — is the only thing that may
+license a claim about **cause**, because it is the only kind of document that records
+one. A `procedure` may license a proposed **action**. `context` gives you ownership
+and topology. No matching precedent means no cause is asserted, which is a correct
+outcome rather than a gap.
+
+Role comes from where a document lives, not from what it says. Inferring a document's
+evidentiary standing from its prose is exactly the inference this design exists to
+avoid.
+
+**The same mistake reappears one layer down.** That rule alone still produced a
+"draft a fix" card for the no-precedent alarm, because the runbook mentions
+rollbacks. So a mutating action requires an evidence-supported cause, and is
+otherwise downgraded to filing a ticket — visibly, in the channel and the audit log.
+You cannot draft a fix for a cause nobody established.
+
+</RecipeSection>
+
+<RecipeSection label="Authorization is not authentication">
+
+The approval gate enforces _who may approve_, read from the indexed service catalog:
+the on-call engineer and the service owners, nobody else. It does **not**
+authenticate — the acting user is asserted, so you can watch the gate refuse you
+without restarting anything.
+
+Those are different problems. This recipe solves the first; a deployment must solve
+the second before trusting the first, or it has an approval gate anyone can walk
+through by setting a header.
+
+Relatedly, actions do not execute _as the approving user_. Impersonation is not part
+of these recipes, so the executor is the app's own credential and the gate is an
+app-level policy check. That is a weaker claim than per-person permission
+enforcement, and worth stating plainly rather than implying.
+
+</RecipeSection>
+
+<TakeItFurther>
+
+<>Persist incidents and the audit log. An audit log you can lose by restarting a process is not an audit log.</>
+
+<>Add the rest of the dashboard: response-time rollups, an expiring-soon lane, and an end-of-shift handoff summary.</>
+
+<>Replace the simulated actions with real governed tools, keeping the registry boundary and the approval log exactly where they are.</>
+
+<>Write the postmortem draft back into your knowledge base so the next incident retrieves it as a precedent — the loop that makes the evidence rules get better over time.</>
+
+<>Expose the copilot itself over A2A so another agent can request triage, with the same gate in front of every action.</>
+
+</TakeItFurther>
+
+<RecipeDemoQueries />
+
+</RecipePage>
