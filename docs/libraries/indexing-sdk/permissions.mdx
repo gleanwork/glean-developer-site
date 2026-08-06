@@ -1,0 +1,159 @@
+---
+title: Permissions
+description: Index documents with real ACLs and push the identities that make them evaluate
+---
+
+import { Pipeline } from '@site/src/components/IndexingSdk/diagrams';
+
+Glean enforces permissions at query time. A document is only returned to a user
+who is allowed to see it — which means your connector has to tell Glean two
+things, and both are required.
+
+<Pipeline nodes={[
+  { label: 'Source ACLs', caption: 'Who can see what, at the source', icon: 'Server', owner: 'external' },
+  { label: <>Per-document ACLs</>, caption: 'DocumentPermissionsDefinition', icon: 'Lock', owner: 'you' },
+  { label: <><code>get_identities()</code></>, caption: 'Users, groups, memberships', icon: 'Users', owner: 'you' },
+  { label: 'Enforced at query time', caption: 'Results scoped per user', icon: 'Shield', owner: 'sdk' },
+]} />
+
+An ACL naming a group Glean has never heard of matches nobody.
+
+:::danger
+Never index sensitive content with an allow-all ACL "for now." Permissions are
+the boundary between a useful connector and a data leak, and retrofitting them
+means re-indexing everything. Get them right in the first run.
+:::
+
+## Per-document ACLs
+
+Attach a `DocumentPermissionsDefinition` to each document:
+
+```python
+from glean.api_client.models import (
+    DocumentDefinition,
+    DocumentPermissionsDefinition,
+    UserReferenceDefinition,
+)
+
+
+def transform(self, data):
+    return [
+        DocumentDefinition(
+            id=article["id"],
+            title=article["title"],
+            datasource=self.name,
+            view_url=article["url"],
+            permissions=DocumentPermissionsDefinition(
+                allowed_groups=article["visible_to_groups"],
+                allowed_users=[
+                    UserReferenceDefinition(email=email)
+                    for email in article["visible_to_users"]
+                ],
+            ),
+        )
+        for article in data
+    ]
+```
+
+| Field | Meaning |
+|---|---|
+| `allowed_users` | Users who can see the document, by email or datasource user ID. |
+| `allowed_groups` | Group names that can see the document. |
+| `allowed_group_intersections` | Requires membership in *all* listed groups — for sources with AND-style ACLs. |
+
+Map your source's model onto these directly. Don't flatten groups into user
+lists: group membership changes constantly, and a flattened ACL is stale the
+moment someone joins a team.
+
+## Datasource identities
+
+Implement `get_identities()` to push the identity graph:
+
+```python
+from glean.indexing.models import DatasourceIdentityDefinitions
+
+
+def get_identities(self) -> DatasourceIdentityDefinitions:
+    return DatasourceIdentityDefinitions(
+        users=fetch_users(),
+        groups=fetch_groups(),
+        memberships=fetch_memberships(),
+    )
+```
+
+`index_data()` runs this **before** the content crawl, so identities exist by the
+time documents referencing them arrive.
+
+:::info
+If you return `groups`, you must also return `memberships`. The SDK raises
+`InconsistentDataError` otherwise, because a group with no members produces ACLs
+that can never match. Returning only `users` is valid when your source has no
+group concept.
+:::
+
+## Email-based references
+
+Setting `is_user_referenced_by_email=True` on the datasource config lets you
+reference users by email, which is usually simplest when your source and Glean
+share an identity provider:
+
+```python
+configuration = CustomDatasourceConfig(
+    name="company_wiki",
+    display_name="Company Wiki",
+    is_user_referenced_by_email=True,
+)
+```
+
+Without it, references use datasource-specific user IDs, and you must push a
+user record mapping each ID.
+
+## Verifying enforcement
+
+Counting indexed documents proves nothing about permissions. Test the negative
+case: a user who should *not* see a document must not see it.
+
+The test harness supports this directly. List identities that should never
+appear in any ACL:
+
+```yaml title="testing_config.yaml"
+testing:
+  negative_test_identities:
+    - contractor@example.com
+    - external-partners
+```
+
+Phase 2 asserts they're absent from every transformed document. See
+[Integration testing](/libraries/indexing-sdk/testing/integration).
+
+You can also assert in code:
+
+```python
+from glean.indexing.testing import assert_negative_identities_absent, extract_permission_refs
+
+result = run_connector(connector)
+refs = extract_permission_refs(result.documents_posted)
+
+assert "engineering" in refs.group_ids
+assert_negative_identities_absent(result.documents_posted, ["contractor@example.com"])
+```
+
+`extract_permission_refs()` walks `allowed_users`, `allowed_groups`, and
+`allowed_group_intersections`, returning the deduplicated `user_ids` and
+`group_ids` your documents actually reference. It's also useful for indexing
+*only* the identities your crawl needs, rather than the whole directory.
+
+Finally, confirm end to end against a real instance and search as a restricted
+user. If they can see a document they shouldn't, the ACL or the identity graph is
+wrong — the search result is the ground truth, not the upload response.
+
+## Related
+
+<CardGroup cols={2}>
+  <Card title="Indexing API permissions" icon="Book" href="/api-info/indexing/documents/permissions">
+    The underlying permissions model and field reference.
+  </Card>
+  <Card title="Testing" icon="CheckCircle" href="/libraries/indexing-sdk/testing/overview">
+    Verify ACLs before you ship.
+  </Card>
+</CardGroup>

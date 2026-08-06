@@ -1,4 +1,5 @@
 import type React from 'react';
+import Head from '@docusaurus/Head';
 import recipesData from '@site/src/data/recipes.json';
 import type { RecipesData } from '../../types/recipe';
 import RecipeLayout from './RecipeLayout';
@@ -21,9 +22,8 @@ export default function RecipePage({
   recipeId,
   children,
 }: RecipePageProps): React.ReactElement {
-  const recipe = (recipesData as RecipesData).recipes.find(
-    (r) => r.id === recipeId,
-  );
+  const data = recipesData as RecipesData;
+  const recipe = data.recipes.find((r) => r.id === recipeId);
 
   if (!recipe) {
     throw new Error(
@@ -33,5 +33,22 @@ export default function RecipePage({
     );
   }
 
-  return <RecipeLayout recipe={recipe}>{children}</RecipeLayout>;
+  return (
+    <>
+      {/* Recipe .mdx files carry no frontmatter, so Docusaurus falls back to
+          the doc id for <title> and emits no description — every recipe page
+          would otherwise present itself as "permissions-aware-retrieval" in browser
+          tabs, search results, and link previews. Setting both here keeps the
+          registry the one source, the same way the sidebar labels do. */}
+      <Head>
+        <title>{`${recipe.title} | Glean Developer`}</title>
+        <meta name="description" content={recipe.description} />
+        <meta property="og:title" content={recipe.title} />
+        <meta property="og:description" content={recipe.description} />
+      </Head>
+      <RecipeLayout plugin={data.plugin} recipe={recipe}>
+        {children}
+      </RecipeLayout>
+    </>
+  );
 }

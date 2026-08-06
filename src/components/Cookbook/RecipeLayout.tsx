@@ -1,18 +1,21 @@
 import React, { useState } from 'react';
-import Link from '@docusaurus/Link';
 import { getIcon } from '@gleanwork/docusaurus-theme-glean/Icons';
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
 import {
   RECIPE_STATUS_LABELS,
   RECIPE_SURFACE_LABELS,
+  type CookbookPlugin,
   type RecipeRecord,
 } from '../../types/recipe';
+import PluginRunButton from './PluginRunButton';
 import { CategoryTile, CATEGORY_ICONS } from './categories';
 import styles from './RecipeLayout.module.css';
 import catStyles from './categories.module.css';
 
-/** Base URL for runnable recipe code. One place to change when the repo lands. */
+/** Base URL for runnable recipe code — the glean-cookbook repo (private until launch). */
 export const COOKBOOK_REPO_URL =
-  'https://github.com/gleanwork/cookbook/tree/main';
+  'https://github.com/gleanwork/glean-cookbook/tree/main';
 
 /** Set by RecipeLayout; lets MDX section components read the recipe record. */
 export const RecipeContext = React.createContext<RecipeRecord | null>(null);
@@ -38,12 +41,30 @@ function metaPill(icon: string, text: string): React.ReactElement {
   );
 }
 
-function ActionCard({ recipe }: { recipe: RecipeRecord }): React.ReactElement {
+/**
+ * Rail actions, branching on `buildMethod`.
+ *
+ * `scaffold` recipes have real, verified commands — the page renders them in
+ * `RecipeSteps`, and the plugin runs them. Those recipes get the plugin run
+ * button; copying `aiPrompt` for them would offer a worse, drift-prone path
+ * than the page it sits on.
+ *
+ * `integrate` and `third-party-build` recipes have no fixed target to copy
+ * into (or hand off to Lovable/Replit), so prose genuinely is the mechanism
+ * and copy-prompt stays — just labelled for what it does.
+ */
+function ActionCard({
+  recipe,
+  plugin,
+}: {
+  recipe: RecipeRecord;
+  plugin: CookbookPlugin;
+}): React.ReactElement {
   const [copied, setCopied] = useState(false);
 
   const copyPrompt = async () => {
     try {
-      await navigator.clipboard.writeText(recipe.ai_prompt);
+      await navigator.clipboard.writeText(recipe.aiPrompt);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
@@ -51,52 +72,53 @@ function ActionCard({ recipe }: { recipe: RecipeRecord }): React.ReactElement {
     }
   };
 
-  const starter = recipe.code_assets[0];
+  // Link the recipe directory rather than a single codeAsset: recipes with a
+  // path or language split have several, and linking only the first hid the
+  // others once the separate code-assets card went away.
+  const hasSource = recipe.codeAssets.length > 0;
+  const isScaffold = recipe.buildMethod === 'scaffold';
 
   return (
     <div className={styles.actionCard}>
-      <button
-        className={styles.primaryAction}
-        onClick={copyPrompt}
-        type="button"
-      >
-        {getIcon('Play', 'feather', {
-          width: 16,
-          height: 16,
-          color: 'currentColor',
-        })}
-        {copied ? 'Prompt copied!' : 'Run minimal demo'}
-      </button>
-      {starter ? (
-        <a
-          className={styles.secondaryAction}
-          href={`${COOKBOOK_REPO_URL}/${starter.repo_path}`}
-          rel="noopener noreferrer"
-          target="_blank"
-        >
-          {getIcon('Plus', 'feather', {
-            width: 16,
-            height: 16,
-            color: 'currentColor',
-          })}
-          Scaffold starter code
-        </a>
+      {isScaffold ? (
+        <PluginRunButton plugin={plugin} recipeId={recipe.id} />
       ) : (
         <button
-          className={styles.secondaryAction}
+          className={styles.primaryAction}
           onClick={copyPrompt}
           type="button"
         >
-          {getIcon('Plus', 'feather', {
+          {getIcon('Copy', 'feather', {
             width: 16,
             height: 16,
             color: 'currentColor',
           })}
-          Scaffold starter code
+          {copied ? 'Prompt copied' : 'Copy build prompt'}
         </button>
       )}
+
+      {hasSource ? (
+        <a
+          className={styles.secondaryAction}
+          href={`${COOKBOOK_REPO_URL}/recipes/${recipe.id}`}
+          rel="noopener noreferrer"
+          target="_blank"
+        >
+          {getIcon('Code', 'feather', {
+            width: 16,
+            height: 16,
+            color: 'currentColor',
+          })}
+          View source
+        </a>
+      ) : null}
+
       <p className={styles.actionHint}>
-        Copies a prompt your AI assistant can build from.
+        {isScaffold
+          ? 'Runs the recipe through the Glean cookbook plugin.'
+          : recipe.buildMethod === 'third-party-build'
+            ? 'Paste into Lovable or Replit to build the app.'
+            : 'Paste into Claude Code, Cursor, or Codex.'}
       </p>
     </div>
   );
@@ -211,24 +233,170 @@ export function RecipePrereqs(): React.ReactElement {
   );
 }
 
-/** Numbered vertical timeline; each child is one step. */
-export function RecipeSteps({
-  children,
-}: {
-  children: React.ReactNode;
-}): React.ReactElement {
-  const steps = React.Children.toArray(children);
+/**
+ * The queries a reader should actually try, from the registry's `demoQueries`.
+ *
+ * Data-driven like `RecipePrereqs`, and for the same reason: these are the exact
+ * queries the verify harness runs, so a page that restated them in prose would
+ * drift from what is actually checked. Until this existed, `demoQueries` was
+ * compiled into recipes.json and rendered nowhere -- a reader finished a recipe
+ * with no idea what to test.
+ */
+export function RecipeDemoQueries(): React.ReactElement | null {
+  const recipe = useRecipe('RecipeDemoQueries');
+  if (recipe.demoQueries.length === 0) return null;
+
   return (
-    <RecipeSection label="Steps">
-      <div className={styles.stepsWrap}>
-        <div className={styles.stepsRail} />
-        {steps.map((step, i) => (
-          <div className={styles.stepRow} key={i}>
-            <span className={styles.stepNum}>{i + 1}</span>
-            <div className={styles.stepBody}>{step}</div>
+    <RecipeSection label="Try it">
+      <div className={styles.prereqList}>
+        {recipe.demoQueries.map((demo) => (
+          <div className={styles.prereqRow} key={demo.query}>
+            {getIcon('Search', 'feather', {
+              width: 18,
+              height: 18,
+              color: 'var(--gdt-primary)',
+            })}
+            <div>
+              <p>
+                <strong>{demo.query}</strong>
+              </p>
+              <p>{demo.expectedBehavior}</p>
+            </div>
           </div>
         ))}
       </div>
+      {recipe.lastVerified && (
+        <p>
+          <em>
+            Each of these was run against a live Glean instance on{' '}
+            {recipe.lastVerified}.
+          </em>
+        </p>
+      )}
+    </RecipeSection>
+  );
+}
+
+const VARIANT_LABEL_WORDS: Record<string, string> = {
+  sdk: 'SDK',
+  api: 'API',
+  typescript: 'TypeScript',
+  javascript: 'JavaScript',
+};
+
+/** Last path segment of a codeAsset's repoPath, title-cased ("web-sdk" -> "Web SDK"). */
+function humanizeVariantLabel(repoPath: string): string {
+  return repoPath
+    .split('/')
+    .pop()!
+    .split('-')
+    .map(
+      (word) =>
+        VARIANT_LABEL_WORDS[word] ??
+        word.charAt(0).toUpperCase() + word.slice(1),
+    )
+    .join(' ');
+}
+
+/** One numbered row in a steps timeline. */
+function StepRow({
+  index,
+  step,
+}: {
+  index: number;
+  step: { title: string; description?: string; command?: string };
+}): React.ReactElement {
+  return (
+    <div className={styles.stepRow}>
+      <span className={styles.stepNum}>{index}</span>
+      <div className={styles.stepBody}>
+        <p>
+          <strong>{step.title}</strong>
+        </p>
+        {step.description && <p>{step.description}</p>}
+        {step.command && (
+          <pre className={styles.stepCommand}>
+            <code>{step.command}</code>
+          </pre>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Numbered vertical timeline. Recipes with `recipe.steps`/
+ * `codeAssets[].steps` (and, for recipes with more than one variant, a
+ * tabbed choice) render from that data — the same real, runnable source
+ * the generated plugin skill renders from. Recipes not yet migrated to
+ * that data fall back to hand-authored JSX children.
+ */
+export function RecipeSteps({
+  children,
+}: {
+  children?: React.ReactNode;
+}): React.ReactElement {
+  const recipe = useRecipe('RecipeSteps');
+  const variantsWithSteps = (recipe.codeAssets ?? []).filter(
+    (asset) => asset.steps && asset.steps.length > 0,
+  );
+  const hasStepsData =
+    (recipe.steps && recipe.steps.length > 0) || variantsWithSteps.length > 0;
+
+  if (!hasStepsData) {
+    const steps = React.Children.toArray(children);
+    return (
+      <RecipeSection label="Steps">
+        <div className={styles.stepsWrap}>
+          <div className={styles.stepsRail} />
+          {steps.map((step, i) => (
+            <div className={styles.stepRow} key={i}>
+              <span className={styles.stepNum}>{i + 1}</span>
+              <div className={styles.stepBody}>{step}</div>
+            </div>
+          ))}
+        </div>
+      </RecipeSection>
+    );
+  }
+
+  return (
+    <RecipeSection label="Steps">
+      {recipe.steps && recipe.steps.length > 0 && (
+        <div className={styles.stepsWrap}>
+          <div className={styles.stepsRail} />
+          {recipe.steps.map((step, i) => (
+            <StepRow key={step.title} index={i + 1} step={step} />
+          ))}
+        </div>
+      )}
+      {variantsWithSteps.length > 1 ? (
+        <Tabs>
+          {variantsWithSteps.map((asset) => (
+            <TabItem
+              key={asset.repoPath}
+              value={asset.repoPath}
+              label={humanizeVariantLabel(asset.repoPath)}
+            >
+              <div className={styles.stepsWrap}>
+                <div className={styles.stepsRail} />
+                {asset.steps!.map((step, i) => (
+                  <StepRow key={step.title} index={i + 1} step={step} />
+                ))}
+              </div>
+            </TabItem>
+          ))}
+        </Tabs>
+      ) : (
+        variantsWithSteps.map((asset) => (
+          <div className={styles.stepsWrap} key={asset.repoPath}>
+            <div className={styles.stepsRail} />
+            {asset.steps!.map((step, i) => (
+              <StepRow key={step.title} index={i + 1} step={step} />
+            ))}
+          </div>
+        ))
+      )}
     </RecipeSection>
   );
 }
@@ -277,36 +445,41 @@ export function TakeItFurther({
 
 interface RecipeLayoutProps {
   recipe: RecipeRecord;
+  /** Plugin coordinates from recipes.json, for the rail's run button. */
+  plugin: CookbookPlugin;
   children: React.ReactNode;
 }
 
 /**
  * Recipe detail template per design handoff 4b: gradient header banner
- * (breadcrumb, category tile, title, meta pills) and a main + sticky-rail
- * grid. Body sections come from the recipe MDX via the section components.
+ * (category tile, title, meta pills) and a main + sticky-rail grid. The
+ * native theme breadcrumb (rendered above this component) handles
+ * back-navigation to /cookbook. Body sections come from the recipe MDX via
+ * the section components.
  */
 export default function RecipeLayout({
   recipe,
+  plugin,
   children,
 }: RecipeLayoutProps): React.ReactElement {
   return (
     <RecipeContext.Provider value={recipe}>
       <div className={styles.page}>
         <div className={styles.banner}>
-          <div className={styles.breadcrumb}>
-            <Link to="/cookbook">Cookbook</Link>
-            <span className={styles.breadcrumbSep}>/</span>
-            {recipe.title}
-          </div>
           <div className={styles.bannerMain}>
-            <CategoryTile category={recipe.category} iconSize={26} size={52} />
+            <CategoryTile
+              category={recipe.category}
+              iconOverride={recipe.icon}
+              iconSize={26}
+              size={52}
+            />
             <div>
               <h1 className={styles.bannerTitle}>{recipe.title}</h1>
-              <p className={styles.bannerDesc}>{recipe.summary}</p>
+              <p className={styles.bannerDesc}>{recipe.description}</p>
             </div>
           </div>
           <div className={styles.metaRow}>
-            {metaPill('Clock', recipe.time_estimate.replace(/\s*\(.*\)$/, ''))}
+            {metaPill('Clock', recipe.timeEstimate.replace(/\s*\(.*\)$/, ''))}
             {metaPill('TrendingUp', recipe.level)}
           </div>
         </div>
@@ -315,7 +488,7 @@ export default function RecipeLayout({
           <div className={styles.main}>{children}</div>
 
           <div className={styles.rail}>
-            <ActionCard recipe={recipe} />
+            <ActionCard plugin={plugin} recipe={recipe} />
 
             <div className={styles.railCard}>
               <div className={styles.railLabel}>At a glance</div>
@@ -337,44 +510,20 @@ export default function RecipeLayout({
                 <div className={`${styles.glanceRow} ${styles.glanceRowLast}`}>
                   <span className={styles.glanceKey}>Time</span>
                   <span className={styles.glanceVal}>
-                    {recipe.time_estimate}
+                    {recipe.timeEstimate}
                   </span>
                 </div>
               </div>
             </div>
 
-            {recipe.required_scopes.length > 0 ? (
+            {recipe.requiredScopes.length > 0 ? (
               <div className={styles.railCard}>
                 <div className={styles.railLabel}>Required scopes</div>
                 <div className={styles.scopes}>
-                  {recipe.required_scopes.map((scope) => (
+                  {recipe.requiredScopes.map((scope) => (
                     <span className={styles.scopeChip} key={scope}>
                       {scope}
                     </span>
-                  ))}
-                </div>
-              </div>
-            ) : null}
-
-            {recipe.code_assets.length > 0 ? (
-              <div className={styles.railCard}>
-                <div className={styles.railLabel}>Code assets</div>
-                <div className={styles.assets}>
-                  {recipe.code_assets.map((asset) => (
-                    <a
-                      className={styles.assetRow}
-                      href={`${COOKBOOK_REPO_URL}/${asset.repo_path}`}
-                      key={asset.repo_path}
-                      rel="noopener noreferrer"
-                      target="_blank"
-                    >
-                      <span>{asset.description}</span>
-                      {getIcon('ExternalLink', 'feather', {
-                        width: 14,
-                        height: 14,
-                        color: 'currentColor',
-                      })}
-                    </a>
                   ))}
                 </div>
               </div>

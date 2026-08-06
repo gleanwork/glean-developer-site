@@ -1,0 +1,165 @@
+---
+title: CLI
+description: glean-idx, the single command line interface for building and operating Glean connectors
+---
+
+The SDK ships one command, `glean-idx`. It covers the whole loop: checking your
+credentials, validating a plan, running a connector, inspecting what it
+uploaded, and deploying it on a schedule.
+
+```bash
+glean-idx doctor                    # are my credentials right?
+glean-idx validate ./my-connector   # is the plan complete, before writing code?
+glean-idx test --phase all          # mocked, then real source, then live
+glean-idx run                       # crawl for real
+glean-idx datasource status --datasource company_wiki
+glean-idx deploy init --cloud gcp   # Docker and Terraform for a CronJob
+```
+
+## Where each command runs
+
+Commands fall into two groups, and knowing which is which saves the most common
+confusion. `glean-idx --help` restates it.
+
+**Credentials only.** Most commands need nothing but `GLEAN_SERVER_URL` and
+`GLEAN_INDEXING_API_TOKEN`. They never import your code, so they run from any
+directory — including with nothing installed:
+
+```bash
+uvx --from glean-indexing-sdk glean-idx doctor
+```
+
+**Your connector too.** `run`, `test`, and `datasource configure` import your
+connector class, so they run from inside the connector project with the SDK
+installed alongside your code:
+
+```bash
+uv run glean-idx run
+```
+
+A command in the second group run from the wrong directory tells you exactly
+that, and lists the directories it searched for `glean_deployment.yaml`.
+
+## Commands
+
+### Before you write code
+
+| Command | What it does |
+|---|---|
+| `glean-idx doctor` | Checks credentials, and with `--datasource NAME` proves the token actually works by reading that datasource. |
+| `glean-idx validate [DIR]` | Checks a connector's `.glean/` planning artifacts are complete and confirmed. Exits `5` and lists every problem at once. |
+| `glean-idx schema [NAME]` | Prints the JSON Schema for the models `transform()` returns. Run with no name to list them. |
+
+### Running and testing
+
+| Command | What it does |
+|---|---|
+| `glean-idx run` | Fetches, transforms, and uploads. `--mode incremental` overrides the project's `indexing_mode`; `--force-restart` discards a partial upload. |
+| `glean-idx test --phase PHASE` | Runs the connector at one fidelity: `mock`, `integration`, `live`, or `all`. |
+
+`--phase` maps onto the [testing phases](/libraries/indexing-sdk/testing/overview):
+
+| Flag | Phase | Source | Glean |
+|---|---|---|---|
+| `--phase mock` | [Unit](/libraries/indexing-sdk/testing/unit) | the connector's own clients | mocked |
+| `--phase integration` | [Integration](/libraries/indexing-sdk/testing/integration) | real, recorded and replayed | mocked |
+| `--phase live` | [End-to-end](/libraries/indexing-sdk/testing/end-to-end) | real | real |
+
+`--phase all` runs them in order and stops at the first failure. A phase that
+cannot run is skipped and reported rather than failing the batch — without Glean
+credentials, `live` is skipped and the earlier phases still run.
+
+### Inspecting what landed
+
+| Command | What it does |
+|---|---|
+| `glean-idx datasource status` | Uploaded and indexed counts per object type, identity counts, visibility, and the most recent upload and processing runs. |
+| `glean-idx datasource process` | Requests processing now instead of waiting for the next scheduled run. |
+| `glean-idx datasource configure` | Registers the connector's own `configuration`, so the datasource cannot drift from what the connector uploads to. |
+| `glean-idx document status` | Whether specific documents finished indexing. `--poll` waits. |
+| `glean-idx document access` | Whether a given user can see a document. |
+| `glean-idx document events` | A document's lifecycle events, for when it uploaded but never became searchable. |
+
+`document status` and `document access` are the two worth reaching for first
+when something is missing from search — see
+[Status and debugging](/libraries/indexing-sdk/status-and-debugging).
+
+### Removing things
+
+| Command | What it does |
+|---|---|
+| `glean-idx document delete` | Removes specific documents from the index. Prompts unless `--yes`. |
+| `glean-idx datasource teardown` | Removes every document, keeping the datasource and its configuration. Requires typing the datasource name to confirm. |
+
+:::warning
+`teardown` cannot be undone. It uploads an empty full crawl, so everything
+currently indexed for that datasource becomes stale and is removed.
+:::
+
+### Deploying
+
+`glean-idx deploy` generates and operates a scheduled job in your own cloud —
+`init`, `build`, `secrets`, `apply`, `status`, `logs`, and `destroy`. See
+[Deployment](/libraries/indexing-sdk/deployment/overview).
+
+## Output and exit codes
+
+Every command takes `--output json` and returns a stable envelope, which is what
+makes the CLI usable from a script or an agent:
+
+```bash
+glean-idx datasource status --datasource company_wiki --output json | jq .data.documents
+```
+
+```json
+{
+  "ok": true,
+  "data": { "datasource": "company_wiki", "documents": { "uploaded": { "article": 42 } } }
+}
+```
+
+Output defaults to text at a terminal and JSON when redirected, so a piped
+command is machine-readable without passing anything. In JSON mode the envelope
+goes to **stdout whether the command succeeded or not** — an `ok: false` result
+is still the result — so there is one stream to parse. Text-mode errors go to
+stderr, as does connector logging from `run`.
+
+Exit codes are stable:
+
+| Code | Meaning |
+|---|---|
+| `0` | Succeeded. |
+| `1` | Unexpected failure, or the connector itself raised. |
+| `2` | Bad invocation. |
+| `3` | Environment not ready: no credentials, no project, no importable connector. |
+| `4` | Glean rejected the request or was unreachable. |
+| `5` | The command ran and found its subject invalid. |
+
+Failures carry a machine-readable `code`, and where one exists, the command that
+fixes them:
+
+```json
+{
+  "ok": false,
+  "error": {
+    "code": "missing_credentials",
+    "message": "missing required environment variables: GLEAN_SERVER_URL, GLEAN_INDEXING_API_TOKEN",
+    "hint": ["export GLEAN_SERVER_URL=...", "export GLEAN_INDEXING_API_TOKEN=..."]
+  }
+}
+```
+
+## Unattended use
+
+`--yes` skips every confirmation, which destructive commands otherwise require.
+`datasource teardown` asks you to type the datasource name rather than pressing
+`y`, since the effect is unrecoverable and covers the whole datasource.
+
+## Shell completion
+
+```bash
+glean-idx completion zsh >> ~/.zshrc      # or bash, fish
+```
+
+The script goes to stdout and the install hint to stderr, so redirecting into a
+startup file captures only what belongs there.

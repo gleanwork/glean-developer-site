@@ -1,0 +1,51 @@
+---
+title: Testing overview
+description: The three-phase testing model for Glean Indexing SDK connectors
+---
+
+import { PhaseCards, TESTING_PHASES } from '@site/src/components/IndexingSdk/diagrams';
+
+Connector bugs are expensive to find in production: a crawl either indexes
+nothing, indexes the wrong thing, or — worst case — deletes documents it should
+have kept. The SDK's testing tools exist so you find those problems before
+pointing a connector at a real instance.
+
+Testing progresses through three phases. Each phase swaps exactly one dependency
+from mocked to real, so a failure tells you which layer broke.
+
+<PhaseCards phases={TESTING_PHASES} />
+
+Most of your tests should be Phase 1. Phase 2 catches the class of bug you can't
+mock your way to — a source field that's `null` more often than the docs
+suggest. Phase 3 is a pre-release check, not something you run on every commit.
+
+## The harness
+
+`TestHarness` wraps a connector and drives all three phases:
+
+```python
+from glean.indexing.testing import TestConfig, TestHarness
+
+harness = TestHarness(
+    connector=my_connector,
+    config=TestConfig(),
+    clients={"data_client": real_data_client},   # required for Phase 2 and 3
+)
+```
+
+`clients` maps **connector attribute names** to data client instances. Keys must
+match real attributes on the connector — `AttributeError` otherwise. Phase 1
+doesn't need it.
+
+## Output validation
+
+`run_connector()` and the harness both run `validate_connector_output()`
+automatically, which catches structural mistakes — a document whose `datasource`
+doesn't match the connector, a missing required field — and raises
+`ConnectorOutputValidationError`. You get those checks without writing them.
+
+## Testing permissions
+
+Every phase can assert on ACLs. Because permissions are the highest-risk part of
+a connector, test the negative case explicitly — see
+[Permissions](/libraries/indexing-sdk/permissions).

@@ -1,17 +1,22 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import yaml from 'js-yaml';
-import { parseRecipeFrontmatter } from '../src/types/recipe';
+import { parseRecipeEntry } from '../src/types/recipe';
 import { RECIPE_SURFACES } from '../src/types/recipe';
-import type { RecipeRecord, RecipesData } from '../src/types/recipe';
+import type {
+  CookbookPlugin,
+  RecipeRecord,
+  RecipesData,
+} from '../src/types/recipe';
 
 /**
  * Compiles cookbook recipes into src/data/recipes.json.
  *
- * Reads every .mdx file in docs/cookbook/ (except index.mdx), validates the
- * frontmatter `recipe:` block against the schema in src/types/recipe.ts, and
- * emits the flat records consumed by the Cookbook components and the
- * glean-cookbook plugin.
+ * Reads data/cookbook-registry.json (the local snapshot of glean-cookbook's
+ * registry.json — see `pnpm registry:sync`), validates each entry against
+ * the schema in src/types/recipe.ts, and cross-checks that every entry has a
+ * matching prose page at docs/cookbook/{id}.mdx and vice versa. Emits the
+ * flat records consumed by the Cookbook components and the glean-cookbook
+ * plugin.
  *
  * Validation failures FAIL THE BUILD (exit 1) — lax registries rot.
  *
@@ -20,51 +25,87 @@ import type { RecipeRecord, RecipesData } from '../src/types/recipe';
  */
 
 const repoRoot = path.resolve(import.meta.dirname, '..');
+const registryFile = path.join(repoRoot, 'data', 'cookbook-registry.json');
+const pluginFile = path.join(repoRoot, 'data', 'cookbook-plugin.json');
 const recipesDir = path.join(repoRoot, 'docs', 'cookbook');
 const outputFile = path.join(repoRoot, 'src', 'data', 'recipes.json');
-
-const FRONTMATTER_RE = /^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/;
-
-function extractFrontmatter(source: string, fileName: string): unknown {
-  const match = source.match(FRONTMATTER_RE);
-  if (!match) {
-    throw new Error(`${fileName}: no frontmatter block found`);
-  }
-  return yaml.load(match[1]);
-}
 
 function main(): void {
   const records: RecipeRecord[] = [];
   const errors: string[] = [];
 
-  const files = fs.existsSync(recipesDir)
-    ? fs
-        .readdirSync(recipesDir)
-        .filter((file) => file.endsWith('.mdx') && file !== 'index.mdx')
-        .sort()
-    : [];
+  if (!fs.existsSync(registryFile)) {
+    console.error(
+      `Recipe registry not found at ${path.relative(repoRoot, registryFile)}. Run \`pnpm registry:sync\` first.`,
+    );
+    process.exit(1);
+  }
+  const registry: unknown = JSON.parse(fs.readFileSync(registryFile, 'utf8'));
+  if (!Array.isArray(registry)) {
+    console.error(
+      `${path.relative(repoRoot, registryFile)} must be a JSON array of recipe entries.`,
+    );
+    process.exit(1);
+  }
 
-  for (const fileName of files) {
-    const filePath = path.join(recipesDir, fileName);
-    const expectedId = path.basename(fileName, '.mdx');
-
-    let frontmatter: unknown;
-    try {
-      frontmatter = extractFrontmatter(
-        fs.readFileSync(filePath, 'utf-8'),
-        fileName,
+  // Plugin coordinates come from glean-cookbook's generated marketplace
+  // manifest (see scripts/sync-registry.mjs). Required, not optional: recipe
+  // pages print these in install/invocation commands, and a page that silently
+  // rendered without them would show a broken command rather than nothing.
+  if (!fs.existsSync(pluginFile)) {
+    console.error(
+      `Plugin coordinates not found at ${path.relative(repoRoot, pluginFile)}. Run \`pnpm registry:sync\` first.`,
+    );
+    process.exit(1);
+  }
+  const plugin = JSON.parse(
+    fs.readFileSync(pluginFile, 'utf8'),
+  ) as CookbookPlugin;
+  for (const field of ['marketplaceName', 'pluginName', 'repo'] as const) {
+    if (!plugin[field]) {
+      console.error(
+        `${path.relative(repoRoot, pluginFile)} is missing "${field}".`,
       );
-    } catch (error) {
-      errors.push(error instanceof Error ? error.message : String(error));
+      process.exit(1);
+    }
+  }
+
+  const pageIds = new Set(
+    fs.existsSync(recipesDir)
+      ? fs
+          .readdirSync(recipesDir)
+          .filter((file) => file.endsWith('.mdx') && file !== 'index.mdx')
+          .map((file) => path.basename(file, '.mdx'))
+      : [],
+  );
+
+  for (const entry of registry) {
+    const expectedId =
+      entry !== null && typeof entry === 'object' && 'id' in entry
+        ? String((entry as { id: unknown }).id)
+        : undefined;
+
+    const result = parseRecipeEntry(entry, expectedId);
+    if (!result.success) {
+      errors.push(...result.errors.map((e) => `${expectedId ?? '?'}: ${e}`));
       continue;
     }
 
-    const result = parseRecipeFrontmatter(frontmatter, expectedId);
-    if (!result.success) {
-      errors.push(...result.errors.map((e) => `${fileName}: ${e}`));
+    if (!pageIds.has(result.record.id)) {
+      errors.push(
+        `${result.record.id}: registry entry has no matching docs/cookbook/${result.record.id}.mdx page`,
+      );
       continue;
     }
+    pageIds.delete(result.record.id);
+
     records.push(result.record);
+  }
+
+  for (const orphanId of pageIds) {
+    errors.push(
+      `${orphanId}: docs/cookbook/${orphanId}.mdx has no matching registry entry`,
+    );
   }
 
   const duplicates = records
@@ -85,7 +126,7 @@ function main(): void {
   // generatedAt mirrors the changelog convention (derived from content, not
   // wall-clock) so the committed artifact stays deterministic for Turbo.
   const latestVerified = records
-    .map((r) => r.last_verified)
+    .map((r) => r.lastVerified)
     .filter((d): d is string => Boolean(d))
     .sort()
     .at(-1);
@@ -96,6 +137,11 @@ function main(): void {
     order.indexOf(a) - order.indexOf(b);
 
   const data: RecipesData = {
+    // First key in the emitted file, so anyone who opens it sees this before the
+    // data. The registry snapshot is a bare array and cannot carry the same
+    // marker, which is why data/README.md exists.
+    _generated:
+      'Generated by `pnpm recipes:compile` from data/cookbook-registry.json. Do not edit. Recipe metadata is authored in gleanwork/glean-cookbook at recipes/<id>/recipe.json — see AGENTS.md.',
     recipes: records,
     surfaces: [...new Set(records.flatMap((r) => r.surfaces))].sort(
       enumOrder(RECIPE_SURFACES),
@@ -104,12 +150,13 @@ function main(): void {
       ? new Date(`${latestVerified}T00:00:00.000Z`).toISOString()
       : new Date(0).toISOString(),
     totalRecipes: records.length,
+    plugin,
   };
 
   fs.mkdirSync(path.dirname(outputFile), { recursive: true });
   fs.writeFileSync(outputFile, `${JSON.stringify(data, null, 2)}\n`);
   console.log(
-    `Generated recipes data with ${records.length} recipe(s) from ${files.length} file(s)`,
+    `Generated recipes data with ${records.length} recipe(s) from ${registry.length} registry entries`,
   );
 }
 

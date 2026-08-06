@@ -1,0 +1,82 @@
+---
+title: Architecture
+description: How the Glean Indexing SDK moves data from your source into the Glean index
+---
+
+import { ConnectorPipeline, Stages } from '@site/src/components/IndexingSdk/diagrams';
+
+A connector is a pipeline. You own the two stages specific to your source; the
+SDK owns batching, retries, upload sessions, and stale-document cleanup.
+
+<ConnectorPipeline />
+
+## The indexing lifecycle
+
+`connector.index_data()` runs a fixed sequence every time. Each stage is timed
+separately, so a slow connector can be attributed to fetch, transform, or
+upload without adding instrumentation.
+
+<Stages stages={[
+  { owner: 'sdk', title: <>Start observability</>, body: <>Begins execution timing and assigns a <code>run_id</code> for the run.</> },
+  { owner: 'you', title: <>Identity crawl &mdash; <code>get_identities()</code></>, body: <>Users are bulk-indexed first. If groups are returned, memberships must be too &mdash; otherwise the SDK raises <code>InconsistentDataError</code>, because groups without memberships produce ACLs that can never match anyone.</> },
+  { owner: 'you', title: <>Resolve <code>since</code></>, body: <>On an incremental crawl, calls <code>_get_last_crawl_timestamp()</code>. The base implementation returns <code>None</code>.</> },
+  { owner: 'you', title: <>Content crawl &mdash; <code>get_data()</code></>, body: <>Delegates to your data client&rsquo;s <code>get_source_data()</code>.</> },
+  { owner: 'you', title: <>Transform &mdash; <code>transform()</code></>, body: <>Your mapping from source records to Glean entity definitions.</> },
+  { owner: 'sdk', title: <>Upload</>, body: <>Hands documents to <code>PushUploader.bulk_index_documents()</code>, which batches, parallelizes, retries, and triggers stale-document cleanup.</> },
+  { owner: 'sdk', title: <>End observability</>, body: <>Records totals. On exception, increments the error counter and re-raises so a scheduler sees a non-zero exit.</> },
+]} />
+
+## Class hierarchy
+
+Connectors and data clients pair by shape: a streaming connector expects a
+streaming data client.
+
+```text
+BaseConnector[TSourceData, TIndexableEntityDefinition]
+├── BaseDatasourceConnector[T]                 → DocumentDefinition
+├── BaseStreamingDatasourceConnector[T]        → DocumentDefinition (sync generator)
+├── BaseAsyncStreamingDatasourceConnector[T]   → DocumentDefinition (async generator)
+└── BasePeopleConnector[T]                     → EmployeeInfoDefinition
+
+BaseDataClient[T]                     → Sequence[T]
+├── BaseStreamingDataClient[T]        → Generator[T]
+├── BaseAsyncStreamingDataClient[T]   → AsyncGenerator[T]
+└── BasePullHttpStreamingDataClient[T]  (HTTP + pagination, from the pull recipes)
+```
+
+See [Connector types](/libraries/indexing-sdk/concepts/connector-types) for
+which pair to use.
+
+## Errors
+
+Every SDK exception derives from `GleanError` and carries a `fix_suggestion`
+and, where applicable, a `docs_url`. Both are included in `str(error)`, so an
+unhandled failure tells the operator what to do next.
+
+```text
+GleanError
+├── GleanConfigurationError (also a ValueError)
+│   ├── MissingEnvironmentVariableError
+│   └── InvalidDatasourceConfigError
+└── GleanValidationError (also a ValueError)
+    ├── InvalidPropertyError
+    ├── InconsistentDataError
+    └── UnsupportedConnectorTypeError
+```
+
+Both branches subclass `ValueError`, so existing `except ValueError` handlers
+keep working. See [Error handling](/libraries/indexing-sdk/push/error-handling)
+for what to catch and — more importantly — what never to swallow.
+
+## Configuration
+
+Two environment variables. There is no configuration file.
+
+| Variable | Purpose |
+|---|---|
+| `GLEAN_SERVER_URL` | Your Glean backend URL, e.g. `https://acme-be.glean.com`. |
+| `GLEAN_INDEXING_API_TOKEN` | Datasource-scoped Indexing API token. |
+| `GLEAN_INSTANCE` | Deprecated fallback for `GLEAN_SERVER_URL`. |
+
+A missing variable raises `MissingEnvironmentVariableError` at client
+construction, not mid-upload.

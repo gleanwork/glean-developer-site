@@ -11,6 +11,7 @@ export const SURFACE_ICONS: Record<string, string> = {
   'connector-sdk': 'Database',
   'indexing-api': 'Database',
   mcp: 'GitBranch',
+  'client-api': 'Code',
   'platform-api': 'Code',
   'sdk-client': 'Package',
   tools: 'Zap',
@@ -32,10 +33,10 @@ export default function RecipeCard({
   return (
     <Link className={styles.card} to={recipe.permalink}>
       <div className={styles.tileRow}>
-        <CategoryTile category={recipe.category} />
+        <CategoryTile category={recipe.category} iconOverride={recipe.icon} />
       </div>
       <span className={styles.title}>{recipe.title}</span>
-      <p className={styles.summary}>{recipe.summary}</p>
+      <p className={styles.summary}>{recipe.description}</p>
       <div className={styles.footer}>
         <span className={styles.metaItem}>
           {getIcon('Clock', 'feather', {
@@ -43,7 +44,7 @@ export default function RecipeCard({
             height: 14,
             color: 'currentColor',
           })}
-          {recipe.time_estimate.replace(/\s*\(.*\)$/, '')}
+          {recipe.timeEstimate.replace(/\s*\(.*\)$/, '')}
         </span>
         <span className={styles.dot}>·</span>
         <span>{recipe.level}</span>

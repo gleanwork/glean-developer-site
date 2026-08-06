@@ -1,5 +1,6 @@
 import os
 from glean.api_client import Glean, models
+from glean.api_client.models import PlatformFilter
 from typing import List, Dict, Optional
 
 class AdvancedAgent:
@@ -11,27 +12,34 @@ class AdvancedAgent:
         if not self.api_token or not self.server_url:
             raise ValueError("GLEAN_API_TOKEN and GLEAN_SERVER_URL must be set")
     
-    def search_with_filters(self, query: str, filters: Optional[Dict] = None, page_size: int = 10) -> List[Dict]:
-        """Search with optional filters"""
+    def search_with_filters(self, query: str, filters: Optional[Dict[str, List[str]]] = None, page_size: int = 10) -> List:
+        """Search with optional filters, via the Platform API's data-first
+        retrieval method (requires X_GLEAN_INCLUDE_EXPERIMENTAL=true).
+        `filters` maps a field name to the values to match, e.g.
+        {"department": ["HR"]} -- each becomes a PlatformFilter (EQUALS by
+        default; OR'd across multiple values, AND'd across fields)."""
         with Glean(api_token=self.api_token, server_url=self.server_url) as glean:
             try:
-                search_params = {
-                    "query": query,
-                    "page_size": page_size
-                }
-                
-                if filters:
-                    search_params["request_options"] = {"facet_filters": filters}
-                
-                response = glean.client.search.query(**search_params)
-                return response.results if hasattr(response, 'results') else []
+                platform_filters = [
+                    PlatformFilter(field=field, values=values)
+                    for field, values in (filters or {}).items()
+                ]
+
+                response = glean.search.query(
+                    query=query,
+                    page_size=page_size,
+                    filters=platform_filters or None,
+                )
+                return response.results or []
                 
             except Exception as e:
                 print(f"Search error: {e}")
                 return []
     
-    def chat_with_context(self, query: str, context_docs: Optional[List[Dict]] = None, save_to_history: bool = True) -> str:
-        """Chat with document context and conversation history"""
+    def chat_with_context(self, query: str, context_docs: Optional[List] = None, save_to_history: bool = True) -> str:
+        """Chat with document context and conversation history. context_docs
+        are the Platform API's search results (attribute access, not
+        dict-style .get() -- title and snippets are direct fields)."""
         with Glean(api_token=self.api_token, server_url=self.server_url) as glean:
             try:
                 # Build message with context
@@ -39,9 +47,9 @@ class AdvancedAgent:
                 
                 if context_docs:
                     context_text = "\n".join([
-                        f"- {doc.get('title', 'Unknown')}: {doc.get('snippet', '')}"
+                        f"- {doc.title}: {' '.join(doc.snippets or [])}"
                         for doc in context_docs[:3]
-                        if doc.get('snippet')
+                        if doc.snippets
                     ])
                     if context_text:
                         message_parts.append(f"Relevant context:\n{context_text}")
@@ -88,14 +96,15 @@ class AdvancedAgent:
             except Exception as e:
                 return f"Chat error: {e}"
     
-    def summarize_documents(self, documents: List[Dict]) -> str:
-        """Summarize a list of documents"""
+    def summarize_documents(self, documents: List) -> str:
+        """Summarize a list of documents (the Platform API's search results,
+        one attribute-access .url per document, not documents[i]["url"])"""
         with Glean(api_token=self.api_token, server_url=self.server_url) as glean:
             try:
                 document_specs = [
-                    {"url": doc["url"]}
+                    {"url": doc.url}
                     for doc in documents[:5]  # Limit to 5 docs
-                    if doc.get("url")
+                    if doc.url
                 ]
 
                 if not document_specs:
