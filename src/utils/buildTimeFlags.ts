@@ -1,11 +1,14 @@
 import type { FeatureFlagsMap } from '../lib/featureFlagTypes';
+import { DEFAULT_FLAGS } from '../lib/defaultFlags';
 
 let memo: FeatureFlagsMap | null = null;
 
 export function getBuildTimeFlags(): FeatureFlagsMap {
   if (memo) return memo;
 
-  const flags: FeatureFlagsMap = {};
+  // Seed the default-on flags first so env overrides (FF_* / FEATURE_FLAGS_JSON)
+  // can still turn them off, but they default on when nothing is set.
+  const flags: FeatureFlagsMap = { ...DEFAULT_FLAGS };
   try {
     const raw = process.env.FEATURE_FLAGS_JSON;
     if (raw) {

@@ -23,6 +23,12 @@ type PluginPageProps = {
   clientId: string;
   /** Monochrome brand marks need inverting in dark mode (cursor, codex). */
   mono?: boolean;
+  /** Optional "What's included" blurb rendered between the banner and Installation. */
+  whatsIncluded?: React.ReactNode;
+  /** Optional content rendered below the numbered steps, under its own section label. */
+  afterSteps?: React.ReactNode;
+  /** Section label shown above afterSteps content. Defaults to "Configuration". */
+  afterStepsLabel?: string;
   /** Banner heading; defaults to "Glean plugin for <name>". */
   title?: string;
   steps: PluginStep[];
@@ -79,6 +85,9 @@ export default function PluginPage({
   tagline,
   clientId,
   mono = false,
+  whatsIncluded,
+  afterSteps,
+  afterStepsLabel,
   title,
   steps,
 }: PluginPageProps): React.ReactElement {
@@ -109,6 +118,13 @@ export default function PluginPage({
         <p className={styles.bannerTagline}>{tagline}</p>
       </div>
 
+      {whatsIncluded ? (
+        <>
+          <div className={styles.sectionLabel}>What&rsquo;s included</div>
+          <p className={styles.whatsIncluded}>{whatsIncluded}</p>
+        </>
+      ) : null}
+
       <div className={styles.sectionLabel}>Installation</div>
       <div className={styles.stepsWrap}>
         <div className={styles.stepsRail} />
@@ -121,6 +137,15 @@ export default function PluginPage({
           </div>
         ))}
       </div>
+
+      {afterSteps ? (
+        <>
+          <div className={styles.sectionLabel}>
+            {afterStepsLabel ?? 'Configuration'}
+          </div>
+          <div className={styles.afterSteps}>{afterSteps}</div>
+        </>
+      ) : null}
     </div>
   );
 }

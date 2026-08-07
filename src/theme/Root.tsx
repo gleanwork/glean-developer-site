@@ -11,6 +11,7 @@ import type {
   FeatureFlagDefinition,
 } from '@site/src/lib/featureFlagTypes';
 import { flagsSnapshotToBooleans } from '@site/src/lib/featureFlags';
+import { DEFAULT_FLAGS } from '@site/src/lib/defaultFlags';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import KeyboardShortcuts from './KeyboardShortcuts';
 import Intercom from '@intercom/messenger-js-sdk';
@@ -87,9 +88,15 @@ export default function Root({ children }: { children: ReactNode }) {
   const { siteConfig } = useDocusaurusContext();
   const debug =
     typeof window !== 'undefined' && (window as any).__FLAGS_DEBUG__;
-  const initial =
-    ((siteConfig?.customFields as any)?.__BUILD_FLAGS__ as FeatureFlagsMap) ||
-    {};
+  // DEFAULT_FLAGS is the base beneath the build snapshot and the runtime Edge
+  // Config response, so its entries stay on unless a later source overrides
+  // them. The build snapshot already includes it (getBuildTimeFlags seeds it),
+  // but merging here too keeps default-on flags surviving the runtime replace.
+  const initial = {
+    ...DEFAULT_FLAGS,
+    ...(((siteConfig?.customFields as any)
+      ?.__BUILD_FLAGS__ as FeatureFlagsMap) || {}),
+  };
   const [flagConfigs, setFlagConfigs] = useState<FeatureFlagsMap>(initial);
 
   Intercom({
@@ -184,13 +191,13 @@ export default function Root({ children }: { children: ReactNode }) {
   const refresh = useCallback(() => {
     const cached = readCache();
     if (cached) {
-      setFlagConfigs(cached);
+      setFlagConfigs({ ...DEFAULT_FLAGS, ...cached });
       return;
     }
     fetchRuntimeFlags().then((next) => {
       if (next) {
         writeCache(next);
-        setFlagConfigs(next);
+        setFlagConfigs({ ...DEFAULT_FLAGS, ...next });
       }
     });
   }, []);
