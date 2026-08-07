@@ -1,13 +1,13 @@
 import { z } from 'zod';
 
 /**
- * Dev-site validation contract for cookbook recipe metadata.
+ * Dev-site adapter for the cookbook-owned recipe contract.
  *
  * Recipe records are authored only in `glean-cookbook` at
  * `recipes/<id>/recipe.json`, compiled into that repo's `registry.json`, and synced
  * locally to `data/cookbook-registry.json` (see `scripts/sync-registry.mjs`).
- * The matching `docs/cookbook/{id}.mdx` file is prose-only — no metadata
- * frontmatter — and is matched to its registry entry by filename === id.
+ * `docs/cookbook/{id}.mdx` is generated from the same registry entry and is
+ * matched by filename === id.
  *
  * Consumed by:
  * - `scripts/compile-recipes.ts` → `src/data/recipes.json` (build-failing validation)
@@ -17,9 +17,8 @@ import { z } from 'zod';
  * Field names are camelCase since this is a genuine JSON data store shared
  * across repos and consumers, not Docusaurus frontmatter.
  *
- * `schemas/recipe.schema.json` is generated from this file via
- * `pnpm recipes:schema` for cookbook authoring validation. This file defines the
- * contract; it is not a second store of recipe content.
+ * The canonical JSON Schema lives in glean-cookbook. `pnpm recipes:schema`
+ * projects this adapter back to JSON Schema so CI can detect structural drift.
  */
 
 export const RECIPE_SURFACES = [
@@ -260,6 +259,27 @@ export const recipeArchitectureNodeSchema = z.strictObject({
   emphasized: z.boolean().default(false),
 });
 
+export const recipeContentSchema = z.strictObject({
+  problem: z.string().min(1),
+  takeItFurther: z.array(z.string().min(1)),
+  guardrails: z
+    .array(
+      z.strictObject({
+        title: z.string().min(1),
+        rule: z.string().min(1),
+      }),
+    )
+    .optional(),
+  limitations: z
+    .array(
+      z.strictObject({
+        title: z.string().min(1),
+        description: z.string().min(1),
+      }),
+    )
+    .optional(),
+});
+
 /**
  * One demo query paired with the checkable behavior a correct build must
  * produce for it — the eval data an agent (or a recipe's own `verify`
@@ -318,6 +338,7 @@ export const recipeMetaSchema = z.strictObject({
   execution: recipeExecutionSchema.optional(),
   combines: z.array(recipeCombinesSchema).optional(),
   architecture: z.array(recipeArchitectureNodeSchema).optional(),
+  content: recipeContentSchema,
   aiPrompt: z.string().min(1),
   llmContext: z.string().min(1).optional(),
   lastVerified: z.iso.date().optional(),
