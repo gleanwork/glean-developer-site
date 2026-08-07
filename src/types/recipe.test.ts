@@ -44,6 +44,110 @@ describe('parseRecipeEntry', () => {
     expect(result.record.sidebarLabel).toBe('Embed');
   });
 
+  it('accepts a path-level customer execution contract', () => {
+    const entry = {
+      ...validEntry(),
+      execution: {
+        questions: [
+          {
+            id: 'email',
+            prompt: 'What is your work email?',
+          },
+        ],
+        auth: [
+          {
+            kind: 'oauth-with-token-fallback',
+            scopes: ['CHAT'],
+            setupCommand: 'npm run login',
+            configFile: '.env',
+            backendVariable: 'GLEAN_SERVER_URL',
+            credentialVariable: 'GLEAN_API_TOKEN',
+          },
+        ],
+        verification: {
+          kind: 'automated',
+          command: 'npm run verify',
+          expectedDuration: '1–3 minutes',
+          startsOwnServer: true,
+        },
+        run: {
+          command: 'npm start',
+          url: 'http://localhost:3000',
+          userBrowser: true,
+        },
+      },
+    };
+    const result = parseRecipeEntry(entry, 'embed-search-chat');
+    expect(result.success).toBe(true);
+    if (!result.success) return;
+    expect(result.record.execution?.auth[0].kind).toBe(
+      'oauth-with-token-fallback',
+    );
+  });
+
+  it('requires an executable command for automated verification', () => {
+    const entry = {
+      ...validEntry(),
+      execution: {
+        auth: [{ kind: 'none' }],
+        verification: {
+          kind: 'automated',
+          expectedDuration: 'about 1 minute',
+        },
+      },
+    };
+    expect(parseRecipeEntry(entry, 'embed-search-chat').success).toBe(false);
+  });
+
+  it('accepts explicit manual verification without a command', () => {
+    const entry = {
+      ...validEntry(),
+      execution: {
+        auth: [{ kind: 'none' }],
+        verification: {
+          kind: 'manual',
+          expectedDuration: 'about 1 minute',
+        },
+      },
+    };
+    expect(parseRecipeEntry(entry, 'embed-search-chat').success).toBe(true);
+  });
+
+  it('rejects run handoffs with no command or URL', () => {
+    for (const run of [{}, { userBrowser: true }]) {
+      const entry = {
+        ...validEntry(),
+        execution: {
+          auth: [{ kind: 'none' }],
+          verification: {
+            kind: 'manual',
+            expectedDuration: 'about 1 minute',
+          },
+          run,
+        },
+      };
+      expect(parseRecipeEntry(entry, 'embed-search-chat').success).toBe(false);
+    }
+  });
+
+  it('accepts an explicit existing-app browser handoff', () => {
+    const entry = {
+      ...validEntry(),
+      execution: {
+        auth: [{ kind: 'browser-cookie' }],
+        verification: {
+          kind: 'user-browser',
+          expectedDuration: 'about 1 minute',
+        },
+        run: {
+          kind: 'existing-app',
+          userBrowser: true,
+        },
+      },
+    };
+    expect(parseRecipeEntry(entry, 'embed-search-chat').success).toBe(true);
+  });
+
   it('rejects unknown top-level keys', () => {
     const entry = { ...validEntry(), surprise: true };
     const result = parseRecipeEntry(entry, 'embed-search-chat');

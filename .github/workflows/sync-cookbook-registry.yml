@@ -1,6 +1,12 @@
 name: Sync Cookbook Registry
 
 on:
+  # The cookbook cannot dispatch across repositories with its scoped
+  # GITHUB_TOKEN. Poll the canonical registry so cookbook merges still
+  # produce a generated dev-site PR without a person remembering to sync.
+  schedule:
+    - cron: '*/15 * * * *'
+
   workflow_dispatch:
     inputs:
       reason:
@@ -55,7 +61,7 @@ jobs:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           echo "📋 Syncing recipe registry..."
-          echo "Reason: ${{ github.event.inputs.reason }}"
+          echo "Reason: ${{ github.event.inputs.reason || 'Scheduled cookbook sync' }}"
           pnpm registry:sync
           pnpm recipes:compile
           echo "✅ Registry synced and recipes recompiled"
@@ -88,7 +94,7 @@ jobs:
           body: |
             ## 🔄 Cookbook Registry Sync
 
-            **Trigger reason**: ${{ github.event.inputs.reason }}
+            **Trigger reason**: ${{ github.event.inputs.reason || 'Scheduled cookbook sync' }}
             **Triggered by**: ${{ github.actor }}
             **Run ID**: [${{ github.run_id }}](https://github.com/gleanwork/glean-developer-site/actions/runs/${{ github.run_id }})
 
