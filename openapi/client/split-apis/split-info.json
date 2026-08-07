@@ -33,7 +33,7 @@
       "description": "",
       "file": "agents-api.yaml",
       "configId": "agents",
-      "paths": 6,
+      "paths": 7,
       "endpoints": [
         {
           "method": "POST",
@@ -78,6 +78,13 @@
           "operationId": "editAgent"
         },
         {
+          "method": "POST",
+          "path": "/rest/api/v1/agents/{agent_id}/import",
+          "summary": "Import an agent",
+          "description": "Imports an [agent](https://developers.glean.com/agents/agents-api) from its on-disk folder representation (spec.yaml, instructions.md, skills/, subagents/) packaged as a zip, and creates or updates the agent. Inverse of the export flow: the folder-to-schema conversion runs server-side. The bundle must contain only regular files; symlinks are resolved by the caller at packaging time.",
+          "operationId": "importAgent"
+        },
+        {
           "method": "GET",
           "path": "/rest/api/v1/agents/{agent_id}/schemas",
           "summary": "List an agent's schemas",
@@ -85,7 +92,7 @@
           "operationId": "getAgentSchemas"
         }
       ],
-      "schemas": 149,
+      "schemas": 157,
       "fullyInlined": false,
       "circularReferencesFixed": true
     },
@@ -284,7 +291,7 @@
           "operationId": "uploadchatfiles"
         }
       ],
-      "schemas": 173,
+      "schemas": 174,
       "fullyInlined": false,
       "circularReferencesFixed": true
     },
@@ -787,7 +794,7 @@
       "description": "",
       "file": "tools-api.yaml",
       "configId": "tools",
-      "paths": 4,
+      "paths": 5,
       "endpoints": [
         {
           "method": "GET",
@@ -818,6 +825,13 @@
           "operationId": "authorizeToolServer"
         },
         {
+          "method": "GET",
+          "path": "/rest/api/v1/tool-servers/{serverId}/tools",
+          "summary": "Get tool definitions from a tool server.",
+          "description": "Returns the name, description and JSON input schema for the named tools on the\nspecified tool server. Works for both action packs and MCP servers.\n\n`toolNames` is required. Names that do not exist on the server are returned in\n`notFound` rather than failing the request, so a single bad name does not force\ncallers into one-at-a-time retries. Matching is case-insensitive and treats `-`\nand `_` as equivalent.\n\nNative tools are not served; `serverId=native` returns 404.\n",
+          "operationId": "getToolServerTools"
+        },
+        {
           "method": "POST",
           "path": "/rest/api/v1/tools/call",
           "summary": "Execute the specified tool",
@@ -832,7 +846,7 @@
           "operationId": "list-available-tools"
         }
       ],
-      "schemas": 15,
+      "schemas": 18,
       "fullyInlined": false,
       "circularReferencesFixed": true
     },

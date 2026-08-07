@@ -2,18 +2,18 @@ openapi: 3.0.0
 info:
   version: 0.9.0
   title: Glean API - Tools
-  x-source-commit-sha: 2822daae55430107c738db822cbeeb5a6bef463b
+  x-source-commit-sha: 5239e2c2a10977d437924181dc4c1327ec9e2832
   description: API endpoints for Tools
   x-logo:
     url: https://app.glean.com/images/glean-text2.svg
-  x-open-api-commit-sha: 0bdefe83a21f917592624e6f1dbaa180e89d5224
+  x-open-api-commit-sha: 596868e6726e60114c5b8324f66098310204d6f5
   x-speakeasy-name: Glean API
 servers:
-  - url: https://{instance}-be.glean.com
+  - url: '{serverUrl}'
     variables:
-      instance:
-        default: instance-name
-        description: The instance name (typically the email domain without the TLD) that determines the deployment backend.
+      serverUrl:
+        default: https://instance-name-be.glean.com
+        description: Your Glean API server URL — https://{instance}-be.glean.com for Glean-hosted deployments, or your own domain for non-Glean-hosted deployments. Find it at app.glean.com/admin/about-glean.
 security: []
 paths:
   /rest/api/v1/tools/list:
@@ -673,6 +673,147 @@ paths:
             default: true
           example: true
           value: 'true'
+  /rest/api/v1/tool-servers/{serverId}/tools:
+    get:
+      tags:
+        - Tools
+      summary: Get tool definitions from a tool server.
+      description: |
+        Returns the name, description and JSON input schema for the named tools on the
+        specified tool server. Works for both action packs and MCP servers.
+
+        `toolNames` is required. Names that do not exist on the server are returned in
+        `notFound` rather than failing the request, so a single bad name does not force
+        callers into one-at-a-time retries. Matching is case-insensitive and treats `-`
+        and `_` as equivalent.
+
+        Native tools are not served; `serverId=native` returns 404.
+      operationId: getToolServerTools
+      x-visibility: Preview
+      x-glean-experimental:
+        id: 332eb38f-1b5d-4896-88e3-59db5e96e4e1
+        introduced: '2026-07-30'
+      parameters:
+        - in: header
+          name: X-Glean-Include-Experimental
+          description: This endpoint is experimental, so requests must include this header set to `true`. See [How experimental APIs work](https://developers.glean.com/experimental/overview) for details.
+          required: true
+          schema:
+            type: boolean
+            default: true
+          example: true
+          value: 'true'
+        - in: query
+          name: toolNames
+          required: true
+          description: Tool names to look up on this server. Maximum 100.
+          schema:
+            type: array
+            items:
+              type: string
+          style: form
+          explode: false
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolDefinitionsResponse'
+        '400':
+          description: Invalid request (e.g. missing toolNames, or more than 100 names)
+        '401':
+          description: Unauthorized
+        '404':
+          description: Tool server not found
+        '429':
+          description: Too Many Requests
+        '503':
+          description: Tool schemas could not be resolved from the server
+      security:
+        - APIToken: []
+      x-speakeasy-name-override: getToolServerTools
+      x-speakeasy-group: client.tools
+      x-codeSamples:
+        - lang: Python
+          label: Python (API Client)
+          source: |-
+            from glean.api_client import Glean
+            import os
+
+
+            with Glean(
+                api_token=os.getenv("GLEAN_API_TOKEN", ""),
+                server_url="https://mycompany-be.glean.com",
+                include_experimental=True,
+            ) as glean:
+
+                res = glean.client.tools.get_tool_server_tools(server_id="<id>", tool_names=[
+                    "<value 1>",
+                    "<value 2>",
+                    "<value 3>",
+                ])
+
+                # Handle response
+                print(res)
+        - lang: JavaScript
+          label: Typescript (API Client)
+          source: |-
+            import { Glean } from "@gleanwork/api-client";
+
+            const glean = new Glean({
+              apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
+              serverURL: "https://mycompany-be.glean.com",
+              includeExperimental: true,
+            });
+
+            async function run() {
+              const result = await glean.client.tools.getToolServerTools("<id>", [
+                "<value 1>",
+                "<value 2>",
+                "<value 3>",
+              ]);
+
+              console.log(result);
+            }
+
+            run();
+        - lang: Go
+          label: Go (API Client)
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Client.Tools.GetToolServerTools(ctx, \"<id>\", []string{\n        \"<value 1>\",\n        \"<value 2>\",\n        \"<value 3>\",\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.ToolDefinitionsResponse != nil {\n        // handle response\n    }\n}"
+        - lang: Java
+          label: Java (API Client)
+          source: |-
+            package hello.world;
+
+            import com.glean.api_client.glean_api_client.Glean;
+            import com.glean.api_client.glean_api_client.hooks.GleanBuilder;
+            import com.glean.api_client.glean_api_client.models.operations.GetToolServerToolsResponse;
+            import java.lang.Exception;
+            import java.util.List;
+
+            public class Application {
+
+                public static void main(String[] args) throws Exception {
+
+                    Glean sdk = GleanBuilder.create()
+                            .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
+                            .includeExperimental(true)
+                        .build();
+
+                    GetToolServerToolsResponse res = sdk.client().tools().getToolServerTools()
+                            .serverId("<id>")
+                            .toolNames(List.of(
+                                "<value 1>",
+                                "<value 2>",
+                                "<value 3>"))
+                            .call();
+
+                    if (res.toolDefinitionsResponse().isPresent()) {
+                        System.out.println(res.toolDefinitionsResponse().get());
+                    }
+                }
+            }
 components:
   schemas:
     ActionAuthType:
@@ -742,6 +883,45 @@ components:
         error:
           type: string
           description: The error message if applicable
+    ToolAnnotations:
+      type: object
+      description: |
+        Behavioural hints for the tool, exactly as declared by the tool server. No
+        defaults are filled in — see the per-field notes for what an absent value means.
+
+        Per the MCP specification, clients MUST treat these hints as untrusted unless
+        the tool server is itself trusted. They are advisory metadata, not an
+        authorization signal, and must not be the sole basis of a security decision.
+      properties:
+        title:
+          type: string
+        readOnlyHint:
+          type: boolean
+          x-includeEmpty: true
+          description: |
+            True if the tool does not modify its environment. Always present. MCP
+            defines no distinction between an undeclared value and `false` here, so
+            `false` means "not declared read-only" rather than "declared mutating".
+        destructiveHint:
+          type: boolean
+          nullable: true
+          description: |
+            True if the tool may perform destructive updates. **Absent means the server
+            did not declare it**, for which the MCP default is `true`. Only meaningful
+            when `readOnlyHint` is `false`.
+        idempotentHint:
+          type: boolean
+          x-includeEmpty: true
+          description: |
+            True if repeated calls with the same arguments have no additional effect.
+            Always present; as with `readOnlyHint`, `false` means "not declared
+            idempotent". Only meaningful when `readOnlyHint` is `false`.
+        openWorldHint:
+          type: boolean
+          nullable: true
+          description: |
+            True if the tool interacts with an open world of external entities. **Absent
+            means the server did not declare it**, for which the MCP default is `true`.
     ToolsCallRequest:
       type: object
       required:
@@ -801,6 +981,30 @@ components:
           description: The parameters for the tool. Each key is the name of the parameter and the value is the parameter object.
           additionalProperties:
             $ref: '#/components/schemas/ToolParameter'
+    ToolDefinition:
+      type: object
+      required:
+        - serverId
+        - name
+      properties:
+        serverId:
+          type: string
+          description: Tool server this tool belongs to.
+        name:
+          type: string
+          description: Name to invoke the tool by.
+        displayName:
+          type: string
+          description: Human-readable name of the tool.
+        description:
+          type: string
+          description: What the tool does, as surfaced to a model.
+        inputSchema:
+          type: object
+          additionalProperties: true
+          description: JSON Schema for the tool's input parameters.
+        annotations:
+          $ref: '#/components/schemas/ToolAnnotations'
     ToolParameter:
       type: object
       properties:
@@ -911,6 +1115,21 @@ components:
           $ref: '#/components/schemas/ToolServerAuthStatus'
         authType:
           $ref: '#/components/schemas/ActionAuthType'
+    ToolDefinitionsResponse:
+      type: object
+      required:
+        - tools
+      properties:
+        tools:
+          type: array
+          description: Definitions for the requested tools that exist on this server.
+          items:
+            $ref: '#/components/schemas/ToolDefinition'
+        notFound:
+          type: array
+          description: Requested names that do not exist on this server.
+          items:
+            type: string
     ToolsCallParameter:
       required: &ref_2
         - name

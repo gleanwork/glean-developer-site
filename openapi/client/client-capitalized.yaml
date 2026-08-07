@@ -2,7 +2,7 @@ openapi: 3.0.0
 info:
   version: 0.9.0
   title: Glean API
-  x-source-commit-sha: 2822daae55430107c738db822cbeeb5a6bef463b
+  x-source-commit-sha: 5239e2c2a10977d437924181dc4c1327ec9e2832
   description: |
     # Introduction
     In addition to the data sources that Glean has built-in support for, Glean also provides a REST API that enables customers to put arbitrary content in the search index. This is useful, for example, for doing permissions-aware search over content in internal tools that reside on-prem as well as for searching over applications that Glean does not currently support first class. In addition these APIs allow the customer to push organization data (people info, organization structure etc) into Glean.
@@ -22,14 +22,14 @@ info:
     These API clients provide type-safe, idiomatic interfaces for working with Glean IndexingAPIs in your language of choice.
   x-logo:
     url: https://app.glean.com/images/glean-text2.svg
-  x-open-api-commit-sha: 0bdefe83a21f917592624e6f1dbaa180e89d5224
+  x-open-api-commit-sha: 596868e6726e60114c5b8324f66098310204d6f5
   x-speakeasy-name: Glean API
 servers:
-  - url: https://{instance}-be.glean.com
+  - url: '{serverUrl}'
     variables:
-      instance:
-        default: instance-name
-        description: The instance name (typically the email domain without the TLD) that determines the deployment backend.
+      serverUrl:
+        default: https://instance-name-be.glean.com
+        description: Your Glean API server URL — https://{instance}-be.glean.com for Glean-hosted deployments, or your own domain for non-Glean-hosted deployments. Find it at app.glean.com/admin/about-glean.
 paths:
   /rest/api/v1/activity:
     post:
@@ -140644,6 +140644,10 @@ paths:
           description: Not Authorized
         '403':
           description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccessRequestPermissionDeniedResponse'
         '429':
           description: Too Many Requests
       security:
@@ -140696,12 +140700,13 @@ paths:
 
             import com.glean.api_client.glean_api_client.Glean;
             import com.glean.api_client.glean_api_client.models.components.GetChatRequest;
+            import com.glean.api_client.glean_api_client.models.errors.AccessRequestPermissionDeniedResponseException;
             import com.glean.api_client.glean_api_client.models.operations.GetchatResponse;
             import java.lang.Exception;
 
             public class Application {
 
-                public static void main(String[] args) throws Exception {
+                public static void main(String[] args) throws AccessRequestPermissionDeniedResponseException, Exception {
 
                     Glean sdk = Glean.builder()
                             .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
@@ -140991,7 +140996,7 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    example, fileErr := os.Open(\"example.file\")\n    if fileErr != nil {\n        panic(fileErr)\n    }\n\n    res, err := s.Client.Chat.UploadFiles(ctx, components.UploadChatFilesRequest{\n        Files: []components.File{\n            components.File{\n                FileName: \"example.file\",\n                Content: example,\n            },\n        },\n    }, nil, nil)\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.UploadChatFilesResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    example, fileErr := os.Open(\"example.file\")\n    if fileErr != nil {\n        panic(fileErr)\n    }\n\n    res, err := s.Client.Chat.UploadFiles(ctx, components.UploadChatFilesRequest{\n        Files: []components.UploadChatFilesRequestFile{\n            components.UploadChatFilesRequestFile{\n                FileName: \"example.file\",\n                Content: example,\n            },\n        },\n    }, nil, nil)\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.UploadChatFilesResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -141782,6 +141787,133 @@ paths:
                     }
                 }
             }
+  /rest/api/v1/agents/{agent_id}/import:
+    post:
+      tags:
+        - Agents
+      summary: Import an agent
+      description: 'Imports an [agent](https://developers.glean.com/agents/agents-api) from its on-disk folder representation (spec.yaml, instructions.md, skills/, subagents/) packaged as a zip, and creates or updates the agent. Inverse of the export flow: the folder-to-schema conversion runs server-side. The bundle must contain only regular files; symlinks are resolved by the caller at packaging time.'
+      operationId: importAgent
+      x-visibility: Preview
+      parameters:
+        - $ref: '#/components/parameters/locale'
+        - $ref: '#/components/parameters/timezoneOffset'
+        - description: The ID of the agent to create or update.
+          required: true
+          schema:
+            type: string
+            title: Agent ID
+            description: The ID of the agent to create or update.
+          name: agent_id
+          in: path
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ImportAgentRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportAgentResponse'
+        '400':
+          description: Bad request
+        '401':
+          description: Not Authorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+      security:
+        - APIToken: []
+      x-speakeasy-group: client.agents
+      x-speakeasy-name-override: import
+      x-codeSamples:
+        - lang: Python
+          label: Python (API Client)
+          source: |-
+            from glean.api_client import Glean
+            import os
+
+
+            with Glean(
+                api_token=os.getenv("GLEAN_API_TOKEN", ""),
+                server_url="https://mycompany-be.glean.com",
+            ) as glean:
+
+                res = glean.client.agents.import_(agent_id="<id>", bundle={
+                    "file_name": "example.file",
+                    "content": open("example.file", "rb"),
+                })
+
+                # Handle response
+                print(res)
+        - lang: JavaScript
+          label: Typescript (API Client)
+          source: |-
+            import { Glean } from "@gleanwork/api-client";
+            import { openAsBlob } from "node:fs";
+
+            const glean = new Glean({
+              apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
+              serverURL: "https://mycompany-be.glean.com",
+            });
+
+            async function run() {
+              const result = await glean.client.agents.import({
+                bundle: await openAsBlob("example.file"),
+              }, "<id>");
+
+              console.log(result);
+            }
+
+            run();
+        - lang: Go
+          label: Go (API Client)
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    example, fileErr := os.Open(\"example.file\")\n    if fileErr != nil {\n        panic(fileErr)\n    }\n\n    res, err := s.Client.Agents.Import(ctx, \"<id>\", components.ImportAgentRequest{\n        Bundle: components.Bundle{\n            FileName: \"example.file\",\n            Content: example,\n        },\n    }, nil, nil)\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.ImportAgentResponse != nil {\n        // handle response\n    }\n}"
+        - lang: Java
+          label: Java (API Client)
+          source: |-
+            package hello.world;
+
+            import com.glean.api_client.glean_api_client.Glean;
+            import com.glean.api_client.glean_api_client.models.components.Bundle;
+            import com.glean.api_client.glean_api_client.models.components.ImportAgentRequest;
+            import com.glean.api_client.glean_api_client.models.errors.ErrorResponse;
+            import com.glean.api_client.glean_api_client.models.operations.ImportAgentResponse;
+            import com.glean.api_client.glean_api_client.utils.Utils;
+            import java.io.FileInputStream;
+            import java.lang.Exception;
+
+            public class Application {
+
+                public static void main(String[] args) throws ErrorResponse, Exception {
+
+                    Glean sdk = Glean.builder()
+                            .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
+                        .build();
+
+                    ImportAgentResponse res = sdk.client().agents().import_()
+                            .agentId("<id>")
+                            .importAgentRequest(ImportAgentRequest.builder()
+                                .bundle(Bundle.builder()
+                                    .fileName("example.file")
+                                    .content(Utils.readBytesAndClose(new FileInputStream("example.file")))
+                                    .build())
+                                .build())
+                            .call();
+
+                }
+            }
   /rest/api/v1/agents/search:
     post:
       tags:
@@ -141951,11 +142083,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '422':
-          description: Validation Error
+          description: Returned when the agent has tools the caller has not authorized. The response body enumerates the tools that need connecting.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/UnauthorizedAgentToolsError'
         '500':
           description: Internal server error
       security:
@@ -142019,13 +142151,14 @@ paths:
             import com.glean.api_client.glean_api_client.models.components.AgentRunCreate;
             import com.glean.api_client.glean_api_client.models.components.Message;
             import com.glean.api_client.glean_api_client.models.errors.ErrorResponse;
+            import com.glean.api_client.glean_api_client.models.errors.UnauthorizedAgentToolsError;
             import com.glean.api_client.glean_api_client.models.operations.CreateAndStreamRunResponse;
             import java.lang.Exception;
             import java.util.List;
 
             public class Application {
 
-                public static void main(String[] args) throws ErrorResponse, Exception {
+                public static void main(String[] args) throws ErrorResponse, UnauthorizedAgentToolsError, Exception {
 
                     Glean sdk = Glean.builder()
                             .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
@@ -142078,7 +142211,11 @@ paths:
         '409':
           description: Conflict
         '422':
-          description: Validation Error
+          description: Returned when the agent has tools the caller has not authorized. The response body enumerates the tools that need connecting.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedAgentToolsError'
         '500':
           description: Internal server error
       security:
@@ -142141,13 +142278,14 @@ paths:
             import com.glean.api_client.glean_api_client.Glean;
             import com.glean.api_client.glean_api_client.models.components.AgentRunCreate;
             import com.glean.api_client.glean_api_client.models.components.Message;
+            import com.glean.api_client.glean_api_client.models.errors.UnauthorizedAgentToolsError;
             import com.glean.api_client.glean_api_client.models.operations.CreateAndWaitRunResponse;
             import java.lang.Exception;
             import java.util.List;
 
             public class Application {
 
-                public static void main(String[] args) throws Exception {
+                public static void main(String[] args) throws UnauthorizedAgentToolsError, Exception {
 
                     Glean sdk = Glean.builder()
                             .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
@@ -146642,6 +146780,7 @@ paths:
                             ],
                         },
                     ],
+                    "cursor": "",
                 })
 
                 # Handle response
@@ -146694,6 +146833,7 @@ paths:
                     ],
                   },
                 ],
+                cursor: "",
               });
 
               console.log(result);
@@ -146702,7 +146842,7 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Client.Documents.RetrieveByFacets(ctx, nil, &components.GetDocumentsByFacetsRequest{\n        FilterSets: []components.FacetFilterSet{\n            components.FacetFilterSet{\n                Filters: []components.FacetFilter{\n                    components.FacetFilter{\n                        FieldName: apiclientgo.Pointer(\"type\"),\n                        Values: []components.FacetFilterValue{\n                            components.FacetFilterValue{\n                                Value: apiclientgo.Pointer(\"Spreadsheet\"),\n                                RelationType: components.RelationTypeEquals.ToPointer(),\n                            },\n                            components.FacetFilterValue{\n                                Value: apiclientgo.Pointer(\"Presentation\"),\n                                RelationType: components.RelationTypeEquals.ToPointer(),\n                            },\n                        },\n                    },\n                },\n            },\n            components.FacetFilterSet{\n                Filters: []components.FacetFilter{\n                    components.FacetFilter{\n                        FieldName: apiclientgo.Pointer(\"type\"),\n                        Values: []components.FacetFilterValue{\n                            components.FacetFilterValue{\n                                Value: apiclientgo.Pointer(\"Spreadsheet\"),\n                                RelationType: components.RelationTypeEquals.ToPointer(),\n                            },\n                            components.FacetFilterValue{\n                                Value: apiclientgo.Pointer(\"Presentation\"),\n                                RelationType: components.RelationTypeEquals.ToPointer(),\n                            },\n                        },\n                    },\n                },\n            },\n        },\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.GetDocumentsByFacetsResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Client.Documents.RetrieveByFacets(ctx, nil, &components.GetDocumentsByFacetsRequest{\n        FilterSets: []components.FacetFilterSet{\n            components.FacetFilterSet{\n                Filters: []components.FacetFilter{\n                    components.FacetFilter{\n                        FieldName: apiclientgo.Pointer(\"type\"),\n                        Values: []components.FacetFilterValue{\n                            components.FacetFilterValue{\n                                Value: apiclientgo.Pointer(\"Spreadsheet\"),\n                                RelationType: components.RelationTypeEquals.ToPointer(),\n                            },\n                            components.FacetFilterValue{\n                                Value: apiclientgo.Pointer(\"Presentation\"),\n                                RelationType: components.RelationTypeEquals.ToPointer(),\n                            },\n                        },\n                    },\n                },\n            },\n            components.FacetFilterSet{\n                Filters: []components.FacetFilter{\n                    components.FacetFilter{\n                        FieldName: apiclientgo.Pointer(\"type\"),\n                        Values: []components.FacetFilterValue{\n                            components.FacetFilterValue{\n                                Value: apiclientgo.Pointer(\"Spreadsheet\"),\n                                RelationType: components.RelationTypeEquals.ToPointer(),\n                            },\n                            components.FacetFilterValue{\n                                Value: apiclientgo.Pointer(\"Presentation\"),\n                                RelationType: components.RelationTypeEquals.ToPointer(),\n                            },\n                        },\n                    },\n                },\n            },\n        },\n        Cursor: apiclientgo.Pointer(\"\"),\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.GetDocumentsByFacetsResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -146755,6 +146895,7 @@ paths:
                                                         .build()))
                                                 .build()))
                                         .build()))
+                                .cursor("")
                                 .build())
                             .call();
 
@@ -147641,9 +147782,11 @@ paths:
                                 "Backend",
                                 "Networking",
                             ],
-                            status="[\"Done\"]",
+                            status="Done",
                             custom_data={
-                                "someCustomField": models.CustomDataValue(),
+                                "someCustomField": models.CustomDataValue(
+                                    string_value="someCustomValue",
+                                ),
                             },
                         ),
                     ),
@@ -147665,9 +147808,11 @@ paths:
                                 "Backend",
                                 "Networking",
                             ],
-                            status="[\"Done\"]",
+                            status="Done",
                             custom_data={
-                                "someCustomField": models.CustomDataValue(),
+                                "someCustomField": models.CustomDataValue(
+                                    string_value="someCustomValue",
+                                ),
                             },
                         ),
                     ),
@@ -147688,12 +147833,14 @@ paths:
                             "Backend",
                             "Networking",
                         ],
-                        status="[\"Done\"]",
+                        status="Done",
                         custom_data={
-                            "someCustomField": models.CustomDataValue(),
+                            "someCustomField": models.CustomDataValue(
+                                string_value="someCustomValue",
+                            ),
                         },
                     ),
-                ), page_size=10, max_snippet_size=400, input_details={
+                ), page_size=10, max_snippet_size=400, cursor="", input_details={
                     "has_copy_paste": True,
                 }, request_options=models.SearchRequestOptions(
                     facet_filters=[
@@ -148132,9 +148279,11 @@ paths:
                                 "Backend",
                                 "Networking",
                             ],
-                            status="[\"Done\"]",
+                            status="Done",
                             custom_data={
-                                "someCustomField": models.CustomDataValue(),
+                                "someCustomField": models.CustomDataValue(
+                                    string_value="someCustomValue",
+                                ),
                             },
                         ),
                     ),
@@ -148156,9 +148305,11 @@ paths:
                                 "Backend",
                                 "Networking",
                             ],
-                            status="[\"Done\"]",
+                            status="Done",
                             custom_data={
-                                "someCustomField": models.CustomDataValue(),
+                                "someCustomField": models.CustomDataValue(
+                                    string_value="someCustomValue",
+                                ),
                             },
                         ),
                     ),
@@ -148179,9 +148330,11 @@ paths:
                             "Backend",
                             "Networking",
                         ],
-                        status="[\"Done\"]",
+                        status="Done",
                         custom_data={
-                            "someCustomField": models.CustomDataValue(),
+                            "someCustomField": models.CustomDataValue(
+                                string_value="someCustomValue",
+                            ),
                         },
                     ),
                 ), page_size=100, max_snippet_size=400, request_options=models.RecommendationsRequestOptions(
@@ -148223,9 +148376,11 @@ paths:
                                     "Backend",
                                     "Networking",
                                 ],
-                                status="[\"Done\"]",
+                                status="Done",
                                 custom_data={
-                                    "someCustomField": models.CustomDataValue(),
+                                    "someCustomField": models.CustomDataValue(
+                                        string_value="someCustomValue",
+                                    ),
                                 },
                             ),
                         ),
@@ -148247,9 +148402,11 @@ paths:
                                     "Backend",
                                     "Networking",
                                 ],
-                                status="[\"Done\"]",
+                                status="Done",
                                 custom_data={
-                                    "someCustomField": models.CustomDataValue(),
+                                    "someCustomField": models.CustomDataValue(
+                                        string_value="someCustomValue",
+                                    ),
                                 },
                             ),
                         ),
@@ -148270,9 +148427,11 @@ paths:
                                 "Backend",
                                 "Networking",
                             ],
-                            status="[\"Done\"]",
+                            status="Done",
                             custom_data={
-                                "someCustomField": models.CustomDataValue(),
+                                "someCustomField": models.CustomDataValue(
+                                    string_value="someCustomValue",
+                                ),
                             },
                         ),
                     ),
@@ -148313,9 +148472,11 @@ paths:
                         "Backend",
                         "Networking",
                       ],
-                      status: "[\"Done\"]",
+                      status: "Done",
                       customData: {
-                        "someCustomField": {},
+                        "someCustomField": {
+                          stringValue: "someCustomValue",
+                        },
                       },
                     },
                   },
@@ -148337,9 +148498,11 @@ paths:
                         "Backend",
                         "Networking",
                       ],
-                      status: "[\"Done\"]",
+                      status: "Done",
                       customData: {
-                        "someCustomField": {},
+                        "someCustomField": {
+                          stringValue: "someCustomValue",
+                        },
                       },
                     },
                   },
@@ -148360,9 +148523,11 @@ paths:
                       "Backend",
                       "Networking",
                     ],
-                    status: "[\"Done\"]",
+                    status: "Done",
                     customData: {
-                      "someCustomField": {},
+                      "someCustomField": {
+                        stringValue: "someCustomValue",
+                      },
                     },
                   },
                 },
@@ -148441,9 +148606,11 @@ paths:
                           "Backend",
                           "Networking",
                         ],
-                        status: "[\"Done\"]",
+                        status: "Done",
                         customData: {
-                          "someCustomField": {},
+                          "someCustomField": {
+                            stringValue: "someCustomValue",
+                          },
                         },
                       },
                     },
@@ -148465,9 +148632,11 @@ paths:
                           "Backend",
                           "Networking",
                         ],
-                        status: "[\"Done\"]",
+                        status: "Done",
                         customData: {
-                          "someCustomField": {},
+                          "someCustomField": {
+                            stringValue: "someCustomValue",
+                          },
                         },
                       },
                     },
@@ -148488,9 +148657,11 @@ paths:
                         "Backend",
                         "Networking",
                       ],
-                      status: "[\"Done\"]",
+                      status: "Done",
                       customData: {
-                        "someCustomField": {},
+                        "someCustomField": {
+                          stringValue: "someCustomValue",
+                        },
                       },
                     },
                   },
@@ -148503,7 +148674,7 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/types\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Client.Search.Recommendations(ctx, components.RecommendationsRequest{\n        SourceDocument: &components.Document{\n            ContainerDocument: &components.Document{\n                Metadata: &components.DocumentMetadata{\n                    Datasource: apiclientgo.Pointer(\"datasource\"),\n                    ObjectType: apiclientgo.Pointer(\"Feature Request\"),\n                    Container: apiclientgo.Pointer(\"container\"),\n                    ParentID: apiclientgo.Pointer(\"JIRA_EN-1337\"),\n                    MimeType: apiclientgo.Pointer(\"mimeType\"),\n                    DocumentID: apiclientgo.Pointer(\"documentId\"),\n                    CreateTime: types.MustNewTimeFromString(\"2000-01-23T04:56:07.000Z\"),\n                    UpdateTime: types.MustNewTimeFromString(\"2000-01-23T04:56:07.000Z\"),\n                    Author: &components.Person{\n                        Name: \"name\",\n                        ObfuscatedID: \"<id>\",\n                    },\n                    Components: []string{\n                        \"Backend\",\n                        \"Networking\",\n                    },\n                    Status: apiclientgo.Pointer(\"[\\\"Done\\\"]\"),\n                    CustomData: map[string]components.CustomDataValue{\n                        \"someCustomField\": components.CustomDataValue{},\n                    },\n                },\n            },\n            ParentDocument: &components.Document{\n                Metadata: &components.DocumentMetadata{\n                    Datasource: apiclientgo.Pointer(\"datasource\"),\n                    ObjectType: apiclientgo.Pointer(\"Feature Request\"),\n                    Container: apiclientgo.Pointer(\"container\"),\n                    ParentID: apiclientgo.Pointer(\"JIRA_EN-1337\"),\n                    MimeType: apiclientgo.Pointer(\"mimeType\"),\n                    DocumentID: apiclientgo.Pointer(\"documentId\"),\n                    CreateTime: types.MustNewTimeFromString(\"2000-01-23T04:56:07.000Z\"),\n                    UpdateTime: types.MustNewTimeFromString(\"2000-01-23T04:56:07.000Z\"),\n                    Author: &components.Person{\n                        Name: \"name\",\n                        ObfuscatedID: \"<id>\",\n                    },\n                    Components: []string{\n                        \"Backend\",\n                        \"Networking\",\n                    },\n                    Status: apiclientgo.Pointer(\"[\\\"Done\\\"]\"),\n                    CustomData: map[string]components.CustomDataValue{\n                        \"someCustomField\": components.CustomDataValue{},\n                    },\n                },\n            },\n            Metadata: &components.DocumentMetadata{\n                Datasource: apiclientgo.Pointer(\"datasource\"),\n                ObjectType: apiclientgo.Pointer(\"Feature Request\"),\n                Container: apiclientgo.Pointer(\"container\"),\n                ParentID: apiclientgo.Pointer(\"JIRA_EN-1337\"),\n                MimeType: apiclientgo.Pointer(\"mimeType\"),\n                DocumentID: apiclientgo.Pointer(\"documentId\"),\n                CreateTime: types.MustNewTimeFromString(\"2000-01-23T04:56:07.000Z\"),\n                UpdateTime: types.MustNewTimeFromString(\"2000-01-23T04:56:07.000Z\"),\n                Author: &components.Person{\n                    Name: \"name\",\n                    ObfuscatedID: \"abc123\",\n                },\n                Components: []string{\n                    \"Backend\",\n                    \"Networking\",\n                },\n                Status: apiclientgo.Pointer(\"[\\\"Done\\\"]\"),\n                CustomData: map[string]components.CustomDataValue{\n                    \"someCustomField\": components.CustomDataValue{},\n                },\n            },\n        },\n        PageSize: apiclientgo.Pointer[int64](100),\n        MaxSnippetSize: apiclientgo.Pointer[int64](400),\n        RequestOptions: &components.RecommendationsRequestOptions{\n            FacetFilterSets: []components.FacetFilterSet{\n                components.FacetFilterSet{\n                    Filters: []components.FacetFilter{\n                        components.FacetFilter{\n                            FieldName: apiclientgo.Pointer(\"type\"),\n                            Values: []components.FacetFilterValue{\n                                components.FacetFilterValue{\n                                    Value: apiclientgo.Pointer(\"Spreadsheet\"),\n                                    RelationType: components.RelationTypeEquals.ToPointer(),\n                                },\n                                components.FacetFilterValue{\n                                    Value: apiclientgo.Pointer(\"Presentation\"),\n                                    RelationType: components.RelationTypeEquals.ToPointer(),\n                                },\n                            },\n                        },\n                    },\n                },\n                components.FacetFilterSet{\n                    Filters: []components.FacetFilter{\n                        components.FacetFilter{\n                            FieldName: apiclientgo.Pointer(\"type\"),\n                            Values: []components.FacetFilterValue{\n                                components.FacetFilterValue{\n                                    Value: apiclientgo.Pointer(\"Spreadsheet\"),\n                                    RelationType: components.RelationTypeEquals.ToPointer(),\n                                },\n                                components.FacetFilterValue{\n                                    Value: apiclientgo.Pointer(\"Presentation\"),\n                                    RelationType: components.RelationTypeEquals.ToPointer(),\n                                },\n                            },\n                        },\n                    },\n                },\n                components.FacetFilterSet{\n                    Filters: []components.FacetFilter{\n                        components.FacetFilter{\n                            FieldName: apiclientgo.Pointer(\"type\"),\n                            Values: []components.FacetFilterValue{\n                                components.FacetFilterValue{\n                                    Value: apiclientgo.Pointer(\"Spreadsheet\"),\n                                    RelationType: components.RelationTypeEquals.ToPointer(),\n                                },\n                                components.FacetFilterValue{\n                                    Value: apiclientgo.Pointer(\"Presentation\"),\n                                    RelationType: components.RelationTypeEquals.ToPointer(),\n                                },\n                            },\n                        },\n                    },\n                },\n            },\n            Context: &components.Document{\n                ContainerDocument: &components.Document{\n                    Metadata: &components.DocumentMetadata{\n                        Datasource: apiclientgo.Pointer(\"datasource\"),\n                        ObjectType: apiclientgo.Pointer(\"Feature Request\"),\n                        Container: apiclientgo.Pointer(\"container\"),\n                        ParentID: apiclientgo.Pointer(\"JIRA_EN-1337\"),\n                        MimeType: apiclientgo.Pointer(\"mimeType\"),\n                        DocumentID: apiclientgo.Pointer(\"documentId\"),\n                        CreateTime: types.MustNewTimeFromString(\"2000-01-23T04:56:07.000Z\"),\n                        UpdateTime: types.MustNewTimeFromString(\"2000-01-23T04:56:07.000Z\"),\n                        Author: &components.Person{\n                            Name: \"name\",\n                            ObfuscatedID: \"<id>\",\n                        },\n                        Components: []string{\n                            \"Backend\",\n                            \"Networking\",\n                        },\n                        Status: apiclientgo.Pointer(\"[\\\"Done\\\"]\"),\n                        CustomData: map[string]components.CustomDataValue{\n                            \"someCustomField\": components.CustomDataValue{},\n                        },\n                    },\n                },\n                ParentDocument: &components.Document{\n                    Metadata: &components.DocumentMetadata{\n                        Datasource: apiclientgo.Pointer(\"datasource\"),\n                        ObjectType: apiclientgo.Pointer(\"Feature Request\"),\n                        Container: apiclientgo.Pointer(\"container\"),\n                        ParentID: apiclientgo.Pointer(\"JIRA_EN-1337\"),\n                        MimeType: apiclientgo.Pointer(\"mimeType\"),\n                        DocumentID: apiclientgo.Pointer(\"documentId\"),\n                        CreateTime: types.MustNewTimeFromString(\"2000-01-23T04:56:07.000Z\"),\n                        UpdateTime: types.MustNewTimeFromString(\"2000-01-23T04:56:07.000Z\"),\n                        Author: &components.Person{\n                            Name: \"name\",\n                            ObfuscatedID: \"<id>\",\n                        },\n                        Components: []string{\n                            \"Backend\",\n                            \"Networking\",\n                        },\n                        Status: apiclientgo.Pointer(\"[\\\"Done\\\"]\"),\n                        CustomData: map[string]components.CustomDataValue{\n                            \"someCustomField\": components.CustomDataValue{},\n                        },\n                    },\n                },\n                Metadata: &components.DocumentMetadata{\n                    Datasource: apiclientgo.Pointer(\"datasource\"),\n                    ObjectType: apiclientgo.Pointer(\"Feature Request\"),\n                    Container: apiclientgo.Pointer(\"container\"),\n                    ParentID: apiclientgo.Pointer(\"JIRA_EN-1337\"),\n                    MimeType: apiclientgo.Pointer(\"mimeType\"),\n                    DocumentID: apiclientgo.Pointer(\"documentId\"),\n                    CreateTime: types.MustNewTimeFromString(\"2000-01-23T04:56:07.000Z\"),\n                    UpdateTime: types.MustNewTimeFromString(\"2000-01-23T04:56:07.000Z\"),\n                    Author: &components.Person{\n                        Name: \"name\",\n                        ObfuscatedID: \"abc123\",\n                    },\n                    Components: []string{\n                        \"Backend\",\n                        \"Networking\",\n                    },\n                    Status: apiclientgo.Pointer(\"[\\\"Done\\\"]\"),\n                    CustomData: map[string]components.CustomDataValue{\n                        \"someCustomField\": components.CustomDataValue{},\n                    },\n                },\n            },\n        },\n    }, nil)\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.ResultsResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/types\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Client.Search.Recommendations(ctx, components.RecommendationsRequest{\n        SourceDocument: &components.Document{\n            ContainerDocument: &components.Document{\n                Metadata: &components.DocumentMetadata{\n                    Datasource: apiclientgo.Pointer(\"datasource\"),\n                    ObjectType: apiclientgo.Pointer(\"Feature Request\"),\n                    Container: apiclientgo.Pointer(\"container\"),\n                    ParentID: apiclientgo.Pointer(\"JIRA_EN-1337\"),\n                    MimeType: apiclientgo.Pointer(\"mimeType\"),\n                    DocumentID: apiclientgo.Pointer(\"documentId\"),\n                    CreateTime: types.MustNewTimeFromString(\"2000-01-23T04:56:07.000Z\"),\n                    UpdateTime: types.MustNewTimeFromString(\"2000-01-23T04:56:07.000Z\"),\n                    Author: &components.Person{\n                        Name: \"name\",\n                        ObfuscatedID: \"<id>\",\n                    },\n                    Components: []string{\n                        \"Backend\",\n                        \"Networking\",\n                    },\n                    Status: apiclientgo.Pointer(\"Done\"),\n                    CustomData: map[string]components.CustomDataValue{\n                        \"someCustomField\": components.CustomDataValue{\n                            StringValue: apiclientgo.Pointer(\"someCustomValue\"),\n                        },\n                    },\n                },\n            },\n            ParentDocument: &components.Document{\n                Metadata: &components.DocumentMetadata{\n                    Datasource: apiclientgo.Pointer(\"datasource\"),\n                    ObjectType: apiclientgo.Pointer(\"Feature Request\"),\n                    Container: apiclientgo.Pointer(\"container\"),\n                    ParentID: apiclientgo.Pointer(\"JIRA_EN-1337\"),\n                    MimeType: apiclientgo.Pointer(\"mimeType\"),\n                    DocumentID: apiclientgo.Pointer(\"documentId\"),\n                    CreateTime: types.MustNewTimeFromString(\"2000-01-23T04:56:07.000Z\"),\n                    UpdateTime: types.MustNewTimeFromString(\"2000-01-23T04:56:07.000Z\"),\n                    Author: &components.Person{\n                        Name: \"name\",\n                        ObfuscatedID: \"<id>\",\n                    },\n                    Components: []string{\n                        \"Backend\",\n                        \"Networking\",\n                    },\n                    Status: apiclientgo.Pointer(\"Done\"),\n                    CustomData: map[string]components.CustomDataValue{\n                        \"someCustomField\": components.CustomDataValue{\n                            StringValue: apiclientgo.Pointer(\"someCustomValue\"),\n                        },\n                    },\n                },\n            },\n            Metadata: &components.DocumentMetadata{\n                Datasource: apiclientgo.Pointer(\"datasource\"),\n                ObjectType: apiclientgo.Pointer(\"Feature Request\"),\n                Container: apiclientgo.Pointer(\"container\"),\n                ParentID: apiclientgo.Pointer(\"JIRA_EN-1337\"),\n                MimeType: apiclientgo.Pointer(\"mimeType\"),\n                DocumentID: apiclientgo.Pointer(\"documentId\"),\n                CreateTime: types.MustNewTimeFromString(\"2000-01-23T04:56:07.000Z\"),\n                UpdateTime: types.MustNewTimeFromString(\"2000-01-23T04:56:07.000Z\"),\n                Author: &components.Person{\n                    Name: \"name\",\n                    ObfuscatedID: \"abc123\",\n                },\n                Components: []string{\n                    \"Backend\",\n                    \"Networking\",\n                },\n                Status: apiclientgo.Pointer(\"Done\"),\n                CustomData: map[string]components.CustomDataValue{\n                    \"someCustomField\": components.CustomDataValue{\n                        StringValue: apiclientgo.Pointer(\"someCustomValue\"),\n                    },\n                },\n            },\n        },\n        PageSize: apiclientgo.Pointer[int64](100),\n        MaxSnippetSize: apiclientgo.Pointer[int64](400),\n        RequestOptions: &components.RecommendationsRequestOptions{\n            FacetFilterSets: []components.FacetFilterSet{\n                components.FacetFilterSet{\n                    Filters: []components.FacetFilter{\n                        components.FacetFilter{\n                            FieldName: apiclientgo.Pointer(\"type\"),\n                            Values: []components.FacetFilterValue{\n                                components.FacetFilterValue{\n                                    Value: apiclientgo.Pointer(\"Spreadsheet\"),\n                                    RelationType: components.RelationTypeEquals.ToPointer(),\n                                },\n                                components.FacetFilterValue{\n                                    Value: apiclientgo.Pointer(\"Presentation\"),\n                                    RelationType: components.RelationTypeEquals.ToPointer(),\n                                },\n                            },\n                        },\n                    },\n                },\n                components.FacetFilterSet{\n                    Filters: []components.FacetFilter{\n                        components.FacetFilter{\n                            FieldName: apiclientgo.Pointer(\"type\"),\n                            Values: []components.FacetFilterValue{\n                                components.FacetFilterValue{\n                                    Value: apiclientgo.Pointer(\"Spreadsheet\"),\n                                    RelationType: components.RelationTypeEquals.ToPointer(),\n                                },\n                                components.FacetFilterValue{\n                                    Value: apiclientgo.Pointer(\"Presentation\"),\n                                    RelationType: components.RelationTypeEquals.ToPointer(),\n                                },\n                            },\n                        },\n                    },\n                },\n                components.FacetFilterSet{\n                    Filters: []components.FacetFilter{\n                        components.FacetFilter{\n                            FieldName: apiclientgo.Pointer(\"type\"),\n                            Values: []components.FacetFilterValue{\n                                components.FacetFilterValue{\n                                    Value: apiclientgo.Pointer(\"Spreadsheet\"),\n                                    RelationType: components.RelationTypeEquals.ToPointer(),\n                                },\n                                components.FacetFilterValue{\n                                    Value: apiclientgo.Pointer(\"Presentation\"),\n                                    RelationType: components.RelationTypeEquals.ToPointer(),\n                                },\n                            },\n                        },\n                    },\n                },\n            },\n            Context: &components.Document{\n                ContainerDocument: &components.Document{\n                    Metadata: &components.DocumentMetadata{\n                        Datasource: apiclientgo.Pointer(\"datasource\"),\n                        ObjectType: apiclientgo.Pointer(\"Feature Request\"),\n                        Container: apiclientgo.Pointer(\"container\"),\n                        ParentID: apiclientgo.Pointer(\"JIRA_EN-1337\"),\n                        MimeType: apiclientgo.Pointer(\"mimeType\"),\n                        DocumentID: apiclientgo.Pointer(\"documentId\"),\n                        CreateTime: types.MustNewTimeFromString(\"2000-01-23T04:56:07.000Z\"),\n                        UpdateTime: types.MustNewTimeFromString(\"2000-01-23T04:56:07.000Z\"),\n                        Author: &components.Person{\n                            Name: \"name\",\n                            ObfuscatedID: \"<id>\",\n                        },\n                        Components: []string{\n                            \"Backend\",\n                            \"Networking\",\n                        },\n                        Status: apiclientgo.Pointer(\"Done\"),\n                        CustomData: map[string]components.CustomDataValue{\n                            \"someCustomField\": components.CustomDataValue{\n                                StringValue: apiclientgo.Pointer(\"someCustomValue\"),\n                            },\n                        },\n                    },\n                },\n                ParentDocument: &components.Document{\n                    Metadata: &components.DocumentMetadata{\n                        Datasource: apiclientgo.Pointer(\"datasource\"),\n                        ObjectType: apiclientgo.Pointer(\"Feature Request\"),\n                        Container: apiclientgo.Pointer(\"container\"),\n                        ParentID: apiclientgo.Pointer(\"JIRA_EN-1337\"),\n                        MimeType: apiclientgo.Pointer(\"mimeType\"),\n                        DocumentID: apiclientgo.Pointer(\"documentId\"),\n                        CreateTime: types.MustNewTimeFromString(\"2000-01-23T04:56:07.000Z\"),\n                        UpdateTime: types.MustNewTimeFromString(\"2000-01-23T04:56:07.000Z\"),\n                        Author: &components.Person{\n                            Name: \"name\",\n                            ObfuscatedID: \"<id>\",\n                        },\n                        Components: []string{\n                            \"Backend\",\n                            \"Networking\",\n                        },\n                        Status: apiclientgo.Pointer(\"Done\"),\n                        CustomData: map[string]components.CustomDataValue{\n                            \"someCustomField\": components.CustomDataValue{\n                                StringValue: apiclientgo.Pointer(\"someCustomValue\"),\n                            },\n                        },\n                    },\n                },\n                Metadata: &components.DocumentMetadata{\n                    Datasource: apiclientgo.Pointer(\"datasource\"),\n                    ObjectType: apiclientgo.Pointer(\"Feature Request\"),\n                    Container: apiclientgo.Pointer(\"container\"),\n                    ParentID: apiclientgo.Pointer(\"JIRA_EN-1337\"),\n                    MimeType: apiclientgo.Pointer(\"mimeType\"),\n                    DocumentID: apiclientgo.Pointer(\"documentId\"),\n                    CreateTime: types.MustNewTimeFromString(\"2000-01-23T04:56:07.000Z\"),\n                    UpdateTime: types.MustNewTimeFromString(\"2000-01-23T04:56:07.000Z\"),\n                    Author: &components.Person{\n                        Name: \"name\",\n                        ObfuscatedID: \"abc123\",\n                    },\n                    Components: []string{\n                        \"Backend\",\n                        \"Networking\",\n                    },\n                    Status: apiclientgo.Pointer(\"Done\"),\n                    CustomData: map[string]components.CustomDataValue{\n                        \"someCustomField\": components.CustomDataValue{\n                            StringValue: apiclientgo.Pointer(\"someCustomValue\"),\n                        },\n                    },\n                },\n            },\n        },\n    }, nil)\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.ResultsResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -148545,9 +148716,10 @@ paths:
                                             .components(List.of(
                                                 "Backend",
                                                 "Networking"))
-                                            .status("[\"Done\"]")
+                                            .status("Done")
                                             .customData(Map.ofEntries(
                                                 Map.entry("someCustomField", CustomDataValue.builder()
+                                                    .stringValue("someCustomValue")
                                                     .build())))
                                             .build())
                                         .build())
@@ -148568,9 +148740,10 @@ paths:
                                             .components(List.of(
                                                 "Backend",
                                                 "Networking"))
-                                            .status("[\"Done\"]")
+                                            .status("Done")
                                             .customData(Map.ofEntries(
                                                 Map.entry("someCustomField", CustomDataValue.builder()
+                                                    .stringValue("someCustomValue")
                                                     .build())))
                                             .build())
                                         .build())
@@ -148590,9 +148763,10 @@ paths:
                                         .components(List.of(
                                             "Backend",
                                             "Networking"))
-                                        .status("[\"Done\"]")
+                                        .status("Done")
                                         .customData(Map.ofEntries(
                                             Map.entry("someCustomField", CustomDataValue.builder()
+                                                .stringValue("someCustomValue")
                                                 .build())))
                                         .build())
                                     .build())
@@ -148663,9 +148837,10 @@ paths:
                                                 .components(List.of(
                                                     "Backend",
                                                     "Networking"))
-                                                .status("[\"Done\"]")
+                                                .status("Done")
                                                 .customData(Map.ofEntries(
                                                     Map.entry("someCustomField", CustomDataValue.builder()
+                                                        .stringValue("someCustomValue")
                                                         .build())))
                                                 .build())
                                             .build())
@@ -148686,9 +148861,10 @@ paths:
                                                 .components(List.of(
                                                     "Backend",
                                                     "Networking"))
-                                                .status("[\"Done\"]")
+                                                .status("Done")
                                                 .customData(Map.ofEntries(
                                                     Map.entry("someCustomField", CustomDataValue.builder()
+                                                        .stringValue("someCustomValue")
                                                         .build())))
                                                 .build())
                                             .build())
@@ -148708,9 +148884,10 @@ paths:
                                             .components(List.of(
                                                 "Backend",
                                                 "Networking"))
-                                            .status("[\"Done\"]")
+                                            .status("Done")
                                             .customData(Map.ofEntries(
                                                 Map.entry("someCustomField", CustomDataValue.builder()
+                                                    .stringValue("someCustomValue")
                                                     .build())))
                                             .build())
                                         .build())
@@ -148806,9 +148983,11 @@ paths:
                                 "Backend",
                                 "Networking",
                             ],
-                            status="[\"Done\"]",
+                            status="Done",
                             custom_data={
-                                "someCustomField": models.CustomDataValue(),
+                                "someCustomField": models.CustomDataValue(
+                                    string_value="someCustomValue",
+                                ),
                             },
                         ),
                     ),
@@ -148830,9 +149009,11 @@ paths:
                                 "Backend",
                                 "Networking",
                             ],
-                            status="[\"Done\"]",
+                            status="Done",
                             custom_data={
-                                "someCustomField": models.CustomDataValue(),
+                                "someCustomField": models.CustomDataValue(
+                                    string_value="someCustomValue",
+                                ),
                             },
                         ),
                     ),
@@ -148853,12 +149034,14 @@ paths:
                             "Backend",
                             "Networking",
                         ],
-                        status="[\"Done\"]",
+                        status="Done",
                         custom_data={
-                            "someCustomField": models.CustomDataValue(),
+                            "someCustomField": models.CustomDataValue(
+                                string_value="someCustomValue",
+                            ),
                         },
                     ),
-                ), page_size=10, max_snippet_size=400, input_details={
+                ), page_size=10, max_snippet_size=400, cursor="", input_details={
                     "has_copy_paste": True,
                 }, request_options=models.SearchRequestOptions(
                     facet_filters=[
@@ -149061,7 +149244,7 @@ paths:
                             },
                         ],
                     },
-                ], entity_type=models.ListEntitiesRequestEntityType.PEOPLE, page_size=100, request_type=models.ListEntitiesRequestRequestType.STANDARD)
+                ], entity_type=models.ListEntitiesRequestEntityType.PEOPLE, page_size=100, cursor="", request_type=models.ListEntitiesRequestRequestType.STANDARD)
 
                 # Handle response
                 print(res)
@@ -149093,6 +149276,7 @@ paths:
                   },
                 ],
                 pageSize: 100,
+                cursor: "",
               });
 
               console.log(result);
@@ -149101,7 +149285,7 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Client.Entities.List(ctx, components.ListEntitiesRequest{\n        Filter: []components.FacetFilter{\n            components.FacetFilter{\n                FieldName: apiclientgo.Pointer(\"type\"),\n                Values: []components.FacetFilterValue{\n                    components.FacetFilterValue{\n                        Value: apiclientgo.Pointer(\"Spreadsheet\"),\n                        RelationType: components.RelationTypeEquals.ToPointer(),\n                    },\n                    components.FacetFilterValue{\n                        Value: apiclientgo.Pointer(\"Presentation\"),\n                        RelationType: components.RelationTypeEquals.ToPointer(),\n                    },\n                },\n            },\n        },\n        PageSize: apiclientgo.Pointer[int64](100),\n    }, nil)\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.ListEntitiesResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Client.Entities.List(ctx, components.ListEntitiesRequest{\n        Filter: []components.FacetFilter{\n            components.FacetFilter{\n                FieldName: apiclientgo.Pointer(\"type\"),\n                Values: []components.FacetFilterValue{\n                    components.FacetFilterValue{\n                        Value: apiclientgo.Pointer(\"Spreadsheet\"),\n                        RelationType: components.RelationTypeEquals.ToPointer(),\n                    },\n                    components.FacetFilterValue{\n                        Value: apiclientgo.Pointer(\"Presentation\"),\n                        RelationType: components.RelationTypeEquals.ToPointer(),\n                    },\n                },\n            },\n        },\n        PageSize: apiclientgo.Pointer[int64](100),\n        Cursor: apiclientgo.Pointer(\"\"),\n    }, nil)\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.ListEntitiesResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -149137,6 +149321,7 @@ paths:
                                                 .build()))
                                         .build()))
                                 .pageSize(100L)
+                                .cursor("")
                                 .build())
                             .call();
 
@@ -152806,7 +152991,7 @@ paths:
                 server_url="https://mycompany-be.glean.com",
             ) as glean:
 
-                res = glean.client.shortcuts.list(page_size=10, filters=[
+                res = glean.client.shortcuts.list(page_size=10, cursor="", filters=[
                     {
                         "field_name": "type",
                         "values": [
@@ -152837,6 +153022,7 @@ paths:
             async function run() {
               const result = await glean.client.shortcuts.list({
                 pageSize: 10,
+                cursor: "",
                 filters: [
                   {
                     fieldName: "type",
@@ -152860,7 +153046,7 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Client.Shortcuts.List(ctx, components.ListShortcutsPaginatedRequest{\n        PageSize: 10,\n        Filters: []components.FacetFilter{\n            components.FacetFilter{\n                FieldName: apiclientgo.Pointer(\"type\"),\n                Values: []components.FacetFilterValue{\n                    components.FacetFilterValue{\n                        Value: apiclientgo.Pointer(\"Spreadsheet\"),\n                        RelationType: components.RelationTypeEquals.ToPointer(),\n                    },\n                    components.FacetFilterValue{\n                        Value: apiclientgo.Pointer(\"Presentation\"),\n                        RelationType: components.RelationTypeEquals.ToPointer(),\n                    },\n                },\n            },\n        },\n    }, nil)\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.ListShortcutsPaginatedResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Client.Shortcuts.List(ctx, components.ListShortcutsPaginatedRequest{\n        PageSize: 10,\n        Cursor: apiclientgo.Pointer(\"\"),\n        Filters: []components.FacetFilter{\n            components.FacetFilter{\n                FieldName: apiclientgo.Pointer(\"type\"),\n                Values: []components.FacetFilterValue{\n                    components.FacetFilterValue{\n                        Value: apiclientgo.Pointer(\"Spreadsheet\"),\n                        RelationType: components.RelationTypeEquals.ToPointer(),\n                    },\n                    components.FacetFilterValue{\n                        Value: apiclientgo.Pointer(\"Presentation\"),\n                        RelationType: components.RelationTypeEquals.ToPointer(),\n                    },\n                },\n            },\n        },\n    }, nil)\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.ListShortcutsPaginatedResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -152883,6 +153069,7 @@ paths:
                     ListshortcutsResponse res = sdk.client().shortcuts().list()
                             .listShortcutsPaginatedRequest(ListShortcutsPaginatedRequest.builder()
                                 .pageSize(10L)
+                                .cursor("")
                                 .filters(List.of(
                                     FacetFilter.builder()
                                         .fieldName("type")
@@ -159588,6 +159775,154 @@ paths:
             default: true
           example: true
           value: 'true'
+  /rest/api/v1/tool-servers/{serverId}/tools:
+    parameters:
+      - in: path
+        name: serverId
+        required: true
+        description: Unique identifier of the tool server.
+        schema:
+          type: string
+    get:
+      tags:
+        - Tools
+      summary: Get tool definitions from a tool server.
+      description: |
+        Returns the name, description and JSON input schema for the named tools on the
+        specified tool server. Works for both action packs and MCP servers.
+
+        `toolNames` is required. Names that do not exist on the server are returned in
+        `notFound` rather than failing the request, so a single bad name does not force
+        callers into one-at-a-time retries. Matching is case-insensitive and treats `-`
+        and `_` as equivalent.
+
+        Native tools are not served; `serverId=native` returns 404.
+      operationId: getToolServerTools
+      x-visibility: Preview
+      x-glean-experimental:
+        id: 332eb38f-1b5d-4896-88e3-59db5e96e4e1
+        introduced: '2026-07-30'
+      parameters:
+        - in: header
+          name: X-Glean-Include-Experimental
+          description: This endpoint is experimental, so requests must include this header set to `true`. See [How experimental APIs work](https://developers.glean.com/experimental/overview) for details.
+          required: true
+          schema:
+            type: boolean
+            default: true
+          example: true
+          value: 'true'
+        - in: query
+          name: toolNames
+          required: true
+          description: Tool names to look up on this server. Maximum 100.
+          schema:
+            type: array
+            items:
+              type: string
+          style: form
+          explode: false
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolDefinitionsResponse'
+        '400':
+          description: Invalid request (e.g. missing toolNames, or more than 100 names)
+        '401':
+          description: Unauthorized
+        '404':
+          description: Tool server not found
+        '429':
+          description: Too Many Requests
+        '503':
+          description: Tool schemas could not be resolved from the server
+      security:
+        - APIToken: []
+      x-speakeasy-name-override: getToolServerTools
+      x-speakeasy-group: client.tools
+      x-codeSamples:
+        - lang: Python
+          label: Python (API Client)
+          source: |-
+            from glean.api_client import Glean
+            import os
+
+
+            with Glean(
+                api_token=os.getenv("GLEAN_API_TOKEN", ""),
+                server_url="https://mycompany-be.glean.com",
+                include_experimental=True,
+            ) as glean:
+
+                res = glean.client.tools.get_tool_server_tools(server_id="<id>", tool_names=[
+                    "<value 1>",
+                    "<value 2>",
+                    "<value 3>",
+                ])
+
+                # Handle response
+                print(res)
+        - lang: JavaScript
+          label: Typescript (API Client)
+          source: |-
+            import { Glean } from "@gleanwork/api-client";
+
+            const glean = new Glean({
+              apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
+              serverURL: "https://mycompany-be.glean.com",
+              includeExperimental: true,
+            });
+
+            async function run() {
+              const result = await glean.client.tools.getToolServerTools("<id>", [
+                "<value 1>",
+                "<value 2>",
+                "<value 3>",
+              ]);
+
+              console.log(result);
+            }
+
+            run();
+        - lang: Go
+          label: Go (API Client)
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Client.Tools.GetToolServerTools(ctx, \"<id>\", []string{\n        \"<value 1>\",\n        \"<value 2>\",\n        \"<value 3>\",\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.ToolDefinitionsResponse != nil {\n        // handle response\n    }\n}"
+        - lang: Java
+          label: Java (API Client)
+          source: |-
+            package hello.world;
+
+            import com.glean.api_client.glean_api_client.Glean;
+            import com.glean.api_client.glean_api_client.hooks.GleanBuilder;
+            import com.glean.api_client.glean_api_client.models.operations.GetToolServerToolsResponse;
+            import java.lang.Exception;
+            import java.util.List;
+
+            public class Application {
+
+                public static void main(String[] args) throws Exception {
+
+                    Glean sdk = GleanBuilder.create()
+                            .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
+                            .includeExperimental(true)
+                        .build();
+
+                    GetToolServerToolsResponse res = sdk.client().tools().getToolServerTools()
+                            .serverId("<id>")
+                            .toolNames(List.of(
+                                "<value 1>",
+                                "<value 2>",
+                                "<value 3>"))
+                            .call();
+
+                    if (res.toolDefinitionsResponse().isPresent()) {
+                        System.out.println(res.toolDefinitionsResponse().get());
+                    }
+                }
+            }
   /rest/api/v1/governance/data/policies/{id}:
     get:
       operationId: getpolicy
@@ -161827,6 +162162,8 @@ components:
               - RESULTS_HELPFUL
               - RESULTS_POOR_ORDER
               - TOO_MUCH_ONE_KIND
+              - NOT_A_QUESTION
+              - UNSURE_IF_CORRECT
         imageUrls:
           type: array
           items:
@@ -162501,12 +162838,16 @@ components:
         facetFilters:
           - fieldName: fieldName
             values:
-              - fieldValues
-              - fieldValues
+              - value: fieldValues
+                relationType: EQUALS
+              - value: fieldValues
+                relationType: EQUALS
           - fieldName: fieldName
             values:
-              - fieldValues
-              - fieldValues
+              - value: fieldValues
+                relationType: EQUALS
+              - value: fieldValues
+                relationType: EQUALS
     TextRange:
       required:
         - startIndex
@@ -163681,6 +164022,7 @@ components:
         cursor:
           type: string
           description: An opaque cursor representing the search request
+          example: ''
         trackingToken:
           type: string
           description: An opaque token that represents this particular result in this particular query. To be used for /feedback reporting.
@@ -163775,8 +164117,9 @@ components:
         url: https://example.com/foo/bar
         nativeAppUrl: slack://foo/bar
         mustIncludeSuggestions:
-          - missingTerm: container
-            query: container
+          suggestions:
+            - missingTerm: container
+              query: container
     ExtractedQnA:
       properties:
         heading:
@@ -164602,6 +164945,9 @@ components:
         department:
           type: string
           description: An organizational unit where everyone has a similar task, e.g. `Engineering`.
+        jobFunction:
+          type: string
+          description: Normalized job-function category assigned by Entity Builder from the source department and, when available, job title. Unlike `department`, which preserves the company-specific organizational unit, this field groups departments into configured categories such as `Engineering`, `Sales`, or `IT`; it may be `Unknown` when the mapping is inconclusive.
         teams:
           description: Info about the employee's team(s).
           type: array
@@ -164747,7 +165093,7 @@ components:
         department: Movies
         email: george@example.com
         location: Hollywood, CA
-        phone: 6505551234
+        phone: '6505551234'
         photoUrl: https://example.com/george.jpg
         startDate: '2000-01-23'
         title: Actor
@@ -164997,10 +165343,10 @@ components:
         components:
           - Backend
           - Networking
-        status:
-          - Done
+        status: Done
         customData:
-          someCustomField: someCustomValue
+          someCustomField:
+            stringValue: someCustomValue
     DocumentSection:
       type: object
       properties:
@@ -165459,10 +165805,7 @@ components:
     objectName:
       type: string
       description: Name of the generated object. This will be used to indicate to the end user what the generated object contains.
-      example:
-        - HR ticket
-        - Email
-        - Chat message
+      example: HR ticket
     PersonObject:
       required:
         - name
@@ -165540,7 +165883,36 @@ components:
             - client_secret_post
             - client_secret_basic
             - none
-          description: The OAuth 2.0 token endpoint authentication method (RFC 7591). Determines how the client authenticates when exchanging an authorization code for a token. client_secret_post sends credentials as form fields, client_secret_basic sends them via Authorization header, none omits client secret and relies on PKCE only. Values use lowercase to match the OAuth 2.0 wire format (RFC 7591 Section 2).
+            - private_key_jwt
+          x-enumDescriptions:
+            client_secret_post: Send client_id and client_secret as form fields in the token request body.
+            client_secret_basic: Send client_id and client_secret via the HTTP Basic Authorization header.
+            none: Public client - omit the client secret and authenticate with the PKCE code_verifier only.
+            private_key_jwt: Authenticate with a JWT client assertion signed by the client's private key (RFC 7523 Section 2.2 / OIDC Core Section 9). Requires a key pair pre-registered with the authorization server.
+          description: The OAuth 2.0 token endpoint authentication method (RFC 7591). Determines how the client authenticates when exchanging an authorization code for a token. Values use lowercase to match the OAuth 2.0 wire format (RFC 7591 Section 2).
+          x-speakeasy-enum-descriptions:
+            client_secret_post: Send client_id and client_secret as form fields in the token request body.
+            client_secret_basic: Send client_id and client_secret via the HTTP Basic Authorization header.
+            none: Public client - omit the client secret and authenticate with the PKCE code_verifier only.
+            private_key_jwt: Authenticate with a JWT client assertion signed by the client's private key (RFC 7523 Section 2.2 / OIDC Core Section 9). Requires a key pair pre-registered with the authorization server.
+        authHeaderType:
+          type: string
+          description: Defines the header structure for sending the API key or token to the server. Defaults to AUTHORIZATION_BEARER. Select the specific header format the server expects for transmitting the key.
+          enum:
+            - AUTHORIZATION_BEARER
+            - AUTHORIZATION_TOKEN
+            - AUTHORIZATION_API_KEY
+            - X_API_KEY
+          x-enumDescriptions:
+            AUTHORIZATION_BEARER: 'Sends "Authorization: Bearer <key>".'
+            AUTHORIZATION_TOKEN: 'Sends "Authorization: Token <key>".'
+            AUTHORIZATION_API_KEY: 'Sends "Authorization: ApiKey <key>".'
+            X_API_KEY: 'Sends "X-API-Key: <key>". No Authorization header is sent.'
+          x-speakeasy-enum-descriptions:
+            AUTHORIZATION_BEARER: 'Sends "Authorization: Bearer <key>".'
+            AUTHORIZATION_TOKEN: 'Sends "Authorization: Token <key>".'
+            AUTHORIZATION_API_KEY: 'Sends "Authorization: ApiKey <key>".'
+            X_API_KEY: 'Sends "X-API-Key: <key>". No Authorization header is sent.'
         lastAuthorizedAt:
           type: string
           format: date-time
@@ -166063,6 +166435,26 @@ components:
       properties:
         chatResult:
           $ref: '#/components/schemas/ChatResult'
+    AccessRequestPermissionDeniedResponse:
+      type: object
+      required:
+        - errorType
+        - createdBy
+        - requestableRoles
+        - hasPendingRequest
+      properties:
+        errorType:
+          type: string
+          enum:
+            - PERMISSION_DENIED
+        createdBy:
+          $ref: '#/components/schemas/Person'
+        requestableRoles:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserRole'
+        hasPendingRequest:
+          type: boolean
     ChatMetadataResult:
       properties:
         chat:
@@ -166080,6 +166472,7 @@ components:
         cursor:
           type: string
           description: An opaque cursor for fetching the next page of results. If empty, there are no more results.
+          example: ''
     GetChatApplicationRequest:
       required:
         - id
@@ -166344,6 +166737,52 @@ components:
         - output_schema
       title: AgentSchemas
       description: Defines the structure and properties of an agent.
+    ImportAgentSyncMode:
+      type: string
+      enum:
+        - STAGED
+        - PUBLISHED
+      description: |
+        Whether the imported version is staged (saved without updating the live version) or published directly to the live version.
+    ImportAgentRequest:
+      type: object
+      required:
+        - bundle
+      properties:
+        bundle:
+          type: string
+          format: binary
+          description: |
+            Zip of the agent folder (spec.yaml, instructions.md, skills/, subagents/) with symlinks dereferenced.
+        gitCommitSha:
+          type: string
+          description: Optional Git commit SHA to associate with this import.
+        gitAuthorId:
+          type: string
+          description: Optional VCS commit author ID to associate with this import.
+        commitMessage:
+          type: string
+          description: Optional commit message for the imported version.
+        syncMode:
+          $ref: '#/components/schemas/ImportAgentSyncMode'
+        isDraft:
+          type: boolean
+          description: |
+            When true, validates and stores a draft preview without publishing (used for PR preview links). Takes precedence over `syncMode`: when `isDraft` is true, `syncMode` is ignored.
+    ImportAgentStatus:
+      type: string
+      enum:
+        - CREATED
+        - UPDATED
+        - DRAFT_PREVIEW
+      description: Outcome of the import for the target agent.
+    ImportAgentResponse:
+      type: object
+      properties:
+        workflowResult:
+          $ref: '#/components/schemas/WorkflowResult'
+        status:
+          $ref: '#/components/schemas/ImportAgentStatus'
     SearchAgentsRequest:
       type: object
       properties:
@@ -166412,6 +166851,22 @@ components:
           title: Metadata
           description: The metadata to pass to the agent.
           additionalProperties: true
+    UnauthorizedAgentToolsError:
+      title: UnauthorizedAgentToolsError
+      description: Returned when the agent has tools the caller must authorize before the run can start. Each entry in `authenticationSuggestions` names one such tool; POST its `serverId` to `/tool-servers/{serverId}/auth` with `returnUrl` in the request body to obtain an `authorizationUrl` to redirect the end user to, then retry the run once OAuth completes.
+      type: object
+      required:
+        - message
+        - authenticationSuggestions
+      properties:
+        message:
+          type: string
+          description: Human-readable description of the failure.
+        authenticationSuggestions:
+          type: array
+          description: One entry per tool the caller must authorize.
+          items:
+            $ref: '#/components/schemas/ServerToolRequest'
     AgentExecutionStatus:
       description: The status of the run. One of 'error', 'success'.
       type: string
@@ -166716,6 +167171,7 @@ components:
         cursor:
           type: string
           description: Pagination cursor. A previously received opaque token representing the position in the overall results at which to start.
+          example: ''
     GetDocumentsByFacetsResponse:
       properties:
         documents:
@@ -166729,6 +167185,7 @@ components:
         cursor:
           type: string
           description: Cursor that indicates the start of the next page of results. To be passed in "more" requests for this query.
+          example: ''
     InsightsOverviewRequest:
       properties:
         departments:
@@ -167719,6 +168176,7 @@ components:
             cursor:
               type: string
               description: Cursor that indicates the start of the next page of results. To be passed in "more" requests for this query.
+              example: ''
             hasMoreResults:
               type: boolean
               description: Whether more results are available. Use cursor to retrieve them.
@@ -167797,12 +168255,16 @@ components:
         rewrittenFacetFilters:
           - fieldName: fieldName
             values:
-              - fieldValues
-              - fieldValues
+              - value: fieldValues
+                relationType: EQUALS
+              - value: fieldValues
+                relationType: EQUALS
           - fieldName: fieldName
             values:
-              - fieldValues
-              - fieldValues
+              - value: fieldValues
+                relationType: EQUALS
+              - value: fieldValues
+                relationType: EQUALS
     MessagesResponse:
       required:
         - hasMore
@@ -167889,6 +168351,7 @@ components:
             cursor:
               type: string
               description: Pagination cursor. A previously received opaque token representing the position in the overall results at which to start.
+              example: ''
             resultTabIds:
               type: array
               items:
@@ -168213,6 +168676,7 @@ components:
               - PLAN_MY_DAY
               - END_MY_DAY
               - STARTER_KIT
+              - MEETING_PREP_AUTOMATION
               - MID_DAY_CATCH_UP
               - QUERY_SUGGESTION
               - COWORK_CUJ_PROMO
@@ -168656,6 +169120,7 @@ components:
             - STARTER_KIT_ORG_CHART
             - STARTER_KIT_ADD_DOC
             - MEETING_RECAP
+            - MEETING_PREP_AUTOMATION
             - ACTIVE_DISCUSSION
             - MID_DAY_CATCH_UP
             - QUERY_SUGGESTION
@@ -168748,6 +169213,7 @@ components:
             - PLAN_MY_DAY
             - END_MY_DAY
             - STARTER_KIT
+            - MEETING_PREP_AUTOMATION
             - MID_DAY_CATCH_UP
             - QUERY_SUGGESTION
             - COWORK_CUJ_PROMO
@@ -168900,6 +169366,7 @@ components:
         cursor:
           type: string
           description: Pagination cursor. A previously received opaque token representing the position in the overall results at which to start.
+          example: ''
         source:
           type: string
           description: A string denoting the search surface from which the endpoint is called.
@@ -168949,6 +169416,7 @@ components:
         cursor:
           type: string
           description: Pagination cursor. A previously received opaque token representing the position in the overall results at which to start.
+          example: ''
         totalCount:
           type: integer
           description: The total number of entities available
@@ -169097,6 +169565,7 @@ components:
         cursor:
           type: string
           description: A token specifying the position in the overall results to start at. Received from the endpoint and iterated back. Currently being used as page no (as we implement offset pagination)
+          example: ''
         filters:
           type: array
           items:
@@ -169113,6 +169582,7 @@ components:
         cursor:
           type: string
           description: Cursor indicates the start of the next page of results
+          example: ''
         hasNextPage:
           type: boolean
         totalItemCount:
@@ -169437,6 +169907,84 @@ components:
           description: |
             URL that the client should navigate the end user to in order to begin the OAuth flow.
             After the user consents, control returns to `returnUrl` from the request.
+    ToolAnnotations:
+      type: object
+      description: |
+        Behavioural hints for the tool, exactly as declared by the tool server. No
+        defaults are filled in — see the per-field notes for what an absent value means.
+
+        Per the MCP specification, clients MUST treat these hints as untrusted unless
+        the tool server is itself trusted. They are advisory metadata, not an
+        authorization signal, and must not be the sole basis of a security decision.
+      properties:
+        title:
+          type: string
+        readOnlyHint:
+          type: boolean
+          x-includeEmpty: true
+          description: |
+            True if the tool does not modify its environment. Always present. MCP
+            defines no distinction between an undeclared value and `false` here, so
+            `false` means "not declared read-only" rather than "declared mutating".
+        destructiveHint:
+          type: boolean
+          nullable: true
+          description: |
+            True if the tool may perform destructive updates. **Absent means the server
+            did not declare it**, for which the MCP default is `true`. Only meaningful
+            when `readOnlyHint` is `false`.
+        idempotentHint:
+          type: boolean
+          x-includeEmpty: true
+          description: |
+            True if repeated calls with the same arguments have no additional effect.
+            Always present; as with `readOnlyHint`, `false` means "not declared
+            idempotent". Only meaningful when `readOnlyHint` is `false`.
+        openWorldHint:
+          type: boolean
+          nullable: true
+          description: |
+            True if the tool interacts with an open world of external entities. **Absent
+            means the server did not declare it**, for which the MCP default is `true`.
+    ToolDefinition:
+      type: object
+      required:
+        - serverId
+        - name
+      properties:
+        serverId:
+          type: string
+          description: Tool server this tool belongs to.
+        name:
+          type: string
+          description: Name to invoke the tool by.
+        displayName:
+          type: string
+          description: Human-readable name of the tool.
+        description:
+          type: string
+          description: What the tool does, as surfaced to a model.
+        inputSchema:
+          type: object
+          additionalProperties: true
+          description: JSON Schema for the tool's input parameters.
+        annotations:
+          $ref: '#/components/schemas/ToolAnnotations'
+    ToolDefinitionsResponse:
+      type: object
+      required:
+        - tools
+      properties:
+        tools:
+          type: array
+          description: Definitions for the requested tools that exist on this server.
+          items:
+            $ref: '#/components/schemas/ToolDefinition'
+        notFound:
+          type: array
+          description: Requested names that do not exist on this server.
+          items:
+            type: string
     SensitiveInfoType:
       properties:
         likelihoodThreshold:

@@ -2,18 +2,18 @@ openapi: 3.0.0
 info:
   version: 0.9.0
   title: Glean API - Agents
-  x-source-commit-sha: 2822daae55430107c738db822cbeeb5a6bef463b
+  x-source-commit-sha: 5239e2c2a10977d437924181dc4c1327ec9e2832
   description: API endpoints for Agents
   x-logo:
     url: https://app.glean.com/images/glean-text2.svg
-  x-open-api-commit-sha: 0bdefe83a21f917592624e6f1dbaa180e89d5224
+  x-open-api-commit-sha: 596868e6726e60114c5b8324f66098310204d6f5
   x-speakeasy-name: Glean API
 servers:
-  - url: https://{instance}-be.glean.com
+  - url: '{serverUrl}'
     variables:
-      instance:
-        default: instance-name
-        description: The instance name (typically the email domain without the TLD) that determines the deployment backend.
+      serverUrl:
+        default: https://instance-name-be.glean.com
+        description: Your Glean API server URL — https://{instance}-be.glean.com for Glean-hosted deployments, or your own domain for non-Glean-hosted deployments. Find it at app.glean.com/admin/about-glean.
 security: []
 paths:
   /rest/api/v1/agents:
@@ -444,6 +444,133 @@ paths:
                     }
                 }
             }
+  /rest/api/v1/agents/{agent_id}/import:
+    post:
+      tags:
+        - Agents
+      summary: Import an agent
+      description: 'Imports an [agent](https://developers.glean.com/agents/agents-api) from its on-disk folder representation (spec.yaml, instructions.md, skills/, subagents/) packaged as a zip, and creates or updates the agent. Inverse of the export flow: the folder-to-schema conversion runs server-side. The bundle must contain only regular files; symlinks are resolved by the caller at packaging time.'
+      operationId: importAgent
+      x-visibility: Preview
+      parameters:
+        - $ref: '#/components/parameters/locale'
+        - $ref: '#/components/parameters/timezoneOffset'
+        - description: The ID of the agent to create or update.
+          required: true
+          schema:
+            type: string
+            title: Agent ID
+            description: The ID of the agent to create or update.
+          name: agent_id
+          in: path
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ImportAgentRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportAgentResponse'
+        '400':
+          description: Bad request
+        '401':
+          description: Not Authorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+      security:
+        - APIToken: []
+      x-speakeasy-group: client.agents
+      x-speakeasy-name-override: import
+      x-codeSamples:
+        - lang: Python
+          label: Python (API Client)
+          source: |-
+            from glean.api_client import Glean
+            import os
+
+
+            with Glean(
+                api_token=os.getenv("GLEAN_API_TOKEN", ""),
+                server_url="https://mycompany-be.glean.com",
+            ) as glean:
+
+                res = glean.client.agents.import_(agent_id="<id>", bundle={
+                    "file_name": "example.file",
+                    "content": open("example.file", "rb"),
+                })
+
+                # Handle response
+                print(res)
+        - lang: JavaScript
+          label: Typescript (API Client)
+          source: |-
+            import { Glean } from "@gleanwork/api-client";
+            import { openAsBlob } from "node:fs";
+
+            const glean = new Glean({
+              apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
+              serverURL: "https://mycompany-be.glean.com",
+            });
+
+            async function run() {
+              const result = await glean.client.agents.import({
+                bundle: await openAsBlob("example.file"),
+              }, "<id>");
+
+              console.log(result);
+            }
+
+            run();
+        - lang: Go
+          label: Go (API Client)
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    example, fileErr := os.Open(\"example.file\")\n    if fileErr != nil {\n        panic(fileErr)\n    }\n\n    res, err := s.Client.Agents.Import(ctx, \"<id>\", components.ImportAgentRequest{\n        Bundle: components.Bundle{\n            FileName: \"example.file\",\n            Content: example,\n        },\n    }, nil, nil)\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.ImportAgentResponse != nil {\n        // handle response\n    }\n}"
+        - lang: Java
+          label: Java (API Client)
+          source: |-
+            package hello.world;
+
+            import com.glean.api_client.glean_api_client.Glean;
+            import com.glean.api_client.glean_api_client.models.components.Bundle;
+            import com.glean.api_client.glean_api_client.models.components.ImportAgentRequest;
+            import com.glean.api_client.glean_api_client.models.errors.ErrorResponse;
+            import com.glean.api_client.glean_api_client.models.operations.ImportAgentResponse;
+            import com.glean.api_client.glean_api_client.utils.Utils;
+            import java.io.FileInputStream;
+            import java.lang.Exception;
+
+            public class Application {
+
+                public static void main(String[] args) throws ErrorResponse, Exception {
+
+                    Glean sdk = Glean.builder()
+                            .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
+                        .build();
+
+                    ImportAgentResponse res = sdk.client().agents().import_()
+                            .agentId("<id>")
+                            .importAgentRequest(ImportAgentRequest.builder()
+                                .bundle(Bundle.builder()
+                                    .fileName("example.file")
+                                    .content(Utils.readBytesAndClose(new FileInputStream("example.file")))
+                                    .build())
+                                .build())
+                            .call();
+
+                }
+            }
   /rest/api/v1/agents/search:
     post:
       tags:
@@ -613,11 +740,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '422':
-          description: Validation Error
+          description: Returned when the agent has tools the caller has not authorized. The response body enumerates the tools that need connecting.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/UnauthorizedAgentToolsError'
         '500':
           description: Internal server error
       security:
@@ -681,13 +808,14 @@ paths:
             import com.glean.api_client.glean_api_client.models.components.AgentRunCreate;
             import com.glean.api_client.glean_api_client.models.components.Message;
             import com.glean.api_client.glean_api_client.models.errors.ErrorResponse;
+            import com.glean.api_client.glean_api_client.models.errors.UnauthorizedAgentToolsError;
             import com.glean.api_client.glean_api_client.models.operations.CreateAndStreamRunResponse;
             import java.lang.Exception;
             import java.util.List;
 
             public class Application {
 
-                public static void main(String[] args) throws ErrorResponse, Exception {
+                public static void main(String[] args) throws ErrorResponse, UnauthorizedAgentToolsError, Exception {
 
                     Glean sdk = Glean.builder()
                             .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
@@ -740,7 +868,11 @@ paths:
         '409':
           description: Conflict
         '422':
-          description: Validation Error
+          description: Returned when the agent has tools the caller has not authorized. The response body enumerates the tools that need connecting.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedAgentToolsError'
         '500':
           description: Internal server error
       security:
@@ -803,13 +935,14 @@ paths:
             import com.glean.api_client.glean_api_client.Glean;
             import com.glean.api_client.glean_api_client.models.components.AgentRunCreate;
             import com.glean.api_client.glean_api_client.models.components.Message;
+            import com.glean.api_client.glean_api_client.models.errors.UnauthorizedAgentToolsError;
             import com.glean.api_client.glean_api_client.models.operations.CreateAndWaitRunResponse;
             import java.lang.Exception;
             import java.util.List;
 
             public class Application {
 
-                public static void main(String[] args) throws Exception {
+                public static void main(String[] args) throws UnauthorizedAgentToolsError, Exception {
 
                     Glean sdk = Glean.builder()
                             .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
@@ -915,6 +1048,20 @@ components:
         - COLLECTION_AUDIENCE
       x-speakeasy-enum-descriptions:
         COLLECTION_AUDIENCE: Refers to any viewers of the Collection.
+    ImportAgentStatus:
+      type: string
+      enum:
+        - CREATED
+        - UPDATED
+        - DRAFT_PREVIEW
+      description: Outcome of the import for the target agent.
+    ImportAgentSyncMode:
+      type: string
+      enum:
+        - STAGED
+        - PUBLISHED
+      description: |
+        Whether the imported version is staged (saved without updating the live version) or published directly to the live version.
     ScopeType:
       type: string
       description: Describes the scope for a ReadPermission, WritePermission, or GrantPermission object
@@ -1054,6 +1201,15 @@ components:
         name:
           type: string
           description: The name of the workflow.
+    ActionPreview:
+      description: Preview information for an action being executed.
+      properties:
+        markdown:
+          type: string
+          description: Markdown preview describing what the action will do.
+        description:
+          type: string
+          description: Short summary of what this specific tool invocation will do.
     CustomFieldValueHyperlink:
       properties:
         urlAnchor:
@@ -1080,6 +1236,35 @@ components:
           description: When the document was last indexed
           type: string
           format: date-time
+    ServerToolBase:
+      x-visibility: Preview
+      x-glean-experimental:
+        id: 4e3ee791-45e0-4125-845f-4b7701aa983c
+        introduced: '2026-07-02'
+      type: object
+      required:
+        - toolType
+        - requestType
+        - requestId
+      properties:
+        requestType:
+          type: string
+          description: The type of request made to the user.
+          x-enumDescriptions:
+            EXECUTION: Request for approving execution of the tool.
+            AUTHENTICATION_SUGGESTION: Request for authenticating to a tool, provided as a (tool) suggestion.
+            VOTE_SUGGESTION: Suggestion to vote for enabling an available-but-not-enabled tool.
+          enum:
+            - EXECUTION
+            - AUTHENTICATION_SUGGESTION
+            - VOTE_SUGGESTION
+          x-speakeasy-enum-descriptions:
+            EXECUTION: Request for approving execution of the tool.
+            AUTHENTICATION_SUGGESTION: Request for authenticating to a tool, provided as a (tool) suggestion.
+            VOTE_SUGGESTION: Suggestion to vote for enabling an available-but-not-enabled tool.
+        requestId:
+          type: string
+          description: Unique identifier for this request.
     Thumbnail:
       properties:
         photoId:
@@ -1729,6 +1914,31 @@ components:
       description: Custom fields specific to individual datasources
       additionalProperties:
         $ref: '#/components/schemas/CustomDataValue'
+    ImportAgentRequest:
+      type: object
+      required:
+        - bundle
+      properties:
+        bundle:
+          type: string
+          format: binary
+          description: |
+            Zip of the agent folder (spec.yaml, instructions.md, skills/, subagents/) with symlinks dereferenced.
+        gitCommitSha:
+          type: string
+          description: Optional Git commit SHA to associate with this import.
+        gitAuthorId:
+          type: string
+          description: Optional VCS commit author ID to associate with this import.
+        commitMessage:
+          type: string
+          description: Optional commit message for the imported version.
+        syncMode:
+          $ref: '#/components/schemas/ImportAgentSyncMode'
+        isDraft:
+          type: boolean
+          description: |
+            When true, validates and stores a draft preview without publishing (used for PR preview links). Takes precedence over `syncMode`: when `isDraft` is true, `syncMode` is ignored.
     CreateWorkflowResponse:
       allOf:
         - $ref: '#/components/schemas/WorkflowResult'
@@ -2058,6 +2268,29 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Agent'
+    ImportAgentResponse:
+      type: object
+      properties:
+        workflowResult:
+          $ref: '#/components/schemas/WorkflowResult'
+        status:
+          $ref: '#/components/schemas/ImportAgentStatus'
+    UnauthorizedAgentToolsError:
+      title: UnauthorizedAgentToolsError
+      description: Returned when the agent has tools the caller must authorize before the run can start. Each entry in `authenticationSuggestions` names one such tool; POST its `serverId` to `/tool-servers/{serverId}/auth` with `returnUrl` in the request body to obtain an `authorizationUrl` to redirect the end user to, then retry the run once OAuth completes.
+      type: object
+      required:
+        - message
+        - authenticationSuggestions
+      properties:
+        message:
+          type: string
+          description: Human-readable description of the failure.
+        authenticationSuggestions:
+          type: array
+          description: One entry per tool the caller must authorize.
+          items:
+            $ref: '#/components/schemas/ServerToolRequest'
     CollectionPinTarget:
       required:
         - category
@@ -2202,6 +2435,31 @@ components:
               - text
               - type
             title: MessageTextBlock
+    ServerToolRequest:
+      x-visibility: Preview
+      x-glean-experimental:
+        id: 8544e887-4569-4b14-bde0-d1be9e90dbc3
+        introduced: '2026-07-02'
+      allOf:
+        - $ref: '#/components/schemas/ServerToolBase'
+        - type: object
+          required:
+            - toolName
+          properties:
+            toolDisplayName:
+              type: string
+              description: Human-readable display name for the tool.
+            serverId:
+              type: string
+              description: |
+                Unique identifier of the tool server. Use with GET /tool-servers/{serverId}/auth
+                to resolve display information and authentication status.
+            toolCta:
+              type: string
+              description: Custom call-to-action (CTA) verb for the approval button (e.g., "Create", "Update", "Send").
+            actionPreview:
+              description: Preview information for this tool request.
+              $ref: '#/components/schemas/ActionPreview'
     Meeting:
       properties:
         attendees:
@@ -2788,6 +3046,7 @@ components:
           type: string
         cursor:
           description: An opaque cursor representing the search request
+          example: ''
           type: string
         followUpPrompts:
           description: List of all follow-up prompts generated for the given query or the generated question.
@@ -2960,12 +3219,16 @@ components:
         facetFilters:
           - fieldName: fieldName
             values:
-              - fieldValues
-              - fieldValues
+              - value: fieldValues
+                relationType: EQUALS
+              - value: fieldValues
+                relationType: EQUALS
           - fieldName: fieldName
             values:
-              - fieldValues
-              - fieldValues
+              - value: fieldValues
+                relationType: EQUALS
+              - value: fieldValues
+                relationType: EQUALS
     CollectionBaseMutableProperties:
       required:
         - name
@@ -3110,8 +3373,9 @@ components:
               url: https://example.com/foo/bar
               nativeAppUrl: slack://foo/bar
               mustIncludeSuggestions:
-                - missingTerm: container
-                  query: container
+                suggestions:
+                  - missingTerm: container
+                    query: container
             required: &ref_34
               - url
             type: object
@@ -3458,7 +3722,7 @@ components:
                   department: Movies
                   email: george@example.com
                   location: Hollywood, CA
-                  phone: 6505551234
+                  phone: '6505551234'
                   photoUrl: https://example.com/george.jpg
                   startDate: '2000-01-23'
                   title: Actor
@@ -3533,6 +3797,9 @@ components:
                   isSignedUp:
                     description: Whether the user has signed into Glean at least once.
                     type: boolean
+                  jobFunction:
+                    description: Normalized job-function category assigned by Entity Builder from the source department and, when available, job title. Unlike `department`, which preserves the company-specific organizational unit, this field groups departments into configured categories such as `Engineering`, `Sales`, or `IT`; it may be `Unknown` when the mapping is inconclusive.
+                    type: string
                   lastExtensionUse:
                     description: The last time the user has used the Glean extension in ISO 8601 format.
                     format: date-time
@@ -3838,10 +4105,10 @@ components:
                 components:
                   - Backend
                   - Networking
-                status:
-                  - Done
+                status: Done
                 customData:
-                  someCustomField: someCustomValue
+                  someCustomField:
+                    stringValue: someCustomValue
               properties:
                 ancestors:
                   description: A list of documents that are ancestors of this document in the hierarchy of the document's datasource, for example parent folders or containers. Ancestors can be of different types and some may not be indexed. Higher level ancestors appear earlier in the list.
@@ -4076,6 +4343,9 @@ components:
                 isSignedUp:
                   description: Whether the user has signed into Glean at least once.
                   type: boolean
+                jobFunction:
+                  description: Normalized job-function category assigned by Entity Builder from the source department and, when available, job title. Unlike `department`, which preserves the company-specific organizational unit, this field groups departments into configured categories such as `Engineering`, `Sales`, or `IT`; it may be `Unknown` when the mapping is inconclusive.
+                  type: string
                 lastExtensionUse:
                   description: The last time the user has used the Glean extension in ISO 8601 format.
                   format: date-time
@@ -4623,6 +4893,9 @@ components:
             isSignedUp:
               description: Whether the user has signed into Glean at least once.
               type: boolean
+            jobFunction:
+              description: Normalized job-function category assigned by Entity Builder from the source department and, when available, job title. Unlike `department`, which preserves the company-specific organizational unit, this field groups departments into configured categories such as `Engineering`, `Sales`, or `IT`; it may be `Unknown` when the mapping is inconclusive.
+              type: string
             lastExtensionUse:
               description: The last time the user has used the Glean extension in ISO 8601 format.
               format: date-time
@@ -5276,6 +5549,7 @@ components:
                     type: string
                   cursor:
                     description: An opaque cursor representing the search request
+                    example: ''
                     type: string
                   followUpPrompts:
                     description: List of all follow-up prompts generated for the given query or the generated question.
@@ -6407,6 +6681,7 @@ components:
                   type: string
                 cursor:
                   description: An opaque cursor representing the search request
+                  example: ''
                   type: string
                 followUpPrompts:
                   description: List of all follow-up prompts generated for the given query or the generated question.
@@ -6758,6 +7033,9 @@ components:
         isSignedUp:
           description: Whether the user has signed into Glean at least once.
           type: boolean
+        jobFunction:
+          description: Normalized job-function category assigned by Entity Builder from the source department and, when available, job title. Unlike `department`, which preserves the company-specific organizational unit, this field groups departments into configured categories such as `Engineering`, `Sales`, or `IT`; it may be `Unknown` when the mapping is inconclusive.
+          type: string
         lastExtensionUse:
           description: The last time the user has used the Glean extension in ISO 8601 format.
           format: date-time
@@ -7717,6 +7995,7 @@ components:
               type: string
             cursor:
               description: An opaque cursor representing the search request
+              example: ''
               type: string
             followUpPrompts:
               description: List of all follow-up prompts generated for the given query or the generated question.

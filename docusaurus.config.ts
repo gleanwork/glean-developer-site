@@ -101,6 +101,11 @@ const config: Config = {
   ],
 
   themeConfig: {
+    // API Explorer: keep pasted bearer tokens across pages/reloads (stored
+    // in the reader's browser only)
+    api: {
+      authPersistence: 'localStorage',
+    },
     image: 'img/glean-developer-logo-light.svg',
     colorMode: {
       defaultMode: 'light',

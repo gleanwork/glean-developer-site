@@ -896,6 +896,12 @@ const baseSidebars: SidebarsConfig = {
               label: 'Create an agent',
               className: 'api-method post',
             },
+            {
+              type: 'doc',
+              id: 'api/client-api/agents/import-agent',
+              label: 'Import an agent',
+              className: 'api-method post',
+            },
           ],
         },
         {
@@ -1497,6 +1503,12 @@ const baseSidebars: SidebarsConfig = {
               type: 'doc',
               id: 'api/client-api/tools/get-tool-server-auth-status',
               label: 'Get end-user authentication status for a tool server.',
+              className: 'api-method get',
+            },
+            {
+              type: 'doc',
+              id: 'api/client-api/tools/get-tool-server-tools',
+              label: 'Get tool definitions from a tool server.',
               className: 'api-method get',
             },
           ],
