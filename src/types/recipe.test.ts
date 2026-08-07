@@ -17,6 +17,10 @@ function validEntry() {
     authMethod: ['web-sdk-cookie'],
     buildMethod: 'integrate',
     prerequisites: ['A Glean instance with content indexed'],
+    content: {
+      problem: 'People leave their app to search for answers.',
+      takeItFurther: ['Add a scoped agent.'],
+    },
     aiPrompt: 'Build the embed-search-chat recipe from developers.glean.com.',
   };
 }

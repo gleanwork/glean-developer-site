@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://developers.glean.com/schemas/recipe.schema.json",
   "title": "Glean Cookbook Recipe",
-  "description": "Validation contract for recipe records authored in gleanwork/glean-cookbook at recipes/<id>/recipe.json. Generated from src/types/recipe.ts — do not edit by hand.",
+  "description": "Canonical validation contract for recipe records authored in gleanwork/glean-cookbook at recipes/<id>/recipe.json.",
   "type": "object",
   "properties": {
     "id": {
@@ -811,6 +811,60 @@
         "additionalProperties": false
       }
     },
+    "content": {
+      "type": "object",
+      "properties": {
+        "problem": {
+          "type": "string",
+          "minLength": 1
+        },
+        "takeItFurther": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "guardrails": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string",
+                "minLength": 1
+              },
+              "rule": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": ["title", "rule"],
+            "additionalProperties": false
+          }
+        },
+        "limitations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string",
+                "minLength": 1
+              },
+              "description": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": ["title", "description"],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": ["problem", "takeItFurther"],
+      "additionalProperties": false
+    },
     "aiPrompt": {
       "type": "string",
       "minLength": 1
@@ -855,6 +909,7 @@
     "authMethod",
     "buildMethod",
     "prerequisites",
+    "content",
     "aiPrompt"
   ],
   "additionalProperties": false

@@ -4,10 +4,10 @@ import { z } from 'zod';
 import { recipeMetaSchema } from '../src/types/recipe';
 
 /**
- * Generates schemas/recipe.schema.json from the zod schema in
- * src/types/recipe.ts. The zod schema is the source of truth; the JSON
- * Schema artifact exists for external consumers (the glean-cookbook
- * plugin, the cookbook repo CI, editors).
+ * Generates the developer-site adapter's schema projection. The canonical
+ * contract is schemas/recipe.schema.json in gleanwork/glean-cookbook; this
+ * projection must remain structurally identical so local Zod validation cannot
+ * silently accept a different recipe shape.
  *
  * Run via `pnpm recipes:schema`.
  */
@@ -22,7 +22,7 @@ const artifact = {
   $id: 'https://developers.glean.com/schemas/recipe.schema.json',
   title: 'Glean Cookbook Recipe',
   description:
-    'Validation contract for recipe records authored in gleanwork/glean-cookbook at recipes/<id>/recipe.json. Generated from src/types/recipe.ts — do not edit by hand.',
+    'Canonical validation contract for recipe records authored in gleanwork/glean-cookbook at recipes/<id>/recipe.json.',
   ...jsonSchema,
 };
 

@@ -100,7 +100,15 @@
     "goDependency": false,
     "featured": false,
     "tags": ["a2a", "interop"],
-    "lastVerified": "2026-08-02"
+    "lastVerified": "2026-08-02",
+    "content": {
+      "problem": "You've already built a Glean agent. A2A (Agent2Agent) lets any\nA2A-compliant client — not just Glean's own UI — discover and run it,\nmulti-turn and streamed, with Glean's permissions still enforced.",
+      "takeItFurther": [
+        "Handle the `Task`-based response shape explicitly if your agent uses tool calls that return structured artifacts, not just text.",
+        "Watch for the `a2a-sdk` 1.x upgrade path once Glean's server moves past spec 0.3 — the pinning caveat in this recipe is temporary.",
+        "Combine with [connect-mcp-hosts](/cookbook/connect-mcp-hosts) to compare calling the same agent via MCP vs. A2A."
+      ]
+    }
   },
   {
     "id": "build-engineering-portal",
@@ -225,7 +233,15 @@
     "goDependency": false,
     "featured": false,
     "tags": ["portal"],
-    "lastVerified": "2026-08-02"
+    "lastVerified": "2026-08-02",
+    "content": {
+      "problem": "Service ownership, on-call, and docs live in a portal nobody can search,\nand the knowledge about those services lives everywhere else. This recipe\nturns a lightweight service-catalog portal into the one-stop shop: its\ncatalog becomes searchable in Glean, and Glean's permission-aware search\nand chat come back into the portal itself.",
+      "takeItFurther": [
+        "Add an on-call answer card to the portal backed by a Client API search call.",
+        "Extend the connector with incremental sync and identity mapping so catalog permissions mirror your org.",
+        "Wire the portal's \"ask\" box to open Glean Chat with the current service as context."
+      ]
+    }
   },
   {
     "id": "company-answers",
@@ -431,7 +447,15 @@
     "goDependency": false,
     "featured": true,
     "tags": ["starter", "dual-implementation"],
-    "lastVerified": "2026-08-02"
+    "lastVerified": "2026-08-02",
+    "content": {
+      "problem": "Every team has the same first Glean app: a single page where anyone can ask\na company question and get a cited, permission-aware answer. There are two\nequally valid ways to build it — this recipe builds both, side by side, so\nyou can pick the trade-off that fits your app.",
+      "takeItFurther": [
+        "Swap in a specific agent by passing its `agentId` — to the chat component for Path A, or in the `chat.create` request for Path B.",
+        "Stream responses instead of waiting for the full answer (both the Web SDK and the Chat API support streaming).",
+        "Add follow-up prompt suggestions from the Chat API response's `followUpPrompts`."
+      ]
+    }
   },
   {
     "id": "connect-mcp-hosts",
@@ -528,7 +552,15 @@
     "goDependency": false,
     "featured": false,
     "tags": ["mcp", "starter"],
-    "lastVerified": "2026-08-02"
+    "lastVerified": "2026-08-02",
+    "content": {
+      "problem": "Your team already lives in Claude Code, Cursor, and Claude Desktop. Connect\neach to the same Glean remote MCP server and every one of them can search,\nsummarize, and answer from your company's permission-aware knowledge — no\nper-host reimplementation, no separate index.",
+      "takeItFurther": [
+        "Ask an onboarding question (\"explain how payments-service handles retries\") right after cloning a repo — no context-switching to search separately.",
+        "Compare tool selection across hosts for the same prompt — each host's MCP client decides which Glean tools to call, and they don't always agree.",
+        "Ask an incident-investigation question (\"what changed in payments-service recently?\") to see multi-tool chaining (search + code) in one turn."
+      ]
+    }
   },
   {
     "id": "customer-360",
@@ -766,7 +798,15 @@
     "llmContext": "Use Platform Search for tiles, Client Chat POST /rest/api/v1/chat for synthesis, and Platform Agents for the optional agent path. Client Chat answers are CONTENT messages from GLEAN_AI; citations are fragment.citation.sourceDocument. Set saveChat:false for verification and keep tokens server-side. Read the account from GLEAN_ACCOUNT_NAME and leave owner, ARR, seats, renewal date, and risk blank unless retrieved documents support them. Use GLEAN_SERVER_URL directly.",
     "goDependency": false,
     "featured": false,
-    "tags": ["dual-implementation", "sales", "platform-api"]
+    "tags": ["dual-implementation", "sales", "platform-api"],
+    "content": {
+      "problem": "Account executives jump between CRM notes, renewal docs, and security\npackets to prep a single customer conversation. This puts those sources on\none page per account — KPI header, parallel search tiles, journey summary,\nand one-click saved prompts — so the next call needs one tab, not nine.\n\nEverything on the page comes from what your instance already knows about\nthat account. Nothing is hardcoded, which also means a field stays blank\nwhen no source supports it rather than showing a number nobody can trace.\n\nThis recipe builds the page two ways: Platform Search plus Client Chat for an\nopen-ended dashboard, or Agents `createRun` for a prescriptive QBR-ready brief.",
+      "takeItFurther": [
+        "Add a portfolio dashboard across a rep's whole book of business, with health and renewal countdown tiles per account.",
+        "Schedule a weekly headless job that re-runs the account's queries, diffs against the last run, and posts only what changed to Slack.",
+        "Wire push-to-CRM / push-to-Slack actions from the journey panel once you have a governed custom tool."
+      ]
+    }
   },
   {
     "id": "embed-search-chat",
@@ -863,7 +903,16 @@
     "goDependency": false,
     "featured": true,
     "tags": ["embed", "web-sdk"],
-    "lastVerified": "2026-08-02"
+    "lastVerified": "2026-08-02",
+    "content": {
+      "problem": "Your team lives in an internal tool and context-switches to find answers.\nInstead of sending them elsewhere, bring Glean's answers into the app they\nalready use — with permissions enforced per user, automatically.",
+      "takeItFurther": [
+        "Hand off context between search and chat so a search result opens a grounded conversation ([separate pages for chat and search](/libraries/web-sdk/components/chat)).",
+        "Scope chat to a specific agent by passing its `agentId` to the chat component.",
+        "Go tokenless for guests with the Web SDK's guest auth provider for public-facing deployments.",
+        "Add the [Modal Search](/libraries/web-sdk/components/modal-search) or [Sidebar](/libraries/web-sdk/components/sidebar) variants for search anywhere in the app."
+      ]
+    }
   },
   {
     "id": "incident-copilot",
@@ -1053,7 +1102,29 @@
         "language": "typescript",
         "description": "Webhook → service registry → retrieval fan-out → evidence classification → triage card → approval gate (authz, expiry, escalation, audit) → pre-registered actions → postmortem timeline. Both orchestrators render into one shell."
       }
-    ]
+    ],
+    "content": {
+      "problem": "An alarm fires at 3am. Everything the responder needs already exists — the runbook,\nthe review of the last time this happened, who owns the service, what it depends on\n— scattered across systems they now have to search one at a time, while the graphs\nget worse.\n\nThe retrieval is the easy part. What makes an incident copilot safe to point at a\nproduction service is everything that refuses: a gate that turns away the wrong\nperson, an expiry that escalates instead of quietly approving itself, an action\nregistry the planner cannot talk its way out of, and an audit entry for every\nattempt including the ones that were refused.",
+      "takeItFurther": [
+        "Persist incidents and the audit log. An audit log you can lose by restarting a process is not an audit log.",
+        "Add the rest of the dashboard: response-time rollups, an expiring-soon lane, and an end-of-shift handoff summary.",
+        "Replace the simulated actions with real governed tools, keeping the registry boundary and the approval log exactly where they are.",
+        "Write the postmortem draft back into your knowledge base so the next incident retrieves it as a precedent — the loop that makes the evidence rules get better over time.",
+        "Expose the copilot itself over A2A so another agent can request triage, with the same gate in front of every action."
+      ],
+      "guardrails": [
+        {
+          "title": "Relevance is not evidence",
+          "rule": "Only a matching past incident may support a causal claim. Runbooks support procedures, not causes."
+        }
+      ],
+      "limitations": [
+        {
+          "title": "Authorization is not authentication",
+          "description": "The demo restricts who may approve but trusts the asserted actor. Production deployments must authenticate the actor and define which credential executes actions."
+        }
+      ]
+    }
   },
   {
     "id": "multi-step-agent",
@@ -1201,7 +1272,15 @@
     "llmContext": "Run agents with glean.client.agents.run(agent_id, messages) using Message and MessageTextBlock. Expose a local demo tool through public HTTPS and set the OpenAPI server URL to that origin with route paths aligned. Register tools manually in the admin console. Glean-User-Email supports an authorization allow-list only after the request is authenticated as coming from Glean; the sample server is demo-only and must not front a real write action.",
     "goDependency": false,
     "featured": true,
-    "tags": ["agents", "governance"]
+    "tags": ["agents", "governance"],
+    "content": {
+      "problem": "A chatbot that only answers questions is half an agent. Attach a governed\nTool and it can act — file a ticket, update a record — but only for people\nwho are actually allowed to, with a graceful fallback for everyone else\ninstead of a hard failure.",
+      "takeItFurther": [
+        "Add a second governed tool (e.g., escalate to PagerDuty) and let the agent choose between them based on severity.",
+        "Switch to `run_stream()` and parse the SSE text yourself for a live-updating UI.",
+        "Combine with [permissions-aware-retrieval](/cookbook/permissions-aware-retrieval)'s retrieval pattern if you want the agent's grounding to come from your own index instead of Glean's default retrieval."
+      ]
+    }
   },
   {
     "id": "no-code-it-helpdesk-lovable",
@@ -1272,7 +1351,15 @@
     "llmContext": "Keep this single-user prototype private. Its shared backend token is one service identity, so every request has the token owner's access; it does not enforce permissions for each visitor. Multi-user deployment requires app authentication and per-user Glean OAuth. Keep the token in Lovable's server-side secret store, call Client Chat from a backend function, and read CONTENT text and fragment.citation.sourceDocument citations.",
     "goDependency": false,
     "featured": false,
-    "tags": ["no-code", "it"]
+    "tags": ["no-code", "it"],
+    "content": {
+      "problem": "Half your helpdesk tickets are \"how do I reset my SSO password\" and \"how do\nI get a new laptop\" — questions your IT docs already answer. You want a\npage that answers them before a ticket gets filed, without pulling an\nengineer off other work to build it.",
+      "takeItFurther": [
+        "Scope the `CHAT` token even further if your Glean plan supports per-collection tokens, so this tool can only ever answer from IT content.",
+        "Compare this to [`no-code-pto-lookup-replit`](/cookbook/no-code-pto-lookup-replit) — same Chat API call, same \"browser never holds the token\" constraint, different no-code tool and persona.",
+        "Once your team outgrows the no-code version, [`company-answers`](/cookbook/company-answers) shows the same pattern as a hand-written, version-controlled app."
+      ]
+    }
   },
   {
     "id": "no-code-pto-lookup-replit",
@@ -1343,7 +1430,15 @@
     "llmContext": "Keep this single-user prototype private. Its shared backend token is one service identity, so every request has the token owner's access; it does not enforce permissions for each visitor. Multi-user deployment requires app authentication and per-user Glean OAuth. Keep the token server-side, call glean.client.chat.create with USER message fragments, read CONTENT text and fragment.citation.sourceDocument citations, and show cited answers or an explicit no-answer state.",
     "goDependency": false,
     "featured": false,
-    "tags": ["no-code", "hr"]
+    "tags": ["no-code", "hr"],
+    "content": {
+      "problem": "Your HR team fields the same PTO and benefits questions on repeat. You want\na self-serve lookup tool answered from your real HR docs — but nobody on\nthe team writes backend code, and you don't want to wait for an engineer\nto have time for it.",
+      "takeItFurther": [
+        "Scope the `CHAT` token even further if your Glean plan supports per-collection tokens, so this tool can only ever answer from HR content.",
+        "Compare this to [`no-code-it-helpdesk-lovable`](/cookbook/no-code-it-helpdesk-lovable) — same Chat API call, same \"browser never holds the token\" constraint, different no-code tool and persona.",
+        "Once your team outgrows the no-code version, [`company-answers`](/cookbook/company-answers) shows the same pattern as a hand-written, version-controlled app."
+      ]
+    }
   },
   {
     "id": "onboarding-hub",
@@ -1571,7 +1666,15 @@
           }
         ]
       }
-    ]
+    ],
+    "content": {
+      "problem": "New hires land on day one with a dozen tasks spread across HR,\nIT, and their team — and no single place to see what's done, what's left, and\nwhere to get help. The Onboarding Hub solves that: a gamified checklist with\nprogress tracking, milestone badges, and contextual Glean chat on every step.\n\nThis recipe builds the hub two ways so you can pick the trade-off that fits\nyour portal — Web SDK for fastest SSO integration, Client Chat when you\nneed full UI control.",
+      "takeItFurther": [
+        "Wire real HRIS completion events instead of localStorage toggles.",
+        "Add a manager view that shows onboarding progress across the team.",
+        "Scope chat to onboarding-only documents, so a first-week question cannot wander into unrelated content."
+      ]
+    }
   },
   {
     "id": "permissions-aware-retrieval",
@@ -1777,7 +1880,15 @@
     "llmContext": "Use Platform Search glean.search.query with query, page_size, and X_GLEAN_INCLUDE_EXPERIMENTAL=true. Results expose title, url, and snippets as strings. The caller's OAuth credential is the permission boundary; send no impersonation header. Pass only retrieved, ACL-filtered content to the model, include source links, and refuse to answer when retrieval is empty.",
     "goDependency": false,
     "featured": true,
-    "tags": ["rag", "retrieval", "differentiator"]
+    "tags": ["rag", "retrieval", "differentiator"],
+    "content": {
+      "problem": "Grounding your own LLM app in company content — the pattern usually called\nRAG — normally means standing up a vector DB, mirroring every source system's\nACLs into it, and keeping that mirror in sync forever. Get any of that wrong\nand you leak documents. Glean is already the permission-aware index of your\ncompany's content, so use its Platform API as the retrieval layer and skip all\nthree problems.",
+      "takeItFurther": [
+        "Add a re-ranking pass over snippets before they reach the LLM for higher-precision citations.",
+        "Cache retrieval results per session to cut latency on follow-up questions in the same conversation.",
+        "Swap in [Glean Chat](/cookbook/company-answers) instead of a raw LLM call if you want Glean to also own the generation step."
+      ]
+    }
   },
   {
     "id": "rfp-responder",
@@ -1951,6 +2062,32 @@
         "language": "typescript",
         "description": "Parse + dedup -> batched Chat calls -> review grid with evidence classification -> approval gate -> structure-preserving export"
       }
-    ]
+    ],
+    "content": {
+      "problem": "A security questionnaire arrives with 200 rows. The answers all exist somewhere —\nin last quarter's SOC 2 report, in a policy doc, in the response you sent a\ndifferent customer in March. Someone spends a week finding them again.\n\nEveryone has seen an RFP bot that drafts those answers. The hard part isn't\ndrafting. It's what happens on the rows where the evidence isn't there, because a\nfluent, confident, wrong answer about your own security controls doesn't get\ncaught in review — it gets pasted into a customer's document over your signature.\n\nSo this recipe is built around the failure contract rather than the happy path.\nOnly permitted, approved evidence enters the prompt. Every claim keeps its\ncitation. Missing evidence stays unanswered. A person approves before anything\nleaves.",
+      "takeItFurther": [
+        "Add an xlsx and docx reader so real questionnaires can be uploaded directly — the parser here reads CSV to keep the interesting logic legible.",
+        "Write answers back into the source document with a custom tool instead of exporting, keeping the confirm step and the approval log.",
+        "Give the answer library its own access control before sharing it across a team. It's a cache of retrieved content, so it can leak across the permission boundary the rest of the app respects.",
+        "Route \"needs SME\" rows to their owners automatically, and track which ones came back — the assignment field here is deliberately inert.",
+        "Combine with [permissions-aware retrieval](/cookbook/permissions-aware-retrieval) to see the same refusal property in a smaller, single-question app."
+      ],
+      "guardrails": [
+        {
+          "title": "Merge only exact duplicates",
+          "rule": "Similarity may rank possible duplicates for review, but must never merge security controls automatically."
+        },
+        {
+          "title": "Topicality is not approval",
+          "rule": "A source must be both relevant and explicitly approved for customer-facing use before it can support a draft."
+        }
+      ],
+      "limitations": [
+        {
+          "title": "Single-user permission boundary",
+          "description": "The app runs as the credential owner. Multi-user deployment requires per-user authentication and authorization."
+        }
+      ]
+    }
   }
 ]
