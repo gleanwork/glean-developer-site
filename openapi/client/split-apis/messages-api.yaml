@@ -2,11 +2,11 @@ openapi: 3.0.0
 info:
   version: 0.9.0
   title: Glean API - Messages
-  x-source-commit-sha: 2822daae55430107c738db822cbeeb5a6bef463b
+  x-source-commit-sha: 5239e2c2a10977d437924181dc4c1327ec9e2832
   description: API endpoints for Messages
   x-logo:
     url: https://app.glean.com/images/glean-text2.svg
-  x-open-api-commit-sha: 0bdefe83a21f917592624e6f1dbaa180e89d5224
+  x-open-api-commit-sha: 596868e6726e60114c5b8324f66098310204d6f5
   x-speakeasy-name: Glean API
 servers:
   - url: '{serverUrl}'
@@ -2049,6 +2049,7 @@ components:
           type: string
         cursor:
           description: An opaque cursor representing the search request
+          example: ''
           type: string
         followUpPrompts:
           description: List of all follow-up prompts generated for the given query or the generated question.
@@ -2221,12 +2222,16 @@ components:
         facetFilters:
           - fieldName: fieldName
             values:
-              - fieldValues
-              - fieldValues
+              - value: fieldValues
+                relationType: EQUALS
+              - value: fieldValues
+                relationType: EQUALS
           - fieldName: fieldName
             values:
-              - fieldValues
-              - fieldValues
+              - value: fieldValues
+                relationType: EQUALS
+              - value: fieldValues
+                relationType: EQUALS
     CollectionBaseMutableProperties:
       required:
         - name
@@ -2282,6 +2287,7 @@ components:
             cursor:
               type: string
               description: Cursor that indicates the start of the next page of results. To be passed in "more" requests for this query.
+              example: ''
             hasMoreResults:
               type: boolean
               description: Whether more results are available. Use cursor to retrieve them.
@@ -2360,12 +2366,16 @@ components:
         rewrittenFacetFilters:
           - fieldName: fieldName
             values:
-              - fieldValues
-              - fieldValues
+              - value: fieldValues
+                relationType: EQUALS
+              - value: fieldValues
+                relationType: EQUALS
           - fieldName: fieldName
             values:
-              - fieldValues
-              - fieldValues
+              - value: fieldValues
+                relationType: EQUALS
+              - value: fieldValues
+                relationType: EQUALS
     QuerySuggestion:
       example: &ref_38
         query: app:github type:pull author:mortimer
@@ -2487,8 +2497,9 @@ components:
               url: https://example.com/foo/bar
               nativeAppUrl: slack://foo/bar
               mustIncludeSuggestions:
-                - missingTerm: container
-                  query: container
+                suggestions:
+                  - missingTerm: container
+                    query: container
             required: &ref_34
               - url
             type: object
@@ -2835,7 +2846,7 @@ components:
                   department: Movies
                   email: george@example.com
                   location: Hollywood, CA
-                  phone: 6505551234
+                  phone: '6505551234'
                   photoUrl: https://example.com/george.jpg
                   startDate: '2000-01-23'
                   title: Actor
@@ -2910,6 +2921,9 @@ components:
                   isSignedUp:
                     description: Whether the user has signed into Glean at least once.
                     type: boolean
+                  jobFunction:
+                    description: Normalized job-function category assigned by Entity Builder from the source department and, when available, job title. Unlike `department`, which preserves the company-specific organizational unit, this field groups departments into configured categories such as `Engineering`, `Sales`, or `IT`; it may be `Unknown` when the mapping is inconclusive.
+                    type: string
                   lastExtensionUse:
                     description: The last time the user has used the Glean extension in ISO 8601 format.
                     format: date-time
@@ -3215,10 +3229,10 @@ components:
                 components:
                   - Backend
                   - Networking
-                status:
-                  - Done
+                status: Done
                 customData:
-                  someCustomField: someCustomValue
+                  someCustomField:
+                    stringValue: someCustomValue
               properties:
                 ancestors:
                   description: A list of documents that are ancestors of this document in the hierarchy of the document's datasource, for example parent folders or containers. Ancestors can be of different types and some may not be indexed. Higher level ancestors appear earlier in the list.
@@ -3453,6 +3467,9 @@ components:
                 isSignedUp:
                   description: Whether the user has signed into Glean at least once.
                   type: boolean
+                jobFunction:
+                  description: Normalized job-function category assigned by Entity Builder from the source department and, when available, job title. Unlike `department`, which preserves the company-specific organizational unit, this field groups departments into configured categories such as `Engineering`, `Sales`, or `IT`; it may be `Unknown` when the mapping is inconclusive.
+                  type: string
                 lastExtensionUse:
                   description: The last time the user has used the Glean extension in ISO 8601 format.
                   format: date-time
@@ -4000,6 +4017,9 @@ components:
             isSignedUp:
               description: Whether the user has signed into Glean at least once.
               type: boolean
+            jobFunction:
+              description: Normalized job-function category assigned by Entity Builder from the source department and, when available, job title. Unlike `department`, which preserves the company-specific organizational unit, this field groups departments into configured categories such as `Engineering`, `Sales`, or `IT`; it may be `Unknown` when the mapping is inconclusive.
+              type: string
             lastExtensionUse:
               description: The last time the user has used the Glean extension in ISO 8601 format.
               format: date-time
@@ -4653,6 +4673,7 @@ components:
                     type: string
                   cursor:
                     description: An opaque cursor representing the search request
+                    example: ''
                     type: string
                   followUpPrompts:
                     description: List of all follow-up prompts generated for the given query or the generated question.
@@ -5784,6 +5805,7 @@ components:
                   type: string
                 cursor:
                   description: An opaque cursor representing the search request
+                  example: ''
                   type: string
                 followUpPrompts:
                   description: List of all follow-up prompts generated for the given query or the generated question.
@@ -6135,6 +6157,9 @@ components:
         isSignedUp:
           description: Whether the user has signed into Glean at least once.
           type: boolean
+        jobFunction:
+          description: Normalized job-function category assigned by Entity Builder from the source department and, when available, job title. Unlike `department`, which preserves the company-specific organizational unit, this field groups departments into configured categories such as `Engineering`, `Sales`, or `IT`; it may be `Unknown` when the mapping is inconclusive.
+          type: string
         lastExtensionUse:
           description: The last time the user has used the Glean extension in ISO 8601 format.
           format: date-time
@@ -7094,6 +7119,7 @@ components:
               type: string
             cursor:
               description: An opaque cursor representing the search request
+              example: ''
               type: string
             followUpPrompts:
               description: List of all follow-up prompts generated for the given query or the generated question.
