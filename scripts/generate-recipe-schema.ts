@@ -22,7 +22,7 @@ const artifact = {
   $id: 'https://developers.glean.com/schemas/recipe.schema.json',
   title: 'Glean Cookbook Recipe',
   description:
-    'The `recipe` frontmatter block of a cookbook recipe MDX file. Generated from src/types/recipe.ts — do not edit by hand.',
+    'Validation contract for recipe records authored in gleanwork/glean-cookbook at recipes/<id>/recipe.json. Generated from src/types/recipe.ts — do not edit by hand.',
   ...jsonSchema,
 };
 

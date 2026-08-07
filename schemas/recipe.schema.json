@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://developers.glean.com/schemas/recipe.schema.json",
   "title": "Glean Cookbook Recipe",
-  "description": "The `recipe` frontmatter block of a cookbook recipe MDX file. Generated from src/types/recipe.ts — do not edit by hand.",
+  "description": "Validation contract for recipe records authored in gleanwork/glean-cookbook at recipes/<id>/recipe.json. Generated from src/types/recipe.ts — do not edit by hand.",
   "type": "object",
   "properties": {
     "id": {
@@ -153,12 +153,281 @@
             "type": "string",
             "minLength": 1
           },
+          "execution": {
+            "type": "object",
+            "properties": {
+              "questions": {
+                "default": [],
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "pattern": "^[a-z][a-z0-9-]*$"
+                    },
+                    "prompt": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "required": {
+                      "default": true,
+                      "type": "boolean"
+                    }
+                  },
+                  "required": ["id", "prompt"],
+                  "additionalProperties": false
+                }
+              },
+              "auth": {
+                "minItems": 1,
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "none",
+                        "browser-cookie",
+                        "oauth-with-token-fallback",
+                        "host-managed",
+                        "hosted-secret",
+                        "external-api-key",
+                        "indexing-token"
+                      ]
+                    },
+                    "scopes": {
+                      "default": [],
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "setupCommand": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "configFile": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "backendVariable": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "credentialVariable": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": ["kind"],
+                  "additionalProperties": false
+                }
+              },
+              "verification": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "automated"
+                      },
+                      "command": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "expectedDuration": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "startsOwnServer": {
+                        "default": false,
+                        "type": "boolean"
+                      }
+                    },
+                    "required": ["kind", "command", "expectedDuration"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "user-browser"
+                      },
+                      "command": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "expectedDuration": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "startsOwnServer": {
+                        "default": false,
+                        "type": "boolean"
+                      }
+                    },
+                    "required": ["kind", "expectedDuration"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "third-party"
+                      },
+                      "command": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "expectedDuration": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "startsOwnServer": {
+                        "default": false,
+                        "type": "boolean"
+                      }
+                    },
+                    "required": ["kind", "expectedDuration"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "manual-admin"
+                      },
+                      "command": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "expectedDuration": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "startsOwnServer": {
+                        "default": false,
+                        "type": "boolean"
+                      }
+                    },
+                    "required": ["kind", "expectedDuration"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "manual"
+                      },
+                      "command": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "expectedDuration": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "startsOwnServer": {
+                        "default": false,
+                        "type": "boolean"
+                      }
+                    },
+                    "required": ["kind", "expectedDuration"],
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              "run": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "command": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "url": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "userBrowser": {
+                        "default": false,
+                        "type": "boolean",
+                        "const": false
+                      }
+                    },
+                    "required": ["command"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "command": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "url": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "userBrowser": {
+                        "default": false,
+                        "type": "boolean"
+                      }
+                    },
+                    "required": ["url"],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "existing-app"
+                      },
+                      "userBrowser": {
+                        "type": "boolean",
+                        "const": true
+                      }
+                    },
+                    "required": ["kind", "userBrowser"],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            },
+            "required": ["auth", "verification"],
+            "additionalProperties": false
+          },
           "steps": {
             "minItems": 1,
             "type": "array",
             "items": {
               "type": "object",
               "properties": {
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "choose",
+                    "scaffold",
+                    "install",
+                    "configure",
+                    "authenticate",
+                    "verify-fixture",
+                    "verify-live",
+                    "run",
+                    "manual",
+                    "handoff"
+                  ]
+                },
                 "title": {
                   "type": "string",
                   "minLength": 1
@@ -200,6 +469,21 @@
       "items": {
         "type": "object",
         "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "choose",
+              "scaffold",
+              "install",
+              "configure",
+              "authenticate",
+              "verify-fixture",
+              "verify-live",
+              "run",
+              "manual",
+              "handoff"
+            ]
+          },
           "title": {
             "type": "string",
             "minLength": 1
@@ -216,6 +500,260 @@
         "required": ["title"],
         "additionalProperties": false
       }
+    },
+    "execution": {
+      "type": "object",
+      "properties": {
+        "questions": {
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9-]*$"
+              },
+              "prompt": {
+                "type": "string",
+                "minLength": 1
+              },
+              "required": {
+                "default": true,
+                "type": "boolean"
+              }
+            },
+            "required": ["id", "prompt"],
+            "additionalProperties": false
+          }
+        },
+        "auth": {
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "none",
+                  "browser-cookie",
+                  "oauth-with-token-fallback",
+                  "host-managed",
+                  "hosted-secret",
+                  "external-api-key",
+                  "indexing-token"
+                ]
+              },
+              "scopes": {
+                "default": [],
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "setupCommand": {
+                "type": "string",
+                "minLength": 1
+              },
+              "configFile": {
+                "type": "string",
+                "minLength": 1
+              },
+              "backendVariable": {
+                "type": "string",
+                "minLength": 1
+              },
+              "credentialVariable": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": ["kind"],
+            "additionalProperties": false
+          }
+        },
+        "verification": {
+          "oneOf": [
+            {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "const": "automated"
+                },
+                "command": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "expectedDuration": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "startsOwnServer": {
+                  "default": false,
+                  "type": "boolean"
+                }
+              },
+              "required": ["kind", "command", "expectedDuration"],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "const": "user-browser"
+                },
+                "command": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "expectedDuration": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "startsOwnServer": {
+                  "default": false,
+                  "type": "boolean"
+                }
+              },
+              "required": ["kind", "expectedDuration"],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "const": "third-party"
+                },
+                "command": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "expectedDuration": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "startsOwnServer": {
+                  "default": false,
+                  "type": "boolean"
+                }
+              },
+              "required": ["kind", "expectedDuration"],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "const": "manual-admin"
+                },
+                "command": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "expectedDuration": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "startsOwnServer": {
+                  "default": false,
+                  "type": "boolean"
+                }
+              },
+              "required": ["kind", "expectedDuration"],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "const": "manual"
+                },
+                "command": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "expectedDuration": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "startsOwnServer": {
+                  "default": false,
+                  "type": "boolean"
+                }
+              },
+              "required": ["kind", "expectedDuration"],
+              "additionalProperties": false
+            }
+          ]
+        },
+        "run": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "command": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "url": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "userBrowser": {
+                  "default": false,
+                  "type": "boolean",
+                  "const": false
+                }
+              },
+              "required": ["command"],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "command": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "url": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "userBrowser": {
+                  "default": false,
+                  "type": "boolean"
+                }
+              },
+              "required": ["url"],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "const": "existing-app"
+                },
+                "userBrowser": {
+                  "type": "boolean",
+                  "const": true
+                }
+              },
+              "required": ["kind", "userBrowser"],
+              "additionalProperties": false
+            }
+          ]
+        }
+      },
+      "required": ["auth", "verification"],
+      "additionalProperties": false
     },
     "combines": {
       "type": "array",

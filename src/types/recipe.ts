@@ -1,9 +1,10 @@
 import { z } from 'zod';
 
 /**
- * Recipe schema — the single source of truth for the Cookbooks section.
+ * Dev-site validation contract for cookbook recipe metadata.
  *
- * A recipe's metadata lives in `glean-cookbook`'s `registry.json`, synced
+ * Recipe records are authored only in `glean-cookbook` at
+ * `recipes/<id>/recipe.json`, compiled into that repo's `registry.json`, and synced
  * locally to `data/cookbook-registry.json` (see `scripts/sync-registry.mjs`).
  * The matching `docs/cookbook/{id}.mdx` file is prose-only — no metadata
  * frontmatter — and is matched to its registry entry by filename === id.
@@ -17,7 +18,8 @@ import { z } from 'zod';
  * across repos and consumers, not Docusaurus frontmatter.
  *
  * `schemas/recipe.schema.json` is generated from this file via
- * `pnpm recipes:schema` — do not edit that artifact by hand.
+ * `pnpm recipes:schema` for cookbook authoring validation. This file defines the
+ * contract; it is not a second store of recipe content.
  */
 
 export const RECIPE_SURFACES = [
@@ -132,6 +134,89 @@ export const RECIPE_CATEGORIES = [
 
 export const RECIPE_LEVELS = ['Beginner', 'Intermediate', 'Advanced'] as const;
 
+export const RECIPE_STEP_KINDS = [
+  'choose',
+  'scaffold',
+  'install',
+  'configure',
+  'authenticate',
+  'verify-fixture',
+  'verify-live',
+  'run',
+  'manual',
+  'handoff',
+] as const;
+
+export const recipeQuestionSchema = z.strictObject({
+  id: z.string().regex(/^[a-z][a-z0-9-]*$/),
+  prompt: z.string().min(1),
+  required: z.boolean().default(true),
+});
+
+const recipeVerificationFields = {
+  expectedDuration: z.string().min(1),
+  startsOwnServer: z.boolean().default(false),
+};
+
+export const recipeVerificationSchema = z.discriminatedUnion('kind', [
+  z.strictObject({
+    kind: z.literal('automated'),
+    command: z.string().min(1),
+    ...recipeVerificationFields,
+  }),
+  ...(['user-browser', 'third-party', 'manual-admin', 'manual'] as const).map(
+    (kind) =>
+      z.strictObject({
+        kind: z.literal(kind),
+        command: z.string().min(1).optional(),
+        ...recipeVerificationFields,
+      }),
+  ),
+]);
+
+export const recipeRunSchema = z.union([
+  z.strictObject({
+    command: z.string().min(1),
+    url: z.string().min(1).optional(),
+    userBrowser: z.literal(false).default(false),
+  }),
+  z.strictObject({
+    command: z.string().min(1).optional(),
+    url: z.string().min(1),
+    userBrowser: z.boolean().default(false),
+  }),
+  z.strictObject({
+    kind: z.literal('existing-app'),
+    userBrowser: z.literal(true),
+  }),
+]);
+
+export const recipeExecutionSchema = z.strictObject({
+  questions: z.array(recipeQuestionSchema).default([]),
+  auth: z
+    .array(
+      z.strictObject({
+        kind: z.enum([
+          'none',
+          'browser-cookie',
+          'oauth-with-token-fallback',
+          'host-managed',
+          'hosted-secret',
+          'external-api-key',
+          'indexing-token',
+        ]),
+        scopes: z.array(z.string().min(1)).default([]),
+        setupCommand: z.string().min(1).optional(),
+        configFile: z.string().min(1).optional(),
+        backendVariable: z.string().min(1).optional(),
+        credentialVariable: z.string().min(1).optional(),
+      }),
+    )
+    .min(1),
+  verification: recipeVerificationSchema,
+  run: recipeRunSchema.optional(),
+});
+
 /**
  * One step in a `buildMethod: 'scaffold'` recipe's real, runnable sequence.
  * `command` is a literal, copy-pasteable string when the step is one (a
@@ -141,6 +226,7 @@ export const RECIPE_LEVELS = ['Beginner', 'Intermediate', 'Advanced'] as const;
  * from this one source, instead of two independently hand-authored copies.
  */
 export const recipeStepSchema = z.strictObject({
+  kind: z.enum(RECIPE_STEP_KINDS).optional(),
   title: z.string().min(1),
   description: z.string().min(1).optional(),
   command: z.string().min(1).optional(),
@@ -150,6 +236,7 @@ export const recipeCodeAssetSchema = z.strictObject({
   repoPath: z.string().min(1),
   language: z.string().min(1),
   description: z.string().min(1),
+  execution: recipeExecutionSchema.optional(),
   /** Steps specific to this variant, for recipes with more than one (e.g. Web SDK vs. Chat API). */
   steps: z.array(recipeStepSchema).min(1).optional(),
 });
@@ -227,6 +314,8 @@ export const recipeMetaSchema = z.strictObject({
   scaffoldActions: z.array(z.enum(RECIPE_SCAFFOLD_ACTIONS)).default([]),
   /** Top-level runnable steps for `buildMethod: 'scaffold'` recipes with no variant split; variant-specific steps live on `codeAssets[].steps` instead. */
   steps: z.array(recipeStepSchema).min(1).optional(),
+  /** Customer setup contract when execution is not attached to a specific code asset. */
+  execution: recipeExecutionSchema.optional(),
   combines: z.array(recipeCombinesSchema).optional(),
   architecture: z.array(recipeArchitectureNodeSchema).optional(),
   aiPrompt: z.string().min(1),
