@@ -1,5 +1,6 @@
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 
@@ -7,9 +8,10 @@ const testDirs: string[] = [];
 
 function createFixture(options?: {
   ambiguous?: boolean;
+  preseed?: boolean;
   unresolved?: boolean;
 }) {
-  const root = fs.mkdtempSync(path.join(process.cwd(), '.sidebar-sync-test-'));
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'sidebar-sync-test-'));
   testDirs.push(root);
   fs.mkdirSync(path.join(root, 'scripts'), { recursive: true });
   fs.mkdirSync(path.join(root, 'docs/api/client-api'), { recursive: true });
@@ -25,6 +27,10 @@ function createFixture(options?: {
       path.join(process.cwd(), 'node_modules'),
     path.join(root, 'node_modules'),
     'dir',
+  );
+  fs.copyFileSync(
+    path.join(process.cwd(), '.prettierrc.json'),
+    path.join(root, '.prettierrc.json'),
   );
   fs.copyFileSync(
     path.join(process.cwd(), 'scripts/sync-api-sidebar.mjs'),
@@ -68,7 +74,17 @@ function createFixture(options?: {
             id: 'api/platform-api/platform-search',
             label: 'Search',
             className: 'api-method post',
-          },
+          },${
+            options?.preseed
+              ? `
+          {
+            type: 'doc',
+            id: 'api/platform-api/platform-search-filters',
+            label: 'List search filters',
+            className: 'api-method get',
+          },`
+              : ''
+          }
         ],
       },
       {
@@ -80,7 +96,17 @@ function createFixture(options?: {
             id: 'api/platform-api/platform-skills-list',
             label: 'List skills',
             className: 'api-method get',
-          },
+          },${
+            options?.preseed
+              ? `
+          {
+            type: 'doc',
+            id: 'api/platform-api/platform-skills-delete',
+            label: 'Delete skill',
+            className: 'api-method delete',
+          },`
+              : ''
+          }
         ],
       },
       {
@@ -283,6 +309,11 @@ describe('sync-api-sidebar', () => {
       );
     }
     expect(
+      sidebar.indexOf("id: 'api/platform-api/platform-search'"),
+    ).toBeLessThan(
+      sidebar.indexOf("id: 'api/platform-api/platform-search-filters'"),
+    );
+    expect(
       sidebar.indexOf("id: 'api/platform-api/platform-skills-list'"),
     ).toBeLessThan(
       sidebar.indexOf("id: 'api/platform-api/platform-skills-delete'"),
@@ -296,9 +327,9 @@ describe('sync-api-sidebar', () => {
       'platform-skills-update',
     ].map((id) => sidebar.indexOf(`id: 'api/platform-api/${id}'`));
     expect(skillPositions).toEqual([...skillPositions].sort((a, b) => a - b));
-    expect(
-      sidebar.indexOf("id: 'api/platform-api/platform-chat-create'"),
-    ).toBeLessThan(sidebar.indexOf("label: 'OpenAPI Spec'"));
+    expect(sidebar).toMatch(
+      /label: 'Chat',[\s\S]*?id: 'api\/platform-api\/platform-chat-create',[\s\S]*?\n {10}\},\n {8}\],\n {6}\},\n {6}\{\n {8}type: 'link',\n {8}href: 'https:\/\/developers\.glean\.com\/oas\/platform',\n {8}label: 'OpenAPI Spec',/,
+    );
     expect(sidebar.match(/id: 'guides\/chat\/overview'/g)).toHaveLength(1);
     expect(run(root, '--check').status).toBe(0);
   });
@@ -313,6 +344,81 @@ describe('sync-api-sidebar', () => {
     expect(second.status).toBe(0);
     expect(second.stdout).toContain('already complete');
     expect(fs.readFileSync(path.join(root, 'sidebars.ts'), 'utf8')).toBe(first);
+  });
+
+  it('does not duplicate Platform entries already present in the sidebar', () => {
+    const root = createFixture({ preseed: true });
+
+    expect(run(root, '--fix').status).toBe(0);
+    const sidebar = fs.readFileSync(path.join(root, 'sidebars.ts'), 'utf8');
+
+    for (const id of [
+      'platform-chat-create',
+      'platform-search-filters',
+      'platform-skills-import',
+      'platform-skills-preview-source',
+      'platform-skills-update',
+      'platform-skills-delete',
+      'platform-skills-sync',
+    ]) {
+      expect(
+        sidebar.match(new RegExp(`id: 'api/platform-api/${id}'`, 'g')),
+      ).toHaveLength(1);
+    }
+  });
+
+  it('preserves client insertion through a parent overview entry', () => {
+    const root = createFixture();
+    const sidebarPath = path.join(root, 'sidebars.ts');
+    fs.writeFileSync(
+      sidebarPath,
+      fs.readFileSync(sidebarPath, 'utf8').replace(
+        '\n];',
+        `
+  {
+    type: 'category',
+    label: 'Client API Reference',
+    items: [
+      {
+        type: 'category',
+        label: 'Chat',
+        items: [
+          {
+            type: 'doc',
+            id: 'api/client-api/chat/overview',
+            label: 'Overview',
+          },
+        ],
+      },
+    ],
+  },
+];`,
+      ),
+    );
+    fs.mkdirSync(path.join(root, 'docs/api/client-api/chat'), {
+      recursive: true,
+    });
+    fs.writeFileSync(
+      path.join(root, 'docs/api/client-api/chat/overview.mdx'),
+      '---\ntitle: "Chat"\n---\n',
+    );
+    fs.writeFileSync(
+      path.join(root, 'docs/api/client-api/chat/create.api.mdx'),
+      `---
+title: "Create chat"
+sidebar_label: "Create chat"
+sidebar_class_name: "post api-method"
+---
+`,
+    );
+
+    expect(run(root, '--fix').status).toBe(0);
+    const sidebar = fs.readFileSync(sidebarPath, 'utf8');
+
+    expect(sidebar).toContain("id: 'api/client-api/chat/create'");
+    expect(sidebar.indexOf("id: 'api/client-api/chat/overview'")).toBeLessThan(
+      sidebar.indexOf("id: 'api/client-api/chat/create'"),
+    );
   });
 
   it('fails without changing sidebars when an operation is unresolved', () => {

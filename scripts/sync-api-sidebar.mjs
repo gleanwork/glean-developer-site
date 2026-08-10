@@ -87,7 +87,7 @@ function collectApiDocs(dir) {
 
   for (const entry of fs
     .readdirSync(dir, { withFileTypes: true })
-    .sort((a, b) => a.name.localeCompare(b.name))) {
+    .sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0))) {
     if (entry.isDirectory()) {
       results.push(...collectApiDocs(path.join(dir, entry.name)));
     } else if (entry.name.endsWith('.api.mdx') && !shouldSkip(entry.name)) {
