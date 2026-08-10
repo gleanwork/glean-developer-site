@@ -1,0 +1,59 @@
+---
+title: Tools Unauthorized
+description: tools_unauthorized ProblemDetail reference for the Glean Platform API
+---
+
+# Tools Unauthorized
+
+## Code
+
+- `code`: `tools_unauthorized`
+- `status`: `422`
+- `url`: `https://developers.glean.com/errors/tools-unauthorized`
+
+## What It Means
+
+The request targets an agent that uses tools the end user has not authorized, so the run cannot start.
+
+## Common Causes
+
+- The agent uses a tool server the end user has never connected.
+- The end user previously revoked access to a connected tool.
+- The agent was built by someone else and depends on tools the current user has not authorized.
+
+## How To Resolve
+
+### Client Actions
+
+- Read `authentication_suggestions` in the response to see which tools require authorization.
+- POST each `server_id` to the Client API `/tool-servers/{serverId}/auth` with a `returnUrl` to obtain an `authorizationUrl`.
+- Redirect the end user to that `authorizationUrl`, then start the run again once OAuth completes.
+
+
+### Admin Actions
+
+- Confirm the required tool servers are enabled for the deployment and available to the user.
+
+## Retry Guidance
+
+Retrying before the user authorizes the tools will continue to fail. Retry once authorization completes.
+
+## Example Response
+
+```json
+{
+  "type": "https://developers.glean.com/errors/tools-unauthorized",
+  "title": "Tools Unauthorized",
+  "status": 422,
+  "detail": "Human-readable explanation specific to this occurrence.",
+  "code": "tools_unauthorized",
+  "documentation_url": "https://developers.glean.com/errors/tools-unauthorized",
+  "request_id": "req_7f8a9b0c1d2e"
+}
+```
+
+
+## Related Docs
+
+- [Agents API Overview](/api/platform-api/agents-overview)
+

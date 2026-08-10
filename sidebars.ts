@@ -747,6 +747,12 @@ const baseSidebars: SidebarsConfig = {
               label: 'Search',
               className: 'api-method post',
             },
+            {
+              type: 'doc',
+              id: 'api/platform-api/platform-search-filters',
+              label: 'List search filters',
+              className: 'api-method get',
+            },
           ],
         },
         {
@@ -806,6 +812,49 @@ const baseSidebars: SidebarsConfig = {
               id: 'api/platform-api/platform-skills-get-version-content',
               label: 'Download skill version content',
               className: 'api-method get',
+            },
+            {
+              type: 'doc',
+              id: 'api/platform-api/platform-skills-delete',
+              label: 'Delete skill',
+              className: 'api-method delete',
+            },
+            {
+              type: 'doc',
+              id: 'api/platform-api/platform-skills-import',
+              label: 'Import skills from GitHub',
+              className: 'api-method post',
+            },
+            {
+              type: 'doc',
+              id: 'api/platform-api/platform-skills-preview-source',
+              label: 'Preview a GitHub skill source',
+              className: 'api-method post',
+            },
+            {
+              type: 'doc',
+              id: 'api/platform-api/platform-skills-sync',
+              label: 'Sync a GitHub-imported skill',
+              className: 'api-method post',
+            },
+            {
+              type: 'doc',
+              id: 'api/platform-api/platform-skills-update',
+              label: 'Update skill',
+              className: 'api-method patch',
+            },
+          ],
+        },
+        {
+          type: 'category',
+          label: 'Chat',
+
+          items: [
+            {
+              type: 'doc',
+              id: 'api/platform-api/platform-chat-create',
+              label: 'Create a chat response',
+              className: 'api-method post',
             },
           ],
         },

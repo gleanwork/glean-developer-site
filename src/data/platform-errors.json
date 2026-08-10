@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-07-22T01:14:29.032Z",
-  "totalCount": 20,
+  "generatedAt": "2026-08-10T19:49:22.721Z",
+  "totalCount": 23,
   "errors": [
     {
       "code": "invalid_request",
@@ -357,6 +357,41 @@
       }
     },
     {
+      "code": "spend_limit_exceeded",
+      "slug": "spend-limit-exceeded",
+      "status": 403,
+      "title": "Spend Limit Exceeded",
+      "canonicalUrl": "https://developers.glean.com/errors/spend-limit-exceeded",
+      "docPath": "docs/errors/spend-limit-exceeded.mdx",
+      "example": {
+        "type": "https://developers.glean.com/errors/spend-limit-exceeded",
+        "title": "Spend Limit Exceeded",
+        "status": 403,
+        "detail": "Human-readable explanation specific to this occurrence.",
+        "code": "spend_limit_exceeded",
+        "documentation_url": "https://developers.glean.com/errors/spend-limit-exceeded",
+        "request_id": "req_7f8a9b0c1d2e"
+      },
+      "remediation": {
+        "meaning": "The request was rejected because a configured spend limit for the deployment has been reached.",
+        "commonCauses": [
+          "The deployment has consumed its allotted spend for the current billing period.",
+          "High-volume or automated traffic exhausted the budget faster than expected.",
+          "The configured limit is lower than the workload requires."
+        ],
+        "clientRemediation": [
+          "Stop retrying and reduce request volume until the limit is raised or the period resets.",
+          "Check the response `detail` for which limit was reached.",
+          "Contact a Glean administrator for your deployment to review the limit."
+        ],
+        "adminRemediation": [
+          "Review and adjust the spend limit in the Admin Console.",
+          "Investigate which integrations or workloads consumed the budget before raising the limit."
+        ],
+        "retryGuidance": "Retrying will continue to fail until the limit is raised or the spend period resets."
+      }
+    },
+    {
       "code": "resource_not_found",
       "slug": "resource-not-found",
       "status": 404,
@@ -479,6 +514,38 @@
       }
     },
     {
+      "code": "token_limit_exceeded",
+      "slug": "token-limit-exceeded",
+      "status": 413,
+      "title": "Token Limit Exceeded",
+      "canonicalUrl": "https://developers.glean.com/errors/token-limit-exceeded",
+      "docPath": "docs/errors/token-limit-exceeded.mdx",
+      "example": {
+        "type": "https://developers.glean.com/errors/token-limit-exceeded",
+        "title": "Token Limit Exceeded",
+        "status": 413,
+        "detail": "Human-readable explanation specific to this occurrence.",
+        "code": "token_limit_exceeded",
+        "documentation_url": "https://developers.glean.com/errors/token-limit-exceeded",
+        "request_id": "req_7f8a9b0c1d2e"
+      },
+      "remediation": {
+        "meaning": "The request exceeded the model's token limit, which caps how much content the model can process in one operation.",
+        "commonCauses": [
+          "The supplied input is longer than the model's context window.",
+          "A continued conversation has accumulated too much history.",
+          "Large pasted documents or transcripts were included in the input."
+        ],
+        "clientRemediation": [
+          "Shorten the input, or summarize long content before sending it.",
+          "Start a new conversation instead of continuing one with a long history.",
+          "Split large content into smaller requests and combine the results client-side.",
+          "Note that this limit counts tokens, not payload bytes, unlike `request_too_large`."
+        ],
+        "retryGuidance": "Retrying the same input will continue to fail. Retry only after reducing the amount of content."
+      }
+    },
+    {
       "code": "conflict",
       "slug": "conflict",
       "status": 409,
@@ -569,6 +636,46 @@
           {
             "title": "Platform Search API",
             "href": "/api/platform-api/search-overview"
+          }
+        ]
+      }
+    },
+    {
+      "code": "tools_unauthorized",
+      "slug": "tools-unauthorized",
+      "status": 422,
+      "title": "Tools Unauthorized",
+      "canonicalUrl": "https://developers.glean.com/errors/tools-unauthorized",
+      "docPath": "docs/errors/tools-unauthorized.mdx",
+      "example": {
+        "type": "https://developers.glean.com/errors/tools-unauthorized",
+        "title": "Tools Unauthorized",
+        "status": 422,
+        "detail": "Human-readable explanation specific to this occurrence.",
+        "code": "tools_unauthorized",
+        "documentation_url": "https://developers.glean.com/errors/tools-unauthorized",
+        "request_id": "req_7f8a9b0c1d2e"
+      },
+      "remediation": {
+        "meaning": "The request targets an agent that uses tools the end user has not authorized, so the run cannot start.",
+        "commonCauses": [
+          "The agent uses a tool server the end user has never connected.",
+          "The end user previously revoked access to a connected tool.",
+          "The agent was built by someone else and depends on tools the current user has not authorized."
+        ],
+        "clientRemediation": [
+          "Read `authentication_suggestions` in the response to see which tools require authorization.",
+          "POST each `server_id` to the Client API `/tool-servers/{serverId}/auth` with a `returnUrl` to obtain an `authorizationUrl`.",
+          "Redirect the end user to that `authorizationUrl`, then start the run again once OAuth completes."
+        ],
+        "adminRemediation": [
+          "Confirm the required tool servers are enabled for the deployment and available to the user."
+        ],
+        "retryGuidance": "Retrying before the user authorizes the tools will continue to fail. Retry once authorization completes.",
+        "relatedDocs": [
+          {
+            "title": "Agents API Overview",
+            "href": "/api/platform-api/agents-overview"
           }
         ]
       }
