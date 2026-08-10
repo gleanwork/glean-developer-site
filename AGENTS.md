@@ -66,33 +66,28 @@ Project-local Claude Code skills live under `.claude/skills/`. Load the relevant
 per recipe at `recipes/<id>/recipe.json`. That repo is the source of truth, and it
 also holds the runnable code each recipe scaffolds.
 
-This repo holds the prose page and two generated derivatives:
+This repo holds only generated recipe content plus the presentation layer:
 
 | path | what it is |
 | --- | --- |
-| `docs/cookbook/<id>.mdx` | the prose page. **No metadata frontmatter** — matched to its registry entry by filename |
+| `docs/cookbook/<id>.mdx` | **generated** — page composition from the cookbook's structured content |
 | `data/cookbook-registry.json` | **generated** — a sync of the cookbook's built `registry.json` |
 | `src/data/recipes.json` | **generated** — compiled from that sync by `pnpm recipes:compile` |
+| `static/img/cookbook/previews/<id>/` | **generated** — cookbook-owned previews declared in `recipe.json` |
 
-Do not edit the two generated files. They are committed and not gitignored, so they
+Do not edit generated recipe files or assets. They are committed and not gitignored, so they
 look editable, and a recipe added to them renders correctly — then disappears on the
-next sync, which writes whatever upstream says. Four pull requests did this before
-`scripts/check-generated-recipe-data.mjs` existed to fail CI on it.
+next sync, which writes whatever upstream says.
 
 To add a recipe:
 
 1. **In `glean-cookbook`:** add `recipes/<id>/recipe.json` (schema:
-   `schemas/recipe.schema.json`, generated from this repo's `src/types/recipe.ts` —
-   field names are camelCase), add the runnable code under `recipes/<id>/`, then
+   `schemas/recipe.schema.json`; this repo's `src/types/recipe.ts` is a consumer
+   adapter and must mirror that canonical contract), add the runnable code under `recipes/<id>/`, then
    `npm run build:registry` and `npm run validate:registry`.
-2. **Here:** `pnpm registry:sync`, then `pnpm recipes:compile`.
-3. **Here:** add `docs/cookbook/<id>.mdx`. Wrap the body in
-   `<RecipePage recipeId="<id>">` and use the standard sections — `RecipeSection`
-   (Problem), `RecipeArchitecture`, `RecipePrereqs`, `RecipeSteps`,
-   `RecipeDemoQueries`, `TakeItFurther`. Copy the shape from
-   `docs/cookbook/embed-search-chat.mdx`. Title, description, prerequisites, steps
-   and demo queries all render from the registry, so do not restate them in prose.
-4. Verify with `pnpm recipes:compile`, `pnpm test`, and `pnpm build`. The Cookbooks
+2. **Here:** `pnpm registry:sync`, then `pnpm recipes:compile`. The sync generates
+   the MDX page and copies any declared preview asset; do not recreate either by hand.
+3. Verify with `pnpm recipes:compile`, `pnpm test`, and `pnpm build`. The Cookbooks
    nav and homepage band are behind the `cookbook` feature flag — build with
    `FF_COOKBOOKS=true` to see them.
 
@@ -101,4 +96,3 @@ Only document verified APIs. Source samples from the published guides (e.g.
 names must exist in the docs. A recipe's `demoQueries` are the eval data its
 verification harness runs, so they must be answerable on a reader's own instance —
 never against a seeded demo corpus.
-

@@ -1,7 +1,13 @@
 import { describe, it, expect } from 'vitest';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore - plain .mjs module without type declarations
-import { extractPluginCoordinates } from './sync-registry.mjs';
+import {
+  extractPluginCoordinates,
+  syncPreviewAssets,
+} from './sync-registry.mjs';
 
 /**
  * The real manifest as pluginpack emits it at the root of gleanwork/
@@ -94,5 +100,64 @@ describe('extractPluginCoordinates', () => {
     expect(() => extractPluginCoordinates(noRepo)).toThrow(
       /Could not derive a GitHub slug/,
     );
+  });
+});
+
+describe('syncPreviewAssets', () => {
+  it('copies only declared cookbook previews into the generated static tree', async () => {
+    const output = fs.mkdtempSync(path.join(os.tmpdir(), 'cookbook-previews-'));
+    const requested: string[] = [];
+    try {
+      const count = await syncPreviewAssets(
+        [
+          {
+            id: 'company-answers',
+            preview: {
+              path: 'recipes/company-answers/assets/preview.webp',
+            },
+          },
+          { id: 'server-only' },
+        ],
+        async (sourcePath: string) => {
+          requested.push(sourcePath);
+          return Buffer.from('RIFFxxxxWEBPpayload');
+        },
+        output,
+      );
+
+      expect(count).toBe(1);
+      expect(requested).toEqual([
+        'recipes/company-answers/assets/preview.webp',
+      ]);
+      expect(
+        fs.readFileSync(
+          path.join(output, 'company-answers', 'preview.webp'),
+          'utf8',
+        ),
+      ).toBe('RIFFxxxxWEBPpayload');
+      expect(fs.existsSync(path.join(output, 'server-only'))).toBe(false);
+    } finally {
+      fs.rmSync(output, { recursive: true, force: true });
+    }
+  });
+
+  it('rejects a preview outside its recipe asset directory', async () => {
+    const output = fs.mkdtempSync(path.join(os.tmpdir(), 'cookbook-previews-'));
+    try {
+      await expect(
+        syncPreviewAssets(
+          [
+            {
+              id: 'company-answers',
+              preview: { path: 'recipes/other/assets/preview.webp' },
+            },
+          ],
+          async () => Buffer.from('RIFFxxxxWEBPpayload'),
+          output,
+        ),
+      ).rejects.toThrow(/preview\.path/);
+    } finally {
+      fs.rmSync(output, { recursive: true, force: true });
+    }
   });
 });

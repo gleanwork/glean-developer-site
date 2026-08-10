@@ -48,6 +48,30 @@ describe('parseRecipeEntry', () => {
     expect(result.record.sidebarLabel).toBe('Embed');
   });
 
+  it('accepts a cookbook-owned WebP preview', () => {
+    const entry = {
+      ...validEntry(),
+      preview: {
+        path: 'recipes/embed-search-chat/assets/preview.webp',
+        alt: 'Search and chat embedded in an internal app',
+        caption: 'Permission-aware search and chat in one view.',
+      },
+    };
+    expect(parseRecipeEntry(entry, 'embed-search-chat').success).toBe(true);
+  });
+
+  it('rejects preview assets outside the cookbook recipe asset shape', () => {
+    const entry = {
+      ...validEntry(),
+      preview: {
+        path: '../preview.png',
+        alt: 'Preview',
+        caption: 'Preview caption.',
+      },
+    };
+    expect(parseRecipeEntry(entry, 'embed-search-chat').success).toBe(false);
+  });
+
   it('accepts a path-level customer execution contract', () => {
     const entry = {
       ...validEntry(),

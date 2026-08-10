@@ -131,6 +131,42 @@ const plugin = {
 };
 
 describe('RecipeLayout', () => {
+  it('renders a cookbook-owned preview when one is declared', () => {
+    render(
+      <RecipeLayout
+        plugin={plugin}
+        recipe={makeRecipe({
+          preview: {
+            path: 'recipes/embed-search-chat/assets/preview.webp',
+            alt: 'Embedded search and chat preview',
+            caption: 'A permission-aware embedded experience.',
+          },
+        })}
+      >
+        <p>Body</p>
+      </RecipeLayout>,
+    );
+
+    expect(
+      screen.getByRole('img', { name: 'Embedded search and chat preview' }),
+    ).toHaveAttribute(
+      'src',
+      '/img/cookbook/previews/embed-search-chat/preview.webp',
+    );
+    expect(
+      screen.getByText('A permission-aware embedded experience.'),
+    ).toBeInTheDocument();
+  });
+
+  it('does not render a preview placeholder when none is declared', () => {
+    render(
+      <RecipeLayout plugin={plugin} recipe={makeRecipe({})}>
+        <p>Body</p>
+      </RecipeLayout>,
+    );
+    expect(screen.queryByRole('img')).not.toBeInTheDocument();
+  });
+
   it('renders the banner, meta pills, and rail from the record', () => {
     render(
       <RecipeLayout

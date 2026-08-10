@@ -8,6 +8,7 @@ import {
   type CookbookPlugin,
   type RecipeRecord,
 } from '../../types/recipe';
+import BrowserFrame from '../BrowserFrame';
 import PluginRunButton from './PluginRunButton';
 import { CategoryTile, CATEGORY_ICONS } from './categories';
 import styles from './RecipeLayout.module.css';
@@ -462,6 +463,11 @@ export default function RecipeLayout({
   plugin,
   children,
 }: RecipeLayoutProps): React.ReactElement {
+  const previewFile = recipe.preview?.path.split('/').at(-1);
+  const previewUrl = previewFile
+    ? `/img/cookbook/previews/${recipe.id}/${previewFile}`
+    : null;
+
   return (
     <RecipeContext.Provider value={recipe}>
       <div className={styles.page}>
@@ -483,6 +489,24 @@ export default function RecipeLayout({
             {metaPill('TrendingUp', recipe.level)}
           </div>
         </div>
+
+        {recipe.preview && previewUrl ? (
+          <figure className={styles.preview}>
+            <BrowserFrame url="localhost:3000" className={styles.previewFrame}>
+              <img
+                className={styles.previewImage}
+                src={previewUrl}
+                alt={recipe.preview.alt}
+                loading="eager"
+                width="1280"
+                height="720"
+              />
+            </BrowserFrame>
+            <figcaption className={styles.previewCaption}>
+              {recipe.preview.caption}
+            </figcaption>
+          </figure>
+        ) : null}
 
         <div className={styles.columns}>
           <div className={styles.main}>{children}</div>
