@@ -150,6 +150,18 @@ function slugify(text) {
     .replace(/^-|-$/g, '');
 }
 
+// Match docusaurus-plugin-openapi-docs / lodash kebabCase for operationId
+// filenames (getAgent → get-agent). Plain slugify would collapse to getagent.
+function kebabCase(text) {
+  return text
+    .trim()
+    .replace(/([a-z0-9])([A-Z])/g, '$1-$2')
+    .replace(/([A-Z]+)([A-Z][a-z])/g, '$1-$2')
+    .replace(/[^a-zA-Z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+    .toLowerCase();
+}
+
 function addTagMapping(slugToTags, slug, tag) {
   const tags = slugToTags.get(slug) ?? new Set();
   tags.add(tag);
@@ -187,6 +199,7 @@ function buildSlugToTagMap() {
         if (!tag) continue;
         if (op.operationId) {
           addTagMapping(map, op.operationId, tag);
+          addTagMapping(map, kebabCase(op.operationId), tag);
         }
         if (op.summary) {
           addTagMapping(map, slugify(op.summary), tag);

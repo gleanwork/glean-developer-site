@@ -8,6 +8,7 @@ const testDirs: string[] = [];
 
 function createFixture(options?: {
   ambiguous?: boolean;
+  camelCaseOpId?: boolean;
   preseed?: boolean;
   unresolved?: boolean;
 }) {
@@ -211,6 +212,18 @@ sidebar_class_name: "get api-method"
 `,
     );
   }
+  if (options?.camelCaseOpId) {
+    fs.writeFileSync(
+      path.join(root, 'docs/api/platform-api/get-platform-thing.api.mdx'),
+      `---
+id: get-platform-thing
+title: "Get platform thing"
+sidebar_label: "Get platform thing"
+sidebar_class_name: "get api-method"
+---
+`,
+    );
+  }
 
   const paths = new Map<
     string,
@@ -225,6 +238,16 @@ sidebar_class_name: "get api-method"
     const pathOperations = paths.get(apiPath) ?? [];
     pathOperations.push({ method, tag, summary, operationId });
     paths.set(apiPath, pathOperations);
+  }
+  if (options?.camelCaseOpId) {
+    paths.set('/things/{id}', [
+      {
+        method: 'get',
+        tag: 'Search',
+        summary: 'Retrieve the thing',
+        operationId: 'getPlatformThing',
+      },
+    ]);
   }
   fs.writeFileSync(
     path.join(root, 'openapi/platform/platform-capitalized.yaml'),
@@ -344,6 +367,20 @@ describe('sync-api-sidebar', () => {
     expect(second.status).toBe(0);
     expect(second.stdout).toContain('already complete');
     expect(fs.readFileSync(path.join(root, 'sidebars.ts'), 'utf8')).toBe(first);
+  });
+
+  it('resolves camelCase operationIds to kebab-case doc basenames', () => {
+    const root = createFixture({ camelCaseOpId: true });
+
+    expect(run(root, '--fix').status).toBe(0);
+    const sidebar = fs.readFileSync(path.join(root, 'sidebars.ts'), 'utf8');
+
+    expect(sidebar).toContain("id: 'api/platform-api/get-platform-thing'");
+    expect(
+      sidebar.indexOf("id: 'api/platform-api/platform-search'"),
+    ).toBeLessThan(
+      sidebar.indexOf("id: 'api/platform-api/get-platform-thing'"),
+    );
   });
 
   it('does not duplicate Platform entries already present in the sidebar', () => {
