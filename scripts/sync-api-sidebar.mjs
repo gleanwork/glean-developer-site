@@ -85,7 +85,9 @@ function collectApiDocs(dir) {
   const results = [];
   if (!fs.existsSync(dir)) return results;
 
-  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+  for (const entry of fs
+    .readdirSync(dir, { withFileTypes: true })
+    .sort((a, b) => a.name.localeCompare(b.name))) {
     if (entry.isDirectory()) {
       results.push(...collectApiDocs(path.join(dir, entry.name)));
     } else if (entry.name.endsWith('.api.mdx') && !shouldSkip(entry.name)) {
@@ -148,6 +150,12 @@ function slugify(text) {
     .replace(/^-|-$/g, '');
 }
 
+function addTagMapping(slugToTags, slug, tag) {
+  const tags = slugToTags.get(slug) ?? new Set();
+  tags.add(tag);
+  slugToTags.set(slug, tags);
+}
+
 // Build a map: docId-slug -> tag-name from all OpenAPI source specs.
 // Used to determine which sidebar category a flat-structured doc (e.g.
 // indexing-api endpoints) belongs to, since the file path alone doesn't
@@ -176,12 +184,37 @@ function buildSlugToTagMap() {
         if (!HTTP_METHODS.includes(m)) continue;
         if (!op || typeof op !== 'object') continue;
         const tag = op.tags?.[0];
-        if (!op.summary || !tag) continue;
-        map.set(slugify(op.summary), tag);
+        if (!tag) continue;
+        if (op.operationId) {
+          addTagMapping(map, op.operationId, tag);
+        }
+        if (op.summary) {
+          addTagMapping(map, slugify(op.summary), tag);
+        }
       }
     }
   }
   return map;
+}
+
+function getStringProperty(node, name) {
+  const property = node.properties.find(
+    (prop) =>
+      prop.type === 'ObjectProperty' &&
+      prop.key?.name === name &&
+      prop.value?.type === 'StringLiteral',
+  );
+  return property?.value.value ?? null;
+}
+
+function getItemsProperty(node) {
+  const property = node.properties.find(
+    (prop) =>
+      prop.type === 'ObjectProperty' &&
+      prop.key?.name === 'items' &&
+      prop.value?.type === 'ArrayExpression',
+  );
+  return property?.value ?? null;
 }
 
 // Find the `items` array of the sidebar category whose label matches the
@@ -219,6 +252,58 @@ function findCategoryItemsByLabel(root, label) {
   return found;
 }
 
+function findCategoriesByLabel(elements, label) {
+  return elements.filter(
+    (element) =>
+      element?.type === 'ObjectExpression' &&
+      getStringProperty(element, 'type') === 'category' &&
+      getStringProperty(element, 'label') === label &&
+      getItemsProperty(element),
+  );
+}
+
+function findPlatformItems(root) {
+  const matches = [];
+  root.find(j.ObjectExpression).forEach((path) => {
+    if (
+      getStringProperty(path.node, 'type') === 'category' &&
+      getStringProperty(path.node, 'label') === 'Platform API Reference'
+    ) {
+      const items = getItemsProperty(path.node);
+      if (items) {
+        matches.push(items);
+      }
+    }
+  });
+  if (matches.length !== 1) {
+    return {
+      error: `expected one Platform API Reference category, found ${matches.length}`,
+    };
+  }
+  return { items: matches[0] };
+}
+
+function resolveTag(slugToTags, slug) {
+  const tags = slugToTags.get(slug);
+  if (!tags) {
+    return { error: `no OpenAPI tag found for slug '${slug}'` };
+  }
+  if (tags.size !== 1) {
+    return {
+      error: `ambiguous OpenAPI tags for slug '${slug}': ${[...tags].sort().join(', ')}`,
+    };
+  }
+  return { tag: [...tags][0] };
+}
+
+function makeCategoryNode(label) {
+  return j.objectExpression([
+    j.objectProperty(j.identifier('type'), j.stringLiteral('category')),
+    j.objectProperty(j.identifier('label'), j.stringLiteral(label)),
+    j.objectProperty(j.identifier('items'), j.arrayExpression([])),
+  ]);
+}
+
 // Remove sidebar entries whose `id` is in `orphanedIds` (typically because the
 // upstream OpenAPI spec renamed or removed the operation, leaving the entry
 // pointing at a doc that no longer exists). Operates on every `items: [...]`
@@ -246,55 +331,96 @@ function removeOrphanEntries(root, orphanedIds) {
   return removed;
 }
 
-function insertEntry(root, doc, slugToTag) {
-  const segments = doc.docId.split('/');
-  const overviewId = segments.slice(0, -1).join('/') + '/overview';
-
-  let inserted = false;
-
+function findOverviewTarget(root, overviewId) {
+  let found = null;
   root
     .find(j.ObjectProperty, { key: { name: 'items' } })
-    .filter((p) => {
-      const arr = p.node.value;
-      if (arr.type !== 'ArrayExpression') return false;
-      return arr.elements.some((el) => {
-        if (!el || el.type !== 'ObjectExpression') return false;
-        return el.properties.some(
-          (prop) =>
-            prop.type === 'ObjectProperty' &&
-            prop.key?.name === 'id' &&
-            prop.value?.type === 'StringLiteral' &&
-            prop.value?.value === overviewId,
-        );
-      });
-    })
-    .forEach((p) => {
-      if (inserted) return;
-      p.node.value.elements.push(
-        makeEntryNode(doc.docId, doc.label, doc.className),
+    .filter((path) => {
+      const items = path.node.value;
+      if (items.type !== 'ArrayExpression') return false;
+      return items.elements.some(
+        (element) =>
+          element?.type === 'ObjectExpression' &&
+          getStringProperty(element, 'id') === overviewId,
       );
-      inserted = true;
+    })
+    .forEach((path) => {
+      if (!found) {
+        found = path.node.value;
+      }
     });
+  return found;
+}
 
-  if (inserted) return true;
+function resolvePlatformTarget(root, tag, plannedCategories) {
+  const platform = findPlatformItems(root);
+  if (platform.error) {
+    return platform;
+  }
+  const matches = findCategoriesByLabel(platform.items.elements, tag);
+  if (matches.length > 1) {
+    return {
+      error: `ambiguous Platform API Reference categories labelled '${tag}'`,
+    };
+  }
+  if (matches.length === 1) {
+    return { items: getItemsProperty(matches[0]) };
+  }
+  if (tag !== 'Chat') {
+    return { error: `no Platform API Reference category labelled '${tag}'` };
+  }
+  const openApiSpecIndexes = platform.items.elements
+    .map((element, index) => ({ element, index }))
+    .filter(
+      ({ element }) =>
+        element?.type === 'ObjectExpression' &&
+        getStringProperty(element, 'type') === 'link' &&
+        getStringProperty(element, 'label') === 'OpenAPI Spec',
+    )
+    .map(({ index }) => index);
+  if (openApiSpecIndexes.length !== 1) {
+    return {
+      error: `expected one Platform OpenAPI Spec link, found ${openApiSpecIndexes.length}`,
+    };
+  }
+  if (!plannedCategories.has(tag)) {
+    const category = makeCategoryNode(tag);
+    plannedCategories.set(tag, {
+      category,
+      insertAt: openApiSpecIndexes[0],
+      parentItems: platform.items,
+    });
+  }
+  return { items: getItemsProperty(plannedCategories.get(tag).category) };
+}
+
+function resolveEntry(root, doc, slugToTags, plannedCategories) {
+  const segments = doc.docId.split('/');
+  const overviewId = segments.slice(0, -1).join('/') + '/overview';
+  const isPlatformDoc = doc.docId.startsWith('api/platform-api/');
+  if (!isPlatformDoc) {
+    const overviewTarget = findOverviewTarget(root, overviewId);
+    if (overviewTarget) {
+      return { items: overviewTarget };
+    }
+  }
 
   // Fallback: look up the operation's OpenAPI tag and find the category whose
   // label matches. This handles flat-structure APIs (e.g. indexing-api) where
   // all docs live in one directory and the category is determined by the tag,
   // not the file path.
   const slug = segments[segments.length - 1];
-  const tag = slugToTag.get(slug);
-  if (tag) {
-    const itemsArr = findCategoryItemsByLabel(root, tag);
-    if (itemsArr) {
-      itemsArr.elements.push(
-        makeEntryNode(doc.docId, doc.label, doc.className),
-      );
-      return true;
-    }
+  const tagResult = resolveTag(slugToTags, slug);
+  if (tagResult.error) {
+    return tagResult;
   }
-
-  return false;
+  if (isPlatformDoc) {
+    return resolvePlatformTarget(root, tagResult.tag, plannedCategories);
+  }
+  const items = findCategoryItemsByLabel(root, tagResult.tag);
+  return items
+    ? { items }
+    : { error: `no sidebar category labelled '${tagResult.tag}'` };
 }
 
 const { values: args } = parseArgs({
@@ -349,19 +475,35 @@ if (missing.length === 0 && orphaned.length === 0) {
   process.exit(0);
 }
 
-const warnings = [];
-const slugToTag = buildSlugToTagMap();
+const failures = [];
+const insertionPlans = [];
+const plannedCategories = new Map();
+const slugToTags = buildSlugToTagMap();
 
 for (const doc of missing) {
-  const ok = insertEntry(root, doc, slugToTag);
-  if (!ok) {
-    const slug = doc.docId.split('/').slice(-1)[0];
-    const tag = slugToTag.get(slug);
-    const reason = tag
-      ? `no sidebar category labelled '${tag}' (and no parent overview doc found)`
-      : `no OpenAPI tag found for slug '${slug}' and no parent overview doc found`;
-    warnings.push(`Could not auto-insert '${doc.docId}': ${reason}`);
+  const target = resolveEntry(root, doc, slugToTags, plannedCategories);
+  if (target.error) {
+    failures.push(`Could not auto-insert '${doc.docId}': ${target.error}`);
+  } else {
+    insertionPlans.push({ doc, items: target.items });
   }
+}
+
+if (failures.length > 0) {
+  console.error(
+    '\nThe following entries could not be auto-inserted; sidebars.ts was not changed:',
+  );
+  for (const failure of failures) {
+    console.error(`  ! ${failure}`);
+  }
+  process.exit(1);
+}
+
+for (const { category, insertAt, parentItems } of plannedCategories.values()) {
+  parentItems.elements.splice(insertAt, 0, category);
+}
+for (const { doc, items } of insertionPlans) {
+  items.elements.push(makeEntryNode(doc.docId, doc.label, doc.className));
 }
 
 const orphanedSet = new Set(orphaned);
@@ -376,9 +518,7 @@ const formatted = await prettier.format(transformed, {
 fs.writeFileSync(SIDEBARS_PATH, formatted, 'utf8');
 
 if (missing.length > 0) {
-  console.log(
-    `✓ Inserted ${missing.length - warnings.length} entry(ies) into sidebars.ts:`,
-  );
+  console.log(`✓ Inserted ${missing.length} entry(ies) into sidebars.ts:`);
   for (const doc of missing) {
     console.log(`  + ${doc.docId}  "${doc.label}"`);
   }
@@ -391,16 +531,4 @@ if (removedCount > 0) {
   for (const id of orphaned) {
     console.log(`  - ${id}`);
   }
-}
-
-if (warnings.length > 0) {
-  console.warn(
-    '\n⚠ The following entries could not be auto-inserted (new category?):',
-  );
-  for (const w of warnings) {
-    console.warn(`  ! ${w}`);
-  }
-  console.warn(
-    '\nAdd them manually to sidebars.ts. Continuing with partial fix so the regenerate workflow can still produce a PR for the entries that were auto-inserted.',
-  );
 }

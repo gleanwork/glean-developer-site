@@ -20,6 +20,12 @@ function createFixture(options?: {
   fs.mkdirSync(path.join(root, 'openapi/client/split-apis'), {
     recursive: true,
   });
+  fs.symlinkSync(
+    process.env.SIDEBAR_TEST_NODE_MODULES ??
+      path.join(process.cwd(), 'node_modules'),
+    path.join(root, 'node_modules'),
+    'dir',
+  );
   fs.copyFileSync(
     path.join(process.cwd(), 'scripts/sync-api-sidebar.mjs'),
     path.join(root, 'scripts/sync-api-sidebar.mjs'),
@@ -89,6 +95,25 @@ function createFixture(options?: {
 export default sidebars;
 `,
   );
+  fs.writeFileSync(
+    path.join(root, 'docs/api/platform-api/platform-overview.mdx'),
+    '---\ntitle: "Platform API Overview"\n---\n',
+  );
+  for (const [operationId, title, method] of [
+    ['platform-search', 'Search', 'post'],
+    ['platform-skills-list', 'List skills', 'get'],
+  ]) {
+    fs.writeFileSync(
+      path.join(root, `docs/api/platform-api/${operationId}.api.mdx`),
+      `---
+id: ${operationId}
+title: "${title}"
+sidebar_label: "${title}"
+sidebar_class_name: "${method} api-method"
+---
+`,
+    );
+  }
 
   const operations = [
     ['post', '/chat', 'Chat', 'Create a chat response', 'platform-chat-create'],
@@ -233,13 +258,17 @@ afterEach(() => {
 describe('sync-api-sidebar', () => {
   it('inserts operationId-named Platform docs into scoped categories', () => {
     const root = createFixture();
+    const original = fs.readFileSync(path.join(root, 'sidebars.ts'), 'utf8');
+    const platformMarker = "    label: 'Platform API Reference',";
+    const guides = original.slice(0, original.indexOf(platformMarker));
 
     expect(run(root, '--check').status).toBe(1);
     const result = run(root, '--fix');
     const sidebar = fs.readFileSync(path.join(root, 'sidebars.ts'), 'utf8');
 
     expect(result.status).toBe(0);
-    expect(sidebar).toContain("label: 'Chat'");
+    expect(sidebar.match(/label: 'Chat'/g)).toHaveLength(2);
+    expect(sidebar.slice(0, sidebar.indexOf(platformMarker))).toBe(guides);
     expect(sidebar).toContain("id: 'api/platform-api/platform-chat-create'");
     expect(sidebar).toContain("id: 'api/platform-api/platform-search-filters'");
     for (const operation of [
@@ -258,6 +287,15 @@ describe('sync-api-sidebar', () => {
     ).toBeLessThan(
       sidebar.indexOf("id: 'api/platform-api/platform-skills-delete'"),
     );
+    const skillPositions = [
+      'platform-skills-list',
+      'platform-skills-delete',
+      'platform-skills-import',
+      'platform-skills-preview-source',
+      'platform-skills-sync',
+      'platform-skills-update',
+    ].map((id) => sidebar.indexOf(`id: 'api/platform-api/${id}'`));
+    expect(skillPositions).toEqual([...skillPositions].sort((a, b) => a - b));
     expect(
       sidebar.indexOf("id: 'api/platform-api/platform-chat-create'"),
     ).toBeLessThan(sidebar.indexOf("label: 'OpenAPI Spec'"));
