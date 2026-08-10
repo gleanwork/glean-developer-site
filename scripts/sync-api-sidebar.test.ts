@@ -5,7 +5,10 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 const testDirs: string[] = [];
 
-function createFixture(options?: { ambiguous?: boolean; unresolved?: boolean }) {
+function createFixture(options?: {
+  ambiguous?: boolean;
+  unresolved?: boolean;
+}) {
   const root = fs.mkdtempSync(path.join(process.cwd(), '.sidebar-sync-test-'));
   testDirs.push(root);
   fs.mkdirSync(path.join(root, 'scripts'), { recursive: true });
@@ -237,12 +240,8 @@ describe('sync-api-sidebar', () => {
 
     expect(result.status).toBe(0);
     expect(sidebar).toContain("label: 'Chat'");
-    expect(sidebar).toContain(
-      "id: 'api/platform-api/platform-chat-create'",
-    );
-    expect(sidebar).toContain(
-      "id: 'api/platform-api/platform-search-filters'",
-    );
+    expect(sidebar).toContain("id: 'api/platform-api/platform-chat-create'");
+    expect(sidebar).toContain("id: 'api/platform-api/platform-search-filters'");
     for (const operation of [
       'import',
       'preview-source',
