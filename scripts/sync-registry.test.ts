@@ -6,6 +6,7 @@ import path from 'node:path';
 // @ts-ignore - plain .mjs module without type declarations
 import {
   extractPluginCoordinates,
+  renderPage,
   syncPreviewAssets,
 } from './sync-registry.mjs';
 
@@ -100,6 +101,49 @@ describe('extractPluginCoordinates', () => {
     expect(() => extractPluginCoordinates(noRepo)).toThrow(
       /Could not derive a GitHub slug/,
     );
+  });
+});
+
+describe('renderPage', () => {
+  const markdown = [
+    '## Problem',
+    '',
+    'People need a useful recipe.',
+    '',
+    '## Take it further',
+    '',
+    '- Add another capability.',
+  ].join('\n');
+
+  const recipe = {
+    id: 'customer-360',
+    title: 'Customer 360: an account page',
+    sidebarLabel: 'Customer 360',
+  };
+
+  it('generates native Docusaurus pagination between adjacent recipes', () => {
+    const page = renderPage(
+      recipe,
+      markdown,
+      { id: 'company-answers' },
+      { id: 'embed-search-chat' },
+    );
+
+    expect(page).toContain('pagination_label: "Customer 360"');
+    expect(page).toContain('pagination_prev: "cookbook/company-answers"');
+    expect(page).toContain('pagination_next: "cookbook/embed-search-chat"');
+  });
+
+  it('keeps the sequence bounded to recipes at either end', () => {
+    const first = renderPage(recipe, markdown, null, {
+      id: 'embed-search-chat',
+    });
+    const last = renderPage(recipe, markdown, { id: 'company-answers' }, null);
+
+    expect(first).toContain('pagination_prev: null');
+    expect(first).toContain('pagination_next: "cookbook/embed-search-chat"');
+    expect(last).toContain('pagination_prev: "cookbook/company-answers"');
+    expect(last).toContain('pagination_next: null');
   });
 });
 

@@ -275,7 +275,13 @@ function splitOrderedList(markdown) {
  * The page Docusaurus sees. Layout order is decided here, not upstream: the
  * data-driven blocks take no content, so the cookbook never mentions them.
  */
-function renderPage(recipeId, markdown) {
+export function renderPage(
+  recipe,
+  markdown,
+  previousRecipe = null,
+  nextRecipe = null,
+) {
+  const recipeId = recipe.id;
   const sections = parseSections(stripSnippetDirectives(markdown));
   const find = (title) => sections.find((section) => section.title === title);
   const problem = find('Problem');
@@ -318,8 +324,9 @@ function renderPage(recipeId, markdown) {
 # sync. Components and layout are chosen by scripts/sync-registry.mjs in this repo.
 hide_table_of_contents: true
 hide_title: true
-pagination_prev: null
-pagination_next: null
+pagination_label: ${JSON.stringify(recipe.sidebarLabel ?? recipe.title)}
+pagination_prev: ${previousRecipe ? JSON.stringify(`cookbook/${previousRecipe.id}`) : 'null'}
+pagination_next: ${nextRecipe ? JSON.stringify(`cookbook/${nextRecipe.id}`) : 'null'}
 ---
 
 import RecipePage from '@site/src/components/Cookbook/RecipePage';
@@ -370,7 +377,7 @@ async function main() {
   console.log(`🧱 Rendering ${parsed.length} page(s) from cookbook data...`);
   fs.mkdirSync(pagesDir, { recursive: true });
   const written = new Set();
-  for (const entry of parsed) {
+  for (const [index, entry] of parsed.entries()) {
     const sections = [
       `## Problem\n\n${entry.content.problem}`,
       ...(entry.content.guardrails ?? []).map(
@@ -384,7 +391,7 @@ async function main() {
     const markdown = sections.join('\n\n');
     fs.writeFileSync(
       path.join(pagesDir, `${entry.id}.mdx`),
-      renderPage(entry.id, markdown),
+      renderPage(entry, markdown, parsed[index - 1], parsed[index + 1]),
     );
     written.add(entry.id);
   }
