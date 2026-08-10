@@ -310,6 +310,21 @@ export const recipeMetaSchema = z.strictObject({
   description: z.string().min(1),
   /** Short label for the doc sidebar; falls back to `title` when omitted. */
   sidebarLabel: z.string().min(1).optional(),
+  /** Optional visual preview authored and stored with the canonical cookbook recipe. */
+  preview: z
+    .strictObject({
+      path: z
+        .string()
+        .regex(
+          /^recipes\/[a-z0-9]+(?:-[a-z0-9]+)*\/assets\/[a-z0-9]+(?:-[a-z0-9]+)*\.webp$/,
+        ),
+      alt: z.string().min(1),
+      caption: z.string().min(1),
+    })
+    .describe(
+      'Optional cookbook-owned visual preview consumed by recipe renderers.',
+    )
+    .optional(),
   surfaces: z.array(z.enum(RECIPE_SURFACES)).min(1),
   status: z.enum(RECIPE_STATUSES),
   category: z.enum(RECIPE_CATEGORIES),

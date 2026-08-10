@@ -131,6 +131,59 @@ const plugin = {
 };
 
 describe('RecipeLayout', () => {
+  it('renders a compact preview that opens and closes a full-size dialog', async () => {
+    const user = userEvent.setup();
+    render(
+      <RecipeLayout
+        plugin={plugin}
+        recipe={makeRecipe({
+          preview: {
+            path: 'recipes/embed-search-chat/assets/preview.webp',
+            alt: 'Embedded search and chat preview',
+            caption: 'A permission-aware embedded experience.',
+          },
+        })}
+      >
+        <p>Body</p>
+      </RecipeLayout>,
+    );
+
+    expect(
+      screen.getByRole('img', { name: 'Embedded search and chat preview' }),
+    ).toHaveAttribute(
+      'src',
+      '/img/cookbook/previews/embed-search-chat/preview.webp',
+    );
+    expect(
+      screen.getByText('A permission-aware embedded experience.'),
+    ).toBeInTheDocument();
+
+    await user.click(
+      screen.getByRole('button', { name: /Open full-size preview/ }),
+    );
+    const dialog = screen.getByRole('dialog', {
+      name: 'Embedded search and chat preview',
+    });
+    expect(dialog).toHaveAttribute('open');
+
+    await user.click(
+      screen.getByRole('button', { name: 'Close full-size preview' }),
+    );
+    expect(dialog).not.toHaveAttribute('open');
+  });
+
+  it('does not render a preview placeholder when none is declared', () => {
+    render(
+      <RecipeLayout plugin={plugin} recipe={makeRecipe({})}>
+        <p>Body</p>
+      </RecipeLayout>,
+    );
+    expect(screen.queryByRole('img')).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /Open full-size preview/ }),
+    ).not.toBeInTheDocument();
+  });
+
   it('renders the banner, meta pills, and rail from the record', () => {
     render(
       <RecipeLayout
