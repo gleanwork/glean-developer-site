@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { getIcon } from '@gleanwork/docusaurus-theme-glean/Icons';
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
@@ -451,6 +451,85 @@ interface RecipeLayoutProps {
   children: React.ReactNode;
 }
 
+interface RecipePreviewProps {
+  url: string;
+  alt: string;
+  caption: string;
+}
+
+function RecipePreview({
+  url,
+  alt,
+  caption,
+}: RecipePreviewProps): React.ReactElement {
+  const dialogRef = useRef<HTMLDialogElement>(null);
+
+  const openPreview = (): void => {
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    if (typeof dialog.showModal === 'function') dialog.showModal();
+    else dialog.setAttribute('open', '');
+  };
+
+  const closePreview = (): void => {
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    if (typeof dialog.close === 'function') dialog.close();
+    else dialog.removeAttribute('open');
+  };
+
+  return (
+    <>
+      <button
+        className={styles.previewThumbnail}
+        type="button"
+        aria-label={`Open full-size preview: ${alt}`}
+        aria-haspopup="dialog"
+        onClick={openPreview}
+      >
+        <img src={url} alt={alt} width="1280" height="720" />
+        <span className={styles.previewThumbnailHint} aria-hidden="true">
+          {getIcon('Maximize2', 'feather', { width: 15, height: 15 })}
+          View preview
+        </span>
+      </button>
+
+      <dialog
+        ref={dialogRef}
+        className={styles.previewDialog}
+        aria-label={alt}
+        onClick={(event) => {
+          if (event.target === event.currentTarget) closePreview();
+        }}
+      >
+        <div className={styles.previewDialogSurface}>
+          <button
+            className={styles.previewDialogClose}
+            type="button"
+            aria-label="Close full-size preview"
+            onClick={closePreview}
+          >
+            {getIcon('X', 'feather', { width: 18, height: 18 })}
+          </button>
+          <BrowserFrame
+            url="localhost:3000"
+            className={styles.previewDialogFrame}
+          >
+            <img
+              className={styles.previewDialogImage}
+              src={url}
+              alt={alt}
+              width="1280"
+              height="720"
+            />
+          </BrowserFrame>
+          <p className={styles.previewDialogCaption}>{caption}</p>
+        </div>
+      </dialog>
+    </>
+  );
+}
+
 /**
  * Recipe detail template per design handoff 4b: gradient header banner
  * (category tile, title, meta pills) and a main + sticky-rail grid. The
@@ -472,41 +551,42 @@ export default function RecipeLayout({
     <RecipeContext.Provider value={recipe}>
       <div className={styles.page}>
         <div className={styles.banner}>
-          <div className={styles.bannerMain}>
-            <CategoryTile
-              category={recipe.category}
-              iconOverride={recipe.icon}
-              iconSize={26}
-              size={52}
-            />
+          <div
+            className={`${styles.bannerLayout} ${
+              recipe.preview && previewUrl ? styles.bannerLayoutWithPreview : ''
+            }`}
+          >
             <div>
-              <h1 className={styles.bannerTitle}>{recipe.title}</h1>
-              <p className={styles.bannerDesc}>{recipe.description}</p>
+              <div className={styles.bannerMain}>
+                <CategoryTile
+                  category={recipe.category}
+                  iconOverride={recipe.icon}
+                  iconSize={26}
+                  size={52}
+                />
+                <div>
+                  <h1 className={styles.bannerTitle}>{recipe.title}</h1>
+                  <p className={styles.bannerDesc}>{recipe.description}</p>
+                </div>
+              </div>
+              <div className={styles.metaRow}>
+                {metaPill(
+                  'Clock',
+                  recipe.timeEstimate.replace(/\s*\(.*\)$/, ''),
+                )}
+                {metaPill('TrendingUp', recipe.level)}
+              </div>
             </div>
-          </div>
-          <div className={styles.metaRow}>
-            {metaPill('Clock', recipe.timeEstimate.replace(/\s*\(.*\)$/, ''))}
-            {metaPill('TrendingUp', recipe.level)}
+
+            {recipe.preview && previewUrl ? (
+              <RecipePreview
+                url={previewUrl}
+                alt={recipe.preview.alt}
+                caption={recipe.preview.caption}
+              />
+            ) : null}
           </div>
         </div>
-
-        {recipe.preview && previewUrl ? (
-          <figure className={styles.preview}>
-            <BrowserFrame url="localhost:3000" className={styles.previewFrame}>
-              <img
-                className={styles.previewImage}
-                src={previewUrl}
-                alt={recipe.preview.alt}
-                loading="eager"
-                width="1280"
-                height="720"
-              />
-            </BrowserFrame>
-            <figcaption className={styles.previewCaption}>
-              {recipe.preview.caption}
-            </figcaption>
-          </figure>
-        ) : null}
 
         <div className={styles.columns}>
           <div className={styles.main}>{children}</div>
