@@ -123,6 +123,15 @@ fi
 grep -vE '\.xml(\.gz)?$' "$url_list" >"${url_list}.pages"
 mv "${url_list}.pages" "$url_list"
 
+# Docusaurus writes the configured production origin into sitemap.xml even for
+# local builds. Rewrite that origin when checking a preview so the crawler
+# validates the branch being served instead of the currently deployed site.
+if [ "$BASE_URL" != "https://developers.glean.com" ]; then
+  sed "s#^https://developers.glean.com#${BASE_URL%/}#" "$url_list" \
+    >"${url_list}.local"
+  mv "${url_list}.local" "$url_list"
+fi
+
 # ── Build lychee command with appropriate options ─────────────────────────────
 # Use an array to properly handle arguments and avoid word splitting issues
 # This prevents problems with spaces and special characters in arguments
@@ -196,6 +205,13 @@ lychee_cmd+=(
 
 # Add exclusions for GitHub URLs (will be handled separately if needed)
 lychee_cmd+=( --exclude "^https://github\.com/gleanwork/" )
+
+# Local builds still emit production canonical/Open Graph URLs. Their route
+# existence is covered by the rewritten sitemap entries above; exclude the
+# deployed origin so new preview-only pages are not reported as production 404s.
+if [ "$BASE_URL" != "https://developers.glean.com" ]; then
+  lychee_cmd+=( --exclude "^https://developers\.glean\.com/" )
+fi
 
 # The MCP server endpoint at /mcp is exposed by docusaurus-plugin-mcp-server
 # and gets included in every page's globalData (visible to crawlers like

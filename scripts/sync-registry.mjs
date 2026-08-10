@@ -35,6 +35,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
+import prettier from 'prettier';
 
 const REPO = 'gleanwork/glean-cookbook';
 
@@ -364,7 +365,13 @@ async function main() {
   }
 
   fs.mkdirSync(path.dirname(registryFile), { recursive: true });
-  fs.writeFileSync(registryFile, `${JSON.stringify(parsed, null, 2)}\n`);
+  fs.writeFileSync(
+    registryFile,
+    await prettier.format(JSON.stringify(parsed), {
+      ...(await prettier.resolveConfig(registryFile)),
+      filepath: registryFile,
+    }),
+  );
   console.log(
     `✅ Wrote ${parsed.length} recipe(s) to ${path.relative(repoRoot, registryFile)}`,
   );

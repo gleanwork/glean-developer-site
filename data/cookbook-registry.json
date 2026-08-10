@@ -8,10 +8,7 @@
     "status": "production-pattern",
     "category": "agent",
     "level": "Intermediate",
-    "levels": {
-      "minimal": true,
-      "wow": false
-    },
+    "levels": { "minimal": true, "wow": false },
     "timeEstimate": "~45 min",
     "icon": "double-arrow",
     "requiredScopes": ["AGENTS"],
@@ -119,10 +116,7 @@
     "status": "showcase",
     "category": "portal",
     "level": "Intermediate",
-    "levels": {
-      "minimal": true,
-      "wow": true
-    },
+    "levels": { "minimal": true, "wow": true },
     "timeEstimate": "~30 min",
     "requiredScopes": [],
     "authMethod": ["indexing-token", "web-sdk-cookie"],
@@ -148,20 +142,14 @@
           "scopes": ["INDEXING"],
           "credentialVariable": "GLEAN_INDEXING_TOKEN"
         },
-        {
-          "kind": "browser-cookie",
-          "scopes": []
-        }
+        { "kind": "browser-cookie", "scopes": [] }
       ],
       "verification": {
         "kind": "user-browser",
         "expectedDuration": "5–15 minutes after indexing because this is a composed integration",
         "startsOwnServer": false
       },
-      "run": {
-        "kind": "existing-app",
-        "userBrowser": true
-      }
+      "run": { "kind": "existing-app", "userBrowser": true }
     },
     "languages": ["python", "typescript"],
     "prerequisites": [
@@ -257,10 +245,7 @@
     "status": "showcase",
     "category": "search",
     "level": "Beginner",
-    "levels": {
-      "minimal": true,
-      "wow": true
-    },
+    "levels": { "minimal": true, "wow": true },
     "timeEstimate": "~30 min",
     "icon": "qna",
     "requiredScopes": ["CHAT"],
@@ -471,10 +456,7 @@
     "status": "production-pattern",
     "category": "mcp",
     "level": "Beginner",
-    "levels": {
-      "minimal": true,
-      "wow": false
-    },
+    "levels": { "minimal": true, "wow": false },
     "timeEstimate": "~15 min",
     "requiredScopes": ["MCP"],
     "authMethod": ["custom"],
@@ -581,10 +563,7 @@
     "status": "showcase",
     "category": "workflow",
     "level": "Intermediate",
-    "levels": {
-      "minimal": true,
-      "wow": true
-    },
+    "levels": { "minimal": true, "wow": true },
     "timeEstimate": "~1 hr",
     "icon": "layout-outlined",
     "requiredScopes": ["SEARCH", "CHAT", "AGENTS"],
@@ -623,10 +602,7 @@
               "id": "email",
               "prompt": "What is your work email? It is used once to discover your Glean tenant."
             },
-            {
-              "id": "account",
-              "prompt": "Which account should the page use?"
-            }
+            { "id": "account", "prompt": "Which account should the page use?" }
           ],
           "auth": [
             {
@@ -691,10 +667,7 @@
               "id": "email",
               "prompt": "What is your work email? It is used once to discover your Glean tenant."
             },
-            {
-              "id": "account",
-              "prompt": "Which account should the page use?"
-            },
+            { "id": "account", "prompt": "Which account should the page use?" },
             {
               "id": "agent-id",
               "prompt": "What is the ID of your Account Brief agent?"
@@ -827,10 +800,7 @@
     "status": "production-pattern",
     "category": "search",
     "level": "Beginner",
-    "levels": {
-      "minimal": true,
-      "wow": true
-    },
+    "levels": { "minimal": true, "wow": true },
     "timeEstimate": "~15 min (minimal)",
     "icon": "deep-research",
     "requiredScopes": ["SEARCH", "CHAT"],
@@ -847,21 +817,13 @@
           "prompt": "What topic do you know exists in your Glean content?"
         }
       ],
-      "auth": [
-        {
-          "kind": "browser-cookie",
-          "scopes": []
-        }
-      ],
+      "auth": [{ "kind": "browser-cookie", "scopes": [] }],
       "verification": {
         "kind": "user-browser",
         "expectedDuration": "about 1 minute after the integration builds",
         "startsOwnServer": false
       },
-      "run": {
-        "kind": "existing-app",
-        "userBrowser": true
-      }
+      "run": { "kind": "existing-app", "userBrowser": true }
     },
     "languages": ["typescript", "javascript"],
     "prerequisites": [
@@ -925,223 +887,6 @@
     }
   },
   {
-    "id": "incident-copilot",
-    "title": "On-call copilot with a real approval gate",
-    "description": "Triage an incident from your own runbooks and past incidents, propose one pre-registered action, and let a human approve it — where the gate refuses the wrong person, expiry escalates instead of auto-approving, and every attempt is audited.",
-    "sidebarLabel": "Incident copilot",
-    "preview": {
-      "path": "recipes/incident-copilot/assets/preview.webp",
-      "alt": "Incident Copilot triaging an alert with evidence and an approval gate",
-      "caption": "Evidence-ranked triage with a human approval gate before action."
-    },
-    "surfaces": ["platform-api", "client-api", "agents", "tools"],
-    "status": "showcase",
-    "category": "agent",
-    "level": "Advanced",
-    "levels": {
-      "minimal": true,
-      "wow": true
-    },
-    "timeEstimate": "~1.5 hr",
-    "icon": "badge",
-    "requiredScopes": ["SEARCH", "CHAT", "AGENTS"],
-    "authMethod": ["client-api-oauth-or-token"],
-    "buildMethod": "scaffold",
-    "execution": {
-      "questions": [
-        {
-          "id": "mode",
-          "prompt": "Do you want the instant fixture demo or a live tenant run?"
-        },
-        {
-          "id": "service",
-          "prompt": "For a live run, which service has a catalog entry, runbook, and past incident in Glean?"
-        },
-        {
-          "id": "orchestrator",
-          "prompt": "For a live run, use direct Search + Chat or an existing Glean agent?"
-        },
-        {
-          "id": "email",
-          "prompt": "For a live run, what is your work email?"
-        }
-      ],
-      "auth": [
-        {
-          "kind": "oauth-with-token-fallback",
-          "scopes": ["SEARCH", "CHAT"],
-          "setupCommand": "cd incident-copilot && npm run login -- --email \"<work-email>\"",
-          "configFile": ".env",
-          "backendVariable": "GLEAN_SERVER_URL",
-          "credentialVariable": "GLEAN_API_TOKEN"
-        }
-      ],
-      "verification": {
-        "kind": "user-browser",
-        "expectedDuration": "under 1 minute for fixtures; 1–3 minutes live",
-        "startsOwnServer": false
-      },
-      "run": {
-        "command": "cd incident-copilot && npm start",
-        "url": "http://localhost:3000",
-        "userBrowser": true
-      }
-    },
-    "languages": ["typescript"],
-    "prerequisites": [
-      "A Glean instance with engineering content indexed — a service catalog, runbooks, and at least one past incident review",
-      "A work email for tenant discovery and OAuth sign-in; a scoped API token is the fallback",
-      "X_GLEAN_INCLUDE_EXPERIMENTAL=true (the Platform API is Experimental as of its 2026-07 launch)",
-      "Node 20+"
-    ],
-    "demoQueries": [
-      {
-        "query": "Triage a real alert from one of your services",
-        "expectedBehavior": "The copilot acknowledges in the channel, resolves the service to its on-call engineer and owner from your own service catalog, fans out retrieval, and posts a triage card. A past incident is cited as the precedent that supports whatever it proposes — the proposal has to point at evidence, not at a hunch."
-      },
-      {
-        "query": "Triage an alert with no matching past incident",
-        "expectedBehavior": "The highest-scoring retrieved document will often be a runbook, so a relevance-ranked copilot would confidently blame whatever that runbook is about. With no matching signature and nothing in flight, this copilot asserts no cause. Ranking is not evidence."
-      },
-      {
-        "query": "Approve the proposed action as someone who is not on call",
-        "expectedBehavior": "Refused with 403 and audited against that actor. The allowed set is the on-call engineer and service owner read from your service catalog, not a config file. The incident stays awaiting approval. The recipe implements the authorization itself — nothing upstream does it for you.",
-        "permissionDifferentiated": true
-      },
-      {
-        "query": "Let the approval window expire",
-        "expectedBehavior": "The proposal escalates to the escalation target named in your service catalog and is NOT executed. Auto-approving on timeout would invert the point of a gate. The escalation is audited and posted to the channel."
-      },
-      {
-        "query": "Have the Glean agent propose an action that is not registered",
-        "expectedBehavior": "Refused at proposal time and audited, with no approval card offered. An agent that can describe arbitrary actions into existence is an agent with production access, whatever its prompt says."
-      }
-    ],
-    "steps": [
-      {
-        "title": "Scaffold the project",
-        "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/incident-copilot incident-copilot",
-        "kind": "scaffold"
-      },
-      {
-        "title": "Install dependencies",
-        "command": "cd incident-copilot && npm install",
-        "kind": "install"
-      },
-      {
-        "title": "Watch the governance hold, with no credentials",
-        "command": "cd incident-copilot && npm run verify:fixture",
-        "description": "Replays recorded responses and asserts the parts that matter: the gate refuses the wrong actor, expiry escalates without executing, an unregistered action is refused, a mutating action with no supported cause is downgraded, and every attempt is audited.",
-        "kind": "verify-fixture"
-      },
-      {
-        "title": "Set credentials",
-        "command": "cd incident-copilot && npm run login -- --email \"<work-email>\"",
-        "description": "Only for a live run. Use npm run login for direct Search + Chat, or npm run login:agent when the user selected an existing Glean agent. Set WATCHED_SERVICES to the service already supplied and GLEAN_AGENT_ID only for the agent path.",
-        "kind": "authenticate"
-      },
-      {
-        "title": "Run it",
-        "command": "cd incident-copilot && npm start",
-        "kind": "run"
-      },
-      {
-        "title": "Verify",
-        "description": "Fire the sample alarm and check three things: the probable cause cites a past incident rather than a runbook, approving as someone who is not on call returns 403, and forcing expiry escalates without executing anything.",
-        "kind": "verify-live"
-      }
-    ],
-    "combines": [
-      {
-        "title": "Multi-step agent with governed tools",
-        "surface": "Agents API",
-        "category": "agent",
-        "language": "typescript"
-      },
-      {
-        "title": "Permissions-aware retrieval",
-        "surface": "Platform API",
-        "category": "search",
-        "language": "typescript"
-      }
-    ],
-    "architecture": [
-      {
-        "label": "PagerDuty webhook",
-        "caption": "severity + service filter",
-        "category": "workflow",
-        "icon": "plug"
-      },
-      {
-        "label": "Service registry",
-        "caption": "owner, runbook, escalation",
-        "category": "index"
-      },
-      {
-        "label": "Glean",
-        "caption": "permission-aware index",
-        "emphasized": true
-      },
-      {
-        "label": "Evidence check",
-        "caption": "precedent vs procedure",
-        "category": "search",
-        "icon": "badge"
-      },
-      {
-        "label": "Approval gate",
-        "caption": "authz, expiry, audit",
-        "category": "portal"
-      },
-      {
-        "label": "Governed actions",
-        "caption": "pre-registered only",
-        "category": "agent"
-      }
-    ],
-    "aiPrompt": "Build an on-call incident copilot following the incident-copilot recipe. Resolve the alarming service from an indexed service catalog, retrieve relevant precedents and runbooks, and classify evidence by role. Only a matching past incident may support a cause; a runbook may support a procedure. Assert no cause when no precedent matches. Gate mutating actions behind authorized human approval, expiry, a closed action registry, evidence support, and a complete audit log. Exercise unauthorized approval, expiry, unregistered action, and no-precedent paths during verification.",
-    "llmContext": "Use Platform Search for retrieval, Client Chat POST /rest/api/v1/chat for synthesis, and Platform Agents for the optional agent path. The app runs as the caller; its approval check is application policy, not impersonation. Resolve owners, on-call engineers, and escalation targets from the reader's service catalog. Only a matching past incident may support a cause; runbooks support procedures, not causes. Mutating actions require a supported cause, an authorized approver, a registered action, an unexpired proposal, and a complete audit trail. Set saveChat:false for verification and treat empty chat output as a retryable failure.",
-    "goDependency": false,
-    "featured": true,
-    "tags": [
-      "flagship",
-      "incident-response",
-      "human-in-the-loop",
-      "governed-actions",
-      "audit",
-      "agent"
-    ],
-    "codeAssets": [
-      {
-        "repoPath": "recipes/incident-copilot",
-        "language": "typescript",
-        "description": "Webhook → service registry → retrieval fan-out → evidence classification → triage card → approval gate (authz, expiry, escalation, audit) → pre-registered actions → postmortem timeline. Both orchestrators render into one shell."
-      }
-    ],
-    "content": {
-      "problem": "An alarm fires at 3am. Everything the responder needs already exists — the runbook,\nthe review of the last time this happened, who owns the service, what it depends on\n— scattered across systems they now have to search one at a time, while the graphs\nget worse.\n\nThe retrieval is the easy part. What makes an incident copilot safe to point at a\nproduction service is everything that refuses: a gate that turns away the wrong\nperson, an expiry that escalates instead of quietly approving itself, an action\nregistry the planner cannot talk its way out of, and an audit entry for every\nattempt including the ones that were refused.",
-      "takeItFurther": [
-        "Persist incidents and the audit log. An audit log you can lose by restarting a process is not an audit log.",
-        "Add the rest of the dashboard: response-time rollups, an expiring-soon lane, and an end-of-shift handoff summary.",
-        "Replace the simulated actions with real governed tools, keeping the registry boundary and the approval log exactly where they are.",
-        "Write the postmortem draft back into your knowledge base so the next incident retrieves it as a precedent — the loop that makes the evidence rules get better over time.",
-        "Expose the copilot itself over A2A so another agent can request triage, with the same gate in front of every action."
-      ],
-      "guardrails": [
-        {
-          "title": "Relevance is not evidence",
-          "rule": "Only a matching past incident may support a causal claim. Runbooks support procedures, not causes."
-        }
-      ],
-      "limitations": [
-        {
-          "title": "Authorization is not authentication",
-          "description": "The demo restricts who may approve but trusts the asserted actor. Production deployments must authenticate the actor and define which credential executes actions."
-        }
-      ]
-    }
-  },
-  {
     "id": "multi-step-agent",
     "title": "Multi-step agent with governed tools",
     "description": "Build a Glean agent that plans, retrieves, and acts through a governed custom tool — with a safe fallback when the tool is denied.",
@@ -1150,10 +895,7 @@
     "status": "production-pattern",
     "category": "agent",
     "level": "Advanced",
-    "levels": {
-      "minimal": true,
-      "wow": true
-    },
+    "levels": { "minimal": true, "wow": true },
     "timeEstimate": "~2 hr",
     "icon": "agent",
     "requiredScopes": ["AGENTS", "TOOLS"],
@@ -1306,10 +1048,7 @@
     "status": "showcase",
     "category": "workflow",
     "level": "Beginner",
-    "levels": {
-      "minimal": true,
-      "wow": false
-    },
+    "levels": { "minimal": true, "wow": false },
     "timeEstimate": "~45 min",
     "icon": "lovable",
     "requiredScopes": ["CHAT"],
@@ -1385,10 +1124,7 @@
     "status": "showcase",
     "category": "workflow",
     "level": "Beginner",
-    "levels": {
-      "minimal": true,
-      "wow": false
-    },
+    "levels": { "minimal": true, "wow": false },
     "timeEstimate": "~45 min",
     "icon": "replit",
     "requiredScopes": ["CHAT"],
@@ -1469,10 +1205,7 @@
     "status": "showcase",
     "category": "portal",
     "level": "Intermediate",
-    "levels": {
-      "minimal": true,
-      "wow": true
-    },
+    "levels": { "minimal": true, "wow": true },
     "timeEstimate": "~45 min",
     "icon": "layout-outlined",
     "requiredScopes": ["CHAT"],
@@ -1698,6 +1431,217 @@
     }
   },
   {
+    "id": "oncall-copilot",
+    "title": "On-call Copilot",
+    "description": "Triage an incident from your own runbooks and past incidents, propose one pre-registered action, and let a human approve it — where the gate refuses the wrong person, expiry escalates instead of auto-approving, and every attempt is audited.",
+    "sidebarLabel": "On-call Copilot",
+    "preview": {
+      "path": "recipes/oncall-copilot/assets/preview.webp",
+      "alt": "On-call Copilot triaging an alert with evidence and an approval gate",
+      "caption": "Evidence-ranked triage with a human approval gate before action."
+    },
+    "surfaces": ["platform-api", "client-api", "agents", "tools"],
+    "status": "showcase",
+    "category": "agent",
+    "level": "Advanced",
+    "levels": { "minimal": true, "wow": true },
+    "timeEstimate": "~1.5 hr",
+    "icon": "badge",
+    "requiredScopes": ["SEARCH", "CHAT", "AGENTS"],
+    "authMethod": ["client-api-oauth-or-token"],
+    "buildMethod": "scaffold",
+    "execution": {
+      "questions": [
+        {
+          "id": "mode",
+          "prompt": "Do you want the instant fixture demo or a live tenant run?"
+        },
+        {
+          "id": "service",
+          "prompt": "For a live run, which service has a catalog entry, runbook, and past incident in Glean?"
+        },
+        {
+          "id": "orchestrator",
+          "prompt": "For a live run, use direct Search + Chat or an existing Glean agent?"
+        },
+        { "id": "email", "prompt": "For a live run, what is your work email?" }
+      ],
+      "auth": [
+        {
+          "kind": "oauth-with-token-fallback",
+          "scopes": ["SEARCH", "CHAT"],
+          "setupCommand": "cd oncall-copilot && npm run login -- --email \"<work-email>\"",
+          "configFile": ".env",
+          "backendVariable": "GLEAN_SERVER_URL",
+          "credentialVariable": "GLEAN_API_TOKEN"
+        }
+      ],
+      "verification": {
+        "kind": "user-browser",
+        "expectedDuration": "under 1 minute for fixtures; 1–3 minutes live",
+        "startsOwnServer": false
+      },
+      "run": {
+        "command": "cd oncall-copilot && npm start",
+        "url": "http://localhost:3000",
+        "userBrowser": true
+      }
+    },
+    "languages": ["typescript"],
+    "prerequisites": [
+      "A Glean instance with engineering content indexed — a service catalog, runbooks, and at least one past incident review",
+      "A work email for tenant discovery and OAuth sign-in; a scoped API token is the fallback",
+      "X_GLEAN_INCLUDE_EXPERIMENTAL=true (the Platform API is Experimental as of its 2026-07 launch)",
+      "Node 20+"
+    ],
+    "demoQueries": [
+      {
+        "query": "Triage a real alert from one of your services",
+        "expectedBehavior": "The copilot acknowledges in the channel, resolves the service to its on-call engineer and owner from your own service catalog, fans out retrieval, and posts a triage card. A past incident is cited as the precedent that supports whatever it proposes — the proposal has to point at evidence, not at a hunch."
+      },
+      {
+        "query": "Triage an alert with no matching past incident",
+        "expectedBehavior": "The highest-scoring retrieved document will often be a runbook, so a relevance-ranked copilot would confidently blame whatever that runbook is about. With no matching signature and nothing in flight, this copilot asserts no cause. Ranking is not evidence."
+      },
+      {
+        "query": "Approve the proposed action as someone who is not on call",
+        "expectedBehavior": "Refused with 403 and audited against that actor. The allowed set is the on-call engineer and service owner read from your service catalog, not a config file. The incident stays awaiting approval. The recipe implements the authorization itself — nothing upstream does it for you.",
+        "permissionDifferentiated": true
+      },
+      {
+        "query": "Let the approval window expire",
+        "expectedBehavior": "The proposal escalates to the escalation target named in your service catalog and is NOT executed. Auto-approving on timeout would invert the point of a gate. The escalation is audited and posted to the channel."
+      },
+      {
+        "query": "Have the Glean agent propose an action that is not registered",
+        "expectedBehavior": "Refused at proposal time and audited, with no approval card offered. An agent that can describe arbitrary actions into existence is an agent with production access, whatever its prompt says."
+      }
+    ],
+    "steps": [
+      {
+        "title": "Scaffold the project",
+        "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/oncall-copilot oncall-copilot",
+        "kind": "scaffold"
+      },
+      {
+        "title": "Install dependencies",
+        "command": "cd oncall-copilot && npm install",
+        "kind": "install"
+      },
+      {
+        "title": "Watch the governance hold, with no credentials",
+        "command": "cd oncall-copilot && npm run verify:fixture",
+        "description": "Replays recorded responses and asserts the parts that matter: the gate refuses the wrong actor, expiry escalates without executing, an unregistered action is refused, a mutating action with no supported cause is downgraded, and every attempt is audited.",
+        "kind": "verify-fixture"
+      },
+      {
+        "title": "Set credentials",
+        "command": "cd oncall-copilot && npm run login -- --email \"<work-email>\"",
+        "description": "Only for a live run. Use npm run login for direct Search + Chat, or npm run login:agent when the user selected an existing Glean agent. Set WATCHED_SERVICES to the service already supplied and GLEAN_AGENT_ID only for the agent path.",
+        "kind": "authenticate"
+      },
+      {
+        "title": "Run it",
+        "command": "cd oncall-copilot && npm start",
+        "kind": "run"
+      },
+      {
+        "title": "Verify",
+        "description": "Fire the sample alarm and check three things: the probable cause cites a past incident rather than a runbook, approving as someone who is not on call returns 403, and forcing expiry escalates without executing anything.",
+        "kind": "verify-live"
+      }
+    ],
+    "combines": [
+      {
+        "title": "Multi-step agent with governed tools",
+        "surface": "Agents API",
+        "category": "agent",
+        "language": "typescript"
+      },
+      {
+        "title": "Permissions-aware retrieval",
+        "surface": "Platform API",
+        "category": "search",
+        "language": "typescript"
+      }
+    ],
+    "architecture": [
+      {
+        "label": "PagerDuty webhook",
+        "caption": "severity + service filter",
+        "category": "workflow",
+        "icon": "plug"
+      },
+      {
+        "label": "Service registry",
+        "caption": "owner, runbook, escalation",
+        "category": "index"
+      },
+      {
+        "label": "Glean",
+        "caption": "permission-aware index",
+        "emphasized": true
+      },
+      {
+        "label": "Evidence check",
+        "caption": "precedent vs procedure",
+        "category": "search",
+        "icon": "badge"
+      },
+      {
+        "label": "Approval gate",
+        "caption": "authz, expiry, audit",
+        "category": "portal"
+      },
+      {
+        "label": "Governed actions",
+        "caption": "pre-registered only",
+        "category": "agent"
+      }
+    ],
+    "aiPrompt": "Build the On-call Copilot following the oncall-copilot recipe. Resolve the alarming service from an indexed service catalog, retrieve relevant precedents and runbooks, and classify evidence by role. Only a matching past incident may support a cause; a runbook may support a procedure. Assert no cause when no precedent matches. Gate mutating actions behind authorized human approval, expiry, a closed action registry, evidence support, and a complete audit log. Exercise unauthorized approval, expiry, unregistered action, and no-precedent paths during verification.",
+    "llmContext": "Use Platform Search for retrieval, Client Chat POST /rest/api/v1/chat for synthesis, and Platform Agents for the optional agent path. The app runs as the caller; its approval check is application policy, not impersonation. Resolve owners, on-call engineers, and escalation targets from the reader's service catalog. Only a matching past incident may support a cause; runbooks support procedures, not causes. Mutating actions require a supported cause, an authorized approver, a registered action, an unexpired proposal, and a complete audit trail. Set saveChat:false for verification and treat empty chat output as a retryable failure.",
+    "goDependency": false,
+    "featured": true,
+    "tags": [
+      "flagship",
+      "incident-response",
+      "human-in-the-loop",
+      "governed-actions",
+      "audit",
+      "agent"
+    ],
+    "codeAssets": [
+      {
+        "repoPath": "recipes/oncall-copilot",
+        "language": "typescript",
+        "description": "Webhook → service registry → retrieval fan-out → evidence classification → triage card → approval gate (authz, expiry, escalation, audit) → pre-registered actions → postmortem timeline. Both orchestrators render into one shell."
+      }
+    ],
+    "content": {
+      "problem": "An alarm fires at 3am. Everything the responder needs already exists — the runbook,\nthe review of the last time this happened, who owns the service, what it depends on\n— scattered across systems they now have to search one at a time, while the graphs\nget worse.\n\nThe retrieval is the easy part. What makes an on-call copilot safe to point at a\nproduction service is everything that refuses: a gate that turns away the wrong\nperson, an expiry that escalates instead of quietly approving itself, an action\nregistry the planner cannot talk its way out of, and an audit entry for every\nattempt including the ones that were refused.",
+      "takeItFurther": [
+        "Persist incidents and the audit log. An audit log you can lose by restarting a process is not an audit log.",
+        "Add the rest of the dashboard: response-time rollups, an expiring-soon lane, and an end-of-shift handoff summary.",
+        "Replace the simulated actions with real governed tools, keeping the registry boundary and the approval log exactly where they are.",
+        "Write the postmortem draft back into your knowledge base so the next incident retrieves it as a precedent — the loop that makes the evidence rules get better over time.",
+        "Expose the copilot itself over A2A so another agent can request triage, with the same gate in front of every action."
+      ],
+      "guardrails": [
+        {
+          "title": "Relevance is not evidence",
+          "rule": "Only a matching past incident may support a causal claim. Runbooks support procedures, not causes."
+        }
+      ],
+      "limitations": [
+        {
+          "title": "Authorization is not authentication",
+          "description": "The demo restricts who may approve but trusts the asserted actor. Production deployments must authenticate the actor and define which credential executes actions."
+        }
+      ]
+    }
+  },
+  {
     "id": "permissions-aware-retrieval",
     "title": "Ground your own LLM app in Glean",
     "description": "Use Glean's Platform API as the retrieval layer for your own LLM app — every result ACL-filtered for the caller before it ever reaches the model.",
@@ -1706,10 +1650,7 @@
     "status": "production-pattern",
     "category": "search",
     "level": "Intermediate",
-    "levels": {
-      "minimal": true,
-      "wow": true
-    },
+    "levels": { "minimal": true, "wow": true },
     "timeEstimate": "~1 hr",
     "icon": "badge",
     "requiredScopes": ["SEARCH"],
@@ -1925,10 +1866,7 @@
     "status": "showcase",
     "category": "workflow",
     "level": "Intermediate",
-    "levels": {
-      "minimal": true,
-      "wow": true
-    },
+    "levels": { "minimal": true, "wow": true },
     "timeEstimate": "~45 min",
     "icon": "qna",
     "requiredScopes": ["CHAT"],
@@ -1944,10 +1882,7 @@
           "id": "approved-sources",
           "prompt": "For a live run, which Glean URL prefixes are approved sources for external answers?"
         },
-        {
-          "id": "email",
-          "prompt": "For a live run, what is your work email?"
-        }
+        { "id": "email", "prompt": "For a live run, what is your work email?" }
       ],
       "auth": [
         {
