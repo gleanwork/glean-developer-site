@@ -693,7 +693,7 @@
         },
         {
           "query": "What are the renewal risks?",
-          "expectedBehavior": "Either names risks grounded in cited content, or says it has none to report. It must not infer risk the sources don't support, and the KPI header must leave unsupported fields blank rather than showing a figure no document contains."
+          "expectedBehavior": "Either names risks grounded in cited content, or says it has none to report. It must not infer risk the sources don't support, and the account overview must show only the supplied account name and deterministic Search result counts."
         }
       ],
       "codeAssets": [
@@ -759,7 +759,7 @@
             {
               "kind": "verify-live",
               "title": "Verify",
-              "description": "Allow 1–3 minutes. It starts its own server, runs the demo queries against the supplied account, and asserts cited answers with blank unsupported KPI fields.",
+              "description": "Allow 1–3 minutes. It starts its own server, runs the demo queries against the supplied account, and asserts cited answers plus deterministic evidence coverage.",
               "command": "cd customer-360 && npm run verify"
             },
             {
@@ -880,7 +880,7 @@
       "architecture": [
         {
           "label": "Account page",
-          "caption": "KPIs + tiles + journey + prompts",
+          "caption": "Evidence overview + sources + assistant thread",
           "icon": "layout-outlined",
           "emphasized": false
         },
@@ -903,15 +903,15 @@
         }
       ],
       "content": {
-        "problem": "Account executives jump between CRM notes, renewal docs, and security\npackets to prep a single customer conversation. This puts those sources on\none page per account — KPI header, parallel search tiles, journey summary,\nand one-click saved prompts — so the next call needs one tab, not nine.\n\nEverything on the page comes from what your instance already knows about\nthat account. Nothing is hardcoded, which also means a field stays blank\nwhen no source supports it rather than showing a number nobody can trace.\n\nThis recipe builds the page two ways: Platform Search plus Client Chat for an\nopen-ended dashboard, or Agents `createRun` for a prescriptive QBR-ready brief.",
+        "problem": "Account executives jump between CRM notes, renewal docs, and security\npackets to prep a single customer conversation. This puts those sources in\none account workspace with evidence coverage, compact source sections, and\nan above-the-fold assistant thread — so the next call needs one tab, not nine.\n\nEverything displayed comes from what your instance already knows about that\naccount. The overview uses only the supplied account name and deterministic\nSearch result counts; assistant claims remain cited rather than turning loose\nsearch matches into unsupported CRM facts.\n\nThis recipe builds the page two ways: Platform Search plus Client Chat for an\nopen-ended dashboard, or Agents `createRun` for a prescriptive QBR-ready brief.",
         "takeItFurther": [
           "Add a portfolio dashboard across a rep's whole book of business, with health and renewal countdown tiles per account.",
           "Schedule a weekly headless job that re-runs the account's queries, diffs against the last run, and posts only what changed to Slack.",
           "Wire push-to-CRM / push-to-Slack actions from the journey panel once you have a governed custom tool."
         ]
       },
-      "aiPrompt": "Build a Customer 360 account page following https://developers.glean.com/cookbook/customer-360. Ask whether to use (A) Platform Search plus Client Chat or (B) Platform Agents, then ask for the account name and the selected path's required configuration. Do not research another account unless the user explicitly asks for help; if they do, run one bounded search and offer at most three choices. Retrieve every displayed account fact and leave unsupported fields blank. Use the scaffold's shipped login command rather than implementing authentication. Verify before leaving the app running.",
-      "llmContext": "Use Platform Search for tiles, Client Chat POST /rest/api/v1/chat for synthesis, and Platform Agents for the optional agent path. Client Chat answers are CONTENT messages from GLEAN_AI; citations are fragment.citation.sourceDocument. Set saveChat:false for verification and keep tokens server-side. Read the account from GLEAN_ACCOUNT_NAME and leave owner, ARR, seats, renewal date, and risk blank unless retrieved documents support them. Use GLEAN_SERVER_URL directly.",
+      "aiPrompt": "Build a Customer 360 account workspace following https://developers.glean.com/cookbook/customer-360. Ask whether to use (A) Platform Search plus Client Chat or (B) Platform Agents, then ask for the account name and the selected path's required configuration. Do not research another account unless the user explicitly asks for help; if they do, run one bounded search and offer at most three choices. Keep the assistant above the fold, display only cited account claims, and derive overview counts directly from Search results. Use the scaffold's shipped login command rather than implementing authentication. Verify before leaving the app running.",
+      "llmContext": "Use Platform Search for evidence sections, Client Chat POST /rest/api/v1/chat for synthesis, and Platform Agents for the optional agent path. Client Chat answers are CONTENT messages from GLEAN_AI; citations are fragment.citation.sourceDocument. Set saveChat:false for verification and keep tokens server-side. Read the account from GLEAN_ACCOUNT_NAME. The overview may show the supplied account name and deterministic Search result counts; never infer CRM facts from loosely matching documents. Use GLEAN_SERVER_URL directly.",
       "goDependency": false,
       "featured": false,
       "tags": [
