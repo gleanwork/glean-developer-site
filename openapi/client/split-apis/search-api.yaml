@@ -2,11 +2,11 @@ openapi: 3.0.0
 info:
   version: 0.9.0
   title: Glean API - Search
-  x-source-commit-sha: 7a82cb818d032eca9f42d56706dd9e0a65418d45
+  x-source-commit-sha: 26582d482fd365bb6e08720a096edc8336b2322e
   description: API endpoints for Search
   x-logo:
     url: https://app.glean.com/images/glean-text2.svg
-  x-open-api-commit-sha: 987c3f6458420f6a99420d808bdccea74ab84dad
+  x-open-api-commit-sha: ba805dad43d06e3a084ffb35806144d0ad946bcc
   x-speakeasy-name: Glean API
 servers:
   - url: '{serverUrl}'
@@ -3068,6 +3068,7 @@ components:
               - OOO_PLANNER
               - OOO_CATCH_UP
               - ADMIN_HEALTH_CENTER
+              - KNOWLEDGE_GAP
           description: Categories of content requested. An allowlist gives flexibility to request content separately or together.
         requestOptions:
           $ref: '#/components/schemas/FeedRequestOptions'
@@ -3264,6 +3265,7 @@ components:
             - OOO_PLANNER
             - OOO_CATCH_UP
             - ADMIN_HEALTH_CENTER
+            - KNOWLEDGE_GAP
           description: Category of the result, one of the requested categories in incoming request.
         primaryEntry:
           $ref: '#/components/schemas/FeedEntry'
@@ -3280,7 +3282,8 @@ components:
           enum:
             - ORGANIC
             - PROMO
-          description: Placement source for ranked feed results. ORGANIC means the card was emitted by normal feed ranking. PROMO means the card was inserted by the homepage cards promo framework.
+            - PINNED
+          description: Placement source for ranked feed results. ORGANIC means the card was emitted by normal feed ranking. PROMO means the card was inserted by the homepage cards promo framework. PINNED means the card was moved to the head of the ranked stack (e.g. knowledge-gap pilot cards).
     CalendarAttendees:
       properties:
         isLimit:
@@ -5274,6 +5277,7 @@ components:
             - OOO_PLANNER
             - OOO_CATCH_UP
             - ADMIN_HEALTH_CENTER
+            - KNOWLEDGE_GAP
           description: Type of the justification.
         justification:
           type: string
