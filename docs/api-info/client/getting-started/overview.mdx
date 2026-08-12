@@ -1,99 +1,53 @@
 ---
-title: 'Overview'
+title: 'Client API Quickstart'
+description: Make your first permission-aware Client API request.
 icon: 'send-backward'
 ---
 
+# Client API Quickstart
 
-# Client API Overview
+Make a permission-aware search request with the Client API. This is the shortest path from a credential to a successful response; use the [Client API overview](/api/client-api) to choose other capabilities.
 
-The Glean Client API enables organizations to build custom applications and interfaces that leverage Glean's search and generative AI capabilities. With this API, you can integrate Glean's powerful search, chat, and content discovery features directly into your internal tools, creating tailored workflows for your specific use cases.
+## Before you begin
 
-## Key Capabilities
+1. Find your Glean backend URL, such as `https://your-instance-be.glean.com`.
+2. Configure OAuth or a user-scoped Glean-issued token with the [Client API authentication guide](/api-info/client/authentication/overview).
+3. Have a query that should return content the authenticated user can access.
 
-<CardGroup cols={2}>
-<Card title="Search & Discovery" icon="Search">
-  Execute sophisticated searches across your organization's content with relevance ranking, faceted filtering, and contextual results
-</Card>
+## Make your first request
 
-<Card title="Generative AI Chat" icon="chat" iconSet="glean">
-  Build conversational interfaces using Glean's AI that understands your organization's specific context and content
-</Card>
+Replace `<your_token>` and the example backend URL, then run:
 
-<Card title="Document Access" icon="File">
-  Retrieve document content, metadata, activity tracking, and permissions-aware access to organizational knowledge
-</Card>
+```bash showLineNumbers snippet=basic-usage/snippet-03.sh
+curl -X POST https://your-instance-be.glean.com/rest/api/v1/search \
+  -H 'Authorization: Bearer <your_token>' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "query": "quarterly planning",
+    "pageSize": 10,
+    "requestOptions": {
+      "datasourcesFilter": ["confluence", "gdrive"],
+      "facetBucketSize": 100
+    }
+  }'
+```
 
-<Card title="Content Management" icon="Folder">
-  Create and manage collections, answers, announcements, and other knowledge artifacts programmatically
-</Card>
-</CardGroup>
+A successful response contains a `results` array with documents the authenticated user is allowed to see. An empty `results` array is still a successful request; try a broader query or confirm that the user can access matching content.
 
-## Common Use Cases
+See the [Search API reference](/api/client-api/search/overview) for request parameters and the complete response model.
 
-- **Internal Chatbots**: Build AI-powered assistants that can answer questions using your organization's knowledge
-- **Custom Search Interfaces**: Create specialized search experiences tailored to specific workflows or departments  
-- **Knowledge Management**: Automate the creation and curation of answers, collections, and other knowledge artifacts
-- **Analytics Dashboards**: Build custom analytics and reporting tools using Glean's insights and activity data
-- **Workflow Integration**: Embed search and AI capabilities into existing business applications
+## Next steps
 
-## Developer Workflow
-
-<Steps>
-<Step title="Authentication Setup">
-Choose your authentication method based on your use case:
-- **OAuth** (recommended): Best for user-facing applications requiring user permissions
-- **Glean Tokens**: Suitable for server-to-server integrations or when OAuth isn't available
-
-See our [Authentication Setup Guide](../authentication/overview) for detailed instructions.
-</Step>
-
-<Step title="Choose Your Approach">
-Select your development approach:
-- **Official SDKs**: Use our [Python, Java, NodeJS, or Go SDKs](../../../libraries/api-clients) for faster development
-- **Direct REST API**: Make HTTP requests directly for maximum flexibility
-- **Web SDK**: Embed pre-built UI components using our [Web SDK](../../../libraries/web-sdk/overview)
-</Step>
-
-<Step title="Start Building">
-Begin with core functionality using our [Basic Usage Guide](basic-usage):
-- Try basic search queries to understand result formats
-- Experiment with chat endpoints for conversational features  
-- Test document retrieval and permission handling
-- Explore content creation endpoints (collections, answers)
-</Step>
-
-<Step title="Production Considerations">
-Prepare for production deployment:
-- Implement proper error handling and retry logic
-- Set up monitoring and logging for API usage
-- Review [rate limits](../../../get-started/rate-limits) and plan scaling
-- Test permission scenarios thoroughly
-</Step>
-</Steps>
-
-## Next Steps
-
-<CardGroup cols={1}>
-  <Card title="Set Up Authentication" icon="Shield" href="../authentication/overview">
-    Configure OAuth or Glean tokens for your application
+<CardGroup cols={3}>
+  <Card title="Authentication" icon="Shield" href="/api-info/client/authentication/overview">
+    Review Client API credential types and user context.
   </Card>
 
-  <Card title="Try Basic Usage" icon="Code" href="basic-usage">
-    Start with simple API calls and examples to get familiar with the API
+  <Card title="Usage Guide" icon="Code" href="/api-info/client/getting-started/basic-usage">
+    Explore Chat, Search, Agents, and common integration patterns.
   </Card>
 
-  <Card title="Explore Examples" icon="Info" href="/guides/chat/chatbot-example">
-    Follow step-by-step tutorials for common integration patterns
-  </Card>
-
-  <Card title="Install API Clients" icon="Download" href="../../../libraries/api-clients">
-    Install official API Clients for faster development
+  <Card title="API Reference" icon="BookOpen" href="/api/client-api#client-api-reference">
+    Browse Client API endpoints by capability.
   </Card>
 </CardGroup>
-
-## Support & Community
-
-- **Documentation**: Comprehensive guides and API reference available throughout this site
-- **Rate Limits**: Review our [rate limiting policies](../../../get-started/rate-limits) 
-- **Backwards Compatibility**: Glean provides advance notice and deprecation periods for any breaking changes
-- **Feedback**: Help us improve by sharing your integration experiences and suggestions 

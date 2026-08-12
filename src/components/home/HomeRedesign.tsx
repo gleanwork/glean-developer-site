@@ -194,12 +194,19 @@ export function CookbookStrip(): React.ReactElement {
   );
 }
 
-const PATHS = [
+const PATHS: Array<{
+  title: string;
+  body: string;
+  icon: string;
+  iconSet?: 'feather' | 'glean';
+  href: string;
+}> = [
   {
-    title: 'Build with the APIs',
-    body: 'Search, chat, and agents from your code — with client libraries for four languages.',
-    icon: 'Code',
-    href: '/api-info/client/getting-started/overview',
+    title: 'Build with Platform API',
+    body: 'Start with modern search, agents, skills, and chat from your code.',
+    icon: 'platform',
+    iconSet: 'glean',
+    href: '/api/platform-api',
   },
   {
     title: 'Embed with the Web SDK',
@@ -209,8 +216,9 @@ const PATHS = [
   },
   {
     title: 'Connect your data',
-    body: 'Bring any source into Glean with the Indexing API and connector framework.',
-    icon: 'Database',
+    body: 'Bring any source into Glean with the Indexing API.',
+    icon: 'sources',
+    iconSet: 'glean',
     href: '/api-info/indexing/getting-started/overview',
   },
   {
@@ -229,7 +237,13 @@ export function PathCards(): React.ReactElement {
       <div className={styles.pathGrid}>
         {PATHS.map((path) => (
           <Link className={styles.pathCard} key={path.title} to={path.href}>
-            <span className={styles.pathIcon}>{feather(path.icon, 20)}</span>
+            <span className={styles.pathIcon}>
+              {getIcon(path.icon, path.iconSet ?? 'feather', {
+                width: 20,
+                height: 20,
+                color: 'currentColor',
+              })}
+            </span>
             <span className={styles.pathTitle}>{path.title}</span>
             <span className={styles.pathBody}>{path.body}</span>
           </Link>

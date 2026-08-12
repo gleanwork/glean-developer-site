@@ -948,6 +948,11 @@ html[data-theme='dark'] [class*='codeBlockTitle'] {
 /* Tables: hairline borders, rounded corners, quiet header row — the
  * plugin-page "Which plugin do I need?" treatment, everywhere. */
 .markdown table {
+  /* Infima makes tables block-level for overflow scrolling. That leaves the
+   * block border full-width while the table rows stay intrinsic-width. Keep
+   * the semantic table layout here so columns fill the document content. */
+  display: table;
+  width: 100%;
   border-collapse: separate;
   border-spacing: 0;
   border: 1px solid var(--gdt-border-light);
@@ -971,6 +976,13 @@ html[data-theme='dark'] [class*='codeBlockTitle'] {
 
 .markdown table tr:nth-child(2n) {
   background-color: transparent;
+}
+
+@media (max-width: 996px) {
+  .markdown table {
+    display: block;
+    overflow-x: auto;
+  }
 }
 
 /* Admonitions: keep the per-type tint, modernize the box — hairline

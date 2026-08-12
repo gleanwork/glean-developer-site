@@ -275,12 +275,12 @@ function findCategoriesByLabel(elements, label) {
   );
 }
 
-function findPlatformItems(root) {
+function findReferenceItems(root, referenceLabel) {
   const matches = [];
   root.find(j.ObjectExpression).forEach((path) => {
     if (
       getStringProperty(path.node, 'type') === 'category' &&
-      getStringProperty(path.node, 'label') === 'Platform API Reference'
+      getStringProperty(path.node, 'label') === referenceLabel
     ) {
       const items = getItemsProperty(path.node);
       if (items) {
@@ -290,10 +290,24 @@ function findPlatformItems(root) {
   });
   if (matches.length !== 1) {
     return {
-      error: `expected one Platform API Reference category, found ${matches.length}`,
+      error: `expected one ${referenceLabel} category, found ${matches.length}`,
     };
   }
   return { items: matches[0] };
+}
+
+function resolveReferenceTarget(root, referenceLabel, tag) {
+  const reference = findReferenceItems(root, referenceLabel);
+  if (reference.error) {
+    return reference;
+  }
+  const matches = findCategoriesByLabel(reference.items.elements, tag);
+  if (matches.length !== 1) {
+    return {
+      error: `expected one ${referenceLabel} category labelled '${tag}', found ${matches.length}`,
+    };
+  }
+  return { items: getItemsProperty(matches[0]) };
 }
 
 function resolveTag(slugToTags, slug) {
@@ -366,7 +380,7 @@ function findOverviewTarget(root, overviewId) {
 }
 
 function resolvePlatformTarget(root, tag, plannedCategories) {
-  const platform = findPlatformItems(root);
+  const platform = findReferenceItems(root, 'Platform API Reference');
   if (platform.error) {
     return platform;
   }
@@ -411,7 +425,9 @@ function resolveEntry(root, doc, slugToTags, plannedCategories) {
   const segments = doc.docId.split('/');
   const overviewId = segments.slice(0, -1).join('/') + '/overview';
   const isPlatformDoc = doc.docId.startsWith('api/platform-api/');
-  if (!isPlatformDoc) {
+  const isClientDoc = doc.docId.startsWith('api/client-api/');
+  const isIndexingDoc = doc.docId.startsWith('api/indexing-api/');
+  if (!isPlatformDoc && !isClientDoc && !isIndexingDoc) {
     const overviewTarget = findOverviewTarget(root, overviewId);
     if (overviewTarget) {
       return { items: overviewTarget };
@@ -429,6 +445,16 @@ function resolveEntry(root, doc, slugToTags, plannedCategories) {
   }
   if (isPlatformDoc) {
     return resolvePlatformTarget(root, tagResult.tag, plannedCategories);
+  }
+  if (isClientDoc) {
+    return resolveReferenceTarget(root, 'Client API Reference', tagResult.tag);
+  }
+  if (isIndexingDoc) {
+    return resolveReferenceTarget(
+      root,
+      'Indexing API Reference',
+      tagResult.tag,
+    );
   }
   const items = findCategoryItemsByLabel(root, tagResult.tag);
   return items

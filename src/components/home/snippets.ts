@@ -114,7 +114,7 @@ renderChat(chatEl, {
   },
   {
     surface: 'Indexing SDK',
-    primaryHref: '/api-info/indexing/getting-started/overview',
+    primaryHref: '/libraries/indexing-sdk/quickstart',
     secondaryHref: '/api/indexing-api/documents-overview',
     headline: 'Bring any data into Glean',
     subcopy:
