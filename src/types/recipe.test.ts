@@ -76,6 +76,7 @@ describe('parseRecipeEntry', () => {
     const entry = {
       ...validEntry(),
       execution: {
+        type: 'local-web',
         questions: [
           {
             id: 'email',
@@ -117,6 +118,7 @@ describe('parseRecipeEntry', () => {
     const entry = {
       ...validEntry(),
       execution: {
+        type: 'cli',
         auth: [{ kind: 'none' }],
         verification: {
           kind: 'automated',
@@ -131,6 +133,7 @@ describe('parseRecipeEntry', () => {
     const entry = {
       ...validEntry(),
       execution: {
+        type: 'cli',
         auth: [{ kind: 'none' }],
         verification: {
           kind: 'manual',
@@ -146,6 +149,7 @@ describe('parseRecipeEntry', () => {
       const entry = {
         ...validEntry(),
         execution: {
+          type: 'local-web',
           auth: [{ kind: 'none' }],
           verification: {
             kind: 'manual',
@@ -162,6 +166,7 @@ describe('parseRecipeEntry', () => {
     const entry = {
       ...validEntry(),
       execution: {
+        type: 'existing-app',
         auth: [{ kind: 'browser-cookie' }],
         verification: {
           kind: 'user-browser',
@@ -174,6 +179,20 @@ describe('parseRecipeEntry', () => {
       },
     };
     expect(parseRecipeEntry(entry, 'embed-search-chat').success).toBe(true);
+  });
+
+  it('requires an execution type when an execution contract is present', () => {
+    const entry = {
+      ...validEntry(),
+      execution: {
+        auth: [{ kind: 'none' }],
+        verification: {
+          kind: 'manual',
+          expectedDuration: 'about 1 minute',
+        },
+      },
+    };
+    expect(parseRecipeEntry(entry, 'embed-search-chat').success).toBe(false);
   });
 
   it('rejects unknown top-level keys', () => {

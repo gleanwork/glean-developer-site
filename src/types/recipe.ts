@@ -121,6 +121,20 @@ export const RECIPE_BUILD_METHODS = [
   'third-party-build',
 ] as const;
 
+/**
+ * How a coding agent runs and hands off a recipe or variant. This is distinct
+ * from `category` (what problem it solves) and `buildMethod` (how the
+ * implementation is produced).
+ */
+export const RECIPE_EXECUTION_TYPES = [
+  'local-web',
+  'existing-app',
+  'cli',
+  'host-configuration',
+  'external-builder',
+  'hybrid-service',
+] as const;
+
 /** Visual category — drives the pastel tile color and icon (design handoff). */
 export const RECIPE_CATEGORIES = [
   'search',
@@ -191,6 +205,7 @@ export const recipeRunSchema = z.union([
 ]);
 
 export const recipeExecutionSchema = z.strictObject({
+  type: z.enum(RECIPE_EXECUTION_TYPES),
   questions: z.array(recipeQuestionSchema).default([]),
   auth: z
     .array(

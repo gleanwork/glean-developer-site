@@ -74,6 +74,7 @@
         }
       ],
       "execution": {
+        "type": "cli",
         "questions": [
           {
             "id": "email",
@@ -108,6 +109,10 @@
           "command": "cd a2a-client && uv run main.py",
           "expectedDuration": "about 1 minute after sign-in",
           "startsOwnServer": false
+        },
+        "run": {
+          "command": "cd a2a-client && uv run main.py",
+          "userBrowser": false
         }
       },
       "architecture": [],
@@ -184,6 +189,7 @@
         "scaffold-web-sdk-embed"
       ],
       "execution": {
+        "type": "existing-app",
         "questions": [
           {
             "id": "email",
@@ -345,6 +351,7 @@
           "language": "typescript",
           "description": "Web SDK variant — renderChat in a page",
           "execution": {
+            "type": "local-web",
             "questions": [
               {
                 "id": "email",
@@ -397,7 +404,6 @@
             {
               "kind": "run",
               "title": "Run it",
-              "description": "Keep Vite running, report its exact Local URL, and wait for the user to open it in their normal signed-in browser. Never open or automate the URL yourself.",
               "command": "cd company-answers && npm run dev"
             },
             {
@@ -412,6 +418,7 @@
           "language": "typescript",
           "description": "Chat API variant — one chat.create call, citations rendered",
           "execution": {
+            "type": "local-web",
             "questions": [
               {
                 "id": "email",
@@ -444,7 +451,7 @@
             },
             "run": {
               "command": "cd company-answers && npm start",
-              "url": "http://localhost:3000",
+              "url": "the Local URL printed by the server",
               "userBrowser": true
             }
           },
@@ -474,7 +481,6 @@
             {
               "kind": "run",
               "title": "Run it",
-              "description": "Leave the verified app running at http://localhost:3000 and give that URL to the user.",
               "command": "cd company-answers && npm start"
             }
           ]
@@ -601,6 +607,7 @@
         }
       ],
       "execution": {
+        "type": "host-configuration",
         "questions": [
           {
             "id": "email",
@@ -712,6 +719,7 @@
           "language": "typescript",
           "description": "Path A — parallel Platform Search tiles + Client Chat synthesis",
           "execution": {
+            "type": "local-web",
             "questions": [
               {
                 "id": "email",
@@ -745,7 +753,7 @@
             },
             "run": {
               "command": "cd customer-360 && npm start",
-              "url": "http://localhost:3000",
+              "url": "the Local URL printed by the server",
               "userBrowser": true
             }
           },
@@ -775,7 +783,6 @@
             {
               "kind": "run",
               "title": "Run it",
-              "description": "Leave the verified app running at http://localhost:3000 and give that URL to the user.",
               "command": "cd customer-360 && npm start"
             }
           ]
@@ -785,6 +792,7 @@
           "language": "typescript",
           "description": "Path B — Platform Agents createRun for prescriptive account briefs",
           "execution": {
+            "type": "local-web",
             "questions": [
               {
                 "id": "email",
@@ -823,7 +831,7 @@
             },
             "run": {
               "command": "cd customer-360 && npm start",
-              "url": "http://localhost:3000",
+              "url": "the Local URL printed by the server",
               "userBrowser": true
             }
           },
@@ -853,7 +861,6 @@
             {
               "kind": "run",
               "title": "Run it",
-              "description": "Leave the verified app running at http://localhost:3000 and give that URL to the user.",
               "command": "cd customer-360 && npm start"
             }
           ]
@@ -984,6 +991,7 @@
         "scaffold-web-sdk-embed"
       ],
       "execution": {
+        "type": "existing-app",
         "questions": [
           {
             "id": "email",
@@ -1167,6 +1175,7 @@
         }
       ],
       "execution": {
+        "type": "hybrid-service",
         "questions": [
           {
             "id": "email",
@@ -1283,6 +1292,7 @@
       ],
       "scaffoldActions": [],
       "execution": {
+        "type": "external-builder",
         "questions": [
           {
             "id": "email",
@@ -1376,6 +1386,7 @@
       ],
       "scaffoldActions": [],
       "execution": {
+        "type": "external-builder",
         "questions": [
           {
             "id": "email",
@@ -1485,6 +1496,7 @@
           "language": "typescript",
           "description": "Web SDK variant — checklist + renderChat",
           "execution": {
+            "type": "local-web",
             "questions": [
               {
                 "id": "email",
@@ -1537,7 +1549,6 @@
             {
               "kind": "run",
               "title": "Run it",
-              "description": "Start Vite and leave it running. Report the exact Local URL printed by Vite. Never open the URL yourself and never use browser automation. Wait for the user to open it in their normal browser where they are already signed in to Glean and tell you it is ready.",
               "command": "cd onboarding-hub && npm run dev"
             },
             {
@@ -1552,6 +1563,7 @@
           "language": "typescript",
           "description": "Client Chat variant — server-side API call, custom UI",
           "execution": {
+            "type": "local-web",
             "questions": [
               {
                 "id": "email",
@@ -1584,7 +1596,7 @@
             },
             "run": {
               "command": "cd onboarding-hub && npm start",
-              "url": "http://localhost:3000",
+              "url": "the Local URL printed by the server",
               "userBrowser": true
             }
           },
@@ -1614,7 +1626,6 @@
             {
               "kind": "run",
               "title": "Run it",
-              "description": "Leave the verified app running at http://localhost:3000 and give that URL to the user.",
               "command": "cd onboarding-hub && npm start"
             }
           ]
@@ -1724,9 +1735,9 @@
         "typescript"
       ],
       "prerequisites": [
-        "A Glean instance with engineering content indexed — a service catalog, runbooks, and at least one past incident review",
-        "A work email for tenant discovery and OAuth sign-in; a scoped API token is the fallback",
-        "X_GLEAN_INCLUDE_EXPERIMENTAL=true (the Platform API is Experimental as of its 2026-07 launch)",
+        "For configured runs: a Glean instance with engineering content indexed — a service catalog, runbooks, and at least one past incident review",
+        "For configured runs: a work email for tenant discovery and OAuth sign-in; a scoped API token is the fallback",
+        "For configured runs: X_GLEAN_INCLUDE_EXPERIMENTAL=true (the Platform API is Experimental as of its 2026-07 launch)",
         "Node 20+"
       ],
       "demoQueries": [
@@ -1795,25 +1806,21 @@
         }
       ],
       "execution": {
+        "type": "local-web",
         "questions": [
           {
-            "id": "mode",
-            "prompt": "Do you want the instant fixture demo or a live tenant run?",
-            "required": true
-          },
-          {
             "id": "service",
-            "prompt": "For a live run, which service has a catalog entry, runbook, and past incident in Glean?",
+            "prompt": "Which service has a catalog entry, runbook, and past incident in Glean?",
             "required": true
           },
           {
             "id": "orchestrator",
-            "prompt": "For a live run, use direct Search + Chat or an existing Glean agent?",
+            "prompt": "Use direct Search + Chat or an existing Glean agent?",
             "required": true
           },
           {
             "id": "email",
-            "prompt": "For a live run, what is your work email?",
+            "prompt": "What is your work email?",
             "required": true
           }
         ],
@@ -1837,7 +1844,7 @@
         },
         "run": {
           "command": "cd oncall-copilot && npm start",
-          "url": "http://localhost:3000",
+          "url": "the Local URL printed by the server",
           "userBrowser": true
         }
       },
@@ -1982,6 +1989,7 @@
           "language": "python",
           "description": "Platform API search.query → snippets → LLM with citations",
           "execution": {
+            "type": "cli",
             "questions": [
               {
                 "id": "email",
@@ -2021,6 +2029,10 @@
               "kind": "manual",
               "expectedDuration": "about 1 minute after sign-in",
               "startsOwnServer": false
+            },
+            "run": {
+              "command": "cd permissions-aware-retrieval && uv run main.py \"<allowed-topic>\"",
+              "userBrowser": false
             }
           },
           "steps": [
@@ -2053,6 +2065,7 @@
           "language": "typescript",
           "description": "Same flow in TypeScript",
           "execution": {
+            "type": "cli",
             "questions": [
               {
                 "id": "email",
@@ -2092,6 +2105,10 @@
               "kind": "manual",
               "expectedDuration": "about 1 minute after sign-in",
               "startsOwnServer": false
+            },
+            "run": {
+              "command": "cd permissions-aware-retrieval && npm start -- \"<allowed-topic>\"",
+              "userBrowser": false
             }
           },
           "steps": [
@@ -2204,8 +2221,8 @@
         "typescript"
       ],
       "prerequisites": [
-        "A Glean instance with your company content indexed",
-        "A work email for tenant discovery and OAuth sign-in; a CHAT-scoped API token is the fallback",
+        "For configured runs: a Glean instance with your company content indexed",
+        "For configured runs: a work email for tenant discovery and OAuth sign-in; a CHAT-scoped API token is the fallback",
         "Node 20+"
       ],
       "demoQueries": [
@@ -2270,20 +2287,16 @@
         }
       ],
       "execution": {
+        "type": "local-web",
         "questions": [
           {
-            "id": "mode",
-            "prompt": "Do you want the instant fixture demo or a live tenant run?",
-            "required": true
-          },
-          {
             "id": "approved-sources",
-            "prompt": "For a live run, which Glean URL prefixes are approved sources for external answers?",
+            "prompt": "Which Glean URL prefixes are approved sources for external answers?",
             "required": true
           },
           {
             "id": "email",
-            "prompt": "For a live run, what is your work email?",
+            "prompt": "What is your work email?",
             "required": true
           }
         ],
@@ -2306,7 +2319,7 @@
         },
         "run": {
           "command": "cd rfp-responder && npm start",
-          "url": "http://localhost:3000",
+          "url": "the Local URL printed by the server",
           "userBrowser": true
         }
       },
