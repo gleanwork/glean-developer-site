@@ -1,0 +1,53 @@
+---
+title: Platform API Getting Started
+slug: /api/platform-api/getting-started
+description: Start building a modern Glean integration with the Platform API.
+sidebar_label: Getting Started
+---
+
+# Platform API Getting Started
+
+The Platform API is Glean's recommended API for new application integrations when the capability and stability level fit the use case. It provides modern endpoints for search, agents, skills, and chat under the `/api` path. Search, Chat, and Skills are currently experimental.
+
+## Before you begin
+
+1. Review the [Platform API authentication guide](/api/platform-api/authentication).
+2. Find your Glean backend URL and choose the credentials for your integration.
+3. Start with the capability that matches your application: [Search](/api/platform-api/search-overview), [Agents](/api/platform-api/agents-overview), [Skills](/api/platform-api/skills-overview), or [Chat](/api/platform-api/chat-overview).
+
+## Choose Platform API over Client API
+
+Use Platform API for new integrations whenever the capability you need is available. Use [Client API](/api/client-api) when you need an existing Client API capability that has not yet moved to Platform API or when maintaining an existing integration.
+
+## First request
+
+The example below uses the experimental Search API. Review the endpoint's stability notice before using it in production.
+
+The Platform API uses a bearer credential and JSON requests. A typical request looks like this:
+
+```bash
+curl -X POST 'https://<instance>-be.glean.com/api/search' \
+  -H 'Authorization: Bearer <platform_token>' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "query": "quarterly planning"
+  }'
+```
+
+See the [Search API reference](/api/platform-api/platform-search) for the complete request and response model.
+
+## Next steps
+
+<CardGroup cols={3}>
+  <Card title="Authenticate" icon="Shield" href="/api/platform-api/authentication">
+    Configure one of the supported Platform API bearer-token methods.
+  </Card>
+
+  <Card title="Search" icon="Search" href="/api/platform-api/search-overview">
+    Build permission-aware search experiences over connected content.
+  </Card>
+
+  <Card title="Run agents" icon="agent" iconSet="glean" href="/api/platform-api/agents-overview">
+    Discover agents and create agent runs.
+  </Card>
+</CardGroup>

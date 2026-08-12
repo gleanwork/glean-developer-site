@@ -1,6 +1,6 @@
 ---
 title: Indexing API Authentication
-sidebar_label: Overview
+sidebar_label: Authentication
 description: Complete implementation guide for authenticating with Glean's Indexing API using Glean-issued tokens
 icon: key
 ---
@@ -23,8 +23,8 @@ This guide covers implementing authentication for Glean's **Indexing API**, whic
     **Manually created through admin console**
     
     - **Authentication**: Glean tokens only (no OAuth support)
-    - **Permissions**: Global by default (no user-scoping)
-    - **Scopes**: Full indexing API access (no scope restrictions)
+    - **Permissions**: Global or limited to specific datasource apps
+    - **Access**: Standard Indexing API operations; Custom Metadata uses separately scoped credentials
     - **Advanced Features**: IP restrictions, token rotation, custom expiry
     - **Use Cases**: Document indexing, datasource management, bulk operations
   </Card>
@@ -132,8 +132,8 @@ Authorization: Bearer <indexing_api_token>
 ### Token Properties
 
 - **API Support**: **Indexing API only** (Client API not supported)
-- **User Context**: Global permissions (no user-scoping available)
-- **Scopes**: Full indexing API access (no granular scope control)
+- **User Context**: Service-level access rather than Client API user impersonation
+- **Access**: Global or limited to selected datasource apps; [Custom Metadata](/api-info/indexing/custom-metadata/authentication) uses separate global or group-specific scopes
 - **Expiration**: Required expiry date (validated in the Admin Console at creation time)
 - **Security**: Support for IP restrictions and rotation
 

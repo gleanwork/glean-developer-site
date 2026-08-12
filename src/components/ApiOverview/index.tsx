@@ -95,6 +95,12 @@ function getPlatformApiEndpoints(apiFamily: string): Endpoint[] {
         summary: 'Search',
         operationId: 'platform-search',
       },
+      {
+        method: 'GET',
+        path: '/api/search/filters',
+        summary: 'List search filters',
+        operationId: 'platform-search-filters',
+      },
     ],
   };
 

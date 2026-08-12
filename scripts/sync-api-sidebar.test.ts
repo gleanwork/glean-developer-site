@@ -404,7 +404,7 @@ describe('sync-api-sidebar', () => {
     }
   });
 
-  it('preserves client insertion through a parent overview entry', () => {
+  it('inserts Client docs into the scoped reference category with a linked overview', () => {
     const root = createFixture();
     const sidebarPath = path.join(root, 'sidebars.ts');
     fs.writeFileSync(
@@ -419,13 +419,11 @@ describe('sync-api-sidebar', () => {
       {
         type: 'category',
         label: 'Chat',
-        items: [
-          {
-            type: 'doc',
-            id: 'api/client-api/chat/overview',
-            label: 'Overview',
-          },
-        ],
+        link: {
+          type: 'doc',
+          id: 'api/client-api/chat/overview',
+        },
+        items: [],
       },
     ],
   },
@@ -448,6 +446,18 @@ sidebar_class_name: "post api-method"
 ---
 `,
     );
+    fs.writeFileSync(
+      path.join(root, 'openapi/client/split-apis/chat.yaml'),
+      `openapi: 3.0.0
+paths:
+  /chat:
+    post:
+      tags:
+        - Chat
+      summary: Create chat
+      operationId: create
+`,
+    );
 
     expect(run(root, '--fix').status).toBe(0);
     const sidebar = fs.readFileSync(sidebarPath, 'utf8');
@@ -456,6 +466,76 @@ sidebar_class_name: "post api-method"
     expect(sidebar.indexOf("id: 'api/client-api/chat/overview'")).toBeLessThan(
       sidebar.indexOf("id: 'api/client-api/chat/create'"),
     );
+  });
+
+  it('inserts Indexing docs into Indexing API Reference when guide labels overlap', () => {
+    const root = createFixture();
+    const sidebarPath = path.join(root, 'sidebars.ts');
+    fs.writeFileSync(
+      sidebarPath,
+      fs.readFileSync(sidebarPath, 'utf8').replace(
+        '\n];',
+        `
+  {
+    type: 'category',
+    label: 'Indexing API',
+    items: [
+      {
+        type: 'category',
+        label: 'Guides',
+        items: [
+          {
+            type: 'category',
+            label: 'Custom Metadata',
+            items: [],
+          },
+        ],
+      },
+      {
+        type: 'category',
+        label: 'Indexing API Reference',
+        items: [
+          {
+            type: 'category',
+            label: 'Custom Metadata',
+            items: [],
+          },
+        ],
+      },
+    ],
+  },
+];`,
+      ),
+    );
+    fs.writeFileSync(
+      path.join(root, 'docs/api/indexing-api/update-metadata.api.mdx'),
+      `---
+title: "Update metadata"
+sidebar_label: "Update metadata"
+sidebar_class_name: "put api-method"
+---
+`,
+    );
+    fs.writeFileSync(
+      path.join(root, 'openapi/indexing/indexing-capitalized.yaml'),
+      `openapi: 3.0.0
+paths:
+  /metadata:
+    put:
+      tags:
+        - Custom Metadata
+      summary: Update metadata
+      operationId: update-metadata
+`,
+    );
+
+    expect(run(root, '--fix').status).toBe(0);
+    const sidebar = fs.readFileSync(sidebarPath, 'utf8');
+    const referenceStart = sidebar.indexOf("label: 'Indexing API Reference'");
+    const inserted = sidebar.indexOf("id: 'api/indexing-api/update-metadata'");
+
+    expect(referenceStart).toBeGreaterThan(-1);
+    expect(inserted).toBeGreaterThan(referenceStart);
   });
 
   it('fails without changing sidebars when an operation is unresolved', () => {
@@ -483,5 +563,22 @@ sidebar_class_name: "post api-method"
     expect(fs.readFileSync(path.join(root, 'sidebars.ts'), 'utf8')).toBe(
       original,
     );
+  });
+});
+
+describe('production API reference ordering', () => {
+  it('keeps Platform API reference families alphabetized', () => {
+    const sidebar = fs.readFileSync(
+      path.join(process.cwd(), 'sidebars.ts'),
+      'utf8',
+    );
+    const referenceStart = sidebar.indexOf("label: 'Platform API Reference'");
+    const referenceEnd = sidebar.indexOf("label: 'Client API'", referenceStart);
+    const reference = sidebar.slice(referenceStart, referenceEnd);
+    const labels = [...reference.matchAll(/^\s{14}label: '([^']+)'/gm)]
+      .map((match) => match[1])
+      .filter((label) => label !== 'OpenAPI Spec');
+
+    expect(labels).toEqual([...labels].sort((a, b) => a.localeCompare(b)));
   });
 });

@@ -1,154 +1,85 @@
 ---
 title: Authentication Overview
 sidebar_label: Authentication
-description: Authentication methods and concepts for Glean APIs - OAuth and Glean-issued tokens
+description: Authentication methods and concepts for Glean APIs - Platform, Client, and Indexing
 ---
 
 import ApiSupport from '@site/src/components/ApiSupport';
-import ThemedImage from '@theme/ThemedImage';
-import useBaseUrl from '@docusaurus/useBaseUrl';
 
 # Authentication Overview
 
-Glean provides two main authentication methods to access its APIs, each with different capabilities and use cases. This guide will help you understand the concepts and choose the right approach for your integration.
-
----
+Glean's three REST API families use different authentication models. Start by choosing the API you need, then follow its implementation guide for the exact credential and scope requirements.
 
 ## Finding Your Server URL
 
-All Glean API requests require your organization's server URL. The server URL is used in API endpoints and API Client/SDK configuration.
+All Glean API requests require your organization's server URL. Find it in the **Server instance (QE)** field on the [Glean About page](https://app.glean.com/admin/about-glean).
 
-### How to Find Your Server URL
+Your server URL is used in API requests and API client configuration:
 
-1. **Navigate to the About Page**: Visit [https://app.glean.com/admin/about-glean](https://app.glean.com/admin/about-glean) in your Glean admin console
-2. **Locate Server URL**: Find the **"Server instance (QE)"** field — this is your server URL
+- Platform API: `https://<your-server-url>/api/...`
+- Client API: `https://<your-server-url>/rest/api/v1/...`
+- Indexing API: `https://<your-server-url>/api/index/v1/...`
 
-### Example
+## API authentication at a glance
 
-If the field shows: `https://acme-prod-be.glean.com/`
-Your server URL is: **`https://acme-prod-be.glean.com`**
+<CardGroup cols={3}>
+  <Card title="Platform API" icon="Zap" iconSet="feather">
+    <ApiSupport platformApi={true} />
 
-### Usage in APIs
+    **Recommended for new integrations**
 
-Your server URL is used in:
-- **API Base URLs**:
-  - Client API: `https://acme-prod-be.glean.com/rest/api/v1/`
-  - Indexing API: `https://acme-prod-be.glean.com/api/index/v1/`
-- **API Client/SDK Configuration**: Set as `GLEAN_SERVER_URL` environment variable
-
----
-
-## API Types and Implementation Guides
-
-Glean offers two distinct APIs with different authentication capabilities. Choose your API type to get started:
-
-<CardGroup cols={2}>
-  <Card title="Client API Authentication" icon="Code">
-    **For end-user applications and integrations**
-        
-    - Search, chat, collections, agents
-    - User-facing functionality
-    - OAuth (recommended) + Glean tokens
-    - Base URL: `https://<your-server-url>/rest/api/v1/`
-
-    [Implementation Guide →](/api-info/client/authentication/overview)
+    - Glean OAuth Authorization Server tokens
+    - External IdP OAuth tokens
+    - Glean-issued tokens
+    - [Platform authentication guide](/api/platform-api/authentication)
   </Card>
 
-  <Card title="Indexing API Authentication" icon="Database">
-    **For administrative operations and content management**
+  <Card title="Client API" icon="Code" iconSet="feather">
+    <ApiSupport clientApi={true} />
 
-    - Document indexing, datasource management
-    - Administrative operations
-    - Glean tokens only (no OAuth support)
-    - Base URL: `https://<your-server-url>/api/index/v1/`
-    
-    [Implementation Guide →](/api-info/indexing/authentication/overview)
+    **For existing and specialized user-facing integrations**
+
+    - Glean OAuth Authorization Server
+    - External IdP OAuth
+    - Glean-issued tokens
+    - [Client authentication guide](/api-info/client/authentication/overview)
+  </Card>
+
+  <Card title="Indexing API" icon="Database">
+    <ApiSupport indexingApi={true} />
+
+    **For content ingestion and management**
+
+    - Glean-issued tokens only
+    - Datasources, documents, people, and permissions
+    - [Indexing authentication guide](/api-info/indexing/authentication/overview)
   </Card>
 </CardGroup>
 
----
+## Choose an authentication path
 
-## Authentication Methods
+### Platform API
 
-### OAuth Authentication (Recommended)
+Platform API requests use a bearer credential in the `Authorization` header. Use one of the supported Platform API authentication methods described in the [Platform API authentication guide](/api/platform-api/authentication).
 
-<ApiSupport clientApi={true} />
+### Client API
 
-**OAuth is the recommended method** for Client API integrations. Two options are supported:
+OAuth is recommended for new Client API integrations. Use Glean-issued tokens when you need admin-managed token lifecycle, granular token control, or a server-to-server integration without OAuth. See the [Client API authentication guide](/api-info/client/authentication/overview).
 
-- **Glean OAuth Authorization Server** (recommended for new integrations): Glean issues OAuth tokens with Glean-defined scopes via Authorization Code + PKCE. No IdP OAuth setup is required — users are directed through your SSO provider automatically as part of authorization. This is also the mechanism behind the remote MCP server.
-- **IdP-issued tokens**: use OAuth tokens from Google Workspace, Microsoft Entra ID (Azure AD), Okta, or OneLogin if you already operate OAuth in your identity provider.
+### Indexing API
 
-- Supported APIs: Client API only  
-- Benefits: No manual token management, standards-based (OAuth 2.0 + PKCE), seamless SSO login  
+The Indexing API requires Glean-issued tokens. OAuth is not supported for ordinary Indexing API operations. See the [Indexing API authentication guide](/api-info/indexing/authentication/overview).
 
-### Glean-Issued Tokens
+## Shared security practices
 
-<ApiSupport clientApi={true} indexingApi={true} />
+- Store credentials securely and never commit them to source control.
+- Use environment variables or a secrets manager for application credentials.
+- Use the least-privileged credential and scopes available for your integration.
+- Rotate long-lived credentials and plan for expiry before production rollout.
+- Handle `401`, `403`, and rate-limit responses explicitly.
 
-Glean-issued tokens are manually created through the admin console and offer granular control over permissions and access.
+## Next steps
 
-- Supported APIs: Both Client API and Indexing API  
-- Types: User-scoped, Global (super admin only)  
-- Benefits: Granular scope control, works with both APIs  
-
----
-
-## Quick Decision Guide
-
-<Card title="Which Authentication Method Should I Use?" icon="HelpCircle">
-  **For Client API integrations:**
-  - **Choose OAuth** for new integrations — the Glean OAuth Authorization Server requires no IdP OAuth infrastructure (IdP-issued tokens remain supported if you already run OAuth in Google, Entra ID, Okta, or OneLogin)
-  - **Choose Glean tokens** for server-to-service integrations or when you need admin-managed token lifecycle
-  
-  **For Indexing API operations:**
-  - **Must use Glean tokens** (OAuth is not supported)
-  
-  **For applications using both APIs:**
-  - Use OAuth for Client API operations + separate Glean token for Indexing API operations
-</Card>
-
----
-
-## User Roles and Permissions
-
-Understanding who can create what type of authentication tokens:
-
-| Role | Client API Tokens | Indexing API Tokens |
-|------|-------------------|---------------------|
-| **Super Admin** | Create for any scope, including `global` | Create |
-| **Admin** | Create for any scope except `global` | Create |
-| **Setup Admin** | Cannot create | Create (Indexing API only) |
-| **API Token Creator** | Create, scoped to themselves | Create, scoped to themselves |
-
-See the [Administrator Roles matrix](https://docs.glean.com/administration/identity/roles/admin-roles) for the authoritative permission breakdown. OAuth access is configured separately in the Admin console — see the [Client API authentication overview](/api-info/client/authentication/overview).
-
----
-
-## Security Best Practices
-
-Regardless of which authentication method you choose:
-
-- **Store tokens securely** - Never commit tokens to version control
-- **Use environment variables** for token storage in applications
-- **Implement token rotation** for long-running applications
-- **Monitor token usage** through Glean's admin console
-- **Use minimal scopes** when creating Glean tokens
-- **Implement proper error handling** for authentication failures
-
----
-
-## Need Help?
-
-- **Community**: Join discussions at [community.glean.com](https://community.glean.com)
-- **Support**: Contact your Glean administrator for token creation access
-- **Documentation**: Detailed implementation guides linked above
-
----
-
-## Next Steps
-
-1. **Determine your use case**: Client API, Indexing API, or both?
-2. **Choose authentication method**: OAuth (Client API) or Glean tokens
-3. **Follow the implementation guide**: Use the links above for detailed setup instructions
-4. **Test your integration**: Verify authentication works before building your application 
+1. Choose the right API from the [Glean API overview](/api).
+2. Follow the API-specific authentication guide above.
+3. Try the API's getting-started example before building the complete integration.

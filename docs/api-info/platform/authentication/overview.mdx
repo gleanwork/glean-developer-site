@@ -1,0 +1,51 @@
+---
+title: Platform API Authentication
+slug: /api/platform-api/authentication
+description: Authenticate requests to the Glean Platform API.
+sidebar_label: Authentication
+---
+
+# Platform API Authentication
+
+Platform API requests use a bearer credential in the `Authorization` header. Platform API supports the same customer-facing authentication methods as Client API: Glean OAuth Authorization Server tokens, OAuth access tokens issued by a configured external identity provider, and Glean-issued API tokens.
+
+## Request header
+
+```http
+Authorization: Bearer <platform_token>
+```
+
+## Choose an authentication method
+
+<CardGroup cols={3}>
+  <Card title="Glean OAuth Authorization Server" icon="Shield" iconSet="feather">
+    Use Glean's OAuth Authorization Server for OAuth access tokens and fine-grained Glean scopes. This is the recommended OAuth path for new integrations.
+  </Card>
+
+  <Card title="External IdP OAuth" icon="Globe" iconSet="feather">
+    Use OAuth access tokens issued by a configured identity provider such as Google, Microsoft Entra ID, Okta, or OneLogin.
+  </Card>
+
+  <Card title="Glean-issued tokens" icon="Key" iconSet="feather">
+    Use user-scoped or global bearer tokens created in the Glean Admin Console. Global tokens also require `X-Glean-ActAs`.
+  </Card>
+</CardGroup>
+
+## Quick start
+
+1. Confirm that your application has access to the Platform API.
+2. Obtain a Platform bearer credential through the appropriate flow.
+3. Store the credential securely and provide it in the `Authorization` header.
+4. Try the [Platform API getting-started guide](/api/platform-api/getting-started).
+
+:::note
+
+Platform API and Client API use the same customer-facing authentication methods. Indexing API operations use Glean-issued tokens and do not accept OAuth. Follow the method-specific setup and scope requirements for the endpoint you are calling.
+
+:::
+
+## Related resources
+
+- [Platform API overview](/api/platform-api)
+- [Platform API reference](/api/platform-api/platform-search)
+- [Common API authentication concepts](/get-started/authentication)

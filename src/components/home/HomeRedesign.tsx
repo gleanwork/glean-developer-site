@@ -196,10 +196,10 @@ export function CookbookStrip(): React.ReactElement {
 
 const PATHS = [
   {
-    title: 'Build with the APIs',
-    body: 'Search, chat, and agents from your code — with client libraries for four languages.',
+    title: 'Build with Platform API',
+    body: 'Start with modern search, agents, skills, and chat from your code.',
     icon: 'Code',
-    href: '/api-info/client/getting-started/overview',
+    href: '/api/platform-api',
   },
   {
     title: 'Embed with the Web SDK',
@@ -209,7 +209,7 @@ const PATHS = [
   },
   {
     title: 'Connect your data',
-    body: 'Bring any source into Glean with the Indexing API and connector framework.',
+    body: 'Bring any source into Glean with the Indexing API.',
     icon: 'Database',
     href: '/api-info/indexing/getting-started/overview',
   },
