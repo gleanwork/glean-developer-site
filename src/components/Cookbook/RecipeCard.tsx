@@ -5,19 +5,6 @@ import { RECIPE_SURFACE_LABELS, type RecipeRecord } from '../../types/recipe';
 import { CategoryTile } from './categories';
 import styles from './RecipeCard.module.css';
 
-/** Feather icon per surface, for cards that show a surface glyph. */
-export const SURFACE_ICONS: Record<string, string> = {
-  'web-sdk': 'Layout',
-  'connector-sdk': 'Database',
-  'indexing-api': 'Database',
-  mcp: 'GitBranch',
-  'client-api': 'Code',
-  'platform-api': 'Code',
-  'sdk-client': 'Package',
-  tools: 'Zap',
-  agents: 'Cpu',
-};
-
 interface RecipeCardProps {
   recipe: RecipeRecord;
 }

@@ -630,7 +630,7 @@ const baseSidebars: SidebarsConfig = {
         {
           type: 'doc',
           id: 'api-info/platform/getting-started/overview',
-          label: 'Getting Started',
+          label: 'Quickstart',
         },
         {
           type: 'doc',
@@ -956,7 +956,7 @@ const baseSidebars: SidebarsConfig = {
         {
           type: 'doc',
           id: 'api-info/client/getting-started/overview',
-          label: 'Getting Started',
+          label: 'Quickstart',
         },
         {
           type: 'category',
@@ -986,7 +986,7 @@ const baseSidebars: SidebarsConfig = {
         {
           type: 'doc',
           id: 'api-info/client/getting-started/basic-usage',
-          label: 'Basic Usage',
+          label: 'Usage Guide',
         },
         {
           type: 'category',
@@ -1722,7 +1722,7 @@ const baseSidebars: SidebarsConfig = {
         {
           type: 'doc',
           id: 'api-info/indexing/getting-started/overview',
-          label: 'Getting Started',
+          label: 'Quickstart',
         },
         {
           type: 'doc',
