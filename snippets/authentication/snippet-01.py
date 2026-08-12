@@ -7,7 +7,7 @@ YOUR_GLEAN_SERVER_URL=''
 # Find your server URL at app.glean.com/admin/about-glean
 
 # Use this function as is in your code (once you have filled out YOUR_GLEAN_SERVER_URL).
-# Pass the header value for Glean-Actions-Signature as the 'token' in this function.
+# Pass the header value for Glean-Tools-Signature as the 'token' in this function.
 
 def verify_jwt(token):
     try:

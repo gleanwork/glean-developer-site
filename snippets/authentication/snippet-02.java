@@ -39,6 +39,6 @@ public static void verifySignature(String publicKey, String jwtFromHeader) throw
   try {
     jwtConsumer.processToClaims(jwtFromHeader);
   } catch (InvalidJwtException e) {
-    throw new IOException("Failed to verify actions signature: " + e.getMessage());
+    throw new IOException("Failed to verify tools signature: " + e.getMessage());
   }
 }
