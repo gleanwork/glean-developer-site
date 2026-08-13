@@ -36,6 +36,7 @@ const PATH_SCOPES: Record<string, string> = {
   pins: 'pins',
   search: 'search',
   shortcuts: 'shortcuts',
+  skills: 'skills',
   summarize: 'summarize',
   tools: 'tools',
   verification: 'verification',

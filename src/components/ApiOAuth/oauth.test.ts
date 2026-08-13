@@ -25,13 +25,13 @@ describe('API Explorer OAuth helpers', () => {
       'agents',
     );
     expect(scopeForPath('/api/platform-api/platform-search')).toBe('search');
+    expect(scopeForPath('/api/platform-api/platform-skills-list')).toBe(
+      'skills',
+    );
   });
 
   it('returns undefined for unmapped groups so no scope is requested', () => {
     expect(scopeForPath('/api/client-api/messages/list')).toBeUndefined();
-    expect(
-      scopeForPath('/api/platform-api/platform-skills-list'),
-    ).toBeUndefined();
     expect(scopeForPath('/api/indexing-api/index-document')).toBeUndefined();
   });
 });
