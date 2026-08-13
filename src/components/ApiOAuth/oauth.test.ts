@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { isOAuthEligiblePath, scopeForPath } from './oauth';
+import {
+  clientRegistrationCacheKey,
+  isOAuthEligiblePath,
+  scopeForPath,
+} from './oauth';
 
 describe('API Explorer OAuth helpers', () => {
   it('offers OAuth on Client and Platform API pages, not Indexing', () => {
@@ -33,5 +37,23 @@ describe('API Explorer OAuth helpers', () => {
   it('returns undefined for unmapped groups so no scope is requested', () => {
     expect(scopeForPath('/api/client-api/messages/list')).toBeUndefined();
     expect(scopeForPath('/api/indexing-api/index-document')).toBeUndefined();
+  });
+
+  it('refreshes a registered client when the server scope set changes', () => {
+    const original = clientRegistrationCacheKey({
+      issuer: 'https://example-be.glean.com',
+      scopes_supported: ['search', 'chat'],
+    });
+    const reordered = clientRegistrationCacheKey({
+      issuer: 'https://example-be.glean.com',
+      scopes_supported: ['chat', 'search'],
+    });
+    const withSkills = clientRegistrationCacheKey({
+      issuer: 'https://example-be.glean.com',
+      scopes_supported: ['chat', 'search', 'skills'],
+    });
+
+    expect(reordered).toBe(original);
+    expect(withSkills).not.toBe(original);
   });
 });

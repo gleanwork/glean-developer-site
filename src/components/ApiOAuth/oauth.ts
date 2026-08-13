@@ -88,6 +88,16 @@ async function discover(serverUrl: string): Promise<ServerMetadata> {
   return res.json();
 }
 
+export function clientRegistrationCacheKey(metadata: {
+  issuer: string;
+  scopes_supported?: string[];
+}): string {
+  const supportedScopes = [...new Set(metadata.scopes_supported ?? [])]
+    .sort()
+    .join(' ');
+  return `${metadata.issuer}|${supportedScopes}`;
+}
+
 /** Register (or reuse) a public client for this issuer via DCR. */
 async function getClientId(metadata: ServerMetadata): Promise<string> {
   let cache: Record<string, string> = {};
@@ -96,8 +106,11 @@ async function getClientId(metadata: ServerMetadata): Promise<string> {
   } catch {
     // Corrupt cache; re-register.
   }
-  if (cache[metadata.issuer]) {
-    return cache[metadata.issuer];
+  // Dynamic clients receive their allowed scopes at registration time. Include
+  // the server's advertised scope set so newly added scopes trigger a refresh.
+  const cacheKey = clientRegistrationCacheKey(metadata);
+  if (cache[cacheKey]) {
+    return cache[cacheKey];
   }
   if (!metadata.registration_endpoint) {
     throw new Error(
@@ -119,7 +132,7 @@ async function getClientId(metadata: ServerMetadata): Promise<string> {
     throw new Error(`Client registration failed (HTTP ${res.status}).`);
   }
   const { client_id: clientId } = await res.json();
-  cache[metadata.issuer] = clientId;
+  cache[cacheKey] = clientId;
   localStorage.setItem(CLIENT_ID_STORE, JSON.stringify(cache));
   return clientId;
 }
