@@ -24,6 +24,18 @@ export default defineConfig({
   resolve: {
     alias: {
       '@site': path.resolve(__dirname, './'),
+      '@theme/ApiExplorer': path.resolve(
+        __dirname,
+        './node_modules/docusaurus-theme-openapi-docs/lib/theme/ApiExplorer',
+      ),
+      '@theme/ApiItem': path.resolve(
+        __dirname,
+        './node_modules/docusaurus-theme-openapi-docs/lib/theme/ApiItem',
+      ),
+      '@theme/translationIds': path.resolve(
+        __dirname,
+        './node_modules/docusaurus-theme-openapi-docs/lib/theme/translationIds.js',
+      ),
       '@theme': path.resolve(
         __dirname,
         './node_modules/@docusaurus/theme-classic/lib/theme',

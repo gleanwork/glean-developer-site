@@ -50,6 +50,31 @@ const HTTP_METHODS = [
 ];
 
 const EXPERIMENTAL_HEADER_NAME = 'X-Glean-Include-Experimental';
+const EXPERIMENTAL_HEADER_DESCRIPTION =
+  'This endpoint is experimental, so requests must include this header set to `true`. See [How experimental APIs work](https://developers.glean.com/experimental/overview) for details.';
+
+function isExperimentalHeaderParam(param) {
+  return (
+    typeof param?.name === 'string' &&
+    param.name.toLowerCase() === EXPERIMENTAL_HEADER_NAME.toLowerCase()
+  );
+}
+
+function normalizeExperimentalHeader(param) {
+  param.in = 'header';
+  param.required = true;
+  const schema =
+    param.schema && typeof param.schema === 'object' && !param.schema.$ref
+      ? param.schema
+      : {};
+  param.schema = { ...schema, type: 'boolean', default: true };
+  param.example = true;
+  param.value = 'true';
+  if (typeof param.description !== 'string' || param.description.length === 0) {
+    param.description = EXPERIMENTAL_HEADER_DESCRIPTION;
+  }
+}
+
 const SKILLS_MULTIPART_OPERATION_IDS = new Set([
   'platform-skills-create',
   'platform-skills-validate',
@@ -71,6 +96,9 @@ const SKILLS_MULTIPART_OPERATION_IDS = new Set([
  * generator (ApiExplorer/buildPostmanRequest `setHeaders`) only emits a
  * header parameter when the parameter object carries a truthy `value`, so
  * pre-setting it makes the header appear in the generated cURL example.
+ * Existing declarations are normalized to that same contract instead of
+ * being skipped, so a header without `value` cannot hide from the
+ * explorer while also being omitted from Send.
  */
 export function injectExperimentalHeaders(apiSpec) {
   const paths = apiSpec?.paths;
@@ -90,19 +118,18 @@ export function injectExperimentalHeaders(apiSpec) {
       }
 
       operation.parameters ??= [];
-      const alreadyDeclared = operation.parameters.some(
-        (param) =>
-          param?.in === 'header' &&
-          typeof param?.name === 'string' &&
-          param.name.toLowerCase() === EXPERIMENTAL_HEADER_NAME.toLowerCase(),
+      const existingHeader = operation.parameters.find((param) =>
+        isExperimentalHeaderParam(param),
       );
-      if (alreadyDeclared) continue;
+      if (existingHeader) {
+        normalizeExperimentalHeader(existingHeader);
+        continue;
+      }
 
       operation.parameters.unshift({
         in: 'header',
         name: EXPERIMENTAL_HEADER_NAME,
-        description:
-          'This endpoint is experimental, so requests must include this header set to `true`. See [How experimental APIs work](https://developers.glean.com/experimental/overview) for details.',
+        description: EXPERIMENTAL_HEADER_DESCRIPTION,
         required: true,
         schema: {
           type: 'boolean',

@@ -49,6 +49,7 @@ paths:
     expect(header.name).toBe(HEADER_NAME);
     expect(header.required).toBe(true);
     expect(header.schema).toEqual({ type: 'boolean', default: true });
+    expect(header.example).toBe(true);
     // Non-standard `value` pre-fills the generated cURL snippet in
     // docusaurus-theme-openapi-docs (see buildPostmanRequest setHeaders).
     expect(header.value).toBe('true');
@@ -120,6 +121,108 @@ paths:
 
     const params = spec.paths['/rest/api/v1/search'].post.parameters;
     expect(params.filter((p: any) => p.name === HEADER_NAME)).toHaveLength(1);
+    expect(params[0].value).toBe('true');
+    expect(params[0].required).toBe(true);
+  });
+
+  it('normalizes an already declared header that is missing a value', () => {
+    const spec = loadSpec(`
+openapi: "3.0.0"
+info:
+  title: Test API
+  version: "1.0.0"
+paths:
+  /rest/api/v1/search:
+    post:
+      operationId: search
+      x-glean-experimental:
+        id: abc
+      parameters:
+        - in: header
+          name: ${HEADER_NAME}
+          description: Keep this description.
+          x-custom: leftover
+      responses:
+        200:
+          description: Success
+`);
+
+    injectExperimentalHeaders(spec);
+
+    const header = spec.paths['/rest/api/v1/search'].post.parameters[0];
+    expect(header.in).toBe('header');
+    expect(header.required).toBe(true);
+    expect(header.schema).toEqual({ type: 'boolean', default: true });
+    expect(header.example).toBe(true);
+    expect(header.value).toBe('true');
+    expect(header.description).toBe('Keep this description.');
+    expect(header['x-custom']).toBe('leftover');
+    expect(
+      spec.paths['/rest/api/v1/search'].post.parameters.filter(
+        (p: any) => p.name === HEADER_NAME,
+      ),
+    ).toHaveLength(1);
+  });
+
+  it('matches an already declared header case-insensitively', () => {
+    const spec = loadSpec(`
+openapi: "3.0.0"
+info:
+  title: Test API
+  version: "1.0.0"
+paths:
+  /rest/api/v1/search:
+    post:
+      operationId: search
+      x-glean-experimental:
+        id: abc
+      parameters:
+        - in: header
+          name: x-glean-include-experimental
+          required: true
+      responses:
+        200:
+          description: Success
+`);
+
+    injectExperimentalHeaders(spec);
+
+    const params = spec.paths['/rest/api/v1/search'].post.parameters;
+    expect(params).toHaveLength(1);
+    expect(params[0].name).toBe('x-glean-include-experimental');
+    expect(params[0].value).toBe('true');
+    expect(params[0].schema).toEqual({ type: 'boolean', default: true });
+  });
+
+  it('moves a same-name parameter into the header location', () => {
+    const spec = loadSpec(`
+openapi: "3.0.0"
+info:
+  title: Test API
+  version: "1.0.0"
+paths:
+  /rest/api/v1/search:
+    post:
+      operationId: search
+      x-glean-experimental:
+        id: abc
+      parameters:
+        - in: query
+          name: ${HEADER_NAME}
+          description: Keep this description.
+      responses:
+        200:
+          description: Success
+`);
+
+    injectExperimentalHeaders(spec);
+
+    const params = spec.paths['/rest/api/v1/search'].post.parameters;
+    expect(params).toHaveLength(1);
+    expect(params[0].in).toBe('header');
+    expect(params[0].name).toBe(HEADER_NAME);
+    expect(params[0].value).toBe('true');
+    expect(params[0].description).toBe('Keep this description.');
   });
 
   it('handles specs without paths', () => {
