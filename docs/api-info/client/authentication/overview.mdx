@@ -12,13 +12,13 @@ import TabItem from '@theme/TabItem';
 This guide helps you choose and implement the right authentication method for Glean's **Client API**, which powers search, chat, collections, agents, and other user-facing functionality.
 
 <CardGroup cols={2}>
-  <Card title="OAuth (Recommended)" icon="Shield">
+  <Card title="OAuth (Recommended for per-user integrations)" icon="Shield">
     **Glean Authorization Server or your IdP**
 
-    - Tokens from the Glean OAuth Authorization Server (incl. DCR) or an external IdP
+    - Tokens from the Glean OAuth Authorization Server or an external IdP
     - Works with Google, Azure, Okta, OneLogin
     - Glean-defined scopes (Authorization Server) or Client API access via your IdP
-    - Powers the remote MCP server
+    - Use static clients for application integrations; DCR is conditional
 
     [Setup OAuth →](./oauth)
   </Card>
@@ -42,14 +42,14 @@ This guide helps you choose and implement the right authentication method for Gl
 Choose your authentication method based on your needs:
 
 ### Choose OAuth if you:
-- Want standards-based, user-authorized access without manually managing Glean API tokens
-- Can enable the Glean OAuth Authorization Server, or already use supported OAuth tokens from your enterprise identity provider
+- Are building a per-user Client API integration and want standards-based, user-authorized access without manually managing Glean API tokens
+- Can use a static client with the Glean OAuth Authorization Server, or already use supported OAuth tokens from your enterprise identity provider
 - Want the token issuer to manage expiration and refresh
 - Are building a user-facing integration
 
 ### Choose Glean Tokens if you:
-- Need granular scope control for security
-- Don't have an OAuth identity provider
+- Need an administrator-managed token lifecycle or a supported server-to-server exception
+- Cannot use OAuth because neither the Glean OAuth Authorization Server is enabled nor an external-IdP OAuth path is configured
 - Need global permissions to impersonate users
 - Want fine-grained control over token lifecycle
 
@@ -111,6 +111,8 @@ X-Glean-ActAs: user@company.com
 ---
 
 ## Testing Your Authentication
+
+Use the [Search API Explorer](/api/client-api/search/search) to test a Client API request against your own tenant. API Explorer is an interactive tenant-testing tool, not production sample code; implement the OAuth flow and token handling in your application before deploying it.
 
 ### Quick Test Commands
 

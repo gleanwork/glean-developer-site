@@ -277,9 +277,10 @@ export function QuickstartTabs(): React.ReactElement {
             <li>
               <span className={styles.quickstartNum}>1</span>
               <span>
-                Create an API token in{' '}
+                Choose OAuth or a Glean-issued token in{' '}
                 <Link to="/get-started/authentication">Authentication</Link> —
-                OAuth or a Glean-issued token.
+                OAuth is preferred for per-user Client and Platform
+                integrations.
               </span>
             </li>
             <li>
