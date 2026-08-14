@@ -1,0 +1,246 @@
+/* ============================================================================
+ * Copyright (c) Palo Alto Networks
+ *
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ * ========================================================================== */
+
+/**
+ * Ejected from docusaurus-theme-openapi-docs@5.0.2 ParamOptions.
+ * Filters X-Glean-Include-Experimental out of the visible form before any
+ * React Hook Form controller mounts. Redux still holds the full parameter
+ * so generated cURL and Send keep the header.
+ */
+import React, { useState, useId } from 'react';
+
+import { translate } from '@docusaurus/Translate';
+import FormItem from '@theme/ApiExplorer/FormItem';
+import ParamArrayFormItem from '@theme/ApiExplorer/ParamOptions/ParamFormItems/ParamArrayFormItem';
+import ParamBooleanFormItem from '@theme/ApiExplorer/ParamOptions/ParamFormItems/ParamBooleanFormItem';
+import ParamMultiSelectFormItem from '@theme/ApiExplorer/ParamOptions/ParamFormItems/ParamMultiSelectFormItem';
+import ParamSelectFormItem from '@theme/ApiExplorer/ParamOptions/ParamFormItems/ParamSelectFormItem';
+import ParamTextFormItem from '@theme/ApiExplorer/ParamOptions/ParamFormItems/ParamTextFormItem';
+import { useTypedSelector } from '@theme/ApiItem/hooks';
+import { OPENAPI_PARAM_OPTIONS } from '@theme/translationIds';
+
+import { isVisibleInExplorer } from './isVisibleInExplorer';
+
+type Param = {
+  in?: string;
+  name?: string;
+  required?: boolean;
+  schema?: any;
+};
+
+export interface LabelProps {
+  label?: string;
+  type?: string;
+  required?: boolean;
+}
+
+export interface ParamProps {
+  param: Param;
+}
+
+export function getSchemaEnum(schema: any): any[] | undefined {
+  if (schema?.enum) {
+    return schema.enum;
+  }
+
+  if (schema?.allOf && Array.isArray(schema.allOf)) {
+    for (const item of schema.allOf) {
+      if (item.enum) {
+        return item.enum;
+      }
+    }
+  }
+
+  if (schema?.const !== undefined) {
+    return [schema.const];
+  }
+
+  return undefined;
+}
+
+function ParamOption({
+  param,
+  label,
+  type,
+  required,
+}: ParamProps & LabelProps) {
+  const schemaEnum = getSchemaEnum(param.schema);
+  const itemsEnum = getSchemaEnum(param.schema?.items);
+
+  if (param.schema?.type === 'array' && itemsEnum) {
+    return (
+      <ParamMultiSelectFormItem
+        param={param}
+        label={label}
+        type={type}
+        required={required}
+      />
+    );
+  }
+
+  if (param.schema?.type === 'array') {
+    return (
+      <ParamArrayFormItem
+        param={param}
+        label={label}
+        type={type}
+        required={required}
+      />
+    );
+  }
+
+  if (schemaEnum) {
+    return (
+      <ParamSelectFormItem
+        param={param}
+        label={label}
+        type={type}
+        required={required}
+      />
+    );
+  }
+
+  if (param.schema?.type === 'boolean') {
+    return (
+      <ParamBooleanFormItem
+        param={param}
+        label={label}
+        type={type}
+        required={required}
+      />
+    );
+  }
+
+  return (
+    <ParamTextFormItem
+      param={param}
+      label={label}
+      type={type}
+      required={required}
+    />
+  );
+}
+
+function ParamOptionWrapper({ param }: ParamProps) {
+  return (
+    <FormItem>
+      <ParamOption
+        param={param}
+        label={param.name}
+        type={param.in}
+        required={param.required}
+      />
+    </FormItem>
+  );
+}
+
+function ParamOptions() {
+  const [showOptional, setShowOptional] = useState(false);
+
+  const optionalId = useId();
+
+  const pathParams = useTypedSelector((state: any) => state.params.path);
+  const queryParams = useTypedSelector((state: any) => state.params.query);
+  const cookieParams = useTypedSelector((state: any) => state.params.cookie);
+  const headerParams = useTypedSelector((state: any) => state.params.header);
+
+  const allParams = [
+    ...pathParams,
+    ...queryParams,
+    ...cookieParams,
+    ...headerParams,
+  ].filter(isVisibleInExplorer);
+
+  if (allParams.length === 0) {
+    return null;
+  }
+
+  const requiredParams = allParams.filter((p) => p.required);
+  const optionalParams = allParams.filter((p) => !p.required);
+
+  return (
+    <>
+      {requiredParams.map((param) => (
+        <ParamOptionWrapper key={`${param.in}-${param.name}`} param={param} />
+      ))}
+
+      {optionalParams.length > 0 && (
+        <>
+          <button
+            type="button"
+            className="openapi-explorer__show-more-btn"
+            aria-expanded={showOptional}
+            aria-controls={optionalId}
+            onClick={() => setShowOptional((prev) => !prev)}
+          >
+            <span
+              style={{
+                width: '1.5em',
+                display: 'inline-block',
+                textAlign: 'center',
+              }}
+            >
+              <span
+                className={
+                  showOptional
+                    ? 'openapi-explorer__plus-btn--expanded'
+                    : 'openapi-explorer__plus-btn'
+                }
+              >
+                <div>
+                  <svg
+                    style={{
+                      fill: 'currentColor',
+                      width: '10px',
+                      height: '10px',
+                    }}
+                    height="16"
+                    viewBox="0 0 16 16"
+                    width="16"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M9 7h6a1 1 0 0 1 0 2H9v6a1 1 0 0 1-2 0V9H1a1 1 0 1 1 0-2h6V1a1 1 0 1 1 2 0z"
+                      fillRule="evenodd"
+                    ></path>
+                  </svg>
+                </div>
+              </span>
+            </span>
+            {showOptional
+              ? translate({
+                  id: OPENAPI_PARAM_OPTIONS.HIDE_OPTIONAL,
+                  message: 'Hide optional parameters',
+                })
+              : translate({
+                  id: OPENAPI_PARAM_OPTIONS.SHOW_OPTIONAL,
+                  message: 'Show optional parameters',
+                })}
+          </button>
+
+          <div
+            className={
+              showOptional
+                ? 'openapi-explorer__show-options'
+                : 'openapi-explorer__hide-options'
+            }
+            id={optionalId}
+          >
+            {optionalParams.map((param) => (
+              <ParamOptionWrapper
+                key={`${param.in}-${param.name}`}
+                param={param}
+              />
+            ))}
+          </div>
+        </>
+      )}
+    </>
+  );
+}
+
+export default ParamOptions;
