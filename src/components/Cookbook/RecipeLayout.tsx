@@ -10,7 +10,7 @@ import {
 } from '../../types/recipe';
 import BrowserFrame from '../BrowserFrame';
 import PluginRunButton from './PluginRunButton';
-import { CategoryTile, CATEGORY_ICONS } from './categories';
+import { CATEGORY_ICONS } from './categories';
 import styles from './RecipeLayout.module.css';
 import catStyles from './categories.module.css';
 
@@ -532,10 +532,10 @@ function RecipePreview({
 
 /**
  * Recipe detail template per design handoff 4b: gradient header banner
- * (category tile, title, meta pills) and a main + sticky-rail grid. The
- * native theme breadcrumb (rendered above this component) handles
- * back-navigation to /cookbook. Body sections come from the recipe MDX via
- * the section components.
+ * (title, meta pills) and a main + sticky-rail grid. The native theme
+ * breadcrumb (rendered above this component) handles back-navigation to
+ * /cookbook. Body sections come from the recipe MDX via the section
+ * components.
  */
 export default function RecipeLayout({
   recipe,
@@ -558,16 +558,8 @@ export default function RecipeLayout({
           >
             <div>
               <div className={styles.bannerMain}>
-                <CategoryTile
-                  category={recipe.category}
-                  iconOverride={recipe.icon}
-                  iconSize={26}
-                  size={52}
-                />
-                <div>
-                  <h1 className={styles.bannerTitle}>{recipe.title}</h1>
-                  <p className={styles.bannerDesc}>{recipe.description}</p>
-                </div>
+                <h1 className={styles.bannerTitle}>{recipe.title}</h1>
+                <p className={styles.bannerDesc}>{recipe.description}</p>
               </div>
               <div className={styles.metaRow}>
                 {metaPill(
