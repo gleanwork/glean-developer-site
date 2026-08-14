@@ -10,9 +10,9 @@ interface FlagshipCardProps {
 }
 
 /**
- * Flagship hero card per design handoff 4a: full-width, blue 1.5px border,
- * light gradient, "Combines N recipes" mini-list on the right built from the
- * recipe's `combines` frontmatter.
+ * Flagship hero card: full-width, regular light border, light gradient,
+ * "Combines N recipes" mini-list on the right built from the recipe's
+ * `combines` frontmatter.
  */
 export default function FlagshipCard({
   recipe,

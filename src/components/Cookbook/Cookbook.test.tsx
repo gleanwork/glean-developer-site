@@ -1,10 +1,18 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import RecipeIndex from './RecipeIndex';
-import RecipeLayout from './RecipeLayout';
+import RecipeLayout, { RecipeArchitecture } from './RecipeLayout';
 import FlagshipCard from './FlagshipCard';
 import type { RecipeRecord } from '../../types/recipe';
+import catStyles from './categories.module.css';
+import layoutStyles from './RecipeLayout.module.css';
+
+function readCss(fileName: string): string {
+  return fs.readFileSync(path.resolve(__dirname, fileName), 'utf8');
+}
 
 function makeRecipe(overrides: Partial<RecipeRecord>): RecipeRecord {
   return {
@@ -121,6 +129,20 @@ describe('FlagshipCard', () => {
     expect(screen.getByText('Combines three recipes')).toBeInTheDocument();
     expect(screen.getByText('Index a developer catalog')).toBeInTheDocument();
     expect(screen.getByText('Ground chat in the catalog')).toBeInTheDocument();
+  });
+
+  it('uses the regular light border and a neutral pill', () => {
+    const css = readCss('FlagshipCard.module.css');
+    expect(css).toMatch(
+      /\.card\s*\{[^}]*border:\s*1px solid var\(--gdt-border-light\)/s,
+    );
+    expect(css).not.toMatch(
+      /\.card\s*\{[^}]*border:\s*1\.5px solid var\(--gdt-primary\)/s,
+    );
+    expect(css).toMatch(/\.pill\s*\{[^}]*background:\s*var\(--gdt-bg-mid\)/s);
+    expect(css).not.toMatch(
+      /\.pill\s*\{[^}]*background:\s*var\(--gdt-primary\)/s,
+    );
   });
 });
 
@@ -332,6 +354,81 @@ describe('RecipeLayout', () => {
     expect(screen.queryByText(/cursor plugin/)).not.toBeInTheDocument();
     expect(screen.getByText(/Import from Repo/)).toBeInTheDocument();
     expect(screen.getByText('/embed-search-chat')).toBeInTheDocument();
+  });
+
+  it('does not render a category tile beside the title', () => {
+    render(
+      <RecipeLayout plugin={plugin} recipe={makeRecipe({})}>
+        <p>Body</p>
+      </RecipeLayout>,
+    );
+
+    expect(
+      screen.getByRole('heading', { name: 'Embed search & chat' }),
+    ).toBeInTheDocument();
+    expect(document.querySelector(`.${catStyles.tile}`)).toBeNull();
+  });
+
+  it('renders architecture in a horizontally scrollable canvas', () => {
+    render(
+      <RecipeLayout
+        plugin={plugin}
+        recipe={makeRecipe({
+          architecture: [
+            {
+              label: 'App',
+              caption: 'frontend',
+              emphasized: false,
+            },
+            {
+              label: 'Glean',
+              caption: 'index',
+              emphasized: true,
+            },
+            {
+              label: 'Auth',
+              caption: 'SSO',
+              emphasized: false,
+            },
+            {
+              label: 'Portal',
+              caption: 'UI',
+              emphasized: false,
+            },
+          ],
+        })}
+      >
+        <RecipeArchitecture />
+      </RecipeLayout>,
+    );
+
+    expect(screen.getByText('Architecture')).toBeInTheDocument();
+    expect(screen.getByText('App')).toBeInTheDocument();
+    expect(screen.getByText('Portal')).toBeInTheDocument();
+    expect(
+      document.querySelector(`.${layoutStyles.archCanvas}`),
+    ).not.toBeNull();
+  });
+
+  it('scrolls the flowchart horizontally instead of stacking it', () => {
+    const css = readCss('RecipeLayout.module.css');
+    expect(css).toMatch(/\.archCanvas\s*\{[^}]*overflow-x:\s*auto/s);
+    expect(css).toMatch(/\.archNode\s*\{[^}]*flex:\s*1 0 /s);
+    expect(css).not.toMatch(
+      /@media \(max-width: 700px\)[\s\S]*\.archFlow\s*\{[\s\S]*flex-direction:\s*column/,
+    );
+  });
+
+  it('every recipe page goes through RecipePage, so title layout applies to all of them', () => {
+    const dir = path.resolve(__dirname, '../../../docs/cookbook');
+    const files = fs
+      .readdirSync(dir)
+      .filter((file) => file.endsWith('.mdx') && file !== 'index.mdx');
+    expect(files.length).toBeGreaterThanOrEqual(12);
+    for (const file of files) {
+      const src = fs.readFileSync(path.join(dir, file), 'utf8');
+      expect(src).toContain('<RecipePage recipeId=');
+    }
   });
 
   it('keeps copy-prompt for recipes whose mechanism really is prose', () => {
