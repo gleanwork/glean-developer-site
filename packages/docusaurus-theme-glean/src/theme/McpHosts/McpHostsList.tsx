@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import clsx from 'clsx';
+import Link from '@docusaurus/Link';
 import Card from '../Card';
 import CardGroup from '../CardGroup';
 import {
@@ -7,6 +8,8 @@ import {
   CLIENT_TYPES,
   TYPE_LABELS,
   type ClientType,
+  type SupportedAuth,
+  type Transport,
 } from '@gleanwork/mcp-config-schema/browser';
 import McpHostIcon from './McpHostIcon';
 import styles from './McpHostsList.module.css';
@@ -17,6 +20,8 @@ interface McpHost {
   types: readonly ClientType[];
   userConfigurable: boolean;
   documentationUrl?: string;
+  transports: readonly Transport[];
+  supportedAuth: readonly SupportedAuth[];
 }
 
 /**
@@ -31,10 +36,12 @@ const EXTRA_HOSTS: McpHost[] = [
     userConfigurable: false,
     documentationUrl:
       'https://learn.microsoft.com/en-us/microsoft-copilot-studio/mcp-add-existing-server-to-agent',
+    transports: ['http'],
+    supportedAuth: ['token', 'oauth:dcr'],
   },
 ];
 
-/** All supported hosts (registry + extras), sorted alphabetically by display name. */
+/** All supported hosts (registry + missing fallbacks), sorted alphabetically. */
 function buildHosts(): McpHost[] {
   const registry = new MCPConfigRegistry();
   const fromRegistry: McpHost[] = registry.getAllConfigs().map((c) => ({
@@ -43,8 +50,14 @@ function buildHosts(): McpHost[] {
     types: c.types,
     userConfigurable: c.userConfigurable,
     documentationUrl: c.documentationUrl,
+    transports: c.transports,
+    supportedAuth: c.supportedAuth,
   }));
-  return [...fromRegistry, ...EXTRA_HOSTS].sort((a, b) =>
+
+  const byId = new Map(EXTRA_HOSTS.map((host) => [host.id, host]));
+  fromRegistry.forEach((host) => byId.set(host.id, host));
+
+  return [...byId.values()].sort((a, b) =>
     a.displayName.localeCompare(b.displayName, undefined, {
       sensitivity: 'base',
     }),
@@ -52,6 +65,19 @@ function buildHosts(): McpHost[] {
 }
 
 const HOSTS = buildHosts();
+
+const TRANSPORT_LABELS: Record<Transport, string> = {
+  stdio: 'STDIO',
+  http: 'HTTP',
+};
+
+const AUTH_LABELS: Record<SupportedAuth, string> = {
+  token: 'API token',
+  'oauth:dcr': 'OAuth (DCR)',
+};
+
+const ORGANIZATION_GUIDANCE_URL =
+  'https://docs.glean.com/administration/platform/mcp/about';
 
 type InstallFilter = 'all' | 'user' | 'admin';
 type TypeFilter = 'all' | ClientType;
@@ -108,7 +134,7 @@ export interface McpHostsListProps {
 /**
  * Renders the full set of supported MCP hosts from @gleanwork/mcp-config-schema
  * (plus a small set of extras) with live filtering by installability, client
- * type, and name. Each card links to the host's official documentation.
+ * type, and name. Each card shows setup actions appropriate to its ownership.
  */
 export default function McpHostsList({
   defaultInstall = 'all',
@@ -193,7 +219,6 @@ export default function McpHostsList({
             <Card
               key={host.id}
               title={host.displayName}
-              href={host.documentationUrl}
               color="var(--ifm-font-color-base)"
               icon={<McpHostIcon clientId={host.id} alt={host.displayName} />}
             >
@@ -204,6 +229,66 @@ export default function McpHostsList({
                   </span>
                 ))}
               </span>
+              <dl className={styles.cardMetadata}>
+                <div>
+                  <dt>Configuration</dt>
+                  <dd>
+                    {host.userConfigurable
+                      ? 'User configurable'
+                      : 'Managed by your organization'}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Transport</dt>
+                  <dd>
+                    {host.transports
+                      .map((value) => TRANSPORT_LABELS[value])
+                      .join(', ')}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Authentication</dt>
+                  <dd>
+                    {host.supportedAuth.length > 0
+                      ? host.supportedAuth
+                          .map((value) => AUTH_LABELS[value])
+                          .join(', ')
+                      : 'None listed'}
+                  </dd>
+                </div>
+              </dl>
+              <div className={styles.cardActions}>
+                {host.userConfigurable ? (
+                  <Link
+                    className="button button--sm button--primary"
+                    to={`https://app.glean.com/settings/install?mcpConfigure=true&mcpHost=${host.id}`}
+                    aria-label={`Open ${host.displayName} in the MCP Configurator`}
+                  >
+                    Open MCP Configurator
+                  </Link>
+                ) : (
+                  <Link
+                    className="button button--sm button--primary"
+                    to={ORGANIZATION_GUIDANCE_URL}
+                    aria-label={`Read organization-managed MCP guidance for ${host.displayName}`}
+                  >
+                    Organization setup guidance
+                  </Link>
+                )}
+                {host.documentationUrl ? (
+                  <Link
+                    className="button button--sm button--secondary"
+                    to={host.documentationUrl}
+                    aria-label={`Read ${host.displayName} vendor documentation`}
+                  >
+                    Vendor documentation
+                  </Link>
+                ) : (
+                  <span className={styles.missingDocumentation}>
+                    Vendor documentation unavailable
+                  </span>
+                )}
+              </div>
             </Card>
           ))}
         </CardGroup>
