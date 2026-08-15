@@ -4,38 +4,116 @@ description: Install the official Glean plugin for Codex — enterprise knowledg
 ---
 
 import PluginPage from '@site/src/components/PluginPage';
+import FeatureFlag from '@site/src/components/FeatureFlag';
 
 {/* Install commands synced from https://github.com/gleanwork/codex-plugins/blob/main/README.md */}
 
-<PluginPage
-  name="Codex"
-  tagline="You use Codex. Glean brings the enterprise context."
-  clientId="codex"
-  mono
-  steps={[
-    {
-      type: 'cta',
-      label: 'Get your Glean MCP server details',
-      description: 'The plugin requires a Glean MCP connection. Open the Glean MCP configurator to find your organization\'s server URL and server name — you\'ll use both in the last step.',
-      ctaText: 'Open MCP Configurator',
-      ctaHref: 'https://app.glean.com/settings/install?mcpConfigure=true&mcpHost=codex',
-    },
-    {
-      type: 'command',
-      label: 'Add the Glean marketplace and install the plugin',
-      description: 'Run these commands in your terminal to install the Glean enterprise-knowledge plugin.',
-      commands: [
-        { title: 'Add the Glean marketplace', code: 'codex plugin marketplace add gleanwork/codex-plugins' },
-        { title: 'Install the plugin', code: 'codex plugin add glean@glean-codex-plugins' },
-      ],
-    },
-    {
-      type: 'command',
-      label: 'Connect the Glean MCP server',
-      description: 'Before starting Codex, connect the MCP server — substitute the server URL and name from step 1. Then start a new Codex task so the bundled skills and MCP tools are available.',
-      commands: [
-        { title: 'Connect and sign in', code: 'codex mcp add glean --url <server-url>/mcp/<server-name>\ncodex mcp login glean' },
-      ],
-    },
-  ]}
-/>
+{/* New page is gated behind `codex-plugin-v2`. The current page is preserved as
+    the fallback and renders whenever the flag is turned off. */}
+
+<FeatureFlag
+  flag="codex-plugin-v2"
+  fallback={
+    <PluginPage
+      name="Codex"
+      tagline="You use Codex. Glean brings the enterprise context."
+      clientId="codex"
+      mono
+      steps={[
+        {
+          type: 'cta',
+          label: 'Get your Glean MCP server details',
+          description:
+            "The plugin requires a Glean MCP connection. Open the Glean MCP configurator to find your organization's server URL and server name — you'll use both in the last step.",
+          ctaText: 'Open MCP Configurator',
+          ctaHref:
+            'https://app.glean.com/settings/install?mcpConfigure=true&mcpHost=codex',
+        },
+        {
+          type: 'command',
+          label: 'Add the Glean marketplace and install the plugin',
+          description:
+            'Run these commands in your terminal to install the Glean enterprise-knowledge plugin.',
+          commands: [
+            {
+              title: 'Add the Glean marketplace',
+              code: 'codex plugin marketplace add gleanwork/codex-plugins',
+            },
+            {
+              title: 'Install the plugin',
+              code: 'codex plugin add glean@glean-codex-plugins',
+            },
+          ],
+        },
+        {
+          type: 'command',
+          label: 'Connect the Glean MCP server',
+          description:
+            'Before starting Codex, connect the MCP server — substitute the server URL and name from step 1. Then start a new Codex task so the bundled skills and MCP tools are available.',
+          commands: [
+            {
+              title: 'Connect and sign in',
+              code: 'codex mcp add glean --url <server-url>/mcp/<server-name>\ncodex mcp login glean',
+            },
+          ],
+        },
+      ]}
+    />
+  }
+>
+  <PluginPage
+    name="Codex"
+    tagline="You use Codex. Glean brings the enterprise context."
+    clientId="codex"
+    mono
+    whatsIncluded={
+      <>
+        The Glean plugin turns Codex into a front door to your company:
+        Glean&rsquo;s expert skills — search, code exploration, people, meetings,
+        onboarding, productivity — the custom skills your team authors in Glean,
+        and every tool configured centrally in Glean, each paired with skills
+        tuned to use it well. Those tools are surfaced with Glean&rsquo;s security
+        and permission guardrails fully enforced, all running through a Glean
+        MCP server so it works right in your terminal.{' '}
+        <a
+          href="https://github.com/gleanwork/codex-plugins/blob/main/README.md"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          See everything included in the plugin →
+        </a>
+      </>
+    }
+    steps={[
+      {
+        type: 'command',
+        label: 'Add the Glean marketplace and install the plugin',
+        description: 'Run these commands in your terminal to install the plugin.',
+        commands: [
+          {
+            title: 'Add the Glean marketplace',
+            code: 'codex plugin marketplace add gleanwork/codex-plugins',
+          },
+          {
+            title: 'Install the plugin',
+            code: 'codex plugin add glean@glean-codex-plugins',
+          },
+        ],
+      },
+      {
+        type: 'list',
+        label: 'Setup the Glean MCP connection',
+        description:
+          "Connect the plugin to your Glean instance through Glean's OAuth sign-in. You only need to do this once per machine.",
+        items: [
+          <>
+            In Codex, run: <code>$glean_run setup my Glean</code>
+          </>,
+          'Enter your work email when prompted.',
+          'Complete Glean OAuth in the browser window that opens and approve access.',
+          'Back in Codex, confirm it reports connected — you now have every skill and tool provisioned for you in Glean, right in your terminal. Search company knowledge, take action across your connected apps, and move through real work faster without leaving the command line.',
+        ],
+      },
+    ]}
+  />
+</FeatureFlag>
