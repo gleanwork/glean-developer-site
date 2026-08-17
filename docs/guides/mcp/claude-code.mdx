@@ -4,29 +4,145 @@ description: Install the official Glean plugin for Claude Code — enterprise kn
 ---
 
 import PluginPage from '@site/src/components/PluginPage';
+import FeatureFlag from '@site/src/components/FeatureFlag';
+import TerminalPanel from '@site/src/components/home/TerminalPanel';
 
 {/* Install commands synced from https://github.com/gleanwork/claude-plugins/blob/main/README.md */}
 
-<PluginPage
-  name="Claude Code"
-  tagline="You use Claude Code. Glean brings the enterprise context."
-  clientId="claude-code"
-  steps={[
-    {
-      type: 'cta',
-      label: 'Set up the Glean MCP Server',
-      description: 'The plugins require a Glean MCP connection. Use the Glean configurator to connect Claude Code to your organization\'s Glean instance. Authentication uses Glean\'s OAuth server where enabled, or a Glean API token as a fallback.',
-      ctaText: 'Open MCP Configurator',
-      ctaHref: 'https://app.glean.com/settings/install?mcpConfigure=true&mcpHost=claude-code',
-    },
-    {
-      type: 'command',
-      label: 'Add the Glean marketplace and install the plugin',
-      description: 'Run these commands inside Claude Code to install the Glean enterprise-knowledge plugin. Its skills — search, code exploration, people, meetings, onboarding, productivity — auto-trigger by task.',
-      commands: [
-        { title: 'Add the Glean marketplace', code: '/plugin marketplace add gleanwork/claude-plugins' },
-        { title: 'Install the plugin', code: '/plugin install glean@glean-plugins' },
-      ],
-    },
-  ]}
-/>
+{/* New page is gated behind `claude-code-plugin-v2`. The previous page is
+    preserved as the fallback and renders whenever the flag is turned off. */}
+
+<FeatureFlag
+  flag="claude-code-plugin-v2"
+  fallback={
+    <PluginPage
+      name="Claude Code"
+      tagline="You use Claude Code. Glean brings the enterprise context."
+      clientId="claude-code"
+      steps={[
+        {
+          type: 'cta',
+          label: 'Set up the Glean MCP Server',
+          description:
+            "The plugins require a Glean MCP connection. Use the Glean configurator to connect Claude Code to your organization's Glean instance. Authentication uses Glean's OAuth server where enabled, or a Glean API token as a fallback.",
+          ctaText: 'Open MCP Configurator',
+          ctaHref:
+            'https://app.glean.com/settings/install?mcpConfigure=true&mcpHost=claude-code',
+        },
+        {
+          type: 'command',
+          label: 'Add the Glean marketplace and install the plugin',
+          description:
+            'Run these commands inside Claude Code to install the Glean enterprise-knowledge plugin. Its skills — search, code exploration, people, meetings, onboarding, productivity — auto-trigger by task.',
+          commands: [
+            {
+              title: 'Add the Glean marketplace',
+              code: '/plugin marketplace add gleanwork/claude-plugins',
+            },
+            { title: 'Install the plugin', code: '/plugin install glean@glean-plugins' },
+          ],
+        },
+      ]}
+    />
+  }
+>
+  <PluginPage
+    name="Claude Code"
+    tagline="You use Claude Code. Glean brings the enterprise context."
+    clientId="claude-code"
+    whatsIncluded={
+      <>
+        The Glean plugin turns Claude Code into a front door to your company:
+        Glean&rsquo;s expert skills — search, code exploration, people, meetings,
+        onboarding, productivity — the custom skills your team authors in Glean,
+        and every tool configured centrally in Glean, each paired with skills
+        tuned to use it well. Those tools are surfaced with Glean&rsquo;s security
+        and permission guardrails fully enforced, all running through a Glean
+        MCP server so it works right in your terminal.{' '}
+        <a
+          href="https://github.com/gleanwork/claude-plugins/blob/main/README.md"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          See everything included in the plugin →
+        </a>
+      </>
+    }
+    steps={[
+      {
+        type: 'command',
+        label: 'Add the Glean marketplace and install the plugin',
+        description: 'Run these commands inside Claude Code.',
+        commands: [
+          {
+            title: 'Add the Glean marketplace',
+            code: '/plugin marketplace add gleanwork/claude-plugins',
+          },
+          { title: 'Install the plugin', code: '/plugin install glean@glean-plugins' },
+        ],
+      },
+      {
+        type: 'list',
+        label: 'Setup the Glean MCP connection',
+        description:
+          "Connect the plugin to your Glean instance. Authentication uses Glean's OAuth server where enabled, or a Glean API token as a fallback. You only need to do this once per machine.",
+        items: [
+          <>
+            In Claude Code, run: <code>/glean_run setup my Glean</code>
+          </>,
+          'Enter your work email when prompted.',
+          'Finish authentication using the method configured for your Glean instance: OAuth in the browser where enabled, or the Glean API-token fallback provided by your administrator.',
+          'Back in Claude Code, confirm it reports connected — you now have every skill and tool provisioned for you in Glean, right in your terminal. Search company knowledge, take action across your connected apps, and move through real work faster without leaving the command line.',
+        ],
+      },
+    ]}
+    afterStepsLabel="Optional: fewer permission prompts"
+    afterSteps={
+      <>
+        <p>
+          Set <code>USE_CLAUDE_PROJECT_DIR</code> to <code>1</code> for fewer
+          approval prompts when the plugin reads its skill files.
+        </p>
+        <p>
+          It&rsquo;s an environment variable, so add it under the{' '}
+          <code>env</code> key of a Claude Code <code>settings.json</code> file:
+        </p>
+        <div style={{ marginBottom: 14, maxWidth: 560 }}>
+          <TerminalPanel
+            filename=".claude/settings.json"
+            copy
+            code={`{
+  // ...your other Claude Code settings
+  "env": {
+    // ...your other environment variables
+    "USE_CLAUDE_PROJECT_DIR": "1"
+  }
+}`}
+          />
+        </div>
+        <p>Pick the scope that fits:</p>
+        <ul>
+          <li>
+            <strong>One project</strong> — add it to{' '}
+            <code>.claude/settings.json</code> (checked into git, shared with
+            your team) or <code>.claude/settings.local.json</code> (just you).
+          </li>
+          <li>
+            <strong>Every project</strong> — ask your Claude Code admin to set
+            it in your organization&rsquo;s managed settings
+            (<code>managed-settings.json</code>), which applies to all projects
+            and can&rsquo;t be overridden locally.
+          </li>
+        </ul>
+        <p>
+          With this on, the plugin writes its skills cache to{' '}
+          <code>.claude/tmp/</code> in your repo, so add that path to your{' '}
+          <code>.gitignore</code>:
+        </p>
+        <div style={{ marginBottom: 14, maxWidth: 560 }}>
+          <TerminalPanel filename=".gitignore" copy code={`.claude/tmp/`} />
+        </div>
+      </>
+    }
+  />
+</FeatureFlag>
