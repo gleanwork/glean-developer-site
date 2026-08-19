@@ -38,4 +38,6 @@ export interface BrandIconEntry {
 
 export const BRAND_ICON_SRC: Record<string, BrandIconEntry> = {
   lovable: { src: '/img/cookbook/lovable.svg', adaptive: false },
+  cursor: { src: '/img/cookbook/cursor.svg', adaptive: false },
+  n8n: { src: '/img/cookbook/n8n.svg', adaptive: false },
 };
