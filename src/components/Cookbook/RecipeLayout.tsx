@@ -13,6 +13,7 @@ import BrowserFrame from '../BrowserFrame';
 import PluginRunButton from './PluginRunButton';
 import { AdaptiveBrandIcon, CATEGORY_ICONS } from './categories';
 import { BRAND_ICON_SRC } from './brandIcons';
+import { RecipeAuthCard } from './RecipeAuth';
 import styles from './RecipeLayout.module.css';
 import catStyles from './categories.module.css';
 
@@ -621,6 +622,8 @@ export default function RecipeLayout({
 
           <div className={styles.rail}>
             <ActionCard plugin={plugin} recipe={recipe} />
+
+            <RecipeAuthCard recipe={recipe} />
 
             <div className={styles.railCard}>
               <div className={styles.railLabel}>At a glance</div>

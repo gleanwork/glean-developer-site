@@ -13,12 +13,11 @@ import { useTypedDispatch, useTypedSelector } from '@theme/ApiItem/hooks';
 import { setAuthData } from '@theme/ApiExplorer/Authorization/slice';
 import {
   isOAuthEligiblePath,
+  isPlaceholderServerUrl,
   scopeForPath,
   signInWithGlean,
 } from '@site/src/components/ApiOAuth/oauth';
 import styles from './styles.module.css';
-
-const PLACEHOLDER_HOST = 'instance-name-be.glean.com';
 
 function resolveServerUrl(server: any): string {
   if (!server?.url) {
@@ -58,7 +57,7 @@ function GleanSignIn(): React.ReactElement | null {
 
   const signIn = async () => {
     const serverUrl = resolveServerUrl(server);
-    if (!serverUrl || serverUrl.includes(PLACEHOLDER_HOST)) {
+    if (!serverUrl || isPlaceholderServerUrl(serverUrl)) {
       setStatus({
         kind: 'error',
         message: 'Set your server URL under Base URL first.',

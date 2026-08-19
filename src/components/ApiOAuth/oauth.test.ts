@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { isOAuthEligiblePath, scopeForPath } from './oauth';
+import {
+  isOAuthEligiblePath,
+  isPlaceholderServerUrl,
+  scopeForPath,
+} from './oauth';
 
 describe('API Explorer OAuth helpers', () => {
   it('offers OAuth on Client and Platform API pages, not Indexing', () => {
@@ -33,5 +37,15 @@ describe('API Explorer OAuth helpers', () => {
   it('returns undefined for unmapped groups so no scope is requested', () => {
     expect(scopeForPath('/api/client-api/messages/list')).toBeUndefined();
     expect(scopeForPath('/api/indexing-api/index-document')).toBeUndefined();
+  });
+
+  it('treats the explorer default host as a placeholder, including braces', () => {
+    expect(isPlaceholderServerUrl('https://instance-name-be.glean.com')).toBe(
+      true,
+    );
+    expect(isPlaceholderServerUrl('https://{instance-name}-be.glean.com')).toBe(
+      true,
+    );
+    expect(isPlaceholderServerUrl('https://acme-be.glean.com')).toBe(false);
   });
 });
