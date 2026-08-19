@@ -230,6 +230,26 @@ const baseSidebars: SidebarsConfig = {
         },
         {
           type: 'category',
+          label: 'Triggers',
+          customProps: {
+            icon: 'Zap',
+            iconSet: 'feather',
+          },
+          items: [
+            {
+              type: 'doc',
+              id: 'guides/triggers/overview',
+              label: 'Overview',
+            },
+            {
+              type: 'doc',
+              id: 'guides/triggers/webhook-delivery',
+              label: 'Webhook Delivery',
+            },
+          ],
+        },
+        {
+          type: 'category',
           label: 'MCP',
           customProps: {
             icon: 'mcp',
@@ -639,22 +659,6 @@ const baseSidebars: SidebarsConfig = {
         },
         {
           type: 'category',
-          label: 'Triggers',
-          items: [
-            {
-              type: 'doc',
-              id: 'api-info/platform/triggers/overview',
-              label: 'Overview',
-            },
-            {
-              type: 'doc',
-              id: 'api-info/platform/triggers/webhook-delivery',
-              label: 'Webhook delivery',
-            },
-          ],
-        },
-        {
-          type: 'category',
           label: 'Errors',
           link: {
             type: 'doc',
@@ -978,12 +982,6 @@ const baseSidebars: SidebarsConfig = {
                 },
                 {
                   type: 'doc',
-                  id: 'api/platform-api/platform-trigger-presets-events-search',
-                  label: 'Search events for a trigger preset',
-                  className: 'api-method post',
-                },
-                {
-                  type: 'doc',
                   id: 'api/platform-api/platform-triggers-create',
                   label: 'Create trigger',
                   className: 'api-method post',
@@ -1011,6 +1009,12 @@ const baseSidebars: SidebarsConfig = {
                   id: 'api/platform-api/platform-triggers-delete',
                   label: 'Delete trigger',
                   className: 'api-method delete',
+                },
+                {
+                  type: 'doc',
+                  id: 'api/platform-api/platform-trigger-presets-events-search',
+                  label: 'Search events for a trigger preset',
+                  className: 'api-method post',
                 },
                 {
                   type: 'doc',
