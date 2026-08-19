@@ -18,7 +18,7 @@ There are two sources for that token, and they behave slightly differently on th
     **Glean issues the tokens (OAuth 2.1)**
 
     - Authorization Code flow with PKCE
-    - Two registration modes: Dynamic Client Registration (DCR) for approved MCP hosts, and static clients for governed applications
+    - Two registration modes: Dynamic Client Registration (DCR), and static clients for governed applications when DCR is disabled or restricted, or when the app needs scopes DCR does not grant
     - Glean-defined, fine-grained scopes
     - Recognized by issuer — **no extra header**
     - Powers the [remote MCP server](/guides/mcp)
@@ -74,9 +74,9 @@ The [Glean OAuth Authorization Server](https://docs.glean.com/administration/oau
   </Step>
 
   <Step title="Choose a client-registration mode">
-    **Dynamic Client Registration (DCR)** lets the client register itself. Use DCR for approved MCP hosts. The default policy is the Glean-managed list of approved applications. Administrators can add redirect URIs, restrict the list, or disable DCR. DCR clients receive only the restricted scope set configured for DCR. See [Dynamic Client Registration](https://docs.glean.com/administration/oauth/dynamic-client-registration).
+    **Dynamic Client Registration (DCR)** lets the client register itself. By default a tenant allows any application that supports DCR. Administrators can instead restrict registration to approved applications, using the Glean-managed list, their own redirect URI patterns, or both, or disable DCR entirely. DCR clients receive only the restricted scope set configured for DCR. See [Dynamic Client Registration](https://docs.glean.com/administration/oauth/dynamic-client-registration).
 
-    A **static OAuth client** is an application an administrator registers and governs. Use a static client when DCR is disabled, the application is not on the approved list, or the application needs scopes DCR does not grant. DCR also issues a `client_id`. Do not choose a static client only to get a stable identifier. See [static OAuth clients](https://docs.glean.com/administration/oauth/static-client-registration).
+    A **static OAuth client** is an application an administrator registers and governs. Use a static client when DCR is disabled, when the tenant restricts DCR to approved applications and this application is not allowed, or when the application needs scopes DCR does not grant. DCR also issues a `client_id`. Do not choose a static client only to get a stable identifier. See [static OAuth clients](https://docs.glean.com/administration/oauth/static-client-registration).
   </Step>
 
   <Step title="Obtain a token">

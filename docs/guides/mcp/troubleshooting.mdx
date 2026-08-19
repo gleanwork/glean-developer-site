@@ -9,25 +9,31 @@ Use this guide for a tenant's Glean Remote MCP Server. If you only need Glean de
 
 ## The Configurator or host is missing
 
-Glean enables the OAuth Authorization Server and Remote MCP Server by default for eligible tenants. Administrators can disable MCP or hide the end-user Configurator. If the [MCP Configurator](https://app.glean.com/settings/install?mcpConfigure=true) is missing, or it does not show your host, ask a Glean administrator to confirm that MCP servers are enabled and that the Configurator is visible, then to check the DCR allowlist and any prior custom OAuth configuration.
+Glean enables the OAuth Authorization Server and Remote MCP Server by default for eligible tenants. Administrators can disable MCP or hide the end-user Configurator. If the [MCP Configurator](https://app.glean.com/settings/install?mcpConfigure=true) is missing, ask a Glean administrator to confirm that MCP servers are enabled and that the Configurator is visible.
+
+If the Configurator is present but a listed host does not appear, ask a Glean administrator to check the tenant's DCR policy and any prior custom OAuth configuration.
+
+If your host is an MCP application that is not listed in the Configurator, that is expected. Use the [Supported MCP Hosts](/guides/mcp/supported-hosts) guidance, choose **Custom**, and paste the server URL and server name instead.
 
 Administrators should start with [Set up Glean MCP server](https://docs.glean.com/administration/platform/mcp/enable-mcp-servers). After the check, reopen the Configurator and select the host again.
 
 ## DCR or redirect URI is rejected
 
-Dynamic Client Registration (DCR) works when the host is on the tenant's approved list and the redirect URI matches policy. Copy the host's configuration from the MCP Configurator. Do not substitute a redirect URI from a different host.
+A tenant sets one of three Dynamic Client Registration (DCR) policies: allow any application, allow only approved applications, or do not allow dynamic registration. Registration fails when the policy restricts it to approved applications and the host's redirect URI matches no allowed pattern, or when DCR is off. Copy the host's configuration from the MCP Configurator. Do not substitute a redirect URI from a different host.
 
 Ask the administrator to check the [DCR policy](https://docs.glean.com/administration/oauth/dynamic-client-registration). When DCR is unavailable or its scopes do not fit a governed application, use a [static OAuth client](https://docs.glean.com/administration/oauth/static-client-registration). See [OAuth authentication](/api-info/client/authentication/oauth) for the DCR versus static model.
 
 ## Authentication fails or sign-in loops
 
-Remove the host's stored Glean MCP credentials. Reconnect the server. Complete the host's SSO sign-in flow again. An expired session, rejected consent, or stale credential can cause a loop.
+Revoke the grant on the Glean side, then clear it on the host side. In Glean, open **Your settings**, go to **Third party apps and MCP**, select the host, and choose **Revoke**. Then remove the host's stored Glean MCP credentials, reconnect the server, and complete your SSO sign-in again. An expired session, rejected consent, or a stale credential on either side can cause a loop.
 
 Prefer OAuth. Use a Glean-issued API token only when the host cannot complete OAuth. Do not assign API Token Creator in bulk to work around OAuth. See the [Glean OAuth Authorization Server guide](https://docs.glean.com/administration/oauth/authorization-server) and the [authentication overview](/get-started/authentication).
 
 ## The URL or server name is wrong
 
-Return to the MCP Configurator, select the exact host, and copy both the server URL and server name again. A value from another host, tenant, or environment can appear valid but connect to the wrong server. Restart the host after you replace the configuration.
+A server URL identifies a Glean MCP server, not a host, so the same URL works across hosts. It fails when it points at the wrong server, tenant, or environment. Return to the MCP Configurator, confirm the server you intended, and copy the server URL again. Restart the host after you replace the configuration.
+
+Host-specific values are the configuration shape, transport, redirect URI, and setup command. Copy those from the Configurator entry for your host.
 
 For organization-managed hosts, use the host's managed-configuration guidance from [About Glean MCP Servers](https://docs.glean.com/administration/platform/mcp/about). For device-managed deployment, use the [MDM deployment guide](https://docs.glean.com/administration/platform/mcp/mdm-mcp).
 

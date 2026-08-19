@@ -12,15 +12,19 @@ Glean enables the OAuth Authorization Server and Remote MCP Server by default fo
 
 <Steps>
   <Step title="Open the MCP Configurator">
-    Open the [MCP Configurator](https://app.glean.com/settings/install?mcpConfigure=true) and select your host. Copy the current server URL, server name, and host-specific instructions. See the [MCP Configurator user guide](https://docs.glean.com/user-guide/mcp/usage) if the navigation in Glean differs.
+    Open the [MCP Configurator](https://app.glean.com/settings/install?mcpConfigure=true). Copy the current server URL and server name. (Optional) Select your host to copy host-specific instructions. See the [MCP Configurator user guide](https://docs.glean.com/user-guide/mcp/usage) if the navigation in Glean differs.
   </Step>
 
   <Step title="If the Configurator or host is missing">
-    Ask an administrator to confirm that MCP servers are enabled, that the end-user Configurator is visible, and to check the DCR allowlist and any prior custom OAuth configuration. Those checks live in [Set up Glean MCP server](https://docs.glean.com/administration/platform/mcp/enable-mcp-servers) and [Dynamic Client Registration](https://docs.glean.com/administration/oauth/dynamic-client-registration).
+    If the Configurator is unavailable, ask a Glean administrator to confirm that MCP servers are enabled and that the end-user Configurator is visible. Those checks live in [Set up Glean MCP server](https://docs.glean.com/administration/platform/mcp/enable-mcp-servers).
+
+    If the Configurator is available but a listed host does not appear, ask the administrator to check the tenant's DCR policy and any prior custom OAuth configuration. Those checks live in [Dynamic Client Registration](https://docs.glean.com/administration/oauth/dynamic-client-registration).
+
+    If your host is an MCP application that is not listed, that is expected. Use [Supported MCP Hosts](/guides/mcp/supported-hosts) guidance, choose **Custom**, and paste the server URL and server name instead.
   </Step>
 
   <Step title="Match the host to its setup path">
-    Check [Supported MCP Hosts](/guides/mcp/supported-hosts) to see whether your host is user-configurable or organization-managed. Use that host's URL, server name, and configuration snippet. Do not copy another host's values.
+    Check [Supported MCP Hosts](/guides/mcp/supported-hosts) to see whether your host is user-configurable or organization-managed. Selecting a host is optional: one server URL connects any MCP host, including hosts the Configurator does not list. Select your host to get the setup method, configuration shape, and commands that fit it.
   </Step>
 </Steps>
 
@@ -28,7 +32,7 @@ Glean enables the OAuth Authorization Server and Remote MCP Server by default fo
 
 Complete the host's OAuth sign-in flow with your organization's SSO when prompted.
 
-Dynamic Client Registration (DCR) is the usual path for approved MCP hosts. The default policy is the Glean-managed list of approved applications. If DCR is disabled, the host is not approved, or the host needs scopes DCR does not grant, an administrator can register a [static OAuth client](https://docs.glean.com/administration/oauth/static-client-registration). See [OAuth authentication](/api-info/client/authentication/oauth) for the DCR versus static model.
+Dynamic Client Registration (DCR) is the usual path for MCP hosts. By default a tenant allows any application that supports DCR. Administrators can restrict registration to approved applications or turn DCR off. If DCR is disabled, your tenant does not allow the host to register, or the host needs scopes DCR does not grant, an administrator can register a [static OAuth client](https://docs.glean.com/administration/oauth/static-client-registration). See [OAuth authentication](/api-info/client/authentication/oauth) for the DCR versus static model.
 
 Use a Glean-issued API token only when the host cannot complete OAuth. Do not assign API Token Creator in bulk as an MCP rollout.
 
