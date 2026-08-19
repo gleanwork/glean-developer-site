@@ -1,0 +1,72 @@
+---
+title: Webhook Delivery
+slug: /api/platform-api/triggers/webhook-delivery
+description: How Glean delivers trigger events to your endpoint, and how to verify them.
+sidebar_label: Webhook delivery
+---
+
+# Webhook Delivery
+
+A trigger delivers each matching event to your endpoint as a signed HTTP POST, following the [Standard Webhooks](https://www.standardwebhooks.com) specification. This guide covers verifying a delivery, authenticating Glean to your receiver, and the retry behaviour you need to design around.
+
+For the endpoints themselves, see the [Triggers API reference](/api/platform-api/triggers-overview).
+
+## Verifying a delivery
+
+Every delivery carries three headers:
+
+| Header | Meaning |
+| --- | --- |
+| `webhook-id` | Stable across retries. Use it as your idempotency key. |
+| `webhook-timestamp` | Unix seconds. Reject deliveries outside a tolerance window; 300 seconds is the Standard Webhooks recommendation. |
+| `webhook-signature` | `v1,<base64>`. Glean sends a single signature today; parse the space-delimited list anyway, as Standard Webhooks allows several. |
+
+The signed string is `{webhook-id}.{webhook-timestamp}.{raw body}`, hashed with HMAC-SHA256 using the signing secret with its `whsec_` prefix removed and the remainder base64-decoded.
+
+```python
+import base64, hashlib, hmac, time
+
+TOLERANCE_SECONDS = 300
+
+def verify(headers, raw_body: bytes, signing_secret: str) -> bool:
+    webhook_id = headers["webhook-id"]
+    timestamp = headers["webhook-timestamp"]
+
+    if abs(time.time() - int(timestamp)) > TOLERANCE_SECONDS:
+        return False
+
+    key = base64.b64decode(signing_secret.removeprefix("whsec_"))
+    signed = f"{webhook_id}.{timestamp}.".encode() + raw_body
+    expected = base64.b64encode(hmac.new(key, signed, hashlib.sha256).digest()).decode()
+
+    # The header may carry several space-delimited "v1,<sig>" pairs.
+    for part in headers["webhook-signature"].split():
+        version, _, candidate = part.partition(",")
+        if version == "v1" and hmac.compare_digest(candidate, expected):
+            return True
+    return False
+```
+
+Verify against the **raw** request body. Parsing the JSON and re-serializing it changes key order and whitespace, and the signature will no longer match.
+
+The signing secret is returned **only** when the trigger is created, and cannot be read back afterwards.
+
+## Retries and idempotency
+
+Delivery is **at least once**: the same event can arrive more than once with the same `webhook-id`, so make your handling idempotent.
+
+Glean retries connection failures, timeouts, `408`, `429` and `5xx`. Other non-2xx responses, including redirects, are terminal — the event is dropped rather than retried, so return a `2xx` as soon as you have accepted it, and do slow work afterwards.
+
+## Authenticating Glean to your endpoint
+
+If your receiver requires its own credential, set `delivery.auth` when creating the trigger. With `type: BEARER`, Glean sends it as `Authorization: Bearer <secret>` **in addition to** the HMAC signature — it does not replace it, and a receiver should check both.
+
+The credential is write-only: it is never returned on any read, and omitting `auth` on an update preserves the stored value. Two consequences worth designing around:
+
+- There is no in-place removal. To drop a credential, delete the trigger and create a new one.
+- While a credential is set, `webhook_url` cannot be changed; that update is rejected with `400`. Otherwise an editor could point the trigger at an endpoint they control and read the secret off the wire. Recreate the trigger to move it.
+
+## Notes
+
+- Use an `https://` webhook URL. The signature proves integrity and origin, not confidentiality — the payload itself is only protected by transport security.
+- Deliveries are filtered per event against the subscribing user's document permissions, so a trigger never surfaces a document its owner could not already open.

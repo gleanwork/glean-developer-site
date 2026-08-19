@@ -639,6 +639,22 @@ const baseSidebars: SidebarsConfig = {
         },
         {
           type: 'category',
+          label: 'Triggers',
+          items: [
+            {
+              type: 'doc',
+              id: 'api-info/platform/triggers/overview',
+              label: 'Overview',
+            },
+            {
+              type: 'doc',
+              id: 'api-info/platform/triggers/webhook-delivery',
+              label: 'Webhook delivery',
+            },
+          ],
+        },
+        {
+          type: 'category',
           label: 'Errors',
           link: {
             type: 'doc',
@@ -944,9 +960,9 @@ const baseSidebars: SidebarsConfig = {
               items: [
                 {
                   type: 'doc',
-                  id: 'api/platform-api/platform-trigger-presets-events-search',
-                  label: 'Search events for a trigger preset',
-                  className: 'api-method post',
+                  id: 'api/platform-api/platform-trigger-presets-list',
+                  label: 'List trigger presets',
+                  className: 'api-method get',
                 },
                 {
                   type: 'doc',
@@ -962,15 +978,33 @@ const baseSidebars: SidebarsConfig = {
                 },
                 {
                   type: 'doc',
-                  id: 'api/platform-api/platform-trigger-presets-list',
-                  label: 'List trigger presets',
-                  className: 'api-method get',
+                  id: 'api/platform-api/platform-trigger-presets-events-search',
+                  label: 'Search events for a trigger preset',
+                  className: 'api-method post',
                 },
                 {
                   type: 'doc',
                   id: 'api/platform-api/platform-triggers-create',
                   label: 'Create trigger',
                   className: 'api-method post',
+                },
+                {
+                  type: 'doc',
+                  id: 'api/platform-api/platform-triggers-list',
+                  label: 'List triggers',
+                  className: 'api-method get',
+                },
+                {
+                  type: 'doc',
+                  id: 'api/platform-api/platform-triggers-get',
+                  label: 'Get trigger',
+                  className: 'api-method get',
+                },
+                {
+                  type: 'doc',
+                  id: 'api/platform-api/platform-triggers-update',
+                  label: 'Update trigger',
+                  className: 'api-method patch',
                 },
                 {
                   type: 'doc',
@@ -983,24 +1017,6 @@ const baseSidebars: SidebarsConfig = {
                   id: 'api/platform-api/platform-triggers-events-search',
                   label: 'Search events for a trigger',
                   className: 'api-method post',
-                },
-                {
-                  type: 'doc',
-                  id: 'api/platform-api/platform-triggers-get',
-                  label: 'Get trigger',
-                  className: 'api-method get',
-                },
-                {
-                  type: 'doc',
-                  id: 'api/platform-api/platform-triggers-list',
-                  label: 'List triggers',
-                  className: 'api-method get',
-                },
-                {
-                  type: 'doc',
-                  id: 'api/platform-api/platform-triggers-update',
-                  label: 'Update trigger',
-                  className: 'api-method patch',
                 },
               ],
             },

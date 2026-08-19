@@ -1,0 +1,50 @@
+---
+title: Triggers
+slug: /api/platform-api/triggers
+description: Subscribe to content events in Glean and receive them as signed webhooks.
+sidebar_label: Overview
+---
+
+# Triggers
+
+A trigger subscribes an application to content events in Glean — a review requested from you, a new call you took part in, the half hour before a meeting starts — and delivers each one to your endpoint as a signed webhook.
+
+Triggers are created from **presets**: curated event definitions, one per datasource, each declaring the inputs it accepts. You pick a preset and supply its inputs rather than assembling a query, and the catalog your deployment serves is discoverable at runtime.
+
+## How a trigger works
+
+1. **Pick a preset.** `GET /trigger-presets` returns the presets your deployment serves as a flat list; filter with the `datasource` query parameter, or read the `datasource` field on each result. Preset ids are per-deployment — discover them rather than hardcoding.
+2. **Supply its inputs.** Each preset returns an `inputs` array declaring the inputs it accepts and which are required. A preset that takes none returns an empty array.
+3. **Preview first.** `POST /trigger-presets/{preset_id}/events/search` reports the recent events the preset would have matched with those inputs. Creating a trigger validates the preset and its required inputs — it cannot tell you whether anything will ever match, so a preset that matches nothing today is worth knowing about before you rely on it.
+4. **Create the trigger.** `POST /triggers` returns the trigger and its `signing_secret`. The secret is returned **only at creation** and cannot be read back.
+5. **Verify each delivery.** See the [webhook delivery guide](/api/platform-api/triggers/webhook-delivery).
+
+## Preset inputs
+
+Each entry in a preset's `inputs` array carries a `field` — the key you set in the trigger's `inputs` object — plus a `type` of `PICKLIST`, `TEXT`, or `USER`, and an `is_required` flag.
+
+Picklist inputs ship a bounded `values` array. When `is_truncated` is `true`, some selectable values were omitted: call `GET /trigger-presets/{preset_id}/input-values` with `field` and a `query` to narrow them. That `query` is a prefix match on the option **value**, not its display name — filter on `test.user@glean.com`, not `Test User`. The endpoint returns up to 300 values and is not cursor-paginated; it sets its own `is_truncated` when there are more.
+
+A preset may also **pin** an input to a fixed value. Supplying a pinned field is rejected with `400`. Where a preset accepts a `time_offset`, its value must be one of the offsets that preset allows.
+
+Presets are filtered to the datasources and document types the calling user can access, so two users may see different catalogs on the same deployment.
+
+## Managing triggers
+
+`PATCH /triggers/{trigger_id}` is a partial update — only the fields you send change. Setting `status` to `DISABLED` stops delivery while keeping the trigger and its signing secret, which is usually what you want instead of deleting and re-onboarding a new secret.
+
+`GET /triggers` returns the caller's own triggers, most recently updated first, and pages with `page_size` and an opaque `cursor`. Follow `next_cursor` while `has_more` is `true`; `next_cursor` is `null` on the last page. `GET /trigger-presets` pages the same way.
+
+Every JSON response carries a `request_id`; a successful delete returns `204` with no body. Include it when reporting a problem — it is how support correlates the call.
+
+## Previewing events
+
+Both search endpoints are read-only: nothing is created and no webhook is delivered. `POST /trigger-presets/{preset_id}/events/search` previews an unsaved preset plus inputs; `POST /triggers/{trigger_id}/events/search` replays what an existing trigger has been matching.
+
+Three limits to plan for:
+
+- They cover the **last seven days** only.
+- They return document-change events. A schedule preset is previewable, but only for the documents its filters match — the results do not replay past firings or apply the schedule offset, so they show *what* would fire, not *when*.
+- There is no cursor paging — `has_more` tells you results were cut off, and the only way to see more is a larger `page_size` (max 100).
+
+For error responses, see [Platform API Errors](/errors) for the shared ProblemDetail code reference and remediation guidance.
