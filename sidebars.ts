@@ -935,6 +935,15 @@ const baseSidebars: SidebarsConfig = {
               ],
             },
             {
+              type: 'category',
+              label: 'Triggers',
+              link: {
+                type: 'doc',
+                id: 'api/platform-api/triggers-overview',
+              },
+              items: [],
+            },
+            {
               type: 'link',
               href: 'https://developers.glean.com/oas/platform',
               label: 'OpenAPI Spec',
