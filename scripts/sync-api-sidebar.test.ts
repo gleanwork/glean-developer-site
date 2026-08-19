@@ -9,6 +9,7 @@ const testDirs: string[] = [];
 function createFixture(options?: {
   ambiguous?: boolean;
   camelCaseOpId?: boolean;
+  newTag?: boolean;
   preseed?: boolean;
   unresolved?: boolean;
 }) {
@@ -224,6 +225,18 @@ sidebar_class_name: "get api-method"
 `,
     );
   }
+  if (options?.newTag) {
+    fs.writeFileSync(
+      path.join(root, 'docs/api/platform-api/platform-triggers-list.api.mdx'),
+      `---
+id: platform-triggers-list
+title: "List triggers"
+sidebar_label: "List triggers"
+sidebar_class_name: "get api-method"
+---
+`,
+    );
+  }
 
   const paths = new Map<
     string,
@@ -246,6 +259,16 @@ sidebar_class_name: "get api-method"
         tag: 'Search',
         summary: 'Retrieve the thing',
         operationId: 'getPlatformThing',
+      },
+    ]);
+  }
+  if (options?.newTag) {
+    paths.set('/triggers', [
+      {
+        method: 'get',
+        tag: 'Triggers',
+        summary: 'List triggers',
+        operationId: 'platform-triggers-list',
       },
     ]);
   }
@@ -354,6 +377,21 @@ describe('sync-api-sidebar', () => {
       /label: 'Chat',[\s\S]*?id: 'api\/platform-api\/platform-chat-create',[\s\S]*?\n {10}\},\n {8}\],\n {6}\},\n {6}\{\n {8}type: 'link',\n {8}href: 'https:\/\/developers\.glean\.com\/oas\/platform',\n {8}label: 'OpenAPI Spec',/,
     );
     expect(sidebar.match(/id: 'guides\/chat\/overview'/g)).toHaveLength(1);
+    expect(run(root, '--check').status).toBe(0);
+  });
+
+  it('creates a Platform category for a tag it has never seen', () => {
+    const root = createFixture({ newTag: true });
+
+    expect(run(root, '--fix').status).toBe(0);
+    const sidebar = fs.readFileSync(path.join(root, 'sidebars.ts'), 'utf8');
+
+    expect(sidebar).toContain("label: 'Triggers'");
+    expect(sidebar).toContain("id: 'api/platform-api/platform-triggers-list'");
+    // New categories land before the OpenAPI Spec link, like Chat does.
+    expect(sidebar.indexOf("label: 'Triggers'")).toBeLessThan(
+      sidebar.indexOf("label: 'OpenAPI Spec'"),
+    );
     expect(run(root, '--check').status).toBe(0);
   });
 

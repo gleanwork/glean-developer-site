@@ -393,9 +393,6 @@ function resolvePlatformTarget(root, tag, plannedCategories) {
   if (matches.length === 1) {
     return { items: getItemsProperty(matches[0]) };
   }
-  if (tag !== 'Chat') {
-    return { error: `no Platform API Reference category labelled '${tag}'` };
-  }
   const openApiSpecIndexes = platform.items.elements
     .map((element, index) => ({ element, index }))
     .filter(
