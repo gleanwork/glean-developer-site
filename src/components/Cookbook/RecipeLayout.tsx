@@ -557,13 +557,18 @@ function ArchNodeIcon({
       color: 'currentColor',
     });
   }
-  return getIcon(
-    node.category
-      ? (CATEGORY_ICONS[node.category] ?? 'glean-app')
-      : 'glean-app',
-    'glean',
-    { width: 18, height: 18, color: 'currentColor' },
-  );
+  // A node with neither icon nor category keeps the feather Box it always had.
+  return node.category
+    ? getIcon(CATEGORY_ICONS[node.category] ?? 'glean-app', 'glean', {
+        width: 18,
+        height: 18,
+        color: 'currentColor',
+      })
+    : getIcon('Box', 'feather', {
+        width: 18,
+        height: 18,
+        color: 'currentColor',
+      });
 }
 
 export default function RecipeLayout({
