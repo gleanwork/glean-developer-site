@@ -73,7 +73,7 @@ const TRANSPORT_LABELS: Record<Transport, string> = {
 
 const AUTH_LABELS: Record<SupportedAuth, string> = {
   token: 'API token',
-  'oauth:dcr': 'OAuth (DCR)',
+  'oauth:dcr': 'OAuth via DCR',
 };
 
 const ORGANIZATION_GUIDANCE_URL =
@@ -84,8 +84,8 @@ type TypeFilter = 'all' | ClientType;
 
 const INSTALL_OPTIONS: { value: InstallFilter; label: string }[] = [
   { value: 'all', label: 'All' },
-  { value: 'user', label: 'User-installable' },
-  { value: 'admin', label: 'Admin-managed' },
+  { value: 'user', label: 'User-configurable' },
+  { value: 'admin', label: 'Organization-managed' },
 ];
 
 interface ChipGroupProps<T extends string> {
@@ -169,7 +169,7 @@ export default function McpHostsList({
     <div className={styles.root}>
       <div className={styles.filterBar}>
         <ChipGroup<InstallFilter>
-          label="Install"
+          label="Configuration"
           value={install}
           options={INSTALL_OPTIONS}
           onChange={setInstall}
@@ -234,8 +234,8 @@ export default function McpHostsList({
                   <dt>Configuration</dt>
                   <dd>
                     {host.userConfigurable
-                      ? 'User configurable'
-                      : 'Managed by your organization'}
+                      ? 'User-configurable'
+                      : 'Organization-managed'}
                   </dd>
                 </div>
                 <div>
@@ -253,7 +253,7 @@ export default function McpHostsList({
                       ? host.supportedAuth
                           .map((value) => AUTH_LABELS[value])
                           .join(', ')
-                      : 'None listed'}
+                      : 'Not specified. See host documentation.'}
                   </dd>
                 </div>
               </dl>
@@ -262,7 +262,7 @@ export default function McpHostsList({
                   <Link
                     className="button button--sm button--primary"
                     to={`https://app.glean.com/settings/install?mcpConfigure=true&mcpHost=${host.id}`}
-                    aria-label={`Open ${host.displayName} in the MCP Configurator`}
+                    aria-label={`Open MCP Configurator for ${host.displayName}`}
                   >
                     Open MCP Configurator
                   </Link>
@@ -270,7 +270,7 @@ export default function McpHostsList({
                   <Link
                     className="button button--sm button--primary"
                     to={ORGANIZATION_GUIDANCE_URL}
-                    aria-label={`Read organization-managed MCP guidance for ${host.displayName}`}
+                    aria-label={`Organization setup guidance for ${host.displayName}`}
                   >
                     Organization setup guidance
                   </Link>
