@@ -1,4 +1,5 @@
 import React, { useRef, useState } from 'react';
+import useBaseUrl from '@docusaurus/useBaseUrl';
 import { getIcon } from '@gleanwork/docusaurus-theme-glean/Icons';
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
@@ -10,7 +11,8 @@ import {
 } from '../../types/recipe';
 import BrowserFrame from '../BrowserFrame';
 import PluginRunButton from './PluginRunButton';
-import { CATEGORY_ICONS } from './categories';
+import { AdaptiveBrandIcon, CATEGORY_ICONS } from './categories';
+import { BRAND_ICON_SRC } from './brandIcons';
 import styles from './RecipeLayout.module.css';
 import catStyles from './categories.module.css';
 
@@ -174,33 +176,7 @@ export function RecipeArchitecture(): React.ReactElement | null {
                       : styles.archNodeIconNeutral
                   }`}
                 >
-                  {node.emphasized
-                    ? getIcon('glean-logo', 'glean', {
-                        width: 20,
-                        height: 20,
-                        color: 'currentColor',
-                      })
-                    : node.icon
-                      ? getIcon(node.icon, 'glean', {
-                          width: 18,
-                          height: 18,
-                          color: 'currentColor',
-                        })
-                      : node.category
-                        ? getIcon(
-                            CATEGORY_ICONS[node.category] ?? 'glean-app',
-                            'glean',
-                            {
-                              width: 18,
-                              height: 18,
-                              color: 'currentColor',
-                            },
-                          )
-                        : getIcon('Box', 'feather', {
-                            width: 18,
-                            height: 18,
-                            color: 'currentColor',
-                          })}
+                  <ArchNodeIcon node={node} />
                 </span>
                 <span className={styles.archLabel}>{node.label}</span>
                 <span className={styles.archCaption}>{node.caption}</span>
@@ -537,6 +513,59 @@ function RecipePreview({
  * /cookbook. Body sections come from the recipe MDX via the section
  * components.
  */
+/**
+ * Architecture node glyph, resolved the same way a recipe card's is: a brand
+ * mark first, then the Glean set, then the category default.
+ *
+ * Its own component because the brand path needs `useBaseUrl`, which cannot be
+ * called from inside the nodes' `.map()`.
+ */
+function ArchNodeIcon({
+  node,
+}: {
+  node: RecipeRecord['architecture'][number];
+}): React.ReactNode {
+  const brand = node.icon ? BRAND_ICON_SRC[node.icon] : undefined;
+  const brandUrl = useBaseUrl(brand?.adaptive === false ? brand.src : '');
+
+  // An emphasized node is always Glean's own mark, whatever icon it declares.
+  if (node.emphasized) {
+    return getIcon('glean-logo', 'glean', {
+      width: 20,
+      height: 20,
+      color: 'currentColor',
+    });
+  }
+  if (brand?.adaptive === false) {
+    return (
+      <img
+        src={brandUrl}
+        alt=""
+        width={18}
+        height={18}
+        style={{ objectFit: 'contain' }}
+      />
+    );
+  }
+  if (brand) {
+    return <AdaptiveBrandIcon src={brand.src} width={18} height={18} />;
+  }
+  if (node.icon) {
+    return getIcon(node.icon, 'glean', {
+      width: 18,
+      height: 18,
+      color: 'currentColor',
+    });
+  }
+  return getIcon(
+    node.category
+      ? (CATEGORY_ICONS[node.category] ?? 'glean-app')
+      : 'glean-app',
+    'glean',
+    { width: 18, height: 18, color: 'currentColor' },
+  );
+}
+
 export default function RecipeLayout({
   recipe,
   plugin,
