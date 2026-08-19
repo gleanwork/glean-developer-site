@@ -238,11 +238,6 @@ const baseSidebars: SidebarsConfig = {
           items: [
             {
               type: 'doc',
-              id: 'docs-mcp',
-              label: 'Docs MCP Server',
-            },
-            {
-              type: 'doc',
               id: 'guides/mcp/mcp',
               label: 'Remote MCP Server',
             },
@@ -250,6 +245,16 @@ const baseSidebars: SidebarsConfig = {
               type: 'doc',
               id: 'guides/mcp/supported-hosts',
               label: 'Supported Hosts',
+            },
+            {
+              type: 'doc',
+              id: 'guides/mcp/troubleshooting',
+              label: 'Troubleshooting',
+            },
+            {
+              type: 'doc',
+              id: 'docs-mcp',
+              label: 'Docs MCP Server',
             },
             {
               type: 'doc',

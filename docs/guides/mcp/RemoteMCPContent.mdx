@@ -1,50 +1,65 @@
-import React, { useMemo, useContext } from 'react';
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
-import { CLIENT, MCPConfigRegistry } from '@gleanwork/mcp-config-schema/browser';
-import { clientNeedsMcpRemote } from '@gleanwork/mcp-config-schema';
-import { FeatureFlagsContext } from '@site/src/theme/Root';
+# Remote MCP Server
 
+Connect an MCP host to your organization's Glean knowledge graph and the tools your administrator has enabled. The Remote MCP Server is tenant-specific and permission-aware. Each person uses their own Glean access.
 
-# <Icon name="mcp" iconSet="glean" className="inline" height="1.4rem" /> Model Context Protocol (MCP) Remote Server
+:::note
+This is different from the public [Docs MCP Server](/docs-mcp), which gives a coding assistant access to Glean developer documentation. Use the Remote MCP Server for your organization's indexed knowledge and configured tools.
+:::
 
-Connect your AI tools to Glean's enterprise knowledge base with zero setup required. The Remote MCP Server is built directly into Glean's platform, providing instant access to your organization's data through any MCP-compatible host application.
+## Check that you can connect
 
-## Get Started
+Glean enables the OAuth Authorization Server and Remote MCP Server by default for eligible tenants. Administrators can disable MCP or hide the end-user Configurator. Open the Configurator first. If it is unavailable, ask an administrator to check your tenant's MCP and OAuth configuration.
 
-<Card
-  title="MCP Configurator"
-  icon="mcp"
-  iconSet="glean"
->
-  Select your profile icon → **Your Settings** → **Install** tab → **MCP Configurator** section. The configurator provides tailored connection instructions, configuration snippets, and OAuth setup for each supported host application.
-</Card>
+<Steps>
+  <Step title="Open the MCP Configurator">
+    Open the [MCP Configurator](https://app.glean.com/settings/install?mcpConfigure=true) and select your host. Copy the current server URL, server name, and host-specific instructions. See the [MCP Configurator user guide](https://docs.glean.com/user-guide/mcp/usage) if the navigation in Glean differs.
+  </Step>
 
-<div>
-  Learn more about using the [MCP Configurator](https://docs.glean.com/user-guide/mcp/usage).
-</div>
+  <Step title="If the Configurator or host is missing">
+    Ask an administrator to confirm that MCP servers are enabled, that the end-user Configurator is visible, and to check the DCR allowlist and any prior custom OAuth configuration. Those checks live in [Set up Glean MCP server](https://docs.glean.com/administration/platform/mcp/enable-mcp-servers) and [Dynamic Client Registration](https://docs.glean.com/administration/oauth/dynamic-client-registration).
+  </Step>
 
+  <Step title="Match the host to its setup path">
+    Check [Supported MCP Hosts](/guides/mcp/supported-hosts) to see whether your host is user-configurable or organization-managed. Use that host's URL, server name, and configuration snippet. Do not copy another host's values.
+  </Step>
+</Steps>
 
----
+## Connect with OAuth
 
-## Documentation
+Complete the host's OAuth sign-in flow with your organization's SSO when prompted.
 
-For comprehensive guides on setting up and using Glean's MCP servers:
+Dynamic Client Registration (DCR) is the usual path for approved MCP hosts. The default policy is the Glean-managed list of approved applications. If DCR is disabled, the host is not approved, or the host needs scopes DCR does not grant, an administrator can register a [static OAuth client](https://docs.glean.com/administration/oauth/static-client-registration). See [OAuth authentication](/api-info/client/authentication/oauth) for the DCR versus static model.
+
+Use a Glean-issued API token only when the host cannot complete OAuth. Do not assign API Token Creator in bulk as an MCP rollout.
+
+## Verify the connection
+
+After the host reports that it is connected, start a new conversation and ask something explicit, such as "Search Glean for our engineering onboarding guide." Confirm that the host shows the Glean server and tools, asks for authorization when required, and returns only content you can access in Glean.
+
+If the server is connected but tools do not load, or a verification request fails, follow [Remote MCP troubleshooting](/guides/mcp/troubleshooting). Hosts choose which tools to call, so name the data or action you want when you test.
+
+## Install individually or manage centrally
 
 <CardGroup cols={2}>
-  <Card 
-    title="Administrator Guide" 
-    icon="Settings"
-    href="https://docs.glean.com/administration/platform/mcp/about"
-  >
-    Setup instructions, architecture overview, authentication methods, and managing MCP servers for your organization.
+  <Card title="Individual installation" icon="User" href="https://docs.glean.com/user-guide/mcp/end-user-configuration">
+    Use the MCP Configurator to connect a user-configurable host for yourself.
   </Card>
-  
-  <Card 
-    title="User Guide" 
-    icon="Users"
-    href="https://docs.glean.com/user-guide/mcp/usage"
-  >
-    Installation steps, supported hosts, usage examples by role, and troubleshooting tips for end users.
+  <Card title="Organization-managed setup" icon="Settings" href="https://docs.glean.com/administration/platform/mcp/about">
+    Configure hosts that your organization manages through administrator controls.
+  </Card>
+  <Card title="MDM deployment" icon="Monitor" href="https://docs.glean.com/administration/platform/mcp/mdm-mcp">
+    Deploy a Glean Remote MCP server to managed devices through MDM.
+  </Card>
+  <Card title="Supported hosts" icon="Monitor" href="/guides/mcp/supported-hosts">
+    See configuration ownership, transport, and authentication for each listed host.
   </Card>
 </CardGroup>
+
+## Related administration guides
+
+- [About Glean MCP Servers](https://docs.glean.com/administration/platform/mcp/about)
+- [Set up Glean MCP server](https://docs.glean.com/administration/platform/mcp/enable-mcp-servers)
+- [Use the MCP Configurator](https://docs.glean.com/user-guide/mcp/usage)
+- [Glean OAuth Authorization Server](https://docs.glean.com/administration/oauth/authorization-server)
+- [Dynamic Client Registration](https://docs.glean.com/administration/oauth/dynamic-client-registration)
+- [Deploy MCP server with MDM](https://docs.glean.com/administration/platform/mcp/mdm-mcp)
