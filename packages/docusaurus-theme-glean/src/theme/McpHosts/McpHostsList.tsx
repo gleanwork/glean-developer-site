@@ -1,12 +1,16 @@
 import React, { useMemo, useState } from 'react';
 import clsx from 'clsx';
+import Link from '@docusaurus/Link';
 import Card from '../Card';
 import CardGroup from '../CardGroup';
 import {
   MCPConfigRegistry,
   CLIENT_TYPES,
   TYPE_LABELS,
+  type ClientId,
   type ClientType,
+  type SupportedAuth,
+  type Transport,
 } from '@gleanwork/mcp-config-schema/browser';
 import McpHostIcon from './McpHostIcon';
 import styles from './McpHostsList.module.css';
@@ -17,6 +21,9 @@ interface McpHost {
   types: readonly ClientType[];
   userConfigurable: boolean;
   documentationUrl?: string;
+  managedSetupUrl?: string;
+  transports: readonly Transport[];
+  supportedAuth: readonly SupportedAuth[];
 }
 
 /**
@@ -31,20 +38,41 @@ const EXTRA_HOSTS: McpHost[] = [
     userConfigurable: false,
     documentationUrl:
       'https://learn.microsoft.com/en-us/microsoft-copilot-studio/mcp-add-existing-server-to-agent',
+    transports: ['http'],
+    supportedAuth: ['token', 'oauth:dcr'],
   },
 ];
 
-/** All supported hosts (registry + extras), sorted alphabetically by display name. */
+const ORGANIZATION_GUIDANCE_URL =
+  'https://docs.glean.com/administration/platform/mcp/about';
+
+// Matches GLEAN_REGISTRY_OPTIONS.managedSetupUrls in @gleanwork/mcp-config-glean.
+const GLEAN_MANAGED_SETUP_URLS = {
+  chatgpt: 'https://chatgpt.com/admin/apps?tab=available&q=glean',
+  'claude-teams-enterprise': 'https://claude.ai/directory/connectors/glean',
+  'cursor-team': 'https://cursor.com/dashboard/integrations',
+} as const satisfies Partial<Record<ClientId, string>>;
+
+/** All supported hosts (registry + missing fallbacks), sorted alphabetically. */
 function buildHosts(): McpHost[] {
-  const registry = new MCPConfigRegistry();
+  const registry = new MCPConfigRegistry({
+    managedSetupUrls: GLEAN_MANAGED_SETUP_URLS,
+  });
   const fromRegistry: McpHost[] = registry.getAllConfigs().map((c) => ({
     id: c.id,
     displayName: c.displayName,
     types: c.types,
     userConfigurable: c.userConfigurable,
     documentationUrl: c.documentationUrl,
+    managedSetupUrl: registry.getManagedSetupUrl(c.id),
+    transports: c.transports,
+    supportedAuth: c.supportedAuth,
   }));
-  return [...fromRegistry, ...EXTRA_HOSTS].sort((a, b) =>
+
+  const byId = new Map(EXTRA_HOSTS.map((host) => [host.id, host]));
+  fromRegistry.forEach((host) => byId.set(host.id, host));
+
+  return [...byId.values()].sort((a, b) =>
     a.displayName.localeCompare(b.displayName, undefined, {
       sensitivity: 'base',
     }),
@@ -53,13 +81,23 @@ function buildHosts(): McpHost[] {
 
 const HOSTS = buildHosts();
 
+const TRANSPORT_LABELS: Record<Transport, string> = {
+  stdio: 'STDIO',
+  http: 'HTTP',
+};
+
+const AUTH_LABELS: Record<SupportedAuth, string> = {
+  token: 'API token',
+  'oauth:dcr': 'OAuth via DCR',
+};
+
 type InstallFilter = 'all' | 'user' | 'admin';
 type TypeFilter = 'all' | ClientType;
 
 const INSTALL_OPTIONS: { value: InstallFilter; label: string }[] = [
   { value: 'all', label: 'All' },
-  { value: 'user', label: 'User-installable' },
-  { value: 'admin', label: 'Admin-managed' },
+  { value: 'user', label: 'User-configurable' },
+  { value: 'admin', label: 'Organization-managed' },
 ];
 
 interface ChipGroupProps<T extends string> {
@@ -108,7 +146,7 @@ export interface McpHostsListProps {
 /**
  * Renders the full set of supported MCP hosts from @gleanwork/mcp-config-schema
  * (plus a small set of extras) with live filtering by installability, client
- * type, and name. Each card links to the host's official documentation.
+ * type, and name. Each card shows setup actions appropriate to its ownership.
  */
 export default function McpHostsList({
   defaultInstall = 'all',
@@ -143,7 +181,7 @@ export default function McpHostsList({
     <div className={styles.root}>
       <div className={styles.filterBar}>
         <ChipGroup<InstallFilter>
-          label="Install"
+          label="Configuration"
           value={install}
           options={INSTALL_OPTIONS}
           onChange={setInstall}
@@ -193,7 +231,6 @@ export default function McpHostsList({
             <Card
               key={host.id}
               title={host.displayName}
-              href={host.documentationUrl}
               color="var(--ifm-font-color-base)"
               icon={<McpHostIcon clientId={host.id} alt={host.displayName} />}
             >
@@ -204,6 +241,74 @@ export default function McpHostsList({
                   </span>
                 ))}
               </span>
+              <dl className={styles.cardMetadata}>
+                <div>
+                  <dt>Configuration</dt>
+                  <dd>
+                    {host.userConfigurable
+                      ? 'User-configurable'
+                      : 'Organization-managed'}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Transport</dt>
+                  <dd>
+                    {host.transports
+                      .map((value) => TRANSPORT_LABELS[value])
+                      .join(', ')}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Authentication</dt>
+                  <dd>
+                    {host.supportedAuth.length > 0
+                      ? host.supportedAuth
+                          .map((value) => AUTH_LABELS[value])
+                          .join(', ')
+                      : 'Not specified. See host documentation.'}
+                  </dd>
+                </div>
+              </dl>
+              <div className={styles.cardActions}>
+                {host.userConfigurable ? (
+                  <Link
+                    className="button button--sm button--primary"
+                    to={`https://app.glean.com/settings/install?mcpConfigure=true&mcpHost=${host.id}`}
+                    aria-label={`Open MCP Configurator for ${host.displayName}`}
+                  >
+                    Open MCP Configurator
+                  </Link>
+                ) : host.managedSetupUrl ? (
+                  <Link
+                    className="button button--sm button--primary"
+                    to={host.managedSetupUrl}
+                    aria-label={`Set up Glean for ${host.displayName}`}
+                  >
+                    Set up Glean
+                  </Link>
+                ) : (
+                  <Link
+                    className="button button--sm button--primary"
+                    to={ORGANIZATION_GUIDANCE_URL}
+                    aria-label={`Organization setup guidance for ${host.displayName}`}
+                  >
+                    Organization setup guidance
+                  </Link>
+                )}
+                {host.documentationUrl ? (
+                  <Link
+                    className="button button--sm button--secondary"
+                    to={host.documentationUrl}
+                    aria-label={`Read ${host.displayName} vendor documentation`}
+                  >
+                    Vendor documentation
+                  </Link>
+                ) : (
+                  <span className={styles.missingDocumentation}>
+                    Vendor documentation unavailable
+                  </span>
+                )}
+              </div>
             </Card>
           ))}
         </CardGroup>

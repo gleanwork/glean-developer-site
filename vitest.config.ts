@@ -22,6 +22,7 @@ export default defineConfig({
     },
   },
   resolve: {
+    dedupe: ['react', 'react-dom'],
     alias: {
       '@site': path.resolve(__dirname, './'),
       '@theme/ApiExplorer': path.resolve(
