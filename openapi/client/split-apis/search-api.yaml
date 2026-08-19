@@ -2,11 +2,11 @@ openapi: 3.0.0
 info:
   version: 0.9.0
   title: Glean API - Search
-  x-source-commit-sha: 26582d482fd365bb6e08720a096edc8336b2322e
+  x-source-commit-sha: 9cbf8e48840ea13c1be8e61cbc378c2e446ec220
   description: API endpoints for Search
   x-logo:
     url: https://app.glean.com/images/glean-text2.svg
-  x-open-api-commit-sha: ba805dad43d06e3a084ffb35806144d0ad946bcc
+  x-open-api-commit-sha: bf898f02464f73f7f83cfe1bd21ce62f53a03749
   x-speakeasy-name: Glean API
 servers:
   - url: '{serverUrl}'
@@ -1498,6 +1498,19 @@ paths:
             }
 components:
   schemas:
+    CalendarRoomBookingStatus:
+      type: string
+      description: The current booking status of the room resource associated with an event.
+      enum:
+        - NONE
+        - ACCEPTED
+        - DECLINED
+        - PENDING
+      x-enum-varnames:
+        - CALENDAR_ROOM_BOOKING_STATUS_NONE
+        - CALENDAR_ROOM_BOOKING_STATUS_ACCEPTED
+        - CALENDAR_ROOM_BOOKING_STATUS_DECLINED
+        - CALENDAR_ROOM_BOOKING_STATUS_PENDING
     ClusterTypeEnum:
       type: string
       description: The reason for inclusion of clusteredResults.
@@ -2518,6 +2531,7 @@ components:
       properties:
         count:
           type: integer
+          format: int64
           description: The counter value
         period:
           $ref: '#/components/schemas/Period'
@@ -4126,47 +4140,6 @@ components:
         metadata:
           - datasource: confluence
           - objectType: page
-    CalendarEvent:
-      required:
-        - id
-        - url
-      allOf:
-        - $ref: '#/components/schemas/AnonymousEvent'
-        - type: object
-          properties:
-            id:
-              type: string
-              description: The calendar event id
-            url:
-              type: string
-              description: A permalink for this calendar event
-            attendees:
-              $ref: '#/components/schemas/CalendarAttendees'
-            location:
-              type: string
-              description: The location that this event is taking place at.
-            conferenceData:
-              $ref: '#/components/schemas/ConferenceData'
-            description:
-              type: string
-              description: The HTML description of the event.
-            datasource:
-              type: string
-              description: The app or other repository type from which the event was extracted
-            hasTranscript:
-              type: boolean
-              description: The event has a transcript associated with it enabling features like summarization
-            transcriptUrl:
-              type: string
-              description: A link to the transcript of the event
-            classifications:
-              type: array
-              items:
-                $ref: '#/components/schemas/EventClassification'
-            generatedAttachments:
-              type: array
-              items:
-                $ref: '#/components/schemas/GeneratedAttachment'
     Announcement:
       allOf:
         - $ref: '#/components/schemas/AnnouncementMutableProperties'
@@ -4430,6 +4403,56 @@ components:
           description: An opaque token that represents this particular result in this particular query. To be used for /feedback reporting.
           type: string
       type: object
+    CalendarEvent:
+      required:
+        - id
+        - url
+      allOf:
+        - $ref: '#/components/schemas/AnonymousEvent'
+        - type: object
+          properties:
+            id:
+              type: string
+              description: The calendar event id
+            url:
+              type: string
+              description: A permalink for this calendar event
+            attendees:
+              $ref: '#/components/schemas/CalendarAttendees'
+            isOrganizer:
+              type: boolean
+              nullable: true
+              description: Whether the requesting user is the organizer of this event.
+            roomBookingStatus:
+              $ref: '#/components/schemas/CalendarRoomBookingStatus'
+            roomName:
+              type: string
+              description: The display name of the room resource associated with this event.
+            location:
+              type: string
+              description: The location that this event is taking place at.
+            conferenceData:
+              $ref: '#/components/schemas/ConferenceData'
+            description:
+              type: string
+              description: The HTML description of the event.
+            datasource:
+              type: string
+              description: The app or other repository type from which the event was extracted
+            hasTranscript:
+              type: boolean
+              description: The event has a transcript associated with it enabling features like summarization
+            transcriptUrl:
+              type: string
+              description: A link to the transcript of the event
+            classifications:
+              type: array
+              items:
+                $ref: '#/components/schemas/EventClassification'
+            generatedAttachments:
+              type: array
+              items:
+                $ref: '#/components/schemas/GeneratedAttachment'
     CollectionMutableProperties:
       type: object
       properties:
@@ -5261,6 +5284,7 @@ components:
             - STARTER_KIT_ORG_CHART
             - STARTER_KIT_ADD_DOC
             - MEETING_RECAP
+            - MEETING_ROOM
             - MEETING_PREP_AUTOMATION
             - ACTIVE_DISCUSSION
             - MID_DAY_CATCH_UP

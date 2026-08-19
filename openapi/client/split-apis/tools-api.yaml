@@ -2,11 +2,11 @@ openapi: 3.0.0
 info:
   version: 0.9.0
   title: Glean API - Tools
-  x-source-commit-sha: 26582d482fd365bb6e08720a096edc8336b2322e
+  x-source-commit-sha: 9cbf8e48840ea13c1be8e61cbc378c2e446ec220
   description: API endpoints for Tools
   x-logo:
     url: https://app.glean.com/images/glean-text2.svg
-  x-open-api-commit-sha: ba805dad43d06e3a084ffb35806144d0ad946bcc
+  x-open-api-commit-sha: bf898f02464f73f7f83cfe1bd21ce62f53a03749
   x-speakeasy-name: Glean API
 servers:
   - url: '{serverUrl}'
@@ -680,14 +680,15 @@ paths:
       summary: Get tool definitions from a tool server.
       description: |
         Returns the name, description and JSON input schema for the named tools on the
-        specified tool server. Works for both action packs and MCP servers.
+        specified tool server. Works for Glean's built-in tools, tool packs and MCP
+        servers.
 
         `toolNames` is required. Names that do not exist on the server are returned in
         `notFound` rather than failing the request, so a single bad name does not force
         callers into one-at-a-time retries. Matching is case-insensitive and treats `-`
         and `_` as equivalent.
 
-        Native tools are not served; `serverId=native` returns 404.
+        Use `serverId=native` for Glean's built-in tools.
       operationId: getToolServerTools
       x-visibility: Preview
       x-glean-experimental:
