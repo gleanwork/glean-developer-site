@@ -29,8 +29,8 @@ Your server URL is used in API requests and API client configuration:
     **Recommended for new integrations**
 
     - OAuth is preferred for per-user integrations
-    - Glean OAuth Authorization Server or external IdP OAuth
-    - Glean-issued tokens for approved exceptions
+    - Glean OAuth Authorization Server (on by default) or external IdP OAuth
+    - Glean-issued tokens for Indexing, global `X-Glean-ActAs`, or when no OAuth path exists
     - [Platform authentication guide](/api/platform-api/authentication)
   </Card>
 
@@ -40,8 +40,8 @@ Your server URL is used in API requests and API client configuration:
     **For existing and specialized user-facing integrations**
 
     - OAuth is preferred for per-user integrations
-    - Glean OAuth Authorization Server or external IdP OAuth
-    - Glean-issued tokens for approved exceptions
+    - Glean OAuth Authorization Server (on by default) or external IdP OAuth
+    - Glean-issued tokens for global `X-Glean-ActAs`, or when no OAuth path exists
     - [Client authentication guide](/api-info/client/authentication/overview)
   </Card>
 
@@ -60,11 +60,11 @@ Your server URL is used in API requests and API client configuration:
 
 ### Platform API: per-user or admin-managed access
 
-For per-user Platform API integrations, prefer OAuth. Use a Glean OAuth Authorization Server token when your administrator has enabled it, or use an external-IdP OAuth token when your organization has configured that option. Use Glean-issued tokens only when an admin-managed token lifecycle, global permissions, or another supported exception is the better fit. See the [Platform API authentication guide](/api/platform-api/authentication).
+For per-user Platform API integrations, prefer OAuth. The Glean OAuth Authorization Server is enabled by default. Use an external-IdP OAuth token when your organization already issues those tokens. Use a Glean-issued token for global permissions with `X-Glean-ActAs`, or when no OAuth path exists. See the [Platform API authentication guide](/api/platform-api/authentication).
 
 ### Client API: per-user or admin-managed access
 
-For per-user Client API integrations, prefer OAuth. Choose the Glean OAuth Authorization Server when your administrator has enabled it, or external-IdP OAuth when your organization already issues the access tokens. Use Glean-issued tokens when you need an admin-managed token lifecycle, global permissions, or another supported exception. See the [Client API authentication guide](/api-info/client/authentication/overview).
+For per-user Client API integrations, prefer OAuth. The Glean OAuth Authorization Server is enabled by default. Use external-IdP OAuth when your organization already issues the access tokens. Use a Glean-issued token for global permissions with `X-Glean-ActAs`, or when no OAuth path exists. See the [Client API authentication guide](/api-info/client/authentication/overview).
 
 ### Indexing API
 
@@ -72,7 +72,7 @@ The Indexing API requires Glean-issued tokens. OAuth is not supported for ordina
 
 ## Try a request in your tenant
 
-Use the [Search API Explorer](/api/client-api/search/search) to test authentication against your own Glean tenant. API Explorer is for interactive tenant testing; it is not production sample code or a substitute for implementing your application's OAuth flow and token handling.
+Use the [Search API Explorer](/api/client-api/search/search) to test Client API authentication against your own Glean tenant. For Platform or Indexing API authentication, use that API's getting-started guide. API Explorer is for interactive tenant testing. It is not production sample code, and it does not replace your application's OAuth flow.
 
 ## Shared security practices
 

@@ -7,7 +7,7 @@ sidebar_label: Authentication
 
 # Platform API Authentication
 
-Platform API requests use a bearer credential in the `Authorization` header. Choose the Platform API first, then choose an access model: OAuth is preferred for per-user integrations, while Glean-issued API tokens remain available for approved admin-managed and global-permission exceptions.
+Platform API requests use a bearer credential in the `Authorization` header. Prefer OAuth for per-user integrations. Use a Glean-issued token for global permissions with `X-Glean-ActAs`, or when no OAuth path exists.
 
 ## Request header
 
@@ -19,7 +19,7 @@ Authorization: Bearer <platform_token>
 
 <CardGroup cols={3}>
   <Card title="Glean OAuth Authorization Server" icon="Shield" iconSet="feather">
-    Use Glean's OAuth Authorization Server for OAuth access tokens and fine-grained Glean scopes. It must be enabled for your tenant; ask an administrator to verify that it is available. Use a static client for application integrations. DCR is available only when enabled and supported, and has restricted scopes.
+    Use Glean's OAuth Authorization Server for OAuth access tokens and fine-grained Glean scopes. It is enabled by default. Use DCR for approved MCP hosts. Use a static client when DCR is disabled, the application is not approved, or the application needs scopes DCR does not grant.
   </Card>
 
   <Card title="External IdP OAuth" icon="Globe" iconSet="feather">
@@ -34,7 +34,7 @@ Authorization: Bearer <platform_token>
 ## Quick start
 
 1. Confirm that your application has access to the Platform API.
-2. For a per-user integration, obtain an OAuth access token from the enabled Glean OAuth Authorization Server or a configured external IdP. For an approved exception, obtain a Glean-issued token.
+2. For a per-user integration, obtain an OAuth access token from the Glean OAuth Authorization Server or a configured external IdP. Use a Glean-issued token for global `X-Glean-ActAs`, or when no OAuth path exists.
 3. Store the credential securely and provide it in the `Authorization` header.
 4. Try the [Platform API Quickstart](/api/platform-api/getting-started).
 

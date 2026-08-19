@@ -18,7 +18,7 @@ This guide helps you choose and implement the right authentication method for Gl
     - Tokens from the Glean OAuth Authorization Server or an external IdP
     - Works with Google, Azure, Okta, OneLogin
     - Glean-defined scopes (Authorization Server) or Client API access via your IdP
-    - Use static clients for application integrations; DCR is conditional
+    - DCR for approved MCP hosts; static clients for governed applications
 
     [Setup OAuth →](./oauth)
   </Card>
@@ -42,16 +42,15 @@ This guide helps you choose and implement the right authentication method for Gl
 Choose your authentication method based on your needs:
 
 ### Choose OAuth if you:
-- Are building a per-user Client API integration and want standards-based, user-authorized access without manually managing Glean API tokens
-- Can use a static client with the Glean OAuth Authorization Server, or already use supported OAuth tokens from your enterprise identity provider
+- Are building a per-user Client API integration
+- Want users to authorize access without distributing Glean-issued API tokens
+- Can use the Glean OAuth Authorization Server (enabled by default) or already use supported OAuth tokens from your enterprise identity provider
 - Want the token issuer to manage expiration and refresh
-- Are building a user-facing integration
 
-### Choose Glean Tokens if you:
-- Need an administrator-managed token lifecycle or a supported server-to-server exception
-- Cannot use OAuth because neither the Glean OAuth Authorization Server is enabled nor an external-IdP OAuth path is configured
-- Need global permissions to impersonate users
-- Want fine-grained control over token lifecycle
+### Choose Glean-issued tokens if you:
+- Call the Indexing API, which does not accept OAuth
+- Need a global token with `X-Glean-ActAs` to impersonate users
+- Have no OAuth path: the Glean OAuth Authorization Server is disabled and no external-IdP OAuth path is configured
 
 ---
 
@@ -60,11 +59,18 @@ Choose your authentication method based on your needs:
 Different authentication methods require different headers:
 
 <Tabs>
-<TabItem value="oauth" label="OAuth">
+<TabItem value="oauth-gas" label="Glean OAuth Authorization Server">
 
 ```bash snippet=overview/snippet-02.sh
 Authorization: Bearer <oauth_access_token>
-X-Glean-Auth-Type: OAUTH   # required for external-IdP tokens; optional for Glean Authorization Server tokens
+```
+
+</TabItem>
+<TabItem value="oauth-idp" label="External IdP OAuth">
+
+```bash snippet=overview/snippet-02-idp.sh
+Authorization: Bearer <oauth_access_token>
+X-Glean-Auth-Type: OAUTH
 ```
 
 </TabItem>
@@ -112,16 +118,26 @@ X-Glean-ActAs: user@company.com
 
 ## Testing Your Authentication
 
-Use the [Search API Explorer](/api/client-api/search/search) to test a Client API request against your own tenant. API Explorer is an interactive tenant-testing tool, not production sample code; implement the OAuth flow and token handling in your application before deploying it.
+Use the [Search API Explorer](/api/client-api/search/search) to test a Client API request against your own tenant. API Explorer tests Client API authentication only. It is not production sample code. Implement the OAuth flow and token handling in your application before you deploy.
 
 ### Quick Test Commands
 
 Replace `<instance>` with your Glean instance name ([how to find](/get-started/authentication#finding-your-server-url)):
 
 <Tabs>
-<TabItem value="oauth" label="OAuth">
+<TabItem value="oauth-gas" label="Glean OAuth Authorization Server">
 
 ```bash snippet=overview/snippet-05.sh
+curl -X POST https://<instance>-be.glean.com/rest/api/v1/search \
+  -H 'Authorization: Bearer <OAUTH_TOKEN>' \
+  -H 'Content-Type: application/json' \
+  -d '{"query": "test", "pageSize": 1}'
+```
+
+</TabItem>
+<TabItem value="oauth-idp" label="External IdP OAuth">
+
+```bash snippet=overview/snippet-05-idp.sh
 curl -X POST https://<instance>-be.glean.com/rest/api/v1/search \
   -H 'Authorization: Bearer <OAUTH_TOKEN>' \
   -H 'X-Glean-Auth-Type: OAUTH' \

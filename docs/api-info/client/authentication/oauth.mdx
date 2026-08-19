@@ -18,7 +18,7 @@ There are two sources for that token, and they behave slightly differently on th
     **Glean issues the tokens (OAuth 2.1)**
 
     - Authorization Code flow with PKCE
-    - Static clients for application integrations; Dynamic Client Registration (DCR) only when enabled and supported
+    - Two registration modes: Dynamic Client Registration (DCR) for approved MCP hosts, and static clients for governed applications
     - Glean-defined, fine-grained scopes
     - Recognized by issuer — **no extra header**
     - Powers the [remote MCP server](/guides/mcp)
@@ -66,19 +66,21 @@ The official API clients accept an OAuth access token in their existing token fi
 <Tabs>
 <TabItem value="gas" label="Glean Authorization Server">
 
-The [Glean OAuth Authorization Server](https://docs.glean.com/administration/oauth/authorization-server) is an OAuth 2.1 authorization server that issues access tokens for the Client API. It reuses your existing SSO for user authentication — it does not replace your IdP.
+The [Glean OAuth Authorization Server](https://docs.glean.com/administration/oauth/authorization-server) is an OAuth 2.1 authorization server that issues access tokens for the Client API. It is enabled by default and reuses your existing SSO. It does not replace your IdP.
 
 <Steps>
-  <Step title="Confirm the authorization-server prerequisites">
-    The Glean OAuth Authorization Server must be enabled for your tenant. Ask a Glean administrator to verify that it is available. Glean continues to use your existing SSO for user authentication; it does not replace your IdP.
+  <Step title="Confirm the authorization server if sign-in fails">
+    Start with OAuth. If sign-in fails, ask a Glean administrator to confirm that the Glean OAuth Authorization Server is still enabled and that your client is allowed.
   </Step>
 
-  <Step title="Register the right kind of client">
-    Register a [static OAuth client](https://docs.glean.com/administration/oauth/static-client-registration) for an application integration. [Dynamic Client Registration (DCR)](https://docs.glean.com/administration/oauth/dynamic-client-registration) is available only when your administrator enables it and the application supports it. Administrators can restrict DCR by application or redirect URI, or disable it entirely.
+  <Step title="Choose a client-registration mode">
+    **Dynamic Client Registration (DCR)** lets the client register itself. Use DCR for approved MCP hosts. The default policy is the Glean-managed list of approved applications. Administrators can add redirect URIs, restrict the list, or disable DCR. DCR clients receive only the restricted scope set configured for DCR. See [Dynamic Client Registration](https://docs.glean.com/administration/oauth/dynamic-client-registration).
+
+    A **static OAuth client** is an application an administrator registers and governs. Use a static client when DCR is disabled, the application is not on the approved list, or the application needs scopes DCR does not grant. DCR also issues a `client_id`. Do not choose a static client only to get a stable identifier. See [static OAuth clients](https://docs.glean.com/administration/oauth/static-client-registration).
   </Step>
 
   <Step title="Obtain a token">
-    Follow the [static-client token example](https://docs.glean.com/administration/oauth/static-client-token-example) and use the Authorization Code flow with **PKCE**. Discover endpoints from the server metadata document and exchange the authorization code for an access token.
+    Use the Authorization Code flow with **PKCE**. Discover endpoints from the server metadata document and exchange the authorization code for an access token. For a static client, follow the [static-client token example](https://docs.glean.com/administration/oauth/static-client-token-example). For DCR, the host or application registers itself, then completes the same token flow.
   </Step>
 </Steps>
 
@@ -216,7 +218,7 @@ If you are using the Glean OAuth Authorization Server and still see a missing-he
     Explore Client API endpoints that work with OAuth
   </Card>
   <Card title="Glean OAuth Authorization Server" href="https://docs.glean.com/administration/oauth/authorization-server" icon="Shield">
-    Admin guide to enabling the server and registering static OAuth clients
+    Admin guide to the Glean OAuth Authorization Server and static OAuth clients
   </Card>
   <Card title="Remote MCP Server" href="/guides/mcp" icon="mcp" iconSet="glean">
     OAuth-authenticated MCP access powered by the Glean Authorization Server
