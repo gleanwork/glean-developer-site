@@ -11,7 +11,7 @@ The Platform Triggers API is now documented as an experimental release — subsc
 
 - Added endpoints: `GET /trigger-presets`, `GET /trigger-presets/{preset_id}`, `GET /trigger-presets/{preset_id}/input-values`.
 - Added endpoints: `POST /triggers`, `GET /triggers`, `GET /triggers/{trigger_id}`, `PATCH /triggers/{trigger_id}`, `DELETE /triggers/{trigger_id}`.
-- Added endpoints: `POST /trigger-presets/{preset_id}/events/search`, `POST /triggers/{trigger_id}/events/search` — preview what a preset would match, or replay what a trigger has matched.
+- Added endpoints: `POST /trigger-presets/{preset_id}/events/search`, `POST /triggers/{trigger_id}/events/search` — preview what a preset would match, or search recent events a trigger's current configuration matches.
 - Triggers are created from **presets**: curated event definitions per datasource, each declaring the inputs it accepts, discoverable at runtime.
 - Events arrive as [Standard Webhooks](https://www.standardwebhooks.com), signed with HMAC-SHA256. The signing secret is returned once, at creation. Delivery is at least once, and `webhook-id` is stable across retries.
 - `delivery.auth` attaches a bearer token sent alongside the signature, not instead of it.

@@ -18,12 +18,12 @@ Every delivery carries three headers:
 | Header | Meaning |
 | --- | --- |
 | `webhook-id` | Stable across retries. Use it as your idempotency key. |
-| `webhook-timestamp` | Unix seconds. Reject deliveries outside a tolerance window; 300 seconds is the Standard Webhooks recommendation. |
+| `webhook-timestamp` | Unix seconds. Reject deliveries outside a tolerance window. Standard Webhooks requires a tolerance but does not prescribe one; 300 seconds is the reference libraries' default. |
 | `webhook-signature` | `v1,<base64>`. Glean sends a single signature today; parse the space-delimited list anyway, as Standard Webhooks allows several. |
 
 The signed string is `{webhook-id}.{webhook-timestamp}.{raw body}`, hashed with HMAC-SHA256 using the signing secret with its `whsec_` prefix removed and the remainder base64-decoded.
 
-```python
+```python snippet=webhook-delivery/snippet-01.py
 import base64, hashlib, hmac, time
 
 TOLERANCE_SECONDS = 300
