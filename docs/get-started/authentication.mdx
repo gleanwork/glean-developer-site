@@ -8,7 +8,7 @@ import ApiSupport from '@site/src/components/ApiSupport';
 
 # Authentication Overview
 
-Glean's three REST API families use different authentication models. Start by choosing the API you need, then follow its implementation guide for the exact credential and scope requirements.
+Glean's three REST API families use different authentication models. Start by choosing the API family you need, then choose the access model that fits your integration. Follow that API's implementation guide for the exact credential and scope requirements.
 
 ## Finding Your Server URL
 
@@ -28,9 +28,9 @@ Your server URL is used in API requests and API client configuration:
 
     **Recommended for new integrations**
 
-    - Glean OAuth Authorization Server tokens
-    - External IdP OAuth tokens
-    - Glean-issued tokens
+    - OAuth is preferred for per-user integrations
+    - Glean OAuth Authorization Server (on by default) or external IdP OAuth
+    - Glean-issued tokens for Indexing, global `X-Glean-ActAs`, or when no OAuth path exists
     - [Platform authentication guide](/api/platform-api/authentication)
   </Card>
 
@@ -39,9 +39,9 @@ Your server URL is used in API requests and API client configuration:
 
     **For existing and specialized user-facing integrations**
 
-    - Glean OAuth Authorization Server
-    - External IdP OAuth
-    - Glean-issued tokens
+    - OAuth is preferred for per-user integrations
+    - Glean OAuth Authorization Server (on by default) or external IdP OAuth
+    - Glean-issued tokens for global `X-Glean-ActAs`, or when no OAuth path exists
     - [Client authentication guide](/api-info/client/authentication/overview)
   </Card>
 
@@ -58,17 +58,21 @@ Your server URL is used in API requests and API client configuration:
 
 ## Choose an authentication path
 
-### Platform API
+### Platform API: per-user or admin-managed access
 
-Platform API requests use a bearer credential in the `Authorization` header. Use one of the supported Platform API authentication methods described in the [Platform API authentication guide](/api/platform-api/authentication).
+For per-user Platform API integrations, prefer OAuth. The Glean OAuth Authorization Server is enabled by default. Use an external-IdP OAuth token when your organization already issues those tokens. Use a Glean-issued token for global permissions with `X-Glean-ActAs`, or when no OAuth path exists. See the [Platform API authentication guide](/api/platform-api/authentication).
 
-### Client API
+### Client API: per-user or admin-managed access
 
-OAuth is recommended for new Client API integrations. Use Glean-issued tokens when you need admin-managed token lifecycle, granular token control, or a server-to-server integration without OAuth. See the [Client API authentication guide](/api-info/client/authentication/overview).
+For per-user Client API integrations, prefer OAuth. The Glean OAuth Authorization Server is enabled by default. Use external-IdP OAuth when your organization already issues the access tokens. Use a Glean-issued token for global permissions with `X-Glean-ActAs`, or when no OAuth path exists. See the [Client API authentication guide](/api-info/client/authentication/overview).
 
 ### Indexing API
 
 The Indexing API requires Glean-issued tokens. OAuth is not supported for ordinary Indexing API operations. See the [Indexing API authentication guide](/api-info/indexing/authentication/overview).
+
+## Try a request in your tenant
+
+Use the [Search API Explorer](/api/client-api/search/search) to test Client API authentication against your own Glean tenant. For Platform or Indexing API authentication, use that API's getting-started guide. API Explorer is for interactive tenant testing. It is not production sample code, and it does not replace your application's OAuth flow.
 
 ## Shared security practices
 

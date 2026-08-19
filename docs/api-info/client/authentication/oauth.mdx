@@ -9,7 +9,7 @@ import TabItem from '@theme/TabItem';
 
 # OAuth Authentication for Client API
 
-OAuth is the **recommended authentication method** for Client API integrations. You authenticate with an OAuth access token instead of managing a Glean-issued API token.
+OAuth is the **recommended authentication method for per-user Client API integrations**. You authenticate with an OAuth access token instead of managing a Glean-issued API token.
 
 There are two sources for that token, and they behave slightly differently on the wire:
 
@@ -18,7 +18,7 @@ There are two sources for that token, and they behave slightly differently on th
     **Glean issues the tokens (OAuth 2.1)**
 
     - Authorization Code flow with PKCE
-    - Static clients or [Dynamic Client Registration](https://docs.glean.com/administration/oauth/dynamic-client-registration)
+    - Two registration modes: Dynamic Client Registration (DCR) for approved MCP hosts, and static clients for governed applications
     - Glean-defined, fine-grained scopes
     - Recognized by issuer — **no extra header**
     - Powers the [remote MCP server](/guides/mcp)
@@ -66,19 +66,21 @@ The official API clients accept an OAuth access token in their existing token fi
 <Tabs>
 <TabItem value="gas" label="Glean Authorization Server">
 
-The [Glean OAuth Authorization Server](https://docs.glean.com/administration/oauth/authorization-server) is an OAuth 2.1 authorization server that issues access tokens for the Client API. It reuses your existing SSO for user authentication — it does not replace your IdP.
+The [Glean OAuth Authorization Server](https://docs.glean.com/administration/oauth/authorization-server) is an OAuth 2.1 authorization server that issues access tokens for the Client API. It is enabled by default and reuses your existing SSO. It does not replace your IdP.
 
 <Steps>
-  <Step title="Enable the authorization server">
-    The Glean OAuth Authorization Server is disabled by default. An administrator enables it in the Glean admin console.
+  <Step title="Confirm the authorization server if sign-in fails">
+    Start with OAuth. If sign-in fails, ask a Glean administrator to confirm that the Glean OAuth Authorization Server is still enabled and that your client is allowed.
   </Step>
 
-  <Step title="Register a client">
-    Register a **static client**, or allow [Dynamic Client Registration](https://docs.glean.com/administration/oauth/dynamic-client-registration) (primarily for MCP hosts). Administrators can restrict or disable dynamic registration.
+  <Step title="Choose a client-registration mode">
+    **Dynamic Client Registration (DCR)** lets the client register itself. Use DCR for approved MCP hosts. The default policy is the Glean-managed list of approved applications. Administrators can add redirect URIs, restrict the list, or disable DCR. DCR clients receive only the restricted scope set configured for DCR. See [Dynamic Client Registration](https://docs.glean.com/administration/oauth/dynamic-client-registration).
+
+    A **static OAuth client** is an application an administrator registers and governs. Use a static client when DCR is disabled, the application is not on the approved list, or the application needs scopes DCR does not grant. DCR also issues a `client_id`. Do not choose a static client only to get a stable identifier. See [static OAuth clients](https://docs.glean.com/administration/oauth/static-client-registration).
   </Step>
 
   <Step title="Obtain a token">
-    Use the Authorization Code flow with **PKCE**. Discover endpoints from the server metadata document and exchange the authorization code for an access token.
+    Use the Authorization Code flow with **PKCE**. Discover endpoints from the server metadata document and exchange the authorization code for an access token. For a static client, follow the [static-client token example](https://docs.glean.com/administration/oauth/static-client-token-example). For DCR, the host or application registers itself, then completes the same token flow.
   </Step>
 </Steps>
 
@@ -88,9 +90,9 @@ Endpoints (replace `<instance>` — see [finding your server URL](/get-started/a
 |---------|-----|
 | OAuth server metadata | `https://<instance>-be.glean.com/.well-known/oauth-authorization-server` |
 | Token | `https://<instance>-be.glean.com/oauth/token` |
-| Dynamic Client Registration | `https://<instance>-be.glean.com/oauth/register` |
+| Dynamic Client Registration (when advertised and allowed) | `https://<instance>-be.glean.com/oauth/register` |
 
-The metadata document is the authoritative source for endpoints — fetch it to discover the current authorization, token, registration, and any other endpoints rather than relying on the values listed above.
+The metadata document is the authoritative source for endpoints — fetch it to discover the current authorization, token, registration, and any other endpoints rather than relying on the values listed above. A registration endpoint does not mean every application, redirect URI, or scope is permitted to use DCR.
 
 Tokens from the Glean Authorization Server are recognized by their issuer, so requests **do not** need the `X-Glean-Auth-Type` header.
 
@@ -131,6 +133,8 @@ Provider setup references:
 
 ## Implementation Examples
 
+The Glean Authorization Server example below shows a static-client token used with the Client API. To try the same authenticated endpoint interactively in your own tenant, use the [Search API Explorer](/api/client-api/search/search). API Explorer is for tenant testing only, not production sample code.
+
 <Tabs>
 <TabItem value="gas" label="Glean Authorization Server token">
 
@@ -165,7 +169,7 @@ curl -X POST https://<instance>-be.glean.com/rest/api/v1/search \
 
 ## Token Properties
 
-- **Scope**: Governed by Glean [scopes](/api-info/client/authentication/glean-issued) (for example `SEARCH`, `CHAT`). For static clients, the allowed scopes are selected when the client is created or edited; dynamically registered (DCR) clients are limited to a restricted subset. Request only the scopes your integration needs
+- **Scope**: Governed by Glean [scopes](/api-info/client/authentication/glean-issued) (for example `SEARCH`, `CHAT`). For static clients, the allowed scopes are selected when the client is created or edited. Dynamically registered (DCR) clients receive only the restricted scope set configured for DCR, so use a static client when the scopes your application needs are not available through DCR. Request only the scopes your integration needs
 - **User context**: Treated as user-permissioned; permissions are enforced by Glean at request time
 - **Expiration & refresh**: Controlled by the issuer (Glean Authorization Server or your IdP). For a refresh token, request the `offline_access` scope and refresh with a standard OAuth library
 - **API support**: These setup instructions apply to Client API. For Platform API, see [Platform API Authentication](/api/platform-api/authentication). Indexing API does not support OAuth
@@ -214,7 +218,7 @@ If you are using the Glean OAuth Authorization Server and still see a missing-he
     Explore Client API endpoints that work with OAuth
   </Card>
   <Card title="Glean OAuth Authorization Server" href="https://docs.glean.com/administration/oauth/authorization-server" icon="Shield">
-    Admin guide to enabling and configuring the Glean Authorization Server
+    Admin guide to the Glean OAuth Authorization Server and static OAuth clients
   </Card>
   <Card title="Remote MCP Server" href="/guides/mcp" icon="mcp" iconSet="glean">
     OAuth-authenticated MCP access powered by the Glean Authorization Server

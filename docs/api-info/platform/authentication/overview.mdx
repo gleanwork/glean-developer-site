@@ -7,7 +7,7 @@ sidebar_label: Authentication
 
 # Platform API Authentication
 
-Platform API requests use a bearer credential in the `Authorization` header. Platform API supports the same customer-facing authentication methods as Client API: Glean OAuth Authorization Server tokens, OAuth access tokens issued by a configured external identity provider, and Glean-issued API tokens.
+Platform API requests use a bearer credential in the `Authorization` header. Prefer OAuth for per-user integrations. Use a Glean-issued token for global permissions with `X-Glean-ActAs`, or when no OAuth path exists.
 
 ## Request header
 
@@ -19,7 +19,7 @@ Authorization: Bearer <platform_token>
 
 <CardGroup cols={3}>
   <Card title="Glean OAuth Authorization Server" icon="Shield" iconSet="feather">
-    Use Glean's OAuth Authorization Server for OAuth access tokens and fine-grained Glean scopes. This is the recommended OAuth path for new integrations.
+    Use Glean's OAuth Authorization Server for OAuth access tokens and fine-grained Glean scopes. It is enabled by default. Use DCR for approved MCP hosts. Use a static client when DCR is disabled, the application is not approved, or the application needs scopes DCR does not grant.
   </Card>
 
   <Card title="External IdP OAuth" icon="Globe" iconSet="feather">
@@ -34,7 +34,7 @@ Authorization: Bearer <platform_token>
 ## Quick start
 
 1. Confirm that your application has access to the Platform API.
-2. Obtain a Platform bearer credential through the appropriate flow.
+2. For a per-user integration, obtain an OAuth access token from the Glean OAuth Authorization Server or a configured external IdP. Use a Glean-issued token for global `X-Glean-ActAs`, or when no OAuth path exists.
 3. Store the credential securely and provide it in the `Authorization` header.
 4. Try the [Platform API Quickstart](/api/platform-api/getting-started).
 
@@ -49,3 +49,4 @@ Platform API and Client API use the same customer-facing authentication methods.
 - [Platform API overview](/api/platform-api)
 - [Platform API reference](/api/platform-api/platform-search)
 - [Common API authentication concepts](/get-started/authentication)
+- [OAuth setup, static clients, and DCR conditions](/api-info/client/authentication/oauth)
