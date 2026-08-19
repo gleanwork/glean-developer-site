@@ -7,6 +7,7 @@ import {
   MCPConfigRegistry,
   CLIENT_TYPES,
   TYPE_LABELS,
+  type ClientId,
   type ClientType,
   type SupportedAuth,
   type Transport,
@@ -20,6 +21,7 @@ interface McpHost {
   types: readonly ClientType[];
   userConfigurable: boolean;
   documentationUrl?: string;
+  managedSetupUrl?: string;
   transports: readonly Transport[];
   supportedAuth: readonly SupportedAuth[];
 }
@@ -41,15 +43,28 @@ const EXTRA_HOSTS: McpHost[] = [
   },
 ];
 
+const ORGANIZATION_GUIDANCE_URL =
+  'https://docs.glean.com/administration/platform/mcp/about';
+
+// Matches GLEAN_REGISTRY_OPTIONS.managedSetupUrls in @gleanwork/mcp-config-glean.
+const GLEAN_MANAGED_SETUP_URLS = {
+  chatgpt: 'https://chatgpt.com/admin/apps?tab=available&q=glean',
+  'claude-teams-enterprise': 'https://claude.ai/directory/connectors/glean',
+  'cursor-team': 'https://cursor.com/dashboard/integrations',
+} as const satisfies Partial<Record<ClientId, string>>;
+
 /** All supported hosts (registry + missing fallbacks), sorted alphabetically. */
 function buildHosts(): McpHost[] {
-  const registry = new MCPConfigRegistry();
+  const registry = new MCPConfigRegistry({
+    managedSetupUrls: GLEAN_MANAGED_SETUP_URLS,
+  });
   const fromRegistry: McpHost[] = registry.getAllConfigs().map((c) => ({
     id: c.id,
     displayName: c.displayName,
     types: c.types,
     userConfigurable: c.userConfigurable,
     documentationUrl: c.documentationUrl,
+    managedSetupUrl: registry.getManagedSetupUrl(c.id),
     transports: c.transports,
     supportedAuth: c.supportedAuth,
   }));
@@ -75,9 +90,6 @@ const AUTH_LABELS: Record<SupportedAuth, string> = {
   token: 'API token',
   'oauth:dcr': 'OAuth via DCR',
 };
-
-const ORGANIZATION_GUIDANCE_URL =
-  'https://docs.glean.com/administration/platform/mcp/about';
 
 type InstallFilter = 'all' | 'user' | 'admin';
 type TypeFilter = 'all' | ClientType;
@@ -265,6 +277,14 @@ export default function McpHostsList({
                     aria-label={`Open MCP Configurator for ${host.displayName}`}
                   >
                     Open MCP Configurator
+                  </Link>
+                ) : host.managedSetupUrl ? (
+                  <Link
+                    className="button button--sm button--primary"
+                    to={host.managedSetupUrl}
+                    aria-label={`Set up Glean for ${host.displayName}`}
+                  >
+                    Set up Glean
                   </Link>
                 ) : (
                   <Link

@@ -3,6 +3,13 @@ import { cleanup, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { vi } from 'vitest';
 
+const { registryCtorOptions } = vi.hoisted(() => ({
+  registryCtorOptions: {
+    current: undefined as
+      { managedSetupUrls?: Partial<Record<string, string>> } | undefined,
+  },
+}));
+
 vi.mock('@gleanwork/mcp-config-schema/browser', async (importOriginal) => {
   const actual =
     await importOriginal<
@@ -22,6 +29,19 @@ vi.mock('@gleanwork/mcp-config-schema/browser', async (importOriginal) => {
   return {
     ...actual,
     MCPConfigRegistry: class {
+      constructor(options?: {
+        managedSetupUrls?: Partial<Record<string, string>>;
+      }) {
+        registryCtorOptions.current = options;
+        this.options = options;
+      }
+
+      options?: { managedSetupUrls?: Partial<Record<string, string>> };
+
+      getManagedSetupUrl(clientId: string) {
+        return this.options?.managedSetupUrls?.[clientId];
+      }
+
       getAllConfigs() {
         return [
           {
@@ -30,11 +50,11 @@ vi.mock('@gleanwork/mcp-config-schema/browser', async (importOriginal) => {
           },
           userConfigurable,
           {
-            id: 'fixture-web',
-            displayName: 'Fixture Web',
+            id: 'chatgpt',
+            displayName: 'ChatGPT',
             types: ['web'] as const,
             userConfigurable: false,
-            documentationUrl: 'https://example.test/fixture-web',
+            documentationUrl: 'https://example.test/chatgpt',
             transports: ['http'] as const,
             supportedAuth: ['oauth:dcr'] as const,
           },
@@ -63,12 +83,26 @@ vi.mock('@gleanwork/mcp-config-schema/browser', async (importOriginal) => {
 
 import McpHostsList from './McpHostsList';
 
+const GLEAN_MANAGED_SETUP_URLS = {
+  chatgpt: 'https://chatgpt.com/admin/apps?tab=available&q=glean',
+  'claude-teams-enterprise': 'https://claude.ai/directory/connectors/glean',
+  'cursor-team': 'https://cursor.com/dashboard/integrations',
+};
+
 async function searchFor(name: string) {
   await userEvent.type(screen.getByRole('searchbox'), name);
 }
 
 describe('McpHostsList', () => {
   afterEach(cleanup);
+
+  it('passes Glean managed setup URLs into the registry', () => {
+    render(<McpHostsList />);
+
+    expect(registryCtorOptions.current?.managedSetupUrls).toEqual(
+      GLEAN_MANAGED_SETUP_URLS,
+    );
+  });
 
   it('renders a registry host only once when it is also present in the fallback list', () => {
     render(<McpHostsList />);
@@ -126,27 +160,25 @@ describe('McpHostsList', () => {
     ).toHaveAttribute('href', 'https://example.test/fixture-ide');
   });
 
-  it('routes centrally managed hosts to organization guidance without a Configurator action', async () => {
+  it('routes managed hosts with a setup URL to the host admin destination', async () => {
     const { container } = render(<McpHostsList />);
-    await searchFor('Fixture Web');
+    await searchFor('ChatGPT');
 
     expect(screen.getAllByText('Organization-managed').length).toBeGreaterThan(
       0,
     );
     expect(
-      screen.getByRole('link', {
-        name: 'Organization setup guidance for Fixture Web',
-      }),
-    ).toHaveAttribute(
-      'href',
-      'https://docs.glean.com/administration/platform/mcp/about',
-    );
+      screen.getByRole('link', { name: 'Set up Glean for ChatGPT' }),
+    ).toHaveAttribute('href', GLEAN_MANAGED_SETUP_URLS.chatgpt);
     expect(
       screen.getByRole('link', {
-        name: 'Read Fixture Web vendor documentation',
+        name: 'Read ChatGPT vendor documentation',
       }),
-    ).toHaveAttribute('href', 'https://example.test/fixture-web');
+    ).toHaveAttribute('href', 'https://example.test/chatgpt');
     expect(screen.queryByText('Open MCP Configurator')).not.toBeInTheDocument();
+    expect(
+      screen.queryByText('Organization setup guidance'),
+    ).not.toBeInTheDocument();
     expect(
       container.querySelector('a[href*="mcpConfigure=true"]'),
     ).not.toBeInTheDocument();
@@ -166,7 +198,9 @@ describe('McpHostsList', () => {
     await searchFor('Fixture Empty');
 
     expect(
-      screen.getByText('Organization setup guidance').closest('a'),
+      screen.getByRole('link', {
+        name: 'Organization setup guidance for Fixture Empty',
+      }),
     ).toHaveAttribute(
       'href',
       'https://docs.glean.com/administration/platform/mcp/about',
@@ -175,6 +209,7 @@ describe('McpHostsList', () => {
       screen.getByText('Vendor documentation unavailable'),
     ).toBeInTheDocument();
     expect(screen.queryByText('Vendor documentation')).not.toBeInTheDocument();
+    expect(screen.queryByText('Set up Glean')).not.toBeInTheDocument();
   });
 
   it('gives every action a host-specific accessible name', async () => {
