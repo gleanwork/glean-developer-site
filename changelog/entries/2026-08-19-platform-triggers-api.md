@@ -9,9 +9,9 @@ The Platform Triggers API is now documented as an experimental release — subsc
 
 ## Changes
 
-- Added endpoints: `GET /trigger-presets`, `GET /trigger-presets/{preset_id}`, `GET /trigger-presets/{preset_id}/input-values`.
-- Added endpoints: `POST /triggers`, `GET /triggers`, `GET /triggers/{trigger_id}`, `PATCH /triggers/{trigger_id}`, `DELETE /triggers/{trigger_id}`.
-- Added endpoints: `POST /trigger-presets/{preset_id}/events/search`, `POST /triggers/{trigger_id}/events/search` — preview what a preset would match, or search recent events a trigger's current configuration matches.
+- Added endpoints: `GET /api/trigger-presets`, `GET /api/trigger-presets/{preset_id}`, `GET /api/trigger-presets/{preset_id}/input-values`.
+- Added endpoints: `POST /api/triggers`, `GET /api/triggers`, `GET /api/triggers/{trigger_id}`, `PATCH /api/triggers/{trigger_id}`, `DELETE /api/triggers/{trigger_id}`.
+- Added endpoints: `POST /api/trigger-presets/{preset_id}/events/search`, `POST /api/triggers/{trigger_id}/events/search` — preview what a preset would match, or search recent events a trigger's current configuration matches.
 - Triggers are created from **presets**: curated event definitions per datasource, each declaring the inputs it accepts, discoverable at runtime.
 - Events arrive as [Standard Webhooks](https://www.standardwebhooks.com), signed with HMAC-SHA256. The signing secret is returned once, at creation. Delivery is at least once, and `webhook-id` is stable across retries.
 - `delivery.auth` attaches a bearer token sent alongside the signature, not instead of it.
