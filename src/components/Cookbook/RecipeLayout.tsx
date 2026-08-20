@@ -528,8 +528,10 @@ function ArchNodeIcon({
   const brand = node.icon ? BRAND_ICON_SRC[node.icon] : undefined;
   const brandUrl = useBaseUrl(brand?.adaptive === false ? brand.src : '');
 
-  // An emphasized node is always Glean's own mark, whatever icon it declares.
-  if (node.emphasized) {
+  // An emphasized node falls back to Glean's own mark, unless it names a brand
+  // icon of its own — a trigger node wants the Glean Trigger lockup, not the
+  // plain wordmark.
+  if (node.emphasized && !brand) {
     return getIcon('glean-logo', 'glean', {
       width: 20,
       height: 20,

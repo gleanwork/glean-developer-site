@@ -41,4 +41,11 @@ export const BRAND_ICON_SRC: Record<string, BrandIconEntry> = {
   cursor: { src: '/img/cookbook/cursor.svg', adaptive: false },
   github: { src: '/img/cookbook/github.svg', adaptive: false },
   n8n: { src: '/img/cookbook/n8n.svg', adaptive: false },
+  gmail: { src: '/img/cookbook/gmail.svg', adaptive: false },
+  gong: { src: '/img/cookbook/gong.svg', adaptive: false },
+  'google-calendar': {
+    src: '/img/cookbook/google-calendar.svg',
+    adaptive: false,
+  },
+  'glean-trigger': { src: '/img/cookbook/glean-trigger.svg', adaptive: false },
 };
