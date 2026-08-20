@@ -2445,7 +2445,8 @@
         {
           "kind": "verify-live",
           "title": "Check it against your own content",
-          "description": "Fire an alarm for the service you named. Check that a probable cause cites a past incident from your own corpus rather than a runbook, that approving as someone who is not on call returns 403, and that forcing expiry escalates without executing anything."
+          "description": "The two buttons on the page fire the bundled payments-service samples, so they get filtered out once WATCHED_SERVICES names your service. Send your own alarm instead. Use the URL the server printed, the same service name you set in .env, and Sev1 or Sev2, because the app ignores Sev3 by default. Then watch the page: the probable cause should cite a past incident from your own corpus rather than a runbook, approving as someone who is not on call should return 403, and forcing expiry should escalate without executing anything.",
+          "command": "curl -X POST \"<local-url>/webhook/pagerduty\" -H \"Content-Type: application/json\" -d '{\"id\":\"TEST-1\",\"service\":\"<your-service>\",\"kind\":\"canary\",\"metric\":\"error rate\",\"summary\":\"Error rate rose sharply during rollout\",\"severity\":\"Sev2\",\"firedAt\":\"2026-01-01T00:00:00Z\"}'"
         }
       ],
       "execution": {
