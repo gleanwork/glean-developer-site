@@ -14,6 +14,7 @@ import PluginRunButton from './PluginRunButton';
 import { AdaptiveBrandIcon, CATEGORY_ICONS } from './categories';
 import { BRAND_ICON_SRC } from './brandIcons';
 import { RecipeAuthCard } from './RecipeAuth';
+import { humanizeVariantLabel, variantScopeGroups } from './authContexts';
 import styles from './RecipeLayout.module.css';
 import catStyles from './categories.module.css';
 
@@ -253,27 +254,6 @@ export function RecipeDemoQueries(): React.ReactElement | null {
       )}
     </RecipeSection>
   );
-}
-
-const VARIANT_LABEL_WORDS: Record<string, string> = {
-  sdk: 'SDK',
-  api: 'API',
-  typescript: 'TypeScript',
-  javascript: 'JavaScript',
-};
-
-/** Last path segment of a codeAsset's repoPath, title-cased ("web-sdk" -> "Web SDK"). */
-function humanizeVariantLabel(repoPath: string): string {
-  return repoPath
-    .split('/')
-    .pop()!
-    .split('-')
-    .map(
-      (word) =>
-        VARIANT_LABEL_WORDS[word] ??
-        word.charAt(0).toUpperCase() + word.slice(1),
-    )
-    .join(' ');
 }
 
 /** One numbered row in a steps timeline. */
@@ -651,21 +631,64 @@ export default function RecipeLayout({
               </div>
             </div>
 
-            {recipe.requiredScopes.length > 0 ? (
-              <div className={styles.railCard}>
-                <div className={styles.railLabel}>Required scopes</div>
-                <div className={styles.scopes}>
-                  {recipe.requiredScopes.map((scope) => (
-                    <span className={styles.scopeChip} key={scope}>
-                      {scope}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            ) : null}
+            <RequiredScopesCard recipe={recipe} />
           </div>
         </div>
       </div>
     </RecipeContext.Provider>
+  );
+}
+
+/**
+ * Scope chips, split per build path when the paths differ. The flat
+ * `requiredScopes` union is what the whole recipe can need, so on a recipe
+ * with a path split it overstates what either path actually asks for.
+ */
+function RequiredScopesCard({
+  recipe,
+}: {
+  recipe: RecipeRecord;
+}): React.ReactElement | null {
+  const groups = variantScopeGroups(recipe);
+
+  if (groups) {
+    return (
+      <div className={styles.railCard}>
+        <div className={styles.railLabel}>Required scopes</div>
+        <div className={styles.authBody}>
+          {groups.map((group) => (
+            <div key={group.label}>
+              <p>
+                <strong>{group.label}</strong>
+              </p>
+              <div className={styles.scopes}>
+                {group.scopes.map((scope) => (
+                  <span className={styles.scopeChip} key={scope}>
+                    {scope}
+                  </span>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (recipe.requiredScopes.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className={styles.railCard}>
+      <div className={styles.railLabel}>Required scopes</div>
+      <div className={styles.scopes}>
+        {recipe.requiredScopes.map((scope) => (
+          <span className={styles.scopeChip} key={scope}>
+            {scope}
+          </span>
+        ))}
+      </div>
+    </div>
   );
 }

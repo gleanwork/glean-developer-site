@@ -44,6 +44,35 @@ function makeRecipe(overrides: Partial<RecipeRecord>): RecipeRecord {
   };
 }
 
+/** One build path of a recipe whose auth contract varies by path. */
+function dualPathAsset(
+  slug: string,
+  scopes: string[],
+): NonNullable<RecipeRecord['codeAssets']>[number] {
+  return {
+    repoPath: `recipes/customer-360/${slug}`,
+    language: 'typescript',
+    description: `The ${slug} path`,
+    execution: {
+      type: 'local-web',
+      questions: [],
+      auth: [
+        {
+          kind: 'oauth-with-token-fallback',
+          scopes,
+          setupCommand: 'cd customer-360 && npm run login',
+        },
+      ],
+      verification: {
+        kind: 'automated',
+        command: 'cd customer-360 && npm run verify',
+        expectedDuration: '1–3 minutes',
+        startsOwnServer: true,
+      },
+    },
+  };
+}
+
 const flagship = makeRecipe({
   id: 'build-engineering-portal',
   title: 'Build an engineering portal',
@@ -488,6 +517,61 @@ describe('RecipeLayout', () => {
     expect(
       screen.getByRole('link', { name: 'Glean-issued tokens' }),
     ).toHaveAttribute('href', '/api-info/client/authentication/glean-issued');
+  });
+
+  it('gives each build path its own scopes rather than the union', () => {
+    render(
+      <RecipeLayout
+        plugin={plugin}
+        recipe={makeRecipe({
+          authMethod: ['client-api-oauth-or-token'],
+          buildMethod: 'scaffold',
+          requiredScopes: ['SEARCH', 'CHAT', 'AGENTS'],
+          codeAssets: [
+            dualPathAsset('platform-search-chat', ['SEARCH', 'CHAT']),
+            dualPathAsset('platform-agents', ['SEARCH', 'AGENTS']),
+          ],
+        })}
+      >
+        <p>Body</p>
+      </RecipeLayout>,
+    );
+
+    const auth = screen.getByText('Auth').parentElement!;
+    expect(auth).toHaveTextContent('Platform Search Chat');
+    expect(auth).toHaveTextContent('(SEARCH, CHAT)');
+    expect(auth).toHaveTextContent('Platform Agents');
+    expect(auth).toHaveTextContent('(SEARCH, AGENTS)');
+
+    // Chips are grouped per path, so SEARCH is chipped twice. The union would
+    // have told the Search + Chat reader to mint an AGENTS scope it never calls.
+    expect(screen.getAllByText('SEARCH')).toHaveLength(2);
+    expect(screen.getAllByText('CHAT')).toHaveLength(1);
+    expect(screen.getAllByText('AGENTS')).toHaveLength(1);
+  });
+
+  it('does not split the rail when both paths need the same scopes', () => {
+    render(
+      <RecipeLayout
+        plugin={plugin}
+        recipe={makeRecipe({
+          authMethod: ['client-api-oauth-or-token'],
+          buildMethod: 'scaffold',
+          requiredScopes: ['SEARCH'],
+          codeAssets: [
+            dualPathAsset('typescript', ['SEARCH']),
+            dualPathAsset('python', ['SEARCH']),
+          ],
+        })}
+      >
+        <p>Body</p>
+      </RecipeLayout>,
+    );
+
+    const auth = screen.getByText('Auth').parentElement!;
+    expect(auth).not.toHaveTextContent('TypeScript');
+    expect(auth).not.toHaveTextContent('Python');
+    expect(screen.getAllByText('SEARCH')).toHaveLength(1);
   });
 
   it('does not tell cookie-SSO recipes to mint a token', () => {

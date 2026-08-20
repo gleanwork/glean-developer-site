@@ -1,6 +1,7 @@
 import type React from 'react';
 import Link from '@docusaurus/Link';
 import type { RecipeRecord } from '../../types/recipe';
+import { authContexts, type AuthKind } from './authContexts';
 import styles from './RecipeLayout.module.css';
 
 const FIND_SERVER = '/get-started/authentication#finding-your-server-url';
@@ -12,40 +13,16 @@ const TOKEN_MGMT_CLIENT =
 const TOKEN_MGMT_INDEXING =
   'https://app.glean.com/admin/platform/tokenManagement?tab=indexing';
 
-type AuthKind = NonNullable<RecipeRecord['execution']>['auth'][number]['kind'];
-
-function kindsFromRecipe(recipe: RecipeRecord): AuthKind[] {
-  const declared = recipe.execution?.auth.map((entry) => entry.kind) ?? [];
-  if (declared.length > 0) {
-    return [...new Set(declared)];
-  }
-  const mapped: AuthKind[] = [];
-  for (const method of recipe.authMethod) {
-    if (method === 'web-sdk-cookie') {
-      mapped.push('browser-cookie');
-    } else if (method === 'client-api-oauth-or-token') {
-      mapped.push('oauth-with-token-fallback');
-    } else if (method === 'indexing-token') {
-      mapped.push('indexing-token');
-    }
-  }
-  return [...new Set(mapped)];
-}
-
-function setupCommand(recipe: RecipeRecord): string | undefined {
-  return recipe.execution?.auth.find((entry) => entry.setupCommand)
-    ?.setupCommand;
-}
-
 function AuthBlock({
   kind,
-  recipe,
+  scopeList,
+  login,
 }: {
   kind: AuthKind;
-  recipe: RecipeRecord;
+  scopeList: string[];
+  login?: string;
 }): React.ReactElement | null {
-  const login = setupCommand(recipe);
-  const scopes = recipe.requiredScopes.join(', ');
+  const scopes = scopeList.join(', ');
 
   switch (kind) {
     case 'none':
@@ -110,14 +87,20 @@ function AuthBlock({
   }
 }
 
-/** Sticky-rail auth guidance keyed off recipe auth data. */
+/** Sticky-rail auth guidance keyed off recipe auth data, per build path. */
 export function RecipeAuthCard({
   recipe,
 }: {
   recipe: RecipeRecord;
 }): React.ReactElement | null {
-  const kinds = kindsFromRecipe(recipe).filter((kind) => kind !== 'none');
-  if (kinds.length === 0) {
+  const contexts = authContexts(recipe)
+    .map((context) => ({
+      ...context,
+      entries: context.entries.filter((entry) => entry.kind !== 'none'),
+    }))
+    .filter((context) => context.entries.length > 0);
+
+  if (contexts.length === 0) {
     return null;
   }
 
@@ -125,8 +108,25 @@ export function RecipeAuthCard({
     <div className={styles.railCard}>
       <div className={styles.railLabel}>Auth</div>
       <div className={styles.authBody}>
-        {kinds.map((kind) => (
-          <AuthBlock key={kind} kind={kind} recipe={recipe} />
+        {contexts.map((context, contextIndex) => (
+          <div
+            className={styles.authBody}
+            key={context.label ?? `auth-${contextIndex}`}
+          >
+            {context.label && (
+              <p>
+                <strong>{context.label}</strong>
+              </p>
+            )}
+            {context.entries.map((entry, entryIndex) => (
+              <AuthBlock
+                key={`${entry.kind}-${entryIndex}`}
+                kind={entry.kind}
+                scopeList={entry.scopes}
+                login={entry.setupCommand}
+              />
+            ))}
+          </div>
         ))}
       </div>
     </div>
