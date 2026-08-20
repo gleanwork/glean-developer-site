@@ -2432,8 +2432,8 @@
         },
         {
           "kind": "configure",
-          "title": "Point at an existing Glean agent, if you chose that path",
-          "description": "Skip this step if you are using Search and Chat directly. If an existing Glean agent should own the plan, run login:agent so the token also has the AGENTS scope, then set GLEAN_AGENT_ID in .env to that agent's ID.",
+          "title": "Optional: let a Glean agent do the planning",
+          "description": "The app ships with two planners and a dropdown to switch between them. Search and Chat works with the token you already have. The Glean agent planner stays greyed out until you point the app at an agent. To turn it on, run this command so your token also carries the AGENTS scope, then set GLEAN_AGENT_ID in .env to that agent's ID.",
           "command": "cd oncall-copilot && npm run login:agent -- --email \"<work-email>\""
         },
         {
@@ -2458,7 +2458,7 @@
           },
           {
             "id": "orchestrator",
-            "prompt": "Use direct Search + Chat or an existing Glean agent?",
+            "prompt": "Should the Glean-agent planner be enabled as well, or just direct Search + Chat? Both render into the same dashboard.",
             "required": true
           },
           {
@@ -2567,7 +2567,7 @@
         ]
       },
       "aiPrompt": "Build the On-call Copilot following the oncall-copilot recipe. Resolve the alarming service from an indexed service catalog, retrieve relevant precedents and runbooks, and classify evidence by role. Only a matching past incident may support a cause; a runbook may support a procedure. Assert no cause when no precedent matches. Gate mutating actions behind authorized human approval, expiry, a closed action registry, evidence support, and a complete audit log. Exercise unauthorized approval, expiry, unregistered action, and no-precedent paths during verification.",
-      "llmContext": "Use Platform Search for retrieval, Client Chat POST /rest/api/v1/chat for synthesis, and Platform Agents for the optional agent path. The app runs as the caller; its approval check is application policy, not impersonation. Resolve owners, on-call engineers, and escalation targets from the reader's service catalog. Only a matching past incident may support a cause; runbooks support procedures, not causes. Mutating actions require a supported cause, an authorized approver, a registered action, an unexpired proposal, and a complete audit trail. Set saveChat:false for verification and treat empty chat output as a retryable failure.",
+      "llmContext": "Use Platform Search for retrieval, Client Chat POST /rest/api/v1/chat for synthesis, and Platform Agents for the optional agent planner. Both planners ship in the same app and render into one dashboard; a dropdown switches between them, and the agent option is disabled unless GLEAN_AGENT_ID is set. This is not a scaffold fork; there is one tiged command. The app runs as the caller; its approval check is application policy, not impersonation. Resolve owners, on-call engineers, and escalation targets from the reader's service catalog. Only a matching past incident may support a cause; runbooks support procedures, not causes. Mutating actions require a supported cause, an authorized approver, a registered action, an unexpired proposal, and a complete audit trail. Set saveChat:false for verification and treat empty chat output as a retryable failure.",
       "goDependency": false,
       "featured": true,
       "tags": [
