@@ -2,15 +2,15 @@ openapi: 3.0.0
 info:
   version: '2026-04-01'
   title: Glean Platform API
-  x-source-commit-sha: 9cbf8e48840ea13c1be8e61cbc378c2e446ec220
-  x-open-api-commit-sha: bf898f02464f73f7f83cfe1bd21ce62f53a03749
+  x-source-commit-sha: fc1b050971735332d0b799f4048fe801553dd8dd
+  x-open-api-commit-sha: f34359dbb304911e06d4a7a3a8aca6162436d542
 servers:
   - url: '{serverUrl}'
     description: 'Replace the placeholder with your Glean API server URL. Copy the complete Server instance (QE) value from https://app.glean.com/admin/about-glean. Glean-hosted deployments use https://{instance}-be.glean.com. How to find it: https://developers.glean.com/get-started/authentication#finding-your-server-url'
     variables:
       serverUrl:
-        default: 'https://{instance-name}-be.glean.com'
-        description: 'Your Glean API server URL. Glean-hosted deployments use https://{instance}-be.glean.com. Custom domains are also valid. Find it at app.glean.com/admin/about-glean.'
+        default: https://{instance-name}-be.glean.com
+        description: Your Glean API server URL. Glean-hosted deployments use https://{instance}-be.glean.com. Custom domains are also valid. Find it at app.glean.com/admin/about-glean.
 security:
   - APIToken: []
 paths:
@@ -2887,6 +2887,41 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/PlatformTriggerCreateRequest'
+      callbacks:
+        triggerEvent:
+          '{$request.body#/delivery/webhook_url}':
+            post:
+              tags:
+                - Triggers
+              summary: Receive a trigger event
+              description: Delivery uses at-least-once semantics, so the same event can be sent more than once. Return any 2xx status after accepting the event. Network failures, 408, 429, and 5xx responses are retried; other non-2xx responses, including redirects, are terminal. The `webhook-id` remains stable across attempts and can be used for deduplication, while `webhook-timestamp` and `webhook-signature` are generated for each attempt.
+              operationId: trigger-webhook-event
+              security:
+                - {}
+                - TriggerWebhookBearerAuth: []
+              parameters:
+                - $ref: '#/components/parameters/TriggerWebhookId'
+                - $ref: '#/components/parameters/TriggerWebhookTimestamp'
+                - $ref: '#/components/parameters/TriggerWebhookSignature'
+              requestBody:
+                required: true
+                content:
+                  application/json:
+                    schema:
+                      $ref: '#/components/schemas/PlatformTriggerWebhookEvent'
+              responses:
+                '408':
+                  description: Request timeout. Glean retries the delivery.
+                '429':
+                  description: Rate limited. Glean retries the delivery.
+                2XX:
+                  description: Event accepted. Glean does not retry the delivery.
+                3XX:
+                  description: Redirects are not followed and the delivery is not retried.
+                4XX:
+                  description: Client error other than 408 or 429. Glean does not retry.
+                5XX:
+                  description: Server error. Glean retries the delivery.
       responses:
         '201':
           description: Trigger created.
@@ -2930,14 +2965,14 @@ paths:
                 include_experimental=True,
             ) as glean:
 
-                res = glean.triggers.create(preset_id="jira_high_priority_bug", delivery={
+                res = glean.triggers.create(preset_id="GITHUB_1", delivery={
                     "webhook_url": "https://customer.app/webhook",
                     "auth": {
                         "type": models.PlatformTriggerAuthType.BEARER,
-                        "secret": "a8f5f167f44f4964e6c998dee827110c",
+                        "secret": "secret_test_123",
                     },
-                }, description="High-priority Jira bugs in the Engineering project", inputs={
-                    "project": "ENG",
+                }, description="Reviews I am tagged on, sent to my team's review channel", inputs={
+                    "repository": "acme/payments-api",
                 })
 
                 # Handle response
@@ -2955,16 +2990,16 @@ paths:
 
             async function run() {
               const result = await glean.triggers.create({
-                preset_id: "jira_high_priority_bug",
-                description: "High-priority Jira bugs in the Engineering project",
+                preset_id: "GITHUB_1",
+                description: "Reviews I am tagged on, sent to my team's review channel",
                 inputs: {
-                  "project": "ENG",
+                  "repository": "acme/payments-api",
                 },
                 delivery: {
                   webhook_url: "https://customer.app/webhook",
                   auth: {
                     type: "BEARER",
-                    secret: "a8f5f167f44f4964e6c998dee827110c",
+                    secret: "secret_test_123",
                   },
                 },
               });
@@ -2975,7 +3010,7 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Triggers.Create(ctx, components.PlatformTriggerCreateRequest{\n        PresetID: \"jira_high_priority_bug\",\n        Description: apiclientgo.Pointer(\"High-priority Jira bugs in the Engineering project\"),\n        Inputs: map[string]any{\n            \"project\": \"ENG\",\n        },\n        Delivery: components.PlatformTriggerDelivery{\n            WebhookURL: \"https://customer.app/webhook\",\n            Auth: &components.PlatformTriggerAuth{\n                Type: components.PlatformTriggerAuthTypeBearer,\n                Secret: \"a8f5f167f44f4964e6c998dee827110c\",\n            },\n        },\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformTriggerCreateResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Triggers.Create(ctx, components.PlatformTriggerCreateRequest{\n        PresetID: \"GITHUB_1\",\n        Description: apiclientgo.Pointer(\"Reviews I am tagged on, sent to my team's review channel\"),\n        Inputs: map[string]any{\n            \"repository\": \"acme/payments-api\",\n        },\n        Delivery: components.PlatformTriggerDelivery{\n            WebhookURL: \"https://customer.app/webhook\",\n            Auth: &components.PlatformTriggerAuth{\n                Type: components.PlatformTriggerAuthTypeBearer,\n                Secret: \"secret_test_123\",\n            },\n        },\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformTriggerCreateResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -2999,17 +3034,17 @@ paths:
                         .build();
 
                     PlatformTriggerCreateRequest req = PlatformTriggerCreateRequest.builder()
-                            .presetId("jira_high_priority_bug")
+                            .presetId("GITHUB_1")
                             .delivery(PlatformTriggerDelivery.builder()
                                 .webhookUrl("https://customer.app/webhook")
                                 .auth(PlatformTriggerAuth.builder()
                                     .type(PlatformTriggerAuthType.BEARER)
-                                    .secret("a8f5f167f44f4964e6c998dee827110c")
+                                    .secret("secret_test_123")
                                     .build())
                                 .build())
-                            .description("High-priority Jira bugs in the Engineering project")
+                            .description("Reviews I am tagged on, sent to my team's review channel")
                             .inputs(Map.ofEntries(
-                                Map.entry("project", "ENG")))
+                                Map.entry("repository", "acme/payments-api")))
                             .build();
 
                     PlatformTriggersCreateResponse res = sdk.triggers().create()
@@ -3357,13 +3392,13 @@ paths:
                 include_experimental=True,
             ) as glean:
 
-                res = glean.triggers.update(trigger_id="<id>", status=models.PlatformTriggerStatus.ENABLED, description="High-priority Jira bugs in the Engineering project", inputs={
-                    "project": "ENG",
+                res = glean.triggers.update(trigger_id="<id>", status=models.PlatformTriggerStatus.ENABLED, description="Reviews I am tagged on, sent to my team's review channel", inputs={
+                    "repository": "acme/payments-api",
                 }, delivery={
                     "webhook_url": "https://customer.app/webhook",
                     "auth": {
                         "type": models.PlatformTriggerAuthType.BEARER,
-                        "secret": "a8f5f167f44f4964e6c998dee827110c",
+                        "secret": "secret_test_123",
                     },
                 })
 
@@ -3383,15 +3418,15 @@ paths:
             async function run() {
               const result = await glean.triggers.update({
                 status: "ENABLED",
-                description: "High-priority Jira bugs in the Engineering project",
+                description: "Reviews I am tagged on, sent to my team's review channel",
                 inputs: {
-                  "project": "ENG",
+                  "repository": "acme/payments-api",
                 },
                 delivery: {
                   webhook_url: "https://customer.app/webhook",
                   auth: {
                     type: "BEARER",
-                    secret: "a8f5f167f44f4964e6c998dee827110c",
+                    secret: "secret_test_123",
                   },
                 },
               }, "<id>");
@@ -3402,7 +3437,7 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Triggers.Update(ctx, \"<id>\", components.PlatformTriggerUpdateRequest{\n        Status: components.PlatformTriggerStatusEnabled.ToPointer(),\n        Description: apiclientgo.Pointer(\"High-priority Jira bugs in the Engineering project\"),\n        Inputs: map[string]any{\n            \"project\": \"ENG\",\n        },\n        Delivery: &components.PlatformTriggerDelivery{\n            WebhookURL: \"https://customer.app/webhook\",\n            Auth: &components.PlatformTriggerAuth{\n                Type: components.PlatformTriggerAuthTypeBearer,\n                Secret: \"a8f5f167f44f4964e6c998dee827110c\",\n            },\n        },\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformTriggerGetResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Triggers.Update(ctx, \"<id>\", components.PlatformTriggerUpdateRequest{\n        Status: components.PlatformTriggerStatusEnabled.ToPointer(),\n        Description: apiclientgo.Pointer(\"Reviews I am tagged on, sent to my team's review channel\"),\n        Inputs: map[string]any{\n            \"repository\": \"acme/payments-api\",\n        },\n        Delivery: &components.PlatformTriggerDelivery{\n            WebhookURL: \"https://customer.app/webhook\",\n            Auth: &components.PlatformTriggerAuth{\n                Type: components.PlatformTriggerAuthTypeBearer,\n                Secret: \"secret_test_123\",\n            },\n        },\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformTriggerGetResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -3429,14 +3464,14 @@ paths:
                             .triggerId("<id>")
                             .platformTriggerUpdateRequest(PlatformTriggerUpdateRequest.builder()
                                 .status(PlatformTriggerStatus.ENABLED)
-                                .description("High-priority Jira bugs in the Engineering project")
+                                .description("Reviews I am tagged on, sent to my team's review channel")
                                 .inputs(Map.ofEntries(
-                                    Map.entry("project", "ENG")))
+                                    Map.entry("repository", "acme/payments-api")))
                                 .delivery(PlatformTriggerDelivery.builder()
                                     .webhookUrl("https://customer.app/webhook")
                                     .auth(PlatformTriggerAuth.builder()
                                         .type(PlatformTriggerAuthType.BEARER)
-                                        .secret("a8f5f167f44f4964e6c998dee827110c")
+                                        .secret("secret_test_123")
                                         .build())
                                     .build())
                                 .build())
@@ -3715,7 +3750,7 @@ paths:
           value: 'true'
         - in: query
           name: datasource
-          description: Restrict results to presets for a single datasource (e.g. jira).
+          description: Restrict results to presets for a single datasource (e.g. github).
           required: false
           schema:
             type: string
@@ -4163,7 +4198,7 @@ paths:
             ) as glean:
 
                 res = glean.triggers.search_preset_events(preset_id="<id>", inputs={
-                    "TITLE": "checkout outage",
+                    "repository": "acme/payments-api",
                 }, page_size=10)
 
                 # Handle response
@@ -4182,7 +4217,7 @@ paths:
             async function run() {
               const result = await glean.triggers.searchPresetEvents("<id>", {
                 inputs: {
-                  "TITLE": "checkout outage",
+                  "repository": "acme/payments-api",
                 },
               });
 
@@ -4192,7 +4227,7 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Triggers.SearchPresetEvents(ctx, \"<id>\", &components.PlatformTriggerPresetEventSearchRequest{\n        Inputs: map[string]string{\n            \"TITLE\": \"checkout outage\",\n        },\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformTriggerEventSearchResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Triggers.SearchPresetEvents(ctx, \"<id>\", &components.PlatformTriggerPresetEventSearchRequest{\n        Inputs: map[string]string{\n            \"repository\": \"acme/payments-api\",\n        },\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformTriggerEventSearchResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -4219,7 +4254,7 @@ paths:
                             .presetId("<id>")
                             .platformTriggerPresetEventSearchRequest(PlatformTriggerPresetEventSearchRequest.builder()
                                 .inputs(Map.ofEntries(
-                                    Map.entry("TITLE", "checkout outage")))
+                                    Map.entry("repository", "acme/payments-api")))
                                 .build())
                             .call();
 
@@ -4823,10 +4858,10 @@ components:
       discriminator:
         propertyName: type
         mapping:
-          DOCUMENT: '#/components/schemas/ChatDocumentSource'
-          PERSON: '#/components/schemas/ChatPersonSource'
-          FILE: '#/components/schemas/ChatFileSource'
-          CUSTOM_ENTITY: '#/components/schemas/ChatCustomEntitySource'
+          DOCUMENT: '#/components/schemas/PlatformChatDocumentSource'
+          PERSON: '#/components/schemas/PlatformChatPersonSource'
+          FILE: '#/components/schemas/PlatformChatFileSource'
+          CUSTOM_ENTITY: '#/components/schemas/PlatformChatCustomEntitySource'
     PlatformChatCitationSnippet:
       type: object
       additionalProperties: false
@@ -5721,7 +5756,7 @@ components:
           type: string
           writeOnly: true
           description: Secret credential value. Write-only; never returned on reads.
-          example: a8f5f167f44f4964e6c998dee827110c
+          example: secret_test_123
     PlatformTriggerDelivery:
       type: object
       additionalProperties: false
@@ -5731,7 +5766,8 @@ components:
         webhook_url:
           type: string
           format: uri
-          description: URL that signed events are delivered to.
+          pattern: ^https://
+          description: HTTPS URL that signed events are delivered to.
           example: https://customer.app/webhook
         auth:
           $ref: '#/components/schemas/PlatformTriggerAuth'
@@ -5748,15 +5784,15 @@ components:
         trigger_id:
           type: string
           description: ID of the trigger.
-          example: 2f8a9b0c1d2e4f5a6b7c8d9e0f1a2b3c
+          example: trigger_test_123
         preset_id:
           type: string
           description: ID of the preset this trigger was created from.
-          example: jira_high_priority_bug
+          example: GITHUB_1
         description:
           type: string
           description: Optional caller-supplied note describing this trigger.
-          example: High-priority Jira bugs in the Engineering project
+          example: Reviews I am tagged on, sent to my team's review channel
         status:
           $ref: '#/components/schemas/PlatformTriggerStatus'
         inputs:
@@ -5764,7 +5800,7 @@ components:
           additionalProperties: true
           description: Values supplied for the preset's inputs.
           example:
-            project: ENG
+            repository: acme/payments-api
         delivery:
           $ref: '#/components/schemas/PlatformTriggerDelivery'
         created_at:
@@ -5808,17 +5844,17 @@ components:
         preset_id:
           type: string
           description: ID of the preset to instantiate.
-          example: jira_high_priority_bug
+          example: GITHUB_1
         description:
           type: string
           description: Optional note describing this trigger.
-          example: High-priority Jira bugs in the Engineering project
+          example: Reviews I am tagged on, sent to my team's review channel
         inputs:
           type: object
           additionalProperties: true
           description: Values for the preset's inputs.
           example:
-            project: ENG
+            repository: acme/payments-api
         delivery:
           $ref: '#/components/schemas/PlatformTriggerDelivery'
     PlatformTriggerWithSecret:
@@ -5830,8 +5866,9 @@ components:
           properties:
             signing_secret:
               type: string
-              description: Secret for verifying webhook signatures. Returned only at creation.
+              pattern: ^whsec_[A-Za-z0-9+/=]+$
               example: whsec_xxx
+              description: Secret for verifying webhook signatures, serialized as `whsec_<base64-encoded key>` following Standard Webhooks. Returned only when the trigger is created and cannot be retrieved later. Store it securely.
     PlatformTriggerCreateResponse:
       type: object
       required:
@@ -5843,6 +5880,122 @@ components:
         request_id:
           type: string
           description: Platform-generated request ID for support correlation.
+    PlatformTriggerWebhookEventBase:
+      type: object
+      required:
+        - version
+        - trigger_id
+        - event_type
+        - datasource
+        - reason
+        - doc_type
+        - doc_id
+        - view_url
+        - title
+      properties:
+        version:
+          type: string
+          description: Webhook payload schema version.
+          pattern: ^1$
+        trigger_id:
+          type: string
+          description: ID of the Platform trigger that produced the event.
+          example: trigger_test_123
+        event_type:
+          type: string
+          description: Kind of trigger event.
+        datasource:
+          type: string
+          description: Datasource the event originated from.
+          example: GITHUB
+        reason:
+          type: string
+          description: Why the event fired.
+          example: REVIEW_REQUESTED
+        doc_type:
+          type: string
+          description: Datasource-specific object type.
+          example: pull
+        doc_id:
+          type: string
+          description: Identifier of the document the event is about.
+          example: GITHUB_pull_123
+        view_url:
+          type: string
+          description: Link to the document in its source system.
+          example: https://github.com/acme/payments-api/pull/123
+        title:
+          type: string
+          description: Title of the document, or the subject for email.
+          example: 'Bug: login fails on Safari'
+        event_time:
+          type: string
+          format: date-time
+          description: Relevant event time. Document changes use the source-observed time when available and otherwise the document ingestion time; content schedules use the scheduled time. Omitted when no timestamp is available.
+    PlatformDocumentChangeWebhookEvent:
+      allOf:
+        - $ref: '#/components/schemas/PlatformTriggerWebhookEventBase'
+        - type: object
+          required:
+            - event_type
+          properties:
+            event_type:
+              type: string
+              pattern: ^DOCUMENT_CHANGE$
+            content:
+              type: string
+              description: Email body content when the event is for an email document.
+            content_truncated:
+              type: boolean
+              description: Present and true when source content exceeded the delivery size limit.
+      example:
+        version: '1'
+        trigger_id: trigger_test_123
+        event_type: DOCUMENT_CHANGE
+        datasource: GITHUB
+        reason: REVIEW_REQUESTED
+        doc_type: pull
+        doc_id: GITHUB_pull_123
+        view_url: https://github.com/acme/payments-api/pull/123
+        title: Add retry backoff to the crawler
+        event_time: '2025-04-23T11:00:00Z'
+    PlatformContentScheduleWebhookEvent:
+      allOf:
+        - $ref: '#/components/schemas/PlatformTriggerWebhookEventBase'
+        - type: object
+          required:
+            - event_type
+            - time_offset_seconds
+          properties:
+            event_type:
+              type: string
+              pattern: ^CONTENT_SCHEDULE$
+            time_offset_seconds:
+              type: integer
+              format: int32
+              description: Offset in seconds from the scheduled time at which the trigger fired.
+      example:
+        version: '1'
+        trigger_id: trigger_test_123
+        event_type: CONTENT_SCHEDULE
+        datasource: GOOGLECALENDAR
+        reason: CONTENT_SCHEDULE
+        doc_type: event
+        doc_id: GCAL_event_123
+        view_url: https://calendar.google.com/event?eid=abc
+        title: Weekly Sync
+        event_time: '2025-04-23T12:00:00Z'
+        time_offset_seconds: 1800
+    PlatformTriggerWebhookEvent:
+      description: Every delivered webhook is one of these two variants. A trigger with a cron schedule carries no document and so cannot be delivered over a webhook.
+      oneOf:
+        - $ref: '#/components/schemas/PlatformDocumentChangeWebhookEvent'
+        - $ref: '#/components/schemas/PlatformContentScheduleWebhookEvent'
+      discriminator:
+        propertyName: event_type
+        mapping:
+          DOCUMENT_CHANGE: '#/components/schemas/PlatformDocumentChangeWebhookEvent'
+          CONTENT_SCHEDULE: '#/components/schemas/PlatformContentScheduleWebhookEvent'
     PlatformTriggerGetResponse:
       type: object
       required:
@@ -5864,13 +6017,13 @@ components:
         description:
           type: string
           description: Optional note describing this trigger.
-          example: High-priority Jira bugs in the Engineering project
+          example: Reviews I am tagged on, sent to my team's review channel
         inputs:
           type: object
           additionalProperties: true
           description: Values for the preset's inputs.
           example:
-            project: ENG
+            repository: acme/payments-api
         delivery:
           $ref: '#/components/schemas/PlatformTriggerDelivery'
     PlatformTriggerEventSearchRequest:
@@ -5896,7 +6049,7 @@ components:
     PlatformTriggerEventReason:
       type: string
       description: Why the event fired.
-      example: CREATED
+      example: REVIEW_REQUESTED
       enum:
         - CREATED
         - UPDATED
@@ -5963,7 +6116,7 @@ components:
         doc_type:
           type: string
           description: Datasource-specific object type.
-          example: Ticket
+          example: pull
         doc_id:
           type: string
           description: Identifier of the document the event is about.
@@ -5976,7 +6129,7 @@ components:
         event_time:
           type: string
           format: date-time
-          description: When the event occurred.
+          description: 'When the event happened at the source: the document''s own change timestamp for a document change, and the scheduled time for a content schedule. Omitted when the source did not supply one.'
     PlatformTriggerEventSearchResponse:
       type: object
       required:
@@ -5996,6 +6149,52 @@ components:
         request_id:
           type: string
           description: Unique identifier for this request, for support and debugging.
+    PlatformTriggerPresetSummary:
+      type: object
+      required:
+        - preset_id
+        - datasource
+        - display_name
+      properties:
+        preset_id:
+          type: string
+          description: ID of the preset. Pass this when creating a trigger.
+          example: GITHUB_1
+        datasource:
+          type: string
+          description: Datasource the preset fires on.
+          example: github
+        display_name:
+          type: string
+          description: Human-readable preset name.
+          example: Review requested from me
+        description:
+          type: string
+          description: Human-readable description of when the preset fires.
+          example: A review is requested from the trigger creator on a pull request
+    PlatformTriggerPresetListResponse:
+      type: object
+      required:
+        - results
+        - has_more
+        - next_cursor
+        - request_id
+      properties:
+        results:
+          type: array
+          description: Trigger presets available to the caller.
+          items:
+            $ref: '#/components/schemas/PlatformTriggerPresetSummary'
+        has_more:
+          type: boolean
+          description: Whether additional results are available.
+        next_cursor:
+          type: string
+          nullable: true
+          description: Cursor for the next page, or null when no more results are available.
+        request_id:
+          type: string
+          description: Platform-generated request ID for support correlation.
     PlatformTriggerPresetInputType:
       type: string
       description: Type of a preset input.
@@ -6014,11 +6213,11 @@ components:
           type: string
           description: |
             The exact value to send in the trigger's `inputs` for this choice (e.g. a channel name, a user's email, etc).
-          example: test.user@glean.com
+          example: acme/payments-api
         display_name:
           type: string
           description: Human-readable name for this value.
-          example: Test User
+          example: acme/payments-api
     PlatformTriggerPresetInput:
       type: object
       required:
@@ -6030,13 +6229,13 @@ components:
         field:
           type: string
           description: Identifier of the input, supplied as a key in the trigger's `inputs`.
-          example: project
+          example: repository
         type:
           $ref: '#/components/schemas/PlatformTriggerPresetInputType'
         display_name:
           type: string
           description: Human-readable name for the input.
-          example: Project
+          example: Repository
         is_required:
           type: boolean
           description: Whether the caller must supply a value for this input.
@@ -6051,57 +6250,17 @@ components:
           description: |
             Whether additional selectable values were omitted from `values`. When true, use GET /trigger-presets/{preset_id}/input-values with a query to narrow the result set.
     PlatformTriggerPreset:
-      type: object
-      required:
-        - preset_id
-        - datasource
-        - display_name
-        - inputs
-      properties:
-        preset_id:
-          type: string
-          description: ID of the preset. Pass this when creating a trigger.
-          example: jira_high_priority_bug
-        datasource:
-          type: string
-          description: Datasource the preset fires on.
-          example: jira
-        display_name:
-          type: string
-          description: Human-readable preset name.
-          example: High-priority Jira bugs
-        description:
-          type: string
-          description: Human-readable description of when the preset fires.
-          example: Fires when a high-priority bug is created.
-        inputs:
-          type: array
-          description: Inputs the caller may supply when creating a trigger from this preset.
-          items:
-            $ref: '#/components/schemas/PlatformTriggerPresetInput'
-    PlatformTriggerPresetListResponse:
-      type: object
-      required:
-        - results
-        - has_more
-        - next_cursor
-        - request_id
-      properties:
-        results:
-          type: array
-          description: Trigger presets available to the caller.
-          items:
-            $ref: '#/components/schemas/PlatformTriggerPreset'
-        has_more:
-          type: boolean
-          description: Whether additional results are available.
-        next_cursor:
-          type: string
-          nullable: true
-          description: Cursor for the next page, or null when no more results are available.
-        request_id:
-          type: string
-          description: Platform-generated request ID for support correlation.
+      allOf:
+        - $ref: '#/components/schemas/PlatformTriggerPresetSummary'
+        - type: object
+          required:
+            - inputs
+          properties:
+            inputs:
+              type: array
+              description: Inputs the caller may supply when creating a trigger from this preset.
+              items:
+                $ref: '#/components/schemas/PlatformTriggerPresetInput'
     PlatformTriggerPresetGetResponse:
       type: object
       required:
@@ -6143,7 +6302,7 @@ components:
           additionalProperties:
             type: string
           example:
-            TITLE: checkout outage
+            repository: acme/payments-api
         page_size:
           type: integer
           description: Maximum number of events to return.
@@ -6217,3 +6376,44 @@ components:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/PlatformProblemDetail'
+  parameters:
+    TriggerWebhookId:
+      name: webhook-id
+      in: header
+      required: true
+      description: Opaque delivery ID. It remains stable across retries of the same event and can be used as an idempotency key.
+      schema:
+        type: string
+        minLength: 1
+      example: msg_test_123
+    TriggerWebhookTimestamp:
+      name: webhook-timestamp
+      in: header
+      required: true
+      description: Unix time in seconds when this delivery attempt was signed.
+      schema:
+        type: integer
+        format: int64
+      example: 1700000000
+    TriggerWebhookSignature:
+      name: webhook-signature
+      in: header
+      required: true
+      description: |
+        `v1,` followed by the standard Base64-encoded HMAC-SHA256 digest. To verify it, remove the
+        `whsec_` prefix from `signing_secret`, standard-Base64-decode the remainder, and use those
+        bytes as the HMAC key. Sign the UTF-8 bytes of `webhook-id + "." + webhook-timestamp + "."
+        + raw request body`. Verify the signature against the unmodified request body before
+        parsing JSON, and use a constant-time comparison.
+
+        Fixed test vector (the raw body is one line with no trailing newline):
+
+        - decoded signing key bytes (UTF-8; test only): `test_webhook_signing_secret_1234`
+        - `webhook-id`: `81e6dc877ac553ef96ecbc939c1e46431159491991ba55cd131fbd0e3746c6bc`
+        - `webhook-timestamp`: `1700000000`
+        - `raw request body`: `{"version":"1","trigger_id":"trigger_test_123","datasource":"GITHUB","reason":"REVIEW_REQUESTED","doc_type":"pull","event_type":"DOCUMENT_CHANGE","doc_id":"GITHUB_pull_123","view_url":"https://github.com/acme/payments-api/pull/123","title":"Add retry backoff to the crawler","event_time":"2025-04-23T11:00:00Z"}`
+        - `webhook-signature`: `v1,JqvHW0dwAOSLndiwQdXLUS/P+2RvOO8x4sOWgA/w0Gs=`
+      schema:
+        type: string
+        pattern: ^v1,[A-Za-z0-9+/=]+$
+      example: v1,xxx
