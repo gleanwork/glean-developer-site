@@ -230,6 +230,26 @@ const baseSidebars: SidebarsConfig = {
         },
         {
           type: 'category',
+          label: 'Triggers',
+          customProps: {
+            icon: 'Zap',
+            iconSet: 'feather',
+          },
+          items: [
+            {
+              type: 'doc',
+              id: 'guides/triggers/overview',
+              label: 'Overview',
+            },
+            {
+              type: 'doc',
+              id: 'guides/triggers/webhook-delivery',
+              label: 'Webhook Delivery',
+            },
+          ],
+        },
+        {
+          type: 'category',
           label: 'MCP',
           customProps: {
             icon: 'mcp',
@@ -949,9 +969,9 @@ const baseSidebars: SidebarsConfig = {
               items: [
                 {
                   type: 'doc',
-                  id: 'api/platform-api/platform-trigger-presets-events-search',
-                  label: 'Search events for a trigger preset',
-                  className: 'api-method post',
+                  id: 'api/platform-api/platform-trigger-presets-list',
+                  label: 'List trigger presets',
+                  className: 'api-method get',
                 },
                 {
                   type: 'doc',
@@ -967,33 +987,9 @@ const baseSidebars: SidebarsConfig = {
                 },
                 {
                   type: 'doc',
-                  id: 'api/platform-api/platform-trigger-presets-list',
-                  label: 'List trigger presets',
-                  className: 'api-method get',
-                },
-                {
-                  type: 'doc',
                   id: 'api/platform-api/platform-triggers-create',
                   label: 'Create trigger',
                   className: 'api-method post',
-                },
-                {
-                  type: 'doc',
-                  id: 'api/platform-api/platform-triggers-delete',
-                  label: 'Delete trigger',
-                  className: 'api-method delete',
-                },
-                {
-                  type: 'doc',
-                  id: 'api/platform-api/platform-triggers-events-search',
-                  label: 'Search events for a trigger',
-                  className: 'api-method post',
-                },
-                {
-                  type: 'doc',
-                  id: 'api/platform-api/platform-triggers-get',
-                  label: 'Get trigger',
-                  className: 'api-method get',
                 },
                 {
                   type: 'doc',
@@ -1003,9 +999,33 @@ const baseSidebars: SidebarsConfig = {
                 },
                 {
                   type: 'doc',
+                  id: 'api/platform-api/platform-triggers-get',
+                  label: 'Get trigger',
+                  className: 'api-method get',
+                },
+                {
+                  type: 'doc',
                   id: 'api/platform-api/platform-triggers-update',
                   label: 'Update trigger',
                   className: 'api-method patch',
+                },
+                {
+                  type: 'doc',
+                  id: 'api/platform-api/platform-triggers-delete',
+                  label: 'Delete trigger',
+                  className: 'api-method delete',
+                },
+                {
+                  type: 'doc',
+                  id: 'api/platform-api/platform-trigger-presets-events-search',
+                  label: 'Search events for a trigger preset',
+                  className: 'api-method post',
+                },
+                {
+                  type: 'doc',
+                  id: 'api/platform-api/platform-triggers-events-search',
+                  label: 'Search events for a trigger',
+                  className: 'api-method post',
                 },
               ],
             },
