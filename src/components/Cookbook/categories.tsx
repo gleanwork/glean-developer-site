@@ -32,7 +32,7 @@ export function categoryTileClass(category: string): string {
  * can pick up the surrounding tile's color; a plain `<img src>` renders the
  * file in an isolated context that never inherits page CSS.
  */
-function AdaptiveBrandIcon({
+export function AdaptiveBrandIcon({
   src,
   width,
   height,
