@@ -651,20 +651,22 @@ function RequiredScopesCard({
       <div className={styles.railCard}>
         <div className={styles.railLabel}>Required scopes</div>
         <div className={styles.authBody}>
-          {groups.map((group) => (
-            <div key={group.label}>
-              <p>
-                <strong>{group.label}</strong>
-              </p>
-              <div className={styles.scopes}>
-                {group.scopes.map((scope) => (
-                  <span className={styles.scopeChip} key={scope}>
-                    {scope}
-                  </span>
-                ))}
+          {groups
+            .filter((group) => group.scopes.length > 0)
+            .map((group) => (
+              <div key={group.label}>
+                <p>
+                  <strong>{group.label}</strong>
+                </p>
+                <div className={styles.scopes}>
+                  {group.scopes.map((scope) => (
+                    <span className={styles.scopeChip} key={scope}>
+                      {scope}
+                    </span>
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
         </div>
       </div>
     );

@@ -91,9 +91,6 @@ export function variantScopeGroups(
     label: context.label ?? '',
     scopes: [...new Set(context.entries.flatMap((entry) => entry.scopes))],
   }));
-  if (groups.some((group) => group.scopes.length === 0)) {
-    return undefined;
-  }
   const distinct = new Set(groups.map((group) => group.scopes.join(',')));
   return distinct.size === 1 ? undefined : groups;
 }

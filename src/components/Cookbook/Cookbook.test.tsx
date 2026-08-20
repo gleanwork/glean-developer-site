@@ -7,6 +7,7 @@ import RecipeIndex from './RecipeIndex';
 import RecipeLayout, { RecipeArchitecture } from './RecipeLayout';
 import FlagshipCard from './FlagshipCard';
 import type { RecipeRecord } from '../../types/recipe';
+import type { AuthKind } from './authContexts';
 import catStyles from './categories.module.css';
 import layoutStyles from './RecipeLayout.module.css';
 
@@ -47,6 +48,7 @@ function makeRecipe(overrides: Partial<RecipeRecord>): RecipeRecord {
 function dualPathAsset(
   slug: string,
   scopes: string[],
+  kind: AuthKind = 'oauth-with-token-fallback',
 ): NonNullable<RecipeRecord['codeAssets']>[number] {
   return {
     repoPath: `recipes/customer-360/${slug}`,
@@ -57,7 +59,7 @@ function dualPathAsset(
       questions: [],
       auth: [
         {
-          kind: 'oauth-with-token-fallback',
+          kind,
           scopes,
           setupCommand: 'cd customer-360 && npm run login',
         },
@@ -569,6 +571,35 @@ describe('RecipeLayout', () => {
     expect(auth).not.toHaveTextContent('TypeScript');
     expect(auth).not.toHaveTextContent('Python');
     expect(screen.getAllByText('SEARCH')).toHaveLength(1);
+  });
+
+  it('does not put token scopes on a cookie path that declares none', () => {
+    render(
+      <RecipeLayout
+        plugin={plugin}
+        recipe={makeRecipe({
+          authMethod: ['web-sdk-cookie', 'client-api-oauth-or-token'],
+          buildMethod: 'scaffold',
+          requiredScopes: ['CHAT'],
+          codeAssets: [
+            dualPathAsset('web-sdk', [], 'browser-cookie'),
+            dualPathAsset('chat-api', ['CHAT']),
+          ],
+        })}
+      >
+        <p>Body</p>
+      </RecipeLayout>,
+    );
+
+    const auth = screen.getByText('Auth').parentElement!;
+    expect(auth).toHaveTextContent('Web SDK');
+    expect(auth).toHaveTextContent('existing Glean browser session');
+    expect(auth).toHaveTextContent('Chat API');
+
+    const scopes = screen.getByText('Required scopes').parentElement!;
+    expect(scopes).toHaveTextContent('Chat API');
+    expect(scopes).toHaveTextContent('CHAT');
+    expect(scopes).not.toHaveTextContent('Web SDK');
   });
 
   it('does not tell cookie-SSO recipes to mint a token', () => {
