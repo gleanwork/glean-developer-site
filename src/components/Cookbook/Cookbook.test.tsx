@@ -44,7 +44,6 @@ function makeRecipe(overrides: Partial<RecipeRecord>): RecipeRecord {
   };
 }
 
-/** One build path of a recipe whose auth contract varies by path. */
 function dualPathAsset(
   slug: string,
   scopes: string[],
@@ -543,8 +542,6 @@ describe('RecipeLayout', () => {
     expect(auth).toHaveTextContent('Platform Agents');
     expect(auth).toHaveTextContent('(SEARCH, AGENTS)');
 
-    // Chips are grouped per path, so SEARCH is chipped twice. The union would
-    // have told the Search + Chat reader to mint an AGENTS scope it never calls.
     expect(screen.getAllByText('SEARCH')).toHaveLength(2);
     expect(screen.getAllByText('CHAT')).toHaveLength(1);
     expect(screen.getAllByText('AGENTS')).toHaveLength(1);

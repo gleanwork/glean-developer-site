@@ -87,7 +87,6 @@ function AuthBlock({
   }
 }
 
-/** Sticky-rail auth guidance keyed off recipe auth data, per build path. */
 export function RecipeAuthCard({
   recipe,
 }: {

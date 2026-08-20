@@ -639,11 +639,6 @@ export default function RecipeLayout({
   );
 }
 
-/**
- * Scope chips, split per build path when the paths differ. The flat
- * `requiredScopes` union is what the whole recipe can need, so on a recipe
- * with a path split it overstates what either path actually asks for.
- */
 function RequiredScopesCard({
   recipe,
 }: {

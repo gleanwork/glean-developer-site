@@ -4,7 +4,6 @@ type Execution = NonNullable<RecipeRecord['execution']>;
 export type AuthEntry = Execution['auth'][number];
 export type AuthKind = AuthEntry['kind'];
 
-/** One auth contract, labelled when a recipe splits auth across build paths. */
 export type AuthContext = {
   label?: string;
   entries: AuthEntry[];
@@ -17,7 +16,6 @@ const VARIANT_LABEL_WORDS: Record<string, string> = {
   javascript: 'JavaScript',
 };
 
-/** Last path segment of a codeAsset's repoPath, title-cased ("web-sdk" -> "Web SDK"). */
 export function humanizeVariantLabel(repoPath: string): string {
   return repoPath
     .split('/')
@@ -31,7 +29,6 @@ export function humanizeVariantLabel(repoPath: string): string {
     .join(' ');
 }
 
-/** Recipes predating execution data still declare auth as a bare method. */
 function fallbackEntries(recipe: RecipeRecord): AuthEntry[] {
   const kinds: AuthKind[] = [];
   for (const method of recipe.authMethod) {
@@ -62,7 +59,6 @@ function variantContexts(recipe: RecipeRecord): AuthContext[] {
   );
 }
 
-/** What two contracts have to share to render as one paragraph. */
 function renderKey(context: AuthContext): string {
   return context.entries
     .map(
@@ -72,14 +68,6 @@ function renderKey(context: AuthContext): string {
     .join('|');
 }
 
-/**
- * The auth contracts to render, one per build path when they differ.
- *
- * A recipe whose paths need different scopes carries no top-level `execution`,
- * so reading `requiredScopes` showed every reader the union of all paths —
- * telling a Customer 360 Path A reader to mint an AGENTS scope that path never
- * calls.
- */
 export function authContexts(recipe: RecipeRecord): AuthContext[] {
   if (recipe.execution) {
     return [{ entries: recipe.execution.auth }];
@@ -92,7 +80,6 @@ export function authContexts(recipe: RecipeRecord): AuthContext[] {
   return distinct.size === 1 ? [{ entries: variants[0].entries }] : variants;
 }
 
-/** Per-path scope chips, only when the paths genuinely require different scopes. */
 export function variantScopeGroups(
   recipe: RecipeRecord,
 ): { label: string; scopes: string[] }[] | undefined {
@@ -104,8 +91,6 @@ export function variantScopeGroups(
     label: context.label ?? '',
     scopes: [...new Set(context.entries.flatMap((entry) => entry.scopes))],
   }));
-  // A path declaring no scopes would render an empty group, which reads as
-  // "this path needs nothing" rather than "this path did not say".
   if (groups.some((group) => group.scopes.length === 0)) {
     return undefined;
   }
