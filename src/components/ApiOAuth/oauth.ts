@@ -61,6 +61,15 @@ export function isOAuthEligiblePath(pathname: string): boolean {
   return /\/api\/(client-api|platform-api)\//.test(pathname);
 }
 
+/** True when the explorer Base URL is still the OpenAPI placeholder. */
+export function isPlaceholderServerUrl(serverUrl: string): boolean {
+  const value = serverUrl.toLowerCase();
+  return (
+    value.includes('{instance-name}') ||
+    value.includes('instance-name-be.glean.com')
+  );
+}
+
 function base64Url(bytes: Uint8Array): string {
   return btoa(String.fromCharCode(...bytes))
     .replace(/\+/g, '-')

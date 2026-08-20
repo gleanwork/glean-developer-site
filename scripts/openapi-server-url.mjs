@@ -27,13 +27,19 @@ const spec = yaml.load(fs.readFileSync(input, 'utf8'));
 spec.servers = [
   {
     url: '{serverUrl}',
+    description:
+      'Replace the placeholder with your Glean API server URL. Copy the ' +
+      'complete Server instance (QE) value from ' +
+      'https://app.glean.com/admin/about-glean. Glean-hosted deployments use ' +
+      'https://{instance}-be.glean.com. How to find it: ' +
+      'https://developers.glean.com/get-started/authentication#finding-your-server-url',
     variables: {
       serverUrl: {
-        default: 'https://instance-name-be.glean.com',
+        default: 'https://{instance-name}-be.glean.com',
         description:
-          'Your Glean API server URL — https://{instance}-be.glean.com for ' +
-          'Glean-hosted deployments, or your own domain for non-Glean-hosted ' +
-          'deployments. Find it at app.glean.com/admin/about-glean.',
+          'Your Glean API server URL. Glean-hosted deployments use ' +
+          'https://{instance}-be.glean.com. Custom domains are also valid. ' +
+          'Find it at app.glean.com/admin/about-glean.',
       },
     },
   },

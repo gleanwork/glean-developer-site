@@ -447,4 +447,60 @@ describe('RecipeLayout', () => {
     expect(screen.queryByText(/Run this recipe/)).not.toBeInTheDocument();
     expect(screen.getByText(/Lovable or Replit/)).toBeInTheDocument();
   });
+
+  it('links token creation from the rail for hosted-secret recipes', () => {
+    render(
+      <RecipeLayout
+        plugin={plugin}
+        recipe={makeRecipe({
+          authMethod: ['custom'],
+          buildMethod: 'third-party-build',
+          requiredScopes: ['CHAT'],
+          execution: {
+            type: 'external-builder',
+            questions: [],
+            auth: [
+              {
+                kind: 'hosted-secret',
+                scopes: ['CHAT'],
+                credentialVariable: 'GLEAN_API_TOKEN',
+              },
+            ],
+            verification: {
+              kind: 'third-party',
+              expectedDuration: 'user-mediated',
+              startsOwnServer: false,
+            },
+          },
+        })}
+      >
+        <p>Body</p>
+      </RecipeLayout>,
+    );
+
+    expect(screen.getByText('Auth')).toBeInTheDocument();
+    expect(
+      screen.getByRole('link', { name: 'Token Management' }),
+    ).toHaveAttribute(
+      'href',
+      'https://app.glean.com/admin/platform/tokenManagement?tab=client',
+    );
+    expect(
+      screen.getByRole('link', { name: 'Glean-issued tokens' }),
+    ).toHaveAttribute('href', '/api-info/client/authentication/glean-issued');
+  });
+
+  it('does not tell cookie-SSO recipes to mint a token', () => {
+    render(
+      <RecipeLayout plugin={plugin} recipe={makeRecipe({})}>
+        <p>Body</p>
+      </RecipeLayout>,
+    );
+
+    expect(screen.getByText('Auth')).toBeInTheDocument();
+    expect(
+      screen.getByText(/existing Glean browser session/),
+    ).toBeInTheDocument();
+    expect(screen.queryByText('Token Management')).not.toBeInTheDocument();
+  });
 });
