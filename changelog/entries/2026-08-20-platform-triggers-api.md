@@ -19,7 +19,7 @@ The Platform Triggers API is now documented as an experimental release — subsc
 
 ## Experimental
 
-These endpoints are experimental. Send `X-Glean-Include-Experimental: true` or they are not exposed. They may change or be removed without notice and are not covered by the [deprecation policy](/deprecations/overview). See [Experimental APIs](/experimental/overview).
+These endpoints are experimental. Send `X-Glean-Include-Experimental: true` or they are not exposed. They may change or be removed without notice, and the standard API lifecycle guarantees do not apply. See [Experimental APIs](/experimental/overview).
 
 ## Documentation
 
