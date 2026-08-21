@@ -23,16 +23,11 @@ import {
 
 <RecipeSection label="Problem">
 
-An alarm fires at 3am. Everything the responder needs already exists — the runbook,
-the review of the last time this happened, who owns the service, what it depends on
-— scattered across systems they now have to search one at a time, while the graphs
-get worse.
+An alarm fires at 3am. The runbook, the review of the last time this happened, who owns the service, and what it depends on all exist in Glean already. They just sit in different systems, and you search them one at a time while the graphs get worse.
 
-The retrieval is the easy part. What makes an on-call copilot safe to point at a
-production service is everything that refuses: a gate that turns away the wrong
-person, an expiry that escalates instead of quietly approving itself, an action
-registry the planner cannot talk its way out of, and an audit entry for every
-attempt including the ones that were refused.
+The retrieval is the easy part. What makes a copilot safe to point at a production service is what it refuses to do, so that is what you build here. The gate turns away anyone who is neither on call nor the service owner. A proposal nobody approves in time escalates instead of quietly approving itself. An action the planner invented never reaches a human. The audit log records approvals, refusals, executions, failures, rejections, and escalations.
+
+Know the edges before you point it anywhere real. Live Search, Chat, and optional Agents calls hit your instance. The bundled alarm buttons always fire payments-service. Catalog and evidence lookups expect the sample URL layout under /services/, /runbooks/, and /incidents/. The three registered actions are simulated in-process, and the acting user is asserted rather than authenticated.
 
 </RecipeSection>
 
@@ -50,7 +45,7 @@ Only a matching past incident may support a causal claim. Runbooks support proce
 
 <RecipeSection label="Authorization is not authentication">
 
-The demo restricts who may approve but trusts the asserted actor. Production deployments must authenticate the actor and define which credential executes actions.
+Live and fixture both restrict who may approve, but they trust the asserted actor (INCIDENT_ACTOR or, in demo mode, X-Incident-Actor). A deployment must authenticate the actor and decide which credential executes actions. This recipe reports impersonation: false.
 
 </RecipeSection>
 
@@ -59,8 +54,8 @@ The demo restricts who may approve but trusts the asserted actor. Production dep
 - Persist incidents and the audit log. An audit log you can lose by restarting a process is not an audit log.
 - Add the rest of the dashboard: response-time rollups, an expiring-soon lane, and an end-of-shift handoff summary.
 - Replace the simulated actions with real governed tools, keeping the registry boundary and the approval log exactly where they are.
-- Write the postmortem draft back into your knowledge base so the next incident retrieves it as a precedent — the loop that makes the evidence rules get better over time.
-- Expose the copilot itself over A2A so another agent can request triage, with the same gate in front of every action.
+- Write the postmortem draft back into your knowledge base. The next incident then retrieves it as precedent, and the evidence rules get better over time.
+- Expose the copilot over Agent-to-Agent (A2A) so another agent can request triage, with the same approval gate in front of every action. See https://developers.glean.com/cookbook/a2a-client.
 
 </TakeItFurther>
 
