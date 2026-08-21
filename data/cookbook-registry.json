@@ -160,7 +160,7 @@
     "languages": ["python", "typescript"],
     "prerequisites": [
       "A Glean instance where you can add a custom datasource",
-      "A Glean-issued Indexing API token, created in Admin Console Token Management (Indexing Tokens)",
+      "A Glean-issued Indexing API token, created in Admin Console → API access → Indexing API tokens",
       "Node.js 18+ to run the portal app locally"
     ],
     "demoQueries": [
@@ -566,7 +566,7 @@
       "alt": "Customer 360 workspace with account evidence and an assistant conversation",
       "caption": "Account context, cited evidence, and follow-up chat in one workspace."
     },
-    "surfaces": ["platform-api", "client-api"],
+    "surfaces": ["platform-api"],
     "status": "showcase",
     "category": "workflow",
     "level": "Intermediate",
@@ -578,11 +578,10 @@
     "buildMethod": "scaffold",
     "languages": ["typescript"],
     "prerequisites": [
-      "A work email for tenant discovery and OAuth sign-in; a scoped Glean API token is the fallback",
-      "X_GLEAN_INCLUDE_EXPERIMENTAL=true for Platform Search and Agents",
-      "Path B: an Account Brief agent in Agent Builder; set GLEAN_AGENT_ID server-side",
-      "Node 20+",
-      "An account name your own content covers — the page is built around whichever you pick (GLEAN_ACCOUNT_NAME)"
+      "Node 20 or newer",
+      "Your work email, so the sign-in command can find your Glean tenant. If your tenant cannot use OAuth, you need a Glean API token instead, scoped to the path you pick",
+      "The name of one of your own customers, spelled the way it appears in your Glean documents. You put that name in GLEAN_ACCOUNT_NAME, and the page is built around it. This is the customer you are reading about, not your own company or your Glean instance",
+      "Path B only: a conversational Account Brief agent in Agent Builder, whose ID you put in GLEAN_AGENT_ID. A form-triggered agent will not work"
     ],
     "demoQueries": [
       {
@@ -595,14 +594,14 @@
       },
       {
         "query": "What are the renewal risks?",
-        "expectedBehavior": "Either names risks grounded in cited content, or says it has none to report. It must not infer risk the sources don't support, and the account overview must show only the supplied account name and deterministic Search result counts."
+        "expectedBehavior": "Either names risks grounded in cited content, or says it has none to report. It must not infer risk the sources don't support, and the account overview must show only the account name you set plus counts taken straight from the Search results."
       }
     ],
     "codeAssets": [
       {
         "repoPath": "recipes/customer-360/platform-search-chat",
         "language": "typescript",
-        "description": "Path A — parallel Platform Search tiles + Client Chat synthesis",
+        "description": "Path A — parallel Platform Search tiles + Platform Chat synthesis",
         "execution": {
           "type": "local-web",
           "questions": [
@@ -610,7 +609,10 @@
               "id": "email",
               "prompt": "What is your work email? It is used once to discover your Glean tenant."
             },
-            { "id": "account", "prompt": "Which account should the page use?" }
+            {
+              "id": "account",
+              "prompt": "Which of your customers should this page be about? Use the name the way your Glean documents spell it, not your own company or Glean instance name."
+            }
           ],
           "auth": [
             {
@@ -636,37 +638,45 @@
         },
         "steps": [
           {
-            "title": "Scaffold the project",
+            "title": "Copy the project onto your machine",
             "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/customer-360/platform-search-chat customer-360",
-            "kind": "scaffold"
+            "kind": "scaffold",
+            "description": "Creates a customer-360 folder in whatever directory you run this from. Every command after this one runs inside that folder."
           },
           {
             "title": "Install dependencies",
             "command": "cd customer-360 && npm install",
-            "kind": "install"
+            "kind": "install",
+            "description": "Installs the Glean API client and the small local server that serves the page."
           },
           {
-            "title": "Try it with no credentials",
+            "title": "See it work before you connect anything",
             "command": "cd customer-360 && npm run verify:fixture",
-            "description": "Runs the Globex account tiles and Client Chat path against recorded Sample Corp responses. Overview counts must match the fixture result lengths, and the three demo queries must stay cited.",
+            "description": "Runs the whole page against recorded answers for a fictional account named Globex, so you can see what it produces before you connect anything. This needs no Glean credentials.",
             "kind": "verify-fixture"
           },
           {
-            "title": "Set credentials",
+            "title": "Sign in to Glean",
             "command": "cd customer-360 && npm run login -- --email \"<work-email>\"",
-            "description": "The shipped command discovers the tenant and completes OAuth, with a scoped API token fallback. Set GLEAN_ACCOUNT_NAME in the resulting ignored .env to the account the user supplied. Do not search for a different account.",
+            "description": "Your email is used once to find which Glean tenant you belong to, then a browser window opens for you to approve access. The command creates the .env file for you and fills in GLEAN_SERVER_URL and GLEAN_API_TOKEN. If your tenant has not enabled OAuth, skip this command and do it by hand instead: copy .env.example to .env, then fill in your Glean instance URL and a Glean API token that has the SEARCH and CHAT scopes.",
             "kind": "authenticate"
           },
           {
-            "title": "Verify",
+            "title": "Choose which customer the page is about",
+            "description": "Signing in does not pick an account for you, so open .env and set GLEAN_ACCOUNT_NAME to one of your own customers, for example Acme Logistics. Spell it the way your Glean documents spell it, because the page searches your content for that exact name and builds the whole page from what it finds.",
+            "kind": "configure"
+          },
+          {
+            "title": "Check it against your own content",
             "command": "cd customer-360 && npm run verify",
-            "description": "Allow 1–3 minutes. It starts its own server, runs the demo queries against the supplied account, and asserts cited answers plus deterministic evidence coverage.",
+            "description": "Takes 1 to 3 minutes. It starts its own server, asks your Glean instance the three demo questions about the account you chose, and fails if any answer comes back without citing a real document.",
             "kind": "verify-live"
           },
           {
-            "title": "Run it",
+            "title": "Open the page",
             "command": "cd customer-360 && npm start",
-            "kind": "run"
+            "kind": "run",
+            "description": "Starts the server and prints a Local URL. Open that URL in your browser."
           }
         ]
       },
@@ -681,10 +691,13 @@
               "id": "email",
               "prompt": "What is your work email? It is used once to discover your Glean tenant."
             },
-            { "id": "account", "prompt": "Which account should the page use?" },
+            {
+              "id": "account",
+              "prompt": "Which of your customers should this page be about? Use the name the way your Glean documents spell it, not your own company or Glean instance name."
+            },
             {
               "id": "agent-id",
-              "prompt": "What is the ID of your Account Brief agent?"
+              "prompt": "What is the ID of your Account Brief agent? It must be a conversational agent, not a form-triggered one."
             }
           ],
           "auth": [
@@ -711,31 +724,44 @@
         },
         "steps": [
           {
-            "title": "Scaffold the project",
+            "title": "Build the Account Brief agent",
+            "description": "In Agent Builder, create a conversational agent that writes an account brief, and copy its ID from the browser URL. It must be conversational, because this page sends it a question and reads the reply. A form-triggered agent will not work here.",
+            "kind": "manual"
+          },
+          {
+            "title": "Copy the project onto your machine",
             "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/customer-360/platform-agents customer-360",
-            "kind": "scaffold"
+            "kind": "scaffold",
+            "description": "Creates a customer-360 folder in whatever directory you run this from. Every command after this one runs inside that folder."
           },
           {
             "title": "Install dependencies",
             "command": "cd customer-360 && npm install",
-            "kind": "install"
+            "kind": "install",
+            "description": "Installs the Glean API client and the small local server that serves the page."
           },
           {
-            "title": "Set credentials",
+            "title": "Sign in to Glean",
             "command": "cd customer-360 && npm run login -- --email \"<work-email>\"",
-            "description": "The shipped command discovers the tenant and completes OAuth, with a scoped API token fallback. Set GLEAN_ACCOUNT_NAME and GLEAN_AGENT_ID in the resulting ignored .env from the answers already supplied.",
+            "description": "Your email is used once to find which Glean tenant you belong to, then a browser window opens for you to approve access. The command creates the .env file for you and fills in GLEAN_SERVER_URL and GLEAN_API_TOKEN. If your tenant has not enabled OAuth, skip this command and do it by hand instead: copy .env.example to .env, then fill in your Glean instance URL and a Glean API token that has the SEARCH and AGENTS scopes.",
             "kind": "authenticate"
           },
           {
-            "title": "Verify",
+            "title": "Choose the customer and point at your agent",
+            "description": "Signing in does not pick an account for you, so open .env and set two values. GLEAN_ACCOUNT_NAME is one of your own customers, for example Acme Logistics, spelled the way your Glean documents spell it. GLEAN_AGENT_ID is the ID of the Account Brief agent you created in Agent Builder.",
+            "kind": "configure"
+          },
+          {
+            "title": "Check it against your own content",
             "command": "cd customer-360 && npm run verify",
-            "description": "Allow 1–3 minutes. It starts its own server and verifies the supplied account and Account Brief agent before the app is left running.",
+            "description": "Takes 1 to 3 minutes. It starts its own server, confirms your agent answers for the account you chose, and fails if the brief comes back without citing a real document.",
             "kind": "verify-live"
           },
           {
-            "title": "Run it",
+            "title": "Open the page",
             "command": "cd customer-360 && npm start",
-            "kind": "run"
+            "kind": "run",
+            "description": "Starts the server and prints a Local URL. Open that URL in your browser."
           }
         ]
       }
@@ -743,7 +769,7 @@
     "steps": [
       {
         "title": "Pick a path",
-        "description": "Path A combines parallel Platform Search tiles with Client Chat synthesis. Path B keeps the same page UX but uses a template Account Brief agent.",
+        "description": "Both paths build the same page from the same content, and each has its own set of steps. Choose Platform Search Chat if you want the page to assemble the account itself, which is the better starting point. Choose Platform Agents if you already run an Account Brief agent and want the page to show what that agent says.",
         "kind": "choose"
       }
     ],
@@ -756,8 +782,8 @@
         "language": "typescript"
       },
       {
-        "title": "Client Chat synthesis",
-        "surface": "Client Chat",
+        "title": "Platform Chat synthesis",
+        "surface": "Platform Chat",
         "category": "workflow",
         "language": "typescript"
       },
@@ -776,7 +802,7 @@
       },
       {
         "label": "Path A: Search + Chat",
-        "caption": "glean.search.query + Client Chat",
+        "caption": "glean.search.query + glean.chat.create",
         "category": "search"
       },
       {
@@ -790,13 +816,13 @@
         "emphasized": true
       }
     ],
-    "aiPrompt": "Build a Customer 360 account workspace following https://developers.glean.com/cookbook/customer-360. Ask whether to use (A) Platform Search plus Client Chat or (B) Platform Agents, then ask for the account name and the selected path's required configuration. Do not research another account unless the user explicitly asks for help; if they do, run one bounded search and offer at most three choices. Keep the assistant above the fold, display only cited account claims, and derive overview counts directly from Search results. Use the scaffold's shipped login command rather than implementing authentication. Verify before leaving the app running.",
-    "llmContext": "Use Platform Search for evidence sections, Client Chat POST /rest/api/v1/chat for synthesis, and Platform Agents for the optional agent path. Client Chat answers are CONTENT messages from GLEAN_AI; citations are fragment.citation.sourceDocument. Set saveChat:false for verification and keep tokens server-side. Read the account from GLEAN_ACCOUNT_NAME. The overview may show the supplied account name and deterministic Search result counts; never infer CRM facts from loosely matching documents. Use GLEAN_SERVER_URL directly.",
+    "aiPrompt": "Build a Customer 360 account workspace following https://developers.glean.com/cookbook/customer-360. Ask whether to use (A) Platform Search plus experimental Platform Chat or (B) Platform Agents, then ask for the account name and the selected path's required configuration. Do not research another account unless the user explicitly asks for help; if they do, run one bounded search and offer at most three choices. Keep the assistant above the fold, display only cited account claims, and derive overview counts directly from Search results. Use the scaffold's shipped login command rather than implementing authentication. Verify before leaving the app running.",
+    "llmContext": "Use Platform Search for evidence sections, experimental Platform Chat through glean.chat.create for synthesis, and Platform Agents for the optional agent path. Set stream:false, store:false, and X_GLEAN_INCLUDE_EXPERIMENTAL=true. Read ASSISTANT OUTPUT_TEXT content and citations from annotations[].sources. Keep tokens server-side. Read the account from GLEAN_ACCOUNT_NAME. The overview may show the supplied account name and deterministic Search result counts; never infer CRM facts from loosely matching documents. Use GLEAN_SERVER_URL directly.",
     "goDependency": false,
     "featured": false,
     "tags": ["dual-implementation", "sales", "platform-api"],
     "content": {
-      "problem": "Account executives jump between CRM notes, renewal docs, and security\npackets to prep a single customer conversation. This puts those sources in\none account workspace with evidence coverage, compact source sections, and\nan above-the-fold assistant thread — so the next call needs one tab, not nine.\n\nEverything displayed comes from what your instance already knows about that\naccount. The overview uses only the supplied account name and deterministic\nSearch result counts; assistant claims remain cited rather than turning loose\nsearch matches into unsupported CRM facts.\n\nThis recipe builds the page two ways: Platform Search plus Client Chat for an\nopen-ended dashboard, or Agents `createRun` for a prescriptive QBR-ready brief.",
+      "problem": "Account executives jump between CRM notes, renewal docs, and security\npackets to prep a single customer conversation. This puts those sources in\none account workspace with evidence coverage, compact source sections, and\nan above-the-fold assistant thread — so the next call needs one tab, not nine.\n\nEverything displayed comes from what your instance already knows about that\naccount. The overview shows only the account name you set and counts taken\nstraight from the Search results; assistant claims remain cited rather than\nturning loose search matches into unsupported CRM facts.\n\nThis recipe builds the page two ways: Platform Search plus Platform Chat for an\nopen-ended dashboard, or Agents `createRun` for a prescriptive QBR-ready brief.",
       "takeItFurther": [
         "Add a portfolio dashboard across a rep's whole book of business, with health and renewal countdown tiles per account.",
         "Schedule a weekly headless job that re-runs the account's queries, diffs against the last run, and posts only what changed to Slack.",
@@ -1600,7 +1626,7 @@
     },
     "prerequisites": [
       "A Lovable account",
-      "A Glean API token with the CHAT scope. Create it in Admin Console Token Management, then keep it as a Lovable backend secret; every request uses this one token owner's access",
+      "A Glean Client API token with the CHAT scope. Create it in Admin Console → API access → Client API tokens, then keep it as a Lovable backend secret; every request uses this one token owner's access",
       "A private Lovable project — multi-user deployments require authenticated per-user Glean OAuth"
     ],
     "demoQueries": [
@@ -1677,7 +1703,7 @@
     },
     "prerequisites": [
       "A Replit account with Agent access",
-      "A Glean API token with the CHAT scope. Create it in Admin Console Token Management, then keep it in Replit Secrets; every request uses this one token owner's access",
+      "A Glean Client API token with the CHAT scope. Create it in Admin Console → API access → Client API tokens, then keep it in Replit Secrets; every request uses this one token owner's access",
       "A private Repl — multi-user deployments require authenticated per-user Glean OAuth"
     ],
     "demoQueries": [
@@ -1722,7 +1748,7 @@
       "alt": "Onboarding Hub with a first-week checklist and cited assistant guidance",
       "caption": "A first-week checklist where every step can answer itself."
     },
-    "surfaces": ["web-sdk", "client-api"],
+    "surfaces": ["web-sdk", "platform-api"],
     "status": "showcase",
     "category": "portal",
     "level": "Intermediate",
@@ -1734,9 +1760,10 @@
     "buildMethod": "scaffold",
     "languages": ["typescript"],
     "prerequisites": [
-      "A Glean instance with your onboarding content indexed",
-      "For the Web SDK path: an existing Glean session in your normal browser",
-      "Node 20.19+ or 22.12+"
+      "Node 20.19+ or 22.12+",
+      "Your work email, so setup can find your Glean tenant",
+      "Onboarding content already indexed in Glean, because the checklist answers from your own docs",
+      "Web SDK path only: you are already signed in to Glean in your normal browser"
     ],
     "demoQueries": [
       {
@@ -1753,14 +1780,14 @@
       },
       {
         "query": "Ask about a step your docs don't cover",
-        "expectedBehavior": "Client Chat path only: the app offers its escalation affordance rather than inventing a plausible-sounding onboarding step. The Web SDK owns its unsupported-answer experience.",
+        "expectedBehavior": "Platform Chat path only: the app offers its escalation affordance rather than inventing a plausible-sounding onboarding step. The Web SDK owns its unsupported-answer experience.",
         "permissionDifferentiated": false
       }
     ],
     "steps": [
       {
         "title": "Pick a path",
-        "description": "Path A embeds Glean's chat UI with the Web SDK. Path B calls Client Chat from your backend and renders the response in your own UI.",
+        "description": "Both paths build the same first-week checklist. Choose Web SDK if you want Glean's chat UI and the Glean session already in your browser. Choose Platform Chat if you want to own the answer UI and call Glean from your backend.",
         "kind": "choose"
       }
     ],
@@ -1774,7 +1801,7 @@
       },
       {
         "title": "Build a chatbot",
-        "surface": "Client Chat",
+        "surface": "Platform Chat",
         "category": "portal",
         "language": "typescript"
       }
@@ -1791,8 +1818,8 @@
         "category": "search"
       },
       {
-        "label": "Path B: Client Chat",
-        "caption": "POST /rest/api/v1/chat — you own the UI",
+        "label": "Path B: Platform Chat",
+        "caption": "glean.chat.create — you own the UI",
         "category": "portal"
       },
       {
@@ -1801,9 +1828,9 @@
         "emphasized": true
       }
     ],
-    "aiPrompt": "Build an Onboarding Hub following https://developers.glean.com/cookbook/onboarding-hub. Ask whether to use (A) Web SDK or (B) Client Chat, then collect the selected path's configuration before starting it. Path A requires VITE_GLEAN_BACKEND and public/steps.json, uses renderChat and re-mounts with initialMessage to seed a step question, and must be opened by the user in their normal signed-in browser—never by browser automation. Path B calls Client Chat server-side, parses CONTENT messages and citations, retries empty output once, and owns the escalation UI. Keep secrets server-side. Verify cited supported answers on both paths and unsupported-answer escalation only on Client Chat.",
-    "llmContext": "Path A requires an explicit VITE_GLEAN_BACKEND, validated public/steps.json, and the user's existing Glean SSO session. Start Vite, report its exact URL, and wait for the user to open it in their normal signed-in browser; never open or automate it. Seed a step question by re-mounting with initialMessage. Do not pass chatId to continue a thread: it makes the widget treat that chat as selected and look for a message in its own frame URL instead of using initialMessage, so nothing is sent. Each ask starts a fresh thread; renderChat exposes no imperative send. Path B uses server-side Client Chat with saveChat:false, CONTENT messages, fragment citations, one empty-output retry, and an application-owned escalation state.",
-    "lastVerified": "2026-08-07",
+    "aiPrompt": "Build an Onboarding Hub following https://developers.glean.com/cookbook/onboarding-hub. Ask whether to use (A) Web SDK or (B) Platform Chat, then collect the selected path's configuration before starting it. Path A requires VITE_GLEAN_BACKEND and public/steps.json, uses renderChat and re-mounts with initialMessage to seed a step question, and must be opened by the user in their normal signed-in browser—never by browser automation. Path B calls experimental Platform Chat server-side with glean.chat.create, stream:false, store:false, and X_GLEAN_INCLUDE_EXPERIMENTAL=true. It parses ASSISTANT OUTPUT_TEXT content and citation annotation sources, retries empty output once, and owns the escalation UI. Keep secrets server-side. Verify cited supported answers on both paths and unsupported-answer escalation only on Platform Chat.",
+    "llmContext": "Path A requires VITE_GLEAN_BACKEND, validated public/steps.json, and the user's Glean SSO session. Start Vite, report its URL, and wait for the user to open it in their normal signed-in browser; never automate it. Seed a step question by re-mounting with initialMessage. Do not pass chatId: it suppresses initialMessage. Each ask starts a fresh thread because renderChat has no imperative send. Path B uses experimental Platform Chat through glean.chat.create with stream:false, store:false, and X_GLEAN_INCLUDE_EXPERIMENTAL=true. Read ASSISTANT OUTPUT_TEXT content and citations from annotations[].sources. Replay bounded USER/ASSISTANT history without conversation_id. Retry empty output once and own the escalation state.",
+    "lastVerified": "2026-08-21",
     "goDependency": false,
     "featured": false,
     "tags": ["dual-implementation", "portal"],
@@ -1811,7 +1838,7 @@
       {
         "repoPath": "recipes/onboarding-hub/web-sdk",
         "language": "typescript",
-        "description": "Web SDK variant — checklist + renderChat",
+        "description": "Web SDK variant — checklist + `renderChat`",
         "execution": {
           "type": "local-web",
           "questions": [
@@ -1821,7 +1848,7 @@
             },
             {
               "id": "steps",
-              "prompt": "What onboarding steps should appear in the checklist?"
+              "prompt": "What onboarding steps should appear in the checklist? The sample in `steps.json` is fine to keep."
             }
           ],
           "auth": [
@@ -1846,29 +1873,37 @@
         },
         "steps": [
           {
-            "title": "Scaffold the project",
+            "title": "Copy the project onto your machine",
             "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/onboarding-hub/web-sdk onboarding-hub",
-            "kind": "scaffold"
+            "kind": "scaffold",
+            "description": "Creates an `onboarding-hub` folder in whatever directory you run this from. Every command after this one runs inside that folder."
           },
           {
             "title": "Install dependencies",
             "command": "cd onboarding-hub && npm install",
-            "kind": "install"
+            "kind": "install",
+            "description": "Installs the Glean Web SDK and the Vite dev server that hosts the page."
           },
           {
-            "title": "Configure the backend and checklist",
-            "command": "cd onboarding-hub && npm run configure -- --email \"<work-email>\" && cp public/steps.example.json public/steps.json",
-            "description": "Enter the user's work email when prompted; tenant discovery writes VITE_GLEAN_BACKEND to .env.local. Replace public/steps.json with the onboarding steps the user supplied and keep every id unique.",
+            "title": "Find your Glean tenant",
+            "command": "cd onboarding-hub && npm run configure -- --email \"<work-email>\"",
+            "description": "Your email is used once to find which Glean tenant you belong to. The command creates `.env.local` and fills in `VITE_GLEAN_BACKEND`.",
             "kind": "configure"
           },
           {
-            "title": "Run it",
-            "command": "cd onboarding-hub && npm run dev",
-            "kind": "run"
+            "title": "Keep the sample checklist, or use your own",
+            "description": "`public/steps.json` is already in the project, so you can run with the sample. To use your own onboarding program, replace those steps. Each one needs a unique `id`, a `title`, a `group` (`it`, `hr`, `team`, or `engineering`), `initiallyDone`, and an `askPrompt`.",
+            "kind": "configure"
           },
           {
-            "title": "Verify",
-            "description": "After the user confirms the app is open in their normal signed-in browser, ask them to confirm the configured checklist renders. Have them click Ask about this and verify a cited first-day answer. Do not open or drive their browser.",
+            "title": "Open the page",
+            "command": "cd onboarding-hub && npm run dev",
+            "kind": "run",
+            "description": "Starts Vite and prints a Local URL. Open that URL yourself in your normal browser where you are already signed in to Glean."
+          },
+          {
+            "title": "Check it against your own content",
+            "description": "Once the page is open in your signed-in browser, confirm your checklist renders. Click **Ask about this** on a step and check that Glean returns a cited first-day answer.",
             "kind": "verify-live"
           }
         ]
@@ -1876,7 +1911,7 @@
       {
         "repoPath": "recipes/onboarding-hub/platform-chat",
         "language": "typescript",
-        "description": "Client Chat variant — server-side API call, custom UI",
+        "description": "Platform Chat variant — server-side API call, custom UI",
         "execution": {
           "type": "local-web",
           "questions": [
@@ -1886,7 +1921,7 @@
             },
             {
               "id": "steps",
-              "prompt": "What onboarding steps should appear in the checklist?"
+              "prompt": "What onboarding steps should appear in the checklist? The sample in `steps.json` is fine to keep."
             }
           ],
           "auth": [
@@ -1913,43 +1948,51 @@
         },
         "steps": [
           {
-            "title": "Scaffold the project",
+            "title": "Copy the project onto your machine",
             "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/onboarding-hub/platform-chat onboarding-hub",
-            "kind": "scaffold"
+            "kind": "scaffold",
+            "description": "Creates an `onboarding-hub` folder in whatever directory you run this from. Every command after this one runs inside that folder."
           },
           {
             "title": "Install dependencies",
             "command": "cd onboarding-hub && npm install",
-            "kind": "install"
+            "kind": "install",
+            "description": "Installs the Glean API client and the small local server that serves the page."
           },
           {
-            "title": "Try it with no credentials",
+            "title": "See it work before you connect anything",
             "command": "cd onboarding-hub && npm run verify:fixture",
-            "description": "Runs the checklist and Client Chat path against recorded Sample Corp responses. Cited first-day, VPN, and PTO answers must stay cited; the unsupported question must escalate.",
+            "description": "Runs the checklist and chat against recorded Sample Corp answers, so you can see cited first-day, VPN, and PTO replies plus unsupported-question escalation before you connect anything. This needs no Glean credentials.",
             "kind": "verify-fixture"
           },
           {
-            "title": "Set credentials",
+            "title": "Sign in to Glean",
             "command": "cd onboarding-hub && npm run login -- --email \"<work-email>\"",
-            "description": "The shipped command discovers the tenant and completes OAuth, with a CHAT-scoped API token fallback. Configure the supplied onboarding steps in ignored .env or a local steps file. The app runs as the signed-in user; there is no act-as.",
+            "description": "Your email is used once to find which Glean tenant you belong to, then a browser window opens for you to approve access. The command creates the `.env` file for you and fills in `GLEAN_SERVER_URL` and `GLEAN_API_TOKEN`. If your tenant has not enabled OAuth, skip this command and do it by hand instead: copy `.env.example` to `.env`, then fill in your Glean instance URL and a Glean API token that has the `CHAT` scope.",
             "kind": "authenticate"
           },
           {
-            "title": "Verify",
+            "title": "Keep the sample checklist, or use your own",
+            "description": "`steps.json` is already selected in `.env`, so you can run with the sample. To use your own onboarding program, replace those steps. Each one needs a unique `id`, a `title`, a `group` (`it`, `hr`, `team`, or `engineering`), `initiallyDone`, and an `askPrompt`.",
+            "kind": "configure"
+          },
+          {
+            "title": "Check it against your own content",
             "command": "cd onboarding-hub && npm run verify",
-            "description": "Allow 1–3 minutes. It starts its own server and checks the configured onboarding topics for cited answers plus unsupported-question escalation.",
+            "description": "Takes 1 to 3 minutes. It starts its own server, checks your onboarding topics for cited answers, and fails if an unsupported question does not escalate.",
             "kind": "verify-live"
           },
           {
-            "title": "Run it",
+            "title": "Open the page",
             "command": "cd onboarding-hub && npm start",
-            "kind": "run"
+            "kind": "run",
+            "description": "Starts the server and prints a Local URL. Open that URL in your browser."
           }
         ]
       }
     ],
     "content": {
-      "problem": "New hires land on day one with a dozen tasks spread across HR,\nIT, and their team — and no single place to see what's done, what's left, and\nwhere to get help. The Onboarding Hub solves that: a gamified checklist with\nprogress tracking, milestone badges, and contextual Glean chat on every step.\n\nThis recipe builds the hub two ways so you can pick the trade-off that fits\nyour portal — Web SDK for fastest SSO integration, Client Chat when you\nneed full UI control.",
+      "problem": "New hires land on day one with a dozen tasks spread across HR,\nIT, and their team — and no single place to see what's done, what's left, and\nwhere to get help. The Onboarding Hub solves that: a gamified checklist with\nprogress tracking, milestone badges, and contextual Glean chat on every step.\n\nThis recipe builds the hub two ways so you can pick the trade-off that fits\nyour portal — Web SDK for fastest SSO integration, Platform Chat when you\nneed full UI control.",
       "takeItFurther": [
         "Wire real HRIS completion events instead of localStorage toggles.",
         "Add a manager view that shows onboarding progress across the team.",
@@ -1960,14 +2003,14 @@
   {
     "id": "oncall-copilot",
     "title": "On-call Copilot",
-    "description": "Triage an incident from your own runbooks and past incidents, propose one pre-registered action, and let a human approve it — where the gate refuses the wrong person, expiry escalates instead of auto-approving, and every attempt is audited.",
+    "description": "An on-call dashboard that takes an alarm to a proposed action and puts a person in front of that action. It names a cause only when a past incident backs it, turns away an approver who is neither on call nor the service owner, and escalates instead of approving itself when nobody answers. It runs on recorded incidents, so you can watch it refuse things before connecting it to anything.",
     "sidebarLabel": "On-call Copilot",
     "preview": {
       "path": "recipes/oncall-copilot/assets/preview.webp",
       "alt": "On-call Copilot triaging an alert with evidence and an approval gate",
       "caption": "Evidence-ranked triage with a human approval gate before action."
     },
-    "surfaces": ["platform-api", "client-api", "agents", "tools"],
+    "surfaces": ["platform-api", "agents", "tools"],
     "status": "showcase",
     "category": "agent",
     "level": "Advanced",
@@ -1979,30 +2022,11 @@
     "buildMethod": "scaffold",
     "execution": {
       "type": "local-web",
-      "questions": [
-        {
-          "id": "service",
-          "prompt": "Which service has a catalog entry, runbook, and past incident in Glean?"
-        },
-        {
-          "id": "orchestrator",
-          "prompt": "Use direct Search + Chat or an existing Glean agent?"
-        },
-        { "id": "email", "prompt": "What is your work email?" }
-      ],
-      "auth": [
-        {
-          "kind": "oauth-with-token-fallback",
-          "scopes": ["SEARCH", "CHAT"],
-          "setupCommand": "cd oncall-copilot && npm run login -- --email \"<work-email>\"",
-          "configFile": ".env",
-          "backendVariable": "GLEAN_SERVER_URL",
-          "credentialVariable": "GLEAN_API_TOKEN"
-        }
-      ],
+      "questions": [],
+      "auth": [{ "kind": "none" }],
       "verification": {
         "kind": "user-browser",
-        "expectedDuration": "under 1 minute for fixtures; 1–3 minutes live",
+        "expectedDuration": "under 1 minute",
         "startsOwnServer": false
       },
       "run": {
@@ -2013,66 +2037,62 @@
     },
     "languages": ["typescript"],
     "prerequisites": [
-      "For configured runs: a Glean instance with engineering content indexed — a service catalog, runbooks, and at least one past incident review",
-      "For configured runs: a work email for tenant discovery and OAuth sign-in; a scoped API token is the fallback",
-      "For configured runs: X_GLEAN_INCLUDE_EXPERIMENTAL=true (the Platform API is Experimental as of its 2026-07 launch)",
-      "Node 20+"
+      "Node 20 or newer",
+      "Nothing else. The walkthrough replays recorded Glean responses, so it needs no credentials and makes no network calls",
+      "Only if you later point it at your own instance: an indexed service catalog, runbooks, and incident reviews, plus a work email for sign-in or a Glean API token with the SEARCH and CHAT scopes. The agent planner also needs the AGENTS scope and a conversational agent ID. Plan on editing the catalog query and parser first, since they read the sample corpus's layout"
     ],
     "demoQueries": [
       {
-        "query": "Triage a real alert from one of your services",
-        "expectedBehavior": "The copilot acknowledges in the channel, resolves the service to its on-call engineer and owner from your own service catalog, fans out retrieval, and posts a triage card. A past incident is cited as the precedent that supports whatever it proposes — the proposal has to point at evidence, not at a hunch."
+        "query": "Fire the sample canary alarm",
+        "expectedBehavior": "Fire the canary alarm, PAY-2231. The incident joins the on-call queue, and the triage card names the service, its tier, the engineer on call, and the owner, all read from the recorded catalog. Probable cause appears with a supported badge and links to the past incident review it came from. In the evidence table that review is tagged precedent and the deploy runbook is tagged procedure. The approval gate offers Draft fix PR, and #eng-oncall shows the acknowledgement and the request for approval."
       },
       {
         "query": "Triage an alert with no matching past incident",
-        "expectedBehavior": "The highest-scoring retrieved document will often be a runbook, so a relevance-ranked copilot would confidently blame whatever that runbook is about. With no matching signature and nothing in flight, this copilot asserts no cause. Ranking is not evidence."
+        "expectedBehavior": "Fire the no-precedent alarm, PAY-2232. The triage card says no probable cause was asserted, because no past incident matches this alarm signature, and no Probable cause section appears. The deploy runbook still ranks highest in the evidence table, tagged procedure. The proposed action drops from Draft fix PR to File tracking ticket, and both #eng-oncall and the audit log record that downgrade and why."
       },
       {
-        "query": "Approve the proposed action as someone who is not on call",
-        "expectedBehavior": "Refused with 403 and audited against that actor. The allowed set is the on-call engineer and service owner read from your service catalog, not a config file. The incident stays awaiting approval. The recipe implements the authorization itself — nothing upstream does it for you.",
+        "query": "Approve the proposed action as the outsider",
+        "expectedBehavior": "Fire an alarm, switch Acting as to the person who is neither on call nor the owner, then click Approve & execute. The approval card warns before you click that this person is not on call and does not own the service, and names who may approve. The request comes back 403, the audit log gains a refused row against that actor, and the incident stays at awaiting-approval.",
         "permissionDifferentiated": true
       },
       {
         "query": "Let the approval window expire",
-        "expectedBehavior": "The proposal escalates to the escalation target named in your service catalog and is NOT executed. Auto-approving on timeout would invert the point of a gate. The escalation is audited and posted to the channel."
+        "expectedBehavior": "With an incident awaiting approval, force the approval to expire. The status changes to escalated, the approve and reject buttons are disabled, and no action runs. #eng-oncall gets a message naming the escalation target from the recorded catalog and saying the action was not executed. The audit log records the same handoff."
       },
       {
         "query": "Have the Glean agent propose an action that is not registered",
-        "expectedBehavior": "Refused at proposal time and audited, with no approval card offered. An agent that can describe arbitrary actions into existence is an agent with production access, whatever its prompt says."
+        "expectedBehavior": "Fire the off-script agent alarm, PAY-2233. The recorded agent proposes rollback-production-now, which is not in the action registry. Where the approval card would be, the dashboard says no action was offered and explains that the planner named an unregistered action. There are no approve or reject buttons, and the audit log records the refusal with glean-agent as the actor."
       }
     ],
     "steps": [
       {
-        "title": "Scaffold the project",
+        "title": "Copy the project onto your machine",
         "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/oncall-copilot oncall-copilot",
+        "description": "Creates an oncall-copilot folder in whatever directory you are in, holding the server, the dashboard, and the recorded incidents. Stay in that same directory for the rest of the steps, since each command changes into the folder itself.",
         "kind": "scaffold"
       },
       {
         "title": "Install dependencies",
         "command": "cd oncall-copilot && npm install",
+        "description": "Installs the few packages the TypeScript server needs. Everything runs on your machine, and nothing is deployed anywhere.",
         "kind": "install"
       },
       {
-        "title": "Watch the governance hold, with no credentials",
+        "title": "See what it refuses before connecting anything",
         "command": "cd oncall-copilot && npm run verify:fixture",
-        "description": "Replays recorded responses and asserts the parts that matter: the gate refuses the wrong actor, expiry escalates without executing, an unregistered action is refused, a mutating action with no supported cause is downgraded, and every attempt is audited.",
-        "kind": "verify-fixture"
+        "description": "Runs the unit tests, then replays the recorded incidents through the whole flow and checks the refusals: the gate turns away an actor who is neither on call nor the service owner, an unapproved proposal escalates without executing, an action the planner invented is refused, and a code-changing action with no supported cause drops to filing a ticket. The audit log records each of those decisions. The command reads no credentials and makes no network calls.",
+        "kind": "manual"
       },
       {
-        "title": "Set credentials",
-        "command": "cd oncall-copilot && npm run login -- --email \"<work-email>\"",
-        "description": "Only for a live run. Use npm run login for direct Search + Chat, or npm run login:agent when the user selected an existing Glean agent. Set WATCHED_SERVICES to the service already supplied and GLEAN_AGENT_ID only for the agent path.",
-        "kind": "authenticate"
-      },
-      {
-        "title": "Run it",
+        "title": "Open the dashboard",
         "command": "cd oncall-copilot && npm start",
+        "description": "Starts the local server and prints a Local URL. Open that URL in a browser. The dashboard replays the same recorded Glean responses, so there is nothing to sign in to.",
         "kind": "run"
       },
       {
-        "title": "Verify",
-        "description": "Fire the sample alarm and check three things: the probable cause cites a past incident rather than a runbook, approving as someone who is not on call returns 403, and forcing expiry escalates without executing anything.",
-        "kind": "verify-live"
+        "title": "Fire the alarms and test the gate",
+        "description": "The trigger row has one button per alarm. PAY-2231 gets a probable cause and the past incident it rests on. PAY-2232 gets no cause, because no past incident matches it, and its proposed fix drops to filing a ticket. PAY-2233 has the agent name an action that is not in the registry, so it is refused before any approval card appears. For a refused approval, select PAY-2231 or PAY-2232 in the queue, switch Acting as to the person who is neither on call nor the owner, and approve anyway: the request comes back 403 and the audit log records it. To watch a proposal hand off without executing, force the approval on that same incident to expire.",
+        "kind": "manual"
       }
     ],
     "combines": [
@@ -2092,39 +2112,39 @@
     "architecture": [
       {
         "label": "PagerDuty webhook",
-        "caption": "severity + service filter",
+        "caption": "filters by severity and watched service",
         "category": "workflow",
         "icon": "plug"
       },
       {
         "label": "Service registry",
-        "caption": "owner, runbook, escalation",
+        "caption": "reads owner, on-call, and escalation from the catalog",
         "category": "index"
       },
       {
         "label": "Glean",
-        "caption": "permission-aware index",
+        "caption": "permission-aware Search, Chat, and optional Agents",
         "emphasized": true
       },
       {
         "label": "Evidence check",
-        "caption": "precedent vs procedure",
+        "caption": "past incidents support cause, runbooks support procedure",
         "category": "search",
         "icon": "badge"
       },
       {
         "label": "Approval gate",
-        "caption": "authz, expiry, audit",
+        "caption": "who may approve, expiry, escalation, and audit",
         "category": "portal"
       },
       {
         "label": "Governed actions",
-        "caption": "pre-registered only",
+        "caption": "only pre-registered action ids may run",
         "category": "agent"
       }
     ],
-    "aiPrompt": "Build the On-call Copilot following the oncall-copilot recipe. Resolve the alarming service from an indexed service catalog, retrieve relevant precedents and runbooks, and classify evidence by role. Only a matching past incident may support a cause; a runbook may support a procedure. Assert no cause when no precedent matches. Gate mutating actions behind authorized human approval, expiry, a closed action registry, evidence support, and a complete audit log. Exercise unauthorized approval, expiry, unregistered action, and no-precedent paths during verification.",
-    "llmContext": "Use Platform Search for retrieval, Client Chat POST /rest/api/v1/chat for synthesis, and Platform Agents for the optional agent path. The app runs as the caller; its approval check is application policy, not impersonation. Resolve owners, on-call engineers, and escalation targets from the reader's service catalog. Only a matching past incident may support a cause; runbooks support procedures, not causes. Mutating actions require a supported cause, an authorized approver, a registered action, an unexpired proposal, and a complete audit trail. Set saveChat:false for verification and treat empty chat output as a retryable failure.",
+    "aiPrompt": "Build the On-call Copilot following the oncall-copilot recipe. Start with the recorded fixtures; they are the supported demo path. Only a matching past incident may support a cause, while a runbook may support a procedure. Do not offer a code-changing action without a supported cause. Gate actions behind authorized human approval, expiry, a closed action registry, and an audit log. The acting user is asserted, not authenticated. Actions are simulated in-process. Treat live mode as a corpus adaptation that requires changing the catalog query, parser, identity mapping, and evidence URL rules.",
+    "llmContext": "Use the recorded Search, Platform Chat, and Agent responses for the default run. Live Platform Chat uses glean.chat.create with stream:false, store:false, and X_GLEAN_INCLUDE_EXPERIMENTAL=true. The app runs as the caller, so approval is application policy, not impersonation. Classify precedent from /incidents/ and procedure from /runbooks/ URLs. Only a matching past incident may support a cause. A mutating action needs a supported cause, an authorized approver, a registered action id, and an unexpired proposal. Unauthorized approvals, executions, and expirations are audited. Registered actions are in-process simulations. Fixture mode permits actor assertion to demonstrate the 403. Live mode refuses it unless INCIDENT_DEMO_MODE is true. Do not claim that npm run start:live works against an arbitrary Glean corpus without adapting the parsers.",
     "goDependency": false,
     "featured": true,
     "tags": [
@@ -2139,17 +2159,17 @@
       {
         "repoPath": "recipes/oncall-copilot",
         "language": "typescript",
-        "description": "Webhook → service registry → retrieval fan-out → evidence classification → triage card → approval gate (authz, expiry, escalation, audit) → pre-registered actions → postmortem timeline. Both orchestrators render into one shell."
+        "description": "Webhook, service registry, retrieval fan-out, evidence classification, triage card, approval gate, pre-registered actions, and a postmortem timeline. Both orchestrators render into one shell."
       }
     ],
     "content": {
-      "problem": "An alarm fires at 3am. Everything the responder needs already exists — the runbook,\nthe review of the last time this happened, who owns the service, what it depends on\n— scattered across systems they now have to search one at a time, while the graphs\nget worse.\n\nThe retrieval is the easy part. What makes an on-call copilot safe to point at a\nproduction service is everything that refuses: a gate that turns away the wrong\nperson, an expiry that escalates instead of quietly approving itself, an action\nregistry the planner cannot talk its way out of, and an audit entry for every\nattempt including the ones that were refused.",
+      "problem": "An alarm fires at 3am. The runbook, the review of the last time this happened, who owns the service, and what it depends on all exist in Glean already. They just sit in different systems, and you search them one at a time while the graphs get worse.\n\nThe retrieval is the easy part. What makes a copilot safe to point at a production service is what it refuses to do, so that is what you build here. The gate turns away anyone who is neither on call nor the service owner. A proposal nobody approves in time escalates instead of quietly approving itself. An action the planner invented never reaches a human. The audit log records approvals, refusals, executions, failures, rejections, and escalations.\n\nKnow the edges before you point it anywhere real. Live Search, Chat, and optional Agents calls hit your instance. The bundled alarm buttons always fire payments-service. Catalog and evidence lookups expect the sample URL layout under /services/, /runbooks/, and /incidents/. The three registered actions are simulated in-process, and the acting user is asserted rather than authenticated.",
       "takeItFurther": [
         "Persist incidents and the audit log. An audit log you can lose by restarting a process is not an audit log.",
         "Add the rest of the dashboard: response-time rollups, an expiring-soon lane, and an end-of-shift handoff summary.",
         "Replace the simulated actions with real governed tools, keeping the registry boundary and the approval log exactly where they are.",
-        "Write the postmortem draft back into your knowledge base so the next incident retrieves it as a precedent — the loop that makes the evidence rules get better over time.",
-        "Expose the copilot itself over A2A so another agent can request triage, with the same gate in front of every action."
+        "Write the postmortem draft back into your knowledge base. The next incident then retrieves it as precedent, and the evidence rules get better over time.",
+        "Expose the copilot over Agent-to-Agent (A2A) so another agent can request triage, with the same approval gate in front of every action. See https://developers.glean.com/cookbook/a2a-client."
       ],
       "guardrails": [
         {
@@ -2160,7 +2180,7 @@
       "limitations": [
         {
           "title": "Authorization is not authentication",
-          "description": "The demo restricts who may approve but trusts the asserted actor. Production deployments must authenticate the actor and define which credential executes actions."
+          "description": "Live and fixture both restrict who may approve, but they trust the asserted actor (INCIDENT_ACTOR or, in demo mode, X-Incident-Actor). A deployment must authenticate the actor and decide which credential executes actions. This recipe reports impersonation: false."
         }
       ]
     }
@@ -2583,14 +2603,14 @@
   {
     "id": "rfp-responder",
     "title": "Answer an RFP or security questionnaire",
-    "description": "Turn a customer questionnaire into grounded, cited draft answers — where every claim carries a source, unsupported rows route to a human, and nothing reaches the customer without approval.",
+    "description": "A review app that drafts cited answers to an RFP or security questionnaire, leaves unsupported questions blank, and requires a person to approve each answer. It starts with recorded Chat responses, so you can inspect its refusal paths before connecting it to Glean.",
     "sidebarLabel": "RFP responder",
     "preview": {
       "path": "recipes/rfp-responder/assets/preview.webp",
       "alt": "RFP Responder review screen with cited draft answers and approval controls",
       "caption": "Grounded draft answers stay behind a human review gate."
     },
-    "surfaces": ["client-api"],
+    "surfaces": ["platform-api"],
     "status": "showcase",
     "category": "workflow",
     "level": "Intermediate",
@@ -2602,26 +2622,11 @@
     "buildMethod": "scaffold",
     "execution": {
       "type": "local-web",
-      "questions": [
-        {
-          "id": "approved-sources",
-          "prompt": "Which Glean URL prefixes are approved sources for external answers?"
-        },
-        { "id": "email", "prompt": "What is your work email?" }
-      ],
-      "auth": [
-        {
-          "kind": "oauth-with-token-fallback",
-          "scopes": ["CHAT"],
-          "setupCommand": "cd rfp-responder && npm run login -- --email \"<work-email>\"",
-          "configFile": ".env",
-          "backendVariable": "GLEAN_SERVER_URL",
-          "credentialVariable": "GLEAN_API_TOKEN"
-        }
-      ],
+      "questions": [],
+      "auth": [{ "kind": "none" }],
       "verification": {
         "kind": "user-browser",
-        "expectedDuration": "under 1 minute for fixtures; 1–3 minutes live",
+        "expectedDuration": "under 1 minute",
         "startsOwnServer": false
       },
       "run": {
@@ -2632,61 +2637,58 @@
     },
     "languages": ["typescript"],
     "prerequisites": [
-      "For configured runs: a Glean instance with your company content indexed",
-      "For configured runs: a work email for tenant discovery and OAuth sign-in; a CHAT-scoped API token is the fallback",
-      "Node 20+"
+      "Node 20 or newer",
+      "Nothing else. The walkthrough replays recorded Chat responses, so it needs no credentials and makes no network calls",
+      "Only for a live run: a Glean instance with company content indexed, a work email for sign-in or a Glean API token with the CHAT scope, and a reviewed list of document URL prefixes that may support customer-facing answers"
     ],
     "demoQueries": [
       {
-        "query": "Draft answers to a real questionnaire you've had to fill in",
-        "expectedBehavior": "Every row is parsed across every tab, exact duplicates are merged, and each row is classified by the evidence behind it: strongly grounded rows get a cited draft, adjacent-evidence rows are flagged for verification, and rows with nothing behind them are left blank. Use a questionnaire your own content can actually speak to."
+        "query": "Draft the bundled security questionnaire",
+        "expectedBehavior": "Click Try the bundled sample, then Confirm and draft answers. The app parses 20 rows across 4 tabs, merges 1 exact duplicate, and asks 19 questions. The review summary shows 10 strongly grounded answers, 2 weak answers to verify, and 8 questions that need a subject matter expert. SEC-01 and SEC-02 have cited drafts."
       },
       {
-        "query": "Ask something your documentation genuinely doesn't cover",
-        "expectedBehavior": "Retrieval finds nothing, so the row returns INSUFFICIENT_EVIDENCE and renders as 'needs SME' with no draft text, and accepting it is refused. This is the behaviour to check first — an RFP tool that invents a compliance answer is worse than no tool, because someone will send it to a customer."
+        "query": "Check what happens when the evidence does not support an answer",
+        "expectedBehavior": "After drafting the bundled sample, ACC-04 and CMP-01 show no draft answer and say that the question needs a subject matter expert. The rows have no citations and offer assignment to a subject matter expert."
       },
       {
-        "query": "Ask something only tangentially covered",
-        "expectedBehavior": "Retrieval finds a document that is genuinely on-topic but not authoritative, so the row is flagged weak rather than strong: drafted, but labelled as resting on documentation a person must clear before it goes out."
+        "query": "Review an answer backed by weak evidence",
+        "expectedBehavior": "After drafting the bundled sample, ACC-02 and ACC-03 have draft answers but appear in the weak evidence bucket. Their evidence notes explain that a person must verify the source before accepting the answer."
       },
       {
-        "query": "Run the same questionnaire as a colleague with narrower access",
-        "expectedBehavior": "Rows backed by documents that person cannot see collapse to 'needs SME' rather than being answered from elsewhere. Their own credential is the permission boundary — you are not impersonating them, you are each running the app as yourselves and comparing.",
+        "query": "Compare a live questionnaire run with a colleague who has narrower access",
+        "expectedBehavior": "In separate live runs, each person signs in as themselves and uploads the same questionnaire. A row backed only by a document the second person cannot access stays blank and needs a subject matter expert. The app does not impersonate either person.",
         "permissionDifferentiated": true
       }
     ],
     "steps": [
       {
-        "title": "Scaffold the project",
+        "title": "Copy the project onto your machine",
         "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/rfp-responder rfp-responder",
+        "description": "Creates an rfp-responder folder containing the local server, review app, sample questionnaire, and recorded Chat responses. Stay in the same parent directory for the remaining commands.",
         "kind": "scaffold"
       },
       {
         "title": "Install dependencies",
         "command": "cd rfp-responder && npm install",
+        "description": "Installs the packages for the TypeScript server. Everything runs on your machine, and nothing is deployed.",
         "kind": "install"
       },
       {
-        "title": "Try it with no credentials",
+        "title": "See what it refuses before connecting anything",
         "command": "cd rfp-responder && npm run verify:fixture",
-        "description": "Runs the whole flow against recorded responses and asserts the failure contract: no ungrounded row carries an answer, every answered row carries a citation, and export is gated on approval.",
-        "kind": "verify-fixture"
+        "description": "Replays the recorded responses through the full questionnaire and checks that every draft has a citation, unsupported rows stay blank, weak evidence is flagged, and export stays behind approval. The command needs no credentials and makes no network calls.",
+        "kind": "manual"
       },
       {
-        "title": "Set credentials",
-        "command": "cd rfp-responder && npm run login -- --email \"<work-email>\"",
-        "description": "Only for a live run. Use the shipped login flow, then configure the approved source prefixes supplied up front. The app runs as the signed-in user; there is no act-as.",
-        "kind": "authenticate"
-      },
-      {
-        "title": "Run it",
+        "title": "Open the review app",
         "command": "cd rfp-responder && npm start",
+        "description": "Starts the local server and prints a Local URL. Open that URL in a browser. The app uses the same recorded responses, so there is nothing to sign in to.",
         "kind": "run"
       },
       {
-        "title": "Verify",
-        "description": "Load the questionnaire, confirm the column mapping, and draft. Check that a supported question (SOC 2, encryption at rest) returns a cited answer, and that an unsupported one (ISO 27001, RTO/RPO) is left blank and assigned to an SME rather than answered.",
-        "kind": "verify-live"
+        "title": "Load the sample and check the refusals",
+        "description": "Click Try the bundled sample, then Confirm and draft answers. The app parses 20 rows and merges the exact SSO duplicate before drafting 19 questions. SEC-01 and SEC-02 get cited answers. ACC-02 and ACC-03 are marked weak. ACC-04 and CMP-01 stay blank and need a subject matter expert.",
+        "kind": "manual"
       }
     ],
     "combines": [
@@ -2710,7 +2712,7 @@
         "category": "workflow"
       },
       {
-        "label": "Client Chat",
+        "label": "Platform Chat",
         "caption": "one call per question",
         "category": "search"
       },
@@ -2731,8 +2733,8 @@
         "category": "portal"
       }
     ],
-    "aiPrompt": "Build an RFP and security-questionnaire responder with Glean Client Chat. Parse every questionnaire tab, merge only exact duplicates, and call Chat once per unique question with evidence-only instructions. Classify citation topicality separately from approval for external use. Never render an uncited draft; route unsupported rows to an SME. Preserve the original questionnaire structure, require explicit approval before export, and record the approval.",
-    "llmContext": "Use Client Chat POST /rest/api/v1/chat with saveChat:false during verification. Read answer text from CONTENT messages and citations from fragment.citation.sourceDocument. Merge only exact duplicate questions. Classify citation topicality separately from approval for external use; every answer requires a citation, and unsupported rows remain blank with needs-sme status. Use the caller's credential as the permission boundary. Retry empty chat output and keep export behind explicit human approval with an audit log.",
+    "aiPrompt": "Build the RFP responder from the deterministic scaffold and start with its recorded Chat responses. Parse every questionnaire tab, merge only exact duplicates, and call Chat once per unique question with evidence-only instructions. Classify citation topicality separately from approval for external use. Never render an uncited draft; route unsupported rows to a subject matter expert. Preserve the original questionnaire structure, require explicit approval before export, and record the approval. Treat live mode as a later adaptation that uses experimental Platform Chat and requires reviewed source URL prefixes.",
+    "llmContext": "Use the recorded responses for the default run. Live mode uses experimental Platform Chat through glean.chat.create with stream:false, store:false, and X_GLEAN_INCLUDE_EXPERIMENTAL=true, and requires RFP_APPROVED_SOURCE_PREFIXES. Read ASSISTANT OUTPUT_TEXT content and citations from annotations[].sources, preserving annotations[].snippets for grounding. Merge only exact duplicate questions. Classify citation topicality separately from approval for external use. Every answer requires a citation, and unsupported rows remain blank with needs-sme status. In live mode, use the caller's credential as the permission boundary. Retry empty chat output and keep export behind explicit human approval with an audit log.",
     "goDependency": false,
     "featured": false,
     "tags": [
@@ -2746,16 +2748,16 @@
       {
         "repoPath": "recipes/rfp-responder",
         "language": "typescript",
-        "description": "Parse + dedup -> batched Chat calls -> review grid with evidence classification -> approval gate -> structure-preserving export"
+        "description": "Parse and deduplicate, make batched Chat calls, review evidence, approve answers, and preserve the questionnaire structure on export"
       }
     ],
     "content": {
-      "problem": "A security questionnaire arrives with 200 rows. The answers all exist somewhere —\nin last quarter's SOC 2 report, in a policy doc, in the response you sent a\ndifferent customer in March. Someone spends a week finding them again.\n\nEveryone has seen an RFP bot that drafts those answers. The hard part isn't\ndrafting. It's what happens on the rows where the evidence isn't there, because a\nfluent, confident, wrong answer about your own security controls doesn't get\ncaught in review — it gets pasted into a customer's document over your signature.\n\nSo this recipe is built around the failure contract rather than the happy path.\nOnly permitted, approved evidence enters the prompt. Every claim keeps its\ncitation. Missing evidence stays unanswered. A person approves before anything\nleaves.",
+      "problem": "A security questionnaire arrives with 200 rows. The answers exist in last quarter's SOC 2 report, a policy document, or the response you sent another customer. Someone spends a week finding them again.\n\nDrafting is not the dangerous part. A fluent answer with no supporting evidence can reach a customer's document over your signature. This app makes that failure visible. Questions with approved evidence get cited drafts. Questions with weak evidence are flagged for verification. Questions with no evidence stay blank and go to a subject matter expert. A person approves each answer before export.\n\nThe default walkthrough uses recorded responses, so you can watch each path without credentials. Live mode runs as the signed-in person and limits customer-facing drafts to reviewed source URL prefixes.",
       "takeItFurther": [
-        "Add an xlsx and docx reader so real questionnaires can be uploaded directly — the parser here reads CSV to keep the interesting logic legible.",
+        "Add an xlsx and docx reader so real questionnaires can be uploaded directly. The parser here reads CSV to keep the evidence and approval logic legible.",
         "Write answers back into the source document with a custom tool instead of exporting, keeping the confirm step and the approval log.",
         "Give the answer library its own access control before sharing it across a team. It's a cache of retrieved content, so it can leak across the permission boundary the rest of the app respects.",
-        "Route \"needs SME\" rows to their owners automatically, and track which ones came back — the assignment field here is deliberately inert.",
+        "Route \"needs SME\" rows to their owners automatically and track which ones came back. The assignment field here does not send a message.",
         "Combine with [permissions-aware retrieval](/cookbook/permissions-aware-retrieval) to see the same refusal property in a smaller, single-question app."
       ],
       "guardrails": [

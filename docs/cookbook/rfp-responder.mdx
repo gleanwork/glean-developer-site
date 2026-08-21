@@ -23,19 +23,11 @@ import {
 
 <RecipeSection label="Problem">
 
-A security questionnaire arrives with 200 rows. The answers all exist somewhere —
-in last quarter's SOC 2 report, in a policy doc, in the response you sent a
-different customer in March. Someone spends a week finding them again.
+A security questionnaire arrives with 200 rows. The answers exist in last quarter's SOC 2 report, a policy document, or the response you sent another customer. Someone spends a week finding them again.
 
-Everyone has seen an RFP bot that drafts those answers. The hard part isn't
-drafting. It's what happens on the rows where the evidence isn't there, because a
-fluent, confident, wrong answer about your own security controls doesn't get
-caught in review — it gets pasted into a customer's document over your signature.
+Drafting is not the dangerous part. A fluent answer with no supporting evidence can reach a customer's document over your signature. This app makes that failure visible. Questions with approved evidence get cited drafts. Questions with weak evidence are flagged for verification. Questions with no evidence stay blank and go to a subject matter expert. A person approves each answer before export.
 
-So this recipe is built around the failure contract rather than the happy path.
-Only permitted, approved evidence enters the prompt. Every claim keeps its
-citation. Missing evidence stays unanswered. A person approves before anything
-leaves.
+The default walkthrough uses recorded responses, so you can watch each path without credentials. Live mode runs as the signed-in person and limits customer-facing drafts to reviewed source URL prefixes.
 
 </RecipeSection>
 
@@ -65,10 +57,10 @@ The app runs as the credential owner. Multi-user deployment requires per-user au
 
 <TakeItFurther>
 
-- Add an xlsx and docx reader so real questionnaires can be uploaded directly — the parser here reads CSV to keep the interesting logic legible.
+- Add an xlsx and docx reader so real questionnaires can be uploaded directly. The parser here reads CSV to keep the evidence and approval logic legible.
 - Write answers back into the source document with a custom tool instead of exporting, keeping the confirm step and the approval log.
 - Give the answer library its own access control before sharing it across a team. It's a cache of retrieved content, so it can leak across the permission boundary the rest of the app respects.
-- Route "needs SME" rows to their owners automatically, and track which ones came back — the assignment field here is deliberately inert.
+- Route "needs SME" rows to their owners automatically and track which ones came back. The assignment field here does not send a message.
 - Combine with [permissions-aware retrieval](/cookbook/permissions-aware-retrieval) to see the same refusal property in a smaller, single-question app.
 
 </TakeItFurther>
