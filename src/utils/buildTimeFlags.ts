@@ -19,6 +19,10 @@ export function getBuildTimeFlags(): FeatureFlagsMap {
   for (const [key, value] of Object.entries(process.env)) {
     if (!key.startsWith('FF_')) continue;
     // converts FF_FOO_BAZ_BAR to foo-baz-bar
+    // AGENTS.md documents FF_COOKBOOKS=true, but the sidebar and homepage
+    // gate on `cookbook` (the /cookbook route and plugin name). The generic
+    // slugger would emit `cookbooks` and the documented preview command
+    // would silently do nothing. Alias until PACT-461 removes the flag.
     const slug =
       key === 'FF_COOKBOOKS'
         ? 'cookbook'
