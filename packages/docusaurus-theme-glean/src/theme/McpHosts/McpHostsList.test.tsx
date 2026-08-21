@@ -59,6 +59,15 @@ vi.mock('@gleanwork/mcp-config-schema/browser', async (importOriginal) => {
             supportedAuth: ['oauth:dcr'] as const,
           },
           {
+            id: 'gemini-enterprise',
+            displayName: 'Gemini Enterprise',
+            types: ['web'] as const,
+            userConfigurable: false,
+            documentationUrl: 'https://example.test/gemini-enterprise',
+            transports: ['http'] as const,
+            supportedAuth: [] as const,
+          },
+          {
             id: 'fixture-empty',
             displayName: 'Fixture Empty',
             types: ['web'] as const,
@@ -160,6 +169,33 @@ describe('McpHostsList', () => {
     ).toHaveAttribute('href', 'https://example.test/fixture-ide');
   });
 
+  it('links supported hosts to Glean documentation before vendor documentation', async () => {
+    render(<McpHostsList />);
+    await searchFor('Gemini Enterprise');
+
+    expect(
+      screen.getByRole('link', {
+        name: 'Open Gemini Enterprise Glean documentation',
+      }),
+    ).toHaveAttribute(
+      'href',
+      'https://docs.glean.com/administration/platform/embedded-integrations/glean-in-gemini-chat/',
+    );
+    expect(
+      screen.getByRole('link', {
+        name: 'Read Gemini Enterprise Glean documentation',
+      }),
+    ).toHaveAttribute(
+      'href',
+      'https://docs.glean.com/administration/platform/embedded-integrations/glean-in-gemini-chat/',
+    );
+    expect(
+      screen.getByRole('link', {
+        name: 'Read Gemini Enterprise vendor documentation',
+      }),
+    ).toHaveAttribute('href', 'https://example.test/gemini-enterprise');
+  });
+
   it('routes managed hosts with a setup URL to the host admin destination', async () => {
     const { container } = render(<McpHostsList />);
     await searchFor('ChatGPT');
@@ -221,6 +257,11 @@ describe('McpHostsList', () => {
         name: 'Open MCP Configurator for Fixture IDE',
       }),
     ).toBeInTheDocument();
+    expect(
+      screen.getByRole('link', {
+        name: 'Read Fixture IDE Glean documentation',
+      }),
+    ).toHaveAttribute('href', 'https://docs.glean.com/guides/mcp/mcp');
     expect(
       screen.getByRole('link', {
         name: 'Read Fixture IDE vendor documentation',

@@ -21,6 +21,7 @@ interface McpHost {
   types: readonly ClientType[];
   userConfigurable: boolean;
   documentationUrl?: string;
+  gleanDocumentationUrl?: string;
   managedSetupUrl?: string;
   transports: readonly Transport[];
   supportedAuth: readonly SupportedAuth[];
@@ -38,6 +39,8 @@ const EXTRA_HOSTS: McpHost[] = [
     userConfigurable: false,
     documentationUrl:
       'https://learn.microsoft.com/en-us/microsoft-copilot-studio/mcp-add-existing-server-to-agent',
+    gleanDocumentationUrl:
+      'https://docs.glean.com/administration/platform/mcp/host-guides/copilot-studio',
     transports: ['http'],
     supportedAuth: ['token', 'oauth:dcr'],
   },
@@ -45,6 +48,22 @@ const EXTRA_HOSTS: McpHost[] = [
 
 const ORGANIZATION_GUIDANCE_URL =
   'https://docs.glean.com/administration/platform/mcp/about';
+const GLEAN_MCP_GUIDANCE_URL = 'https://docs.glean.com/guides/mcp/mcp';
+
+// Prefer Glean's host guides when they cover the connection. The registry's
+// documentationUrl remains available as the vendor documentation link.
+const GLEAN_DOCUMENTATION_URLS = {
+  chatgpt:
+    'https://docs.glean.com/administration/platform/mcp/host-guides/chatgpt',
+  'claude-desktop':
+    'https://docs.glean.com/administration/platform/mcp/host-guides/claude-desktop',
+  'copilot-studio':
+    'https://docs.glean.com/administration/platform/mcp/host-guides/copilot-studio',
+  'gemini-enterprise':
+    'https://docs.glean.com/administration/platform/embedded-integrations/glean-in-gemini-chat/',
+  librechat:
+    'https://docs.glean.com/administration/platform/mcp/host-guides/librechat',
+} as const;
 
 // Matches GLEAN_REGISTRY_OPTIONS.managedSetupUrls in @gleanwork/mcp-config-glean.
 const GLEAN_MANAGED_SETUP_URLS = {
@@ -64,6 +83,8 @@ function buildHosts(): McpHost[] {
     types: c.types,
     userConfigurable: c.userConfigurable,
     documentationUrl: c.documentationUrl,
+    gleanDocumentationUrl:
+      GLEAN_DOCUMENTATION_URLS[c.id] ?? GLEAN_MCP_GUIDANCE_URL,
     managedSetupUrl: registry.getManagedSetupUrl(c.id),
     transports: c.transports,
     supportedAuth: c.supportedAuth,
@@ -232,7 +253,19 @@ export default function McpHostsList({
               key={host.id}
               title={host.displayName}
               color="var(--ifm-font-color-base)"
-              icon={<McpHostIcon clientId={host.id} alt={host.displayName} />}
+              icon={
+                host.gleanDocumentationUrl ? (
+                  <Link
+                    className={styles.iconLink}
+                    to={host.gleanDocumentationUrl}
+                    aria-label={`Open ${host.displayName} Glean documentation`}
+                  >
+                    <McpHostIcon clientId={host.id} alt={host.displayName} />
+                  </Link>
+                ) : (
+                  <McpHostIcon clientId={host.id} alt={host.displayName} />
+                )
+              }
             >
               <span className={styles.cardPills}>
                 {host.types.map((t) => (
@@ -293,6 +326,15 @@ export default function McpHostsList({
                     aria-label={`Organization setup guidance for ${host.displayName}`}
                   >
                     Organization setup guidance
+                  </Link>
+                )}
+                {host.gleanDocumentationUrl && (
+                  <Link
+                    className="button button--sm button--secondary"
+                    to={host.gleanDocumentationUrl}
+                    aria-label={`Read ${host.displayName} Glean documentation`}
+                  >
+                    Glean documentation
                   </Link>
                 )}
                 {host.documentationUrl ? (

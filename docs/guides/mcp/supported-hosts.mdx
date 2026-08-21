@@ -6,10 +6,46 @@ hide_table_of_contents: false
 
 import { McpHostsList } from '@theme/McpHosts';
 
-Glean works with a range of MCP host applications, including IDEs, CLIs, desktop apps, and web apps. Filter by configuration ownership (user-configurable vs. organization-managed) or by client type, or search by name. Each card shows who configures the connection, supported transports and authentication, and the matching setup action.
+Glean works with a range of MCP host applications, including IDEs, CLIs, desktop apps, and web apps. Filter by configuration ownership (user-configurable vs. organization-managed) or by client type, or search by name. Each card shows who configures the connection, supported transports and authentication, and the matching setup action. The host icon and **Glean documentation** link open Glean guidance first. When a host guide is not available, they open the general Remote MCP Server guide. The vendor documentation link provides the host's own setup details.
 
 <McpHostsList />
 
 :::info
 This list comes from `@gleanwork/mcp-config-schema`, the published host catalog. Glean also works with **any MCP-spec-compliant client**. In the MCP Configurator, choose **Custom** and connect using your Glean MCP server URL.
 :::
+
+## Use Glean with Gemini Enterprise
+
+Gemini Enterprise supports two different ways to connect to Glean. Choose the path that matches what you want Gemini to use:
+
+<CardGroup cols={2}>
+  <Card
+    title="Glean MCP server"
+    icon="mcp"
+    iconSet="glean"
+    href="https://docs.glean.com/administration/platform/embedded-integrations/glean-in-gemini-chat/"
+  >
+    Connect Glean's search and knowledge tools to Gemini Enterprise through a custom MCP server data connector. Gemini authenticates each user through OAuth, and Glean applies that user's permissions to every result.
+  </Card>
+  <Card
+    title="Glean A2A server"
+    icon="Share2"
+    href="https://docs.glean.com/administration/platform/a2a-server"
+  >
+    Connect Glean Assistant to Gemini Enterprise as a remote agent through the Agent2Agent protocol. Gemini sends questions to Glean Assistant instead of calling individual Glean tools.
+  </Card>
+</CardGroup>
+
+### Connect Glean Assistant to Gemini with A2A
+
+An administrator can connect Glean Assistant to Gemini Enterprise through the Glean A2A server:
+
+1. Enable the A2A server in **Admin console → Platform → A2A server**.
+2. Copy the deployment's agent card URL from the A2A Server admin page. The URL ends with `/.well-known/agent-card.json`.
+3. In Gemini Enterprise, register Glean Assistant as a remote agent using the agent card URL.
+4. Complete the Glean OAuth flow when prompted. Each user authorizes the connection individually.
+5. Ask a question in Gemini and confirm that Glean Assistant responds.
+
+Every request runs as the signed-in Glean user, so Glean Assistant respects that user's document permissions and access to Glean Assistant. For the complete administrator setup, see [Configure the Glean A2A server](https://docs.glean.com/administration/platform/configure-a2a).
+
+MCP and A2A serve different purposes. The Glean MCP server exposes tools that Gemini can call, while the Glean A2A server exposes Glean Assistant as a remote agent. The A2A server is not another MCP host.
