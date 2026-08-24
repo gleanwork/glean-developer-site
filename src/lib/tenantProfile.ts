@@ -122,6 +122,14 @@ function sameOrigin(left: unknown, right: unknown): boolean {
   }
 }
 
+function isPlaceholderApiUrl(apiUrl: string): boolean {
+  return (
+    apiUrl.includes(PLACEHOLDER_HOST) ||
+    apiUrl.includes('{') ||
+    apiUrl.includes('}')
+  );
+}
+
 function parsePersistedProfile(raw: string | null): TenantProfile | null {
   if (!raw) return null;
   try {
@@ -131,6 +139,7 @@ function parsePersistedProfile(raw: string | null): TenantProfile | null {
     if (
       value.version !== 1 ||
       !apiUrl ||
+      isPlaceholderApiUrl(apiUrl) ||
       (value.source !== 'discovered' && value.source !== 'manual') ||
       typeof value.updatedAt !== 'number'
     ) {
@@ -196,7 +205,7 @@ function readLegacyOpenApiServer(storage: Storage): string | null {
     if (!raw) return null;
     const server = JSON.parse(raw);
     const apiUrl = resolveOpenApiServerUrl(server);
-    return apiUrl && !apiUrl.includes(PLACEHOLDER_HOST) ? apiUrl : null;
+    return apiUrl && !isPlaceholderApiUrl(apiUrl) ? apiUrl : null;
   } catch {
     return null;
   }
@@ -538,6 +547,8 @@ export function useTenantProfile(): TenantProfileState {
 }
 
 export const API_URL_PLACEHOLDERS = [
+  '{serverUrl}',
+  'https://{instance-name}-be.glean.com',
   'https://instance-name-be.glean.com',
   'https://<instance>-be.glean.com',
   'https://your-instance-be.glean.com',
@@ -551,9 +562,9 @@ export function personalizeApiUrlPlaceholders(
   source: string,
   apiUrl: string | undefined,
 ): string {
-  if (!apiUrl) return source;
+  const replacement = apiUrl ?? API_URL_PLACEHOLDERS[0];
   return API_URL_PLACEHOLDERS.reduce(
-    (result, placeholder) => result.replaceAll(placeholder, apiUrl),
+    (result, placeholder) => result.replaceAll(placeholder, replacement),
     source,
   );
 }

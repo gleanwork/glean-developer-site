@@ -3,11 +3,10 @@
 /**
  * Rewrite an OpenAPI spec's `servers` to a single fully-variable server URL.
  *
- * The upstream specs template the Glean-hosted shape
- * (https://{instance}-be.glean.com), but customers may also run non-Glean
- * hosted deployments — the SDKs take a full `serverUrl` for the same reason.
+ * The upstream specs template a Glean-hosted hostname shape, but a tenant's
+ * server URL is an opaque HTTPS origin and may use a vanity or custom domain.
  * A wholly-variable server URL makes the API Explorer's base-URL field a
- * free-form input that accepts either shape.
+ * free-form input without implying a particular deployment hostname.
  *
  * Usage: node openapi-server-url.mjs spec.yaml [output.yaml]
  */
@@ -28,18 +27,14 @@ spec.servers = [
   {
     url: '{serverUrl}',
     description:
-      'Replace the placeholder with your Glean API server URL. Copy the ' +
-      'complete Server instance (QE) value from ' +
-      'https://app.glean.com/admin/about-glean. Glean-hosted deployments use ' +
-      'https://{instance}-be.glean.com. How to find it: ' +
-      'https://developers.glean.com/get-started/authentication#finding-your-server-url',
+      'Replace {serverUrl} with your complete Glean API server URL. Find it at ' +
+      'https://developers.glean.com/get-started/authentication#finding-your-server-url.',
     variables: {
       serverUrl: {
-        default: 'https://{instance-name}-be.glean.com',
+        default: '{serverUrl}',
         description:
-          'Your Glean API server URL. Glean-hosted deployments use ' +
-          'https://{instance}-be.glean.com. Custom domains are also valid. ' +
-          'Find it at app.glean.com/admin/about-glean.',
+          'Your complete Glean API HTTPS origin. Glean-hosted, vanity, custom, ' +
+          'and non-Glean-hosted domains are supported.',
       },
     },
   },

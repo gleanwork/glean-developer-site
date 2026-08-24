@@ -1,12 +1,16 @@
 import React from 'react';
 import { cleanup, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { tenantProfileStore } from '@site/src/lib/tenantProfile';
 import { FeatureFlagsContext } from '@site/src/theme/Root';
 import TenantProfileControl from './index';
 
-function renderTenantProfile(enabled = true) {
+function renderTenantProfile(
+  enabled = true,
+  outerSubmit?: React.FormEventHandler<HTMLFormElement>,
+) {
+  const control = <TenantProfileControl />;
   return render(
     <FeatureFlagsContext.Provider
       value={
@@ -17,7 +21,7 @@ function renderTenantProfile(enabled = true) {
         } as React.ContextType<typeof FeatureFlagsContext>
       }
     >
-      <TenantProfileControl />
+      {outerSubmit ? <form onSubmit={outerSubmit}>{control}</form> : control}
     </FeatureFlagsContext.Provider>,
   );
 }
@@ -58,6 +62,23 @@ describe('TenantProfileControl', () => {
       kind: 'configured',
       profile: { apiUrl: 'https://knowledge.example.org', source: 'manual' },
     });
+  });
+
+  it('does not submit the API Explorer request form when saving a manual URL', async () => {
+    const outerSubmit = vi.fn((event: React.FormEvent<HTMLFormElement>) =>
+      event.preventDefault(),
+    );
+    const user = userEvent.setup();
+    renderTenantProfile(true, outerSubmit);
+
+    await user.click(screen.getByText('Enter URL manually'));
+    await user.type(
+      screen.getByLabelText('Glean API URL'),
+      'https://knowledge.example.org',
+    );
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+
+    expect(outerSubmit).not.toHaveBeenCalled();
   });
 
   it('shows privacy guidance before email discovery', async () => {
