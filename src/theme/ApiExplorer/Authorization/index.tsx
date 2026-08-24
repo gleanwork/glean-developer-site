@@ -6,7 +6,7 @@
  * (persisted like a pasted token). Client and Platform APIs — the
  * Indexing API requires a Glean-issued token instead.
  */
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useLocation } from '@docusaurus/router';
 import Authorization from '@theme-original/ApiExplorer/Authorization';
 import { useTypedDispatch, useTypedSelector } from '@theme/ApiItem/hooks';
@@ -17,12 +17,17 @@ import {
   scopeForPath,
   signInWithGlean,
 } from '@site/src/components/ApiOAuth/oauth';
+import { useTenantApiPersonalizationEnabled } from '@site/src/lib/tenantPersonalizationFlag';
+import {
+  API_URL_PLACEHOLDERS,
+  resolveOpenApiServerUrl,
+  tenantApiUrlMatches,
+  tenantProfileStore,
+} from '@site/src/lib/tenantProfile';
 import styles from './styles.module.css';
 
 function resolveServerUrl(server: any): string {
-  if (!server?.url) {
-    return '';
-  }
+  if (!server?.url) return '';
   let url: string = server.url;
   for (const [key, variable] of Object.entries<any>(server.variables ?? {})) {
     url = url.replace(`{${key}}`, variable.default ?? '');
@@ -31,9 +36,21 @@ function resolveServerUrl(server: any): string {
 }
 
 function GleanSignIn(): React.ReactElement | null {
+  const personalizationEnabled = useTenantApiPersonalizationEnabled();
   const { pathname } = useLocation();
   const dispatch = useTypedDispatch();
   const server = useTypedSelector((state: any) => state.server.value);
+  const serverRef = useRef(server);
+  const personalizationEnabledRef = useRef(personalizationEnabled);
+  const mountedRef = useRef(true);
+  serverRef.current = server;
+  personalizationEnabledRef.current = personalizationEnabled;
+  useEffect(
+    () => () => {
+      mountedRef.current = false;
+    },
+    [],
+  );
   const auth = useTypedSelector((state: any) => state.auth);
   const [status, setStatus] = useState<
     { kind: 'idle' | 'busy' | 'done' } | { kind: 'error'; message: string }
@@ -56,17 +73,39 @@ function GleanSignIn(): React.ReactElement | null {
   }
 
   const signIn = async () => {
-    const serverUrl = resolveServerUrl(server);
-    if (!serverUrl || isPlaceholderServerUrl(serverUrl)) {
+    const serverUrl = personalizationEnabled
+      ? resolveOpenApiServerUrl(server)
+      : resolveServerUrl(server);
+    const hasPlaceholder =
+      serverUrl &&
+      (isPlaceholderServerUrl(serverUrl) ||
+        API_URL_PLACEHOLDERS.some((url) => url === serverUrl));
+    if (!serverUrl || hasPlaceholder) {
       setStatus({
         kind: 'error',
-        message: 'Set your server URL under Base URL first.',
+        message: personalizationEnabled
+          ? 'Find or enter your Glean API URL under Base URL first.'
+          : 'Set your server URL under Base URL first.',
       });
       return;
     }
     setStatus({ kind: 'busy' });
     try {
       const token = await signInWithGlean(serverUrl, scopeForPath(pathname));
+      const liveServerUrl = resolveOpenApiServerUrl(serverRef.current);
+      if (!mountedRef.current || liveServerUrl !== serverUrl) {
+        throw new Error(
+          'Your Glean API URL changed during sign-in. Sign in again for the current URL.',
+        );
+      }
+      if (
+        personalizationEnabledRef.current &&
+        !tenantApiUrlMatches(tenantProfileStore.getSnapshot(), serverUrl)
+      ) {
+        throw new Error(
+          'Your Glean API URL changed during sign-in. Sign in again for the current URL.',
+        );
+      }
       for (const scheme of bearerSchemes) {
         dispatch(setAuthData({ scheme, key: 'token', value: token }));
       }
