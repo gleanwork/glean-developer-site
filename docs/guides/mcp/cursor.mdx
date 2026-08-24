@@ -4,30 +4,95 @@ description: Install the official Glean plugin for Cursor — enterprise search 
 ---
 
 import PluginPage from '@site/src/components/PluginPage';
+import FeatureFlag from '@site/src/components/FeatureFlag';
 
-<PluginPage
-  name="Cursor"
-  tagline="You use Cursor. Glean brings the enterprise context."
-  clientId="cursor"
-  mono
-  steps={[
-    {
-      type: 'cta',
-      label: 'Set up the Glean MCP Server',
-      description: 'The plugin requires a Glean MCP connection. Use the Glean configurator to connect Cursor to your organization\'s Glean instance. Authentication uses Glean\'s OAuth server where enabled, or a Glean API token as a fallback.',
-      ctaText: 'Open MCP Configurator',
-      ctaHref: 'https://app.glean.com/settings/install?mcpConfigure=true&mcpHost=cursor',
-    },
-    {
-      type: 'list',
-      label: 'Install the Glean Plugin',
-      description: 'Find and install the Glean plugin directly from Cursor Settings.',
-      image: '/img/cursor-plugin-install.png',
-      items: [
-        'Open Cursor Settings → Marketplace',
-        'Search for "Glean"',
-        'Click Add to Cursor',
-      ],
-    },
-  ]}
-/>
+{/* Install instructions synced from https://github.com/gleanwork/cursor-plugins/blob/main/README.md */}
+
+{/* New page is gated behind `cursor-plugin-v2`. The current page is preserved as
+    the fallback and renders whenever the flag is turned off. */}
+
+<FeatureFlag
+  flag="cursor-plugin-v2"
+  fallback={
+    <PluginPage
+      name="Cursor"
+      tagline="You use Cursor. Glean brings the enterprise context."
+      clientId="cursor"
+      mono
+      steps={[
+        {
+          type: 'cta',
+          label: 'Set up the Glean MCP Server',
+          description:
+            "The plugin requires a Glean MCP connection. Use the Glean configurator to connect Cursor to your organization's Glean instance. Authentication uses Glean's OAuth server where enabled, or a Glean API token as a fallback.",
+          ctaText: 'Open MCP Configurator',
+          ctaHref:
+            'https://app.glean.com/settings/install?mcpConfigure=true&mcpHost=cursor',
+        },
+        {
+          type: 'list',
+          label: 'Install the Glean Plugin',
+          description: 'Find and install the Glean plugin directly from Cursor Settings.',
+          image: '/img/cursor-plugin-install.png',
+          items: [
+            'Open Cursor Settings → Marketplace',
+            'Search for "Glean"',
+            'Click Add to Cursor',
+          ],
+        },
+      ]}
+    />
+  }
+>
+  <PluginPage
+    name="Cursor"
+    tagline="You use Cursor. Glean brings the enterprise context."
+    clientId="cursor"
+    mono
+    whatsIncluded={
+      <>
+        The Glean plugin turns Cursor into a front door to your company:
+        Glean&rsquo;s expert skills — search, code exploration, people, meetings,
+        onboarding, productivity — the custom skills your team authors in Glean,
+        and every tool configured centrally in Glean, each paired with skills
+        tuned to use it well. Those tools are surfaced with Glean&rsquo;s security
+        and permission guardrails fully enforced, all running through a Glean
+        MCP server so it works right in your editor.{' '}
+        <a
+          href="https://github.com/gleanwork/cursor-plugins/blob/main/README.md"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          See everything included in the plugin →
+        </a>
+      </>
+    }
+    steps={[
+      {
+        type: 'list',
+        label: 'Install the Glean Plugin',
+        description: 'Find and install the Glean plugin directly from Cursor Settings.',
+        image: '/img/cursor-plugin-install.png',
+        items: [
+          'Open Cursor Settings → Marketplace',
+          'Search for "Glean"',
+          'Click Add to Cursor',
+        ],
+      },
+      {
+        type: 'list',
+        label: 'Setup the Glean MCP connection',
+        description:
+          "Connect the plugin to your Glean instance through Glean's OAuth sign-in. You only need to do this once per machine.",
+        items: [
+          <>
+            In Cursor, prompt: <code>Set up Glean for me</code>
+          </>,
+          'Enter your work email when prompted.',
+          'Complete Glean OAuth in the browser window that opens and approve access.',
+          'Back in Cursor, confirm Glean tools are available — you now have every skill and tool provisioned for you in Glean, right in your editor. Search company knowledge, take action across your connected apps, and move through real work faster without leaving your development workflow.',
+        ],
+      },
+    ]}
+  />
+</FeatureFlag>
