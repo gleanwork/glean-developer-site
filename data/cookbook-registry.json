@@ -891,49 +891,49 @@
     "steps": [
       {
         "title": "Choose the mailbox and customer domain",
-        "description": "Provide the work email that owns the agent and the exact customer sender domain to watch. Only messages this user receives from that domain should match.",
+        "description": "Provide the work email that owns the agent and the exact customer sender domain to watch. The trigger matches only messages that this user receives from that domain.",
         "kind": "choose"
       },
       {
         "title": "Add the Glean plugin marketplace",
         "command": "claude plugin marketplace add gleanwork/glean-plugins-vnext",
-        "description": "Claude Code users add the marketplace with the command above. Cursor users open Customize in the sidebar, find Glean vNext, and Install it at user scope, then skip the next step; a team admin can instead add the marketplace under Dashboard, Plugins, Add Marketplace, Import from Repo.",
+        "description": "In Claude Code, add the marketplace with the command above. In Cursor, open Customize, find Glean vNext, and install it at user scope. A team admin can add it under Dashboard → Plugins → Add Marketplace → Import from Repo.",
         "kind": "configure"
       },
       {
         "title": "Install the agent-builder plugin",
         "command": "claude plugin install glean-vnext@glean-plugins-vnext --scope user",
-        "description": "Installs the agent_builder skill at user scope so it stays available across projects. Cursor users skip this step.",
+        "description": "Install the agent_builder skill at user scope so it remains available across projects. Cursor users can skip this step.",
         "kind": "configure"
       },
       {
         "title": "Reload the host and confirm the plugin",
-        "description": "Reload or restart the host so the plugin loads, then confirm /glean_run resolves.",
+        "description": "Reload or restart the host so it loads the plugin. Then confirm that /glean_run resolves.",
         "kind": "run"
       },
       {
         "title": "Authenticate the plugin",
-        "description": "Run setup, provide the Server instance (QE) URL from Glean's About page, then complete browser sign-in. Never use an API token.",
+        "description": "Run setup, enter your work email when prompted, and complete the browser sign-in. The current setup flow does not require a server URL or API token.",
         "kind": "authenticate"
       },
       {
         "title": "Build the agent with the headless builder",
-        "description": "Run /glean_run agent_builder and name the target directory. Ask for a Gmail thread trigger scoped to the owner and customer domain, search grounding, a reply-draft tool, and an owner-only Slack DM. Require no email-send tool, and no tool calls when the latest thread item is a draft, owner-authored, or already handled. Let the builder discover tenant-specific IDs.",
+        "description": "Run /glean_run agent_builder and name the target directory. Use the builder to generate the agent files; do not manually author or edit spec.yaml or instructions.md. Request a Gmail thread trigger scoped to the owner and customer domain, search grounding, a reply-draft tool, and an owner-only Slack DM. Do not add an email-send tool. Stop without tool calls when the latest thread item is a draft, owner-authored, or already handled. Let the builder discover tenant-specific IDs.",
         "kind": "manual"
       },
       {
         "title": "Preview against a real thread",
-        "description": "Run the agent against a real Gmail thread URL, naming the same directory; it arrives as the reserved content input. Hand anything wrong back to agent_builder rather than editing the spec.",
+        "description": "Run the agent against a real Gmail thread URL and name the same directory. The URL is passed as the reserved content input; inspect the run result before publishing. If the result is wrong, return to agent_builder instead of manually editing the generated spec or instructions.",
         "kind": "manual"
       },
       {
         "title": "Review the boundary, publish, and activate",
-        "description": "Show the trigger scope and the unattended write boundary, take one explicit confirmation, then save. Publishing does not activate: on the returned page allow connected-app actions, select Activate agent, and confirm ACTIVE.",
+        "description": "Review the trigger scope and the unattended write boundary, then give one explicit confirmation before saving. Saving publishes the agent but does not activate it. On the returned page, allow connected-app actions, select Activate agent, and confirm ACTIVE.",
         "kind": "manual"
       },
       {
         "title": "Verify with a real email",
-        "description": "Send one genuine customer question from the chosen domain. Expect one run, one unsent draft on the original thread, and one Slack DM to the owner.",
+        "description": "Send one genuine customer question from the chosen domain. Confirm one run, one unsent draft on the original thread, and one Slack DM to the owner.",
         "kind": "verify-live"
       }
     ],
@@ -964,13 +964,13 @@
         "icon": "slack"
       }
     ],
-    "aiPrompt": "Build this Glean agent through the headless agent builder, not by hand. Install the glean-vnext plugin from the gleanwork/glean-plugins-vnext marketplace, reload until /glean_run resolves, and authenticate with setup. Never substitute an MCP server URL or a hand-driven tool sequence for the plugin. Ask once for the owner's work email and the customer sender domain. Then run /glean_run agent_builder and require: a Gmail thread content trigger scoped to that owner as recipient and that sender domain; grounding through a read-only search tool; one reply draft on the original thread for genuine customer questions; a Slack DM to the owner alone; no email-send tool; and a leading instruction that exits with zero tool calls when the latest thread item is a draft, is owner-authored, or matches a draft it already created, because saving a draft re-indexes the thread. Name the target directory in every build, run, and save request, because the builder otherwise resolves to the current working directory. Let it discover every template id, provider id, and tool name and write the agent folder; do not hand-author or hand-edit it. Preview on a real thread before publishing, and treat a wrong-thread draft, a draft for automated mail, or a notification to anyone but the owner as a rebuild. Show the user the trigger scope and the unattended write boundary, take one explicit confirmation for unattended draft creation and the owner DM, publish, then allow connected-app actions and activate the agent on the returned page and confirm ACTIVE. Verify with a real genuine message, and confirm the no-op feedback guard on any follow-up run.",
+    "aiPrompt": "Use the Headless Agent Builder to generate and update this Glean agent. Do not manually author or edit the generated spec.yaml or instructions.md; tenant-specific IDs and tool contracts must come from builder discovery. Follow https://docs.glean.com/agents/create-agents/create-agent-via-headless-builder when the setup or builder flow needs clarification. Install the glean-vnext plugin from the gleanwork/glean-plugins-vnext marketplace, reload until /glean_run resolves, and authenticate with setup. Never substitute an MCP server URL or a hand-driven tool sequence for the plugin. Ask once for the owner's work email and the customer sender domain. Then run /glean_run agent_builder and require: a Gmail thread content trigger scoped to that owner as recipient and that sender domain; grounding through a read-only search tool; one reply draft on the original thread for genuine customer questions; a Slack DM to the owner alone; no email-send tool; and a leading instruction that exits with zero tool calls when the latest thread item is a draft, is owner-authored, or matches a draft it already created, because saving a draft re-indexes the thread. Name the target directory in every build, run, and save request, because the builder otherwise resolves to the current working directory. Let it discover every template id, provider id, and tool name and write the agent folder. Preview on a real thread before publishing and inspect the run result; if the trigger scope, draft, or notification is wrong, return to agent_builder and rebuild. Show the user the trigger scope and the unattended write boundary, take one explicit confirmation for unattended draft creation and the owner DM, publish, then allow connected-app actions and activate the agent on the returned page and confirm ACTIVE. Verify with a real genuine message, and confirm the no-op feedback guard on any follow-up run.",
     "llmContext": "Use the glean-vnext plugin's agent_builder skill: it owns the agent folder contract, tenant discovery, preview, and publish. Never author spec.yaml or instructions.md by hand. Its build, run and save modes resolve an unnamed path to the working directory, so name the directory every time. Resolve trigger template, provider ids and tool names from discovery. The Gmail thread template has no direction or draft-status condition, so a saved draft can re-index the thread and the instructions must stop before tools. Unattended writes are limited to a Gmail reply draft and an owner-only Slack DM. Saving publishes but does not activate the subscription.",
     "goDependency": false,
     "featured": false,
     "tags": ["gmail", "content-trigger", "headless-agent", "agent-builder"],
     "content": {
-      "problem": "You are already working in Claude Code or Cursor—the place where you describe, test, and refine automations. Glean Headless Agent Builder lets you create an agent without switching to another UI: describe the outcome in your existing coding harness, let the builder discover the trigger and action tools available in your deployment, and preview the result before publishing.\n\nIn this recipe, the finished agent watches emails from one customer domain, decides whether a response is needed, drafts a grounded Gmail reply, and alerts you in Slack. It handles the preparation; you stay in control of what gets sent.",
+      "problem": "You already use Claude Code or Cursor to describe, test, and refine automations. Glean Headless Agent Builder lets you create an agent there, while discovering the triggers and action tools available in your deployment. You can preview the result before publishing it.\n\nThis recipe builds an agent that watches messages from one customer domain, decides whether a reply is needed, drafts a grounded response in Gmail, and alerts you in Slack. It handles the preparation; you remain in control of what is sent.",
       "takeItFurther": [
         "Expand from one customer domain to a reviewed domain allow-list after the single-domain workflow is reliable.",
         "Route unclear questions to a support queue while preserving the same no-send boundary.",
@@ -1178,49 +1178,49 @@
       {
         "title": "Verify the local path with no credentials",
         "command": "cd github-pr-review-monitor && npm run verify:fixture",
-        "description": "Verifies the signed receiver, event queue, and draft-review flow using recorded events.",
+        "description": "Use recorded events to verify the signed receiver, event queue, and draft-review flow.",
         "kind": "verify-fixture"
       },
       {
         "title": "Sign in to Glean",
         "command": "cd github-pr-review-monitor && npm run login -- --email \"<work-email>\"",
-        "description": "Discovers your tenant and writes GLEAN_SERVER_URL and GLEAN_API_TOKEN to an ignored .env. An exported GLEAN_API_TOKEN outranks .env, and the scripts warn when it does.",
+        "description": "Sign in to discover your tenant and save GLEAN_SERVER_URL and GLEAN_API_TOKEN to the ignored .env file. An exported GLEAN_API_TOKEN takes precedence over .env, and the scripts warn you when it does.",
         "kind": "authenticate"
       },
       {
         "title": "Run the receiver",
         "command": "cd github-pr-review-monitor && npm start",
-        "description": "Keep this running. It binds to loopback, verifies signatures, and queues each webhook id once.",
+        "description": "Keep the receiver running. It listens on loopback, verifies signatures, and queues each webhook ID once.",
         "kind": "run"
       },
       {
         "title": "Expose the receiver over HTTPS",
         "command": "cd github-pr-review-monitor && cloudflared tunnel --url http://127.0.0.1:8787",
-        "description": "Append /webhook to the printed origin and set GLEAN_WEBHOOK_URL before registering. Leave the tunnel running — the triggers outlive it, so a closed tunnel means deliveries to a dead address.",
+        "description": "Append /webhook to the printed origin and set GLEAN_WEBHOOK_URL before registering. Keep the tunnel running: triggers outlive the tunnel, so closing it sends future deliveries to a dead address.",
         "kind": "manual"
       },
       {
         "title": "Register the review triggers",
         "command": "cd github-pr-review-monitor && npm run setup",
-        "description": "Set GLEAN_TRIGGER_DATASOURCE and the preset ids you want to register. With no ids configured, setup lists the presets your deployment serves and stops. Presets that require inputs read them from GLEAN_TRIGGER_INPUT_<FIELD>.",
+        "description": "Set GLEAN_TRIGGER_DATASOURCE and the preset IDs to register. If you leave the IDs empty, setup lists the presets available in your deployment and stops instead of guessing. Provide required preset inputs through GLEAN_TRIGGER_INPUT_<FIELD>.",
         "kind": "configure"
       },
       {
         "title": "Attach Claude Code Monitor",
         "command": "cd github-pr-review-monitor && claude plugin validate . --strict",
-        "description": "Validate the plugin, then restart Claude Code from the repository being reviewed so Monitor starts with the session. Where Monitor is unavailable, run npm run stream to receive the same events in the terminal.",
+        "description": "Validate the plugin, then restart Claude Code from the repository under review so Monitor starts with the session. If Monitor is unavailable, run npm run stream to receive the same events in the terminal.",
         "kind": "handoff"
       },
       {
         "title": "Verify a real review request",
-        "description": "Request a review from yourself on a real pull request. Expect one queued event and one draft grounded in the current diff, with no GitHub write until you ask for one.",
+        "description": "Request a review from yourself on a real pull request. Confirm one queued event and one draft grounded in the current diff. The workflow makes no GitHub write until you ask for one.",
         "kind": "verify-live"
       }
     ],
     "architecture": [
       {
         "label": "GitHub",
-        "caption": "Assignment, review request, or ready-for-review event",
+        "caption": "Review request or ready-for-review event",
         "category": "workflow",
         "icon": "github"
       },
@@ -1244,13 +1244,13 @@
         "icon": "spellcheck"
       }
     ],
-    "aiPrompt": "Scaffold the shipped receiver and Claude Code plugin. Run the fixture test before requesting credentials. Use the shipped login flow, start the receiver, create a public HTTPS tunnel, and store only the URL and returned secrets in ignored .env. Register the GitHub review presets selected from the deployment's live catalog. If none of the required review-event presets is available, stop rather than inventing an id. Validate and load the plugin in an interactive session opened in the target repository. Preserve the local-draft-first boundary: create a pending GitHub review only after explicit approval, and never submit it.",
-    "llmContext": "Glean webhook delivery uses Standard Webhooks and is at-least-once. The documented payload is snake_case: version, trigger_id, event_type, datasource, reason, doc_type, doc_id, view_url, title, and an optional event_time; webhook-id exists only in headers. Verify HMAC over webhook-id.timestamp.raw-body, reject stale timestamps, and deduplicate webhook-id. Claude Code monitors need an interactive CLI and emit one notification per stdout line. The external trigger catalog may omit GitHub even when agent content-trigger templates include it. A pending GitHub review is an external write requiring explicit approval; never submit it.",
+    "aiPrompt": "Scaffold the shipped receiver and Claude Code plugin. For trigger concepts or endpoint details, consult https://developers.glean.com/guides/triggers/overview and https://developers.glean.com/api/platform-api/triggers-overview. Run the fixture test before requesting credentials. Use the shipped login flow, start the receiver, create a public HTTPS tunnel, and store only the URL and returned secrets in ignored .env. Register the GitHub review presets selected from the deployment's live catalog. If none of the required review-event presets is available, stop rather than inventing an id. Validate and load the plugin in an interactive session opened in the target repository. Preserve the local-draft-first boundary: create a pending GitHub review only after explicit approval, and never submit it.",
+    "llmContext": "Delivery uses Standard Webhooks, at-least-once. Payload is flat snake_case, no wrapper: version, trigger_id, event_type, datasource, reason, doc_type, doc_id, view_url, title, event_time; webhook-id exists only in headers. Verify HMAC over the raw bytes, since re-serialising changes the signature; reject stale timestamps and deduplicate webhook-id. Every Triggers request needs x-glean-include-experimental: true, or the API answers 401 Not allowed. A 401 on a valid TRIGGERS-scoped token means the grant was revoked: sign in again. events/search looks backward; delivery fires forward from trigger creation. PATCH /triggers/{id} re-points delivery.webhook_url and keeps the signing secret, issued once, so a fresh checkout cannot adopt existing triggers. Diffs come from gh, matching the head SHA. A pending review is author-only; never approve, request changes, or submit it.",
     "goDependency": false,
     "featured": false,
     "tags": ["github", "claude-code", "monitor", "content-trigger"],
     "content": {
-      "problem": "You are already working in Claude Code, with the repository, local diff, and your review tools available in the same coding environment. But review requests arrive asynchronously, often while your attention is elsewhere, and preparing a thoughtful review still means noticing the event and reconstructing its context.\n\nGlean catches the GitHub review event and sends it to Claude Code Monitor where you are already coding. Claude runs your local review skill against the real diff and prepares an initial round of findings before you jump in manually. You verify and refine the review, then decide what gets submitted.",
+      "problem": "You already have the repository, local diff, and review tools in Claude Code. The hard part is noticing a new review request and rebuilding enough context to give it a thoughtful first pass.\n\nGlean catches the GitHub event and delivers it to Claude Code Monitor, where your local review skill examines the current diff and prepares initial findings. You review and refine the draft, then decide whether anything should be submitted.",
       "takeItFurther": [
         "Teach the local review skill your repository's conventions and test commands, so the first pass reflects how your team already reviews.",
         "Notify the reviewer when the first-pass draft is ready, so the queue is not something anyone has to remember to check.",
@@ -1293,8 +1293,16 @@
       "type": "existing-app",
       "questions": [
         {
+          "id": "n8n-hosting",
+          "prompt": "Will you use n8n Cloud or a local/self-hosted n8n instance? If local/self-hosted, choose a public HTTPS option before importing: n8n's development --tunnel, Cloudflare Tunnel, or another public ingress. Glean cannot deliver to localhost."
+        },
+        {
+          "id": "work-email",
+          "prompt": "What is your work email? It is used once to discover your Glean tenant and normalized API backend."
+        },
+        {
           "id": "slack-channel",
-          "prompt": "Which Slack channel id should the heads-up go to? One central channel (C…) is the simplest start. If different account teams should see different calls, give a Salesforce Account id to Slack channel id map instead — ids, not names."
+          "prompt": "Where should the follow-up go in Slack? Start with one channel id, or provide a Salesforce Account id → Slack channel id map if each account team has its own destination. Use ids, not names."
         }
       ],
       "auth": [
@@ -1311,7 +1319,7 @@
     "languages": ["javascript"],
     "prerequisites": [
       "Glean Triggers enabled with the Gong preset available, Gong calls indexed, and credentials scoped for Triggers, Search, and Chat",
-      "A publicly reachable n8n instance",
+      "A publicly reachable n8n instance, or a local one exposed with npx n8n start --tunnel",
       "Permission to install the Glean n8n community nodes",
       "Salesforce and Slack credentials with the required write access",
       "Node 20+"
@@ -1332,100 +1340,111 @@
     "scaffoldActions": ["scaffold-n8n-workflow"],
     "steps": [
       {
+        "title": "Choose n8n hosting before scaffolding",
+        "description": "Choose n8n Cloud or local/self-hosted n8n before downloading anything. Cloud is public by default. Local/self-hosted needs a public HTTPS webhook origin—use n8n's development `--tunnel`, Cloudflare Tunnel, or another ingress, and keep it available before publishing.",
+        "kind": "manual"
+      },
+      {
         "title": "Scaffold the workflow",
         "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/gong-call-follow-up-n8n gong-call-follow-up-n8n",
         "kind": "scaffold"
       },
       {
+        "title": "Resolve the Glean backend",
+        "command": "cd gong-call-follow-up-n8n && node <cookbook-plugin-root>/scripts/resolve-backend.mjs \"<work-email>\"",
+        "description": "Run the cookbook resolver with the work email. It may see a legacy frontend address such as `*.askscio.com`, but it returns the API backend `https://<instance>-be.glean.com`. Use that result for Glean Chat; do not paste the discovery address into the workflow.",
+        "kind": "authenticate"
+      },
+      {
         "title": "Install the Glean n8n nodes",
-        "description": "Settings, Community nodes, Install, then @gleanwork/n8n-nodes-gleanclient@0.4.1; verified end to end on n8n 2.35. It ships a Trigger and a Search action and no Chat node, so summarization is an HTTP Request. n8n Cloud works as shipped; self-hosted needs WEBHOOK_URL set to its public origin.",
+        "description": "In n8n, open Settings → Community nodes → Install and add `@gleanwork/n8n-nodes-gleanclient@0.4.2`. It provides the Trigger and Search nodes; the workflow uses an HTTP Request for Chat. Cloud works as shipped. For self-hosted n8n, set the webhook base to your public origin or start the development tunnel.",
         "kind": "install"
       },
       {
         "title": "Import the workflow",
         "kind": "configure",
-        "description": "In n8n, use Workflows, Import from URL with the raw workflow.json link. If n8n cannot reach GitHub, copy and paste the workflow onto an empty canvas. Import from File uses the browser's filesystem, so it cannot see files scaffolded on a remote host. Confirm that ten nodes and the Start here note appear."
+        "description": "In n8n, choose Workflows → Import from File and select the scaffolded `workflow.json`; this is the route that keeps your local edits. Import from URL always fetches the untouched GitHub file. If your browser cannot see the scaffolded file, copy and paste it onto a blank canvas. Confirm that the ten nodes and Start here note appear."
       },
       {
         "title": "Attach credentials",
-        "description": "A TRIGGERS-scoped Glean Trigger credential for the trigger, a SEARCH+CHAT-scoped Glean Client credential for Search and Chat, plus Salesforce and Slack. The trigger matches the Glean credential owner's calls; there is no user to pick.",
+        "description": "Attach a Glean Trigger credential with `TRIGGERS`, a Glean Client credential with `SEARCH` and `CHAT`, plus your Salesforce and Slack credentials. The trigger follows the Glean credential owner; there is no separate user to select.",
         "kind": "authenticate"
       },
       {
         "title": "Configure Glean Chat and Slack routing",
-        "description": "Replace the placeholder backend URL in the Glean Chat node. Then configure either one reviewed central Slack channel or an Account-to-channel map in Resolve channel. n8n Variables may override these values but are not required.",
+        "description": "Set the Glean Chat node to the backend returned by the resolver, then choose one reviewed Slack channel or an Account-to-channel map. n8n Variables can hold the backend and routing values, but they are optional.",
         "kind": "configure"
       },
       {
         "title": "Verify the workflow with no credentials",
         "command": "cd gong-call-follow-up-n8n && npm run verify:fixture",
-        "description": "Verifies the imported workflow, account resolution, Salesforce activity, and Slack routing using recorded data.",
+        "description": "Run the fixture verifier against recorded data. If you edited the local workflow.json, run `npm run verify:config` too. That command cannot see values entered in the n8n UI or stored in n8n Variables, so verify those configurations inside n8n before publishing.",
         "kind": "verify-fixture"
       },
       {
         "title": "Publish the workflow",
-        "description": "Publish in n8n. The Glean Trigger node registers n8n's production webhook and stores the one-time signing secret in workflow static data.",
+        "description": "Publish the workflow in n8n. The Glean Trigger node registers the production webhook and stores the signing secret used to verify deliveries.",
         "kind": "run"
       },
       {
         "title": "Verify with a real Gong call",
-        "description": "Complete a short call with yourself as a participant. Confirm one execution, one completed Salesforce activity on the matched Account, and one Slack post, and read the summary before widening the audience.",
+        "description": "Make a short Gong call with yourself as a participant. Confirm one execution, one completed Salesforce activity on the matched Account, and one Slack post. Read the summary before widening the audience.",
         "kind": "verify-live"
       }
     ],
     "architecture": [
       {
         "label": "Gong",
-        "caption": "A new indexed call involving the trigger owner",
+        "caption": "A new indexed call involving you",
         "category": "workflow",
         "icon": "gong"
       },
       {
         "label": "Glean Trigger",
-        "caption": "Registers and verifies signed delivery to n8n",
+        "caption": "Delivers the call securely to n8n",
         "category": "workflow",
         "emphasized": true,
         "icon": "glean-trigger"
       },
       {
         "label": "n8n",
-        "caption": "Retrieves context, summarizes, and resolves one account",
+        "caption": "Finds context, writes the summary, and matches one account",
         "category": "workflow",
         "icon": "n8n"
       },
       {
         "label": "Salesforce + Slack",
-        "caption": "Records an activity and posts the account heads-up",
+        "caption": "Records the activity and shares the right update",
         "category": "workflow",
         "icon": "slack"
       }
     ],
-    "aiPrompt": "Scaffold the shipped n8n workflow and help the user import it. Confirm their n8n endpoint is public HTTPS, install exactly @gleanwork/n8n-nodes-gleanclient@0.4.1, and attach host-managed credentials rather than writing secrets into JSON. Keep the live Glean preset selected by semantics, not only by cached id. Configure either one reviewed central Slack destination or a reviewed Account-to-channel map. Preserve the single-account gate and the completed Salesforce activity pattern. Run the offline workflow verifier, publish only after every credential and mapping is configured, then verify one real Gong call end to end.",
-    "llmContext": "The published Glean n8n package is 0.4.1. It includes a Glean Trigger node and a Glean Search action, not a Glean Chat node. The trigger registers POST /api/triggers on activation, stores the returned signing secret, verifies Standard Webhooks delivery, and deletes the trigger on deactivation. Glean event payloads are thin, so retrieve permission-aware context before summarization. n8n credentials must remain host-managed. Do not write to Salesforce or Slack if the account is absent, ambiguous, or unsupported by evidence.",
+    "aiPrompt": "Before downloading the workflow, ask whether the user will use n8n Cloud or local/self-hosted n8n. For local/self-hosted, require a public HTTPS webhook origin before publishing; offer n8n's development --tunnel, Cloudflare Tunnel, or another public ingress, and never accept localhost as reachable by Glean. Ask for the user's work email, then run the cookbook plugin's resolve-backend.mjs script and use its normalized https://<instance>-be.glean.com result for the Glean Chat URL; do not paste a legacy *.askscio.com discovery URL into the workflow. For trigger concepts or endpoint details, consult https://developers.glean.com/guides/triggers/overview and https://developers.glean.com/api/platform-api/triggers-overview. Scaffold the shipped n8n workflow, install exactly @gleanwork/n8n-nodes-gleanclient@0.4.2, and attach host-managed credentials rather than writing secrets into JSON. Keep the live Glean preset selected by semantics, not only by cached id. Configure either one reviewed central Slack destination or a reviewed Account-to-channel map. Preserve the single-account gate and the completed Salesforce activity pattern. Run the offline workflow verifier, publish only after every credential and mapping is configured, then verify one real Gong call end to end.",
+    "llmContext": "The published Glean n8n package is 0.4.2. It includes a Glean Trigger node and a Glean Search action, not a Glean Chat node. The trigger registers POST /api/triggers on activation, stores the returned signing secret, verifies Standard Webhooks delivery, and deletes the trigger on deactivation. Glean event payloads are thin, so retrieve permission-aware context before summarization. n8n credentials must remain host-managed. Do not write to Salesforce or Slack if the account is absent, ambiguous, or unsupported by evidence.",
     "goDependency": false,
     "featured": false,
     "tags": ["gong", "n8n", "salesforce", "slack", "content-trigger"],
     "content": {
-      "problem": "Your team already runs its automations in n8n because workflows are visible, integrations and credentials stay managed in one place, and each step is easy to inspect or adapt. A Gong follow-up belongs there too—but n8n cannot start the workflow when a new Gong call becomes available on its own.\n\nGlean supplies the missing trigger and permission-aware context. When a customer call is indexed, it automatically starts the n8n workflow, which summarizes the conversation, records it only when one Salesforce account matches, and alerts the reviewed Slack destination. The workflow stays in the automation platform your team already uses.",
+      "problem": "Important follow-up gets lost after customer calls—not because the information is missing, but because it is scattered across Gong, Salesforce, and Slack.\n\nThis recipe connects those systems in n8n. When a new Gong call is indexed, Glean finds permission-aware context and summarizes it, Salesforce gets an activity only when one account matches, and Slack receives a focused update for the right audience.",
       "takeItFurther": [
-        "Create owner-assigned Salesforce follow-up tasks from explicit call action items, so a commitment made on the call has an owner.",
-        "Send a daily digest of completed and unresolved call follow-ups, so the account team sees the backlog rather than individual posts.",
-        "Route unresolved accounts to a human-owned queue instead of stopping, once someone owns that review path."
+        "Create Salesforce follow-up tasks from explicit call action items, so every commitment has an owner.",
+        "Send a daily digest of completed and unresolved follow-ups instead of one Slack post per call.",
+        "Route unresolved accounts to a human review queue once that ownership path is in place."
       ],
       "guardrails": [
         {
           "title": "One account or no write",
-          "rule": "Writes happen only after exactly one Salesforce Account matches; ambiguity halts the run rather than choosing."
+          "rule": "The workflow writes only after exactly one Salesforce Account matches. Ambiguity stops the run instead of choosing for you."
         },
         {
           "title": "Evidence before summary",
-          "rule": "Summaries come from the call and permission-aware Glean results. The prompt forbids unsupported commitments, dates, and pricing."
+          "rule": "The summary uses the call and permission-aware Glean results. Unsupported commitments, dates, and pricing stay out."
         }
       ],
       "limitations": [
         {
-          "title": "Account identification remains model-dependent",
-          "description": "Glean Chat identifies the customer from the call context. The workflow proceeds only when Salesforce returns one matching Account; otherwise it stops for manual resolution."
+          "title": "Account matching still needs a review path",
+          "description": "Glean Chat proposes the customer from the call context, but Salesforce remains the authority. The workflow continues only when exactly one Account matches; otherwise it stops for resolution."
         }
       ]
     }
@@ -2430,7 +2449,7 @@
         },
         {
           "id": "meeting-pattern",
-          "prompt": "Which reviewed meeting-title pattern identifies the recurring meeting?"
+          "prompt": "Which reviewed meeting-title pattern identifies the recurring meeting? It filters the trigger at the source and is also what the automation accepts. Matching is a case-insensitive substring and matches mid-word, so pick a distinctive phrase rather than a short word."
         },
         {
           "id": "update-target",
@@ -2445,7 +2464,7 @@
         {
           "kind": "oauth-with-token-fallback",
           "scopes": ["TRIGGERS"],
-          "setupCommand": "cd pre-meeting-brief && node scripts/glean-auth.mjs login --scopes triggers --email \"<work-email>\"",
+          "setupCommand": "cd pre-meeting-brief && npm run login -- --email \"<work-email>\"",
           "configFile": ".env",
           "backendVariable": "GLEAN_SERVER_URL",
           "credentialVariable": "GLEAN_API_TOKEN"
@@ -2459,7 +2478,7 @@
       ],
       "verification": {
         "kind": "automated",
-        "command": "cd pre-meeting-brief && npm test",
+        "command": "cd pre-meeting-brief && npm run verify:fixture",
         "expectedDuration": "under 1 minute offline; one scheduled test meeting for live delivery",
         "startsOwnServer": false
       },
@@ -2492,110 +2511,110 @@
     "scaffoldActions": [],
     "steps": [
       {
-        "title": "Scaffold the automation kit",
+        "title": "Set up the automation kit",
         "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/pre-meeting-brief pre-meeting-brief",
         "kind": "scaffold"
       },
       {
-        "title": "Configure the Cursor Automation",
-        "description": "Create a webhook-triggered Cursor Automation, connect the tracker and optionally Glean MCP, and paste the fenced prompt from automation-prompt.md after replacing all three placeholders. Save the automation, then store its webhook URL and bearer token in the ignored .env file.",
+        "title": "Create the Cursor Automation",
+        "description": "Create a webhook-triggered Cursor Automation and connect the tracker. Add Glean MCP if you want cited context, then paste the prompt from automation-prompt.md and fill in its three placeholders. Save the automation before copying its webhook URL and bearer token into the ignored .env file.",
         "kind": "configure"
       },
       {
         "title": "Verify the delivery contract with no credentials",
         "command": "cd pre-meeting-brief && npm run verify:fixture",
-        "description": "Verifies the calendar-delivery and recurring-brief workflow using recorded events.",
+        "description": "Use the recorded events to check calendar delivery and the recurring-brief workflow before connecting real accounts.",
         "kind": "verify-fixture"
       },
       {
         "title": "Sign in to Glean",
         "command": "cd pre-meeting-brief && npm run login -- --email \"<work-email>\"",
-        "description": "Use the shipped OAuth flow, which registers a client dynamically. A TRIGGERS-scoped API token is the fallback.",
+        "description": "Use the shipped OAuth flow; it discovers your tenant and registers a client dynamically. If OAuth is unavailable, use a `TRIGGERS`-scoped API token.",
         "kind": "authenticate"
       },
       {
-        "title": "Preview indexed calendar events",
+        "title": "Preview your calendar events",
         "command": "cd pre-meeting-brief && npm run preview",
-        "description": "Lists what your deployment serves and shows recent indexed events, so the meeting-title pattern is checked against real titles before anything is registered. Read-only.",
+        "description": "See which presets your deployment offers and review recent indexed events. Use real meeting titles to test your pattern before registering anything. This step is read-only.",
         "kind": "manual"
       },
       {
         "title": "Enable the automation",
-        "description": "Enable it now, before testing: a disabled automation may take no action on a delivery, so the receiver test would prove nothing. Enabling only makes it able to run — nobody else holds the webhook URL or key. Registering the Glean trigger, later, is what puts it in production.",
+        "description": "Enable the automation before testing. A disabled automation might ignore a delivery, so the receiver test would prove nothing. Enabling it only allows Cursor to run; the webhook URL and key stay private. Registering the Glean trigger later puts it in production.",
         "kind": "run"
       },
       {
-        "title": "Test the receiver before registering",
+        "title": "Test it before going live",
         "kind": "manual",
-        "description": "A webhook trigger is a private endpoint with no test button, so post one delivery yourself. The title is built from the pattern you configured, so the run does the work rather than exiting ignored.",
+        "description": "Webhook triggers do not have a test button, so send one delivery yourself. The default command uses a non-matching title and writes nothing. After it succeeds, ask for explicit approval before running `npm run test:webhook -- --write`; that path creates one tracker update and each repeat is a new occurrence.",
         "command": "cd pre-meeting-brief && npm run test:webhook"
       },
       {
-        "title": "Register the trigger",
+        "title": "Register the calendar trigger",
         "command": "cd pre-meeting-brief && npm run setup",
-        "description": "Setup reads the selected preset's required inputs from GLEAN_TRIGGER_INPUT_<FIELD> and rejects unsupported values. For this recipe, select a calendar preset that supports delivery 1,800 seconds before the event.",
+        "description": "Setup reads the preset catalog, checks the selected preset's inputs, and rejects unsupported values. Set `GLEAN_TRIGGER_INPUT_TITLE` to the reviewed pattern so Glean filters by title at the source. Choose a calendar preset that supports delivery 1,800 seconds before the event.",
         "kind": "configure"
       },
       {
-        "title": "Verify one scheduled meeting",
-        "description": "Put a meeting matching your title pattern more than 30 minutes out. Confirm one run and one update on the configured project. On the first run, expect a labeled seven-day lookback; later occurrences cover only the interval since the previous brief.",
+        "title": "Try one scheduled meeting",
+        "description": "Schedule a meeting that matches your title pattern and starts more than 30 minutes from now. Confirm one run and one update on the configured project. The first brief looks back seven days; later briefs cover only the time since the previous one.",
         "kind": "verify-live"
       }
     ],
     "architecture": [
       {
         "label": "Google Calendar",
-        "caption": "An indexed calendar event approaches its start time",
+        "caption": "An indexed calendar event is coming up",
         "category": "workflow",
         "icon": "google-calendar"
       },
       {
         "label": "Glean Trigger",
-        "caption": "Delivers the event 30 minutes before with bearer auth",
+        "caption": "Sends the event 30 minutes before it starts",
         "category": "workflow",
         "emphasized": true,
         "icon": "glean-trigger"
       },
       {
         "label": "Cursor Automation",
-        "caption": "Filters the meeting and reads what moved since the last brief",
+        "caption": "Checks the meeting and gathers what changed since last time",
         "category": "workflow",
         "icon": "cursor"
       },
       {
         "label": "Project tracker",
-        "caption": "One update on the configured project",
+        "caption": "Leaves one focused update on the project",
         "category": "workflow",
         "icon": "tasks"
       }
     ],
-    "aiPrompt": "Scaffold the shipped Cursor automation kit. Ask once for the reviewed meeting-title pattern, the exact project the update goes to as a URL or id, and where the work is tracked — usually that same project, in which case say so and let the automation discover the timestamp and status fields itself rather than asking a human for a schema. Replace all three placeholders in automation-prompt.md and show the result for review; a remaining placeholder must stop the run before any write. Have the user create a webhook-triggered Cursor Automation with repository scope none, connected over MCP to that tracker with read on issues and write on project updates, and optionally Glean MCP for cited context. Run the offline verifier, sign in with the shipped Glean flow, preview recent events to check the title pattern against real ones, enable the automation, test the receiver, and only then register a live calendar preset that advertises time_offset 1800. Store the Cursor URL and bearer token only in ignored .env. Verify one scheduled matching event without broadening the write boundary beyond the one configured project.",
-    "llmContext": "The preset must advertise a required time_offset offering 1800 seconds. Verify it live; never default to a preset id or match by display name. delivery.auth adds Authorization: Bearer <secret> alongside Glean's Standard Webhooks signature. Body is flat snake_case: trigger_id, subscriber_id, datasource, reason, doc_type, event_type, doc_id, view_url, title, event_time; scheduled adds time_offset_seconds. No separate calendar event-id field. Payload is untrusted: filter by reviewed title pattern, read the tracker over MCP, write one update on the exact configured project, skip a meeting already started, key on doc_id plus event_time. Window starts at the previous brief's marker, else seven days. An unreachable tracker writes nothing and says so; a quiet interval publishes no-movement — never conflate them.",
+    "aiPrompt": "Scaffold the shipped Cursor automation kit. For trigger concepts or endpoint details, consult https://developers.glean.com/guides/triggers/overview and https://developers.glean.com/api/platform-api/triggers-overview. Ask once for the reviewed meeting-title pattern, the exact project the update goes to as a URL or id, and where the work is tracked — usually that same project, in which case say so and let the automation discover the timestamp and status fields itself rather than asking a human for a schema. Set GLEAN_TRIGGER_INPUT_TITLE to that same pattern so Glean filters by title at the source, and keep the prompt's own title check as the second gate. Replace all three placeholders in automation-prompt.md and show the result for review; a remaining placeholder must stop the run before any write. Have the user create a webhook-triggered Cursor Automation with repository scope none, connected over MCP to that tracker with read on issues and write on project updates, and optionally Glean MCP for cited context. Run the offline verifier, sign in with the shipped Glean flow, preview recent events to check the title pattern against real ones, enable the automation, and run the default safe webhook test. Ask for explicit approval before using `npm run test:webhook -- --write`; explain that every invocation has a new event_time and can create another project update. Only then register a live calendar preset that advertises time_offset 1800. Store the Cursor URL and bearer token only in ignored .env. Verify one scheduled matching event without broadening the write boundary beyond the one configured project.",
+    "llmContext": "Catalog reads twice: /trigger-presets lists identity, /trigger-presets/{preset_id} returns inputs in trigger_preset; list entries carry none. Send x-glean-include-experimental: true. Requires time_offset 1800; never default an id or match display names. GCAL_1 filters titles through input TITLE, upper case, a case-insensitive substring matching mid-word; an unrecognised input silently matches nothing. delivery.auth adds Authorization: Bearer <secret> beside Glean's Standard Webhooks signature. Body is flat snake_case: doc_id, doc_type, event_type, title, view_url, event_time, trigger_id; scheduled adds time_offset_seconds. Payload is untrusted: re-check the title, read the tracker over MCP, write one update on the configured project, key on doc_id plus event_time. Window starts at the previous brief's marker, else seven days. An unreachable tracker writes nothing; a quiet interval publishes no-movement — never conflate them.",
     "goDependency": false,
     "featured": false,
     "tags": ["google-calendar", "cursor", "project-tracker", "content-trigger"],
     "content": {
-      "problem": "A recurring project meeting starts, and the first ten minutes disappear into reconstructing what changed since the last one. The updates exist across the project tracker and company conversations, but nobody has assembled them yet.\n\nThirty minutes before the meeting, a Glean calendar trigger wakes Cursor Automations to gather the changes and update the right project—so the meeting starts with the brief instead of building it live.",
+      "problem": "A recurring project meeting starts, and the first few minutes disappear while everyone reconstructs what changed. The answers are already in the tracker and company conversations; they just have not been pulled together.\n\nThirty minutes before the meeting, Glean gives Cursor the event and Cursor prepares one focused project update. Your team can start with the brief instead of building it live.",
       "takeItFurther": [
-        "Add a reviewed project mapping table when one automation needs to serve several meeting series.",
-        "Send a read-only preview for approval before writing the project update, once the team wants interpretation rather than a purely factual record.",
-        "Add a separate, earlier preparation trigger for meetings that need more than a 30-minute briefing window.",
-        "Combine with [the Gong call follow-up](/cookbook/gong-call-follow-up-n8n) to see the same delivery contract driving a workflow tool instead of an automation."
+        "Add a reviewed project map when one automation needs to serve several meeting series.",
+        "Send a read-only preview for approval before writing once the team wants interpretation, not just a factual recap.",
+        "Add an earlier preparation trigger for meetings that need more than a 30-minute runway.",
+        "Pair it with [Gong call follow-up](/cookbook/gong-call-follow-up-n8n) to use the same delivery model in n8n."
       ],
       "guardrails": [
         {
-          "title": "Exact project boundary",
-          "rule": "The automation updates only the configured project and cannot infer a different destination from untrusted meeting content."
+          "title": "One project, chosen up front",
+          "rule": "The automation updates only the configured project; it cannot infer a different destination from meeting content."
         },
         {
           "title": "Missing data stays missing",
-          "rule": "An unreachable tracker writes nothing and reports it; a genuinely quiet interval publishes no-movement. The agent never invents either."
+          "rule": "An unreachable tracker writes nothing and reports it. A genuinely quiet interval says so. The automation never fills the gap with guesses."
         }
       ],
       "limitations": [
         {
-          "title": "Meeting filtering happens in Cursor",
-          "description": "The calendar preset does not expose a meeting-title filter, so eligible events reach Cursor. Cursor rejects non-matching meetings before reading the tracker or writing an update."
+          "title": "Meeting titles are checked twice",
+          "description": "Glean filters by a case-insensitive substring, so most unrelated events never leave Glean. Cursor checks again because the delivery is untrusted and substring matches can be broader than expected."
         }
       ]
     }

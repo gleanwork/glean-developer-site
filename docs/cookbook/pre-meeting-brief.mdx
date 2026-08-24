@@ -23,9 +23,9 @@ import {
 
 <RecipeSection label="Problem">
 
-A recurring project meeting starts, and the first ten minutes disappear into reconstructing what changed since the last one. The updates exist across the project tracker and company conversations, but nobody has assembled them yet.
+A recurring project meeting starts, and the first few minutes disappear while everyone reconstructs what changed. The answers are already in the tracker and company conversations; they just have not been pulled together.
 
-Thirty minutes before the meeting, a Glean calendar trigger wakes Cursor Automations to gather the changes and update the right project—so the meeting starts with the brief instead of building it live.
+Thirty minutes before the meeting, Glean gives Cursor the event and Cursor prepares one focused project update. Your team can start with the brief instead of building it live.
 
 </RecipeSection>
 
@@ -35,30 +35,30 @@ Thirty minutes before the meeting, a Glean calendar trigger wakes Cursor Automat
 
 <RecipeSteps />
 
-<RecipeSection label="Exact project boundary">
+<RecipeSection label="One project, chosen up front">
 
-The automation updates only the configured project and cannot infer a different destination from untrusted meeting content.
+The automation updates only the configured project; it cannot infer a different destination from meeting content.
 
 </RecipeSection>
 
 <RecipeSection label="Missing data stays missing">
 
-An unreachable tracker writes nothing and reports it; a genuinely quiet interval publishes no-movement. The agent never invents either.
+An unreachable tracker writes nothing and reports it. A genuinely quiet interval says so. The automation never fills the gap with guesses.
 
 </RecipeSection>
 
-<RecipeSection label="Meeting filtering happens in Cursor">
+<RecipeSection label="Meeting titles are checked twice">
 
-The calendar preset does not expose a meeting-title filter, so eligible events reach Cursor. Cursor rejects non-matching meetings before reading the tracker or writing an update.
+Glean filters by a case-insensitive substring, so most unrelated events never leave Glean. Cursor checks again because the delivery is untrusted and substring matches can be broader than expected.
 
 </RecipeSection>
 
 <TakeItFurther>
 
-- Add a reviewed project mapping table when one automation needs to serve several meeting series.
-- Send a read-only preview for approval before writing the project update, once the team wants interpretation rather than a purely factual record.
-- Add a separate, earlier preparation trigger for meetings that need more than a 30-minute briefing window.
-- Combine with [the Gong call follow-up](/cookbook/gong-call-follow-up-n8n) to see the same delivery contract driving a workflow tool instead of an automation.
+- Add a reviewed project map when one automation needs to serve several meeting series.
+- Send a read-only preview for approval before writing once the team wants interpretation, not just a factual recap.
+- Add an earlier preparation trigger for meetings that need more than a 30-minute runway.
+- Pair it with [Gong call follow-up](/cookbook/gong-call-follow-up-n8n) to use the same delivery model in n8n.
 
 </TakeItFurther>
 
