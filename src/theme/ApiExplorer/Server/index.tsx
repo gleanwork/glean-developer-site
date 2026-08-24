@@ -95,14 +95,7 @@ function PersonalizedServer({
 
   if (options.length === 0) return null;
 
-  return (
-    <div className="openapi-explorer__server-container">
-      <TenantProfileControl compact />
-      <small className="openapi-explorer__server-description">
-        Request URL: {apiUrl ?? effectiveServerUrl ?? DEFAULT_API_URL}
-      </small>
-    </div>
-  );
+  return <TenantProfileControl compact />;
 }
 
 export default function Server(
