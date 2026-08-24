@@ -2,8 +2,8 @@ openapi: 3.0.0
 info:
   version: '2026-04-01'
   title: Glean Platform API
-  x-source-commit-sha: fc1b050971735332d0b799f4048fe801553dd8dd
-  x-open-api-commit-sha: f34359dbb304911e06d4a7a3a8aca6162436d542
+  x-source-commit-sha: d96a5da69d9d1247157a9a110ae70d6ed80c20b3
+  x-open-api-commit-sha: fe8dfb74e2edcaae013f328b2b481d070cc7408c
 servers:
   - url: '{serverUrl}'
     description: 'Replace the placeholder with your Glean API server URL. Copy the complete Server instance (QE) value from https://app.glean.com/admin/about-glean. Glean-hosted deployments use https://{instance}-be.glean.com. How to find it: https://developers.glean.com/get-started/authentication#finding-your-server-url'
@@ -440,7 +440,12 @@ paths:
                 res = glean.agents.create_run(agent_id="<id>", messages=[
                     {
                         "role": models.PlatformMessageRole.USER,
-                        "content": [],
+                        "content": [
+                            {
+                                "text": "What is our parental leave policy?",
+                                "type": models.PlatformContentType.TEXT,
+                            },
+                        ],
                     },
                 ], stream=False)
 
@@ -461,7 +466,12 @@ paths:
                 messages: [
                   {
                     role: "USER",
-                    content: [],
+                    content: [
+                      {
+                        text: "What is our parental leave policy?",
+                        type: "text",
+                      },
+                    ],
                   },
                 ],
               }, "<id>");
@@ -472,7 +482,7 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Agents.CreateRun(ctx, \"<id>\", components.PlatformAgentRunCreateRequest{\n        Messages: []components.PlatformMessage{\n            components.PlatformMessage{\n                Role: components.PlatformMessageRoleUser,\n                Content: []components.PlatformMessageTextBlock{},\n            },\n        },\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformAgentRunWaitResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Agents.CreateRun(ctx, \"<id>\", components.PlatformAgentRunCreateRequest{\n        Messages: []components.PlatformMessage{\n            components.PlatformMessage{\n                Role: components.PlatformMessageRoleUser,\n                Content: []components.PlatformMessageTextBlock{\n                    components.PlatformMessageTextBlock{\n                        Text: \"What is our parental leave policy?\",\n                        Type: components.PlatformContentTypeText,\n                    },\n                },\n            },\n        },\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformAgentRunWaitResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -500,7 +510,11 @@ paths:
                                 .messages(List.of(
                                     PlatformMessage.builder()
                                         .role(PlatformMessageRole.USER)
-                                        .content(List.of())
+                                        .content(List.of(
+                                            PlatformMessageTextBlock.builder()
+                                                .text("What is our parental leave policy?")
+                                                .type(PlatformContentType.TEXT)
+                                                .build()))
                                         .build()))
                                 .build())
                             .call();
@@ -597,7 +611,7 @@ paths:
                 include_experimental=True,
             ) as glean:
 
-                res = glean.chat.create(input="<value>", stream=False, store=True)
+                res = glean.chat.create(input="What is our parental leave policy?", stream=False, store=True)
 
                 # Handle response
                 print(res)
@@ -614,7 +628,7 @@ paths:
 
             async function run() {
               const result = await glean.chat.create({
-                input: "<value>",
+                input: "What is our parental leave policy?",
               });
 
               console.log(result);
@@ -623,7 +637,7 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Chat.Create(ctx, components.PlatformChatCreateRequest{\n        Input: components.CreateInputStr(\n            \"<value>\",\n        ),\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformChatCompletedResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Chat.Create(ctx, components.PlatformChatCreateRequest{\n        Input: components.CreateInputStr(\n            \"What is our parental leave policy?\",\n        ),\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformChatCompletedResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -647,7 +661,7 @@ paths:
                         .build();
 
                     PlatformChatCreateRequest req = PlatformChatCreateRequest.builder()
-                            .input(Input.of("<value>"))
+                            .input(Input.of("What is our parental leave policy?"))
                             .build();
 
                     PlatformChatCreateResponse res = sdk.chat().create()
@@ -1004,7 +1018,7 @@ paths:
             ) as glean:
 
                 res = glean.skills.import_(source_urls=[
-                    "<value 1>",
+                    "https://github.com/anthropics/skills/tree/main/skills/skill-creator",
                 ])
 
                 # Handle response
@@ -1023,7 +1037,7 @@ paths:
             async function run() {
               const result = await glean.skills.import({
                 source_urls: [
-                  "<value 1>",
+                  "https://github.com/anthropics/skills/tree/main/skills/skill-creator",
                 ],
               });
 
@@ -1033,7 +1047,7 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Skills.Import(ctx, components.PlatformSkillImportRequest{\n        SourceUrls: []string{\n            \"<value 1>\",\n        },\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformSkillImportResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Skills.Import(ctx, components.PlatformSkillImportRequest{\n        SourceUrls: []string{\n            \"https://github.com/anthropics/skills/tree/main/skills/skill-creator\",\n        },\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformSkillImportResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -1058,7 +1072,7 @@ paths:
 
                     PlatformSkillImportRequest req = PlatformSkillImportRequest.builder()
                             .sourceUrls(List.of(
-                                "<value 1>"))
+                                "https://github.com/anthropics/skills/tree/main/skills/skill-creator"))
                             .build();
 
                     PlatformSkillsImportResponse res = sdk.skills().import_()
@@ -1301,7 +1315,7 @@ paths:
                 include_experimental=True,
             ) as glean:
 
-                res = glean.skills.preview_source(source_url="https://ugly-information.name/", stream=False)
+                res = glean.skills.preview_source(source_url="https://github.com/anthropics/skills", stream=False)
 
                 # Handle response
                 print(res)
@@ -1318,7 +1332,7 @@ paths:
 
             async function run() {
               const result = await glean.skills.previewSource({
-                source_url: "https://ugly-information.name/",
+                source_url: "https://github.com/anthropics/skills",
               });
 
               console.log(result);
@@ -1327,7 +1341,7 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Skills.PreviewSource(ctx, components.PlatformSkillSourcePreviewRequest{\n        SourceURL: \"https://ugly-information.name/\",\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformSkillSourcePreviewResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Skills.PreviewSource(ctx, components.PlatformSkillSourcePreviewRequest{\n        SourceURL: \"https://github.com/anthropics/skills\",\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformSkillSourcePreviewResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -1350,7 +1364,7 @@ paths:
                         .build();
 
                     PlatformSkillSourcePreviewRequest req = PlatformSkillSourcePreviewRequest.builder()
-                            .sourceUrl("https://ugly-information.name/")
+                            .sourceUrl("https://github.com/anthropics/skills")
                             .build();
 
                     PlatformSkillsPreviewSourceResponse res = sdk.skills().previewSource()
@@ -1451,7 +1465,7 @@ paths:
                 include_experimental=True,
             ) as glean:
 
-                res = glean.skills.update(skill_id="<id>", status=models.PlatformSkillUpdateStatus.DISABLED)
+                res = glean.skills.update(skill_id="<id>", status=models.PlatformSkillUpdateStatus.ENABLED)
 
                 # Handle response
                 print(res)
@@ -1468,7 +1482,7 @@ paths:
 
             async function run() {
               const result = await glean.skills.update({
-                status: "DISABLED",
+                status: "ENABLED",
               }, "<id>");
 
               console.log(result);
@@ -1477,7 +1491,7 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Skills.Update(ctx, \"<id>\", components.PlatformSkillUpdateRequest{\n        Status: components.PlatformSkillUpdateStatusDisabled,\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformSkillUpdateResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Skills.Update(ctx, \"<id>\", components.PlatformSkillUpdateRequest{\n        Status: components.PlatformSkillUpdateStatusEnabled,\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformSkillUpdateResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -1503,7 +1517,7 @@ paths:
                     PlatformSkillsUpdateResponse res = sdk.skills().update()
                             .skillId("<id>")
                             .platformSkillUpdateRequest(PlatformSkillUpdateRequest.builder()
-                                .status(PlatformSkillUpdateStatus.DISABLED)
+                                .status(PlatformSkillUpdateStatus.ENABLED)
                                 .build())
                             .call();
 
@@ -4292,6 +4306,8 @@ components:
     PlatformAgentsSearchRequest:
       type: object
       additionalProperties: false
+      example:
+        name: HR Policy Agent
       properties:
         name:
           type: string
@@ -4615,6 +4631,12 @@ components:
       additionalProperties: false
       description: |
         Request to run an agent. A request MUST supply either `messages` (a non-empty conversation) or `input` (for input-form triggered agents).
+      example:
+        messages:
+          - role: USER
+            content:
+              - text: What is our parental leave policy?
+                type: text
       properties:
         input:
           type: object
@@ -4731,6 +4753,8 @@ components:
       additionalProperties: false
       required:
         - input
+      example:
+        input: What is our parental leave policy?
       properties:
         input:
           description: |
@@ -5131,6 +5155,9 @@ components:
       additionalProperties: false
       required:
         - source_urls
+      example:
+        source_urls:
+          - https://github.com/anthropics/skills/tree/main/skills/skill-creator
       properties:
         source_urls:
           type: array
@@ -5223,6 +5250,8 @@ components:
       additionalProperties: false
       required:
         - source_url
+      example:
+        source_url: https://github.com/anthropics/skills
       properties:
         source_url:
           type: string
@@ -5345,6 +5374,8 @@ components:
       additionalProperties: false
       required:
         - status
+      example:
+        status: ENABLED
       properties:
         status:
           $ref: '#/components/schemas/PlatformSkillUpdateStatus'
