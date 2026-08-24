@@ -86,7 +86,7 @@ function TenantProfileControlContent({
         <div className={styles.configuredField}>
           <label className={styles.configuredLabel} htmlFor={configuredUrlId}>
             <span className={styles.statusDot} aria-hidden="true" />
-            API URL
+            {compact ? 'Configured' : 'API URL'}
             {state.kind === 'configured' &&
             state.persistence === 'memory-only' ? (
               <span className={styles.persistenceWarning}>
@@ -95,7 +95,13 @@ function TenantProfileControlContent({
             ) : null}
           </label>
           <div className={styles.copyField}>
-            <input id={configuredUrlId} readOnly type="url" value={apiUrl} />
+            <input
+              aria-label="API URL"
+              id={configuredUrlId}
+              readOnly
+              type="url"
+              value={apiUrl}
+            />
             <button
               aria-label={copied ? 'API URL copied' : 'Copy API URL'}
               className={styles.copyButton}

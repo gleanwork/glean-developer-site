@@ -9,8 +9,9 @@ import TenantProfileControl from './index';
 function renderTenantProfile(
   enabled = true,
   outerSubmit?: React.FormEventHandler<HTMLFormElement>,
+  compact = false,
 ) {
-  const control = <TenantProfileControl />;
+  const control = <TenantProfileControl compact={compact} />;
   return render(
     <FeatureFlagsContext.Provider
       value={
@@ -64,12 +65,29 @@ describe('TenantProfileControl', () => {
     });
   });
 
+  it('uses a status label instead of repeating the API URL heading in compact mode', async () => {
+    const user = userEvent.setup();
+    renderTenantProfile(true, undefined, true);
+
+    await user.click(screen.getByText('Enter URL manually'));
+    await user.type(
+      screen.getByLabelText('Glean API URL'),
+      'https://knowledge.example.org',
+    );
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+
+    expect(screen.getByText('Configured')).toBeInTheDocument();
+    expect(screen.getByLabelText('API URL')).toHaveValue(
+      'https://knowledge.example.org',
+    );
+  });
+
   it('does not submit the API Explorer request form when saving a manual URL', async () => {
     const outerSubmit = vi.fn((event: React.FormEvent<HTMLFormElement>) =>
       event.preventDefault(),
     );
     const user = userEvent.setup();
-    renderTenantProfile(true, outerSubmit);
+    renderTenantProfile(true, outerSubmit, true);
 
     await user.click(screen.getByText('Enter URL manually'));
     await user.type(
