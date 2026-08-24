@@ -51,14 +51,22 @@ function TenantProfileControlContent({
     }
   }, [onConfigured, state]);
 
-  const discover = async (event: React.FormEvent) => {
-    event.preventDefault();
+  const discover = async () => {
     await tenantProfileStore.discover(email);
   };
 
-  const saveManual = (event: React.FormEvent) => {
-    event.preventDefault();
+  const saveManual = () => {
     tenantProfileStore.setManualApiUrl(manualUrl);
+  };
+
+  const submitOnEnter = (
+    event: React.KeyboardEvent<HTMLInputElement>,
+    submit: () => void | Promise<void>,
+  ) => {
+    if (event.key !== 'Enter') return;
+    event.preventDefault();
+    event.stopPropagation();
+    void submit();
   };
 
   const copy = async () => {
@@ -159,7 +167,7 @@ function TenantProfileControlContent({
       ) : null}
 
       {mode === 'discover' ? (
-        <form className={styles.form} onSubmit={discover}>
+        <div className={styles.form}>
           <label htmlFor={emailId}>Work email</label>
           <div className={styles.inputRow}>
             <input
@@ -168,6 +176,7 @@ function TenantProfileControlContent({
               disabled={state.kind === 'resolving'}
               id={emailId}
               onChange={(event) => setEmail(event.target.value)}
+              onKeyDown={(event) => submitOnEnter(event, discover)}
               placeholder="you@company.com"
               type="email"
               value={email}
@@ -175,7 +184,8 @@ function TenantProfileControlContent({
             <button
               className={styles.primaryButton}
               disabled={state.kind === 'resolving'}
-              type="submit"
+              onClick={discover}
+              type="button"
             >
               {state.kind === 'resolving' ? 'Finding…' : 'Find API URL'}
             </button>
@@ -191,21 +201,26 @@ function TenantProfileControlContent({
           >
             Enter the URL manually instead
           </button>
-        </form>
+        </div>
       ) : null}
 
       {mode === 'manual' ? (
-        <form className={styles.form} onSubmit={saveManual}>
+        <div className={styles.form}>
           <label htmlFor={manualId}>Glean API URL</label>
           <div className={styles.inputRow}>
             <input
               id={manualId}
               onChange={(event) => setManualUrl(event.target.value)}
+              onKeyDown={(event) => submitOnEnter(event, saveManual)}
               placeholder="https://company-be.glean.com"
               type="url"
               value={manualUrl}
             />
-            <button className={styles.primaryButton} type="submit">
+            <button
+              className={styles.primaryButton}
+              onClick={saveManual}
+              type="button"
+            >
               Save
             </button>
           </div>
@@ -221,7 +236,7 @@ function TenantProfileControlContent({
           >
             Find it from my work email instead
           </button>
-        </form>
+        </div>
       ) : null}
 
       {state.kind === 'error' ? (

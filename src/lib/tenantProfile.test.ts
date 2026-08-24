@@ -278,15 +278,44 @@ describe('tenant profile persistence', () => {
     });
   });
 
-  it('does not migrate a placeholder OpenAPI server value', () => {
+  it.each([
+    'https://instance-name-be.glean.com',
+    'https://{instance-name}-be.glean.com',
+  ])('does not migrate the placeholder OpenAPI server value %s', (apiUrl) => {
     const storage = new MemoryStorage();
     storage.setItem(
       OPENAPI_SERVER_STORAGE_KEY,
       JSON.stringify({
         url: '{serverUrl}',
         variables: {
+          serverUrl: { default: apiUrl },
+        },
+      }),
+    );
+    const store = createTenantProfileStore({ storage });
+
+    expect(store.getSnapshot()).toEqual({ kind: 'unconfigured' });
+    expect(storage.getItem(TENANT_PROFILE_STORAGE_KEY)).toBeNull();
+  });
+
+  it('ignores a persisted profile created from a placeholder server', () => {
+    const storage = new MemoryStorage();
+    storage.setItem(
+      TENANT_PROFILE_STORAGE_KEY,
+      JSON.stringify({
+        version: 1,
+        apiUrl: 'https://{instance-name}-be.glean.com',
+        source: 'manual',
+        updatedAt: 55,
+      }),
+    );
+    storage.setItem(
+      OPENAPI_SERVER_STORAGE_KEY,
+      JSON.stringify({
+        url: '{serverUrl}',
+        variables: {
           serverUrl: {
-            default: 'https://instance-name-be.glean.com',
+            default: 'https://{instance-name}-be.glean.com',
           },
         },
       }),
@@ -404,6 +433,7 @@ describe('OpenAPI server personalization', () => {
 describe('API URL placeholder personalization', () => {
   it('replaces approved origins while preserving paths and unrelated URLs', () => {
     const source = [
+      'curl https://{instance-name}-be.glean.com/api/agents',
       'curl https://instance-name-be.glean.com/api/search',
       'curl https://<instance>-be.glean.com/rest/api/v1/search',
       'docs https://example.com/instance-name-be.glean.com',
@@ -413,6 +443,7 @@ describe('API URL placeholder personalization', () => {
       personalizeApiUrlPlaceholders(source, 'https://custom.example.org'),
     ).toBe(
       [
+        'curl https://custom.example.org/api/agents',
         'curl https://custom.example.org/api/search',
         'curl https://custom.example.org/rest/api/v1/search',
         'docs https://example.com/instance-name-be.glean.com',
@@ -450,8 +481,12 @@ describe('API URL placeholder personalization', () => {
     ).toBe(false);
   });
 
-  it('leaves placeholders intact when no profile is configured', () => {
-    const source = 'https://instance-name-be.glean.com/api/search';
-    expect(personalizeApiUrlPlaceholders(source, undefined)).toBe(source);
+  it('standardizes placeholders when no profile is configured', () => {
+    expect(
+      personalizeApiUrlPlaceholders(
+        'https://{instance-name}-be.glean.com/api/search',
+        undefined,
+      ),
+    ).toBe('{serverUrl}/api/search');
   });
 });
