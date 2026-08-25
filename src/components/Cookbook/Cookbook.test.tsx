@@ -283,7 +283,7 @@ describe('RecipeLayout', () => {
 
     const run = screen.getByRole('button', { name: /Run this recipe/ });
     expect(run).toHaveAttribute('aria-expanded', 'false');
-    expect(screen.queryByText(/Copy build prompt/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Copy assistant prompt/)).not.toBeInTheDocument();
 
     await user.click(run);
     expect(run).toHaveAttribute('aria-expanded', 'true');
@@ -472,10 +472,15 @@ describe('RecipeLayout', () => {
     );
 
     expect(
-      screen.getByRole('button', { name: /Copy build prompt/ }),
+      screen.getByRole('button', { name: /Copy assistant prompt/ }),
     ).toBeInTheDocument();
     expect(screen.queryByText(/Run this recipe/)).not.toBeInTheDocument();
-    expect(screen.getByText(/Lovable or Replit/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/This text is for Cursor, Claude Code, or Codex/),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/not for pasting into Lovable or Replit/),
+    ).toBeInTheDocument();
   });
 
   it('links token creation from the rail for hosted-secret recipes', () => {

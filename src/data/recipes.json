@@ -1879,8 +1879,8 @@
     },
     {
       "id": "no-code-it-helpdesk-lovable",
-      "title": "IT helpdesk deflection page — no code, on Lovable",
-      "description": "Prompt Lovable into a private, single-user IT helpdesk prototype on the Glean Chat API — zero hand-written backend.",
+      "title": "IT helpdesk deflection page, no code, on Lovable",
+      "description": "Prompt Lovable into a private, single-user IT helpdesk prototype on the Glean Chat API, with zero hand-written backend.",
       "sidebarLabel": "IT Helpdesk (Lovable)",
       "surfaces": [
         "client-api"
@@ -1904,7 +1904,7 @@
       "prerequisites": [
         "A Lovable account",
         "A Glean Client API token with the CHAT scope. Create it in Admin Console → API access → Client API tokens, then keep it as a Lovable backend secret; every request uses this one token owner's access",
-        "A private Lovable project — multi-user deployments require authenticated per-user Glean OAuth"
+        "A private Lovable project. Multi-user deployments require authenticated per-user Glean OAuth"
       ],
       "demoQueries": [
         {
@@ -1924,6 +1924,34 @@
         }
       ],
       "scaffoldActions": [],
+      "steps": [
+        {
+          "kind": "configure",
+          "title": "Resolve your Glean instance",
+          "description": "Copy the instance slug from your Glean URL, the part in https://<instance>-be.glean.com. That slug is GLEAN_INSTANCE. Plugin users run the command instead and take the same slug from the returned URL.",
+          "command": "node <cookbook-plugin-root>/scripts/resolve-backend.mjs \"<work-email>\""
+        },
+        {
+          "kind": "configure",
+          "title": "Fill the prompt template",
+          "description": "Open recipes/no-code-it-helpdesk-lovable/lovable-prompt.md. Replace <your-glean-instance> with the instance slug, and set the first suggested question to a natural question about the supplied topic. Plugin users show the filled prompt and stop. Do not open Lovable."
+        },
+        {
+          "kind": "handoff",
+          "title": "Paste into a new private Lovable project",
+          "description": "Start a new private project at https://lovable.dev and paste the filled prompt as the first message. Plugin users hand the filled prompt to the user. Do not open Lovable."
+        },
+        {
+          "kind": "authenticate",
+          "title": "Add secrets when Lovable asks",
+          "description": "When Lovable asks, add GLEAN_API_TOKEN and GLEAN_INSTANCE as backend secrets, never in the chat. The token is one service identity. Keep the project private."
+        },
+        {
+          "kind": "verify-live",
+          "title": "Verify with two live questions",
+          "description": "Ask \"Where do I reset my SSO password?\" and \"How do I request a new laptop?\" Each should return a cited answer from your own indexed content."
+        }
+      ],
       "execution": {
         "type": "external-builder",
         "questions": [
@@ -1934,7 +1962,7 @@
           },
           {
             "id": "topic",
-            "prompt": "What IT topic do you know exists in your Glean content?",
+            "prompt": "What IT topic should the first suggested question cover? Pick something you know exists in your Glean content.",
             "required": true
           }
         ],
@@ -1954,15 +1982,21 @@
         }
       },
       "content": {
-        "problem": "Half your helpdesk tickets are \"how do I reset my SSO password\" and \"how do\nI get a new laptop\" — questions your IT docs already answer. You want a\npage that answers them before a ticket gets filed, without pulling an\nengineer off other work to build it.",
+        "problem": "Half your helpdesk tickets are \"how do I reset my SSO password\" and \"how do I get a new laptop.\" Your IT docs already answer both. You want a page that answers them before a ticket gets filed, without pulling an engineer off other work to build it.",
         "takeItFurther": [
           "Scope the `CHAT` token even further if your Glean plan supports per-collection tokens, so this tool can only ever answer from IT content.",
-          "Compare this to [`no-code-pto-lookup-replit`](/cookbook/no-code-pto-lookup-replit) — same Chat API call, same \"browser never holds the token\" constraint, different no-code tool and persona.",
+          "Compare this to [`no-code-pto-lookup-replit`](/cookbook/no-code-pto-lookup-replit). Same Chat API call, same constraint that the browser never holds the token, different no-code tool and persona.",
           "Once your team outgrows the no-code version, [`company-answers`](/cookbook/company-answers) shows the same pattern as a hand-written, version-controlled app."
+        ],
+        "limitations": [
+          {
+            "title": "Not tested on a live Lovable account",
+            "description": "This walkthrough has not been run end-to-end against a live Lovable account. Confirm the two verify questions on your own instance before you rely on the generated app."
+          }
         ]
       },
-      "aiPrompt": "I'm using Lovable, not you, to build this — your job is to prepare my\ninputs per\nhttps://developers.glean.com/cookbook/no-code-it-helpdesk-lovable\n\n1. Resolve my Glean server URL from the work email already supplied with the cookbook plugin's resolve-backend.mjs script, then fill it and the supplied topic into the recipe prompt template.\n2. Remind me: token goes in a Lovable backend secret, never in the\n   prompt. It is one service identity, so keep this prototype private;\n   multi-user deployment requires per-user Glean OAuth.\n3. After Lovable builds it, hand it back to me — see Verify below for\n   the exact queries to test and what a correct result looks like.",
-      "llmContext": "Keep this single-user prototype private. Its shared backend token is one service identity, so every request has the token owner's access; it does not enforce permissions for each visitor. Multi-user deployment requires app authentication and per-user Glean OAuth. Keep the token in Lovable's server-side secret store, call Client Chat from a backend function, and read CONTENT text and fragment.citation.sourceDocument citations.",
+      "aiPrompt": "I'm using Cursor, Claude Code, or Codex, not Lovable. Do not open Lovable. Ask for my work email if needed, run `node <cookbook-plugin-root>/scripts/resolve-backend.mjs \"<work-email>\"`, and take the instance slug from the returned https://<instance>-be.glean.com URL. Open recipes/no-code-it-helpdesk-lovable/lovable-prompt.md. Replace <your-glean-instance> with that slug and set the first suggested question to a natural question about the supplied topic. Show me the filled prompt so I can paste it into a new private Lovable project. Remind me GLEAN_API_TOKEN and GLEAN_INSTANCE go in Lovable backend secrets, never in the prompt. Then walk the remaining steps.",
+      "llmContext": "Keep this single-user prototype private. Its shared backend token is one service identity, so every request has the token owner's access. Multi-user deployment requires app authentication and per-user Glean OAuth. Keep the token in Lovable's server-side secret store, call Client Chat from a backend function, and read CONTENT text and fragment.citation.sourceDocument citations. GLEAN_INSTANCE is the instance slug from https://<instance>-be.glean.com.",
       "goDependency": false,
       "featured": false,
       "tags": [
@@ -1973,8 +2007,8 @@
     },
     {
       "id": "no-code-pto-lookup-replit",
-      "title": "PTO & benefits lookup — no code, on Replit",
-      "description": "Prompt Replit Agent into a private, single-user HR lookup prototype on the Glean Chat API — zero hand-written backend.",
+      "title": "PTO and benefits lookup, no code, on Replit",
+      "description": "Prompt Replit Agent into a private, single-user HR lookup prototype on the Glean Chat API, with zero hand-written backend.",
       "sidebarLabel": "PTO Lookup (Replit)",
       "surfaces": [
         "client-api"
@@ -1998,7 +2032,7 @@
       "prerequisites": [
         "A Replit account with Agent access",
         "A Glean Client API token with the CHAT scope. Create it in Admin Console → API access → Client API tokens, then keep it in Replit Secrets; every request uses this one token owner's access",
-        "A private Repl — multi-user deployments require authenticated per-user Glean OAuth"
+        "A private Repl. Multi-user deployments require authenticated per-user Glean OAuth"
       ],
       "demoQueries": [
         {
@@ -2006,8 +2040,8 @@
           "expectedBehavior": "Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content."
         },
         {
-          "query": "When is open enrollment?",
-          "expectedBehavior": "Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content."
+          "query": "what's our revenue?",
+          "expectedBehavior": "Does not fabricate an answer when Glean cites nothing. Shows an explicit no-answer state."
         }
       ],
       "codeAssets": [
@@ -2018,6 +2052,34 @@
         }
       ],
       "scaffoldActions": [],
+      "steps": [
+        {
+          "kind": "configure",
+          "title": "Resolve your Glean instance",
+          "description": "Copy the instance slug from your Glean URL, the part in https://<instance>-be.glean.com. That slug is GLEAN_INSTANCE. Plugin users run the command instead and take the same slug from the returned URL.",
+          "command": "node <cookbook-plugin-root>/scripts/resolve-backend.mjs \"<work-email>\""
+        },
+        {
+          "kind": "configure",
+          "title": "Fill the prompt template",
+          "description": "Open recipes/no-code-pto-lookup-replit/replit-agent-prompt.md. Replace <your-glean-instance> with the instance slug, and set the first suggested question to a natural question about the supplied topic. Plugin users show the filled prompt and stop. Do not open Replit."
+        },
+        {
+          "kind": "handoff",
+          "title": "Paste into a new private Repl",
+          "description": "Start a new private Repl at https://replit.com/new, open Agent, and paste the filled prompt as the first message. Plugin users hand the filled prompt to the user. Do not open Replit."
+        },
+        {
+          "kind": "authenticate",
+          "title": "Add secrets when Replit asks",
+          "description": "When Replit Agent asks, add GLEAN_API_TOKEN and GLEAN_INSTANCE in the Secrets tab, never in the chat. The token is one service identity. Keep the Repl private."
+        },
+        {
+          "kind": "verify-live",
+          "title": "Verify with two live questions",
+          "description": "Ask \"What is our PTO policy?\" and confirm a cited answer from your own indexed content. Then ask \"what's our revenue?\" and confirm the assistant does not fabricate an answer when Glean cites nothing."
+        }
+      ],
       "execution": {
         "type": "external-builder",
         "questions": [
@@ -2028,7 +2090,7 @@
           },
           {
             "id": "topic",
-            "prompt": "What HR topic do you know exists in your Glean content?",
+            "prompt": "What HR topic should the first suggested question cover? Pick something you know exists in your Glean content.",
             "required": true
           }
         ],
@@ -2048,15 +2110,21 @@
         }
       },
       "content": {
-        "problem": "Your HR team fields the same PTO and benefits questions on repeat. You want\na self-serve lookup tool answered from your real HR docs — but nobody on\nthe team writes backend code, and you don't want to wait for an engineer\nto have time for it.",
+        "problem": "Your HR team fields the same PTO and benefits questions on repeat. You want a self-serve lookup tool answered from your real HR docs. Nobody on the team writes backend code, and you don't want to wait for an engineer to have time for it.",
         "takeItFurther": [
           "Scope the `CHAT` token even further if your Glean plan supports per-collection tokens, so this tool can only ever answer from HR content.",
-          "Compare this to [`no-code-it-helpdesk-lovable`](/cookbook/no-code-it-helpdesk-lovable) — same Chat API call, same \"browser never holds the token\" constraint, different no-code tool and persona.",
+          "Compare this to [`no-code-it-helpdesk-lovable`](/cookbook/no-code-it-helpdesk-lovable). Same Chat API call, same constraint that the browser never holds the token, different no-code tool and persona.",
           "Once your team outgrows the no-code version, [`company-answers`](/cookbook/company-answers) shows the same pattern as a hand-written, version-controlled app."
+        ],
+        "limitations": [
+          {
+            "title": "Not tested on a live Replit account",
+            "description": "This walkthrough has not been run end-to-end against a live Replit account. Confirm the two verify questions on your own instance before you rely on the generated app."
+          }
         ]
       },
-      "aiPrompt": "I'm using Replit Agent, not you, to build this — your job is to prepare\nmy inputs per\nhttps://developers.glean.com/cookbook/no-code-pto-lookup-replit\n\n1. Resolve my Glean server URL from the work email already supplied with the cookbook plugin's resolve-backend.mjs script, then fill it and the supplied topic into the recipe prompt template.\n2. Remind me: token goes in Replit Secrets as GLEAN_API_TOKEN, never\n   in the prompt. It is one service identity, so keep this prototype\n   private; multi-user deployment requires per-user Glean OAuth.\n3. After Replit builds it, hand it back to me — see Verify below for\n   the exact queries to test and what a correct result looks like.",
-      "llmContext": "Keep this single-user prototype private. Its shared backend token is one service identity, so every request has the token owner's access; it does not enforce permissions for each visitor. Multi-user deployment requires app authentication and per-user Glean OAuth. Keep the token server-side, call glean.client.chat.create with USER message fragments, read CONTENT text and fragment.citation.sourceDocument citations, and show cited answers or an explicit no-answer state.",
+      "aiPrompt": "I'm using Cursor, Claude Code, or Codex, not Replit Agent. Do not open Replit. Ask for my work email if needed, run `node <cookbook-plugin-root>/scripts/resolve-backend.mjs \"<work-email>\"`, and take the instance slug from the returned https://<instance>-be.glean.com URL. Open recipes/no-code-pto-lookup-replit/replit-agent-prompt.md. Replace <your-glean-instance> with that slug and set the first suggested question to a natural question about the supplied topic. Show me the filled prompt so I can paste it into a new private Repl. Remind me GLEAN_API_TOKEN and GLEAN_INSTANCE go in Replit Secrets, never in the prompt. Then walk the remaining steps.",
+      "llmContext": "Keep this single-user prototype private. Its shared backend token is one service identity, so every request has the token owner's access. Multi-user deployment requires app authentication and per-user Glean OAuth. Keep the token in Replit Secrets, call glean.client.chat.create with USER message fragments, read CONTENT text and fragment.citation.sourceDocument citations, and show cited answers or an explicit no-answer state. GLEAN_INSTANCE is the instance slug from https://<instance>-be.glean.com.",
       "goDependency": false,
       "featured": false,
       "tags": [

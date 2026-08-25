@@ -54,9 +54,9 @@ function metaPill(icon: string, text: string): React.ReactElement {
  * button; copying `aiPrompt` for them would offer a worse, drift-prone path
  * than the page it sits on.
  *
- * `integrate` and `third-party-build` recipes have no fixed target to copy
- * into (or hand off to Lovable/Replit), so prose genuinely is the mechanism
- * and copy-prompt stays — just labelled for what it does.
+ * `integrate` and `third-party-build` recipes keep copy-prompt, labelled
+ * for the coding assistant. For third-party-build, that text is not the
+ * Lovable or Replit paste. The builder prompt lives in the recipe directory.
  */
 function ActionCard({
   recipe,
@@ -98,7 +98,7 @@ function ActionCard({
             height: 16,
             color: 'currentColor',
           })}
-          {copied ? 'Prompt copied' : 'Copy build prompt'}
+          {copied ? 'Prompt copied' : 'Copy assistant prompt'}
         </button>
       )}
 
@@ -122,7 +122,7 @@ function ActionCard({
         {isScaffold
           ? 'Runs the recipe through the Glean cookbook plugin.'
           : recipe.buildMethod === 'third-party-build'
-            ? 'Paste into Lovable or Replit to build the app.'
+            ? 'This text is for Cursor, Claude Code, or Codex, not for pasting into Lovable or Replit.'
             : 'Paste into Claude Code, Cursor, or Codex.'}
       </p>
     </div>
