@@ -1605,8 +1605,8 @@
   },
   {
     "id": "no-code-it-helpdesk-lovable",
-    "title": "Build an IT helpdesk page in Lovable",
-    "description": "Paste a prompt into Lovable to get a private page that answers common IT questions from your Glean docs.",
+    "title": "IT helpdesk deflection page — no code, on Lovable",
+    "description": "Prompt Lovable into a private, single-user IT helpdesk prototype on the Glean Chat API — zero hand-written backend.",
     "sidebarLabel": "IT Helpdesk (Lovable)",
     "surfaces": ["client-api"],
     "status": "showcase",
@@ -1627,7 +1627,7 @@
         },
         {
           "id": "topic",
-          "prompt": "What IT topic do you know your docs cover?"
+          "prompt": "What IT topic do you know exists in your Glean content?"
         }
       ],
       "auth": [
@@ -1645,17 +1645,17 @@
     },
     "prerequisites": [
       "A Lovable account",
-      "A Glean Client API token with the CHAT scope. Create it in Admin Console → API access → Client API tokens, and keep it as a Lovable backend secret. Every request uses that token owner's access",
-      "A private Lovable project. Multi-user deployments require authenticated per-user Glean OAuth"
+      "A Glean Client API token with the CHAT scope. Create it in Admin Console → API access → Client API tokens, then keep it as a Lovable backend secret; every request uses this one token owner's access",
+      "A private Lovable project — multi-user deployments require authenticated per-user Glean OAuth"
     ],
     "demoQueries": [
       {
         "query": "Where do I reset my SSO password?",
-        "expectedBehavior": "A cited answer from your own IT docs, with a real title and URL."
+        "expectedBehavior": "Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content."
       },
       {
         "query": "How do I request a new laptop?",
-        "expectedBehavior": "A cited answer from your own IT docs, with a real title and URL."
+        "expectedBehavior": "Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content."
       }
     ],
     "codeAssets": [
@@ -1666,55 +1666,24 @@
       }
     ],
     "scaffoldActions": [],
-    "pasteTarget": "Lovable",
-    "pastePromptFile": "lovable-prompt.md",
-    "steps": [
-      {
-        "title": "Copy your instance name",
-        "description": "Copy the instance name from the lookup on this page, or from `https://app.glean.com/admin/about-glean`. For `https://acme-be.glean.com` that value is `acme`, not the full URL and not `app.glean.com`. Cookbook plugin users can run `resolve-backend.mjs` with the work email and use the `instance` field.",
-        "kind": "configure"
-      },
-      {
-        "title": "Copy the prompt into a private Lovable project",
-        "description": "Click `Copy Lovable prompt`. Replace `<your-glean-instance>` with your instance name. Paste the result into a new private project at `https://lovable.dev`. Cookbook plugin users: the same text is in `lovable-prompt.md` next to this skill.",
-        "kind": "handoff"
-      },
-      {
-        "title": "Add secrets when Lovable asks",
-        "description": "When Lovable asks, add `GLEAN_API_TOKEN` and `GLEAN_INSTANCE` as backend secrets, never in the chat. This token is one person's Glean access. Keep the project private.",
-        "kind": "authenticate"
-      },
-      {
-        "title": "Ask the two IT questions",
-        "description": "Ask \"Where do I reset my SSO password?\" and \"How do I request a new laptop?\" Each answer should cite a real doc from your own instance.",
-        "kind": "verify-live"
-      }
-    ],
-    "aiPrompt": "I'm using Cursor, Claude Code, or Codex, not Lovable. Do not open Lovable. Ask for my work email if needed, run `node <cookbook-plugin-root>/scripts/resolve-backend.mjs \"<work-email>\"`, and use the instance field from that JSON as GLEAN_INSTANCE. Open lovable-prompt.md next to this skill. Replace <your-glean-instance> with that name and set the first suggested question to a natural question about the IT topic they named. Show me the filled prompt so I can paste it into a new private Lovable project. Remind me GLEAN_API_TOKEN and GLEAN_INSTANCE go in Lovable backend secrets, never in the prompt. Then walk the remaining steps.",
-    "llmContext": "Keep this single-user prototype private. Its shared backend token is one service identity, so every request has the token owner's access. Multi-user deployment requires app authentication and per-user Glean OAuth. Keep the token in Lovable's server-side secret store, call Client Chat from a backend function, and read CONTENT text and fragment.citation.sourceDocument citations. GLEAN_INSTANCE is Instance name from https://app.glean.com/admin/about-glean, for example acme.",
+    "aiPrompt": "I'm using Lovable, not you, to build this — your job is to prepare my\ninputs per\nhttps://developers.glean.com/cookbook/no-code-it-helpdesk-lovable\n\n1. Resolve my Glean server URL from the work email already supplied with the cookbook plugin's resolve-backend.mjs script, then fill it and the supplied topic into the recipe prompt template.\n2. Remind me: token goes in a Lovable backend secret, never in the\n   prompt. It is one service identity, so keep this prototype private;\n   multi-user deployment requires per-user Glean OAuth.\n3. After Lovable builds it, hand it back to me — see Verify below for\n   the exact queries to test and what a correct result looks like.",
+    "llmContext": "Keep this single-user prototype private. Its shared backend token is one service identity, so every request has the token owner's access; it does not enforce permissions for each visitor. Multi-user deployment requires app authentication and per-user Glean OAuth. Keep the token in Lovable's server-side secret store, call Client Chat from a backend function, and read CONTENT text and fragment.citation.sourceDocument citations.",
     "goDependency": false,
     "featured": false,
     "tags": ["no-code", "it"],
     "content": {
-      "problem": "Half the helpdesk tickets are \"how do I reset my SSO password\" and \"how do I get a new laptop.\" The IT docs already answer both.\n\nThis recipe builds a private Lovable page that answers those questions from your Glean content before a ticket gets filed.",
+      "problem": "Half your helpdesk tickets are \"how do I reset my SSO password\" and \"how do\nI get a new laptop\" — questions your IT docs already answer. You want a\npage that answers them before a ticket gets filed, without pulling an\nengineer off other work to build it.",
       "takeItFurther": [
         "Scope the `CHAT` token even further if your Glean plan supports per-collection tokens, so this tool can only ever answer from IT content.",
-        "Compare this to [`no-code-pto-lookup-replit`](/cookbook/no-code-pto-lookup-replit). Same Chat API call, same constraint that the browser never holds the token, different no-code tool and persona.",
+        "Compare this to [`no-code-pto-lookup-replit`](/cookbook/no-code-pto-lookup-replit) — same Chat API call, same \"browser never holds the token\" constraint, different no-code tool and persona.",
         "Once your team outgrows the no-code version, [`company-answers`](/cookbook/company-answers) shows the same pattern as a hand-written, version-controlled app."
-      ],
-      "limitations": [
-        {
-          "title": "Not run on a live Lovable account yet",
-          "description": "Finish the two verify questions on your own instance before you trust the generated app."
-        }
       ]
-    },
-    "pastePrompt": "Build \"IT Deflection Page\", a single-page chat tool that answers\ncommon IT helpdesk questions (SSO/password resets, laptop issues, VPN\nsetup) using the Glean Chat API, so employees get an answer before they\nfile a ticket. I don't want to write or review implementation code; you\nown that. I do want to review the running app and its use of secrets.\n\nThe browser must never see a Glean API token. If a question calls a\nGlean API from the client, the token is exposed to anyone who opens\ndevtools, and that's not acceptable here. Route the Glean call through\nwhatever server-side mechanism you use for secrets and backend calls.\nYou may need to connect a backend/database integration to get one.\nAsk me before you do, and ask me for the two values below when it's\nready. Don't skip this by calling Glean directly from React.\n\n1. Build a polished React assistant called \"IT Help.\" On desktop, use a\n   compact two-column workspace: a short \"Ask before you file a ticket\"\n   intro with three suggested questions on the left, and the assistant on\n   the right. The three questions are \"How do I get help with <topic>?\",\n   \"How do I reset my SSO password?\", and \"How do I request a new laptop?\"\n   Keep the assistant, its composer, and the latest answer above\n   the fold. On mobile, put the assistant first. The assistant is a real\n   thread: append user and assistant messages, keep the composer pinned,\n   auto-scroll inside the thread, and show citations as compact source chips\n   directly under each answer.\n\n2. Server-side, install `@gleanwork/api-client` (pin the version; do\n   not use a `^` or `latest` range) and construct the client like this:\n\n   ```ts\n   import { Glean } from '@gleanwork/api-client';\n\n   const glean = new Glean({\n     apiToken: process.env.GLEAN_API_TOKEN,\n     instance: process.env.GLEAN_INSTANCE, // e.g. \"<your-glean-instance>\"\n   });\n   ```\n\n   Both `GLEAN_API_TOKEN` and `GLEAN_INSTANCE` must be stored as\n   server-side secrets, never hardcoded and never bundled into the\n   frontend. Stop and ask me for these two values by name before running\n   the app. Do not invent placeholder values and move on.\n\n3. Call the Chat API like this. The response shape is specific, follow\n   it exactly rather than guessing at field names:\n\n   ```ts\n   export async function askGlean(question: string) {\n     const response = await glean.client.chat.create({\n       messages: [{ author: 'USER', fragments: [{ text: question }] }],\n     });\n\n     const contentMessages = (response.messages ?? []).filter(\n       (m) => m.messageType === 'CONTENT',\n     );\n     const fragments = contentMessages.flatMap((m) => m.fragments ?? []);\n\n     const answer = fragments.map((f) => f.text ?? '').join('');\n\n     const citations = fragments\n       .map((f) => f.citation?.sourceDocument)\n       .filter(\n         (doc): doc is NonNullable<typeof doc> => !!doc?.title && !!doc?.url,\n       );\n     const uniqueCitations = Array.from(\n       new Map(citations.map((doc) => [doc.url, doc])).values(),\n     );\n\n     return { answer, citations: uniqueCitations };\n   }\n   ```\n\n   Notes on the response shape, since guessing at field names here is\n   easy to get wrong:\n   - The response can include earlier step-narration messages (search/read\n     progress) before the real answer. Filter to `messageType === 'CONTENT'`\n     or that narration text ends up prepended to the answer.\n   - Citations live per-fragment, in `fragment.citation.sourceDocument`,\n     not a top-level `citedDocuments` field, and not the\n     `message.citations[]` field, which is deprecated and not populated\n     on a live agentic response. Dedupe by `url` since the same source is\n     commonly cited by more than one fragment.\n\n4. Frontend: on submit, call your server-side function with the question,\n   append the response to the thread, and render each citation as a safe\n   link using its `title` and `url`. Show a visible loading message, disable\n   duplicate submits, keep the thread scrolled to the newest message, and\n   show an inline retryable error if the request fails.\n\n5. Style it like the Glean cookbook demos: light gray `#f7f8fa` page,\n   white cards with subtle `#e7e8ed` borders, 16px radii, restrained shadows,\n   Inter/system sans, strong typographic hierarchy, and `#343ced` as the\n   primary accent. Avoid a generic chatbot bubble, oversized hero, gradients\n   behind text, and a separate answer box below the form. Use this\n   exact mark as the page's logo/icon instead of a generic chat icon.\n   Inline the SVG directly rather than approximating it:\n\n   ```svg\n   <svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 32 32\" width=\"32\" height=\"32\" fill=\"none\" role=\"img\" aria-label=\"Glean\">\n     <path d=\"M24.3006 2.95427L20.7656 0.199951L17.9028 3.99527C13.5653 1.93495 8.23019 3.08439 5.19394 7.00983C1.65888 11.5642 2.483 18.1138 7.03738 21.6489C8.77238 22.9935 10.7893 23.7092 12.8279 23.8177C16.1461 24.0128 19.5077 22.6248 21.6765 19.8055C24.7344 15.88 24.5175 10.4148 21.4596 6.72789L24.3006 2.95427ZM18.1197 17.0512C16.1028 19.632 12.3725 20.1091 9.77001 18.0922C7.18919 16.0752 6.71207 12.3233 8.72901 9.74246C9.70494 8.48458 11.1146 7.68214 12.6761 7.48696C13.0448 7.44358 13.4135 7.4219 13.7822 7.44358C14.975 7.50865 16.1244 7.94239 17.0787 8.67977C19.6595 10.7184 20.1366 14.4703 18.1197 17.0512Z\" fill=\"#4718F2\"></path>\n     <path d=\"M24.5176 21.6922C23.932 22.4513 23.2814 23.1236 22.5657 23.7525C21.8717 24.3381 21.1127 24.8803 20.3102 25.3357C19.5295 25.7695 18.6837 26.1382 17.8378 26.4201C16.992 26.702 16.1028 26.8972 15.2137 27.0057C14.3245 27.1141 13.4353 27.1575 12.5244 27.0924C11.6135 27.0273 10.7243 26.8755 9.85684 26.6587L9.66165 27.3743L8.77246 30.9962C9.90021 31.2998 11.0497 31.4733 12.2208 31.56C12.2642 31.56 12.3292 31.56 12.3726 31.56C13.5003 31.6251 14.6498 31.5817 15.7558 31.4516C16.927 31.2998 18.0981 31.0395 19.2258 30.6708C20.3536 30.3022 21.4597 29.825 22.5007 29.2395C23.5634 28.6539 24.561 27.9382 25.4935 27.1575C26.4478 26.355 27.3153 25.4442 28.0744 24.4465C28.1828 24.3164 28.2695 24.1646 28.378 24.0128L24.7779 21.3452C24.6694 21.4537 24.6044 21.5838 24.5176 21.6922Z\" fill=\"#4718F2\"></path>\n   </svg>\n   ```\n\n6. Give the assistant a short system framing so it stays on-topic: it\n   should present itself as \"IT Help\" and answer IT/helpdesk\n   questions using only what Glean returns. Don't have it improvise\n   troubleshooting steps Glean didn't cite.\n\n7. When you're done, tell me the two things I need to test:\n   - Ask \"Where do I reset my SSO password?\" and confirm the answer\n     cites a source from my own indexed content.\n   - Ask \"How do I request a new laptop?\" and confirm the answer\n     cites a source from my own indexed content.\n\nThis is a private, single-user prototype. The backend token is one service\nidentity: every request has the token owner's Glean access, not the person\nopening the page. Keep the project private and do not deploy or share it. If\nI ask for a multi-user deployment, stop and require app authentication plus\na per-user Glean OAuth token; never represent a shared token as per-user\npermission enforcement. Do not add a ticketing integration."
+    }
   },
   {
     "id": "no-code-pto-lookup-replit",
-    "title": "Build a PTO lookup page in Replit",
-    "description": "Paste a prompt into Replit Agent to get a private page that answers PTO and benefits questions from your Glean docs.",
+    "title": "PTO & benefits lookup — no code, on Replit",
+    "description": "Prompt Replit Agent into a private, single-user HR lookup prototype on the Glean Chat API — zero hand-written backend.",
     "sidebarLabel": "PTO Lookup (Replit)",
     "surfaces": ["client-api"],
     "status": "showcase",
@@ -1735,7 +1704,7 @@
         },
         {
           "id": "topic",
-          "prompt": "What HR topic do you know your docs cover?"
+          "prompt": "What HR topic do you know exists in your Glean content?"
         }
       ],
       "auth": [
@@ -1753,17 +1722,17 @@
     },
     "prerequisites": [
       "A Replit account with Agent access",
-      "A Glean Client API token with the CHAT scope. Create it in Admin Console → API access → Client API tokens, and keep it in Replit Secrets. Every request uses that token owner's access",
-      "A private Repl. Multi-user deployments require authenticated per-user Glean OAuth"
+      "A Glean Client API token with the CHAT scope. Create it in Admin Console → API access → Client API tokens, then keep it in Replit Secrets; every request uses this one token owner's access",
+      "A private Repl — multi-user deployments require authenticated per-user Glean OAuth"
     ],
     "demoQueries": [
       {
         "query": "What is our PTO policy?",
-        "expectedBehavior": "A cited answer from your own HR docs, with a real title and URL."
+        "expectedBehavior": "Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content."
       },
       {
-        "query": "what's our revenue?",
-        "expectedBehavior": "No fabricated answer when Glean cites nothing. The page shows that it does not know."
+        "query": "When is open enrollment?",
+        "expectedBehavior": "Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content."
       }
     ],
     "codeAssets": [
@@ -1774,50 +1743,19 @@
       }
     ],
     "scaffoldActions": [],
-    "pasteTarget": "Replit",
-    "pastePromptFile": "replit-agent-prompt.md",
-    "steps": [
-      {
-        "title": "Copy your instance name",
-        "description": "Copy the instance name from the lookup on this page, or from `https://app.glean.com/admin/about-glean`. For `https://acme-be.glean.com` that value is `acme`, not the full URL and not `app.glean.com`. Cookbook plugin users can run `resolve-backend.mjs` with the work email and use the `instance` field.",
-        "kind": "configure"
-      },
-      {
-        "title": "Copy the prompt into a private Repl",
-        "description": "Click `Copy Replit prompt`. Replace `<your-glean-instance>` with your instance name. Paste the result into a new private Repl at `https://replit.com/new` and open Agent. Cookbook plugin users: the same text is in `replit-agent-prompt.md` next to this skill.",
-        "kind": "handoff"
-      },
-      {
-        "title": "Add secrets when Replit asks",
-        "description": "When Replit Agent asks, add `GLEAN_API_TOKEN` and `GLEAN_INSTANCE` in the Secrets tab, never in the chat. This token is one person's Glean access. Keep the Repl private.",
-        "kind": "authenticate"
-      },
-      {
-        "title": "Ask a PTO question, then an off-topic one",
-        "description": "Ask \"What is our PTO policy?\" and confirm a cited answer from your own docs. Then ask \"what's our revenue?\" and confirm the assistant does not invent an answer when Glean cites nothing.",
-        "kind": "verify-live"
-      }
-    ],
-    "aiPrompt": "I'm using Cursor, Claude Code, or Codex, not Replit Agent. Do not open Replit. Ask for my work email if needed, run `node <cookbook-plugin-root>/scripts/resolve-backend.mjs \"<work-email>\"`, and use the instance field from that JSON as GLEAN_INSTANCE. Open replit-agent-prompt.md next to this skill. Replace <your-glean-instance> with that name and set the first suggested question to a natural question about the HR topic they named. Show me the filled prompt so I can paste it into a new private Repl. Remind me GLEAN_API_TOKEN and GLEAN_INSTANCE go in Replit Secrets, never in the prompt. Then walk the remaining steps.",
-    "llmContext": "Keep this single-user prototype private. Its shared backend token is one service identity, so every request has the token owner's access. Multi-user deployment requires app authentication and per-user Glean OAuth. Keep the token in Replit Secrets, call glean.client.chat.create with USER message fragments, read CONTENT text and fragment.citation.sourceDocument citations, and show cited answers or an explicit no-answer state. GLEAN_INSTANCE is Instance name from https://app.glean.com/admin/about-glean, for example acme.",
+    "aiPrompt": "I'm using Replit Agent, not you, to build this — your job is to prepare\nmy inputs per\nhttps://developers.glean.com/cookbook/no-code-pto-lookup-replit\n\n1. Resolve my Glean server URL from the work email already supplied with the cookbook plugin's resolve-backend.mjs script, then fill it and the supplied topic into the recipe prompt template.\n2. Remind me: token goes in Replit Secrets as GLEAN_API_TOKEN, never\n   in the prompt. It is one service identity, so keep this prototype\n   private; multi-user deployment requires per-user Glean OAuth.\n3. After Replit builds it, hand it back to me — see Verify below for\n   the exact queries to test and what a correct result looks like.",
+    "llmContext": "Keep this single-user prototype private. Its shared backend token is one service identity, so every request has the token owner's access; it does not enforce permissions for each visitor. Multi-user deployment requires app authentication and per-user Glean OAuth. Keep the token server-side, call glean.client.chat.create with USER message fragments, read CONTENT text and fragment.citation.sourceDocument citations, and show cited answers or an explicit no-answer state.",
     "goDependency": false,
     "featured": false,
     "tags": ["no-code", "hr"],
     "content": {
-      "problem": "HR fields the same PTO and benefits questions on repeat. The answers are already in your docs.\n\nThis recipe builds a private Replit page that looks those answers up in Glean. Nobody on the team has to write a backend.",
+      "problem": "Your HR team fields the same PTO and benefits questions on repeat. You want\na self-serve lookup tool answered from your real HR docs — but nobody on\nthe team writes backend code, and you don't want to wait for an engineer\nto have time for it.",
       "takeItFurther": [
         "Scope the `CHAT` token even further if your Glean plan supports per-collection tokens, so this tool can only ever answer from HR content.",
-        "Compare this to [`no-code-it-helpdesk-lovable`](/cookbook/no-code-it-helpdesk-lovable). Same Chat API call, same constraint that the browser never holds the token, different no-code tool and persona.",
+        "Compare this to [`no-code-it-helpdesk-lovable`](/cookbook/no-code-it-helpdesk-lovable) — same Chat API call, same \"browser never holds the token\" constraint, different no-code tool and persona.",
         "Once your team outgrows the no-code version, [`company-answers`](/cookbook/company-answers) shows the same pattern as a hand-written, version-controlled app."
-      ],
-      "limitations": [
-        {
-          "title": "Not run on a live Replit account yet",
-          "description": "Finish the two verify questions on your own instance before you trust the generated app."
-        }
       ]
-    },
-    "pastePrompt": "Build \"HR Assistant\", a single-page chat tool that answers employee\nquestions about PTO and benefits using the Glean Chat API. I don't want to\nwrite or review implementation code; you own that. I do want to review the\nrunning app and its use of secrets.\n\nStack: Node.js + Express backend, plain HTML/CSS/JS frontend (no framework\nneeded). The backend is the only thing that talks to Glean. The browser\nnever sees a Glean API token.\n\n1. Scaffold an Express server with one route:\n   - GET  /          → serves a polished assistant workspace described in\n     step 4 below.\n   - POST /api/ask    → body `{ \"question\": string }`, calls Glean, returns\n     `{ \"answer\": string, \"citations\": [{ \"title\": string, \"url\": string }] }`.\n\n2. Install `@gleanwork/api-client` (pin the version; do not use a `^` or\n   `latest` range) and construct the client like this:\n\n   ```ts\n   import { Glean } from '@gleanwork/api-client';\n\n   const glean = new Glean({\n     apiToken: process.env.GLEAN_API_TOKEN,\n     instance: process.env.GLEAN_INSTANCE, // e.g. \"<your-glean-instance>\"\n   });\n   ```\n\n   Both `GLEAN_API_TOKEN` and `GLEAN_INSTANCE` must come from Replit\n   Secrets (the padlock icon in the sidebar), never hardcoded and never\n   sent to the browser. Stop and ask me for these two values by name\n   before running the app. Do not invent placeholder values and move on.\n\n3. Call the Chat API like this. The response shape is specific, follow it\n   exactly rather than guessing at field names:\n\n   ```ts\n   export async function askGlean(question: string) {\n     const response = await glean.client.chat.create({\n       messages: [{ author: 'USER', fragments: [{ text: question }] }],\n     });\n\n     const contentMessages = (response.messages ?? []).filter(\n       (m) => m.messageType === 'CONTENT',\n     );\n     const fragments = contentMessages.flatMap((m) => m.fragments ?? []);\n\n     const answer = fragments.map((f) => f.text ?? '').join('');\n\n     const citations = fragments\n       .map((f) => f.citation?.sourceDocument)\n       .filter(\n         (doc): doc is NonNullable<typeof doc> => !!doc?.title && !!doc?.url,\n       );\n     const uniqueCitations = Array.from(\n       new Map(citations.map((doc) => [doc.url, doc])).values(),\n     );\n\n     return { answer, citations: uniqueCitations };\n   }\n   ```\n\n   Notes on the response shape, since guessing at field names here is\n   easy to get wrong:\n   - The response can include earlier step-narration messages (search/read\n     progress) before the real answer. Filter to `messageType === 'CONTENT'`\n     or that narration text ends up prepended to the answer.\n   - Citations live per-fragment, in `fragment.citation.sourceDocument`,\n     not a top-level `citedDocuments` field, and not the\n     `message.citations[]` field, which is deprecated and not populated\n     on a live agentic response. Dedupe by `url` since the same source is\n     commonly cited by more than one fragment.\n\n4. Frontend: build a real \"HR Assistant\" thread. On desktop, use a compact\n   two-column workspace: a short PTO/benefits intro with three suggested\n   questions on the left, and the assistant on the right. The three\n   questions are \"How do I get help with <topic>?\", \"What is our PTO\n   policy?\", and \"How do I request parental leave?\" Keep the assistant,\n   composer, and latest answer above the fold. On mobile, put the assistant\n   first. Append user and assistant messages, pin the composer, auto-scroll\n   inside the thread, and render citations as compact source chips under the\n   answer. Show a visible loading message, disable duplicate submits, and show\n   an inline retryable error if the request fails.\n\n5. Style it like the Glean cookbook demos: light gray `#f7f8fa` page,\n   white cards with subtle `#e7e8ed` borders, 16px radii, restrained shadows,\n   Inter/system sans, strong typographic hierarchy, and `#343ced` as the\n   primary accent. Avoid a generic chatbot bubble, oversized hero, gradients\n   behind text, and a separate answer box below the form. Use this\n   exact mark as the page's logo/icon instead of a generic chat icon.\n   Inline the SVG directly rather than approximating it:\n\n   ```svg\n   <svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 32 32\" width=\"32\" height=\"32\" fill=\"none\" role=\"img\" aria-label=\"Glean\">\n     <path d=\"M24.3006 2.95427L20.7656 0.199951L17.9028 3.99527C13.5653 1.93495 8.23019 3.08439 5.19394 7.00983C1.65888 11.5642 2.483 18.1138 7.03738 21.6489C8.77238 22.9935 10.7893 23.7092 12.8279 23.8177C16.1461 24.0128 19.5077 22.6248 21.6765 19.8055C24.7344 15.88 24.5175 10.4148 21.4596 6.72789L24.3006 2.95427ZM18.1197 17.0512C16.1028 19.632 12.3725 20.1091 9.77001 18.0922C7.18919 16.0752 6.71207 12.3233 8.72901 9.74246C9.70494 8.48458 11.1146 7.68214 12.6761 7.48696C13.0448 7.44358 13.4135 7.4219 13.7822 7.44358C14.975 7.50865 16.1244 7.94239 17.0787 8.67977C19.6595 10.7184 20.1366 14.4703 18.1197 17.0512Z\" fill=\"#4718F2\"></path>\n     <path d=\"M24.5176 21.6922C23.932 22.4513 23.2814 23.1236 22.5657 23.7525C21.8717 24.3381 21.1127 24.8803 20.3102 25.3357C19.5295 25.7695 18.6837 26.1382 17.8378 26.4201C16.992 26.702 16.1028 26.8972 15.2137 27.0057C14.3245 27.1141 13.4353 27.1575 12.5244 27.0924C11.6135 27.0273 10.7243 26.8755 9.85684 26.6587L9.66165 27.3743L8.77246 30.9962C9.90021 31.2998 11.0497 31.4733 12.2208 31.56C12.2642 31.56 12.3292 31.56 12.3726 31.56C13.5003 31.6251 14.6498 31.5817 15.7558 31.4516C16.927 31.2998 18.0981 31.0395 19.2258 30.6708C20.3536 30.3022 21.4597 29.825 22.5007 29.2395C23.5634 28.6539 24.561 27.9382 25.4935 27.1575C26.4478 26.355 27.3153 25.4442 28.0744 24.4465C28.1828 24.3164 28.2695 24.1646 28.378 24.0128L24.7779 21.3452C24.6694 21.4537 24.6044 21.5838 24.5176 21.6922Z\" fill=\"#4718F2\"></path>\n   </svg>\n   ```\n\n6. Give the assistant a short system framing so it stays on-topic: it\n   should present itself as \"HR Assistant\" and answer PTO/benefits\n   questions using only what Glean returns. Don't have it add HR advice\n   Glean didn't cite.\n\n7. When you're done, tell me the two things I need to test:\n   - Ask \"What is our PTO policy?\" and confirm the answer cites a\n     source from my own indexed content.\n   - Ask \"what's our revenue?\" and confirm the assistant does not\n     fabricate an answer when Glean has nothing relevant to cite.\n\nThis is a private, single-user prototype. The backend token is one service\nidentity: every request has the token owner's Glean access, not the person\nopening the page. Keep the Repl private and do not deploy or share it. If I\nask for a multi-user deployment, stop and require app authentication plus a\nper-user Glean OAuth token; never represent a shared token as per-user\npermission enforcement. Do not add a database."
+    }
   },
   {
     "id": "onboarding-hub",
