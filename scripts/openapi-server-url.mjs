@@ -12,7 +12,7 @@
  */
 
 import fs from 'fs';
-import yaml from 'js-yaml';
+import * as yaml from 'js-yaml';
 
 const [input, output = input] = process.argv.slice(2);
 

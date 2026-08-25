@@ -22,7 +22,7 @@ import { fileURLToPath } from 'url';
 import { parseArgs } from 'node:util';
 import jscodeshift from 'jscodeshift';
 import * as prettier from 'prettier';
-import yaml from 'js-yaml';
+import * as yaml from 'js-yaml';
 
 const j = jscodeshift.withParser('tsx');
 
