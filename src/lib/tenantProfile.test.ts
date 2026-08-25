@@ -9,6 +9,7 @@ import {
   resolveOpenApiServerUrl,
   tenantApiUrlMatches,
   TENANT_PROFILE_STORAGE_KEY,
+  instanceNameFromApiUrl,
 } from './tenantProfile';
 
 class MemoryStorage implements Storage {
@@ -393,6 +394,20 @@ describe('tenant profile persistence', () => {
       profile: { apiUrl: 'https://other.example.com' },
     });
     expect(listener).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('instanceNameFromApiUrl', () => {
+  it('reads the slug from a Glean-hosted API origin', () => {
+    expect(instanceNameFromApiUrl('https://acme-be.glean.com')).toBe('acme');
+    expect(instanceNameFromApiUrl('https://company-prod-be.glean.com/')).toBe(
+      'company-prod',
+    );
+  });
+
+  it('returns undefined for vanity hosts and the web app', () => {
+    expect(instanceNameFromApiUrl('https://knowledge.example.org')).toBeUndefined();
+    expect(instanceNameFromApiUrl('https://app.glean.com')).toBeUndefined();
   });
 });
 

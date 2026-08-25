@@ -113,6 +113,18 @@ function normalizeApiUrl(value: string): string | null {
   }
 }
 
+/** `acme` from `https://acme-be.glean.com`. Undefined for custom or vanity hosts. */
+export function instanceNameFromApiUrl(apiUrl: string): string | undefined {
+  const origin = normalizeApiUrl(apiUrl);
+  if (!origin) return undefined;
+  try {
+    const match = new URL(origin).hostname.match(/^([a-z0-9-]+)-be\.glean\.com$/i);
+    return match?.[1];
+  } catch {
+    return undefined;
+  }
+}
+
 function sameOrigin(left: unknown, right: unknown): boolean {
   if (typeof left !== 'string' || typeof right !== 'string') return false;
   try {

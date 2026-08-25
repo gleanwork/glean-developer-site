@@ -1,15 +1,34 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { describe, it, expect } from 'vitest';
+import React from 'react';
+import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { FeatureFlagsContext } from '@site/src/theme/Root';
+import { tenantProfileStore } from '@site/src/lib/tenantProfile';
 import RecipeIndex from './RecipeIndex';
-import RecipeLayout, { RecipeArchitecture } from './RecipeLayout';
+import RecipeLayout, { RecipeArchitecture, RecipeSteps } from './RecipeLayout';
 import FlagshipCard from './FlagshipCard';
 import type { RecipeRecord } from '../../types/recipe';
 import type { AuthKind } from './authContexts';
 import catStyles from './categories.module.css';
 import layoutStyles from './RecipeLayout.module.css';
+
+function renderWithTenantFlag(ui: React.ReactElement, enabled = true) {
+  return render(
+    <FeatureFlagsContext.Provider
+      value={
+        {
+          isEnabled: (flag: string) =>
+            enabled && flag === 'tenant-api-personalization',
+          flagConfigs: {},
+        } as React.ContextType<typeof FeatureFlagsContext>
+      }
+    >
+      {ui}
+    </FeatureFlagsContext.Provider>,
+  );
+}
 
 function readCss(fileName: string): string {
   return fs.readFileSync(path.resolve(__dirname, fileName), 'utf8');
@@ -283,7 +302,7 @@ describe('RecipeLayout', () => {
 
     const run = screen.getByRole('button', { name: /Run this recipe/ });
     expect(run).toHaveAttribute('aria-expanded', 'false');
-    expect(screen.queryByText(/Copy build prompt/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Copy assistant prompt/)).not.toBeInTheDocument();
 
     await user.click(run);
     expect(run).toHaveAttribute('aria-expanded', 'true');
@@ -472,10 +491,119 @@ describe('RecipeLayout', () => {
     );
 
     expect(
-      screen.getByRole('button', { name: /Copy build prompt/ }),
+      screen.getByRole('button', { name: /Copy assistant prompt/ }),
     ).toBeInTheDocument();
     expect(screen.queryByText(/Run this recipe/)).not.toBeInTheDocument();
-    expect(screen.getByText(/Lovable or Replit/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Paste into Claude Code, Cursor, or Codex/),
+    ).toBeInTheDocument();
+  });
+
+  it('copies the builder prompt for third-party recipes that ship one', async () => {
+    const user = userEvent.setup();
+    const writeText = vi
+      .spyOn(navigator.clipboard, 'writeText')
+      .mockResolvedValue(undefined);
+    render(
+      <RecipeLayout
+        plugin={plugin}
+        recipe={makeRecipe({
+          buildMethod: 'third-party-build',
+          pasteTarget: 'Lovable',
+          pastePrompt: 'Build the IT page.',
+          aiPrompt: 'This is the assistant prompt and must not be copied.',
+        })}
+      >
+        <p>Body</p>
+      </RecipeLayout>,
+    );
+
+    expect(
+      screen.getByRole('button', { name: /Copy Lovable prompt/ }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/Paste into a new private Lovable project/),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/Copy assistant prompt/)).not.toBeInTheDocument();
+
+    await user.click(
+      screen.getByRole('button', { name: /Copy Lovable prompt/ }),
+    );
+    expect(writeText).toHaveBeenCalledWith('Build the IT page.');
+  });
+
+  it('renders backtick spans in structured steps as inline code', () => {
+    render(
+      <RecipeLayout
+        plugin={plugin}
+        recipe={makeRecipe({
+          steps: [
+            {
+              title: 'Copy your instance name',
+              description:
+                'Open `https://app.glean.com/admin/about-glean` and copy `acme`.',
+            },
+          ],
+        })}
+      >
+        <RecipeSteps />
+      </RecipeLayout>,
+    );
+
+    expect(
+      screen.getByText('https://app.glean.com/admin/about-glean').tagName,
+    ).toBe('CODE');
+    expect(screen.getByText('acme').tagName).toBe('CODE');
+  });
+
+  it('shows the email lookup on third-party recipes when tenant personalization is on', async () => {
+    tenantProfileStore.clear();
+    renderWithTenantFlag(
+      <RecipeLayout
+        plugin={plugin}
+        recipe={makeRecipe({
+          buildMethod: 'third-party-build',
+          steps: [
+            {
+              title: 'Copy your instance name',
+              description:
+                'Copy the instance name from the lookup on this page.',
+            },
+          ],
+        })}
+      >
+        <RecipeSteps />
+      </RecipeLayout>,
+    );
+
+    expect(
+      await screen.findByText('Find your instance name'),
+    ).toBeInTheDocument();
+    expect(screen.getByText('Find my API URL')).toBeInTheDocument();
+  });
+
+  it('copies the instance slug after a Glean API URL is configured', async () => {
+    tenantProfileStore.clear();
+    tenantProfileStore.setManualApiUrl('https://acme-be.glean.com');
+    renderWithTenantFlag(
+      <RecipeLayout
+        plugin={plugin}
+        recipe={makeRecipe({
+          buildMethod: 'third-party-build',
+          steps: [
+            {
+              title: 'Copy your instance name',
+              description:
+                'Copy the instance name from the lookup on this page.',
+            },
+          ],
+        })}
+      >
+        <RecipeSteps />
+      </RecipeLayout>,
+    );
+
+    expect(await screen.findByLabelText('Instance name')).toHaveValue('acme');
   });
 
   it('links token creation from the rail for hosted-secret recipes', () => {

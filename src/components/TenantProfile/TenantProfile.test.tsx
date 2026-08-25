@@ -28,7 +28,7 @@ function renderTenantProfile(
 }
 
 beforeEach(() => {
-  window.localStorage.clear();
+  window.localStorage?.clear();
   tenantProfileStore.clear();
 });
 
@@ -63,6 +63,29 @@ describe('TenantProfileControl', () => {
       kind: 'configured',
       profile: { apiUrl: 'https://knowledge.example.org', source: 'manual' },
     });
+  });
+
+  it('uses a custom heading and description when provided', async () => {
+    render(
+      <FeatureFlagsContext.Provider
+        value={
+          {
+            isEnabled: (flag: string) => flag === 'tenant-api-personalization',
+            flagConfigs: {},
+          } as React.ContextType<typeof FeatureFlagsContext>
+        }
+      >
+        <TenantProfileControl
+          heading="Find your instance name"
+          description="Enter your work email."
+        />
+      </FeatureFlagsContext.Provider>,
+    );
+
+    expect(
+      await screen.findByText('Find your instance name'),
+    ).toBeInTheDocument();
+    expect(screen.getByText('Enter your work email.')).toBeInTheDocument();
   });
 
   it('uses a status label instead of repeating the API URL heading in compact mode', async () => {
