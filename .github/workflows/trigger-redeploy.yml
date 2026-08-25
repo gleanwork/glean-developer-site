@@ -24,6 +24,8 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       has_changes: ${{ steps.check-generated.outputs.has_changes }}
+      has_semantic_changes: ${{ steps.openapi-diff.outputs.has_semantic_changes }}
+      diff_failed: ${{ steps.openapi-diff.outputs.diff_failed }}
 
     steps:
       - name: Generate App Token
@@ -49,6 +51,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Install openapi-changes
+        run: npm install --global @pb33f/openapi-changes@0.0.80
+
       - name: Regenerate OpenAPI documentation
         run: |
           echo "📋 Regenerating OpenAPI documentation..."
@@ -57,7 +62,20 @@ jobs:
           echo "✅ Documentation regenerated successfully"
 
       - name: Format generated files
-        run: pnpm prettier --write .
+        run: >-
+          pnpm prettier --write
+          openapi
+          docs/api
+          docs/errors
+          src/data/deprecations.json
+          src/data/experimental.json
+          src/data/platform-errors.json
+
+      - name: Generate OpenAPI delta report
+        id: openapi-diff
+        env:
+          OPENAPI_TRIGGER_REASON: ${{ github.event.inputs.reason }}
+        run: pnpm openapi:diff-report --output "$RUNNER_TEMP/openapi-delta.md"
 
       - name: Check for generated changes
         id: check-generated
@@ -81,32 +99,15 @@ jobs:
           token: ${{ steps.app-token.outputs.token }}
           commit-message: 'chore: regenerate OpenAPI documentation'
           title: 'Regenerate OpenAPI Documentation'
-          body: |
-            ## 🔄 OpenAPI Documentation Regeneration
-
-            **Trigger reason**: ${{ github.event.inputs.reason }}
-            **Triggered by**: ${{ github.actor }}
-            **Run ID**: [${{ github.run_id }}](https://github.com/gleanwork/glean-developer-site/actions/runs/${{ github.run_id }})
-
-            ### Actions taken:
-            - Downloaded latest OpenAPI specs from GitHub Pages
-            - Split client API by tags
-            - Resolved circular references
-            - Capitalized language names in code samples
-            - Regenerated all MDX documentation
-            - Cleaned up unnecessary files (.info.mdx, sidebar.ts)
-
-            ### Files affected:
-            - `openapi/` - Updated spec files
-            - `docs/api/client-api/` - Regenerated client API docs
-            - `docs/api/indexing-api/` - Regenerated indexing API docs
-
-            Please review the changes if needed, otherwise the PR will auto-merge when checks pass.
+          body-path: ${{ runner.temp }}/openapi-delta.md
           branch: ci/regenerate-openapi-docs
           delete-branch: true
 
       - name: Enable Auto-Merge
-        if: steps.check-generated.outputs.has_changes == 'true'
+        if: >-
+          steps.check-generated.outputs.has_changes == 'true' &&
+          steps.openapi-diff.outputs.has_semantic_changes == 'false' &&
+          steps.openapi-diff.outputs.diff_failed == 'false'
         uses: peter-evans/enable-pull-request-automerge@v3
         with:
           token: ${{ steps.app-token.outputs.token }}
@@ -119,8 +120,12 @@ jobs:
     steps:
       - name: Print Summary
         run: |
-          if [[ "${{ needs.trigger-redeploy.outputs.has_changes }}" == "true" ]]; then
-            echo "🎉 Documentation regenerated and PR created with auto-merge enabled!"
-          else
+          if [[ "${{ needs.trigger-redeploy.outputs.has_changes }}" != "true" ]]; then
             echo "✅ Documentation is already up to date - no changes needed"
+          elif [[ "${{ needs.trigger-redeploy.outputs.diff_failed }}" == "true" ]]; then
+            echo "⚠️ Documentation PR created, but semantic diff failed; manual review is required"
+          elif [[ "${{ needs.trigger-redeploy.outputs.has_semantic_changes }}" == "true" ]]; then
+            echo "🔎 Documentation PR created with API-surface changes; manual review is required"
+          else
+            echo "🎉 Documentation regenerated and PR created with auto-merge enabled!"
           fi
