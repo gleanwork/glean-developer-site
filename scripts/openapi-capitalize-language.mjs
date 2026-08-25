@@ -8,7 +8,7 @@
 import fs from 'fs';
 import https from 'https';
 import http from 'http';
-import yaml from 'js-yaml';
+import * as yaml from 'js-yaml';
 import { dirname } from 'path';
 
 // Capitalization helper

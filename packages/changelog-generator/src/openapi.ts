@@ -3,7 +3,7 @@ import type { Octokit } from 'octokit';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { createRequire } from 'node:module';
-import yaml from 'js-yaml';
+import * as yaml from 'js-yaml';
 import { runOpenApiChanges } from './openapi-changes-runner.js';
 
 const require = createRequire(import.meta.url);
