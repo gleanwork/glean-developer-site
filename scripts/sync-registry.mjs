@@ -208,6 +208,11 @@ export function extractPluginCoordinates(raw) {
   };
 }
 
+/** Docs-site pages: hidden recipes stay in the registry snapshot, not in MDX. */
+export function listedRecipes(entries) {
+  return entries.filter((entry) => entry.hidden !== true);
+}
+
 const pagesDir = path.join(repoRoot, 'docs', 'cookbook');
 
 /** Section headings the cookbook supplies; everything else passes through as prose. */
@@ -348,6 +353,41 @@ ${parts.join('\n\n')}
 `;
 }
 
+/**
+ * Writes listed recipe pages and deletes leftovers (including newly hidden ids).
+ * `index.mdx` is hand-authored and is left alone.
+ */
+export function writeRecipePages(entries, outputDir = pagesDir) {
+  const listed = listedRecipes(entries);
+  fs.mkdirSync(outputDir, { recursive: true });
+  const written = new Set();
+  for (const [index, entry] of listed.entries()) {
+    const sections = [
+      `## Problem\n\n${entry.content.problem}`,
+      ...(entry.content.guardrails ?? []).map(
+        ({ title, rule }) => `## ${title}\n\n${rule}`,
+      ),
+      ...(entry.content.limitations ?? []).map(
+        ({ title, description }) => `## ${title}\n\n${description}`,
+      ),
+      `## Take it further\n\n${entry.content.takeItFurther.map((item) => `- ${item}`).join('\n')}`,
+    ];
+    const markdown = sections.join('\n\n');
+    fs.writeFileSync(
+      path.join(outputDir, `${entry.id}.mdx`),
+      renderPage(entry, markdown, listed[index - 1], listed[index + 1]),
+    );
+    written.add(entry.id);
+  }
+  for (const file of fs.readdirSync(outputDir)) {
+    if (!file.endsWith('.mdx') || file === 'index.mdx') continue;
+    if (!written.has(file.replace(/\.mdx$/, ''))) {
+      fs.rmSync(path.join(outputDir, file));
+    }
+  }
+  return written;
+}
+
 async function main() {
   console.log(`📡 Fetching ${REGISTRY_PATH} from ${REPO}...`);
   if (!process.env.GITHUB_TOKEN) {
@@ -376,41 +416,17 @@ async function main() {
     `✅ Wrote ${parsed.length} recipe(s) to ${path.relative(repoRoot, registryFile)}`,
   );
 
-  const previewCount = await syncPreviewAssets(parsed, fetchSourceBuffer);
+  const previewCount = await syncPreviewAssets(
+    listedRecipes(parsed),
+    fetchSourceBuffer,
+  );
   console.log(
     `✅ Wrote ${previewCount} preview asset(s) to ${path.relative(repoRoot, previewsDir)}`,
   );
 
-  console.log(`🧱 Rendering ${parsed.length} page(s) from cookbook data...`);
-  fs.mkdirSync(pagesDir, { recursive: true });
-  const written = new Set();
-  for (const [index, entry] of parsed.entries()) {
-    const sections = [
-      `## Problem\n\n${entry.content.problem}`,
-      ...(entry.content.guardrails ?? []).map(
-        ({ title, rule }) => `## ${title}\n\n${rule}`,
-      ),
-      ...(entry.content.limitations ?? []).map(
-        ({ title, description }) => `## ${title}\n\n${description}`,
-      ),
-      `## Take it further\n\n${entry.content.takeItFurther.map((item) => `- ${item}`).join('\n')}`,
-    ];
-    const markdown = sections.join('\n\n');
-    fs.writeFileSync(
-      path.join(pagesDir, `${entry.id}.mdx`),
-      renderPage(entry, markdown, parsed[index - 1], parsed[index + 1]),
-    );
-    written.add(entry.id);
-  }
-  // A page with no upstream recipe is a leftover from a rename or retirement, and
-  // would otherwise fail recipes:compile with a confusing message.
-  for (const file of fs.readdirSync(pagesDir)) {
-    if (!file.endsWith('.mdx') || file === 'index.mdx') continue;
-    if (!written.has(file.replace(/\.mdx$/, ''))) {
-      fs.rmSync(path.join(pagesDir, file));
-      console.log(`🗑  Removed ${file} — no matching recipe upstream`);
-    }
-  }
+  const listed = listedRecipes(parsed);
+  console.log(`🧱 Rendering ${listed.length} page(s) from cookbook data...`);
+  const written = writeRecipePages(parsed);
   console.log(`✅ Wrote ${written.size} recipe page(s) to docs/cookbook/`);
 
   console.log(`📡 Fetching ${MARKETPLACE_PATH} from ${REPO}...`);

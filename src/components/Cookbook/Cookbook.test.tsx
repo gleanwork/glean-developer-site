@@ -59,6 +59,7 @@ function makeRecipe(overrides: Partial<RecipeRecord>): RecipeRecord {
     aiPrompt: 'Build the recipe.',
     goDependency: false,
     featured: false,
+    hidden: false,
     tags: [],
     ...overrides,
   };

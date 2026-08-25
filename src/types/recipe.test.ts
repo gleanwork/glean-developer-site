@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { parseRecipeEntry, RECIPE_SCAFFOLD_ACTIONS } from './recipe';
+import {
+  parseRecipeEntry,
+  RECIPE_SCAFFOLD_ACTIONS,
+  isListedOnDocs,
+} from './recipe';
 
 function validEntry() {
   return {
@@ -37,7 +41,18 @@ describe('parseRecipeEntry', () => {
     // defaults applied
     expect(result.record.tags).toEqual([]);
     expect(result.record.featured).toBe(false);
+    expect(result.record.hidden).toBe(false);
+    expect(isListedOnDocs(result.record)).toBe(true);
     expect(result.record.goDependency).toBe(false);
+  });
+
+  it('accepts hidden true', () => {
+    const entry = { ...validEntry(), hidden: true };
+    const result = parseRecipeEntry(entry, 'embed-search-chat');
+    expect(result.success).toBe(true);
+    if (!result.success) return;
+    expect(result.record.hidden).toBe(true);
+    expect(isListedOnDocs(result.record)).toBe(false);
   });
 
   it('accepts an optional sidebarLabel', () => {

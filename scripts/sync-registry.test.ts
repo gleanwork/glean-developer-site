@@ -6,8 +6,10 @@ import path from 'node:path';
 // @ts-ignore - plain .mjs module without type declarations
 import {
   extractPluginCoordinates,
+  listedRecipes,
   renderPage,
   syncPreviewAssets,
+  writeRecipePages,
 } from './sync-registry.mjs';
 
 /**
@@ -147,6 +149,69 @@ describe('renderPage', () => {
   });
 });
 
+describe('listedRecipes', () => {
+  it('drops hidden recipes and keeps the rest', () => {
+    expect(
+      listedRecipes([
+        { id: 'company-answers' },
+        { id: 'wip', hidden: true },
+        { id: 'embed-search-chat', hidden: false },
+      ]).map((entry: { id: string }) => entry.id),
+    ).toEqual(['company-answers', 'embed-search-chat']);
+  });
+});
+
+describe('writeRecipePages', () => {
+  const stubContent = {
+    problem: 'People need a useful recipe.',
+    takeItFurther: ['Add another capability.'],
+  };
+
+  it('writes listed pages, skips hidden ones, and deletes leftover hidden MDX', () => {
+    const output = fs.mkdtempSync(path.join(os.tmpdir(), 'cookbook-pages-'));
+    try {
+      fs.writeFileSync(path.join(output, 'index.mdx'), 'index');
+      fs.writeFileSync(path.join(output, 'wip.mdx'), 'stale hidden page');
+      const written = writeRecipePages(
+        [
+          {
+            id: 'company-answers',
+            title: 'Company Answers',
+            content: stubContent,
+          },
+          {
+            id: 'wip',
+            title: 'WIP',
+            hidden: true,
+            content: stubContent,
+          },
+          {
+            id: 'embed-search-chat',
+            title: 'Embed',
+            content: stubContent,
+          },
+        ],
+        output,
+      );
+
+      expect([...written].sort()).toEqual([
+        'company-answers',
+        'embed-search-chat',
+      ]);
+      expect(fs.existsSync(path.join(output, 'wip.mdx'))).toBe(false);
+      expect(fs.existsSync(path.join(output, 'index.mdx'))).toBe(true);
+      const first = fs.readFileSync(
+        path.join(output, 'company-answers.mdx'),
+        'utf8',
+      );
+      expect(first).toContain('pagination_next: "cookbook/embed-search-chat"');
+      expect(first).not.toContain('cookbook/wip');
+    } finally {
+      fs.rmSync(output, { recursive: true, force: true });
+    }
+  });
+});
+
 describe('syncPreviewAssets', () => {
   it('copies only declared cookbook previews into the generated static tree', async () => {
     const output = fs.mkdtempSync(path.join(os.tmpdir(), 'cookbook-previews-'));
@@ -180,6 +245,43 @@ describe('syncPreviewAssets', () => {
         ),
       ).toBe('RIFFxxxxWEBPpayload');
       expect(fs.existsSync(path.join(output, 'server-only'))).toBe(false);
+    } finally {
+      fs.rmSync(output, { recursive: true, force: true });
+    }
+  });
+
+  it('does not copy previews for hidden recipes when given the listed set', async () => {
+    const output = fs.mkdtempSync(path.join(os.tmpdir(), 'cookbook-previews-'));
+    const requested: string[] = [];
+    try {
+      const count = await syncPreviewAssets(
+        listedRecipes([
+          {
+            id: 'company-answers',
+            preview: {
+              path: 'recipes/company-answers/assets/preview.webp',
+            },
+          },
+          {
+            id: 'wip',
+            hidden: true,
+            preview: {
+              path: 'recipes/wip/assets/preview.webp',
+            },
+          },
+        ]),
+        async (sourcePath: string) => {
+          requested.push(sourcePath);
+          return Buffer.from('RIFFxxxxWEBPpayload');
+        },
+        output,
+      );
+
+      expect(count).toBe(1);
+      expect(requested).toEqual([
+        'recipes/company-answers/assets/preview.webp',
+      ]);
+      expect(fs.existsSync(path.join(output, 'wip'))).toBe(false);
     } finally {
       fs.rmSync(output, { recursive: true, force: true });
     }
