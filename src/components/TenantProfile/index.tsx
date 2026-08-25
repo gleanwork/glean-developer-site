@@ -12,6 +12,8 @@ import styles from './styles.module.css';
 interface TenantProfileControlProps {
   compact?: boolean;
   onConfigured?: () => void;
+  heading?: string;
+  description?: string;
 }
 
 const ERROR_MESSAGES: Record<TenantProfileErrorReason, string> = {
@@ -30,6 +32,8 @@ const ERROR_MESSAGES: Record<TenantProfileErrorReason, string> = {
 function TenantProfileControlContent({
   compact = false,
   onConfigured,
+  heading,
+  description,
 }: TenantProfileControlProps): React.ReactElement {
   const state = useTenantProfile();
   const [mode, setMode] = useState<'discover' | 'manual' | null>(null);
@@ -133,12 +137,16 @@ function TenantProfileControlContent({
       <div className={styles.panelHeader}>
         <div>
           <strong>
-            {apiUrl ? 'Change your Glean API URL' : 'Personalize API examples'}
+            {heading ??
+              (apiUrl
+                ? 'Change your Glean API URL'
+                : 'Personalize API examples')}
           </strong>
           <p>
-            {apiUrl
-              ? `Your current API URL is ${apiUrl}.`
-              : 'Find your API URL once and use it across examples and API reference pages.'}
+            {description ??
+              (apiUrl
+                ? `Your current API URL is ${apiUrl}.`
+                : 'Find your API URL once and use it across examples and API reference pages.')}
           </p>
         </div>
         {apiUrl || mode ? (

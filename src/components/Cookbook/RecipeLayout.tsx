@@ -14,6 +14,7 @@ import PluginRunButton from './PluginRunButton';
 import { AdaptiveBrandIcon, CATEGORY_ICONS } from './categories';
 import { BRAND_ICON_SRC } from './brandIcons';
 import { RecipeAuthCard } from './RecipeAuth';
+import RecipeInstanceLookup from './RecipeInstanceLookup';
 import { humanizeVariantLabel, variantScopeGroups } from './authContexts';
 import styles from './RecipeLayout.module.css';
 import catStyles from './categories.module.css';
@@ -54,9 +55,10 @@ function metaPill(icon: string, text: string): React.ReactElement {
  * button; copying `aiPrompt` for them would offer a worse, drift-prone path
  * than the page it sits on.
  *
- * `integrate` and `third-party-build` recipes keep copy-prompt, labelled
- * for the coding assistant. For third-party-build, that text is not the
- * Lovable or Replit paste. The builder prompt lives in the recipe directory.
+ * `integrate` recipes copy `aiPrompt` into Claude Code, Cursor, or Codex.
+ * `third-party-build` recipes copy `pastePrompt`, the text a reader pastes
+ * into Lovable or Replit. That prompt is inlined from the cookbook so nobody
+ * needs the repo on disk.
  */
 function ActionCard({
   recipe,
@@ -66,10 +68,14 @@ function ActionCard({
   plugin: CookbookPlugin;
 }): React.ReactElement {
   const [copied, setCopied] = useState(false);
+  const pasteTarget = recipe.pasteTarget;
+  const pasteText =
+    recipe.pastePrompt && pasteTarget ? recipe.pastePrompt : recipe.aiPrompt;
+  const copiesBuilderPrompt = Boolean(recipe.pastePrompt && pasteTarget);
 
   const copyPrompt = async () => {
     try {
-      await navigator.clipboard.writeText(recipe.aiPrompt);
+      await navigator.clipboard.writeText(pasteText);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
@@ -98,7 +104,11 @@ function ActionCard({
             height: 16,
             color: 'currentColor',
           })}
-          {copied ? 'Prompt copied' : 'Copy assistant prompt'}
+          {copied
+            ? 'Prompt copied'
+            : copiesBuilderPrompt
+              ? `Copy ${pasteTarget} prompt`
+              : 'Copy assistant prompt'}
         </button>
       )}
 
@@ -121,8 +131,8 @@ function ActionCard({
       <p className={styles.actionHint}>
         {isScaffold
           ? 'Runs the recipe through the Glean cookbook plugin.'
-          : recipe.buildMethod === 'third-party-build'
-            ? 'This text is for Cursor, Claude Code, or Codex, not for pasting into Lovable or Replit.'
+          : copiesBuilderPrompt
+            ? `Paste into a new private ${pasteTarget} project. Replace <your-glean-instance> first.`
             : 'Paste into Claude Code, Cursor, or Codex.'}
       </p>
     </div>
@@ -257,6 +267,16 @@ export function RecipeDemoQueries(): React.ReactElement | null {
 }
 
 /** One numbered row in a steps timeline. */
+function renderInlineCode(text: string): React.ReactNode {
+  const parts = text.split(/(`[^`]+`)/);
+  return parts.map((part, index) => {
+    if (part.startsWith('`') && part.endsWith('`') && part.length > 2) {
+      return <code key={index}>{part.slice(1, -1)}</code>;
+    }
+    return part;
+  });
+}
+
 function StepRow({
   index,
   step,
@@ -271,7 +291,7 @@ function StepRow({
         <p>
           <strong>{step.title}</strong>
         </p>
-        {step.description && <p>{step.description}</p>}
+        {step.description && <p>{renderInlineCode(step.description)}</p>}
         {step.command && (
           <pre className={styles.stepCommand}>
             <code>{step.command}</code>
@@ -320,6 +340,9 @@ export function RecipeSteps({
 
   return (
     <RecipeSection label="Steps">
+      {recipe.buildMethod === 'third-party-build' ? (
+        <RecipeInstanceLookup />
+      ) : null}
       {recipe.steps && recipe.steps.length > 0 && (
         <div className={styles.stepsWrap}>
           <div className={styles.stepsRail} />

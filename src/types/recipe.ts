@@ -370,6 +370,14 @@ export const recipeMetaSchema = z.strictObject({
   architecture: z.array(recipeArchitectureNodeSchema).optional(),
   content: recipeContentSchema,
   aiPrompt: z.string().min(1),
+  /**
+   * Third-party builder name the docs copy button pastes into, e.g. Lovable.
+   * Pair with `pastePromptFile` in recipe.json; `pastePrompt` is inlined into
+   * the synced registry so a docs reader can copy without cloning the repo.
+   */
+  pasteTarget: z.string().min(1).optional(),
+  pastePromptFile: z.string().min(1).optional(),
+  pastePrompt: z.string().min(1).optional(),
   llmContext: z.string().min(1).optional(),
   lastVerified: z.iso.date().optional(),
   goDependency: z.boolean().default(false),
