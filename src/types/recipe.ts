@@ -382,6 +382,12 @@ export const recipeMetaSchema = z.strictObject({
   lastVerified: z.iso.date().optional(),
   goDependency: z.boolean().default(false),
   featured: z.boolean().default(false),
+  hidden: z
+    .boolean()
+    .default(false)
+    .describe(
+      'When true, the developer docs site does not generate a page, sidebar item, or search entry. The cookbook plugin and GitHub README still list the recipe.',
+    ),
   tags: z.array(z.string().min(1)).default([]),
 });
 
@@ -428,6 +434,11 @@ export type RecipesData = {
 export type RecipeValidationResult =
   | { success: true; record: RecipeRecord }
   | { success: false; errors: string[] };
+
+/** Docs-site projection: hidden recipes stay in the cookbook registry, not on the site. */
+export function isListedOnDocs(recipe: Pick<RecipeMeta, 'hidden'>): boolean {
+  return !recipe.hidden;
+}
 
 function formatIssues(error: z.ZodError): string[] {
   return error.issues.map((issue) => {

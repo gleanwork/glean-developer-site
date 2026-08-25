@@ -1,6 +1,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { parseRecipeEntry } from '../src/types/recipe';
+import { pathToFileURL } from 'node:url';
+import { isListedOnDocs, parseRecipeEntry } from '../src/types/recipe';
 import { RECIPE_SURFACES } from '../src/types/recipe';
 import type {
   CookbookPlugin,
@@ -13,10 +14,10 @@ import type {
  *
  * Reads data/cookbook-registry.json (the local snapshot of glean-cookbook's
  * registry.json — see `pnpm registry:sync`), validates each entry against
- * the schema in src/types/recipe.ts, and cross-checks that every entry has a
- * matching prose page at docs/cookbook/{id}.mdx and vice versa. Emits the
- * flat records consumed by the Cookbook components and the glean-cookbook
- * plugin.
+ * the schema in src/types/recipe.ts, and cross-checks that every listed
+ * entry has a matching prose page at docs/cookbook/{id}.mdx and vice versa.
+ * Hidden recipes stay in the snapshot and must not have an MDX page. Emits
+ * the listed records consumed by the Cookbook components.
  *
  * Validation failures FAIL THE BUILD (exit 1) — lax registries rot.
  *
@@ -30,10 +31,64 @@ const pluginFile = path.join(repoRoot, 'data', 'cookbook-plugin.json');
 const recipesDir = path.join(repoRoot, 'docs', 'cookbook');
 const outputFile = path.join(repoRoot, 'src', 'data', 'recipes.json');
 
-function main(): void {
+export function compileRecipeCatalog(
+  registry: unknown[],
+  pageIds: Set<string>,
+): { records: RecipeRecord[]; errors: string[] } {
   const records: RecipeRecord[] = [];
   const errors: string[] = [];
+  const remainingPages = new Set(pageIds);
 
+  for (const entry of registry) {
+    const expectedId =
+      entry !== null && typeof entry === 'object' && 'id' in entry
+        ? String((entry as { id: unknown }).id)
+        : undefined;
+
+    const result = parseRecipeEntry(entry, expectedId);
+    if (!result.success) {
+      errors.push(...result.errors.map((e) => `${expectedId ?? '?'}: ${e}`));
+      continue;
+    }
+
+    if (!isListedOnDocs(result.record)) {
+      if (remainingPages.has(result.record.id)) {
+        errors.push(
+          `${result.record.id}: hidden recipe must not have docs/cookbook/${result.record.id}.mdx`,
+        );
+        remainingPages.delete(result.record.id);
+      }
+      continue;
+    }
+
+    if (!remainingPages.has(result.record.id)) {
+      errors.push(
+        `${result.record.id}: registry entry has no matching docs/cookbook/${result.record.id}.mdx page`,
+      );
+      continue;
+    }
+    remainingPages.delete(result.record.id);
+
+    records.push(result.record);
+  }
+
+  for (const orphanId of remainingPages) {
+    errors.push(
+      `${orphanId}: docs/cookbook/${orphanId}.mdx has no matching registry entry`,
+    );
+  }
+
+  const duplicates = records
+    .map((r) => r.id)
+    .filter((id, i, ids) => ids.indexOf(id) !== i);
+  if (duplicates.length > 0) {
+    errors.push(`duplicate recipe ids: ${[...new Set(duplicates)].join(', ')}`);
+  }
+
+  return { records, errors };
+}
+
+function main(): void {
   if (!fs.existsSync(registryFile)) {
     console.error(
       `Recipe registry not found at ${path.relative(repoRoot, registryFile)}. Run \`pnpm registry:sync\` first.`,
@@ -79,41 +134,7 @@ function main(): void {
       : [],
   );
 
-  for (const entry of registry) {
-    const expectedId =
-      entry !== null && typeof entry === 'object' && 'id' in entry
-        ? String((entry as { id: unknown }).id)
-        : undefined;
-
-    const result = parseRecipeEntry(entry, expectedId);
-    if (!result.success) {
-      errors.push(...result.errors.map((e) => `${expectedId ?? '?'}: ${e}`));
-      continue;
-    }
-
-    if (!pageIds.has(result.record.id)) {
-      errors.push(
-        `${result.record.id}: registry entry has no matching docs/cookbook/${result.record.id}.mdx page`,
-      );
-      continue;
-    }
-    pageIds.delete(result.record.id);
-
-    records.push(result.record);
-  }
-
-  for (const orphanId of pageIds) {
-    errors.push(
-      `${orphanId}: docs/cookbook/${orphanId}.mdx has no matching registry entry`,
-    );
-  }
-
-  const duplicates = records
-    .map((r) => r.id)
-    .filter((id, i, ids) => ids.indexOf(id) !== i);
-  if (duplicates.length > 0) {
-    errors.push(`duplicate recipe ids: ${[...new Set(duplicates)].join(', ')}`);
-  }
+  const { records, errors } = compileRecipeCatalog(registry, pageIds);
 
   if (errors.length > 0) {
     console.error(`Recipe validation failed (${errors.length} error(s)):`);
@@ -160,4 +181,9 @@ function main(): void {
   );
 }
 
-main();
+if (
+  process.argv[1] &&
+  import.meta.url === pathToFileURL(process.argv[1]).href
+) {
+  main();
+}
