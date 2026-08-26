@@ -2,7 +2,7 @@ openapi: 3.0.0
 info:
   version: 0.9.0
   title: Glean API
-  x-source-commit-sha: d96a5da69d9d1247157a9a110ae70d6ed80c20b3
+  x-source-commit-sha: 57c5ed97e505b6f223d7a45ad5a2a341e256c949
   description: |
     # Introduction
     In addition to the data sources that Glean has built-in support for, Glean also provides a REST API that enables customers to put arbitrary content in the search index. This is useful, for example, for doing permissions-aware search over content in internal tools that reside on-prem as well as for searching over applications that Glean does not currently support first class. In addition these APIs allow the customer to push organization data (people info, organization structure etc) into Glean.
@@ -22,15 +22,15 @@ info:
     These API clients provide type-safe, idiomatic interfaces for working with Glean IndexingAPIs in your language of choice.
   x-logo:
     url: https://app.glean.com/images/glean-text2.svg
-  x-open-api-commit-sha: fe8dfb74e2edcaae013f328b2b481d070cc7408c
+  x-open-api-commit-sha: 9ada039d29c22a526e3f2aedf1e2592fa53f9662
   x-speakeasy-name: Glean API
 servers:
   - url: '{serverUrl}'
-    description: 'Replace the placeholder with your Glean API server URL. Copy the complete Server instance (QE) value from https://app.glean.com/admin/about-glean. Glean-hosted deployments use https://{instance}-be.glean.com. How to find it: https://developers.glean.com/get-started/authentication#finding-your-server-url'
+    description: Replace {serverUrl} with your complete Glean API server URL. Find it at https://developers.glean.com/get-started/authentication#finding-your-server-url.
     variables:
       serverUrl:
-        default: https://{instance-name}-be.glean.com
-        description: Your Glean API server URL. Glean-hosted deployments use https://{instance}-be.glean.com. Custom domains are also valid. Find it at app.glean.com/admin/about-glean.
+        default: '{serverUrl}'
+        description: Your complete Glean API HTTPS origin. Glean-hosted, vanity, custom, and non-Glean-hosted domains are supported.
 paths:
   /rest/api/v1/activity:
     post:
@@ -166104,14 +166104,17 @@ components:
             EXECUTION: Request for approving execution of the tool.
             AUTHENTICATION_SUGGESTION: Request for authenticating to a tool, provided as a (tool) suggestion.
             VOTE_SUGGESTION: Suggestion to vote for enabling an available-but-not-enabled tool.
+            SANDBOX_EGRESS: Request to approve an outbound/egress call from the sandbox.
           enum:
             - EXECUTION
             - AUTHENTICATION_SUGGESTION
             - VOTE_SUGGESTION
+            - SANDBOX_EGRESS
           x-speakeasy-enum-descriptions:
             EXECUTION: Request for approving execution of the tool.
             AUTHENTICATION_SUGGESTION: Request for authenticating to a tool, provided as a (tool) suggestion.
             VOTE_SUGGESTION: Suggestion to vote for enabling an available-but-not-enabled tool.
+            SANDBOX_EGRESS: Request to approve an outbound/egress call from the sandbox.
         requestId:
           type: string
           description: Unique identifier for this request.
@@ -166180,6 +166183,9 @@ components:
 
         For VOTE_SUGGESTION requests:
         - voted: whether the user voted for this tool
+
+        For SANDBOX_EGRESS requests:
+        - isGranted: whether the sandbox egress call is approved
       allOf:
         - $ref: '#/components/schemas/ServerToolBase'
         - type: object
