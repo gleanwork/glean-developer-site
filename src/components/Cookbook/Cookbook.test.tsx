@@ -6,6 +6,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { FeatureFlagsContext } from '@site/src/theme/Root';
 import { tenantProfileStore } from '@site/src/lib/tenantProfile';
+import recipesData from '@site/src/data/recipes.json';
 import RecipeIndex from './RecipeIndex';
 import RecipeLayout, { RecipeArchitecture, RecipeSteps } from './RecipeLayout';
 import FlagshipCard from './FlagshipCard';
@@ -474,7 +475,8 @@ describe('RecipeLayout', () => {
     const files = fs
       .readdirSync(dir)
       .filter((file) => file.endsWith('.mdx') && file !== 'index.mdx');
-    expect(files.length).toBeGreaterThanOrEqual(12);
+    expect(files).toHaveLength(recipesData.recipes.length);
+    expect(files.length).toBeGreaterThan(0);
     for (const file of files) {
       const src = fs.readFileSync(path.join(dir, file), 'utf8');
       expect(src).toContain('<RecipePage recipeId=');
