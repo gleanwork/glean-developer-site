@@ -20,39 +20,21 @@ interface ServerMetadata {
   scopes_supported?: string[];
 }
 
-/** Map a client-api docs path segment to its OAuth scope. */
-const PATH_SCOPES: Record<string, string> = {
-  activity: 'activity',
-  agents: 'agents',
-  announcements: 'announcements',
-  answers: 'answers',
-  authentication: 'auth_token_creator',
-  chat: 'chat',
-  collections: 'collections',
-  documents: 'documents',
-  entities: 'entities',
-  governance: 'data_governance',
-  insights: 'insights',
-  pins: 'pins',
-  search: 'search',
-  shortcuts: 'shortcuts',
-  skills: 'skills',
-  summarize: 'summarize',
-  tools: 'tools',
-  verification: 'verification',
-};
+interface CachedClient {
+  clientId: string;
+  scope: string;
+}
 
-/** Scope for the API group being viewed, from the docs path. */
-export function scopeForPath(pathname: string): string | undefined {
-  const client = pathname.match(/\/api\/client-api\/([^/]+)/);
-  if (client) {
-    return PATH_SCOPES[client[1]];
+/** Format every scope advertised by the authorization server for an OAuth
+ * authorization request. The API Explorer intentionally requests the complete
+ * set so one sign-in can be reused while exploring different endpoints. */
+export function allSupportedScopes(scopes: string[] | undefined): string {
+  if (!scopes?.length) {
+    throw new Error(
+      'This server does not advertise any supported OAuth scopes.',
+    );
   }
-  const platform = pathname.match(/\/api\/platform-api\/platform-([a-z]+)/);
-  if (platform) {
-    return PATH_SCOPES[platform[1]];
-  }
-  return undefined;
+  return scopes.join(' ');
 }
 
 /** OAuth tokens work on the Client and Platform APIs; the Indexing API
@@ -97,16 +79,20 @@ async function discover(serverUrl: string): Promise<ServerMetadata> {
   return res.json();
 }
 
-/** Register (or reuse) a public client for this issuer via DCR. */
-async function getClientId(metadata: ServerMetadata): Promise<string> {
-  let cache: Record<string, string> = {};
+/** Register (or reuse) a public client for this issuer and scope set via DCR. */
+async function getClientId(
+  metadata: ServerMetadata,
+  scope: string,
+): Promise<string> {
+  let cache: Record<string, CachedClient> = {};
   try {
     cache = JSON.parse(localStorage.getItem(CLIENT_ID_STORE) ?? '{}');
   } catch {
     // Corrupt cache; re-register.
   }
-  if (cache[metadata.issuer]) {
-    return cache[metadata.issuer];
+  const cachedClient = cache[metadata.issuer];
+  if (cachedClient?.scope === scope) {
+    return cachedClient.clientId;
   }
   if (!metadata.registration_endpoint) {
     throw new Error(
@@ -122,13 +108,14 @@ async function getClientId(metadata: ServerMetadata): Promise<string> {
       grant_types: ['authorization_code'],
       response_types: ['code'],
       token_endpoint_auth_method: 'none',
+      scope,
     }),
   });
   if (!res.ok) {
     throw new Error(`Client registration failed (HTTP ${res.status}).`);
   }
   const { client_id: clientId } = await res.json();
-  cache[metadata.issuer] = clientId;
+  cache[metadata.issuer] = { clientId, scope };
   localStorage.setItem(CLIENT_ID_STORE, JSON.stringify(cache));
   return clientId;
 }
@@ -224,12 +211,10 @@ async function exchangeCode(
 }
 
 /** Full flow: discovery → DCR → PKCE popup → token. */
-export async function signInWithGlean(
-  serverUrl: string,
-  scope: string | undefined,
-): Promise<string> {
+export async function signInWithGlean(serverUrl: string): Promise<string> {
   const metadata = await discover(serverUrl);
-  const clientId = await getClientId(metadata);
+  const scope = allSupportedScopes(metadata.scopes_supported);
+  const clientId = await getClientId(metadata, scope);
   const { verifier, challenge } = await pkcePair();
   const code = await authorizeInPopup(metadata, clientId, challenge, scope);
   return exchangeCode(metadata, clientId, code, verifier);

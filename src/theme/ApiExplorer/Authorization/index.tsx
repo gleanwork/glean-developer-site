@@ -14,7 +14,6 @@ import { setAuthData } from '@theme/ApiExplorer/Authorization/slice';
 import {
   isOAuthEligiblePath,
   isPlaceholderServerUrl,
-  scopeForPath,
   signInWithGlean,
 } from '@site/src/components/ApiOAuth/oauth';
 import { useTenantApiPersonalizationEnabled } from '@site/src/lib/tenantPersonalizationFlag';
@@ -91,7 +90,7 @@ function GleanSignIn(): React.ReactElement | null {
     }
     setStatus({ kind: 'busy' });
     try {
-      const token = await signInWithGlean(serverUrl, scopeForPath(pathname));
+      const token = await signInWithGlean(serverUrl);
       const liveServerUrl = resolveOpenApiServerUrl(serverRef.current);
       if (!mountedRef.current || liveServerUrl !== serverUrl) {
         throw new Error(
