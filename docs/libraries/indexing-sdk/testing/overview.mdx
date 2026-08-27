@@ -19,11 +19,25 @@ Most of your tests should be Phase 1. Phase 2 catches the class of bug you can't
 mock your way to — a source field that's `null` more often than the docs
 suggest. Phase 3 is a pre-release check, not something you run on every commit.
 
+From the CLI, move through the phases explicitly:
+
+```bash snippet=overview/snippet-23.sh
+glean-idx test --phase mock --max-items 5
+glean-idx test --phase integration --max-items 5
+glean-idx test --phase live --mode full --max-items 5 --allow-destructive-live
+```
+
+The CLI's mock phase mocks Glean but leaves the connector's source clients
+unchanged; use static clients for a no-network Phase 1. Every live phase requires
+`--allow-destructive-live` and target confirmation. A full live phase replaces
+the datasource, and `max_items` only limits registered source-client
+consumption—it is not a Glean-side cap or blast-radius guarantee.
+
 ## The harness
 
 `TestHarness` wraps a connector and drives all three phases:
 
-```python
+```python snippet=overview/snippet-24.py
 from glean.indexing.testing import TestConfig, TestHarness
 
 harness = TestHarness(

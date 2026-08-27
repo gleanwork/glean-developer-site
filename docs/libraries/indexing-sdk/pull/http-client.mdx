@@ -11,7 +11,7 @@ It exists because every hand-rolled connector ends up reimplementing the same
 things: session reuse, retry with backoff, honoring `Retry-After`, and keeping
 API keys out of logs.
 
-```python
+```python snippet=http-client/snippet-01.py
 from glean.indexing.recipes.pull import PullHttpClient, PullOptions
 
 with PullHttpClient(
@@ -41,7 +41,7 @@ work without extra bookkeeping.
 `PullResponse` is a frozen dataclass with two accessors that fail loudly on
 shape mismatches:
 
-```python
+```python snippet=http-client/snippet-02.py
 response.status_code   # int
 response.headers       # dict[str, str]
 response.url           # str
@@ -57,7 +57,7 @@ boundary instead of an `AttributeError` deep inside `transform()`.
 
 Retry behavior lives on `PullRetryOptions`:
 
-```python
+```python snippet=http-client/snippet-03.py
 options = PullOptions(
     timeout_seconds=30.0,
     retries=PullRetryOptions(
@@ -121,7 +121,7 @@ exception message you construct yourself.
 `get_bytes()` takes a `max_bytes` cap, useful when indexing attachments from a
 source that can return arbitrarily large files:
 
-```python
+```python snippet=http-client/snippet-05.py
 content, content_type = http.get_bytes("/attachments/42", max_bytes=10 * 1024 * 1024)
 ```
 

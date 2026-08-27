@@ -12,9 +12,9 @@ SDK owns batching, retries, upload sessions, and stale-document cleanup.
 
 ## The indexing lifecycle
 
-`connector.index_data()` runs a fixed sequence every time. Each stage is timed
-separately, so a slow connector can be attributed to fetch, transform, or
-upload without adding instrumentation.
+`BaseDatasourceConnector.index_data()` runs the sequence below. Each stage is
+timed separately, so a slow connector can be attributed to fetch, transform,
+or upload without adding instrumentation.
 
 <Stages stages={[
   { owner: 'sdk', title: <>Start observability</>, body: <>Begins execution timing and assigns a <code>run_id</code> for the run.</> },
@@ -22,9 +22,15 @@ upload without adding instrumentation.
   { owner: 'you', title: <>Resolve <code>since</code></>, body: <>On an incremental crawl, calls <code>_get_last_crawl_timestamp()</code>. The base implementation returns <code>None</code>.</> },
   { owner: 'you', title: <>Content crawl &mdash; <code>get_data()</code></>, body: <>Delegates to your data client&rsquo;s <code>get_source_data()</code>.</> },
   { owner: 'you', title: <>Transform &mdash; <code>transform()</code></>, body: <>Your mapping from source records to Glean entity definitions.</> },
-  { owner: 'sdk', title: <>Upload</>, body: <>Hands documents to <code>PushUploader.bulk_index_documents()</code>, which batches, parallelizes, retries, and triggers stale-document cleanup.</> },
+  { owner: 'sdk', title: <>Upload</>, body: <>A full crawl calls <code>PushUploader.bulk_index_documents()</code> for replacement and stale cleanup. An incremental crawl calls additive <code>index_documents()</code>.</> },
   { owner: 'sdk', title: <>End observability</>, body: <>Records totals. On exception, increments the error counter and re-raises so a scheduler sees a non-zero exit.</> },
 ]} />
+
+Sync and async streaming datasource connectors keep fetch/transform memory
+bounded, but their indexing implementations do **not** run the optional
+`get_identities()` crawl. Push identities separately before a streaming content
+crawl. Their full uploads still use replacement semantics, while incremental
+batches use additive uploads.
 
 ## Class hierarchy
 

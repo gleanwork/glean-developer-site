@@ -28,10 +28,11 @@ means re-indexing everything. Get them right in the first run.
 
 Attach a `DocumentPermissionsDefinition` to each document:
 
-```python
+```python snippet=permissions/snippet-01.py
 from glean.api_client.models import (
     DocumentDefinition,
     DocumentPermissionsDefinition,
+    PermissionsGroupIntersectionDefinition,
     UserReferenceDefinition,
 )
 
@@ -49,6 +50,11 @@ def transform(self, data):
                     UserReferenceDefinition(email=email)
                     for email in article["visible_to_users"]
                 ],
+                allowed_group_intersections=[
+                    PermissionsGroupIntersectionDefinition(
+                        required_groups=["engineering", "employees"]
+                    )
+                ],
             ),
         )
         for article in data
@@ -59,7 +65,7 @@ def transform(self, data):
 |---|---|
 | `allowed_users` | Users who can see the document, by email or datasource user ID. |
 | `allowed_groups` | Group names that can see the document. |
-| `allowed_group_intersections` | Requires membership in *all* listed groups — for sources with AND-style ACLs. |
+| `allowed_group_intersections` | A list of `PermissionsGroupIntersectionDefinition(required_groups=[...])` entries. A user must belong to every group within one entry; multiple entries are alternative intersections. |
 
 Map your source's model onto these directly. Don't flatten groups into user
 lists: group membership changes constantly, and a flattened ACL is stale the
@@ -69,7 +75,7 @@ moment someone joins a team.
 
 Implement `get_identities()` to push the identity graph:
 
-```python
+```python snippet=permissions/snippet-02.py
 from glean.indexing.models import DatasourceIdentityDefinitions
 
 
@@ -81,8 +87,12 @@ def get_identities(self) -> DatasourceIdentityDefinitions:
     )
 ```
 
-`index_data()` runs this **before** the content crawl, so identities exist by the
-time documents referencing them arrive.
+`BaseDatasourceConnector.index_data()` runs this **before** its content crawl, so
+identities exist by the time documents referencing them arrive. The sync and
+async streaming connector implementations do not call `get_identities()`; push
+their users, groups, and memberships separately before indexing documents, or
+use a non-streaming datasource connector when you need the built-in identity
+crawl.
 
 :::info
 If you return `groups`, you must also return `memberships`. The SDK raises
@@ -97,7 +107,7 @@ Setting `is_user_referenced_by_email=True` on the datasource config lets you
 reference users by email, which is usually simplest when your source and Glean
 share an identity provider:
 
-```python
+```python snippet=permissions/snippet-03.py
 configuration = CustomDatasourceConfig(
     name="company_wiki",
     display_name="Company Wiki",
@@ -113,22 +123,25 @@ user record mapping each ID.
 Counting indexed documents proves nothing about permissions. Test the negative
 case: a user who should *not* see a document must not see it.
 
-The test harness supports this directly. List identities that should never
-appear in any ACL:
+The test harness supports this directly. List identities that must not have
+access to any transformed document:
 
-```yaml title="testing_config.yaml"
+```yaml title="testing_config.yaml" snippet=permissions/snippet-04.yaml
 testing:
   negative_test_identities:
     - contractor@example.com
     - external-partners
 ```
 
-Phase 2 asserts they're absent from every transformed document. See
-[Integration testing](/libraries/indexing-sdk/testing/integration).
+Phase 2 checks literal references in `allowed_users`, `allowed_groups`, and each
+intersection's `required_groups`. It also rejects missing `permissions`,
+`allow_anonymous_access=True`, and `allow_all_datasource_users_access=True`,
+because any of those prevents the harness from proving a configured identity is
+denied. See [Integration testing](/libraries/indexing-sdk/testing/integration).
 
 You can also assert in code:
 
-```python
+```python snippet=permissions/snippet-05.py
 from glean.indexing.testing import assert_negative_identities_absent, extract_permission_refs
 
 result = run_connector(connector)

@@ -7,7 +7,7 @@ Every connector base class creates a `ConnectorObservability` instance and wires
 it into the indexing lifecycle. You get stage timings, item counts, and
 structured logs without adding any instrumentation.
 
-```python
+```python snippet=observability/snippet-01.py
 connector.index_data(mode=IndexingMode.FULL)
 print(connector.observability.get_metrics_summary())
 ```
@@ -35,7 +35,7 @@ success/failure.
 
 ## Structured logging
 
-```python
+```python snippet=observability/snippet-02.py
 from glean.indexing.observability import setup_connector_logging
 
 setup_connector_logging("company_wiki", log_level="INFO")
@@ -64,7 +64,7 @@ to attach them elsewhere.
 `NoOpMetricsProvider` — metrics are recorded in-process for
 `get_metrics_summary()` but not exported.
 
-```python
+```python snippet=observability/snippet-03.py
 from glean.indexing.observability import ConnectorObservability, InMemoryMetricsProvider
 
 observability = ConnectorObservability(
@@ -84,22 +84,16 @@ observability = ConnectorObservability(
 
 Each observability instance gets a `run_id` (a UUID unless you pass one), which
 is how you correlate every log line and metric from a single crawl.
-
-:::warning
-`InMemoryMetricsProvider` has a data race under concurrent uploads, and parallel
-uploads are on by default (`upload_max_workers=5`). Counters can undercount.
-It's fine for Phase 1 tests; don't assert on exact counts under concurrency.
-`NoOpMetricsProvider` and the cloud providers are unaffected. Tracked in
-[issue #107](https://github.com/gleanwork/glean-indexing-sdk/issues/107).
-:::
+`InMemoryMetricsProvider` synchronizes concurrent metric updates, so exact
+counter assertions are safe during parallel uploads.
 
 ## AWS
 
-```bash
+```bash snippet=observability/snippet-04.sh
 pip install "glean-indexing-sdk[aws]"
 ```
 
-```python
+```python snippet=observability/snippet-05.py
 from glean.indexing.observability import ConnectorObservability, setup_connector_logging
 from glean.indexing.observability.plugins.aws import (
     CloudWatchLogsProvider,
@@ -108,7 +102,11 @@ from glean.indexing.observability.plugins.aws import (
 
 setup_connector_logging(
     "company_wiki",
-    logger_provider=CloudWatchLogsProvider(log_group="/glean/connectors"),
+    logger_provider=CloudWatchLogsProvider(
+        log_group="/glean/connectors",
+        log_stream="company_wiki",
+        region_name="us-east-1",
+    ),
 )
 
 observability = ConnectorObservability(
@@ -121,13 +119,16 @@ observability = ConnectorObservability(
 )
 ```
 
+The logging provider is named `CloudWatchLogsProvider` and requires both
+`log_group` and `log_stream`; there is no `CloudWatchLoggerProvider`.
+
 ## GCP
 
-```bash
+```bash snippet=observability/snippet-06.sh
 pip install "glean-indexing-sdk[gcp]"
 ```
 
-```python
+```python snippet=observability/snippet-07.py
 from glean.indexing.observability.plugins.gcp import (
     CloudLoggingProvider,
     CloudMonitoringProvider,
@@ -169,7 +170,7 @@ the base class in terms of `emit_metric()`.
 
 ## Manual instrumentation
 
-```python
+```python snippet=observability/snippet-09.py
 obs = connector.observability
 
 obs.start_timer("enrichment")

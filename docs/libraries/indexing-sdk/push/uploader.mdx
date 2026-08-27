@@ -9,7 +9,7 @@ reach for it when you need to push data outside the
 `fetch → transform → upload` lifecycle: event-driven updates, one-off
 backfills, or targeted deletes.
 
-```python
+```python snippet=uploader/snippet-01.py
 from glean.indexing.push import PushUploader
 
 uploader = PushUploader(datasource="company_wiki")
@@ -38,7 +38,7 @@ everywhere else in the SDK.
 `bulk_index_documents()` replaces the datasource's documents. This is what a
 full crawl runs, and it is what deletes stale documents.
 
-```python
+```python snippet=uploader/snippet-02.py
 uploader.bulk_index_documents(
     documents,
     batch_size=1000,
@@ -56,7 +56,9 @@ uploader.bulk_index_documents(
 
 Batching applies both limits: a batch closes when it hits `batch_size` documents
 **or** `max_batch_bytes` serialized bytes, whichever comes first. That keeps one
-unusually large document from pushing a batch past the API's payload limit.
+unusually large document from pushing a batch past the API's payload limit. An
+empty input still sends one page marked as both first and last, completing an
+empty replacement so previously indexed documents are reconciled as stale.
 
 :::danger
 `bulk_index_documents()` is a **replacement**. Documents absent from the call
@@ -66,10 +68,11 @@ are deleted as stale. Never call it with a partial result set — see
 
 ### Incremental updates
 
-To add or update documents without touching anything else, use
-`index_documents()`:
+To add or update documents without touching anything else, use the additive
+`index_documents()`. Incremental connector runs use this method (once per
+streamed batch), and an empty incremental run makes no document request:
 
-```python
+```python snippet=uploader/snippet-03.py
 uploader.index_documents(documents)
 ```
 
@@ -77,7 +80,7 @@ This is the right call for event-driven connectors reacting to a webhook.
 
 ### Deleting
 
-```python
+```python snippet=uploader/snippet-04.py
 uploader.delete_document(object_type="article", document_id="page_123")
 ```
 
@@ -86,7 +89,7 @@ uploader.delete_document(object_type="article", document_id="page_123")
 If you're already producing batches — a streaming connector, or your own
 chunking — hand them over directly:
 
-```python
+```python snippet=uploader/snippet-05.py
 uploader.bulk_index_document_batches(batches, batch_count=len(batches))
 ```
 
@@ -98,7 +101,7 @@ page, which is what triggers stale-document cleanup.
 Document ACLs only evaluate if Glean knows about the users and groups they
 reference. See [Permissions](/libraries/indexing-sdk/permissions).
 
-```python
+```python snippet=uploader/snippet-06.py
 uploader.bulk_index_users(users=users, batch_size=1000)
 uploader.bulk_index_groups(groups=groups, batch_size=1000)
 uploader.bulk_index_memberships(memberships=memberships, batch_size=1000)
@@ -119,7 +122,7 @@ memberships.
 
 For people data, separate from document ACLs:
 
-```python
+```python snippet=uploader/snippet-07.py
 uploader.bulk_index_employees(employees=employees, batch_size=1000)
 ```
 
@@ -130,24 +133,16 @@ pool sized by `upload_max_workers` (default 5). The **first and last pages are
 always sequential** — the first opens the upload session, the last closes it and
 triggers stale deletion, so neither can race.
 
-```python
+```python snippet=uploader/snippet-08.py
 uploader = PushUploader(datasource="company_wiki", upload_max_workers=10)
 ```
 
 Raise it for many small batches over a high-latency link; lower it to `1` to
 make an upload fully sequential when debugging.
 
-:::warning
-Parallel uploads are on by default. If you wire up `InMemoryMetricsProvider` for
-local testing, be aware it has a data race under concurrent uploads and can
-undercount. The default `NoOpMetricsProvider` and the cloud providers are
-unaffected. Tracked in
-[issue #107](https://github.com/gleanwork/glean-indexing-sdk/issues/107).
-:::
-
 ## Parameter naming
 
-Document methods take `disable_stale_document_deletion_check`; user, group,
-membership, and employee methods take `disable_stale_data_deletion_check`. The
-behavior is analogous. Tracked in
-[issue #116](https://github.com/gleanwork/glean-indexing-sdk/issues/116).
+Document methods take `disable_stale_document_deletion_check`; user, group, and
+employee bulk methods take `disable_stale_data_deletion_check`. Membership bulk
+uploads do not expose a stale-deletion option; they accept
+`force_restart_upload` and optional `group` scoping.

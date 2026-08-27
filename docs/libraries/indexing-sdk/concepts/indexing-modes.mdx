@@ -3,7 +3,7 @@ title: Indexing modes
 description: Full versus incremental crawls, stale document deletion, and checkpointing in the Glean Indexing SDK
 ---
 
-```python
+```python snippet=indexing-modes/snippet-01.py
 from glean.indexing.models import IndexingMode
 
 connector.index_data(mode=IndexingMode.FULL)
@@ -67,7 +67,7 @@ Everything below is the developer-owned path.
 An incremental crawl passes a `since` timestamp down to your data client so you
 can query only what changed:
 
-```python
+```python snippet=indexing-modes/snippet-02.py
 class WikiDataClient(BaseDataClient[WikiPage]):
     def get_source_data(self, since=None, **kwargs):
         if since:
@@ -75,9 +75,15 @@ class WikiDataClient(BaseDataClient[WikiPage]):
         return fetch_all_pages()
 ```
 
-Incremental crawls do **not** delete stale documents. Only a full crawl
-reconciles deletions, which is why most connectors run incrementally on a short
-cadence and fully on a longer one.
+Incremental crawls upload documents additively with `index_documents()`: they
+add or update records and do **not** delete documents omitted from that run. An
+empty incremental result is a no-op. Only a full crawl reconciles deletions,
+which is why most connectors run incrementally on a short cadence and fully on
+a longer one.
+
+A full crawl always finalizes replacement state, including when the source is
+empty. A successful empty full crawl sends one complete empty bulk page so all
+previously indexed documents are reconciled as stale.
 
 ### The SDK does not persist checkpoints
 
@@ -89,7 +95,7 @@ back to a full fetch.
 To get real incremental behavior, override it and supply the timestamp from
 wherever you store it:
 
-```python
+```python snippet=indexing-modes/snippet-03.py
 class WikiConnector(BaseDatasourceConnector[WikiPage]):
     def _get_last_crawl_timestamp(self):
         # your storage: file, S3, DynamoDB, database
@@ -109,7 +115,7 @@ crawl was in flight; writing on failure silently skips a window.
 
 `ConnectorOptions` adjusts upload behavior for a single run.
 
-```python
+```python snippet=indexing-modes/snippet-04.py
 from glean.indexing.models import ConnectorOptions
 
 connector.index_data(
@@ -124,17 +130,13 @@ connector.index_data(
 | `disable_stale_deletion_check` | `False` | Forces synchronous stale-document deletion after the upload completes. |
 | `upload_timeout_ms` | `None` | Per-call timeout for bulk upload requests only. Raise it for large batches. |
 | `upload_max_workers` | `5` | Concurrent middle-page uploads. First and last pages are always sequential. |
-| `document_batch_size_bytes` | `5 MiB` | Intended byte cap per document batch. **This override is not applied today** — see below. |
+| `document_batch_size_bytes` | `5 MiB` | Maximum serialized bytes per document batch. Set `None` to batch by document count only. |
 
-:::warning
-Setting `document_batch_size_bytes` has no effect: the connector base classes
-don't forward it to the uploader. Batches are still capped at 5&nbsp;MiB,
-because `PushUploader` applies that as its own default — you just can't change
-it from `ConnectorOptions` yet. To use a different cap, call
-[`PushUploader`](/libraries/indexing-sdk/push/uploader) directly with
-`max_batch_bytes`. Tracked in
-[issue #106](https://github.com/gleanwork/glean-indexing-sdk/issues/106).
-:::
+Datasource and streaming connectors forward `document_batch_size_bytes` to the
+document batch processor. A connector can override `_resolve_max_batch_bytes()`
+when the byte cap must be selected dynamically; that connector-level result
+takes precedence over the option. Direct `PushUploader` calls expose the same
+limit as `max_batch_bytes`.
 
 ## Choosing a schedule
 

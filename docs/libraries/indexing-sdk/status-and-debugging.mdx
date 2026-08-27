@@ -16,9 +16,9 @@ Work through it in order. Each step rules out one layer.
 
 <Stages stages={[
   { title: <>Did the connector actually upload it?</>, body: <>Run against a recording mock and print <code>result.documents_posted</code>. If the document isn&rsquo;t there, the bug is in your data client or <code>transform()</code>, not in Glean. Stop here.</> },
-  { title: <>Has it finished indexing?</>, body: <>Run <code>glean-idx document status --poll</code>. If it&rsquo;s still pending, wait &mdash; large uploads take longer.</> },
-  { title: <>Is the datasource healthy?</>, body: <><code>glean-idx datasource status</code> reports uploaded and indexed counts side by side. A gap between them points at rejected documents rather than slow indexing.</> },
-  { title: <>Can the user see it?</>, body: <>If the document is indexed but one person can&rsquo;t find it, it&rsquo;s a permissions problem. <code>glean-idx document access --user them@example.com</code> answers it directly &mdash; a correct-looking ACL is still wrong if the identities it names were never pushed.</> },
+  { title: <>Has it finished indexing?</>, body: <>Run <code>glean-idx document status --datasource NAME --document TYPE ID --poll</code>. If it&rsquo;s still pending, wait &mdash; large uploads take longer.</> },
+  { title: <>Is the datasource healthy?</>, body: <><code>glean-idx datasource status --datasource NAME</code> reports uploaded and indexed counts side by side. A gap between them points at rejected documents rather than slow indexing.</> },
+  { title: <>Can the user see it?</>, body: <>If the document is indexed but one person can&rsquo;t find it, it&rsquo;s a permissions problem. <code>glean-idx document access --datasource NAME --object-type TYPE --id ID --user them@example.com</code> answers it directly &mdash; a correct-looking ACL is still wrong if the identities it names were never pushed.</> },
 ]} />
 
 ## StatusClient
@@ -44,7 +44,7 @@ environment.
 The SDK ships one CLI, `glean-idx`. This needs only credentials, so it runs
 anywhere — including with no install:
 
-```bash
+```bash snippet=status-and-debugging/snippet-02.sh
 glean-idx document status \
   --datasource company_wiki \
   --document article page_123 \
@@ -58,7 +58,7 @@ instead of once.
 
 In Python:
 
-```python
+```python snippet=status-and-debugging/snippet-03.py
 from glean.api_client.models import DebugDocumentRequest
 from glean.indexing.testing import check_documents_status, poll_documents_status
 
@@ -90,8 +90,10 @@ crawl that fetched an incomplete result set. A full crawl deletes anything it
 didn't include.
 
 Look for a partial fetch that was allowed to complete successfully — a source
-error swallowed inside a paging loop, an auth token expiring mid-crawl, a
-`max_items` left set from local testing. Alert on `documents_indexed` dropping
+error swallowed inside a paging loop, an auth token expiring mid-crawl, or a
+`max_items` cap left set from local testing. `max_items` limits source
+consumption; it is not a blast-radius guarantee, and on a full crawl it can make
+the replacement dangerously incomplete. Alert on `documents_indexed` dropping
 sharply between runs; that catches it before the deletion propagates. See
 [Indexing modes](/libraries/indexing-sdk/concepts/indexing-modes).
 
