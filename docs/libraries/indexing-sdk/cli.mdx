@@ -7,11 +7,12 @@ The SDK ships one command, `glean-idx`. It covers the whole loop: checking your
 credentials, validating a plan, running a connector, inspecting what it
 uploaded, and deploying it on a schedule.
 
-```bash
+```bash snippet=cli/snippet-01.sh
 glean-idx doctor                    # are my credentials right?
 glean-idx validate ./my-connector   # is the plan complete, before writing code?
-glean-idx test --phase all          # mocked, then real source, then live
-glean-idx run                       # crawl for real
+glean-idx test --phase mock         # Glean mocked; connector source clients unchanged
+glean-idx test --phase integration  # real source, recorded/replayed; Glean mocked
+glean-idx run --mode incremental    # additive crawl for real
 glean-idx datasource status --datasource company_wiki
 glean-idx deploy init --cloud gcp   # Docker and Terraform for a CronJob
 ```
@@ -25,7 +26,7 @@ confusion. `glean-idx --help` restates it.
 `GLEAN_INDEXING_API_TOKEN`. They never import your code, so they run from any
 directory — including with nothing installed:
 
-```bash
+```bash snippet=cli/snippet-02.sh
 uvx --from glean-indexing-sdk glean-idx doctor
 ```
 
@@ -33,7 +34,7 @@ uvx --from glean-indexing-sdk glean-idx doctor
 connector class, so they run from inside the connector project with the SDK
 installed alongside your code:
 
-```bash
+```bash snippet=cli/snippet-03.sh
 uv run glean-idx run
 ```
 
@@ -54,8 +55,8 @@ that, and lists the directories it searched for `glean_deployment.yaml`.
 
 | Command | What it does |
 |---|---|
-| `glean-idx run` | Fetches, transforms, and uploads. `--mode incremental` overrides the project's `indexing_mode`; `--force-restart` discards a partial upload. |
-| `glean-idx test --phase PHASE` | Runs the connector at one fidelity: `mock`, `integration`, `live`, or `all`. |
+| `glean-idx run [--connector MODULE:CLASS_OR_FACTORY] [--mode full\|incremental]` | Fetches, transforms, and uploads. `--mode incremental` overrides the project's `indexing_mode`; `--force-restart` discards a partial replacement upload. |
+| `glean-idx test --phase PHASE [--connector MODULE:CLASS_OR_FACTORY]` | Runs the connector at one fidelity: `mock`, `integration`, `live`, or `all`. |
 
 `--phase` maps onto the [testing phases](/libraries/indexing-sdk/testing/overview):
 
@@ -66,19 +67,36 @@ that, and lists the directories it searched for `glean_deployment.yaml`.
 | `--phase live` | [End-to-end](/libraries/indexing-sdk/testing/end-to-end) | real | real |
 
 `--phase all` runs them in order and stops at the first failure. A phase that
-cannot run is skipped and reported rather than failing the batch — without Glean
-credentials, `live` is skipped and the earlier phases still run.
+cannot run is skipped and reported rather than failing the batch. Without Glean
+credentials, `live` is skipped and the earlier phases still run. If live can run,
+`--phase all` also requires `--allow-destructive-live`.
+
+`--max-items N` limits source consumption for every discovered data client. It
+is not a Glean-side document cap and does not guarantee a small blast radius. In
+particular, using it with a full live crawl intentionally produces a partial
+replacement, so documents outside that subset can become stale.
+
+Every live phase requires `--allow-destructive-live` and prompts you to confirm
+the resolved Glean target. For a full live crawl, the flag acknowledges that the
+run finalizes replacement state and may stale-delete documents it does not
+produce. Use a disposable datasource; `--yes` only skips the prompt, not the
+required acknowledgement.
+
+```bash snippet=cli/snippet-04.sh
+glean-idx test --phase live --mode full --allow-destructive-live
+glean-idx test --phase all --allow-destructive-live
+```
 
 ### Inspecting what landed
 
 | Command | What it does |
 |---|---|
-| `glean-idx datasource status` | Uploaded and indexed counts per object type, identity counts, visibility, and the most recent upload and processing runs. |
-| `glean-idx datasource process` | Requests processing now instead of waiting for the next scheduled run. |
-| `glean-idx datasource configure` | Registers the connector's own `configuration`, so the datasource cannot drift from what the connector uploads to. |
-| `glean-idx document status` | Whether specific documents finished indexing. `--poll` waits. |
-| `glean-idx document access` | Whether a given user can see a document. |
-| `glean-idx document events` | A document's lifecycle events, for when it uploaded but never became searchable. |
+| `glean-idx datasource status --datasource NAME` | Uploaded and indexed counts per object type, identity counts, visibility, and the most recent upload and processing runs. |
+| `glean-idx datasource process --datasource NAME` | Requests processing now instead of waiting for the next scheduled run. |
+| `glean-idx datasource configure [--connector MODULE:CLASS_OR_FACTORY]` | Registers the connector's own `configuration`, so the datasource cannot drift from what the connector uploads to. |
+| `glean-idx document status --datasource NAME --document TYPE ID [--poll]` | Whether one or more documents finished indexing. Repeat `--document TYPE ID` to check several. |
+| `glean-idx document access --datasource NAME --object-type TYPE --id ID --user EMAIL` | Whether a given user can see a document. |
+| `glean-idx document events --datasource NAME --object-type TYPE --id ID` | A document's lifecycle events, for when it uploaded but never became searchable. |
 
 `document status` and `document access` are the two worth reaching for first
 when something is missing from search — see
@@ -88,8 +106,8 @@ when something is missing from search — see
 
 | Command | What it does |
 |---|---|
-| `glean-idx document delete` | Removes specific documents from the index. Prompts unless `--yes`. |
-| `glean-idx datasource teardown` | Removes every document, keeping the datasource and its configuration. Requires typing the datasource name to confirm. |
+| `glean-idx document delete --datasource NAME --document TYPE ID` | Removes one or more documents from the index. Repeat `--document TYPE ID`; prompts unless `--yes`. |
+| `glean-idx datasource teardown --datasource NAME` | Removes every document, keeping the datasource and its configuration. Requires typing the datasource name to confirm. |
 
 :::warning
 `teardown` cannot be undone. It uploads an empty full crawl, so everything
@@ -107,7 +125,7 @@ currently indexed for that datasource becomes stale and is removed.
 Every command takes `--output json` and returns a stable envelope, which is what
 makes the CLI usable from a script or an agent:
 
-```bash
+```bash snippet=cli/snippet-05.sh
 glean-idx datasource status --datasource company_wiki --output json | jq .data.documents
 ```
 
@@ -157,7 +175,7 @@ fixes them:
 
 ## Shell completion
 
-```bash
+```bash snippet=cli/snippet-06.sh
 glean-idx completion zsh >> ~/.zshrc      # or bash, fish
 ```
 

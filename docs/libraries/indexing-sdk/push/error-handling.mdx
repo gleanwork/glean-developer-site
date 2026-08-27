@@ -7,7 +7,7 @@ Every SDK exception derives from `GleanError` and carries a `fix_suggestion` —
 and often a `docs_url` — that are included in `str(error)`. An unhandled failure
 prints what to do about it, not just what went wrong.
 
-```python
+```python snippet=error-handling/snippet-01.py
 from glean.indexing.exceptions import GleanError
 
 try:
@@ -74,7 +74,7 @@ one record whose payload is malformed. Skip it, log it, continue.
 **Never swallow:** anything that makes the result set incomplete — a failed page
 of results, an auth expiry mid-crawl, a source-side 500 on a list endpoint.
 
-```python
+```python snippet=error-handling/snippet-03.py
 def get_source_data(self, **kwargs):
     for summary in self.list_articles():        # raises on failure — correct
         try:
@@ -101,7 +101,7 @@ configuration. If an upload session fails partway, the next run picks up cleanly
 — but a session left in a stuck state can block subsequent uploads. Clear it
 with:
 
-```python
+```python snippet=error-handling/snippet-04.py
 connector.index_data(
     mode=IndexingMode.FULL,
     options=ConnectorOptions(force_restart=True),
@@ -116,7 +116,7 @@ upload state.
 `index_data()` increments an error counter and re-raises, so failures are
 visible in metrics as well as logs:
 
-```python
+```python snippet=error-handling/snippet-05.py
 try:
     connector.index_data(mode=IndexingMode.FULL)
 except Exception:

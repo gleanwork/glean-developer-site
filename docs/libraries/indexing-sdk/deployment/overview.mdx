@@ -9,24 +9,17 @@ A connector is a batch job: it runs on a schedule, pulls from a source, pushes t
 Glean, and exits. `glean-idx deploy` generates the scaffolding for that — a
 Dockerfile, an entrypoint, and Terraform for a Kubernetes CronJob on GKE or EKS.
 
-```bash
-glean-idx deploy init --cloud gcp --connector-class CompanyWikiConnector
+```bash snippet=overview/snippet-21.sh
+glean-idx deploy init --cloud gcp \
+  --connector-class CompanyWikiConnector \
+  --connector-factory create_connector
 ```
 
 :::danger
-**The generated infrastructure has not been validated against a real cloud
-account.** Two known issues affect it today:
-
-- The AWS IRSA trust policy uses the wrong OIDC condition-key format and is
-  likely to fail at runtime
-  ([issue #103](https://github.com/gleanwork/glean-indexing-sdk/issues/103)).
-- The GCP service account is granted secret access at **project** scope rather
-  than scoped to the connector's own secrets
-  ([issue #105](https://github.com/gleanwork/glean-indexing-sdk/issues/105)).
-
-Treat the output as a starting point to review, not as production-ready IaC. Have
-someone who owns the target account read the Terraform before applying it.
-Broader validation is tracked in
+**The generated infrastructure has not been validated end to end against a real
+cloud account.** Treat the output as a starting point to review, not as
+production-ready IaC. Have someone who owns the target account read the
+Terraform before applying it. Broader validation is tracked in
 [issue #104](https://github.com/gleanwork/glean-indexing-sdk/issues/104).
 :::
 
@@ -49,6 +42,7 @@ Options for `init`:
 | `--connector-name` | current directory name | Used for resource naming. |
 | `--connector-class` | `MyConnector` | Class the entrypoint instantiates. |
 | `--connector-module` | `connector` | Module to import it from. |
+| `--connector-factory` | — | Optional zero-argument factory in the connector module. |
 | `--output-dir` | `.` | Where to write. |
 
 ## Configuration
@@ -81,16 +75,20 @@ full nightly. See
   { title: <>Generate &mdash; <code>glean-idx deploy init</code></>, body: <>Writes the Dockerfile, entrypoint, Terraform, and config template.</> },
   { title: <>Configure</>, body: <>Edit <code>glean_deployment.yaml</code> (cluster, region, registry, schedule), then <code>cp .env.example .env</code> and fill in credentials.</> },
   { title: <>Build and push &mdash; <code>glean-idx deploy build --push</code></>, body: <>Builds the container image and pushes it to your registry.</> },
-  { title: <>Upload secrets &mdash; <code>glean-idx deploy secrets upload</code></>, body: <>Reads <code>.env</code> and writes to Secret Manager (GCP) or Secrets Manager (AWS). <code>secrets list</code> and <code>secrets delete</code> are also available.</> },
-  { title: <>Apply &mdash; <code>glean-idx deploy apply</code></>, body: <>Runs Terraform. Read the plan first &mdash; see the warning below.</> },
-  { title: <>Verify</>, body: <><code>glean-idx deploy status</code> and <code>glean-idx deploy logs --follow</code>, then confirm documents landed with <code>glean-idx document status</code>. A CronJob that exits zero has not necessarily indexed anything.</> },
+  { title: <>Upload secrets &mdash; <code>glean-idx deploy secrets upload</code></>, body: <>Reads <code>.env</code>, writes each secret to the cloud provider, and atomically records the validated environment keys in local <code>.glean_secret_keys</code>.</> },
+  { title: <>Apply &mdash; <code>glean-idx deploy apply</code></>, body: <>Reads that manifest and passes its keys to Terraform at apply time so IAM and the CronJob name the exact runtime secrets.</> },
+  { title: <>Verify</>, body: <><code>glean-idx deploy status</code> and <code>glean-idx deploy logs --follow</code>, then confirm a document with <code>glean-idx document status --datasource NAME --document TYPE ID</code>. A CronJob that exits zero has not necessarily indexed anything.</> },
 ]} />
 
+Build and push the image **before** uploading secrets. The local manifest is
+created by `secrets upload`, excluded from the Docker build context, and consumed
+by `deploy apply`; it is not baked into the image. Uploading before build is
+neither required nor recommended.
+
 :::warning
-`apply` runs `terraform apply -auto-approve` with **no confirmation prompt**,
-unlike `destroy` which requires two. Run `terraform plan` in the generated
-directory and read it before applying. Tracked in
-[issue #111](https://github.com/gleanwork/glean-indexing-sdk/issues/111).
+`apply` prompts once before invoking `terraform apply -auto-approve`; `--yes`
+skips that prompt for unattended use. Run `terraform plan` in the generated
+`terraform/` directory and review it before applying.
 :::
 
 ## Secrets
@@ -98,18 +96,20 @@ directory and read it before applying. Tracked in
 Credentials are read from the environment at runtime and injected from the cloud
 secret store. Never bake them into the image or commit `.env`.
 
-Deployment-control variables are filtered out rather than uploaded as connector
-secrets. That filter is a blocklist, so a newly added config key could be treated
-as a secret unexpectedly — review `secrets list` output after upgrading
-([issue #120](https://github.com/gleanwork/glean-indexing-sdk/issues/120)).
+`secrets upload` validates environment-variable keys and writes their sorted
+names to `.glean_secret_keys`. At apply time, Terraform grants the workload
+access to each exact declared secret: one secret-level IAM member per key on
+GCP, or the exact resolved secret ARNs on AWS. The generated runtime receives
+the declared key list and fetches those values directly. It has no permission to
+enumerate secrets and does not discover them by connector-name prefix.
 
-The generated Terraform grants the connector's service account access to those
-secrets — subject to the GCP project-scope caveat above. Review and tighten that
-binding.
+`glean-idx deploy secrets list` remains an operator command; the deployed
+connector does not use it. Startup fails if any declared secret cannot be
+loaded. A missing or empty manifest produces a secretless deployment.
 
 ## Teardown
 
-```bash
+```bash snippet=overview/snippet-22.sh
 glean-idx deploy destroy
 ```
 

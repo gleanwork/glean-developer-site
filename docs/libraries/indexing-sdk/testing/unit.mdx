@@ -5,8 +5,10 @@ description: Phase 1 - test connectors with a fully mocked Glean client and no n
 
 
 :::tip Run this from the CLI
-`glean-idx test --phase mock` runs this phase without writing a test file.
-See the [CLI reference](/libraries/indexing-sdk/cli).
+`glean-idx test --phase mock` runs this phase without writing a test file and
+mocks Glean. It leaves the connector's source clients unchanged, so use static
+clients when the phase must make no network calls. See the
+[CLI reference](/libraries/indexing-sdk/cli).
 :::
 
 Phase 1 runs your connector end to end with the Glean API mocked and static data
@@ -17,7 +19,7 @@ where most of your connector tests should live.
 
 Pair `run_connector` with a static data client:
 
-```python
+```python snippet=unit/snippet-01.py
 from glean.indexing.testing import StaticDataClient, run_connector
 
 result = run_connector(
@@ -42,7 +44,7 @@ Static clients exist for each connector shape:
 
 ## Assertions
 
-```python
+```python snippet=unit/snippet-02.py
 result.assert_documents_posted(count=2, datasource="my_ds")
 result.assert_employees_posted(count=10)
 result.assert_users_posted(count=5)
@@ -55,7 +57,7 @@ Omit `count` to assert only that something was posted.
 
 For anything more specific, read the recorded objects directly:
 
-```python
+```python snippet=unit/snippet-03.py
 docs = result.documents_posted
 
 assert [d.id for d in docs] == ["1", "2"]
@@ -71,7 +73,7 @@ Available collections: `documents_posted`, `employees_posted`, `users_posted`,
 
 Use the async runner:
 
-```python
+```python snippet=unit/snippet-04.py
 import pytest
 
 from glean.indexing.testing import StaticAsyncStreamingDataClient, run_connector_async
@@ -92,7 +94,7 @@ otherwise get.
 
 ## Testing modes and options
 
-```python
+```python snippet=unit/snippet-05.py
 from glean.indexing.models import ConnectorOptions, IndexingMode
 
 result = run_connector(
@@ -107,7 +109,7 @@ result = run_connector(
 When you need to interleave calls or inspect state between them, use the context
 manager instead:
 
-```python
+```python snippet=unit/snippet-06.py
 from glean.indexing.testing import mock_glean_client
 
 with mock_glean_client() as client:
@@ -122,7 +124,7 @@ The yielded client is a facade over a `MagicMock(spec=Glean)`, so the whole
 generated client surface is reachable — and typos fail loudly rather than
 silently passing:
 
-```python
+```python snippet=unit/snippet-07.py
 client.indexing.documents.bulk_index.assert_called_once()   # real method
 client.indexing.documents.bluk_index                        # AttributeError
 ```
@@ -141,7 +143,7 @@ need manual control.
 The SDK's own suite uses `pytest-socket` to fail any test that opens a socket.
 It's a cheap way to guarantee a "unit" test stayed a unit test:
 
-```bash
+```bash snippet=unit/snippet-08.sh
 pytest -p no:socket tests/unit
 ```
 

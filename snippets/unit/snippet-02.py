@@ -1,0 +1,6 @@
+result.assert_documents_posted(count=2, datasource="my_ds")
+result.assert_employees_posted(count=10)
+result.assert_users_posted(count=5)
+result.assert_groups_posted(count=2)
+result.assert_memberships_posted(count=8)
+result.assert_datasource_configured(name="my_ds")

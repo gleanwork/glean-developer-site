@@ -18,7 +18,7 @@ records until the source runs out or `max_items` is reached.
 
 The default. GitHub, GitLab, and most APIs that follow RFC 5988 use this.
 
-```python
+```python snippet=pagination/snippet-01.py
 super().__init__(
     base_url="https://api.example.com/v2",
     path="/articles",
@@ -36,7 +36,7 @@ The parser tolerates the messy variants seen in the wild: commas inside URLs,
 
 ## Offset
 
-```python
+```python snippet=pagination/snippet-02.py
 super().__init__(
     base_url="https://api.example.com/v2",
     path="/articles",
@@ -60,7 +60,7 @@ it.
 
 ## Cursor
 
-```python
+```python snippet=pagination/snippet-03.py
 super().__init__(
     base_url="https://api.example.com/v2",
     path="/articles",
@@ -103,7 +103,7 @@ If your source does something else — a page number, a timestamp watermark, a
 `has_more` boolean — override `get_source_data()` and drive `self.http`
 yourself:
 
-```python
+```python snippet=pagination/snippet-06.py
 class ArticleDataClient(BasePullHttpStreamingDataClient[Article]):
     def get_source_data(self, **kwargs):
         page = 1

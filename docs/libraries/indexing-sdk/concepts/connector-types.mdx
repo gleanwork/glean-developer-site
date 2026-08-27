@@ -19,7 +19,7 @@ streaming variant later means changing the base class and the return type of
 `get_source_data()` returns a `Sequence`. The connector fetches everything,
 transforms everything, then uploads in batches of `batch_size` (default 1000).
 
-```python
+```python snippet=connector-types/snippet-01.py
 class WikiDataClient(BaseDataClient[WikiPage]):
     def get_source_data(self, since=None, **kwargs):
         return fetch_all_pages()
@@ -42,7 +42,7 @@ batching happens after transform.
 `get_source_data()` is a generator. The connector pulls `batch_size` items at a
 time, transforms that slice, and uploads it before pulling more.
 
-```python
+```python snippet=connector-types/snippet-02.py
 from collections.abc import Generator
 
 from glean.indexing.connectors import (
@@ -70,7 +70,9 @@ class ArticleConnector(BaseStreamingDatasourceConnector[Article]):
 ```
 
 Note that `transform()` still receives a `Sequence` — the SDK slices the
-generator into batches for you. You never write batching logic.
+generator into batches for you. You never write batching logic. Full-mode
+batches form one replacement upload; incremental-mode batches use additive
+`index_documents()` calls.
 
 :::tip
 If your source is a paginated HTTP API, use
@@ -110,6 +112,13 @@ await connector.index_data_async(mode=IndexingMode.FULL)
 
 `transform()` stays synchronous. Only fetching is async.
 
+:::warning[Push identities separately]
+The sync and async streaming connector implementations do not call the optional
+`get_identities()` crawl inherited from `BaseDatasourceConnector`. If streamed
+documents reference datasource users or groups, upload those identities before
+the streaming content run.
+:::
+
 :::info
 Async connectors also expose the synchronous `index_data()`, which wraps the
 async path in `asyncio.run()`. That works from a plain script but fails inside
@@ -124,7 +133,7 @@ from inside a running loop.
 `DocumentDefinition`. Configuration, `batch_size`, and observability behave the
 same.
 
-```python
+```python snippet=connector-types/snippet-04.py
 class EmployeeConnector(BasePeopleConnector[EmployeeRecord]):
     configuration = CustomDatasourceConfig(name="hris", display_name="HRIS")
 
@@ -140,7 +149,7 @@ document ACLs — see [Permissions](/libraries/indexing-sdk/permissions).
 
 All four classes expose `batch_size`, defaulting to 1000.
 
-```python
+```python snippet=connector-types/snippet-05.py
 connector = WikiConnector(name="wiki", data_client=client)
 connector.batch_size = 250
 ```

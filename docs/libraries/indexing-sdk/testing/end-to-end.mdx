@@ -5,14 +5,16 @@ description: Phase 3 - run a connector against a real source and a real Glean in
 
 
 :::tip Run this from the CLI
-`glean-idx test --phase live` runs this phase without writing a test file.
-See the [CLI reference](/libraries/indexing-sdk/cli).
+`glean-idx test --phase live --mode full --allow-destructive-live` runs a full
+live phase without writing a test file. It displays the resolved Glean target
+for confirmation. See the [CLI reference](/libraries/indexing-sdk/cli).
 :::
 
 Phase 3 removes all mocking. The connector fetches from your real source and
 uploads to whatever `GLEAN_SERVER_URL` points at.
 
-```python
+```python snippet=end-to-end/snippet-01.py
+from glean.indexing.models import IndexingMode
 from glean.indexing.testing import TestConfig, TestHarness
 
 harness = TestHarness(
@@ -21,27 +23,40 @@ harness = TestHarness(
     clients={"data_client": real_data_client},
 )
 
-result = harness.run_end_to_end()
+result = harness.run_end_to_end(
+    mode=IndexingMode.FULL,
+    confirm=True,
+    allow_destructive=True,
+    confirmed_target="https://test-company-be.glean.com",
+)
 ```
 
 :::danger
 **This writes real documents to a real Glean instance.** The harness does not
-sandbox the datasource — your connector's own datasource name is used as-is, and
-`run_id_prefix` is logged but does not namespace anything. Point
-`GLEAN_SERVER_URL` at a dedicated test instance. There is no automatic cleanup
-and no guard against a production URL. Tracked in
-[issue #112](https://github.com/gleanwork/glean-indexing-sdk/issues/112).
+sandbox the datasource: your connector's own datasource name is used as-is, and
+`run_id_prefix` is logged but does not namespace anything. There is no automatic
+cleanup.
+
+Programmatic runs refuse to start unless `confirm=True` and
+`allow_destructive=True`; `confirmed_target` also detects a target change between
+review and execution. Those acknowledgements do not identify production for
+you. Point `GLEAN_SERVER_URL` at a dedicated test instance and compare it with
+the confirmed target.
 :::
 
 ## Before you run it
 
 - `GLEAN_SERVER_URL` points at a **test** instance, verified by eye, not by memory.
 - `GLEAN_INDEXING_API_TOKEN` is scoped to the test datasource.
-- `max_items` is set low in `TestConfig` so a mistake stays small.
+- `max_items` is set low in `TestConfig` to limit source consumption.
 - You know how you'll clean up.
 
-Per-client `max_items` limits are applied in Phase 3 too, which is the main thing
-standing between a typo and a full production crawl. Keep them small.
+Per-client `max_items` limits are applied in Phase 3 too, but they only stop
+consuming registered source clients after N items. They do not cap Glean-side
+writes, constrain unregistered clients, or guarantee a small blast radius. With
+`mode=IndexingMode.FULL`, a low limit creates a partial replacement and can
+stale-delete every existing document outside that subset. Use a disposable
+datasource.
 
 ## What it returns
 
@@ -50,8 +65,13 @@ uploaded no documents. Because indexing is asynchronous, an accepted upload is
 not yet a searchable document — the result reflects the indexing outcome, not
 just the HTTP response.
 
-```python
-result = harness.run_end_to_end()
+```python snippet=end-to-end/snippet-02.py
+result = harness.run_end_to_end(
+    mode=IndexingMode.FULL,
+    confirm=True,
+    allow_destructive=True,
+    confirmed_target="https://test-company-be.glean.com",
+)
 
 if result is None:
     raise AssertionError("connector uploaded nothing")
@@ -61,7 +81,7 @@ if result is None:
 
 Poll indexing status for specific documents:
 
-```python
+```python snippet=end-to-end/snippet-03.py
 from glean.api_client.models import DebugDocumentRequest
 from glean.indexing.testing import poll_documents_status
 
@@ -74,7 +94,7 @@ print(snapshot.result)
 
 `check_documents_status()` is the single-shot variant. Or from the shell:
 
-```bash
+```bash snippet=end-to-end/snippet-04.sh
 glean-idx document status --datasource company_wiki --document article page_123 --poll
 ```
 
@@ -101,7 +121,7 @@ incomplete.
 Nothing is cleaned up for you. Write teardown that deletes what the test
 created:
 
-```python
+```python snippet=end-to-end/snippet-06.py
 from glean.indexing.push import PushUploader
 
 uploader = PushUploader(datasource="company_wiki")
@@ -109,14 +129,14 @@ for doc_id in created_ids:
     uploader.delete_document(object_type="article", document_id=doc_id)
 ```
 
-Identity records need explicit deletion too: `delete_user()`, `delete_group()`,
-`delete_membership()`.
+The live harness rejects people connectors and datasource connectors that
+override `get_identities()`, because it cannot automatically reverse identity
+mutations. Test identity payloads with mocked Glean instead.
 
 :::info
-There is no API to delete a datasource *registration*. Teardown removes
-documents, identities, and employees; the empty datasource remains. Re-running
-the connector repopulates it. To remove the datasource entirely, use the Glean
-admin console.
+There is no API to delete a datasource *registration*. Deleting the test
+documents leaves the empty datasource registered. Re-running the connector
+repopulates it. To remove the datasource entirely, use the Glean admin console.
 :::
 
 ## When to run it

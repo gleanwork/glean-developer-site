@@ -9,7 +9,8 @@ timing out, running too slowly, or overwhelming your source.
 | Knob | Where | Default | Reach for it when… |
 |---|---|---|---|
 | `connector.batch_size` | Connector attribute | `1000` | Batches time out — **lower** it. |
-| `max_batch_bytes` | `PushUploader` argument | `5 MiB` | Rarely. This tracks the API payload limit. |
+| `document_batch_size_bytes` | `ConnectorOptions` | `5 MiB` | Tune the serialized byte cap for connector-managed uploads; `None` disables the byte cap. |
+| `max_batch_bytes` | `PushUploader` argument | `5 MiB` | The equivalent cap for direct uploader calls. |
 | `upload_timeout_ms` | `ConnectorOptions` | client default | Large batches hit timeouts. |
 | `upload_max_workers` | `ConnectorOptions` | `5` | Many small batches over a high-latency link. |
 
@@ -18,7 +19,7 @@ timing out, running too slowly, or overwhelming your source.
 Before tuning anything, look at where time is going. The SDK times fetch,
 transform, and upload separately:
 
-```python
+```python snippet=batching/snippet-01.py
 connector.index_data(mode=IndexingMode.FULL)
 print(connector.observability.get_metrics_summary())
 ```
@@ -37,10 +38,24 @@ nothing. See [Observability](/libraries/indexing-sdk/observability).
 Batches close on whichever limit hits first: `batch_size` documents or
 `max_batch_bytes` serialized bytes.
 
-```python
+```python snippet=batching/snippet-02.py
 connector = WikiConnector(name="wiki", data_client=client)
 connector.batch_size = 250
 ```
+
+Set the byte cap for a connector-managed run with the exact
+`ConnectorOptions` field:
+
+```python snippet=batching/snippet-03.py
+connector.index_data(
+    options=ConnectorOptions(document_batch_size_bytes=2 * 1024 * 1024)
+)
+```
+
+The connector forwards that value to byte-aware batching for in-memory, sync
+streaming, and async streaming uploads. Custom connectors can override the
+static `_resolve_max_batch_bytes(options)` hook when the cap must be selected at
+runtime; the hook's result is the effective cap.
 
 Lower `batch_size` when your documents are large. A connector indexing full page
 bodies will hit the 5 MiB byte cap long before 1000 documents, so the count
@@ -56,7 +71,7 @@ binds first.
 A batch that exceeds the request timeout fails and retries the whole batch,
 which is expensive. If you see timeouts, do one of:
 
-```python
+```python snippet=batching/snippet-04.py
 # Give large batches longer.
 connector.index_data(options=ConnectorOptions(upload_timeout_ms=120_000))
 
@@ -71,7 +86,7 @@ and give more granular progress in logs.
 
 `upload_max_workers` controls how many middle pages upload at once:
 
-```python
+```python snippet=batching/snippet-05.py
 connector.index_data(options=ConnectorOptions(upload_max_workers=10))
 ```
 

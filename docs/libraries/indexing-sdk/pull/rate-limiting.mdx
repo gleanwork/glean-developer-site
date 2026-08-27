@@ -10,7 +10,7 @@ reason someone else's integration gets throttled.
 
 ## Token bucket
 
-```python
+```python snippet=rate-limiting/snippet-01.py
 from glean.indexing.recipes.pull import (
     BasePullHttpStreamingDataClient,
     TokenBucketRateLimiter,
@@ -46,7 +46,7 @@ rate.
 The limiter is thread-safe, so it can be shared across data clients that hit the
 same API:
 
-```python
+```python snippet=rate-limiting/snippet-02.py
 shared = TokenBucketRateLimiter(rate_per_second=10, capacity=20)
 
 articles = ArticleDataClient(token, rate_limiter=shared)
@@ -67,7 +67,7 @@ the same token. A source allowing 600 requests/minute is 10/second; running at
 `acquire()` blocks indefinitely by default. To fail instead of waiting forever,
 set a rate-limit timeout:
 
-```python
+```python snippet=rate-limiting/snippet-03.py
 from glean.indexing.recipes.pull import PullOptions
 
 options = PullOptions(rate_limit_timeout_seconds=30.0)
@@ -86,7 +86,7 @@ They solve different problems and both should be on:
   `PullRetryOptions` backs off and tries again, honoring `Retry-After` by
   default.
 
-```python
+```python snippet=rate-limiting/snippet-04.py
 super().__init__(
     base_url="https://api.example.com/v2",
     path="/articles",

@@ -6,7 +6,7 @@ description: BasePullHttpStreamingDataClient - paginated HTTP data clients with 
 A data client is the source-facing half of a connector. At minimum it
 implements `get_source_data()`:
 
-```python
+```python snippet=data-clients/snippet-01.py
 from glean.indexing.connectors import BaseDataClient
 
 
@@ -25,7 +25,7 @@ base class that already knows how to page.
 [pagination](/libraries/indexing-sdk/pull/pagination) and yields records one at
 a time. For a well-behaved JSON API you often need no method body at all:
 
-```python
+```python snippet=data-clients/snippet-02.py
 from glean.indexing.recipes.pull import BasePullHttpStreamingDataClient, PullOptions
 
 
@@ -91,7 +91,7 @@ its envelope.
 Everything above is a starting point. Override `get_source_data()` when your
 source needs something the base class doesn't model, and reuse `self.http`:
 
-```python
+```python snippet=data-clients/snippet-04.py
 class ArticleDataClient(BasePullHttpStreamingDataClient[Article]):
     def get_source_data(self, **kwargs):
         for article in super().get_source_data(**kwargs):
@@ -107,7 +107,7 @@ common, and the N+1 request cost is exactly why you want a
 
 The client owns an HTTP connection. Close it when the crawl finishes:
 
-```python
+```python snippet=data-clients/snippet-05.py
 try:
     connector.index_data(mode=IndexingMode.FULL)
 finally:
@@ -119,7 +119,7 @@ finally:
 `max_items` caps the number of records fetched, which keeps iteration fast while
 you're still shaping `transform()`:
 
-```python
+```python snippet=data-clients/snippet-06.py
 ArticleDataClient(token, max_items=25)
 ```
 

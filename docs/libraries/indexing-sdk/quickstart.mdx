@@ -14,13 +14,13 @@ builds both and indexes a document you can find in search.
 
 ## Install
 
-```bash
+```bash snippet=quickstart/snippet-01.sh
 pip install glean-indexing-sdk
 ```
 
 Optional cloud observability plugins:
 
-```bash
+```bash snippet=quickstart/snippet-02.sh
 pip install "glean-indexing-sdk[aws]"   # CloudWatch logs + metrics
 pip install "glean-indexing-sdk[gcp]"   # Cloud Logging + Cloud Monitoring
 ```
@@ -31,9 +31,11 @@ The SDK reads these from the environment. Never hardcode them.
 
 <TenantProfileControl />
 
-```bash
+```bash snippet=quickstart/snippet-03.sh
 export GLEAN_SERVER_URL="https://your-company-be.glean.com"
 export GLEAN_INDEXING_API_TOKEN="your-indexing-api-token"
+export WIKI_BASE_URL="https://wiki.company.com"
+export WIKI_API_TOKEN="your-source-api-token"
 ```
 
 :::info
@@ -51,7 +53,7 @@ something with a real permission model already in it — 29 documents, six group
 a few deliberately restricted files, and one restricted to named users rather than
 a group — there is a complete runnable example you can copy instead:
 
-```bash
+```bash snippet=quickstart/snippet-04.sh
 npx tiged --mode=git gleanwork/glean-cookbook/examples/sample-catalog sample-catalog
 cd sample-catalog && cat README.md
 ```
@@ -66,7 +68,7 @@ for the concepts; that example is just content to point them at.
 A data client implements one method, `get_source_data()`. The `since` argument
 is populated on [incremental crawls](/libraries/indexing-sdk/concepts/indexing-modes).
 
-```python
+```python snippet=quickstart/snippet-05.py
 from typing import Any, Optional, Sequence, TypedDict
 
 from glean.indexing.connectors import BaseDataClient
@@ -105,7 +107,8 @@ class WikiDataClient(BaseDataClient[WikiPage]):
 The connector declares its datasource configuration and maps source records to
 `DocumentDefinition` objects.
 
-```python
+```python snippet=quickstart/snippet-06.py
+import os
 from datetime import datetime
 from typing import List
 
@@ -141,7 +144,22 @@ class CompanyWikiConnector(BaseDatasourceConnector[WikiPage]):
             )
             for page in data
         ]
+
+
+def create_connector() -> CompanyWikiConnector:
+    """Construct the connector from runtime configuration."""
+    return CompanyWikiConnector(
+        name="company_wiki",
+        data_client=WikiDataClient(
+            base_url=os.environ["WIKI_BASE_URL"],
+            api_token=os.environ["WIKI_API_TOKEN"],
+        ),
+    )
 ```
+
+Save the data client, connector, and factory in `connector.py`. The
+zero-argument `create_connector()` factory gives the CLI and generated deployment
+entrypoint one construction path without hardcoding credentials.
 
 :::warning
 `created_at` and `updated_at` are **integers** — Unix epoch seconds. Passing an
@@ -152,9 +170,10 @@ upload error.
 
 ## Test it before you push
 
-Run the connector against a recording mock. No network, no credentials.
+Start with a static data client and a recording Glean mock. This check uses no
+network and needs no credentials:
 
-```python
+```python snippet=quickstart/snippet-07.py
 from glean.indexing.testing import StaticDataClient, run_connector
 
 result = run_connector(CompanyWikiConnector("company_wiki", StaticDataClient([
@@ -171,32 +190,54 @@ result = run_connector(CompanyWikiConnector("company_wiki", StaticDataClient([
 result.assert_documents_posted(count=1, datasource="company_wiki")
 ```
 
+Then move through the CLI phases one at a time. Both `mock` and `integration`
+keep Glean mocked, but they call the connector's real source client; integration
+also records and replays source responses.
+
+```bash snippet=quickstart/snippet-08.sh
+glean-idx test --phase mock --connector connector:create_connector --max-items 5
+glean-idx test --phase integration --connector connector:create_connector --max-items 5
+```
+
+`max_items` limits how many source items each registered client consumes. It is
+not a Glean-side upload cap or a blast-radius guarantee.
+
 See [Testing](/libraries/indexing-sdk/testing/overview) for the full
 three-phase workflow.
 
 ## Register and index
 
-`configure_datasource()` registers the datasource with Glean. You only need it
-on the first run or when the configuration changes.
+Register the datasource after the mocked phases pass. You only need to
+reconfigure it when its configuration changes.
 
-```python
-from glean.indexing.models import IndexingMode
-
-connector = CompanyWikiConnector(
-    name="company_wiki",
-    data_client=WikiDataClient(base_url="https://wiki.company.com", api_token="..."),
-)
-
-connector.configure_datasource()
-connector.index_data(mode=IndexingMode.FULL)
+```bash snippet=quickstart/snippet-09.sh
+glean-idx datasource configure --connector connector:CompanyWikiConnector
 ```
+
+For the first live full crawl, use a disposable datasource and verify the target
+shown by the confirmation prompt. A full live test is a replacement and can
+stale-delete documents it does not produce, so the explicit acknowledgement is
+required:
+
+```bash snippet=quickstart/snippet-10.sh
+glean-idx test --phase live \
+  --connector connector:create_connector \
+  --mode full \
+  --max-items 5 \
+  --allow-destructive-live
+```
+
+Do not rely on `--max-items` to make a shared datasource safe: limiting source
+consumption makes a full replacement partial, which can delete everything not
+included. After validating against a disposable datasource, run the same factory
+for the intended complete crawl with `glean-idx run`.
 
 ## Verify it landed
 
 Indexing is asynchronous — an accepted upload is not yet a searchable
 document. Check status from the CLI:
 
-```bash
+```bash snippet=quickstart/snippet-11.sh
 glean-idx document status --datasource company_wiki --document article page_123 --poll
 ```
 

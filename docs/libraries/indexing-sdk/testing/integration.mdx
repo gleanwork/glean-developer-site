@@ -17,7 +17,7 @@ That combination is what makes it useful: you validate your data client against
 responses the source actually produced, then re-run those exact responses
 forever, offline and deterministically.
 
-```python
+```python snippet=integration/snippet-01.py
 from glean.indexing.testing import TestConfig, TestHarness
 
 harness = TestHarness(
@@ -34,7 +34,7 @@ result.assert_documents_posted()
 
 `clients` maps **connector attribute names** to data client instances:
 
-```python
+```python snippet=integration/snippet-02.py
 harness = TestHarness(
     connector=my_connector,
     clients={
@@ -53,7 +53,7 @@ recorded.
 
 `testing_config.yaml` at the connector root, with a top-level `testing:` key:
 
-```yaml title="testing_config.yaml"
+```yaml title="testing_config.yaml" snippet=integration/snippet-03.yaml
 testing:
   cache_dir: .glean_test_cache/
   use_cache: true
@@ -75,12 +75,12 @@ testing:
 | `use_cache` | `true` | Replay from cache when a valid fixture exists. |
 | `refresh_cache` | `false` | Force re-recording even on a cache hit. |
 | `run_id_prefix` | `sdk_test` | Prefix for Phase 3 upload run IDs. |
-| `clients.<name>.max_items` | `5` | Records/replays at most N items for that client. `null` disables the cap. |
-| `negative_test_identities` | `[]` | Identities that must **not** appear in any document ACL. |
+| `clients.<name>.max_items` | `5` | Limits source consumption to at most N items for that client. `null` disables the cap. This is not an upload or blast-radius limit. |
+| `negative_test_identities` | `[]` | Identities that must not be able to access any transformed document. |
 
 Load it explicitly, or build one in process:
 
-```python
+```python snippet=integration/snippet-04.py
 config = TestConfig.from_yaml("testing_config.yaml")
 config = TestConfig(cache_dir=".glean_test_cache/", use_cache=True)
 ```
@@ -115,24 +115,33 @@ and cheap to commit.
 
 Raise it for a client whose pagination you specifically want to exercise:
 
-```yaml
+```yaml snippet=integration/snippet-05.yaml
 clients:
   articles_client:
-    max_items: 250     # spans several pages
+    max_items: 250 # spans several pages
 ```
+
+The wrapper stops consuming the registered source client after the cap. It does
+not cap transformed documents at Glean, constrain unregistered clients, or make
+a full replacement safe. Never treat `max_items` as a blast-radius guarantee.
 
 ## Asserting permissions
 
 Identities in `negative_test_identities` are checked against every transformed
-document's ACL after the run. If one appears, the test fails.
+document after the run. The assertion fails when a configured identity appears
+literally in `allowed_users`, `allowed_groups`, or any intersection's
+`required_groups`. It also fails conservatively when `permissions` is missing,
+`allow_anonymous_access=True`, or
+`allow_all_datasource_users_access=True`, because the identity's lack of access
+cannot be established.
 
 This is the cheapest real permissions test you can run: it uses
-production-shaped data, needs no Glean instance, and catches "this ACL field was
-`null` so we defaulted to allow-all" before it reaches an index.
+production-shaped data, needs no Glean instance, and rejects both literal ACL
+leaks and broad access before either reaches an index.
 
 You can also assert positively:
 
-```python
+```python snippet=integration/snippet-06.py
 from glean.indexing.testing import extract_permission_refs
 
 result = harness.run_integration_test()
