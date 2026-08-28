@@ -1,1 +1,1 @@
-glean-idx document status --datasource company_wiki --document article page_123 --poll
+glean-idx document status --datasource companywiki --document article page_123 --poll

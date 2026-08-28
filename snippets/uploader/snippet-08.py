@@ -1,1 +1,1 @@
-uploader = PushUploader(datasource="company_wiki", upload_max_workers=10)
+uploader = PushUploader(datasource="companywiki", upload_max_workers=10)

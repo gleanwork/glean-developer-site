@@ -105,7 +105,10 @@ class WikiDataClient(BaseDataClient[WikiPage]):
 ## Write a connector
 
 The connector declares its datasource configuration and maps source records to
-`DocumentDefinition` objects.
+`DocumentDefinition` objects. `CustomDatasourceConfig.name` may contain only
+ASCII letters and digits; Glean normalizes it internally. This API-facing name
+is separate from cloud deployment slugs, which may contain hyphens or
+underscores.
 
 ```python snippet=quickstart/snippet-06.py
 import os
@@ -123,7 +126,7 @@ from glean.indexing.models import (
 
 class CompanyWikiConnector(BaseDatasourceConnector[WikiPage]):
     configuration = CustomDatasourceConfig(
-        name="company_wiki",
+        name="companywiki",
         display_name="Company Wiki",
         url_regex=r"https://wiki\.company\.com/.*",
         is_user_referenced_by_email=True,
@@ -149,7 +152,7 @@ class CompanyWikiConnector(BaseDatasourceConnector[WikiPage]):
 def create_connector() -> CompanyWikiConnector:
     """Construct the connector from runtime configuration."""
     return CompanyWikiConnector(
-        name="company_wiki",
+        name="companywiki",
         data_client=WikiDataClient(
             base_url=os.environ["WIKI_BASE_URL"],
             api_token=os.environ["WIKI_API_TOKEN"],
@@ -176,7 +179,7 @@ network and needs no credentials:
 ```python snippet=quickstart/snippet-07.py
 from glean.indexing.testing import StaticDataClient, run_connector
 
-result = run_connector(CompanyWikiConnector("company_wiki", StaticDataClient([
+result = run_connector(CompanyWikiConnector("companywiki", StaticDataClient([
     {
         "id": "page_123",
         "title": "Engineering Onboarding Guide",
@@ -187,7 +190,7 @@ result = run_connector(CompanyWikiConnector("company_wiki", StaticDataClient([
     }
 ])))
 
-result.assert_documents_posted(count=1, datasource="company_wiki")
+result.assert_documents_posted(count=1, datasource="companywiki")
 ```
 
 Then move through the CLI phases one at a time. Both `mock` and `integration`
@@ -214,6 +217,12 @@ reconfigure it when its configuration changes.
 glean-idx datasource configure --connector connector:CompanyWikiConnector
 ```
 
+The CLI rejects invalid datasource names before making a request. If the write
+loses its connection after being sent, the SDK reads the configuration back
+without retrying the write. Equivalent state is reported as success; an
+unreadable or different result is reported as an ambiguous outcome that you
+must inspect before retrying.
+
 For the first live full crawl, use a disposable datasource and verify the target
 shown by the confirmation prompt. A full live test is a replacement and can
 stale-delete documents it does not produce, so the explicit acknowledgement is
@@ -238,7 +247,7 @@ Indexing is asynchronous — an accepted upload is not yet a searchable
 document. Check status from the CLI:
 
 ```bash snippet=quickstart/snippet-11.sh
-glean-idx document status --datasource company_wiki --document article page_123 --poll
+glean-idx document status --datasource companywiki --document article page_123 --poll
 ```
 
 Then search Glean for a phrase from the document body. If it isn't there, work

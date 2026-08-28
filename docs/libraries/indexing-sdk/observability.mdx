@@ -38,7 +38,7 @@ success/failure.
 ```python snippet=observability/snippet-02.py
 from glean.indexing.observability import setup_connector_logging
 
-setup_connector_logging("company_wiki", log_level="INFO")
+setup_connector_logging("companywiki", log_level="INFO")
 ```
 
 Structured JSON logging is on by default, which is what makes logs queryable
@@ -68,8 +68,8 @@ to attach them elsewhere.
 from glean.indexing.observability import ConnectorObservability, InMemoryMetricsProvider
 
 observability = ConnectorObservability(
-    connector_name="company_wiki",
-    datasource="company_wiki",
+    connector_name="companywiki",
+    datasource="companywiki",
     crawl_mode="full",
     metrics_provider=InMemoryMetricsProvider(),
 )
@@ -101,20 +101,20 @@ from glean.indexing.observability.plugins.aws import (
 )
 
 setup_connector_logging(
-    "company_wiki",
+    "companywiki",
     logger_provider=CloudWatchLogsProvider(
         log_group="/glean/connectors",
-        log_stream="company_wiki",
+        log_stream="companywiki",
         region_name="us-east-1",
     ),
 )
 
 observability = ConnectorObservability(
-    connector_name="company_wiki",
+    connector_name="companywiki",
     metrics_provider=CloudWatchMetricsProvider(
         namespace="GleanConnectors",
         region_name="us-east-1",
-        dimensions={"connector": "company_wiki"},
+        dimensions={"connector": "companywiki"},
     ),
 )
 ```

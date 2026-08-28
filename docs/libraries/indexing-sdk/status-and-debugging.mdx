@@ -28,7 +28,7 @@ Read-only wrappers over the debug endpoints:
 ```python
 from glean.indexing.push import StatusClient
 
-status = StatusClient(datasource="company_wiki")
+status = StatusClient(datasource="companywiki")
 
 status.get_datasource_status()      # counts and datasource state
 status.get_documents_status(...)    # per-document indexing status
@@ -46,7 +46,7 @@ anywhere — including with no install:
 
 ```bash snippet=status-and-debugging/snippet-02.sh
 glean-idx document status \
-  --datasource company_wiki \
+  --datasource companywiki \
   --document article page_123 \
   --document article page_124 \
   --poll
@@ -63,7 +63,7 @@ from glean.api_client.models import DebugDocumentRequest
 from glean.indexing.testing import check_documents_status, poll_documents_status
 
 snapshot = poll_documents_status(
-    "company_wiki",
+    "companywiki",
     [DebugDocumentRequest(object_type="article", doc_id="page_123")],
 )
 print(snapshot.result)
@@ -76,6 +76,7 @@ confirm it becomes searchable before declaring the rollout good.
 
 | Symptom | Likely cause |
 |---|---|
+| `datasource configure` reports an unknown outcome | The connection failed after the write may have committed and read-back could not prove equivalence. Inspect the current configuration with `glean-idx doctor --datasource NAME` before retrying. |
 | Document never appears | Never uploaded. Check `documents_posted` in a mocked run first. |
 | Appears, then disappears | A later **full** crawl didn't include it, so it was deleted as stale. |
 | Indexed but not findable by a user | ACL doesn't cover them, or the identity graph is incomplete. |
@@ -109,7 +110,7 @@ For per-document lifecycle events server-side:
 ```python
 from glean.indexing.push import PushUploader
 
-PushUploader(datasource="company_wiki").get_document_lifecycle_events(...)
+PushUploader(datasource="companywiki").get_document_lifecycle_events(...)
 ```
 
 ## Related

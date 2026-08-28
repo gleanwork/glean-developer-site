@@ -86,7 +86,7 @@ from glean.api_client.models import DebugDocumentRequest
 from glean.indexing.testing import poll_documents_status
 
 snapshot = poll_documents_status(
-    "company_wiki",
+    "companywiki",
     [DebugDocumentRequest(object_type="article", doc_id="page_123")],
 )
 print(snapshot.result)
@@ -95,7 +95,7 @@ print(snapshot.result)
 `check_documents_status()` is the single-shot variant. Or from the shell:
 
 ```bash snippet=end-to-end/snippet-04.sh
-glean-idx document status --datasource company_wiki --document article page_123 --poll
+glean-idx document status --datasource companywiki --document article page_123 --poll
 ```
 
 See [Status and debugging](/libraries/indexing-sdk/status-and-debugging).
@@ -108,7 +108,7 @@ confirm they cannot see documents they shouldn't.
 ```python
 from glean.indexing.push import StatusClient
 
-status = StatusClient(datasource="company_wiki")
+status = StatusClient(datasource="companywiki")
 status.check_document_access(...)
 ```
 
@@ -124,7 +124,7 @@ created:
 ```python snippet=end-to-end/snippet-06.py
 from glean.indexing.push import PushUploader
 
-uploader = PushUploader(datasource="company_wiki")
+uploader = PushUploader(datasource="companywiki")
 for doc_id in created_ids:
     uploader.delete_document(object_type="article", document_id=doc_id)
 ```
