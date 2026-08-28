@@ -26,8 +26,8 @@ import { OPENAPI_PARAM_OPTIONS } from '@theme/translationIds';
 import { isVisibleInExplorer } from './isVisibleInExplorer';
 
 type Param = {
-  in?: string;
-  name?: string;
+  in: 'cookie' | 'header' | 'path' | 'query';
+  name: string;
   required?: boolean;
   schema?: any;
 };

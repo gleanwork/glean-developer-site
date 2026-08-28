@@ -47,6 +47,7 @@ export default function LiveWidget({
           // iframes resolve against the embedding page and 404.
           ...(webAppUrl ? { webAppUrl } : {}),
           key: WIDGET_KEYS[kind],
+          onSearch: () => {},
         };
 
         switch (kind) {
@@ -131,6 +132,7 @@ export default function LiveWidget({
       await sdk.openSidebar({
         ...(backend ? { backend } : {}),
         ...(webAppUrl ? { webAppUrl } : {}),
+        onSearch: () => {},
       });
     } catch {
       setError('The Web SDK failed to load in this browser.');
