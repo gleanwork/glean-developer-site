@@ -1,7 +1,10 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Link from '@docusaurus/Link';
 import { getIcon } from '@gleanwork/docusaurus-theme-glean/Icons';
-import { getClientIcon } from '@gleanwork/mcp-config-schema/browser';
+import {
+  getClientIcon,
+  type ClientId,
+} from '@gleanwork/mcp-config-schema/browser';
 import FeatureFlag from '../FeatureFlag';
 import TerminalPanel from './TerminalPanel';
 import {
@@ -391,7 +394,13 @@ export function SdkGrid(): React.ReactElement {
   );
 }
 
-const MCP_CARDS = [
+const MCP_CARDS: Array<{
+  title: string;
+  body: string;
+  href: string;
+  clientId: ClientId;
+  mono: boolean;
+}> = [
   {
     title: 'Claude Code',
     body: 'Install the Glean plugins and search company knowledge from your terminal.',

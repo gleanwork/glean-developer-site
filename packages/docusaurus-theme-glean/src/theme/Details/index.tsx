@@ -103,8 +103,9 @@ function useCollapseAnimation({
   const mounted = useRef(false);
 
   useEffect(() => {
-    const el = collapsibleRef.current;
-    if (!el) return;
+    const currentElement = collapsibleRef.current;
+    if (!currentElement) return;
+    const el = currentElement;
 
     if (animation?.duration === 0 && !collapsed) {
       el.style.transition = 'none';
@@ -190,7 +191,7 @@ type CollapsibleBaseProps = {
   onCollapseTransitionEnd?: (collapsed: boolean) => void;
   /** Class name for the underlying DOM element. */
   className?: string;
-  __wrapperRef__?: RefObject<HTMLElement>;
+  __wrapperRef__?: RefObject<HTMLElement | null>;
 };
 
 function CollapsibleBase({

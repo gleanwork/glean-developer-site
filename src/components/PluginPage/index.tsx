@@ -2,7 +2,10 @@ import React from 'react';
 import Link from '@docusaurus/Link';
 import useBaseUrl from '@docusaurus/useBaseUrl';
 import { getIcon } from '@gleanwork/docusaurus-theme-glean/Icons';
-import { getClientIcon } from '@gleanwork/mcp-config-schema/browser';
+import {
+  getClientIcon,
+  type ClientId,
+} from '@gleanwork/mcp-config-schema/browser';
 import TerminalPanel from '../home/TerminalPanel';
 import styles from './styles.module.css';
 
@@ -20,7 +23,7 @@ type PluginPageProps = {
   name: string;
   tagline: string;
   /** Client id from @gleanwork/mcp-config-schema (claude-code, cursor, codex). */
-  clientId: string;
+  clientId: ClientId;
   /** Monochrome brand marks need inverting in dark mode (cursor, codex). */
   mono?: boolean;
   /** Optional "What's included" blurb rendered between the banner and Installation. */

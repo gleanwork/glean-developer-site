@@ -7,8 +7,11 @@ app.use(express.json());
 app.post("/api/get-glean-token", async (req, res) => {
   const { userEmail } = req.body;
 
-  // Retrieve the user's OAuth access token
-  const accessToken = <USER'S ACCESS TOKEN>;
+  // Retrieve the user's OAuth access token from the incoming request.
+  const accessToken = req.headers.authorization?.replace(/^Bearer\s+/i, "");
+  if (!accessToken) {
+    return res.status(401).json({ error: "Missing OAuth access token" });
+  }
 
   // Your backend URL (find at https://app.glean.com/admin/about-glean)
   const backend = process.env.GLEAN_BACKEND_URL;

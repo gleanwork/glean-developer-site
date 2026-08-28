@@ -527,7 +527,7 @@ function RecipePreview({
 function ArchNodeIcon({
   node,
 }: {
-  node: RecipeRecord['architecture'][number];
+  node: NonNullable<RecipeRecord['architecture']>[number];
 }): React.ReactNode {
   const brand = node.icon ? BRAND_ICON_SRC[node.icon] : undefined;
   const brandUrl = useBaseUrl(brand?.adaptive === false ? brand.src : '');

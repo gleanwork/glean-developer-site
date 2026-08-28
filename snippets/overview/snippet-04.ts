@@ -1,8 +1,8 @@
-{
-  authMethod: "token",
-  authToken: "GLEAN_AUTH_TOKEN_...",
+const config = {
+  authMethod: 'token',
+  authToken: 'GLEAN_AUTH_TOKEN_...',
   onAuthTokenRequired: async () => {
-    // Fetch new token when current one expires
-    return newToken;
-  }
-}
+    // Fetch a new token when the current one expires.
+    return 'GLEAN_AUTH_TOKEN_...';
+  },
+};

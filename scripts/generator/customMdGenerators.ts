@@ -17,7 +17,14 @@ import {
   clean,
   Props,
 } from 'docusaurus-plugin-openapi-docs/lib/markdown/utils';
-import type { ApiPageMetadata } from 'docusaurus-plugin-openapi-docs/lib/types';
+interface ApiPageMetadata {
+  title: string;
+  api: unknown;
+  infoPath?: string;
+  frontMatter: {
+    show_extensions?: boolean;
+  };
+}
 import type {
   DeprecationItem,
   DeprecationsData,

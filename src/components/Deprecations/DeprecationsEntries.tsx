@@ -191,7 +191,10 @@ export default function DeprecationsEntries({
   const getFilterFromUrl = (): RemovalFilter => {
     const params = new URLSearchParams(location.search);
     const filterParam = params.get('filter');
-    return isValidFilter(filterParam, validDateKeys) ? filterParam : 'all';
+    if (!filterParam || !isValidFilter(filterParam, validDateKeys)) {
+      return 'all';
+    }
+    return filterParam;
   };
 
   const [removalFilter, setRemovalFilter] =

@@ -91,7 +91,7 @@ async function collectGitTimestamps(
 
 export default function docTimestampsPlugin(
   _context: LoadContext,
-): Plugin<undefined> {
+): Plugin<unknown> {
   return {
     name: 'doc-timestamps',
     async postBuild({ siteDir, outDir, plugins, siteConfig }) {
