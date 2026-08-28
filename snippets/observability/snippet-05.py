@@ -5,19 +5,19 @@ from glean.indexing.observability.plugins.aws import (
 )
 
 setup_connector_logging(
-    "company_wiki",
+    "companywiki",
     logger_provider=CloudWatchLogsProvider(
         log_group="/glean/connectors",
-        log_stream="company_wiki",
+        log_stream="companywiki",
         region_name="us-east-1",
     ),
 )
 
 observability = ConnectorObservability(
-    connector_name="company_wiki",
+    connector_name="companywiki",
     metrics_provider=CloudWatchMetricsProvider(
         namespace="GleanConnectors",
         region_name="us-east-1",
-        dimensions={"connector": "company_wiki"},
+        dimensions={"connector": "companywiki"},
     ),
 )

@@ -1,1 +1,1 @@
-glean-idx datasource status --datasource company_wiki --output json | jq .data.documents
+glean-idx datasource status --datasource companywiki --output json | jq .data.documents

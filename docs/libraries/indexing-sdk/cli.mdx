@@ -13,14 +13,14 @@ glean-idx validate ./my-connector   # is the plan complete, before writing code?
 glean-idx test --phase mock         # Glean mocked; connector source clients unchanged
 glean-idx test --phase integration  # real source, recorded/replayed; Glean mocked
 glean-idx run --mode incremental    # additive crawl for real
-glean-idx datasource status --datasource company_wiki
+glean-idx datasource status --datasource companywiki
 glean-idx deploy init --cloud gcp   # Docker and Terraform for a CronJob
 ```
 
 ## Where each command runs
 
-Commands fall into two groups, and knowing which is which saves the most common
-confusion. `glean-idx --help` restates it.
+Commands fall into three groups, and knowing which is which saves the most
+common confusion. `glean-idx --help` restates it.
 
 **Credentials only.** Most commands need nothing but `GLEAN_SERVER_URL` and
 `GLEAN_INDEXING_API_TOKEN`. They never import your code, so they run from any
@@ -40,6 +40,13 @@ uv run glean-idx run
 
 A command in the second group run from the wrong directory tells you exactly
 that, and lists the directories it searched for `glean_deployment.yaml`.
+
+**Deployment config plus standard tools.** `deploy` commands read
+`glean_deployment.yaml` and delegate to Docker Buildx, Terraform, the selected
+provider, or `kubectl`. Install and authenticate those tools first. The SDK owns
+connector-specific naming, image selection, exact secret manifests, Terraform
+variables, and workload discovery; it does not create or authenticate your
+cloud account, cluster, registry, identity foundation, or namespace.
 
 ## Commands
 
@@ -93,7 +100,7 @@ glean-idx test --phase all --allow-destructive-live
 |---|---|
 | `glean-idx datasource status --datasource NAME` | Uploaded and indexed counts per object type, identity counts, visibility, and the most recent upload and processing runs. |
 | `glean-idx datasource process --datasource NAME` | Requests processing now instead of waiting for the next scheduled run. |
-| `glean-idx datasource configure [--connector MODULE:CLASS_OR_FACTORY]` | Registers the connector's own `configuration`, so the datasource cannot drift from what the connector uploads to. |
+| `glean-idx datasource configure [--connector MODULE:CLASS_OR_FACTORY]` | Validates and registers the connector's own `configuration`, so the datasource cannot drift from what the connector uploads to. API-facing datasource names may contain only ASCII letters and digits. An ambiguous transport failure is reconciled by reading state back, never by blindly repeating the write. |
 | `glean-idx document status --datasource NAME --document TYPE ID [--poll]` | Whether one or more documents finished indexing. Repeat `--document TYPE ID` to check several. |
 | `glean-idx document access --datasource NAME --object-type TYPE --id ID --user EMAIL` | Whether a given user can see a document. |
 | `glean-idx document events --datasource NAME --object-type TYPE --id ID` | A document's lifecycle events, for when it uploaded but never became searchable. |
@@ -116,9 +123,20 @@ currently indexed for that datasource becomes stale and is removed.
 
 ### Deploying
 
-`glean-idx deploy` generates and operates a scheduled job in your own cloud —
-`init`, `build`, `secrets`, `apply`, `status`, `logs`, and `destroy`. See
-[Deployment](/libraries/indexing-sdk/deployment/overview).
+`glean-idx deploy` generates and operates a scheduled job in your own cloud:
+
+| Command | What it does |
+|---|---|
+| `deploy init` | Generates Docker, Terraform, runtime, and YAML artifacts. |
+| `deploy build [--push]` | Delegates to Docker Buildx using the YAML image tag. The compatibility `--tag` option must match the YAML so build and apply cannot diverge. |
+| `deploy secrets upload` | Uploads exact `.env` values and records only validated key names locally. |
+| `deploy apply` | Runs Terraform init, displays an exact saved plan, prompts, and applies that same plan. |
+| `deploy run` | Delegates to `kubectl` to create one immediate Job from the configured CronJob. |
+| `deploy status` / `deploy logs` | Uses `kubectl` against the currently selected cluster. |
+| `deploy destroy` | Removes Terraform resources and manifest-owned secrets, then reports retained image, namespace, datasource registration, and local files. |
+
+See [Deployment](/libraries/indexing-sdk/deployment/overview) for prerequisites,
+provider authentication, namespace ownership, and cleanup boundaries.
 
 ## Output and exit codes
 
@@ -126,13 +144,13 @@ Every command takes `--output json` and returns a stable envelope, which is what
 makes the CLI usable from a script or an agent:
 
 ```bash snippet=cli/snippet-05.sh
-glean-idx datasource status --datasource company_wiki --output json | jq .data.documents
+glean-idx datasource status --datasource companywiki --output json | jq .data.documents
 ```
 
 ```json
 {
   "ok": true,
-  "data": { "datasource": "company_wiki", "documents": { "uploaded": { "article": 42 } } }
+  "data": { "datasource": "companywiki", "documents": { "uploaded": { "article": 42 } } }
 }
 ```
 
@@ -142,7 +160,10 @@ goes to **stdout whether the command succeeded or not** — an `ok: false` resul
 is still the result — so there is one stream to parse. Text-mode errors go to
 stderr, as does connector logging from `run`.
 
-Exit codes are stable:
+SDK-owned exit codes are stable. When a deployment subprocess starts and exits
+nonzero, the CLI preserves that Docker, Terraform, or `kubectl` exit code (from
+`1` through `255`) and includes the command and captured diagnostics in the
+error envelope.
 
 | Code | Meaning |
 |---|---|

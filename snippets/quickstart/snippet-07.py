@@ -1,6 +1,6 @@
 from glean.indexing.testing import StaticDataClient, run_connector
 
-result = run_connector(CompanyWikiConnector("company_wiki", StaticDataClient([
+result = run_connector(CompanyWikiConnector("companywiki", StaticDataClient([
     {
         "id": "page_123",
         "title": "Engineering Onboarding Guide",
@@ -11,4 +11,4 @@ result = run_connector(CompanyWikiConnector("company_wiki", StaticDataClient([
     }
 ])))
 
-result.assert_documents_posted(count=1, datasource="company_wiki")
+result.assert_documents_posted(count=1, datasource="companywiki")

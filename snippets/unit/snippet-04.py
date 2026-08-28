@@ -6,6 +6,6 @@ from glean.indexing.testing import StaticAsyncStreamingDataClient, run_connector
 @pytest.mark.asyncio
 async def test_async_connector():
     result = await run_connector_async(
-        MyAsyncConnector("my_ds", StaticAsyncStreamingDataClient(fixtures))
+        MyAsyncConnector("myds", StaticAsyncStreamingDataClient(fixtures))
     )
     result.assert_documents_posted(count=10)

@@ -13,7 +13,7 @@ from glean.indexing.models import (
 
 class CompanyWikiConnector(BaseDatasourceConnector[WikiPage]):
     configuration = CustomDatasourceConfig(
-        name="company_wiki",
+        name="companywiki",
         display_name="Company Wiki",
         url_regex=r"https://wiki\.company\.com/.*",
         is_user_referenced_by_email=True,
@@ -39,7 +39,7 @@ class CompanyWikiConnector(BaseDatasourceConnector[WikiPage]):
 def create_connector() -> CompanyWikiConnector:
     """Construct the connector from runtime configuration."""
     return CompanyWikiConnector(
-        name="company_wiki",
+        name="companywiki",
         data_client=WikiDataClient(
             base_url=os.environ["WIKI_BASE_URL"],
             api_token=os.environ["WIKI_API_TOKEN"],

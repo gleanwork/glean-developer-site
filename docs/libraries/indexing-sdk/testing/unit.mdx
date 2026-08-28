@@ -23,13 +23,13 @@ Pair `run_connector` with a static data client:
 from glean.indexing.testing import StaticDataClient, run_connector
 
 result = run_connector(
-    MyConnector("my_ds", StaticDataClient([
+    MyConnector("myds", StaticDataClient([
         {"id": "1", "title": "Doc 1", "url": "https://example.com/1"},
         {"id": "2", "title": "Doc 2", "url": "https://example.com/2"},
     ]))
 )
 
-result.assert_documents_posted(count=2, datasource="my_ds")
+result.assert_documents_posted(count=2, datasource="myds")
 ```
 
 It returns a `MockGleanClient` that recorded everything the connector sent.
@@ -45,12 +45,12 @@ Static clients exist for each connector shape:
 ## Assertions
 
 ```python snippet=unit/snippet-02.py
-result.assert_documents_posted(count=2, datasource="my_ds")
+result.assert_documents_posted(count=2, datasource="myds")
 result.assert_employees_posted(count=10)
 result.assert_users_posted(count=5)
 result.assert_groups_posted(count=2)
 result.assert_memberships_posted(count=8)
-result.assert_datasource_configured(name="my_ds")
+result.assert_datasource_configured(name="myds")
 ```
 
 Omit `count` to assert only that something was posted.
@@ -82,7 +82,7 @@ from glean.indexing.testing import StaticAsyncStreamingDataClient, run_connector
 @pytest.mark.asyncio
 async def test_async_connector():
     result = await run_connector_async(
-        MyAsyncConnector("my_ds", StaticAsyncStreamingDataClient(fixtures))
+        MyAsyncConnector("myds", StaticAsyncStreamingDataClient(fixtures))
     )
     result.assert_documents_posted(count=10)
 ```
@@ -116,7 +116,7 @@ with mock_glean_client() as client:
     connector.configure_datasource()
     connector.index_data(mode=IndexingMode.INCREMENTAL)
 
-    client.assert_datasource_configured(name="my_ds")
+    client.assert_datasource_configured(name="myds")
     client.assert_documents_posted(count=2)
 ```
 
