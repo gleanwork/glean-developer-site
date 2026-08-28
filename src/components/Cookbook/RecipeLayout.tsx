@@ -4,6 +4,7 @@ import { getIcon } from '@gleanwork/docusaurus-theme-glean/Icons';
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 import {
+  RECIPE_CAPABILITY_LABELS,
   RECIPE_STATUS_LABELS,
   RECIPE_SURFACE_LABELS,
   type CookbookPlugin,
@@ -88,11 +89,14 @@ function ActionCard({
   // others once the separate code-assets card went away.
   const hasSource = recipe.codeAssets.length > 0;
   const isScaffold = recipe.buildMethod === 'scaffold';
+  const isPluginAvailable = recipe.visibility !== 'preview';
 
   return (
     <div className={styles.actionCard}>
       {isScaffold ? (
-        <PluginRunButton plugin={plugin} recipeId={recipe.id} />
+        isPluginAvailable ? (
+          <PluginRunButton plugin={plugin} recipeId={recipe.id} />
+        ) : null
       ) : (
         <button
           className={styles.primaryAction}
@@ -130,7 +134,9 @@ function ActionCard({
 
       <p className={styles.actionHint}>
         {isScaffold
-          ? 'Runs the recipe through the Glean cookbook plugin.'
+          ? isPluginAvailable
+            ? 'Runs the recipe through the Glean cookbook plugin.'
+            : 'Preview recipes are not included in the public cookbook plugin.'
           : copiesBuilderPrompt
             ? `Paste into a new private ${pasteTarget} project. Replace <your-glean-instance> first.`
             : 'Paste into Claude Code, Cursor, or Codex.'}
@@ -640,7 +646,15 @@ export default function RecipeLayout({
                   </span>
                 </div>
                 <div className={styles.glanceRow}>
-                  <span className={styles.glanceKey}>Status</span>
+                  <span className={styles.glanceKey}>Capabilities</span>
+                  <span className={styles.glanceVal}>
+                    {recipe.capabilities
+                      .map((capability) => RECIPE_CAPABILITY_LABELS[capability])
+                      .join(', ')}
+                  </span>
+                </div>
+                <div className={styles.glanceRow}>
+                  <span className={styles.glanceKey}>Recipe type</span>
                   <span className={styles.glanceVal}>
                     {RECIPE_STATUS_LABELS[recipe.status]}
                   </span>

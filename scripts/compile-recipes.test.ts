@@ -7,6 +7,7 @@ function listedEntry(id: string) {
     title: id,
     description: 'A recipe.',
     surfaces: ['web-sdk'],
+    capabilities: ['embed'],
     status: 'production-pattern',
     category: 'search',
     level: 'Beginner',
@@ -45,6 +46,19 @@ describe('compileRecipeCatalog', () => {
     );
 
     expect(errors.join('\n')).toMatch(/hidden recipe must not have/);
+  });
+
+  it('compiles preview recipes when their gated MDX page exists', () => {
+    const { records, errors } = compileRecipeCatalog(
+      [{ ...listedEntry('preview-search'), visibility: 'preview' }],
+      new Set(['preview-search']),
+    );
+
+    expect(errors).toEqual([]);
+    expect(records[0]).toMatchObject({
+      id: 'preview-search',
+      visibility: 'preview',
+    });
   });
 
   it('fails when a listed recipe is missing its MDX page', () => {

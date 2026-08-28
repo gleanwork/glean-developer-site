@@ -8,6 +8,14 @@ const redirects = [
   ...require('./redirects.json'),
   ...require('./permalinks.json'),
 ];
+const previewRecipeRoutes = (
+  require('./data/cookbook-registry.json') as Array<{
+    id: string;
+    visibility?: string;
+  }>
+)
+  .filter((recipe) => recipe.visibility === 'preview')
+  .map((recipe) => `/cookbook/${recipe.id}*`);
 import { getBuildTimeFlags } from './src/utils/buildTimeFlags';
 
 /**
@@ -286,6 +294,7 @@ const config: Config = {
         content: {
           includePages: true,
           enableLlmsFullTxt: true,
+          excludeRoutes: previewRecipeRoutes,
         },
       },
     ],
@@ -296,6 +305,7 @@ const config: Config = {
           name: 'glean-developer-docs',
           version: '1.0.0',
         },
+        excludeRoutes: previewRecipeRoutes,
       },
     ],
     [

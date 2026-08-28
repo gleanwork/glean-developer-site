@@ -1,8 +1,12 @@
 import type React from 'react';
+import { useEffect, useState } from 'react';
 import Head from '@docusaurus/Head';
+import Link from '@docusaurus/Link';
+import { useLocation } from '@docusaurus/router';
 import recipesData from '@site/src/data/recipes.json';
 import type { RecipesData } from '../../types/recipe';
 import RecipeLayout from './RecipeLayout';
+import { isRecipeAvailable } from './recipePreview';
 
 interface RecipePageProps {
   recipeId: string;
@@ -24,12 +28,36 @@ export default function RecipePage({
 }: RecipePageProps): React.ReactElement {
   const data = recipesData as RecipesData;
   const recipe = data.recipes.find((r) => r.id === recipeId);
+  const location = useLocation();
+  const [hydrated, setHydrated] = useState(false);
+
+  useEffect(() => setHydrated(true), []);
 
   if (!recipe) {
     throw new Error(
       `RecipePage: no compiled recipe with id "${recipeId}". ` +
         'Check the recipeId prop against the recipe frontmatter, and that ' +
         'recipes:compile ran.',
+    );
+  }
+
+  const isPreview = recipe.visibility === 'preview';
+  const isAvailable =
+    !isPreview || (hydrated && isRecipeAvailable(recipe, location.search));
+
+  if (!isAvailable) {
+    return (
+      <>
+        <Head>
+          <title>Page not found | Glean Developer</title>
+          <meta name="robots" content="noindex,nofollow" />
+        </Head>
+        <div className="container margin-vert--lg">
+          <h1>Page not found</h1>
+          <p>The page you requested could not be found.</p>
+          <Link to="/cookbook">Browse the cookbook</Link>
+        </div>
+      </>
     );
   }
 
@@ -45,6 +73,7 @@ export default function RecipePage({
         <meta name="description" content={recipe.description} />
         <meta property="og:title" content={recipe.title} />
         <meta property="og:description" content={recipe.description} />
+        {isPreview ? <meta name="robots" content="noindex,nofollow" /> : null}
       </Head>
       <RecipeLayout plugin={data.plugin} recipe={recipe}>
         {children}

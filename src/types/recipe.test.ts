@@ -12,6 +12,7 @@ function validEntry() {
     description:
       'Put permission-aware Glean search and chat inside an internal app with the Web SDK.',
     surfaces: ['web-sdk', 'platform-api'],
+    capabilities: ['embed', 'search', 'chat'],
     status: 'production-pattern',
     category: 'search',
     level: 'Beginner',
@@ -42,8 +43,39 @@ describe('parseRecipeEntry', () => {
     expect(result.record.tags).toEqual([]);
     expect(result.record.featured).toBe(false);
     expect(result.record.hidden).toBe(false);
+    expect(result.record.visibility).toBe('public');
     expect(isListedOnDocs(result.record)).toBe(true);
     expect(result.record.goDependency).toBe(false);
+  });
+
+  it('accepts quickstart and preview metadata', () => {
+    const result = parseRecipeEntry(
+      {
+        ...validEntry(),
+        status: 'quickstart',
+        visibility: 'preview',
+      },
+      'embed-search-chat',
+    );
+    expect(result.success).toBe(true);
+    if (!result.success) return;
+    expect(result.record.visibility).toBe('preview');
+    expect(isListedOnDocs(result.record)).toBe(true);
+  });
+
+  it('requires at least one known capability', () => {
+    expect(
+      parseRecipeEntry(
+        { ...validEntry(), capabilities: [] },
+        'embed-search-chat',
+      ).success,
+    ).toBe(false);
+    expect(
+      parseRecipeEntry(
+        { ...validEntry(), capabilities: ['unknown'] },
+        'embed-search-chat',
+      ).success,
+    ).toBe(false);
   });
 
   it('accepts hidden true', () => {

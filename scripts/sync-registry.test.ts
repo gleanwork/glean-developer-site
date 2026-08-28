@@ -7,6 +7,7 @@ import path from 'node:path';
 import {
   extractPluginCoordinates,
   listedRecipes,
+  publicRecipes,
   renderPage,
   syncPreviewAssets,
   writeRecipePages,
@@ -147,16 +148,30 @@ describe('renderPage', () => {
     expect(last).toContain('pagination_prev: "cookbook/company-answers"');
     expect(last).toContain('pagination_next: null');
   });
+
+  it('marks preview recipes as unlisted', () => {
+    const page = renderPage({ ...recipe, visibility: 'preview' }, markdown);
+    expect(page).toContain('unlisted: true');
+  });
 });
 
 describe('listedRecipes', () => {
-  it('drops hidden recipes and keeps the rest', () => {
+  const recipes = [
+    { id: 'company-answers' },
+    { id: 'preview-search', visibility: 'preview' },
+    { id: 'wip', hidden: true },
+    { id: 'embed-search-chat', hidden: false },
+  ];
+
+  it('drops hidden recipes but keeps generated preview pages', () => {
     expect(
-      listedRecipes([
-        { id: 'company-answers' },
-        { id: 'wip', hidden: true },
-        { id: 'embed-search-chat', hidden: false },
-      ]).map((entry: { id: string }) => entry.id),
+      listedRecipes(recipes).map((entry: { id: string }) => entry.id),
+    ).toEqual(['company-answers', 'preview-search', 'embed-search-chat']);
+  });
+
+  it('removes preview recipes from public navigation', () => {
+    expect(
+      publicRecipes(recipes).map((entry: { id: string }) => entry.id),
     ).toEqual(['company-answers', 'embed-search-chat']);
   });
 });
@@ -186,6 +201,12 @@ describe('writeRecipePages', () => {
             content: stubContent,
           },
           {
+            id: 'preview-search',
+            title: 'Preview Search',
+            visibility: 'preview',
+            content: stubContent,
+          },
+          {
             id: 'embed-search-chat',
             title: 'Embed',
             content: stubContent,
@@ -197,6 +218,7 @@ describe('writeRecipePages', () => {
       expect([...written].sort()).toEqual([
         'company-answers',
         'embed-search-chat',
+        'preview-search',
       ]);
       expect(fs.existsSync(path.join(output, 'wip.mdx'))).toBe(false);
       expect(fs.existsSync(path.join(output, 'index.mdx'))).toBe(true);
@@ -206,6 +228,14 @@ describe('writeRecipePages', () => {
       );
       expect(first).toContain('pagination_next: "cookbook/embed-search-chat"');
       expect(first).not.toContain('cookbook/wip');
+      expect(first).not.toContain('cookbook/preview-search');
+      const preview = fs.readFileSync(
+        path.join(output, 'preview-search.mdx'),
+        'utf8',
+      );
+      expect(preview).toContain('unlisted: true');
+      expect(preview).toContain('pagination_prev: null');
+      expect(preview).toContain('pagination_next: null');
     } finally {
       fs.rmSync(output, { recursive: true, force: true });
     }

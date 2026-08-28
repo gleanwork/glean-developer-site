@@ -87,8 +87,10 @@ To add a recipe:
    `npm run build:registry` and `npm run validate:registry`.
 2. **Here:** `pnpm registry:sync`, then `pnpm recipes:compile`. The sync generates
    the MDX page and copies any declared preview asset; do not recreate either by hand.
-   A recipe with `"hidden": true` stays in the registry snapshot and the plugin, but
-   sync does not generate an MDX page for it.
+   A recipe with `"hidden": true` stays in the registry snapshot, but is omitted from
+   the docs site and cookbook plugin. A recipe with `"visibility": "preview"` gets an
+   unlisted, no-index page but is omitted from public discovery and cookbook plugin
+   output; use `?ff_recipe=<recipe-id>` to reveal its card and detail page.
 3. Verify with `pnpm recipes:compile`, `pnpm test`, and `pnpm build`. The Cookbooks
    nav and homepage band are behind the `cookbook` feature flag — build with
    `FF_COOKBOOKS=true` to see them.

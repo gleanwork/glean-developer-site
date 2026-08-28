@@ -213,6 +213,13 @@ export function listedRecipes(entries) {
   return entries.filter((entry) => entry.hidden !== true);
 }
 
+/** Preview pages are generated but must not appear in public navigation. */
+export function publicRecipes(entries) {
+  return listedRecipes(entries).filter(
+    (entry) => entry.visibility !== 'preview',
+  );
+}
+
 const pagesDir = path.join(repoRoot, 'docs', 'cookbook');
 
 /** Section headings the cookbook supplies; everything else passes through as prose. */
@@ -330,7 +337,7 @@ export function renderPage(
 # sync. Components and layout are chosen by scripts/sync-registry.mjs in this repo.
 hide_table_of_contents: true
 hide_title: true
-pagination_label: ${JSON.stringify(recipe.sidebarLabel ?? recipe.title)}
+${recipe.visibility === 'preview' ? 'unlisted: true\n' : ''}pagination_label: ${JSON.stringify(recipe.sidebarLabel ?? recipe.title)}
 pagination_prev: ${previousRecipe ? JSON.stringify(`cookbook/${previousRecipe.id}`) : 'null'}
 pagination_next: ${nextRecipe ? JSON.stringify(`cookbook/${nextRecipe.id}`) : 'null'}
 ---
@@ -359,9 +366,15 @@ ${parts.join('\n\n')}
  */
 export function writeRecipePages(entries, outputDir = pagesDir) {
   const listed = listedRecipes(entries);
+  const navigable = publicRecipes(entries);
   fs.mkdirSync(outputDir, { recursive: true });
   const written = new Set();
-  for (const [index, entry] of listed.entries()) {
+  for (const entry of listed) {
+    const navigationIndex = navigable.indexOf(entry);
+    const previousRecipe =
+      navigationIndex >= 0 ? navigable[navigationIndex - 1] : null;
+    const nextRecipe =
+      navigationIndex >= 0 ? navigable[navigationIndex + 1] : null;
     const sections = [
       `## Problem\n\n${entry.content.problem}`,
       ...(entry.content.guardrails ?? []).map(
@@ -375,7 +388,7 @@ export function writeRecipePages(entries, outputDir = pagesDir) {
     const markdown = sections.join('\n\n');
     fs.writeFileSync(
       path.join(outputDir, `${entry.id}.mdx`),
-      renderPage(entry, markdown, listed[index - 1], listed[index + 1]),
+      renderPage(entry, markdown, previousRecipe, nextRecipe),
     );
     written.add(entry.id);
   }

@@ -38,7 +38,24 @@ export const RECIPE_SURFACES = [
   'agents',
 ] as const;
 
-export const RECIPE_STATUSES = ['showcase', 'production-pattern'] as const;
+export const RECIPE_CAPABILITIES = [
+  'search',
+  'chat',
+  'agents',
+  'indexing',
+  'embed',
+  'tools',
+  'mcp',
+  'workflows',
+] as const;
+
+export const RECIPE_STATUSES = [
+  'quickstart',
+  'showcase',
+  'production-pattern',
+] as const;
+
+export const RECIPE_VISIBILITIES = ['public', 'preview'] as const;
 
 export const RECIPE_SURFACE_LABELS: Record<
   (typeof RECIPE_SURFACES)[number],
@@ -55,10 +72,25 @@ export const RECIPE_SURFACE_LABELS: Record<
   agents: 'Agents',
 };
 
+export const RECIPE_CAPABILITY_LABELS: Record<
+  (typeof RECIPE_CAPABILITIES)[number],
+  string
+> = {
+  search: 'Search',
+  chat: 'Chat',
+  agents: 'Agents',
+  indexing: 'Indexing',
+  embed: 'Embed',
+  tools: 'Tools',
+  mcp: 'MCP',
+  workflows: 'Workflows',
+};
+
 export const RECIPE_STATUS_LABELS: Record<
   (typeof RECIPE_STATUSES)[number],
   string
 > = {
+  quickstart: 'Quickstart',
   showcase: 'Showcase',
   'production-pattern': 'Production pattern',
 };
@@ -341,7 +373,12 @@ export const recipeMetaSchema = z.strictObject({
     )
     .optional(),
   surfaces: z.array(z.enum(RECIPE_SURFACES)).min(1),
+  /** User goals taught materially by this recipe; distinct from implementation surfaces and visual category. */
+  capabilities: z.array(z.enum(RECIPE_CAPABILITIES)).min(1),
+  /** Displayed as recipe type; retained as `status` for registry compatibility. */
   status: z.enum(RECIPE_STATUSES),
+  /** Preview recipes are generated but require an exact `ff_recipe` query value on the docs site. */
+  visibility: z.enum(RECIPE_VISIBILITIES).default('public'),
   category: z.enum(RECIPE_CATEGORIES),
   level: z.enum(RECIPE_LEVELS),
   levels: z.strictObject({
@@ -386,11 +423,13 @@ export const recipeMetaSchema = z.strictObject({
     .boolean()
     .default(false)
     .describe(
-      'When true, the developer docs site does not generate a page, sidebar item, or search entry. The cookbook plugin and GitHub README still list the recipe.',
+      'When true, the developer docs site does not generate a page, sidebar item, or search entry.',
     ),
   tags: z.array(z.string().min(1)).default([]),
 });
 
+export type RecipeCapability = (typeof RECIPE_CAPABILITIES)[number];
+export type RecipeSurface = (typeof RECIPE_SURFACES)[number];
 export type RecipeCodeAsset = z.infer<typeof recipeCodeAssetSchema>;
 export type RecipeDemoQuery = z.infer<typeof recipeDemoQuerySchema>;
 export type RecipeMeta = z.infer<typeof recipeMetaSchema>;
@@ -425,7 +464,8 @@ export type RecipesData = {
    */
   _generated?: string;
   recipes: RecipeRecord[];
-  surfaces: string[];
+  capabilities: RecipeCapability[];
+  surfaces: RecipeSurface[];
   generatedAt: string;
   totalRecipes: number;
   plugin: CookbookPlugin;

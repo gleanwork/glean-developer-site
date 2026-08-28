@@ -14,7 +14,13 @@
       "surfaces": [
         "platform-api"
       ],
+      "capabilities": [
+        "search",
+        "chat",
+        "agents"
+      ],
       "status": "showcase",
+      "visibility": "public",
       "category": "workflow",
       "level": "Intermediate",
       "levels": {
@@ -316,7 +322,11 @@
       "surfaces": [
         "client-api"
       ],
+      "capabilities": [
+        "chat"
+      ],
       "status": "showcase",
+      "visibility": "public",
       "category": "workflow",
       "level": "Beginner",
       "levels": {
@@ -435,7 +445,11 @@
       "surfaces": [
         "client-api"
       ],
+      "capabilities": [
+        "chat"
+      ],
       "status": "showcase",
+      "visibility": "public",
       "category": "workflow",
       "level": "Beginner",
       "levels": {
@@ -560,7 +574,12 @@
         "web-sdk",
         "platform-api"
       ],
+      "capabilities": [
+        "chat",
+        "embed"
+      ],
       "status": "showcase",
+      "visibility": "public",
       "category": "portal",
       "level": "Intermediate",
       "levels": {
@@ -850,7 +869,15 @@
         "agents",
         "tools"
       ],
+      "capabilities": [
+        "search",
+        "chat",
+        "agents",
+        "tools",
+        "workflows"
+      ],
       "status": "showcase",
+      "visibility": "public",
       "category": "agent",
       "level": "Advanced",
       "levels": {
@@ -1060,7 +1087,12 @@
       "surfaces": [
         "platform-api"
       ],
+      "capabilities": [
+        "chat",
+        "workflows"
+      ],
       "status": "showcase",
+      "visibility": "public",
       "category": "workflow",
       "level": "Intermediate",
       "levels": {
@@ -1247,7 +1279,191 @@
         "workflow"
       ],
       "permalink": "/cookbook/rfp-responder"
+    },
+    {
+      "id": "search-with-discovered-filters",
+      "title": "Search Glean with discovered filters",
+      "description": "Discover the datasources and common filter fields available in your Glean instance, then apply a returned datasource and filter value to a permission-aware Platform Search request.",
+      "sidebarLabel": "Search with filters",
+      "surfaces": [
+        "platform-api"
+      ],
+      "capabilities": [
+        "search"
+      ],
+      "status": "quickstart",
+      "visibility": "preview",
+      "category": "search",
+      "level": "Beginner",
+      "levels": {
+        "minimal": true,
+        "wow": false
+      },
+      "timeEstimate": "~15 min",
+      "requiredScopes": [
+        "SEARCH"
+      ],
+      "authMethod": [
+        "client-api-oauth-or-token"
+      ],
+      "buildMethod": "scaffold",
+      "languages": [
+        "typescript"
+      ],
+      "prerequisites": [
+        "Node 20 or newer",
+        "A Glean instance with content indexed",
+        "A work email for tenant discovery and OAuth sign-in; a SEARCH-scoped Glean token is the fallback",
+        "Experimental Platform APIs enabled through X-Glean-Include-Experimental: true, which the scaffold sends automatically"
+      ],
+      "demoQueries": [
+        {
+          "query": "Search for a topic you know exists in your Glean instance",
+          "expectedBehavior": "Lists the datasources and common filter fields visible to you, selects a datasource returned by discovery, applies a suggested EQUALS field value when one is available, and returns a valid permission-aware Search response without assuming a fixed result count."
+        }
+      ],
+      "codeAssets": [
+        {
+          "repoPath": "recipes/search-with-discovered-filters",
+          "language": "typescript",
+          "description": "Interactive TypeScript CLI for Search Filters discovery followed by filtered Platform Search"
+        }
+      ],
+      "scaffoldActions": [],
+      "steps": [
+        {
+          "kind": "scaffold",
+          "title": "Scaffold the project",
+          "description": "Copies the runnable TypeScript CLI, fixture tests, and sign-in helper into a new directory.",
+          "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/search-with-discovered-filters search-with-discovered-filters"
+        },
+        {
+          "kind": "install",
+          "title": "Install dependencies",
+          "command": "cd search-with-discovered-filters && npm install"
+        },
+        {
+          "kind": "manual",
+          "title": "Check the request flow with fixtures",
+          "description": "Validates catalog discovery, query-backed suggested values, field-filter propagation, datasource-only fallback, experimental headers, and rate-limit guidance without credentials or network access.",
+          "command": "cd search-with-discovered-filters && npm test"
+        },
+        {
+          "kind": "authenticate",
+          "title": "Sign in to Glean",
+          "description": "Uses your work email to find your Glean tenant and opens the OAuth flow. If OAuth is unavailable, copy .env.example to .env and provide a SEARCH-scoped Glean token instead.",
+          "command": "cd search-with-discovered-filters && npm run login -- --email \"<work-email>\""
+        },
+        {
+          "kind": "verify-live",
+          "title": "Verify against your instance",
+          "description": "Uses your topic to discover current filters, automatically selects a returned datasource and suggested field value when available, then validates the Search response shape and pagination state.",
+          "command": "cd search-with-discovered-filters && npm run verify -- --query \"<search-query>\""
+        },
+        {
+          "kind": "run",
+          "title": "Choose filters and search",
+          "description": "The CLI shows the best-effort filter catalog, asks you to choose a datasource and suggested field value, and prints results, warnings, pagination state, and request IDs.",
+          "command": "cd search-with-discovered-filters && npm start -- --query \"<search-query>\""
+        }
+      ],
+      "execution": {
+        "type": "cli",
+        "questions": [
+          {
+            "id": "email",
+            "prompt": "What is your work email? It is used once to discover your Glean tenant.",
+            "required": true
+          },
+          {
+            "id": "search-query",
+            "prompt": "What topic do you know exists in your Glean content?",
+            "required": true
+          }
+        ],
+        "auth": [
+          {
+            "kind": "oauth-with-token-fallback",
+            "scopes": [
+              "SEARCH"
+            ],
+            "setupCommand": "cd search-with-discovered-filters && npm run login -- --email \"<work-email>\"",
+            "configFile": ".env",
+            "backendVariable": "GLEAN_SERVER_URL",
+            "credentialVariable": "GLEAN_API_TOKEN"
+          }
+        ],
+        "verification": {
+          "kind": "automated",
+          "command": "cd search-with-discovered-filters && npm run verify -- --query \"<search-query>\"",
+          "expectedDuration": "about 1 minute after sign-in",
+          "startsOwnServer": false
+        },
+        "run": {
+          "command": "cd search-with-discovered-filters && npm start -- --query \"<search-query>\"",
+          "userBrowser": false
+        }
+      },
+      "architecture": [
+        {
+          "label": "Your CLI",
+          "caption": "query and filter choice",
+          "icon": "terminal",
+          "emphasized": false
+        },
+        {
+          "label": "Search Filters",
+          "caption": "visible datasources and fields",
+          "category": "search",
+          "emphasized": true
+        },
+        {
+          "label": "Platform Search",
+          "caption": "permission-aware results",
+          "category": "search",
+          "emphasized": false
+        }
+      ],
+      "content": {
+        "problem": "Search filters differ across Glean instances and connected sources. Hard-coding a datasource or field from another environment makes a first integration brittle. This quickstart asks Glean what the signed-in user can filter, then carries that returned selection into a real Search request so the first example matches the reader's own instance and permissions.",
+        "takeItFurther": [
+          "Follow next_cursor to paginate without treating it as data or constructing it yourself.",
+          "Persist the catalog briefly for UI rendering, but refresh it and continue to treat it as best effort rather than an exhaustive schema.",
+          "Build a faceted search interface that requests query-specific values after the user chooses one datasource.",
+          "Add time_range alongside discovered filters for bounded recency searches."
+        ],
+        "limitations": [
+          {
+            "title": "Discovery is best effort",
+            "description": "A field omitted from Search Filters may still be valid, and suggested values are bounded and non-exhaustive. Reusing a returned value does not guarantee matching results."
+          },
+          {
+            "title": "Experimental API",
+            "description": "Both endpoints may change. The scaffold opts in explicitly and should be evaluated before production adoption."
+          }
+        ]
+      },
+      "aiPrompt": "Scaffold and run the verified Search with discovered filters quickstart. Ask for the user's work email and one topic they know exists in their Glean instance. Run the fixture tests, sign in with SEARCH scope, run live verification, then start the interactive CLI. Use GET /api/search/filters for catalog and query-backed discovery, and apply only a datasource, field, and suggested value returned by discovery to POST /api/search. Send X-Glean-Include-Experimental: true on every request. Do not impersonate another user or claim the best-effort filter catalog is exhaustive.",
+      "llmContext": "Platform Search and GET /api/search/filters are experimental and require X-Glean-Include-Experimental: true. Catalog discovery returns datasource identifiers and common built-in fields; query-backed discovery requires exactly one datasource and returns bounded, non-exhaustive suggested values. Apply returned values unchanged with EQUALS. The caller's credential is the permission boundary. Surface warnings, request IDs, 422 query errors, 429 Retry-After, 503 failures, and next_cursor without logging credentials or storing results.",
+      "goDependency": false,
+      "featured": false,
+      "hidden": false,
+      "tags": [
+        "search",
+        "filters",
+        "quickstart",
+        "platform-api"
+      ],
+      "permalink": "/cookbook/search-with-discovered-filters"
     }
+  ],
+  "capabilities": [
+    "search",
+    "chat",
+    "agents",
+    "embed",
+    "tools",
+    "workflows"
   ],
   "surfaces": [
     "client-api",
@@ -1257,7 +1473,7 @@
     "agents"
   ],
   "generatedAt": "2026-08-21T00:00:00.000Z",
-  "totalRecipes": 6,
+  "totalRecipes": 7,
   "plugin": {
     "marketplaceName": "glean-cookbook",
     "pluginName": "cookbook",
