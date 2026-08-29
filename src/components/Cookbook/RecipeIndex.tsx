@@ -3,12 +3,13 @@ import { useEffect, useMemo, useState } from 'react';
 import { useHistory, useLocation } from '@docusaurus/router';
 import {
   RECIPE_CAPABILITY_LABELS,
+  RECIPE_LEVELS,
   RECIPE_SURFACE_LABELS,
   type RecipeCapability,
   type RecipeRecord,
   type RecipeSurface,
 } from '../../types/recipe';
-import FlagshipCard from './FlagshipCard';
+import RecipeShowcaseCarousel from './RecipeShowcaseCarousel';
 import RecipeCard from './RecipeCard';
 import { isRecipeAvailable } from './recipePreview';
 import styles from './RecipeIndex.module.css';
@@ -22,6 +23,35 @@ interface RecipeIndexProps {
 }
 
 type Filter = string | 'all';
+
+type Level = (typeof RECIPE_LEVELS)[number];
+
+const LEVEL_SECTIONS: Record<Level, { heading: string; description: string }> =
+  {
+    Beginner: {
+      heading: '01 · Start here',
+      description:
+        'Focused recipes with one clear outcome. Learn the API shape, authentication model, and verification loop without assembling a full system.',
+    },
+    Intermediate: {
+      heading: '02 · Build complete experiences',
+      description:
+        'Combine capabilities into useful employee and customer workflows while keeping citations, identity, and permissions visible.',
+    },
+    Advanced: {
+      heading: '03 · Advanced patterns',
+      description:
+        'Coordinate agents, governed actions, human approval, and operational failure paths in end-to-end builds.',
+    },
+  };
+
+function sortRecipes(a: RecipeRecord, b: RecipeRecord): number {
+  return (
+    Number(b.status === 'quickstart') - Number(a.status === 'quickstart') ||
+    Number(b.featured) - Number(a.featured) ||
+    a.title.localeCompare(b.title)
+  );
+}
 
 function validFilter(
   value: string | null,
@@ -110,21 +140,24 @@ export default function RecipeIndex({
     });
   };
 
-  const flagship = availableRecipes.find((recipe) =>
-    recipe.tags.includes('flagship'),
-  );
-  const gridRecipes = availableRecipes.filter((recipe) => recipe !== flagship);
   const visibleRecipes = useMemo(
     () =>
-      gridRecipes.filter((recipe) =>
-        matches(recipe, activeCapability, activeSurface),
-      ),
-    [gridRecipes, activeCapability, activeSurface],
+      availableRecipes
+        .filter((recipe) => matches(recipe, activeCapability, activeSurface))
+        .sort(sortRecipes),
+    [availableRecipes, activeCapability, activeSurface],
   );
-  const flagshipVisible = Boolean(
-    flagship && matches(flagship, activeCapability, activeSurface),
+  const recipesByLevel = useMemo(
+    () =>
+      Object.fromEntries(
+        RECIPE_LEVELS.map((level) => [
+          level,
+          visibleRecipes.filter((recipe) => recipe.level === level),
+        ]),
+      ) as Record<Level, RecipeRecord[]>,
+    [visibleRecipes],
   );
-  const count = visibleRecipes.length + (flagshipVisible ? 1 : 0);
+  const count = visibleRecipes.length;
   const hasActiveFilters =
     activeCapability !== 'all' || activeSurface !== 'all';
 
@@ -156,9 +189,7 @@ export default function RecipeIndex({
         </div>
       ) : (
         <>
-          {flagship && flagshipVisible ? (
-            <FlagshipCard recipe={flagship} />
-          ) : null}
+          <RecipeShowcaseCarousel recipes={availableRecipes} />
 
           <div className={styles.filterBar}>
             <div className={styles.filterControls}>
@@ -228,11 +259,31 @@ export default function RecipeIndex({
             </div>
           </div>
 
-          <div className={styles.grid}>
-            {visibleRecipes.map((recipe) => (
-              <RecipeCard key={recipe.id} recipe={recipe} />
-            ))}
-          </div>
+          {count > 0 ? (
+            <div className={styles.sections}>
+              {RECIPE_LEVELS.map((level) => {
+                const levelRecipes = recipesByLevel[level];
+                if (levelRecipes.length === 0) return null;
+                const section = LEVEL_SECTIONS[level];
+                return (
+                  <section className={styles.recipeSection} key={level}>
+                    <div className={styles.sectionHeading}>
+                      <h2>{section.heading}</h2>
+                      <span className={styles.sectionRule} />
+                    </div>
+                    <p className={styles.sectionDescription}>
+                      {section.description}
+                    </p>
+                    <div className={styles.grid}>
+                      {levelRecipes.map((recipe) => (
+                        <RecipeCard key={recipe.id} recipe={recipe} />
+                      ))}
+                    </div>
+                  </section>
+                );
+              })}
+            </div>
+          ) : null}
 
           {count === 0 ? (
             <div className={styles.empty}>

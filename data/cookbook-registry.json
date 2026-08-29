@@ -828,7 +828,7 @@
     "aiPrompt": "Build a Customer 360 account workspace following https://developers.glean.com/cookbook/customer-360. Ask whether to use (A) Platform Search plus experimental Platform Chat or (B) Platform Agents, then ask for the account name and the selected path's required configuration. Do not research another account unless the user explicitly asks for help; if they do, run one bounded search and offer at most three choices. Keep the assistant above the fold, display only cited account claims, and derive overview counts directly from Search results. Use the scaffold's shipped login command rather than implementing authentication. Verify before leaving the app running.",
     "llmContext": "Use Platform Search for evidence sections, experimental Platform Chat through glean.chat.create for synthesis, and Platform Agents for the optional agent path. Set stream:false, store:false, and X_GLEAN_INCLUDE_EXPERIMENTAL=true. Read ASSISTANT OUTPUT_TEXT content and citations from annotations[].sources. Keep tokens server-side. Read the account from GLEAN_ACCOUNT_NAME. The overview may show the supplied account name and deterministic Search result counts; never infer CRM facts from loosely matching documents. Use GLEAN_SERVER_URL directly.",
     "goDependency": false,
-    "featured": false,
+    "featured": true,
     "tags": ["dual-implementation", "sales", "platform-api"],
     "content": {
       "problem": "Account executives jump between CRM notes, renewal docs, and security\npackets to prep a single customer conversation. This puts those sources in\none account workspace with evidence coverage, compact source sections, and\nan above-the-fold assistant thread — so the next call needs one tab, not nine.\n\nEverything displayed comes from what your instance already knows about that\naccount. The overview shows only the account name you set and counts taken\nstraight from the Search results; assistant claims remain cited rather than\nturning loose search matches into unsupported CRM facts.\n\nThis recipe builds the page two ways: Platform Search plus Platform Chat for an\nopen-ended dashboard, or Agents `createRun` for a prescriptive QBR-ready brief.",
@@ -1713,7 +1713,7 @@
     "aiPrompt": "I'm using Cursor, Claude Code, or Codex, not Lovable. Do not open Lovable. Ask for my work email if needed, run `node <cookbook-plugin-root>/scripts/resolve-backend.mjs \"<work-email>\"`, and use the instance field from that JSON as GLEAN_INSTANCE. Open lovable-prompt.md next to this skill. Replace <your-glean-instance> with that name and set the first suggested question to a natural question about the IT topic they named. Show me the filled prompt so I can paste it into a new private Lovable project. Remind me GLEAN_API_TOKEN and GLEAN_INSTANCE go in Lovable backend secrets, never in the prompt. Then walk the remaining steps.",
     "llmContext": "Keep this single-user prototype private. Its shared backend token is one service identity, so every request has the token owner's access. Multi-user deployment requires app authentication and per-user Glean OAuth. Keep the token in Lovable's server-side secret store, call Client Chat from a backend function, and read CONTENT text and fragment.citation.sourceDocument citations. GLEAN_INSTANCE is Instance name from https://app.glean.com/admin/about-glean, for example acme.",
     "goDependency": false,
-    "featured": false,
+    "featured": true,
     "tags": ["no-code", "it"],
     "content": {
       "problem": "Half the helpdesk tickets are \"how do I reset my SSO password\" and \"how do I get a new laptop.\" The IT docs already answer both.\n\nThis recipe builds a private Lovable page that answers those questions from your Glean content before a ticket gets filed.",
@@ -3003,7 +3003,7 @@
     "aiPrompt": "Scaffold and run the verified Search with discovered filters quickstart. Ask for the user's work email and one topic they know exists in their Glean instance. Run the fixture tests, sign in with SEARCH scope, run live verification, then start the interactive CLI. Use @gleanwork/api-client's glean.search.listFilters() for catalog and query-backed discovery, then pass only a returned datasource, field, and suggested value to glean.search.query(). Enable experimental features through the SDK's documented X_GLEAN_INCLUDE_EXPERIMENTAL option. Do not recreate the SDK transport, impersonate another user, or claim the best-effort filter catalog is exhaustive.",
     "llmContext": "@gleanwork/api-client provides typed glean.search.listFilters() and glean.search.query() methods for these Platform APIs. Enable the experimental header through X_GLEAN_INCLUDE_EXPERIMENTAL rather than constructing requests manually. Catalog discovery returns datasource identifiers and common built-in fields; query-backed discovery requires exactly one datasource and returns bounded, non-exhaustive suggested values. Apply returned values unchanged with EQUALS. The caller's credential is the permission boundary. Let the SDK validate response data and surface typed API errors; display warnings, request IDs, Retry-After guidance, and next_cursor without logging credentials or storing results.",
     "goDependency": false,
-    "featured": false,
+    "featured": true,
     "hidden": false,
     "tags": ["search", "filters", "quickstart", "platform-api"],
     "content": {

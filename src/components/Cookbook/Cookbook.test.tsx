@@ -10,7 +10,9 @@ import recipesData from '@site/src/data/recipes.json';
 import RecipeIndex from './RecipeIndex';
 import RecipePage from './RecipePage';
 import RecipeLayout, { RecipeArchitecture, RecipeSteps } from './RecipeLayout';
-import FlagshipCard from './FlagshipCard';
+import RecipeShowcaseCarousel, {
+  selectShowcaseRecipes,
+} from './RecipeShowcaseCarousel';
 import type { RecipeRecord } from '../../types/recipe';
 import type { AuthKind } from './authContexts';
 import catStyles from './categories.module.css';
@@ -125,7 +127,8 @@ const flagship = makeRecipe({
   permalink: '/cookbook/build-engineering-portal',
   surfaces: ['connector-sdk', 'web-sdk'],
   category: 'portal',
-  level: 'Intermediate',
+  level: 'Advanced',
+  featured: true,
   tags: ['flagship'],
   combines: [
     {
@@ -153,6 +156,7 @@ const searchQuickstart = makeRecipe({
   surfaces: ['platform-api'],
   capabilities: ['search'],
   status: 'quickstart',
+  featured: true,
 });
 
 const recipes = [
@@ -165,6 +169,7 @@ const recipes = [
     capabilities: ['indexing'],
     category: 'index',
     level: 'Intermediate',
+    featured: true,
   }),
   searchQuickstart,
   flagship,
@@ -182,28 +187,30 @@ describe('RecipeIndex', () => {
     ] as const,
   };
 
-  it('preserves the established flagship-and-grid composition', () => {
+  it('renders a featured carousel followed by recipes grouped as a learning progression', () => {
     render(<RecipeIndex {...props} />);
+
     expect(
       screen.getByText('Recipes for building on Glean'),
     ).toBeInTheDocument();
     expect(
-      screen.getByText('Search Glean with discovered filters'),
+      screen.getByRole('region', { name: 'Featured recipes' }),
     ).toBeInTheDocument();
-    expect(screen.getByText('End-to-end build')).toBeInTheDocument();
     expect(
-      screen.queryByText('Featured end-to-end build'),
-    ).not.toBeInTheDocument();
-    expect(screen.queryByText('Browse recipes')).not.toBeInTheDocument();
+      screen.getByRole('heading', {
+        level: 2,
+        name: 'Search Glean with discovered filters',
+      }),
+    ).toBeInTheDocument();
+    expect(screen.getByText('01 · Start here')).toBeInTheDocument();
     expect(
-      screen.queryByText('Start with the core APIs'),
-    ).not.toBeInTheDocument();
+      screen.getByText('02 · Build complete experiences'),
+    ).toBeInTheDocument();
+    expect(screen.getByText('03 · Advanced patterns')).toBeInTheDocument();
     expect(screen.getByText('Embed search & chat')).toBeInTheDocument();
     expect(screen.getByText('Index a custom data source')).toBeInTheDocument();
+    expect(screen.getByText('Build an engineering portal')).toBeInTheDocument();
     expect(screen.getByText('4 recipes')).toBeInTheDocument();
-    expect(
-      screen.getAllByText('Search Glean with discovered filters'),
-    ).toHaveLength(1);
   });
 
   it('filters by capability and implementation surface with intersection semantics', async () => {
@@ -215,7 +222,10 @@ describe('RecipeIndex', () => {
       'search',
     );
     expect(
-      screen.getByText('Search Glean with discovered filters'),
+      screen.getByRole('heading', {
+        level: 2,
+        name: 'Search Glean with discovered filters',
+      }),
     ).toBeInTheDocument();
     expect(screen.getByText('Embed search & chat')).toBeInTheDocument();
     expect(
@@ -228,7 +238,10 @@ describe('RecipeIndex', () => {
       'platform-api',
     );
     expect(
-      screen.getByText('Search Glean with discovered filters'),
+      screen.getByRole('heading', {
+        level: 2,
+        name: 'Search Glean with discovered filters',
+      }),
     ).toBeInTheDocument();
     expect(screen.queryByText('Embed search & chat')).not.toBeInTheDocument();
     expect(screen.getByText('1 recipe')).toBeInTheDocument();
@@ -304,8 +317,13 @@ describe('RecipeIndex', () => {
     };
     rerender(<RecipeIndex {...props} recipes={gatedRecipes} />);
 
-    const title = screen.getByText('Search Glean with discovered filters');
-    expect(title.closest('a')).toHaveAttribute(
+    const previewLinks = screen
+      .getAllByRole('link')
+      .filter((link) =>
+        link.getAttribute('href')?.includes('search-with-discovered-filters'),
+      );
+    expect(previewLinks).not.toHaveLength(0);
+    expect(previewLinks[0]).toHaveAttribute(
       'href',
       '/cookbook/search-with-discovered-filters?ff_recipe=search-with-discovered-filters',
     );
@@ -388,25 +406,70 @@ describe('RecipePage preview gate', () => {
   });
 });
 
-describe('FlagshipCard', () => {
-  it('renders the combines mini-list', () => {
-    render(<FlagshipCard recipe={flagship} />);
-    expect(screen.getByText('Combines three recipes')).toBeInTheDocument();
-    expect(screen.getByText('Index a developer catalog')).toBeInTheDocument();
-    expect(screen.getByText('Ground chat in the catalog')).toBeInTheDocument();
+describe('RecipeShowcaseCarousel', () => {
+  it('selects one curated public recipe per learning level from generated data', () => {
+    const publicRecipes = recipesData.recipes.filter(
+      (recipe) => recipe.visibility === 'public',
+    ) as RecipeRecord[];
+    expect(
+      selectShowcaseRecipes(publicRecipes).map((recipe) => [
+        recipe.level,
+        recipe.title,
+      ]),
+    ).toEqual([
+      ['Beginner', 'Build an IT helpdesk page in Lovable'],
+      [
+        'Intermediate',
+        'Customer 360: an account page built from your own content',
+      ],
+      ['Advanced', 'On-call Copilot'],
+    ]);
+
+    expect(
+      selectShowcaseRecipes(recipesData.recipes as RecipeRecord[])[0].id,
+    ).toBe('search-with-discovered-filters');
   });
 
-  it('uses the regular light border and a neutral pill', () => {
-    const css = readCss('FlagshipCard.module.css');
+  it('rotates through one curated recipe per level and prefers a quickstart', async () => {
+    const user = userEvent.setup();
+    render(<RecipeShowcaseCarousel recipes={recipes} />);
+
+    expect(
+      screen.getByRole('heading', {
+        level: 2,
+        name: 'Search Glean with discovered filters',
+      }),
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Next recipe' }));
+    expect(
+      screen.getByRole('heading', {
+        level: 2,
+        name: 'Index a custom data source',
+      }),
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Next recipe' }));
+    expect(
+      screen.getByRole('heading', {
+        level: 2,
+        name: 'Build an engineering portal',
+      }),
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Previous recipe' }));
+    expect(
+      screen.getByRole('heading', {
+        level: 2,
+        name: 'Index a custom data source',
+      }),
+    ).toBeInTheDocument();
+  });
+
+  it('retains the rounded bordered showcase treatment', () => {
+    const css = readCss('RecipeShowcaseCarousel.module.css');
     expect(css).toMatch(
-      /\.card\s*\{[^}]*border:\s*1px solid var\(--gdt-border-light\)/s,
-    );
-    expect(css).not.toMatch(
-      /\.card\s*\{[^}]*border:\s*1\.5px solid var\(--gdt-primary\)/s,
-    );
-    expect(css).toMatch(/\.pill\s*\{[^}]*background:\s*var\(--gdt-bg-mid\)/s);
-    expect(css).not.toMatch(
-      /\.pill\s*\{[^}]*background:\s*var\(--gdt-primary\)/s,
+      /\.carousel\s*\{[^}]*border:\s*1px solid var\(--gdt-border-light\)[^}]*border-radius:\s*22px/s,
     );
   });
 });
