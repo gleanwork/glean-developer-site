@@ -210,7 +210,10 @@ describe('RecipeIndex', () => {
     const user = userEvent.setup();
     render(<RecipeIndex {...props} />);
 
-    await user.click(screen.getByRole('button', { name: 'Search' }));
+    await user.selectOptions(
+      screen.getByRole('combobox', { name: 'Capability' }),
+      'search',
+    );
     expect(
       screen.getByText('Search Glean with discovered filters'),
     ).toBeInTheDocument();
@@ -220,14 +223,20 @@ describe('RecipeIndex', () => {
     ).not.toBeInTheDocument();
     expect(screen.getByText('3 recipes')).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: 'Platform API' }));
+    await user.selectOptions(
+      screen.getByRole('combobox', { name: 'Surface' }),
+      'platform-api',
+    );
     expect(
       screen.getByText('Search Glean with discovered filters'),
     ).toBeInTheDocument();
     expect(screen.queryByText('Embed search & chat')).not.toBeInTheDocument();
     expect(screen.getByText('1 recipe')).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: 'All capabilities' }));
+    await user.selectOptions(
+      screen.getByRole('combobox', { name: 'Capability' }),
+      'all',
+    );
     expect(screen.getByText('1 recipe')).toBeInTheDocument();
   });
 
@@ -238,9 +247,8 @@ describe('RecipeIndex', () => {
     };
     const { rerender } = render(<RecipeIndex {...props} />);
     expect(screen.getByText('1 recipe')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Search' })).toHaveAttribute(
-      'aria-pressed',
-      'true',
+    expect(screen.getByRole('combobox', { name: 'Capability' })).toHaveValue(
+      'search',
     );
 
     routerState.location = {
@@ -249,16 +257,19 @@ describe('RecipeIndex', () => {
     };
     rerender(<RecipeIndex {...props} />);
     expect(screen.getByText('4 recipes')).toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: 'All capabilities' }),
-    ).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('combobox', { name: 'Capability' })).toHaveValue(
+      'all',
+    );
   });
 
   it('restores filters when browser navigation changes the URL', async () => {
     const user = userEvent.setup();
     const { rerender } = render(<RecipeIndex {...props} />);
 
-    await user.click(screen.getByRole('button', { name: 'Search' }));
+    await user.selectOptions(
+      screen.getByRole('combobox', { name: 'Capability' }),
+      'search',
+    );
     expect(routerState.push).toHaveBeenLastCalledWith({
       pathname: '/cookbook',
       search: '?capability=search',
@@ -283,7 +294,7 @@ describe('RecipeIndex', () => {
       screen.queryByText('Search Glean with discovered filters'),
     ).not.toBeInTheDocument();
     expect(
-      screen.queryByRole('button', { name: 'Platform API' }),
+      screen.queryByRole('option', { name: 'Platform API' }),
     ).not.toBeInTheDocument();
     expect(screen.getByText('3 recipes')).toBeInTheDocument();
 
@@ -299,22 +310,30 @@ describe('RecipeIndex', () => {
       '/cookbook/search-with-discovered-filters?ff_recipe=search-with-discovered-filters',
     );
     expect(
-      screen.getByRole('button', { name: 'Platform API' }),
+      screen.getByRole('option', { name: 'Platform API' }),
     ).toBeInTheDocument();
     expect(screen.getByText('4 recipes')).toBeInTheDocument();
   });
 
-  it('keeps desktop filters in one compact band with the count adjacent', () => {
+  it('uses scalable dropdown controls instead of a horizontally growing chip matrix', () => {
+    render(<RecipeIndex {...props} />);
+
+    expect(screen.getAllByRole('combobox')).toHaveLength(2);
+    expect(
+      screen.getByRole('combobox', { name: 'Capability' }),
+    ).toHaveDisplayValue('All capabilities');
+    expect(
+      screen.getByRole('combobox', { name: 'Surface' }),
+    ).toHaveDisplayValue('All surfaces');
+    expect(
+      screen.queryByRole('button', { name: 'Search' }),
+    ).not.toBeInTheDocument();
+
     const css = readCss('RecipeIndex.module.css');
-    expect(css).not.toMatch(
-      /\.filterBar\s*\{[^}]*justify-content:\s*space-between/s,
-    );
     expect(css).toMatch(
-      /\.filterGroups\s*\{[^}]*display:\s*flex[^}]*flex-wrap:\s*wrap/s,
+      /\.filterControls\s*\{[^}]*display:\s*flex[^}]*flex-wrap:\s*wrap/s,
     );
-    expect(css).not.toMatch(
-      /\.filterGroups\s*\{[^}]*flex-direction:\s*column/s,
-    );
+    expect(css).not.toMatch(/overflow-x:\s*(auto|scroll)/);
   });
 
   it('shows the empty state when no recipes exist', () => {

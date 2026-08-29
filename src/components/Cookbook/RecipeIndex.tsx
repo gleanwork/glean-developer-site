@@ -125,6 +125,8 @@ export default function RecipeIndex({
     flagship && matches(flagship, activeCapability, activeSurface),
   );
   const count = visibleRecipes.length + (flagshipVisible ? 1 : 0);
+  const hasActiveFilters =
+    activeCapability !== 'all' || activeSurface !== 'all';
 
   const resetFilters = () => {
     setActiveCapability('all');
@@ -159,74 +161,71 @@ export default function RecipeIndex({
           ) : null}
 
           <div className={styles.filterBar}>
-            <div className={styles.filterGroups}>
-              <div
-                aria-label="Filter by capability"
-                className={styles.filterGroup}
-                role="group"
-              >
-                <span className={styles.filterLabel}>Capability</span>
-                <div className={styles.chipRow}>
-                  {(['all', ...capabilities] as Filter[]).map((capability) => (
-                    <button
-                      aria-label={
-                        capability === 'all'
-                          ? 'All capabilities'
-                          : RECIPE_CAPABILITY_LABELS[
-                              capability as RecipeCapability
-                            ]
-                      }
-                      aria-pressed={activeCapability === capability}
-                      className={`${styles.chip} ${
-                        activeCapability === capability ? styles.chipActive : ''
-                      }`}
-                      key={capability}
-                      onClick={() => updateFilter('capability', capability)}
-                      type="button"
-                    >
-                      {capability === 'all'
-                        ? 'All'
-                        : RECIPE_CAPABILITY_LABELS[
-                            capability as RecipeCapability
-                          ]}
-                    </button>
+            <div className={styles.filterControls}>
+              <div className={styles.filterGroup}>
+                <label
+                  className={styles.filterLabel}
+                  htmlFor="recipe-capability"
+                >
+                  Capability
+                </label>
+                <select
+                  className={`${styles.filterSelect} ${
+                    activeCapability !== 'all' ? styles.filterSelectActive : ''
+                  }`}
+                  id="recipe-capability"
+                  onChange={(event) =>
+                    updateFilter('capability', event.target.value)
+                  }
+                  value={activeCapability}
+                >
+                  <option value="all">All capabilities</option>
+                  {capabilities.map((capability) => (
+                    <option key={capability} value={capability}>
+                      {RECIPE_CAPABILITY_LABELS[capability]}
+                    </option>
                   ))}
-                </div>
+                </select>
               </div>
 
-              <div
-                aria-label="Filter by implementation surface"
-                className={styles.filterGroup}
-                role="group"
-              >
-                <span className={styles.filterLabel}>Surface</span>
-                <div className={styles.chipRow}>
-                  {(['all', ...surfaces] as Filter[]).map((surface) => (
-                    <button
-                      aria-label={
-                        surface === 'all'
-                          ? 'All surfaces'
-                          : RECIPE_SURFACE_LABELS[surface as RecipeSurface]
-                      }
-                      aria-pressed={activeSurface === surface}
-                      className={`${styles.chip} ${
-                        activeSurface === surface ? styles.chipActive : ''
-                      }`}
-                      key={surface}
-                      onClick={() => updateFilter('surface', surface)}
-                      type="button"
-                    >
-                      {surface === 'all'
-                        ? 'All'
-                        : RECIPE_SURFACE_LABELS[surface as RecipeSurface]}
-                    </button>
+              <div className={styles.filterGroup}>
+                <label className={styles.filterLabel} htmlFor="recipe-surface">
+                  Surface
+                </label>
+                <select
+                  className={`${styles.filterSelect} ${
+                    activeSurface !== 'all' ? styles.filterSelectActive : ''
+                  }`}
+                  id="recipe-surface"
+                  onChange={(event) =>
+                    updateFilter('surface', event.target.value)
+                  }
+                  value={activeSurface}
+                >
+                  <option value="all">All surfaces</option>
+                  {surfaces.map((surface) => (
+                    <option key={surface} value={surface}>
+                      {RECIPE_SURFACE_LABELS[surface]}
+                    </option>
                   ))}
-                </div>
+                </select>
               </div>
             </div>
-            <span aria-live="polite" className={styles.count}>
-              {count} recipe{count === 1 ? '' : 's'}
-            </span>
+
+            <div className={styles.filterMeta}>
+              <span aria-live="polite" className={styles.count}>
+                {count} recipe{count === 1 ? '' : 's'}
+              </span>
+              {hasActiveFilters ? (
+                <button
+                  className={styles.clearButton}
+                  onClick={resetFilters}
+                  type="button"
+                >
+                  Clear filters
+                </button>
+              ) : null}
+            </div>
           </div>
 
           <div className={styles.grid}>
@@ -238,13 +237,6 @@ export default function RecipeIndex({
           {count === 0 ? (
             <div className={styles.empty}>
               <p>No recipes match both selected filters.</p>
-              <button
-                className={styles.resetButton}
-                onClick={resetFilters}
-                type="button"
-              >
-                Reset filters
-              </button>
             </div>
           ) : null}
         </>
