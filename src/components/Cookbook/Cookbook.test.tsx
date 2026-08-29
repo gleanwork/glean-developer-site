@@ -331,7 +331,10 @@ describe('RecipeIndex', () => {
 
     const css = readCss('RecipeIndex.module.css');
     expect(css).toMatch(
-      /\.filterControls\s*\{[^}]*display:\s*flex[^}]*flex-wrap:\s*wrap/s,
+      /\.filterBar\s*\{[^}]*background:\s*var\(--gdt-bg-light\)[^}]*border-radius:/s,
+    );
+    expect(css).toMatch(
+      /\.filterControls\s*\{[^}]*display:\s*grid[^}]*grid-template-columns:\s*repeat\(2,/s,
     );
     expect(css).not.toMatch(/overflow-x:\s*(auto|scroll)/);
   });
