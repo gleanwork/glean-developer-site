@@ -43,8 +43,8 @@ function matches(
 }
 
 /**
- * Cookbook front door: foundational quickstarts first, then featured and
- * production recipes with capability-first, shareable filtering.
+ * Cookbook index: preserve the established flagship-and-grid composition while
+ * adding capability filters, shareable URL state, and gated preview records.
  */
 export default function RecipeIndex({
   recipes,
@@ -113,43 +113,39 @@ export default function RecipeIndex({
   const flagship = availableRecipes.find((recipe) =>
     recipe.tags.includes('flagship'),
   );
-  const quickstarts = availableRecipes.filter(
-    (recipe) => recipe.status === 'quickstart',
-  );
-  const browseRecipes = availableRecipes.filter(
-    (recipe) => recipe !== flagship && recipe.status !== 'quickstart',
-  );
-
-  const visibleQuickstarts = useMemo(
+  const gridRecipes = availableRecipes.filter((recipe) => recipe !== flagship);
+  const visibleRecipes = useMemo(
     () =>
-      quickstarts.filter((recipe) =>
+      gridRecipes.filter((recipe) =>
         matches(recipe, activeCapability, activeSurface),
       ),
-    [quickstarts, activeCapability, activeSurface],
+    [gridRecipes, activeCapability, activeSurface],
   );
   const flagshipVisible = Boolean(
     flagship && matches(flagship, activeCapability, activeSurface),
   );
-  const visibleBrowseRecipes = useMemo(
-    () =>
-      browseRecipes.filter((recipe) =>
-        matches(recipe, activeCapability, activeSurface),
-      ),
-    [browseRecipes, activeCapability, activeSurface],
-  );
-  const count =
-    visibleQuickstarts.length +
-    visibleBrowseRecipes.length +
-    (flagshipVisible ? 1 : 0);
+  const count = visibleRecipes.length + (flagshipVisible ? 1 : 0);
+
+  const resetFilters = () => {
+    setActiveCapability('all');
+    setActiveSurface('all');
+    const params = new URLSearchParams(location.search);
+    params.delete('capability');
+    params.delete('surface');
+    history.push({
+      pathname: location.pathname,
+      search: params.size > 0 ? `?${params.toString()}` : '',
+    });
+  };
 
   return (
     <div className={styles.wrap}>
-      <div className={styles.eyebrow}>Cookbook</div>
-      <h1 className={styles.title}>Build on Glean</h1>
+      <div className={styles.eyebrow}>Cookbooks</div>
+      <h1 className={styles.title}>Recipes for building on Glean</h1>
       <p className={styles.subtitle}>
-        Start with a core API, use a production pattern, or scaffold a complete
-        application. Every recipe includes runnable code, authentication,
-        permissions, and verification.
+        Runnable patterns that go from problem to a working demo to scaffolded
+        starter code — with the architecture, auth, and permissions laid out for
+        each.
       </p>
 
       {availableRecipes.length === 0 ? (
@@ -158,6 +154,10 @@ export default function RecipeIndex({
         </div>
       ) : (
         <>
+          {flagship && flagshipVisible ? (
+            <FlagshipCard recipe={flagship} />
+          ) : null}
+
           <div className={styles.filterBar}>
             <div className={styles.filterGroups}>
               <div
@@ -229,66 +229,18 @@ export default function RecipeIndex({
             </span>
           </div>
 
-          {visibleQuickstarts.length > 0 ? (
-            <section className={styles.section}>
-              <div className={styles.sectionHeader}>
-                <div>
-                  <h2>Start with the core APIs</h2>
-                  <p>Make a successful call before building a larger app.</p>
-                </div>
-              </div>
-              <div className={styles.grid}>
-                {visibleQuickstarts.map((recipe) => (
-                  <RecipeCard key={recipe.id} recipe={recipe} />
-                ))}
-              </div>
-            </section>
-          ) : null}
-
-          {flagship && flagshipVisible ? (
-            <section className={styles.section}>
-              <div className={styles.sectionHeader}>
-                <div>
-                  <h2>Featured end-to-end build</h2>
-                  <p>Combine Glean capabilities in a complete application.</p>
-                </div>
-              </div>
-              <FlagshipCard recipe={flagship} />
-            </section>
-          ) : null}
-
-          {visibleBrowseRecipes.length > 0 ? (
-            <section className={styles.section}>
-              <div className={styles.sectionHeader}>
-                <div>
-                  <h2>Browse recipes</h2>
-                  <p>Production patterns and complete applications.</p>
-                </div>
-              </div>
-              <div className={styles.grid}>
-                {visibleBrowseRecipes.map((recipe) => (
-                  <RecipeCard key={recipe.id} recipe={recipe} />
-                ))}
-              </div>
-            </section>
-          ) : null}
+          <div className={styles.grid}>
+            {visibleRecipes.map((recipe) => (
+              <RecipeCard key={recipe.id} recipe={recipe} />
+            ))}
+          </div>
 
           {count === 0 ? (
             <div className={styles.empty}>
               <p>No recipes match both selected filters.</p>
               <button
                 className={styles.resetButton}
-                onClick={() => {
-                  setActiveCapability('all');
-                  setActiveSurface('all');
-                  const params = new URLSearchParams(location.search);
-                  params.delete('capability');
-                  params.delete('surface');
-                  history.push({
-                    pathname: location.pathname,
-                    search: params.size > 0 ? `?${params.toString()}` : '',
-                  });
-                }}
+                onClick={resetFilters}
                 type="button"
               >
                 Reset filters

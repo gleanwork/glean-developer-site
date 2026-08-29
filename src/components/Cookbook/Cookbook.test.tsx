@@ -182,16 +182,22 @@ describe('RecipeIndex', () => {
     ] as const,
   };
 
-  it('renders the build front door, quickstarts, flagship, and recipe grid', () => {
+  it('preserves the established flagship-and-grid composition', () => {
     render(<RecipeIndex {...props} />);
-    expect(screen.getByText('Build on Glean')).toBeInTheDocument();
-    expect(screen.getByText('Start with the core APIs')).toBeInTheDocument();
+    expect(
+      screen.getByText('Recipes for building on Glean'),
+    ).toBeInTheDocument();
     expect(
       screen.getByText('Search Glean with discovered filters'),
     ).toBeInTheDocument();
-    expect(screen.getByText('Featured end-to-end build')).toBeInTheDocument();
     expect(screen.getByText('End-to-end build')).toBeInTheDocument();
-    expect(screen.getByText('Browse recipes')).toBeInTheDocument();
+    expect(
+      screen.queryByText('Featured end-to-end build'),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText('Browse recipes')).not.toBeInTheDocument();
+    expect(
+      screen.queryByText('Start with the core APIs'),
+    ).not.toBeInTheDocument();
     expect(screen.getByText('Embed search & chat')).toBeInTheDocument();
     expect(screen.getByText('Index a custom data source')).toBeInTheDocument();
     expect(screen.getByText('4 recipes')).toBeInTheDocument();
@@ -277,9 +283,6 @@ describe('RecipeIndex', () => {
       screen.queryByText('Search Glean with discovered filters'),
     ).not.toBeInTheDocument();
     expect(
-      screen.queryByText('Start with the core APIs'),
-    ).not.toBeInTheDocument();
-    expect(
       screen.queryByRole('button', { name: 'Platform API' }),
     ).not.toBeInTheDocument();
     expect(screen.getByText('3 recipes')).toBeInTheDocument();
@@ -295,11 +298,23 @@ describe('RecipeIndex', () => {
       'href',
       '/cookbook/search-with-discovered-filters?ff_recipe=search-with-discovered-filters',
     );
-    expect(screen.getByText('Start with the core APIs')).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: 'Platform API' }),
     ).toBeInTheDocument();
     expect(screen.getByText('4 recipes')).toBeInTheDocument();
+  });
+
+  it('keeps desktop filters in one compact band with the count adjacent', () => {
+    const css = readCss('RecipeIndex.module.css');
+    expect(css).not.toMatch(
+      /\.filterBar\s*\{[^}]*justify-content:\s*space-between/s,
+    );
+    expect(css).toMatch(
+      /\.filterGroups\s*\{[^}]*display:\s*flex[^}]*flex-wrap:\s*wrap/s,
+    );
+    expect(css).not.toMatch(
+      /\.filterGroups\s*\{[^}]*flex-direction:\s*column/s,
+    );
   });
 
   it('shows the empty state when no recipes exist', () => {
