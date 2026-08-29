@@ -9,7 +9,11 @@ import { tenantProfileStore } from '@site/src/lib/tenantProfile';
 import recipesData from '@site/src/data/recipes.json';
 import RecipeIndex from './RecipeIndex';
 import RecipePage from './RecipePage';
-import RecipeLayout, { RecipeArchitecture, RecipeSteps } from './RecipeLayout';
+import RecipeLayout, {
+  RecipeArchitecture,
+  RecipeCodeWalkthrough,
+  RecipeSteps,
+} from './RecipeLayout';
 import RecipeShowcaseCarousel, {
   selectShowcaseRecipes,
 } from './RecipeShowcaseCarousel';
@@ -32,6 +36,23 @@ vi.mock('@docusaurus/router', () => ({
 
 vi.mock('@docusaurus/Head', () => ({
   default: ({ children }: { children: React.ReactNode }) => children,
+}));
+
+vi.mock('@theme/CodeBlock', () => ({
+  default: ({
+    children,
+    title,
+  }: {
+    children: React.ReactNode;
+    title?: string;
+  }) => (
+    <div>
+      {title ? <span>{title}</span> : null}
+      <pre>
+        <code>{children}</code>
+      </pre>
+    </div>
+  ),
 }));
 
 beforeEach(() => {
@@ -481,6 +502,50 @@ const plugin = {
 };
 
 describe('RecipeLayout', () => {
+  it('renders a declared code walkthrough before runnable setup steps', () => {
+    const recipe = makeRecipe({
+      codeWalkthrough: {
+        intro: 'Follow the typed Search flow.',
+        examples: [
+          {
+            title: 'Discover filters and run Search',
+            description: 'Use the official client for both operations.',
+            source: 'src/search.ts',
+            language: 'typescript',
+            code: 'await glean.search.query({ query });',
+          },
+        ],
+      },
+      steps: [
+        {
+          kind: 'install',
+          title: 'Install dependencies',
+          command: 'npm install',
+        },
+      ],
+    });
+
+    render(
+      <RecipeLayout plugin={plugin} recipe={recipe}>
+        <RecipeCodeWalkthrough />
+        <RecipeSteps />
+      </RecipeLayout>,
+    );
+
+    expect(screen.getByText('Code walkthrough')).toBeInTheDocument();
+    expect(
+      screen.getByText('Follow the typed Search flow.'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('Discover filters and run Search'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('await glean.search.query({ query });'),
+    ).toBeInTheDocument();
+    expect(screen.getByText('Run it yourself')).toBeInTheDocument();
+    expect(screen.getByText('Install dependencies')).toBeInTheDocument();
+  });
+
   it('renders a compact preview that opens and closes a full-size dialog', async () => {
     const user = userEvent.setup();
     render(

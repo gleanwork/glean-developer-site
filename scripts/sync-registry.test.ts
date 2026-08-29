@@ -137,6 +137,24 @@ describe('renderPage', () => {
     expect(page).toContain('pagination_next: "cookbook/embed-search-chat"');
   });
 
+  it('places source-backed code walkthroughs before architecture and setup', () => {
+    const page = renderPage(
+      {
+        ...recipe,
+        codeWalkthrough: { intro: 'Read it.', examples: [] },
+      },
+      markdown,
+    );
+    const walkthrough = page.indexOf('<RecipeCodeWalkthrough />');
+    const architecture = page.indexOf('<RecipeArchitecture />');
+    const prerequisites = page.indexOf('<RecipePrereqs />');
+
+    expect(walkthrough).toBeGreaterThan(0);
+    expect(walkthrough).toBeLessThan(architecture);
+    expect(architecture).toBeLessThan(prerequisites);
+    expect(page).toContain('RecipeCodeWalkthrough,');
+  });
+
   it('keeps the sequence bounded to recipes at either end', () => {
     const first = renderPage(recipe, markdown, null, {
       id: 'embed-search-chat',

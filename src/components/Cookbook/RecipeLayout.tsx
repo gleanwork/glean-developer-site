@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import useBaseUrl from '@docusaurus/useBaseUrl';
 import { getIcon } from '@gleanwork/docusaurus-theme-glean/Icons';
+import CodeBlock from '@theme/CodeBlock';
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 import {
@@ -158,6 +159,41 @@ export function RecipeSection({
       <div className={styles.sectionLabel}>{label}</div>
       {children}
     </div>
+  );
+}
+
+/** Source-backed documentation for recipes that opt into a code walkthrough. */
+export function RecipeCodeWalkthrough(): React.ReactElement | null {
+  const recipe = useRecipe('RecipeCodeWalkthrough');
+  const walkthrough = recipe.codeWalkthrough;
+  if (!walkthrough) return null;
+
+  const missingSource = walkthrough.examples.find((example) => !example.code);
+  if (missingSource) {
+    throw new Error(
+      `${recipe.id}: code walkthrough source was not materialized for ${missingSource.source}`,
+    );
+  }
+
+  return (
+    <RecipeSection label="Code walkthrough">
+      <p className={styles.walkthroughIntro}>{walkthrough.intro}</p>
+      <div className={styles.walkthroughExamples}>
+        {walkthrough.examples.map((example) => (
+          <div className={styles.walkthroughExample} key={example.source}>
+            <h3>{example.title}</h3>
+            <p>{example.description}</p>
+            <CodeBlock
+              language={example.language}
+              showLineNumbers
+              title={example.source}
+            >
+              {example.code!}
+            </CodeBlock>
+          </div>
+        ))}
+      </div>
+    </RecipeSection>
   );
 }
 
@@ -326,11 +362,12 @@ export function RecipeSteps({
   );
   const hasStepsData =
     (recipe.steps && recipe.steps.length > 0) || variantsWithSteps.length > 0;
+  const sectionLabel = recipe.codeWalkthrough ? 'Run it yourself' : 'Steps';
 
   if (!hasStepsData) {
     const steps = React.Children.toArray(children);
     return (
-      <RecipeSection label="Steps">
+      <RecipeSection label={sectionLabel}>
         <div className={styles.stepsWrap}>
           <div className={styles.stepsRail} />
           {steps.map((step, i) => (
@@ -345,7 +382,7 @@ export function RecipeSteps({
   }
 
   return (
-    <RecipeSection label="Steps">
+    <RecipeSection label={sectionLabel}>
       {recipe.buildMethod === 'third-party-build' ? (
         <RecipeInstanceLookup />
       ) : null}

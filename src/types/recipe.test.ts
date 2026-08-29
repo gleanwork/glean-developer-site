@@ -298,6 +298,39 @@ describe('recipeMetaSchema', () => {
     expect(parseRecipeEntry(entry, 'embed-search-chat').success).toBe(true);
   });
 
+  it('accepts a source-backed code walkthrough and rejects traversal', () => {
+    const walkthrough = {
+      intro: 'Read the implementation.',
+      examples: [
+        {
+          title: 'Search',
+          description: 'Run a typed search.',
+          source: 'src/search.ts',
+          language: 'typescript',
+          code: 'await glean.search.query({ query });',
+        },
+      ],
+    };
+    expect(
+      parseRecipeEntry(
+        { ...validEntry(), codeWalkthrough: walkthrough },
+        'embed-search-chat',
+      ).success,
+    ).toBe(true);
+    expect(
+      parseRecipeEntry(
+        {
+          ...validEntry(),
+          codeWalkthrough: {
+            ...walkthrough,
+            examples: [{ ...walkthrough.examples[0], source: '../secret.ts' }],
+          },
+        },
+        'embed-search-chat',
+      ).success,
+    ).toBe(false);
+  });
+
   it('requires at least one surface and prerequisite', () => {
     for (const key of ['surfaces', 'prerequisites'] as const) {
       const entry = { ...validEntry(), [key]: [] };

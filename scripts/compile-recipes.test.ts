@@ -61,6 +61,45 @@ describe('compileRecipeCatalog', () => {
     });
   });
 
+  it('requires code walkthrough sources to be materialized by the registry build', () => {
+    const entry = {
+      ...listedEntry('search-example'),
+      codeWalkthrough: {
+        intro: 'Read the implementation.',
+        examples: [
+          {
+            title: 'Search',
+            description: 'Run a typed search.',
+            source: 'src/search.ts',
+            language: 'typescript',
+          },
+        ],
+      },
+    };
+
+    const missing = compileRecipeCatalog([entry], new Set(['search-example']));
+    expect(missing.errors.join('\n')).toMatch(/was not materialized/);
+
+    const materialized = compileRecipeCatalog(
+      [
+        {
+          ...entry,
+          codeWalkthrough: {
+            ...entry.codeWalkthrough,
+            examples: [
+              {
+                ...entry.codeWalkthrough.examples[0],
+                code: 'await glean.search.query({ query });',
+              },
+            ],
+          },
+        },
+      ],
+      new Set(['search-example']),
+    );
+    expect(materialized.errors).toEqual([]);
+  });
+
   it('fails when a listed recipe is missing its MDX page', () => {
     const { errors } = compileRecipeCatalog(
       [listedEntry('embed-search-chat')],

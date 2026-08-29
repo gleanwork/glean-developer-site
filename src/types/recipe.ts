@@ -349,6 +349,36 @@ export const recipeDemoQuerySchema = z.strictObject({
   permissionDifferentiated: z.boolean().optional(),
 });
 
+export const recipeCodeWalkthroughExampleSchema = z.strictObject({
+  title: z.string().min(1),
+  description: z.string().min(1),
+  source: z
+    .string()
+    .regex(
+      /^(?!\/)(?!.*(?:^|\/)\.\.(?:\/|$))[A-Za-z0-9._/-]+$/,
+      'source must be a relative path inside the recipe directory',
+    ),
+  language: z.enum(RECIPE_LANGUAGES),
+  /** Generated from `source` by glean-cookbook; never authored in recipe.json. */
+  code: z
+    .string()
+    .min(1)
+    .max(30_000)
+    .describe(
+      'Generated from source by the registry build; never authored in recipe.json.',
+    )
+    .optional(),
+});
+
+export const recipeCodeWalkthroughSchema = z
+  .strictObject({
+    intro: z.string().min(1),
+    examples: z.array(recipeCodeWalkthroughExampleSchema).min(1),
+  })
+  .describe(
+    'Optional source-backed code walkthrough rendered directly on the recipe documentation page.',
+  );
+
 export const recipeMetaSchema = z.strictObject({
   id: z
     .string()
@@ -372,6 +402,8 @@ export const recipeMetaSchema = z.strictObject({
       'Optional cookbook-owned visual preview consumed by recipe renderers.',
     )
     .optional(),
+  /** Opts a focused recipe into a source-backed code walkthrough on its docs page. */
+  codeWalkthrough: recipeCodeWalkthroughSchema.optional(),
   surfaces: z.array(z.enum(RECIPE_SURFACES)).min(1),
   /** User goals taught materially by this recipe; distinct from implementation surfaces and visual category. */
   capabilities: z.array(z.enum(RECIPE_CAPABILITIES)).min(1),
@@ -431,6 +463,7 @@ export const recipeMetaSchema = z.strictObject({
 export type RecipeCapability = (typeof RECIPE_CAPABILITIES)[number];
 export type RecipeSurface = (typeof RECIPE_SURFACES)[number];
 export type RecipeCodeAsset = z.infer<typeof recipeCodeAssetSchema>;
+export type RecipeCodeWalkthrough = z.infer<typeof recipeCodeWalkthroughSchema>;
 export type RecipeDemoQuery = z.infer<typeof recipeDemoQuerySchema>;
 export type RecipeMeta = z.infer<typeof recipeMetaSchema>;
 
