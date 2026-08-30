@@ -1286,14 +1286,28 @@
       "description": "Use the official TypeScript API client to discover the datasources and common filter fields available in your Glean instance, then apply a returned selection to permission-aware Platform Search.",
       "sidebarLabel": "Search with filters",
       "codeWalkthrough": {
-        "intro": "This implementation uses the official TypeScript client to discover the filter catalog visible to the signed-in user, request query-specific suggestions for one returned datasource, and carry the selected value into a typed Search request.",
+        "intro": "The runnable scaffold uses Glean OAuth by default, gives the API client a refreshable token provider, and keeps the Search sequence explicit. Supporting modules handle the loopback redirect, private token storage, CLI prompts, and error presentation.",
         "examples": [
           {
-            "title": "Discover filters and run Search",
-            "description": "The flow keeps datasource and filter selection injectable while the released client owns authentication, transport, serialization, response validation, retries, and typed errors.",
+            "title": "Configure the API client",
+            "description": "Give the Glean client an async OAuth token provider, a finite timeout per attempt, and bounded exponential backoff. A user-scoped SEARCH token remains an explicit fallback when OAuth is unavailable.",
+            "source": "src/client.ts",
+            "language": "typescript",
+            "code": "import 'dotenv/config';\nimport { Glean, type SDKOptions } from '@gleanwork/api-client';\nimport type { XGleanOptions } from '@gleanwork/api-client/hooks/x-glean-options.js';\nimport { createOAuthTokenProvider } from './oauth.js';\n\nconst LOOPBACK_HOSTS = new Set(['127.0.0.1', '::1', 'localhost']);\n\nexport function createGleanClient() {\n  const serverURL = process.env.GLEAN_SERVER_URL?.trim();\n  if (!serverURL) {\n    throw new Error('Set GLEAN_SERVER_URL in your environment or .env file.');\n  }\n\n  const server = new URL(serverURL);\n  if (server.protocol !== 'https:' && !LOOPBACK_HOSTS.has(server.hostname)) {\n    throw new Error('GLEAN_SERVER_URL must use HTTPS.');\n  }\n\n  const staticToken = process.env.GLEAN_API_TOKEN?.trim();\n  const options = {\n    serverURL: server.href,\n    apiToken: staticToken || createOAuthTokenProvider(server),\n    includeExperimental: true,\n    timeoutMs: 30_000,\n    retryConfig: {\n      strategy: 'backoff',\n      backoff: {\n        initialInterval: 500,\n        maxInterval: 5_000,\n        exponent: 2,\n        maxElapsedTime: 90_000,\n      },\n      retryConnectionErrors: true,\n    },\n  } satisfies SDKOptions & XGleanOptions;\n\n  return new Glean(options);\n}\n"
+          },
+          {
+            "title": "Discover filters, then search",
+            "description": "Keep the API sequence explicit: list visible fields, request query-specific suggestions for one datasource, and pass the selected filter to Search.",
             "source": "src/search.ts",
             "language": "typescript",
-            "code": "import type { Glean } from '@gleanwork/api-client';\nimport type {\n  PlatformDatasourceFilterInfo,\n  PlatformSearchFiltersResponse,\n  PlatformSearchResponse,\n} from '@gleanwork/api-client/models/components';\n\nexport type DatasourceFilterInfo = PlatformDatasourceFilterInfo;\nexport type SearchFiltersResponse = PlatformSearchFiltersResponse;\nexport type SearchResponse = PlatformSearchResponse;\nexport type PlatformSearchSdk = Pick<Glean['search'], 'listFilters' | 'query'>;\n\nexport interface SelectedFilter {\n  field: string;\n  value: string;\n}\n\nexport interface SearchChoices {\n  selectDatasource(\n    datasources: DatasourceFilterInfo[],\n  ): Promise<string> | string;\n  selectFilter(\n    datasource: DatasourceFilterInfo,\n  ): Promise<SelectedFilter | undefined> | SelectedFilter | undefined;\n}\n\nexport interface SearchFlowResult {\n  catalog: SearchFiltersResponse;\n  suggestions: SearchFiltersResponse;\n  datasource: string;\n  filter?: SelectedFilter;\n  response: SearchResponse;\n}\n\nfunction requireNonEmpty(value: string, name: string): string {\n  const normalized = value.trim();\n  if (!normalized) throw new Error(`${name} must not be blank.`);\n  return normalized;\n}\n\nfunction selectedDatasource(\n  response: SearchFiltersResponse,\n  datasource: string,\n): DatasourceFilterInfo {\n  const selected = response.datasources.find(\n    (candidate) => candidate.datasource === datasource,\n  );\n  if (!selected) {\n    throw new Error(\n      `Datasource \"${datasource}\" was not returned by Search Filters.`,\n    );\n  }\n  return selected;\n}\n\nfunction validateFilter(\n  datasource: DatasourceFilterInfo,\n  filter: SelectedFilter | undefined,\n): SelectedFilter | undefined {\n  if (!filter) return undefined;\n  const field = datasource.filters.find(\n    (candidate) => candidate.field === filter.field,\n  );\n  if (!field) {\n    throw new Error(\n      `Field \"${filter.field}\" was not returned for ${datasource.datasource}.`,\n    );\n  }\n  if (!field.operators.includes('EQUALS')) {\n    throw new Error(`Field \"${filter.field}\" does not support EQUALS.`);\n  }\n  return {\n    field: requireNonEmpty(filter.field, 'filter field'),\n    value: requireNonEmpty(filter.value, 'filter value'),\n  };\n}\n\n/**\n * Compose the official SDK's discovery and Search methods without recreating\n * its transport, generated request types, response validation, or errors.\n */\nexport async function runSearchFlow(\n  search: PlatformSearchSdk,\n  query: string,\n  choices: SearchChoices,\n): Promise<SearchFlowResult> {\n  const normalizedQuery = requireNonEmpty(query, 'query');\n  const { result: catalog } = await search.listFilters();\n  if (catalog.datasources.length === 0) {\n    throw new Error(\n      'Search Filters returned no datasources visible to this user.',\n    );\n  }\n\n  const datasource = await choices.selectDatasource(catalog.datasources);\n  selectedDatasource(catalog, datasource);\n\n  const { result: suggestions } = await search.listFilters(\n    [datasource],\n    normalizedQuery,\n  );\n  const suggestionDatasource = selectedDatasource(suggestions, datasource);\n  const filter = validateFilter(\n    suggestionDatasource,\n    await choices.selectFilter(suggestionDatasource),\n  );\n\n  const response = await search.query({\n    query: normalizedQuery,\n    page_size: 10,\n    datasources: [datasource],\n    ...(filter\n      ? {\n          filters: [\n            {\n              field: filter.field,\n              values: [filter.value],\n              operator: 'EQUALS',\n            },\n          ],\n        }\n      : {}),\n  });\n\n  return { catalog, suggestions, datasource, filter, response };\n}\n"
+            "code": "import {\n  chooseDatasource,\n  chooseFilter,\n  createTerminal,\n  parseCliOptions,\n  printSearchResponse,\n} from './cli.js';\nimport { createGleanClient } from './client.js';\nimport { formatSdkError } from './errors.js';\n\n/**\n * Lists visible datasources and common filter fields, requests query-specific\n * values for one datasource, then searches with the selected filter.\n *\n * @remarks\n * Filter discovery returns a best-effort catalog and may omit valid fields.\n * Query-specific values are bounded suggestions, not guaranteed matches. The\n * final Search request still enforces the caller's permissions.\n */\nasync function main() {\n  const cliOptions = parseCliOptions();\n  const glean = createGleanClient();\n  const terminal = createTerminal();\n\n  try {\n    const { result: catalog } = await glean.search.listFilters();\n    const datasource = await chooseDatasource(\n      catalog.datasources,\n      cliOptions.datasource,\n      cliOptions.autoSelect,\n      terminal,\n    );\n\n    const { result: suggestions } = await glean.search.listFilters(\n      [datasource],\n      cliOptions.query,\n    );\n    const filterInfo = suggestions.datasources.find(\n      (candidate) => candidate.datasource === datasource,\n    );\n    if (!filterInfo) {\n      throw new Error(\n        `No filter metadata for \"${datasource}\" (request ${suggestions.request_id}).`,\n      );\n    }\n\n    const filter = await chooseFilter(\n      filterInfo,\n      cliOptions.filter,\n      cliOptions.autoSelect,\n      terminal,\n    );\n    const searchResponse = await glean.search.query({\n      query: cliOptions.query,\n      page_size: 10,\n      datasources: [datasource],\n      ...(filter ? { filters: [filter] } : {}),\n    });\n\n    printSearchResponse(searchResponse, datasource, filter);\n  } finally {\n    terminal?.close();\n  }\n}\n\nmain().catch((error: unknown) => {\n  console.error(formatSdkError(error));\n  process.exitCode = 1;\n});\n"
+          },
+          {
+            "title": "Under the hood: DCR and token refresh",
+            "description": "Use openid-client for OAuth server discovery, Dynamic Client Registration, Authorization Code with PKCE, token validation, and refresh. Client registration plus OAuth access and refresh tokens stay outside the project.",
+            "source": "src/oauth.ts",
+            "language": "typescript",
+            "code": "import * as oauth from 'openid-client';\nimport { authorizeOnLoopback, OAUTH_REDIRECT_URI } from './oauth-loopback.js';\nimport {\n  readOAuthState,\n  type StoredOAuthState,\n  withOAuthStateLock,\n  writeOAuthState,\n} from './oauth-state.js';\n\nconst OAUTH_SCOPE = 'openid offline_access SEARCH';\nconst EXPIRY_SKEW_MS = 60_000;\n\nconst clientMetadata = {\n  client_name: 'Glean Search cookbook recipe',\n  redirect_uris: [OAUTH_REDIRECT_URI.href],\n  grant_types: ['authorization_code', 'refresh_token'],\n  response_types: ['code'],\n  token_endpoint_auth_method: 'none',\n  scope: OAUTH_SCOPE,\n} satisfies Partial<oauth.ClientMetadata>;\n\nfunction requestOptions() {\n  return { algorithm: 'oauth2' as const, timeout: 30 };\n}\n\nfunction assertOAuthCapabilities(config: oauth.Configuration) {\n  if (!config.serverMetadata().supportsPKCE('S256')) {\n    throw new Error('The Glean OAuth server must support PKCE with S256.');\n  }\n  const supportedScopes = config.serverMetadata().scopes_supported;\n  if (supportedScopes && !supportedScopes.includes('SEARCH')) {\n    throw new Error('The Glean OAuth server does not advertise SEARCH scope.');\n  }\n}\n\nasync function discoverRegisteredClient(issuer: URL, state: StoredOAuthState) {\n  if (!state.clientId) {\n    throw new Error('No OAuth client is registered. Run npm run login first.');\n  }\n  const config = await oauth.discovery(\n    issuer,\n    state.clientId,\n    clientMetadata,\n    oauth.None(),\n    requestOptions(),\n  );\n  assertOAuthCapabilities(config);\n  return config;\n}\n\nasync function registerOrDiscoverClient(issuer: URL, state: StoredOAuthState) {\n  const configuredClientId = process.env.GLEAN_OAUTH_CLIENT_ID?.trim();\n  const reusableClientId =\n    state.redirectUri === OAUTH_REDIRECT_URI.href &&\n    state.registrationScope === OAUTH_SCOPE\n      ? state.clientId\n      : undefined;\n  const clientId = configuredClientId ?? reusableClientId;\n\n  const config = clientId\n    ? await oauth.discovery(\n        issuer,\n        clientId,\n        clientMetadata,\n        oauth.None(),\n        requestOptions(),\n      )\n    : await oauth.dynamicClientRegistration(\n        issuer,\n        clientMetadata,\n        oauth.None(),\n        requestOptions(),\n      );\n  assertOAuthCapabilities(config);\n\n  const registeredClientId = config.clientMetadata().client_id;\n  if (!registeredClientId) {\n    throw new Error('OAuth client registration returned no client_id.');\n  }\n  const nextState = {\n    ...(clientId === state.clientId ? state : {}),\n    clientId: registeredClientId,\n    redirectUri: OAUTH_REDIRECT_URI.href,\n    registrationScope: OAUTH_SCOPE,\n  } satisfies StoredOAuthState;\n  await writeOAuthState(issuer, nextState);\n  return { config, state: nextState };\n}\n\ntype OAuthTokens = Awaited<ReturnType<typeof oauth.refreshTokenGrant>>;\n\nfunction stateWithTokens(\n  state: StoredOAuthState,\n  tokens: OAuthTokens,\n  requireRefreshToken: boolean,\n) {\n  const expiresIn = tokens.expiresIn();\n  if (!expiresIn || expiresIn <= 0) {\n    throw new Error('The OAuth token response did not include expires_in.');\n  }\n  const refreshToken = tokens.refresh_token ?? state.refreshToken;\n  if (requireRefreshToken && !refreshToken) {\n    throw new Error(\n      'The OAuth server did not issue a refresh token for offline_access.',\n    );\n  }\n  if (tokens.scope && !tokens.scope.split(/\\s+/u).includes('SEARCH')) {\n    throw new Error('The OAuth grant does not include SEARCH scope.');\n  }\n\n  return {\n    ...state,\n    accessToken: tokens.access_token,\n    refreshToken,\n    expiresAt: Date.now() + expiresIn * 1000,\n    grantedScope: tokens.scope ?? state.grantedScope ?? OAUTH_SCOPE,\n  } satisfies StoredOAuthState;\n}\n\n/**\n * Registers a public OAuth client through DCR and completes Authorization Code\n * with PKCE. Registration and refresh tokens are stored outside the project.\n */\nexport async function loginWithOAuth(\n  issuer: URL,\n  authorize: (authorizationUrl: URL) => Promise<URL> = authorizeOnLoopback,\n) {\n  await withOAuthStateLock(issuer, async () => {\n    const storedState = await readOAuthState(issuer);\n    const { config, state } = await registerOrDiscoverClient(\n      issuer,\n      storedState,\n    );\n    const codeVerifier = oauth.randomPKCECodeVerifier();\n    const codeChallenge = await oauth.calculatePKCECodeChallenge(codeVerifier);\n    const expectedState = oauth.randomState();\n    const authorizationUrl = oauth.buildAuthorizationUrl(config, {\n      redirect_uri: OAUTH_REDIRECT_URI.href,\n      scope: OAUTH_SCOPE,\n      code_challenge: codeChallenge,\n      code_challenge_method: 'S256',\n      state: expectedState,\n    });\n\n    const callbackUrl = await authorize(authorizationUrl);\n    const tokens = await oauth.authorizationCodeGrant(config, callbackUrl, {\n      pkceCodeVerifier: codeVerifier,\n      expectedState,\n    });\n    await writeOAuthState(issuer, stateWithTokens(state, tokens, true));\n  });\n}\n\nasync function freshAccessToken(issuer: URL) {\n  return withOAuthStateLock(issuer, async () => {\n    const state = await readOAuthState(issuer);\n    if (\n      state.accessToken &&\n      state.expiresAt &&\n      state.expiresAt > Date.now() + EXPIRY_SKEW_MS\n    ) {\n      return state.accessToken;\n    }\n    if (!state.refreshToken) {\n      throw new Error('OAuth sign-in is required. Run npm run login.');\n    }\n\n    const config = await discoverRegisteredClient(issuer, state);\n    const tokens = await oauth.refreshTokenGrant(config, state.refreshToken);\n    const refreshedState = stateWithTokens(state, tokens, false);\n    await writeOAuthState(issuer, refreshedState);\n    return refreshedState.accessToken;\n  });\n}\n\n/** Returns an SDK-compatible token callback with single-flight refresh. */\nexport function createOAuthTokenProvider(issuer: URL) {\n  let pending: Promise<string> | undefined;\n  return () => {\n    pending ??= freshAccessToken(issuer).finally(() => {\n      pending = undefined;\n    });\n    return pending;\n  };\n}\n"
           }
         ]
       },
@@ -1325,8 +1339,9 @@
       "prerequisites": [
         "Node 20 or newer",
         "A Glean instance with content indexed",
-        "A work email for tenant discovery and OAuth sign-in; a SEARCH-scoped Glean token is the fallback",
-        "Experimental Platform APIs enabled through X-Glean-Include-Experimental: true, which the scaffold sends automatically"
+        "A work email for tenant discovery and OAuth sign-in",
+        "A tenant that permits this public OAuth client and SEARCH scope through DCR; an administrator-provisioned OAuth client or user-scoped SEARCH token is the fallback",
+        "Experimental Platform APIs enabled through the SDK's includeExperimental constructor option, which the scaffold sets automatically"
       ],
       "demoQueries": [
         {
@@ -1346,7 +1361,7 @@
         {
           "kind": "scaffold",
           "title": "Scaffold the project",
-          "description": "Copies the runnable TypeScript CLI, fixture tests, and sign-in helper into a new directory.",
+          "description": "Copies the runnable TypeScript CLI, OAuth client, secure token store, and fixture tests into a new directory.",
           "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/search-with-discovered-filters search-with-discovered-filters"
         },
         {
@@ -1357,13 +1372,13 @@
         {
           "kind": "manual",
           "title": "Check the request flow with fixtures",
-          "description": "Exercises the real @gleanwork/api-client with fixture responses to validate catalog discovery, query-backed suggestions, typed field-filter propagation, datasource fallback, and experimental headers without credentials or network access.",
-          "command": "cd search-with-discovered-filters && npm test"
+          "description": "Runs executable fixture tests, ESLint, and the TypeScript compiler to validate catalog discovery, query-backed suggestions, retries, typed errors, field-filter propagation, and experimental headers without credentials or network access.",
+          "command": "cd search-with-discovered-filters && npm run check"
         },
         {
           "kind": "authenticate",
-          "title": "Sign in to Glean",
-          "description": "Uses your work email to find your Glean tenant and opens the OAuth flow. If OAuth is unavailable, copy .env.example to .env and provide a SEARCH-scoped Glean token instead.",
+          "title": "Sign in with OAuth",
+          "description": "Uses your work email to discover the tenant through app.glean.com/config/search, dynamically registers a public client when policy allows it, and completes Authorization Code with PKCE for SEARCH and offline_access. Use --server-url only as an override, GLEAN_OAUTH_CLIENT_ID for an administrator-provisioned public client, or GLEAN_API_TOKEN for an explicit user-scoped token fallback.",
           "command": "cd search-with-discovered-filters && npm run login -- --email \"<work-email>\""
         },
         {
@@ -1374,17 +1389,17 @@
         },
         {
           "kind": "run",
-          "title": "Choose filters and search",
-          "description": "The CLI shows the best-effort filter catalog, asks you to choose a datasource and suggested field value, and prints results, warnings, pagination state, and request IDs.",
-          "command": "cd search-with-discovered-filters && npm start -- --query \"<search-query>\""
+          "title": "Discover filters and search",
+          "description": "Runs the non-interactive CLI path, selecting the first returned datasource and suggested field value, then prints results, warnings, pagination state, and request IDs. Omit --auto-select when running interactively to choose them yourself.",
+          "command": "cd search-with-discovered-filters && npm start -- --query \"<search-query>\" --auto-select"
         }
       ],
       "execution": {
         "type": "cli",
         "questions": [
           {
-            "id": "email",
-            "prompt": "What is your work email? It is used once to discover your Glean tenant.",
+            "id": "work-email",
+            "prompt": "What is your work email? It is used only to discover your Glean tenant.",
             "required": true
           },
           {
@@ -1412,7 +1427,7 @@
           "startsOwnServer": false
         },
         "run": {
-          "command": "cd search-with-discovered-filters && npm start -- --query \"<search-query>\"",
+          "command": "cd search-with-discovered-filters && npm start -- --query \"<search-query>\" --auto-select",
           "userBrowser": false
         }
       },
@@ -1456,13 +1471,17 @@
             "description": "A field omitted from Search Filters may still be valid, and suggested values are bounded and non-exhaustive. Reusing a returned value does not guarantee matching results."
           },
           {
+            "title": "OAuth policy varies by tenant",
+            "description": "DCR may be disabled, restricted to approved applications or redirect URI patterns, or unable to grant SEARCH. Use an administrator-provisioned public OAuth client when available; a user-scoped SEARCH token is the tutorial fallback."
+          },
+          {
             "title": "Experimental API",
             "description": "Both endpoints may change. The scaffold opts in explicitly and should be evaluated before production adoption."
           }
         ]
       },
-      "aiPrompt": "Scaffold and run the verified Search with discovered filters quickstart. Ask for the user's work email and one topic they know exists in their Glean instance. Run the fixture tests, sign in with SEARCH scope, run live verification, then start the interactive CLI. Use @gleanwork/api-client's glean.search.listFilters() for catalog and query-backed discovery, then pass only a returned datasource, field, and suggested value to glean.search.query(). Enable experimental features through the SDK's documented X_GLEAN_INCLUDE_EXPERIMENTAL option. Do not recreate the SDK transport, impersonate another user, or claim the best-effort filter catalog is exhaustive.",
-      "llmContext": "@gleanwork/api-client provides typed glean.search.listFilters() and glean.search.query() methods for these Platform APIs. Enable the experimental header through X_GLEAN_INCLUDE_EXPERIMENTAL rather than constructing requests manually. Catalog discovery returns datasource identifiers and common built-in fields; query-backed discovery requires exactly one datasource and returns bounded, non-exhaustive suggested values. Apply returned values unchanged with EQUALS. The caller's credential is the permission boundary. Let the SDK validate response data and surface typed API errors; display warnings, request IDs, Retry-After guidance, and next_cursor without logging credentials or storing results.",
+      "aiPrompt": "Scaffold and run the verified Search with discovered filters quickstart. Ask for the user's work email and one topic they know exists in their Glean instance. Run the fixture tests, sign in through DCR OAuth with SEARCH and offline_access, run live verification, then start the interactive CLI. Use @gleanwork/api-client's glean.search.listFilters() for catalog and query-backed discovery, then pass a returned datasource and either a suggested filter value or an explicit custom field/value to glean.search.query(). Enable experimental features through the SDK's documented includeExperimental constructor option. Do not recreate the SDK transport, impersonate another user, or claim the best-effort filter catalog is exhaustive.",
+      "llmContext": "Use openid-client for OAuth discovery, DCR, Authorization Code with PKCE, and refresh. Pass its refreshable callback to @gleanwork/api-client's apiToken option; Glean-issued OAuth tokens need no X-Glean-Auth-Type. If DCR cannot grant SEARCH, use an administrator-provisioned public client or explicit user-scoped SEARCH token. Use typed glean.search.listFilters() and glean.search.query(), with includeExperimental enabled. Catalog discovery returns datasource IDs and common fields. Query-backed discovery accepts one datasource and returns bounded, non-exhaustive suggestions. Apply returned values unchanged with EQUALS, but treat discovery as advisory and allow explicit nonblank custom fields. The caller's credentials remain the permission boundary. Let the SDK validate responses and surface typed errors; display warnings, request IDs, Retry-After guidance, and next_cursor without logging credentials or storing results.",
       "goDependency": false,
       "featured": true,
       "hidden": false,
