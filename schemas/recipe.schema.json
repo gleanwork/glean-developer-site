@@ -41,6 +41,51 @@
       "additionalProperties": false,
       "description": "Optional cookbook-owned visual preview consumed by recipe renderers."
     },
+    "codeWalkthrough": {
+      "type": "object",
+      "properties": {
+        "intro": {
+          "type": "string",
+          "minLength": 1
+        },
+        "examples": {
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string",
+                "minLength": 1
+              },
+              "description": {
+                "type": "string",
+                "minLength": 1
+              },
+              "source": {
+                "type": "string",
+                "pattern": "^(?!\\/)(?!.*(?:^|\\/)\\.\\.(?:\\/|$))[A-Za-z0-9._/-]+$"
+              },
+              "language": {
+                "type": "string",
+                "enum": ["typescript", "javascript", "python", "go", "java"]
+              },
+              "code": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 30000,
+                "description": "Generated from source during registry sync; never authored in recipe.json."
+              }
+            },
+            "required": ["title", "description", "source", "language"],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": ["intro", "examples"],
+      "additionalProperties": false,
+      "description": "Optional source-backed code walkthrough rendered directly on the recipe documentation page."
+    },
     "surfaces": {
       "minItems": 1,
       "type": "array",

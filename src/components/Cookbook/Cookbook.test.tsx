@@ -8,12 +8,33 @@ import { FeatureFlagsContext } from '@site/src/theme/Root';
 import { tenantProfileStore } from '@site/src/lib/tenantProfile';
 import recipesData from '@site/src/data/recipes.json';
 import RecipeIndex from './RecipeIndex';
-import RecipeLayout, { RecipeArchitecture, RecipeSteps } from './RecipeLayout';
+import RecipeLayout, {
+  RecipeArchitecture,
+  RecipeCodeWalkthrough,
+  RecipeSteps,
+} from './RecipeLayout';
 import FlagshipCard from './FlagshipCard';
 import type { RecipeRecord } from '../../types/recipe';
 import type { AuthKind } from './authContexts';
 import catStyles from './categories.module.css';
 import layoutStyles from './RecipeLayout.module.css';
+
+vi.mock('@theme/CodeBlock', () => ({
+  default: ({
+    children,
+    title,
+  }: {
+    children: React.ReactNode;
+    title?: string;
+  }) => (
+    <div>
+      {title ? <span>{title}</span> : null}
+      <pre>
+        <code>{children}</code>
+      </pre>
+    </div>
+  ),
+}));
 
 function renderWithTenantFlag(ui: React.ReactElement, enabled = true) {
   return render(
@@ -204,6 +225,49 @@ const plugin = {
 };
 
 describe('RecipeLayout', () => {
+  it('renders a declared code walkthrough before runnable setup steps', () => {
+    render(
+      <RecipeLayout
+        plugin={plugin}
+        recipe={makeRecipe({
+          codeWalkthrough: {
+            intro: 'Read the implementation before running it.',
+            examples: [
+              {
+                title: 'Build a request',
+                description: 'Keep the request typed and explicit.',
+                source: 'src/request.ts',
+                language: 'typescript',
+                code: 'export const request = { pageSize: 10 };',
+              },
+            ],
+          },
+          steps: [
+            {
+              kind: 'install',
+              title: 'Install dependencies',
+              command: 'npm install',
+            },
+          ],
+        })}
+      >
+        <RecipeCodeWalkthrough />
+        <RecipeSteps />
+      </RecipeLayout>,
+    );
+
+    expect(screen.getByText('Code walkthrough')).toBeInTheDocument();
+    expect(
+      screen.getByText('Read the implementation before running it.'),
+    ).toBeInTheDocument();
+    expect(screen.getByText('Build a request')).toBeInTheDocument();
+    expect(
+      screen.getByText('export const request = { pageSize: 10 };'),
+    ).toBeInTheDocument();
+    expect(screen.getByText('Run it yourself')).toBeInTheDocument();
+    expect(screen.getByText('Install dependencies')).toBeInTheDocument();
+  });
+
   it('renders a compact preview that opens and closes a full-size dialog', async () => {
     const user = userEvent.setup();
     render(

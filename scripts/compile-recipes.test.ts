@@ -47,6 +47,45 @@ describe('compileRecipeCatalog', () => {
     expect(errors.join('\n')).toMatch(/hidden recipe must not have/);
   });
 
+  it('requires code walkthrough sources to be materialized during sync', () => {
+    const entry = {
+      ...listedEntry('source-backed'),
+      codeWalkthrough: {
+        intro: 'Read the implementation.',
+        examples: [
+          {
+            title: 'Build a request',
+            description: 'Keep the request typed and explicit.',
+            source: 'src/request.ts',
+            language: 'typescript',
+          },
+        ],
+      },
+    };
+
+    const missing = compileRecipeCatalog([entry], new Set(['source-backed']));
+    expect(missing.errors.join('\n')).toMatch(/was not materialized/);
+
+    const materialized = compileRecipeCatalog(
+      [
+        {
+          ...entry,
+          codeWalkthrough: {
+            ...entry.codeWalkthrough,
+            examples: [
+              {
+                ...entry.codeWalkthrough.examples[0],
+                code: 'export const request = { pageSize: 10 };',
+              },
+            ],
+          },
+        },
+      ],
+      new Set(['source-backed']),
+    );
+    expect(materialized.errors).toEqual([]);
+  });
+
   it('fails when a listed recipe is missing its MDX page', () => {
     const { errors } = compileRecipeCatalog(
       [listedEntry('embed-search-chat')],
