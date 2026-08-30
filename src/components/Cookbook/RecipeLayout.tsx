@@ -150,12 +150,14 @@ function ActionCard({
 export function RecipeSection({
   label,
   children,
+  id,
 }: {
   label: string;
   children: React.ReactNode;
+  id?: string;
 }): React.ReactElement {
   return (
-    <div className={styles.section}>
+    <div className={styles.section} id={id}>
       <div className={styles.sectionLabel}>{label}</div>
       {children}
     </div>
@@ -363,11 +365,12 @@ export function RecipeSteps({
   const hasStepsData =
     (recipe.steps && recipe.steps.length > 0) || variantsWithSteps.length > 0;
   const sectionLabel = recipe.codeWalkthrough ? 'Run it yourself' : 'Steps';
+  const sectionId = recipe.codeWalkthrough ? 'run-it-yourself' : 'steps';
 
   if (!hasStepsData) {
     const steps = React.Children.toArray(children);
     return (
-      <RecipeSection label={sectionLabel}>
+      <RecipeSection id={sectionId} label={sectionLabel}>
         <div className={styles.stepsWrap}>
           <div className={styles.stepsRail} />
           {steps.map((step, i) => (
@@ -382,7 +385,7 @@ export function RecipeSteps({
   }
 
   return (
-    <RecipeSection label={sectionLabel}>
+    <RecipeSection id={sectionId} label={sectionLabel}>
       {recipe.buildMethod === 'third-party-build' ? (
         <RecipeInstanceLookup />
       ) : null}

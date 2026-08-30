@@ -958,6 +958,75 @@ describe('RecipeLayout', () => {
     expect(await screen.findByLabelText('Instance name')).toHaveValue('acme');
   });
 
+  it('scrolls from OAuth rail guidance to the scaffold sign-in step', async () => {
+    render(
+      <RecipeLayout
+        plugin={plugin}
+        recipe={makeRecipe({
+          authMethod: ['client-api-oauth-or-token'],
+          buildMethod: 'scaffold',
+          codeWalkthrough: {
+            intro: 'Use the official client.',
+            examples: [
+              {
+                title: 'Search',
+                description: 'Run a search.',
+                source: 'src/search.ts',
+                language: 'typescript',
+                code: 'export {};',
+              },
+            ],
+          },
+          steps: [
+            {
+              kind: 'authenticate',
+              title: 'Sign in to Glean',
+              command: 'npm run login',
+            },
+          ],
+          execution: {
+            type: 'cli',
+            questions: [],
+            auth: [
+              {
+                kind: 'oauth-with-token-fallback',
+                scopes: ['SEARCH'],
+                setupCommand: 'npm run login',
+              },
+            ],
+            verification: {
+              kind: 'automated',
+              command: 'npm test',
+              expectedDuration: 'about a minute',
+              startsOwnServer: false,
+            },
+            run: {
+              command: 'npm start',
+              userBrowser: false,
+            },
+          },
+        })}
+      >
+        <RecipeSteps />
+      </RecipeLayout>,
+    );
+
+    const steps = document.getElementById('run-it-yourself')!;
+    steps.scrollIntoView = vi.fn();
+    await userEvent.click(
+      screen.getByRole('button', { name: 'OAuth sign-in command' }),
+    );
+
+    expect(steps).toHaveTextContent('Sign in to Glean');
+    expect(steps.scrollIntoView).toHaveBeenCalledWith({
+      behavior: 'smooth',
+      block: 'start',
+    });
+    expect(
+      screen.queryByText(/Run the authenticate step on this page/),
+    ).not.toBeInTheDocument();
+  });
+
   it('links token creation from the rail for hosted-secret recipes', () => {
     render(
       <RecipeLayout
