@@ -12,6 +12,7 @@ import RecipeLayout, {
   RecipeArchitecture,
   RecipeCodeWalkthrough,
   RecipeSteps,
+  humanizeStepCommands,
 } from './RecipeLayout';
 import FlagshipCard from './FlagshipCard';
 import type { RecipeRecord } from '../../types/recipe';
@@ -23,12 +24,17 @@ vi.mock('@theme/CodeBlock', () => ({
   default: ({
     children,
     title,
+    language,
   }: {
     children: React.ReactNode;
     title?: string;
+    language?: string;
   }) => (
-    <div>
+    <div data-language={language}>
       {title ? <span>{title}</span> : null}
+      <button aria-label="Copy code to clipboard" type="button">
+        Copy
+      </button>
       <pre>
         <code>{children}</code>
       </pre>
@@ -266,6 +272,70 @@ describe('RecipeLayout', () => {
     ).toBeInTheDocument();
     expect(screen.getByText('Run it yourself')).toBeInTheDocument();
     expect(screen.getByText('Install dependencies')).toBeInTheDocument();
+  });
+
+  it('removes only repeated identical directory prefixes from display commands', () => {
+    const registrySteps = [
+      { title: 'Scaffold', command: 'npx tiged source project' },
+      { title: 'Install', command: 'cd project && npm install' },
+      { title: 'Test', command: 'cd project && npm test' },
+      { title: 'Quoted path', command: "cd 'project' && npm start" },
+      { title: 'Other project', command: 'cd other && npm start' },
+    ];
+
+    const displaySteps = humanizeStepCommands(registrySteps);
+
+    expect(displaySteps.map((step) => step.command)).toEqual([
+      'npx tiged source project',
+      'cd project && npm install',
+      'npm test',
+      "cd 'project' && npm start",
+      'cd other && npm start',
+    ]);
+    expect(registrySteps.map((step) => step.command)).toEqual([
+      'npx tiged source project',
+      'cd project && npm install',
+      'cd project && npm test',
+      "cd 'project' && npm start",
+      'cd other && npm start',
+    ]);
+  });
+
+  it('renders each structured command as a copyable Bash block', () => {
+    render(
+      <RecipeLayout
+        plugin={plugin}
+        recipe={makeRecipe({
+          buildMethod: 'scaffold',
+          steps: [
+            {
+              kind: 'install',
+              title: 'Install',
+              command: 'cd project && npm install',
+            },
+            {
+              kind: 'run',
+              title: 'Run',
+              command: 'cd project && npm start',
+            },
+          ],
+        })}
+      >
+        <RecipeSteps />
+      </RecipeLayout>,
+    );
+
+    expect(screen.getByText('cd project && npm install')).toBeInTheDocument();
+    expect(screen.getByText('npm start')).toBeInTheDocument();
+    expect(
+      screen.queryByText('cd project && npm start'),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getAllByRole('button', { name: 'Copy code to clipboard' }),
+    ).toHaveLength(2);
+    expect(
+      screen.getByText('npm start').closest('[data-language]'),
+    ).toHaveAttribute('data-language', 'bash');
   });
 
   it('renders a compact preview that opens and closes a full-size dialog', async () => {
@@ -671,6 +741,85 @@ describe('RecipeLayout', () => {
     );
 
     expect(await screen.findByLabelText('Instance name')).toHaveValue('acme');
+  });
+
+  it('scrolls scaffold auth guidance to setup and gives an executable token fallback', async () => {
+    render(
+      <RecipeLayout
+        plugin={plugin}
+        recipe={makeRecipe({
+          surfaces: ['platform-api'],
+          authMethod: ['client-api-oauth-or-token'],
+          buildMethod: 'scaffold',
+          codeWalkthrough: {
+            intro: 'Use the official client.',
+            examples: [
+              {
+                title: 'Search',
+                description: 'Run a search.',
+                source: 'src/search.ts',
+                language: 'typescript',
+                code: 'export {};',
+              },
+            ],
+          },
+          steps: [
+            {
+              kind: 'authenticate',
+              title: 'Sign in to Glean',
+              command: 'npm run login',
+            },
+          ],
+          execution: {
+            type: 'cli',
+            questions: [],
+            auth: [
+              {
+                kind: 'oauth-with-token-fallback',
+                scopes: ['SEARCH'],
+                setupCommand: 'npm run login',
+              },
+            ],
+            verification: {
+              kind: 'automated',
+              command: 'npm test',
+              expectedDuration: 'about a minute',
+              startsOwnServer: false,
+            },
+            run: {
+              command: 'npm start',
+              userBrowser: false,
+            },
+          },
+        })}
+      >
+        <RecipeSteps />
+      </RecipeLayout>,
+    );
+
+    const steps = document.getElementById('run-it-yourself')!;
+    steps.scrollIntoView = vi.fn();
+    await userEvent.click(
+      screen.getByRole('button', { name: 'OAuth sign-in command' }),
+    );
+
+    expect(steps).toHaveTextContent('Sign in to Glean');
+    expect(steps.scrollIntoView).toHaveBeenCalledWith({
+      behavior: 'smooth',
+      block: 'start',
+    });
+
+    const auth = screen.getByText('Auth').parentElement!;
+    expect(auth).toHaveTextContent('GLEAN_SERVER_URL');
+    expect(auth).toHaveTextContent('GLEAN_API_TOKEN');
+    expect(auth).toHaveTextContent("scaffold's .env");
+    expect(auth).toHaveTextContent('skip the OAuth sign-in command');
+    expect(auth).toHaveTextContent(
+      'Your Glean admin may need to create the token for you',
+    );
+    expect(
+      screen.getByRole('link', { name: 'Glean-issued token' }),
+    ).toHaveAttribute('href', '/api/platform-api/authentication');
   });
 
   it('links token creation from the rail for hosted-secret recipes', () => {

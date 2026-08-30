@@ -8,6 +8,7 @@ const FIND_SERVER = '/get-started/authentication#finding-your-server-url';
 const CLIENT_TOKEN = '/api-info/client/authentication/glean-issued';
 const INDEXING_TOKEN = '/api-info/indexing/authentication/overview';
 const OAUTH = '/api-info/client/authentication/oauth';
+const PLATFORM_AUTH = '/api/platform-api/authentication';
 const TOKEN_MGMT_CLIENT =
   'https://app.glean.com/admin/platform/tokenManagement?tab=client';
 const TOKEN_MGMT_INDEXING =
@@ -17,12 +18,20 @@ function AuthBlock({
   kind,
   scopeList,
   login,
+  stepsId,
+  isPlatformApi,
+  isScaffold,
 }: {
   kind: AuthKind;
   scopeList: string[];
   login?: string;
+  stepsId: string;
+  isPlatformApi: boolean;
+  isScaffold: boolean;
 }): React.ReactElement | null {
   const scopes = scopeList.join(', ');
+  const oauthGuide = isPlatformApi ? PLATFORM_AUTH : OAUTH;
+  const tokenGuide = isPlatformApi ? PLATFORM_AUTH : CLIENT_TOKEN;
 
   switch (kind) {
     case 'none':
@@ -38,13 +47,43 @@ function AuthBlock({
     case 'oauth-with-token-fallback':
       return (
         <p>
-          Run the authenticate step on this page. It discovers your tenant from
-          work email and signs you in with <Link to={OAUTH}>OAuth</Link>
-          {login ? ', using the shipped login command' : ''}. If OAuth is
-          unavailable, create a scoped{' '}
-          <Link to={CLIENT_TOKEN}>Glean-issued token</Link> in{' '}
+          {login ? (
+            <>
+              After scaffolding, run the{' '}
+              <button
+                className={styles.inlineLinkButton}
+                onClick={() =>
+                  document
+                    .getElementById(stepsId)
+                    ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                }
+                type="button"
+              >
+                OAuth sign-in command
+              </button>
+              . It discovers your tenant from work email and opens the{' '}
+              <Link to={oauthGuide}>OAuth flow</Link>.
+            </>
+          ) : (
+            <>
+              Sign in with <Link to={oauthGuide}>OAuth</Link> before running
+              this recipe.
+            </>
+          )}{' '}
+          If OAuth is unavailable, create a scoped{' '}
+          <Link to={tokenGuide}>Glean-issued token</Link> in{' '}
           <Link to={TOKEN_MGMT_CLIENT}>Token Management</Link>
-          {scopes ? ` (${scopes})` : ''}.
+          {scopes ? ` (${scopes})` : ''}. Your Glean admin may need to create
+          the token for you.
+          {isScaffold ? (
+            <>
+              {' '}
+              Set both <code>GLEAN_SERVER_URL</code> and{' '}
+              <code>GLEAN_API_TOKEN</code> in the scaffold&apos;s{' '}
+              <code>.env</code>, skip the OAuth sign-in command, and continue
+              with the remaining steps.
+            </>
+          ) : null}
         </p>
       );
     case 'indexing-token':
@@ -92,6 +131,9 @@ export function RecipeAuthCard({
 }: {
   recipe: RecipeRecord;
 }): React.ReactElement | null {
+  const stepsId = recipe.codeWalkthrough ? 'run-it-yourself' : 'steps';
+  const isPlatformApi = recipe.surfaces.includes('platform-api');
+  const isScaffold = recipe.buildMethod === 'scaffold';
   const contexts = authContexts(recipe)
     .map((context) => ({
       ...context,
@@ -123,6 +165,9 @@ export function RecipeAuthCard({
                 kind={entry.kind}
                 scopeList={entry.scopes}
                 login={entry.setupCommand}
+                stepsId={stepsId}
+                isPlatformApi={isPlatformApi}
+                isScaffold={isScaffold}
               />
             ))}
           </div>
