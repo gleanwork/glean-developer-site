@@ -1,8 +1,10 @@
 import type React from 'react';
 import { useMemo, useState } from 'react';
+import { useLocation } from '@docusaurus/router';
 import { RECIPE_SURFACE_LABELS, type RecipeRecord } from '../../types/recipe';
 import FlagshipCard from './FlagshipCard';
 import RecipeCard from './RecipeCard';
+import { isRecipeAvailable } from './recipePreview';
 import styles from './RecipeIndex.module.css';
 
 interface RecipeIndexProps {
@@ -31,11 +33,29 @@ export default function RecipeIndex({
   surfaces,
 }: RecipeIndexProps): React.ReactElement {
   const [activeFilter, setActiveFilter] = useState('all');
+  const location = useLocation();
 
-  const flagship = recipes.find((r) => r.tags.includes('flagship'));
-  const gridRecipes = recipes.filter((r) => r !== flagship);
+  const availableRecipes = useMemo(
+    () =>
+      recipes.filter((recipe) => isRecipeAvailable(recipe, location.search)),
+    [recipes, location.search],
+  );
+  const availableSurfaces = useMemo(
+    () =>
+      surfaces.filter((surface) =>
+        availableRecipes.some((recipe) =>
+          recipe.surfaces.some((recipeSurface) => recipeSurface === surface),
+        ),
+      ),
+    [availableRecipes, surfaces],
+  );
+  const flagship = availableRecipes.find((r) => r.tags.includes('flagship'));
+  const gridRecipes = availableRecipes.filter((r) => r !== flagship);
 
-  const chips = useMemo(() => ['all', ...surfaces], [surfaces]);
+  const chips = useMemo(
+    () => ['all', ...availableSurfaces],
+    [availableSurfaces],
+  );
 
   const visibleRecipes = useMemo(
     () => gridRecipes.filter((r) => matches(r, activeFilter)),
@@ -55,7 +75,7 @@ export default function RecipeIndex({
         each.
       </p>
 
-      {recipes.length === 0 ? (
+      {availableRecipes.length === 0 ? (
         <div className={styles.empty}>
           <p>Recipes are coming soon.</p>
         </div>

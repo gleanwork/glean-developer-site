@@ -100,6 +100,19 @@ describe('compileRecipeCatalog', () => {
     expect(materialized.errors).toEqual([]);
   });
 
+  it('compiles preview recipes when their gated MDX page exists', () => {
+    const { records, errors } = compileRecipeCatalog(
+      [{ ...listedEntry('preview-search'), visibility: 'preview' }],
+      new Set(['preview-search']),
+    );
+
+    expect(errors).toEqual([]);
+    expect(records[0]).toMatchObject({
+      id: 'preview-search',
+      visibility: 'preview',
+    });
+  });
+
   it('fails when a listed recipe is missing its MDX page', () => {
     const { errors } = compileRecipeCatalog(
       [listedEntry('embed-search-chat')],

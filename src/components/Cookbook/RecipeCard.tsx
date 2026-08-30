@@ -3,6 +3,7 @@ import Link from '@docusaurus/Link';
 import { getIcon } from '@gleanwork/docusaurus-theme-glean/Icons';
 import { RECIPE_SURFACE_LABELS, type RecipeRecord } from '../../types/recipe';
 import { CategoryTile } from './categories';
+import { recipeHref } from './recipePreview';
 import styles from './RecipeCard.module.css';
 
 interface RecipeCardProps {
@@ -18,7 +19,7 @@ export default function RecipeCard({
   recipe,
 }: RecipeCardProps): React.ReactElement {
   return (
-    <Link className={styles.card} to={recipe.permalink}>
+    <Link className={styles.card} to={recipeHref(recipe)}>
       <div className={styles.tileRow}>
         <CategoryTile category={recipe.category} iconOverride={recipe.icon} />
       </div>
