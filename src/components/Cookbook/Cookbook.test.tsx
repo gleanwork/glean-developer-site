@@ -13,6 +13,7 @@ import RecipeLayout, {
   RecipeArchitecture,
   RecipeCodeWalkthrough,
   RecipeSteps,
+  humanizeStepCommands,
 } from './RecipeLayout';
 import RecipeShowcaseCarousel, {
   selectShowcaseRecipes,
@@ -42,12 +43,17 @@ vi.mock('@theme/CodeBlock', () => ({
   default: ({
     children,
     title,
+    language,
   }: {
     children: React.ReactNode;
     title?: string;
+    language?: string;
   }) => (
-    <div>
+    <div data-language={language}>
       {title ? <span>{title}</span> : null}
+      <button aria-label="Copy code to clipboard" type="button">
+        Copy
+      </button>
       <pre>
         <code>{children}</code>
       </pre>
@@ -544,6 +550,61 @@ describe('RecipeLayout', () => {
     ).toBeInTheDocument();
     expect(screen.getByText('Run it yourself')).toBeInTheDocument();
     expect(screen.getByText('Install dependencies')).toBeInTheDocument();
+  });
+
+  it('presents repeated cwd-safe commands as one sequential shell session', () => {
+    const commands = humanizeStepCommands([
+      { title: 'Scaffold', command: 'npx tiged source project' },
+      { title: 'Install', command: 'cd project && npm install' },
+      { title: 'Test', command: 'cd project && npm test' },
+      { title: 'Run', command: 'cd project && npm start' },
+      { title: 'Other project', command: 'cd other && npm start' },
+    ]);
+
+    expect(commands.map((step) => step.command)).toEqual([
+      'npx tiged source project',
+      'cd project && npm install',
+      'npm test',
+      'npm start',
+      'cd other && npm start',
+    ]);
+  });
+
+  it('renders each walkthrough command as a copyable Bash block', () => {
+    render(
+      <RecipeLayout
+        plugin={plugin}
+        recipe={makeRecipe({
+          buildMethod: 'scaffold',
+          steps: [
+            {
+              kind: 'install',
+              title: 'Install',
+              command: 'cd project && npm install',
+            },
+            {
+              kind: 'run',
+              title: 'Run',
+              command: 'cd project && npm start',
+            },
+          ],
+        })}
+      >
+        <RecipeSteps />
+      </RecipeLayout>,
+    );
+
+    expect(screen.getByText('cd project && npm install')).toBeInTheDocument();
+    expect(screen.getByText('npm start')).toBeInTheDocument();
+    expect(
+      screen.queryByText('cd project && npm start'),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getAllByRole('button', { name: 'Copy code to clipboard' }),
+    ).toHaveLength(2);
+    expect(
+      screen.getByText('npm start').closest('[data-language]'),
+    ).toHaveAttribute('data-language', 'bash');
   });
 
   it('renders a compact preview that opens and closes a full-size dialog', async () => {
