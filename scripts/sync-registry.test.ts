@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -7,6 +7,7 @@ import path from 'node:path';
 import {
   extractPluginCoordinates,
   listedRecipes,
+  materializeCodeWalkthroughSources,
   renderPage,
   syncPreviewAssets,
   writeRecipePages,
@@ -136,6 +137,24 @@ describe('renderPage', () => {
     expect(page).toContain('pagination_next: "cookbook/embed-search-chat"');
   });
 
+  it('places source-backed code walkthroughs before architecture and setup', () => {
+    const page = renderPage(
+      {
+        ...recipe,
+        codeWalkthrough: { intro: 'Read it.', examples: [] },
+      },
+      markdown,
+    );
+    const walkthrough = page.indexOf('<RecipeCodeWalkthrough />');
+    const architecture = page.indexOf('<RecipeArchitecture />');
+    const prerequisites = page.indexOf('<RecipePrereqs />');
+
+    expect(walkthrough).toBeGreaterThan(0);
+    expect(walkthrough).toBeLessThan(architecture);
+    expect(architecture).toBeLessThan(prerequisites);
+    expect(page).toContain('RecipeCodeWalkthrough,');
+  });
+
   it('keeps the sequence bounded to recipes at either end', () => {
     const first = renderPage(recipe, markdown, null, {
       id: 'embed-search-chat',
@@ -209,6 +228,127 @@ describe('writeRecipePages', () => {
     } finally {
       fs.rmSync(output, { recursive: true, force: true });
     }
+  });
+});
+
+describe('materializeCodeWalkthroughSources', () => {
+  const fixtureRoot = path.resolve(__dirname, 'fixtures', 'code-walkthrough');
+
+  it('materializes declared sources from their owning recipe directory', async () => {
+    const registry = JSON.parse(
+      fs.readFileSync(path.join(fixtureRoot, 'registry.json'), 'utf8'),
+    );
+    const requested: string[] = [];
+    const materialized = await materializeCodeWalkthroughSources(
+      registry,
+      async (sourcePath: string) => {
+        requested.push(sourcePath);
+        return fs.readFileSync(path.join(fixtureRoot, sourcePath));
+      },
+    );
+
+    expect(requested).toEqual(['recipes/source-backed/src/request.ts']);
+    expect(materialized[0].codeWalkthrough.examples[0].code).toBe(
+      fs.readFileSync(
+        path.join(fixtureRoot, 'recipes', 'source-backed', 'src', 'request.ts'),
+        'utf8',
+      ),
+    );
+    expect(registry[0].codeWalkthrough.examples[0]).not.toHaveProperty('code');
+    expect(materialized[1]).toBe(registry[1]);
+  });
+
+  it('does not fetch or embed sources for hidden recipes', async () => {
+    const hidden = {
+      id: 'hidden-recipe',
+      hidden: true,
+      codeWalkthrough: {
+        examples: [{ source: '../private-source.ts' }],
+      },
+    };
+    const fetchAsset = vi.fn();
+
+    const materialized = await materializeCodeWalkthroughSources(
+      [hidden],
+      fetchAsset,
+    );
+
+    expect(fetchAsset).not.toHaveBeenCalled();
+    expect(materialized).toEqual([hidden]);
+    expect(materialized[0].codeWalkthrough.examples[0]).not.toHaveProperty(
+      'code',
+    );
+  });
+
+  it('validates every path before fetching any source', async () => {
+    const fetchAsset = vi.fn();
+
+    await expect(
+      materializeCodeWalkthroughSources(
+        [
+          {
+            id: 'valid-recipe',
+            codeWalkthrough: {
+              examples: [{ source: 'src/request.ts' }],
+            },
+          },
+          {
+            id: 'unsafe-recipe',
+            codeWalkthrough: {
+              examples: [{ source: '../secret.ts' }],
+            },
+          },
+        ],
+        fetchAsset,
+      ),
+    ).rejects.toThrow(/normalized relative path inside the recipe directory/);
+    expect(fetchAsset).not.toHaveBeenCalled();
+  });
+
+  it('rejects oversized, binary, and empty source files', async () => {
+    const entry = {
+      id: 'source-backed',
+      codeWalkthrough: {
+        examples: [{ source: 'src/request.ts' }],
+      },
+    };
+
+    await expect(
+      materializeCodeWalkthroughSources([entry], async () =>
+        Buffer.alloc(30_001, 'a'),
+      ),
+    ).rejects.toThrow(/exceeds 30000 bytes/);
+    await expect(
+      materializeCodeWalkthroughSources([entry], async () =>
+        Buffer.from([0xc3, 0x28]),
+      ),
+    ).rejects.toThrow(/valid UTF-8/);
+    await expect(
+      materializeCodeWalkthroughSources([entry], async () => Buffer.from('')),
+    ).rejects.toThrow(/non-empty text/);
+  });
+
+  it('overwrites embedded code with the fetched source', async () => {
+    const [entry] = await materializeCodeWalkthroughSources(
+      [
+        {
+          id: 'source-backed',
+          codeWalkthrough: {
+            examples: [
+              {
+                source: 'src/request.ts',
+                code: 'untrusted registry content',
+              },
+            ],
+          },
+        },
+      ],
+      async () => Buffer.from('export const trusted = true;\n'),
+    );
+
+    expect(entry.codeWalkthrough.examples[0].code).toBe(
+      'export const trusted = true;\n',
+    );
   });
 });
 

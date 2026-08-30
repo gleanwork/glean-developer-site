@@ -8,6 +8,8 @@
  *   source of truth, consumed by scripts/compile-recipes.ts)
  * - docs/cookbook/<id>.mdx pages generated from each registry entry's structured
  *   content. The cookbook owns semantics; this repository owns presentation.
+ * - codeWalkthrough sources fetched from each recipe directory and embedded in
+ *   the local registry snapshot for build-time rendering.
  * - recipe preview assets -> static/img/cookbook/previews/<id>/ (only when a
  *   cookbook-owned preview is declared in that recipe's metadata)
  * - .claude-plugin/marketplace.json -> data/cookbook-plugin.json (the plugin's
@@ -105,6 +107,103 @@ async function fetchSourceBuffer(sourcePath) {
 
 async function fetchSource(sourcePath) {
   return (await fetchSourceBuffer(sourcePath)).toString('utf8');
+}
+
+const MAX_WALKTHROUGH_SOURCE_BYTES = 30_000;
+const SAFE_WALKTHROUGH_SOURCE =
+  /^(?!\/)(?!.*(?:^|\/)\.\.(?:\/|$))[A-Za-z0-9._/-]+$/;
+
+function walkthroughSourcePath(recipeId, source) {
+  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(recipeId)) {
+    throw new Error(`${recipeId}: invalid recipe id for code walkthrough`);
+  }
+  if (
+    typeof source !== 'string' ||
+    !SAFE_WALKTHROUGH_SOURCE.test(source) ||
+    path.posix.normalize(source) !== source ||
+    source.split('/').some((segment) => segment === '.') ||
+    source.endsWith('/')
+  ) {
+    throw new Error(
+      `${recipeId}: code walkthrough source must be a normalized relative path inside the recipe directory: ${String(source)}`,
+    );
+  }
+
+  const recipePrefix = `recipes/${recipeId}/`;
+  const sourcePath = path.posix.join(recipePrefix, source);
+  if (!sourcePath.startsWith(recipePrefix)) {
+    throw new Error(
+      `${recipeId}: code walkthrough source escapes the recipe directory: ${source}`,
+    );
+  }
+  return sourcePath;
+}
+
+/**
+ * Fetches declared walkthrough files from their owning recipe directory and
+ * embeds them in a cloned registry. Paths are validated before any fetch, and
+ * fetched bytes are bounded and decoded strictly so sync cannot publish an
+ * arbitrary, oversized, binary, or malformed source file.
+ */
+export async function materializeCodeWalkthroughSources(entries, fetchAsset) {
+  const requests = [];
+  for (const entry of entries) {
+    if (entry?.hidden) continue;
+    const walkthrough = entry?.codeWalkthrough;
+    if (walkthrough === undefined) continue;
+    if (!Array.isArray(walkthrough.examples)) {
+      throw new Error(
+        `${String(entry?.id)}: codeWalkthrough.examples must be an array`,
+      );
+    }
+    for (const example of walkthrough.examples) {
+      requests.push({
+        entry,
+        example,
+        sourcePath: walkthroughSourcePath(entry.id, example?.source),
+      });
+    }
+  }
+
+  const codeByExample = new Map();
+  for (const { entry, example, sourcePath } of requests) {
+    const source = Buffer.from(await fetchAsset(sourcePath));
+    if (source.byteLength > MAX_WALKTHROUGH_SOURCE_BYTES) {
+      throw new Error(
+        `${entry.id}: code walkthrough source exceeds ${MAX_WALKTHROUGH_SOURCE_BYTES} bytes: ${example.source}`,
+      );
+    }
+
+    let code;
+    try {
+      code = new TextDecoder('utf-8', { fatal: true }).decode(source);
+    } catch {
+      throw new Error(
+        `${entry.id}: code walkthrough source must be valid UTF-8: ${example.source}`,
+      );
+    }
+    if (code.trim().length === 0 || code.includes('\0')) {
+      throw new Error(
+        `${entry.id}: code walkthrough source must be non-empty text: ${example.source}`,
+      );
+    }
+    codeByExample.set(example, code);
+  }
+
+  return entries.map((entry) =>
+    entry.codeWalkthrough && !entry.hidden
+      ? {
+          ...entry,
+          codeWalkthrough: {
+            ...entry.codeWalkthrough,
+            examples: entry.codeWalkthrough.examples.map((example) => ({
+              ...example,
+              code: codeByExample.get(example),
+            })),
+          },
+        }
+      : entry,
+  );
 }
 
 /**
@@ -300,6 +399,7 @@ export function renderPage(
       `<RecipeSection label="Problem">\n\n${problem.body}\n\n</RecipeSection>`,
     );
   }
+  if (recipe.codeWalkthrough) parts.push('<RecipeCodeWalkthrough />');
   parts.push('<RecipeArchitecture />', '<RecipePrereqs />');
   // RecipeSteps renders the registry's structured steps when a recipe has them and
   // falls back to these children when it does not. Each markdown list item becomes
@@ -338,7 +438,7 @@ pagination_next: ${nextRecipe ? JSON.stringify(`cookbook/${nextRecipe.id}`) : 'n
 import RecipePage from '@site/src/components/Cookbook/RecipePage';
 import {
   RecipeSection,
-  RecipeArchitecture,
+${recipe.codeWalkthrough ? '  RecipeCodeWalkthrough,\n' : ''}  RecipeArchitecture,
   RecipePrereqs,
   RecipeSteps,
   RecipeDemoQueries,
@@ -399,10 +499,14 @@ async function main() {
   const rawRegistry = await fetchSource(REGISTRY_PATH);
 
   // Fail loudly on malformed content rather than committing garbage.
-  const parsed = JSON.parse(rawRegistry);
-  if (!Array.isArray(parsed)) {
+  const registryEntries = JSON.parse(rawRegistry);
+  if (!Array.isArray(registryEntries)) {
     throw new Error('registry.json must be a JSON array of recipe entries.');
   }
+  const parsed = await materializeCodeWalkthroughSources(
+    registryEntries,
+    fetchSourceBuffer,
+  );
 
   fs.mkdirSync(path.dirname(registryFile), { recursive: true });
   fs.writeFileSync(
