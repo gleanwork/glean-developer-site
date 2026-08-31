@@ -1,0 +1,127 @@
+.list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin: 1.5rem 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  height: 100%;
+  margin: 0;
+}
+
+.link {
+  display: grid;
+  grid-template-areas:
+    'label arrow'
+    'count arrow';
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.125rem 0.75rem;
+  align-items: center;
+  box-sizing: border-box;
+  height: 100%;
+  min-height: 4rem;
+  padding: 0.75rem 1rem;
+  color: var(--ifm-font-color-base);
+  text-decoration: none;
+  border: 1px solid var(--ifm-color-emphasis-200);
+  border-radius: 0.5rem;
+  transition:
+    border-color 0.2s,
+    color 0.2s;
+}
+
+.withDescription {
+  grid-template-areas:
+    'label arrow'
+    'description arrow'
+    'count arrow';
+  min-height: 6.5rem;
+}
+
+.withIcon {
+  grid-template-areas:
+    'icon label arrow'
+    'icon count arrow';
+  grid-template-columns: auto minmax(0, 1fr) auto;
+}
+
+.withIcon.withDescription {
+  grid-template-areas:
+    'icon label arrow'
+    'icon description arrow'
+    'icon count arrow';
+}
+
+.link:hover {
+  color: var(--ifm-color-primary);
+  text-decoration: none;
+  border-color: var(--ifm-color-primary);
+}
+
+.link:focus-visible {
+  outline: 2px solid var(--ifm-color-primary);
+  outline-offset: 2px;
+}
+
+.icon {
+  display: flex;
+  grid-area: icon;
+  align-self: start;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  margin-top: 0.125rem;
+  color: var(--ifm-color-primary);
+}
+
+.label {
+  grid-area: label;
+  overflow: hidden;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.description {
+  display: -webkit-box;
+  grid-area: description;
+  overflow: hidden;
+  color: var(--ifm-color-emphasis-700);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.endpointCount {
+  grid-area: count;
+  color: var(--ifm-color-emphasis-700);
+  font-size: 0.8125rem;
+}
+
+.arrow {
+  grid-area: arrow;
+  width: 1rem;
+  height: 1rem;
+  color: var(--ifm-color-emphasis-500);
+}
+
+.link:hover .arrow {
+  color: var(--ifm-color-primary);
+}
+
+@media (max-width: 996px) {
+  .list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 576px) {
+  .list {
+    grid-template-columns: 1fr;
+  }
+}

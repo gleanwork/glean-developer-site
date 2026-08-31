@@ -798,6 +798,12 @@ const baseSidebars: SidebarsConfig = {
             {
               type: 'category',
               label: 'Agents',
+              description:
+                'Discover available agents, inspect their schemas, and create agent runs.',
+              customProps: {
+                icon: 'agent',
+                iconSet: 'glean',
+              },
               link: {
                 type: 'doc',
                 id: 'api/platform-api/agents-overview',
@@ -832,6 +838,12 @@ const baseSidebars: SidebarsConfig = {
             {
               type: 'category',
               label: 'Chat',
+              description:
+                'Create chat responses grounded in your Glean instance.',
+              customProps: {
+                icon: 'chat',
+                iconSet: 'glean',
+              },
               link: {
                 type: 'doc',
                 id: 'api/platform-api/chat-overview',
@@ -848,6 +860,12 @@ const baseSidebars: SidebarsConfig = {
             {
               type: 'category',
               label: 'Search',
+              description:
+                'Build permission-aware search experiences with relevant results, filters, and time ranges.',
+              customProps: {
+                icon: 'Search',
+                iconSet: 'feather',
+              },
               link: {
                 type: 'doc',
                 id: 'api/platform-api/search-overview',
@@ -870,6 +888,12 @@ const baseSidebars: SidebarsConfig = {
             {
               type: 'category',
               label: 'Skills',
+              description:
+                'Discover, validate, import, synchronize, and manage skills through the Platform API.',
+              customProps: {
+                icon: 'Settings',
+                iconSet: 'feather',
+              },
               link: {
                 type: 'doc',
                 id: 'api/platform-api/skills-overview',
@@ -964,6 +988,12 @@ const baseSidebars: SidebarsConfig = {
             {
               type: 'category',
               label: 'Triggers',
+              description:
+                'Subscribe to Glean content events and receive signed webhooks using curated trigger presets.',
+              customProps: {
+                icon: 'Zap',
+                iconSet: 'feather',
+              },
               link: {
                 type: 'doc',
                 id: 'api/platform-api/triggers-overview',
@@ -1094,6 +1124,12 @@ const baseSidebars: SidebarsConfig = {
             {
               type: 'category',
               label: 'Activity',
+              description:
+                'Report document and search activity to improve relevance and recommendations.',
+              customProps: {
+                icon: 'Radio',
+                iconSet: 'feather',
+              },
               link: {
                 type: 'doc',
                 id: 'api/client-api/activity/overview',
@@ -1116,6 +1152,12 @@ const baseSidebars: SidebarsConfig = {
             {
               type: 'category',
               label: 'Agents',
+              description:
+                'Discover, create, and run Glean agents from your applications.',
+              customProps: {
+                icon: 'agent',
+                iconSet: 'glean',
+              },
               link: {
                 type: 'doc',
                 id: 'api/client-api/agents/overview',
@@ -1174,6 +1216,12 @@ const baseSidebars: SidebarsConfig = {
             {
               type: 'category',
               label: 'Announcements',
+              description:
+                'Create and manage targeted organizational announcements.',
+              customProps: {
+                icon: 'Volume2',
+                iconSet: 'feather',
+              },
               link: {
                 type: 'doc',
                 id: 'api/client-api/announcements/overview',
@@ -1202,6 +1250,12 @@ const baseSidebars: SidebarsConfig = {
             {
               type: 'category',
               label: 'Answers',
+              description:
+                'Create and manage curated answers to frequently asked questions.',
+              customProps: {
+                icon: 'HelpCircle',
+                iconSet: 'feather',
+              },
               link: {
                 type: 'doc',
                 id: 'api/client-api/answers/overview',
@@ -1242,6 +1296,12 @@ const baseSidebars: SidebarsConfig = {
             {
               type: 'category',
               label: 'Authentication',
+              description:
+                'Create authentication tokens and verify datasource authorization.',
+              customProps: {
+                icon: 'Key',
+                iconSet: 'feather',
+              },
               link: {
                 type: 'doc',
                 id: 'api/client-api/authentication/overview',
@@ -1264,6 +1324,12 @@ const baseSidebars: SidebarsConfig = {
             {
               type: 'category',
               label: 'Chat',
+              description:
+                'Build conversational experiences, manage chat history, and work with chat files.',
+              customProps: {
+                icon: 'chat',
+                iconSet: 'glean',
+              },
               link: {
                 type: 'doc',
                 id: 'api/client-api/chat/overview',
@@ -1340,6 +1406,12 @@ const baseSidebars: SidebarsConfig = {
             {
               type: 'category',
               label: 'Documents',
+              description:
+                'Retrieve document metadata and inspect document permissions.',
+              customProps: {
+                icon: 'FileText',
+                iconSet: 'feather',
+              },
               link: {
                 type: 'doc',
                 id: 'api/client-api/documents/overview',
@@ -1368,6 +1440,12 @@ const baseSidebars: SidebarsConfig = {
             {
               type: 'category',
               label: 'Collections',
+              description:
+                'Create and manage curated collections of documents and resources.',
+              customProps: {
+                icon: 'Folder',
+                iconSet: 'feather',
+              },
               link: {
                 type: 'doc',
                 id: 'api/client-api/collections/overview',
@@ -1426,6 +1504,12 @@ const baseSidebars: SidebarsConfig = {
             {
               type: 'category',
               label: 'Entities',
+              description:
+                'Retrieve people and other structured entities from your Glean instance.',
+              customProps: {
+                icon: 'Users',
+                iconSet: 'feather',
+              },
               link: {
                 type: 'doc',
                 id: 'api/client-api/entities/overview',
@@ -1454,6 +1538,12 @@ const baseSidebars: SidebarsConfig = {
             {
               type: 'category',
               label: 'Governance',
+              description:
+                'Manage governance policies, reports, document visibility, and findings exports.',
+              customProps: {
+                icon: 'Shield',
+                iconSet: 'feather',
+              },
               link: {
                 type: 'doc',
                 id: 'api/client-api/governance/overview',
@@ -1548,6 +1638,12 @@ const baseSidebars: SidebarsConfig = {
             {
               type: 'category',
               label: 'Insights',
+              description:
+                'Retrieve aggregated usage insights about users, queries, and content.',
+              customProps: {
+                icon: 'TrendingUp',
+                iconSet: 'feather',
+              },
               link: {
                 type: 'doc',
                 id: 'api/client-api/insights/overview',
@@ -1564,6 +1660,12 @@ const baseSidebars: SidebarsConfig = {
             {
               type: 'category',
               label: 'Messages',
+              description:
+                'Retrieve messages from connected chat and messaging platforms.',
+              customProps: {
+                icon: 'MessageCircle',
+                iconSet: 'feather',
+              },
               link: {
                 type: 'doc',
                 id: 'api/client-api/messages/overview',
@@ -1580,6 +1682,12 @@ const baseSidebars: SidebarsConfig = {
             {
               type: 'category',
               label: 'Pins',
+              description:
+                'Create and manage pinned results for important search queries.',
+              customProps: {
+                icon: 'pin',
+                iconSet: 'glean',
+              },
               link: {
                 type: 'doc',
                 id: 'api/client-api/pins/overview',
@@ -1620,6 +1728,12 @@ const baseSidebars: SidebarsConfig = {
             {
               type: 'category',
               label: 'Search',
+              description:
+                'Search connected content, autocomplete queries, and retrieve personalized feeds.',
+              customProps: {
+                icon: 'Search',
+                iconSet: 'feather',
+              },
               link: {
                 type: 'doc',
                 id: 'api/client-api/search/overview',
@@ -1660,6 +1774,12 @@ const baseSidebars: SidebarsConfig = {
             {
               type: 'category',
               label: 'Shortcuts',
+              description:
+                'Create and manage shortcuts to frequently used queries and resources.',
+              customProps: {
+                icon: 'golink',
+                iconSet: 'glean',
+              },
               link: {
                 type: 'doc',
                 id: 'api/client-api/shortcuts/overview',
@@ -1700,6 +1820,12 @@ const baseSidebars: SidebarsConfig = {
             {
               type: 'category',
               label: 'Summarize',
+              description:
+                'Generate concise AI summaries of documents and organizational content.',
+              customProps: {
+                icon: 'FileText',
+                iconSet: 'feather',
+              },
               link: {
                 type: 'doc',
                 id: 'api/client-api/summarize/overview',
@@ -1716,6 +1842,12 @@ const baseSidebars: SidebarsConfig = {
             {
               type: 'category',
               label: 'Tools',
+              description:
+                'Discover and execute tools and authorize external integrations.',
+              customProps: {
+                icon: 'tools',
+                iconSet: 'glean',
+              },
               link: {
                 type: 'doc',
                 id: 'api/client-api/tools/overview',
@@ -1772,6 +1904,12 @@ const baseSidebars: SidebarsConfig = {
             {
               type: 'category',
               label: 'Verification',
+              description:
+                'Create and manage content verification reminders and workflows.',
+              customProps: {
+                icon: 'CheckSquare',
+                iconSet: 'feather',
+              },
               link: {
                 type: 'doc',
                 id: 'api/client-api/verification/overview',
@@ -1986,6 +2124,12 @@ const baseSidebars: SidebarsConfig = {
             {
               type: 'category',
               label: 'Authentication',
+              description:
+                'Manage the authentication tokens used to authorize Indexing API requests.',
+              customProps: {
+                icon: 'Shield',
+                iconSet: 'feather',
+              },
               link: {
                 type: 'doc',
                 id: 'api/indexing-api/authentication-overview',
@@ -2002,6 +2146,12 @@ const baseSidebars: SidebarsConfig = {
             {
               type: 'category',
               label: 'Custom Metadata',
+              description:
+                'Attach custom metadata to indexed documents and manage metadata schemas.',
+              customProps: {
+                icon: 'Tag',
+                iconSet: 'feather',
+              },
               items: [
                 {
                   type: 'doc',
@@ -2038,6 +2188,12 @@ const baseSidebars: SidebarsConfig = {
             {
               type: 'category',
               label: 'Datasources',
+              description:
+                'Create, configure, and manage the datasources that hold your content.',
+              customProps: {
+                icon: 'Database',
+                iconSet: 'feather',
+              },
               link: {
                 type: 'doc',
                 id: 'api/indexing-api/datasources-overview',
@@ -2066,6 +2222,12 @@ const baseSidebars: SidebarsConfig = {
             {
               type: 'category',
               label: 'Documents',
+              description:
+                'Index documents individually or in bulk, then update permissions and remove stale content.',
+              customProps: {
+                icon: 'FileText',
+                iconSet: 'feather',
+              },
               link: {
                 type: 'doc',
                 id: 'api/indexing-api/documents-overview',
@@ -2112,6 +2274,12 @@ const baseSidebars: SidebarsConfig = {
             {
               type: 'category',
               label: 'People',
+              description:
+                "Index employees and teams used by Glean's people directory and retrieval experiences.",
+              customProps: {
+                icon: 'Users',
+                iconSet: 'feather',
+              },
               link: {
                 type: 'doc',
                 id: 'api/indexing-api/people-overview',
@@ -2165,6 +2333,12 @@ const baseSidebars: SidebarsConfig = {
             {
               type: 'category',
               label: 'Permissions',
+              description:
+                'Index users, groups, and memberships that control access to indexed content.',
+              customProps: {
+                icon: 'Lock',
+                iconSet: 'feather',
+              },
               link: {
                 type: 'doc',
                 id: 'api/indexing-api/permissions-overview',
@@ -2241,6 +2415,12 @@ const baseSidebars: SidebarsConfig = {
             {
               type: 'category',
               label: 'Shortcuts',
+              description:
+                'Create and manage search shortcuts for frequently used queries, tools, and resources.',
+              customProps: {
+                icon: 'Link',
+                iconSet: 'feather',
+              },
               link: {
                 type: 'doc',
                 id: 'api/indexing-api/shortcuts-overview',
@@ -2263,6 +2443,12 @@ const baseSidebars: SidebarsConfig = {
             {
               type: 'category',
               label: 'Troubleshooting',
+              description:
+                'Debug indexing operations, verify data integrity, and monitor processing status.',
+              customProps: {
+                icon: 'Tool',
+                iconSet: 'feather',
+              },
               link: {
                 type: 'doc',
                 id: 'api/indexing-api/troubleshooting-overview',

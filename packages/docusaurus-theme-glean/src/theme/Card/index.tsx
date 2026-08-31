@@ -13,6 +13,7 @@ interface CardProps {
   img?: string;
   cta?: string;
   arrow?: boolean;
+  fullHeight?: boolean;
   children?: React.ReactNode;
 }
 
@@ -26,6 +27,7 @@ export default function Card({
   img,
   cta,
   arrow = true,
+  fullHeight = false,
   children,
 }: CardProps) {
   const renderIcon = () => {
@@ -54,7 +56,7 @@ export default function Card({
 
   const cardContent = (
     <div
-      className={`${styles.card} ${horizontal ? styles.horizontal : ''} ${href ? styles.clickable : ''}`}
+      className={`${styles.card} ${horizontal ? styles.horizontal : ''} ${href ? styles.clickable : ''} ${fullHeight ? styles.fullHeightCard : ''}`}
       style={
         {
           '--card-color': color,
@@ -125,7 +127,10 @@ export default function Card({
 
   if (href) {
     return (
-      <Link to={href} className={styles.cardLink}>
+      <Link
+        to={href}
+        className={`${styles.cardLink} ${fullHeight ? styles.fullHeightLink : ''}`}
+      >
         {cardContent}
       </Link>
     );
