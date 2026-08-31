@@ -340,7 +340,11 @@ describe('RecipeIndex', () => {
   it('uses scalable dropdown controls instead of a growing chip matrix', () => {
     render(<RecipeIndex {...props} />);
 
-    expect(screen.getAllByRole('combobox')).toHaveLength(2);
+    const selects = screen.getAllByRole('combobox');
+    expect(selects).toHaveLength(2);
+    expect(
+      selects.every((select) => select.classList.contains('gdt-select')),
+    ).toBe(true);
     expect(
       screen.getByRole('combobox', { name: 'Capability' }),
     ).toHaveDisplayValue('All capabilities');
@@ -352,6 +356,8 @@ describe('RecipeIndex', () => {
     ).not.toBeInTheDocument();
 
     const css = readCss('RecipeIndex.module.css');
+    expect(css).not.toMatch(/\.filterSelect\s*\{/);
+    expect(css).not.toMatch(/\.filterGroup::after\s*\{/);
     expect(css).toMatch(
       /\.filterBar\s*\{[^}]*background:\s*var\(--gdt-bg-light\)[^}]*border-radius:/s,
     );
