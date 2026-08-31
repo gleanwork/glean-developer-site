@@ -40,6 +40,8 @@ export const RECIPE_SURFACES = [
 
 export const RECIPE_STATUSES = ['showcase', 'production-pattern'] as const;
 
+export const RECIPE_VISIBILITIES = ['public', 'preview'] as const;
+
 export const RECIPE_SURFACE_LABELS: Record<
   (typeof RECIPE_SURFACES)[number],
   string
@@ -374,6 +376,8 @@ export const recipeMetaSchema = z.strictObject({
   codeWalkthrough: recipeCodeWalkthroughSchema.optional(),
   surfaces: z.array(z.enum(RECIPE_SURFACES)).min(1),
   status: z.enum(RECIPE_STATUSES),
+  /** Preview recipes are generated but require an exact `ff_recipe` query value on the docs site. */
+  visibility: z.enum(RECIPE_VISIBILITIES).default('public'),
   category: z.enum(RECIPE_CATEGORIES),
   level: z.enum(RECIPE_LEVELS),
   levels: z.strictObject({

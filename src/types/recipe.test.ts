@@ -42,8 +42,23 @@ describe('parseRecipeEntry', () => {
     expect(result.record.tags).toEqual([]);
     expect(result.record.featured).toBe(false);
     expect(result.record.hidden).toBe(false);
+    expect(result.record.visibility).toBe('public');
     expect(isListedOnDocs(result.record)).toBe(true);
     expect(result.record.goDependency).toBe(false);
+  });
+
+  it('accepts preview visibility without hiding the docs page', () => {
+    const entry = { ...validEntry(), visibility: 'preview' };
+    const result = parseRecipeEntry(entry, 'embed-search-chat');
+    expect(result.success).toBe(true);
+    if (!result.success) return;
+    expect(result.record.visibility).toBe('preview');
+    expect(isListedOnDocs(result.record)).toBe(true);
+  });
+
+  it('rejects unknown visibility values', () => {
+    const entry = { ...validEntry(), visibility: 'internal' };
+    expect(parseRecipeEntry(entry, 'embed-search-chat').success).toBe(false);
   });
 
   it('accepts hidden true', () => {

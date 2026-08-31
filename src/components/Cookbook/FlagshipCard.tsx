@@ -3,6 +3,7 @@ import Link from '@docusaurus/Link';
 import { getIcon } from '@gleanwork/docusaurus-theme-glean/Icons';
 import type { RecipeRecord } from '../../types/recipe';
 import styles from './FlagshipCard.module.css';
+import { recipeHref } from './recipePreview';
 import catStyles from './categories.module.css';
 
 interface FlagshipCardProps {
@@ -20,7 +21,7 @@ export default function FlagshipCard({
   const combines = recipe.combines ?? [];
 
   return (
-    <Link className={styles.card} to={recipe.permalink}>
+    <Link className={styles.card} to={recipeHref(recipe)}>
       <div>
         <div className={styles.pill}>End-to-end build</div>
         <h2 className={styles.title}>{recipe.title}</h2>

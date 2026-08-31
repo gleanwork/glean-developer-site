@@ -66,11 +66,13 @@ const baseSidebars: SidebarsConfig = {
           // lives in the registry), so the short sidebar label is set
           // explicitly here rather than relying on Docusaurus's own
           // `sidebar_label` frontmatter fallback.
-          items: recipesData.recipes.map((recipe) => ({
-            type: 'doc' as const,
-            id: `cookbook/${recipe.id}`,
-            label: recipe.sidebarLabel ?? recipe.title,
-          })),
+          items: recipesData.recipes
+            .filter((recipe) => recipe.visibility !== 'preview')
+            .map((recipe) => ({
+              type: 'doc' as const,
+              id: `cookbook/${recipe.id}`,
+              label: recipe.sidebarLabel ?? recipe.title,
+            })),
         },
         {
           type: 'category',

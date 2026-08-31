@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import React from 'react';
-import { describe, it, expect, vi } from 'vitest';
+import { beforeEach, describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { FeatureFlagsContext } from '@site/src/theme/Root';
@@ -36,6 +36,18 @@ vi.mock('@theme/CodeBlock', () => ({
   ),
 }));
 
+const routerState = vi.hoisted(() => ({
+  location: { pathname: '/cookbook', search: '' },
+}));
+
+vi.mock('@docusaurus/router', () => ({
+  useLocation: () => routerState.location,
+}));
+
+beforeEach(() => {
+  routerState.location = { pathname: '/cookbook', search: '' };
+});
+
 function renderWithTenantFlag(ui: React.ReactElement, enabled = true) {
   return render(
     <FeatureFlagsContext.Provider
@@ -64,6 +76,7 @@ function makeRecipe(overrides: Partial<RecipeRecord>): RecipeRecord {
     permalink: '/cookbook/embed-search-chat',
     surfaces: ['web-sdk'],
     status: 'production-pattern',
+    visibility: 'public',
     category: 'search',
     level: 'Beginner',
     levels: { minimal: true, wow: true },
@@ -186,6 +199,52 @@ describe('RecipeIndex', () => {
 
     await user.click(screen.getByRole('button', { name: 'All' }));
     expect(screen.getByText('End-to-end build')).toBeInTheDocument();
+    expect(screen.getByText('3 recipes')).toBeInTheDocument();
+  });
+
+  it('reveals only an exact preview recipe id and preserves the flag in its link', () => {
+    const previewRecipes = recipes.map((recipe) =>
+      recipe.id === 'embed-search-chat'
+        ? {
+            ...recipe,
+            surfaces: ['platform-api' as const],
+            visibility: 'preview' as const,
+          }
+        : recipe,
+    );
+    const previewProps = {
+      ...props,
+      surfaces: [...props.surfaces, 'platform-api'],
+    };
+    routerState.location = {
+      pathname: '/cookbook',
+      search: '?ff_recipe=embed-search-cha',
+    };
+    const { rerender } = render(
+      <RecipeIndex {...previewProps} recipes={previewRecipes} />,
+    );
+
+    expect(screen.queryByText('Embed search & chat')).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Platform API' }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByText('2 recipes')).toBeInTheDocument();
+
+    routerState.location = {
+      pathname: '/cookbook',
+      search: '?ff_recipe=other&ff_recipe=embed-search-chat',
+    };
+    rerender(<RecipeIndex {...previewProps} recipes={previewRecipes} />);
+
+    expect(
+      screen.getByRole('button', { name: 'Platform API' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('Embed search & chat').closest('a'),
+    ).toHaveAttribute(
+      'href',
+      '/cookbook/embed-search-chat?ff_recipe=embed-search-chat',
+    );
     expect(screen.getByText('3 recipes')).toBeInTheDocument();
   });
 
@@ -353,6 +412,29 @@ describe('RecipeLayout', () => {
     expect(screen.getByText('At a glance')).toBeInTheDocument();
     expect(screen.getByText('Beginner')).toBeInTheDocument();
     expect(screen.getByText('Body content')).toBeInTheDocument();
+  });
+
+  it('suppresses public plugin actions for preview scaffold recipes', () => {
+    render(
+      <RecipeLayout
+        plugin={plugin}
+        recipe={makeRecipe({
+          buildMethod: 'scaffold',
+          visibility: 'preview',
+        })}
+      >
+        <p>Body</p>
+      </RecipeLayout>,
+    );
+
+    expect(
+      screen.queryByRole('button', { name: /Run this recipe/ }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Preview recipes are not included in the public cookbook plugin.',
+      ),
+    ).toBeInTheDocument();
   });
 
   it('offers the plugin run button for scaffold recipes, not a prompt copy', async () => {
