@@ -460,6 +460,7 @@ export const recipeMetaSchema = z.strictObject({
   tags: z.array(z.string().min(1)).default([]),
 });
 
+export type RecipeSurface = (typeof RECIPE_SURFACES)[number];
 export type RecipeCapability = (typeof RECIPE_CAPABILITIES)[number];
 export type RecipeCodeAsset = z.infer<typeof recipeCodeAssetSchema>;
 export type RecipeCodeWalkthrough = z.infer<typeof recipeCodeWalkthroughSchema>;
