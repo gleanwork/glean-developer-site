@@ -25,9 +25,34 @@ export default defineConfig({
     dedupe: ['react', 'react-dom'],
     alias: {
       '@site': path.resolve(__dirname, './'),
+      '@theme/ApiExplorer/Body': path.resolve(
+        __dirname,
+        './src/theme/ApiExplorer/Body',
+      ),
+      '@theme/ApiExplorer/ParamOptions/ParamFormItems/ParamTextFormItem':
+        path.resolve(
+          __dirname,
+          './src/theme/ApiExplorer/ParamOptions/ParamFormItems/ParamTextFormItem',
+        ),
+      '@theme/ApiExplorer/Request': path.resolve(
+        __dirname,
+        './src/theme/ApiExplorer/Request',
+      ),
       '@theme/ApiExplorer': path.resolve(
         __dirname,
         './node_modules/docusaurus-theme-openapi-docs/lib/theme/ApiExplorer',
+      ),
+      '@theme-original/ApiExplorer/Body': path.resolve(
+        __dirname,
+        './node_modules/docusaurus-theme-openapi-docs/lib/theme/ApiExplorer/Body',
+      ),
+      '@theme-original/ApiExplorer/FormTextInput': path.resolve(
+        __dirname,
+        './node_modules/docusaurus-theme-openapi-docs/lib/theme/ApiExplorer/FormTextInput',
+      ),
+      '@theme-original/ApiExplorer/Request': path.resolve(
+        __dirname,
+        './node_modules/docusaurus-theme-openapi-docs/lib/theme/ApiExplorer/Request',
       ),
       '@theme/ApiItem': path.resolve(
         __dirname,
