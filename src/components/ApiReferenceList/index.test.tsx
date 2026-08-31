@@ -72,6 +72,27 @@ describe('getApiReferenceItems', () => {
     ]);
   });
 
+  it('preserves optional family icons and descriptions', () => {
+    const family = category('Agents', [endpoint('Get agent', '/agents/get')]);
+    family.description = 'Discover and run agents.';
+    family.customProps = {
+      icon: 'agent',
+      iconSet: 'glean',
+    };
+    const currentCategory = apiCategory('API Reference', [family]);
+
+    expect(getApiReferenceItems(currentCategory, 'API Reference')[0]).toEqual(
+      expect.objectContaining({
+        label: 'Agents',
+        description: 'Discover and run agents.',
+        customProps: {
+          icon: 'agent',
+          iconSet: 'glean',
+        },
+      }),
+    );
+  });
+
   it('counts endpoints recursively and ignores non-endpoint links', () => {
     const family = category('Nested', [
       link('Overview', '/nested/overview'),

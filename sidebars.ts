@@ -798,6 +798,12 @@ const baseSidebars: SidebarsConfig = {
             {
               type: 'category',
               label: 'Agents',
+              description:
+                'Discover available agents, inspect their schemas, and create agent runs.',
+              customProps: {
+                icon: 'agent',
+                iconSet: 'glean',
+              },
               link: {
                 type: 'doc',
                 id: 'api/platform-api/agents-overview',
@@ -832,6 +838,12 @@ const baseSidebars: SidebarsConfig = {
             {
               type: 'category',
               label: 'Chat',
+              description:
+                'Create chat responses grounded in your Glean instance.',
+              customProps: {
+                icon: 'chat',
+                iconSet: 'glean',
+              },
               link: {
                 type: 'doc',
                 id: 'api/platform-api/chat-overview',
@@ -848,6 +860,12 @@ const baseSidebars: SidebarsConfig = {
             {
               type: 'category',
               label: 'Search',
+              description:
+                'Build permission-aware search experiences with relevant results, filters, and time ranges.',
+              customProps: {
+                icon: 'Search',
+                iconSet: 'feather',
+              },
               link: {
                 type: 'doc',
                 id: 'api/platform-api/search-overview',
@@ -870,6 +888,12 @@ const baseSidebars: SidebarsConfig = {
             {
               type: 'category',
               label: 'Skills',
+              description:
+                'Discover, validate, import, synchronize, and manage skills through the Platform API.',
+              customProps: {
+                icon: 'Settings',
+                iconSet: 'feather',
+              },
               link: {
                 type: 'doc',
                 id: 'api/platform-api/skills-overview',
@@ -964,6 +988,12 @@ const baseSidebars: SidebarsConfig = {
             {
               type: 'category',
               label: 'Triggers',
+              description:
+                'Subscribe to Glean content events and receive signed webhooks using curated trigger presets.',
+              customProps: {
+                icon: 'Zap',
+                iconSet: 'feather',
+              },
               link: {
                 type: 'doc',
                 id: 'api/platform-api/triggers-overview',
@@ -1986,6 +2016,12 @@ const baseSidebars: SidebarsConfig = {
             {
               type: 'category',
               label: 'Authentication',
+              description:
+                'Manage the authentication tokens used to authorize Indexing API requests.',
+              customProps: {
+                icon: 'Shield',
+                iconSet: 'feather',
+              },
               link: {
                 type: 'doc',
                 id: 'api/indexing-api/authentication-overview',
@@ -2002,6 +2038,12 @@ const baseSidebars: SidebarsConfig = {
             {
               type: 'category',
               label: 'Custom Metadata',
+              description:
+                'Attach custom metadata to indexed documents and manage metadata schemas.',
+              customProps: {
+                icon: 'Tag',
+                iconSet: 'feather',
+              },
               items: [
                 {
                   type: 'doc',
@@ -2038,6 +2080,12 @@ const baseSidebars: SidebarsConfig = {
             {
               type: 'category',
               label: 'Datasources',
+              description:
+                'Create, configure, and manage the datasources that hold your content.',
+              customProps: {
+                icon: 'Database',
+                iconSet: 'feather',
+              },
               link: {
                 type: 'doc',
                 id: 'api/indexing-api/datasources-overview',
@@ -2066,6 +2114,12 @@ const baseSidebars: SidebarsConfig = {
             {
               type: 'category',
               label: 'Documents',
+              description:
+                'Index documents individually or in bulk, then update permissions and remove stale content.',
+              customProps: {
+                icon: 'FileText',
+                iconSet: 'feather',
+              },
               link: {
                 type: 'doc',
                 id: 'api/indexing-api/documents-overview',
@@ -2112,6 +2166,12 @@ const baseSidebars: SidebarsConfig = {
             {
               type: 'category',
               label: 'People',
+              description:
+                "Index employees and teams used by Glean's people directory and retrieval experiences.",
+              customProps: {
+                icon: 'Users',
+                iconSet: 'feather',
+              },
               link: {
                 type: 'doc',
                 id: 'api/indexing-api/people-overview',
@@ -2165,6 +2225,12 @@ const baseSidebars: SidebarsConfig = {
             {
               type: 'category',
               label: 'Permissions',
+              description:
+                'Index users, groups, and memberships that control access to indexed content.',
+              customProps: {
+                icon: 'Lock',
+                iconSet: 'feather',
+              },
               link: {
                 type: 'doc',
                 id: 'api/indexing-api/permissions-overview',
@@ -2241,6 +2307,12 @@ const baseSidebars: SidebarsConfig = {
             {
               type: 'category',
               label: 'Shortcuts',
+              description:
+                'Create and manage search shortcuts for frequently used queries, tools, and resources.',
+              customProps: {
+                icon: 'Link',
+                iconSet: 'feather',
+              },
               link: {
                 type: 'doc',
                 id: 'api/indexing-api/shortcuts-overview',
@@ -2263,6 +2335,12 @@ const baseSidebars: SidebarsConfig = {
             {
               type: 'category',
               label: 'Troubleshooting',
+              description:
+                'Debug indexing operations, verify data integrity, and monitor processing status.',
+              customProps: {
+                icon: 'Tool',
+                iconSet: 'feather',
+              },
               link: {
                 type: 'doc',
                 id: 'api/indexing-api/troubleshooting-overview',

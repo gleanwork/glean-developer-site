@@ -3,6 +3,7 @@ import {
   useCurrentSidebarCategory,
 } from '@docusaurus/plugin-content-docs/client';
 import Link from '@docusaurus/Link';
+import { Icon } from '@theme/Icons';
 import getApiReferenceItems from './getApiReferenceItems';
 import styles from './styles.module.css';
 
@@ -27,10 +28,32 @@ export default function ApiReferenceList({
             );
           }
 
+          const icon = family.customProps?.icon;
+          const iconName = typeof icon === 'string' ? icon : undefined;
+          const iconSet =
+            family.customProps?.iconSet === 'glean' ? 'glean' : 'feather';
+          const description = family.description?.trim();
+
           return (
             <li className={styles.item} key={family.label}>
-              <Link className={styles.link} to={href}>
+              <Link
+                className={`${styles.link} ${iconName ? styles.withIcon : ''} ${description ? styles.withDescription : ''}`}
+                to={href}
+              >
+                {iconName && (
+                  <span aria-hidden="true" className={styles.icon}>
+                    <Icon
+                      height={20}
+                      iconSet={iconSet}
+                      name={iconName}
+                      width={20}
+                    />
+                  </span>
+                )}
                 <span className={styles.label}>{family.label}</span>
+                {description && (
+                  <span className={styles.description}>{description}</span>
+                )}
                 <span className={styles.endpointCount}>
                   {family.endpointCount}{' '}
                   {family.endpointCount === 1 ? 'endpoint' : 'endpoints'}
