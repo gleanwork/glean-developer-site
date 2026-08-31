@@ -266,6 +266,42 @@ describe('recipeMetaSchema', () => {
     expect(parseRecipeEntry(entry, 'embed-search-chat').success).toBe(true);
   });
 
+  it('accepts a source-backed code walkthrough and rejects unsafe paths', () => {
+    const walkthrough = {
+      intro: 'Read the implementation.',
+      examples: [
+        {
+          title: 'Build a request',
+          description: 'Keep the request typed and explicit.',
+          source: 'src/request.ts',
+          language: 'typescript',
+          code: 'export const request = { pageSize: 10 };',
+        },
+      ],
+    };
+    expect(
+      parseRecipeEntry(
+        { ...validEntry(), codeWalkthrough: walkthrough },
+        'embed-search-chat',
+      ).success,
+    ).toBe(true);
+
+    for (const source of ['../secret.ts', 'src/../../secret.ts', '/tmp/x.ts']) {
+      expect(
+        parseRecipeEntry(
+          {
+            ...validEntry(),
+            codeWalkthrough: {
+              ...walkthrough,
+              examples: [{ ...walkthrough.examples[0], source }],
+            },
+          },
+          'embed-search-chat',
+        ).success,
+      ).toBe(false);
+    }
+  });
+
   it('requires at least one surface and prerequisite', () => {
     for (const key of ['surfaces', 'prerequisites'] as const) {
       const entry = { ...validEntry(), [key]: [] };

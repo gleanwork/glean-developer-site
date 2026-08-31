@@ -61,6 +61,19 @@ export function compileRecipeCatalog(
       continue;
     }
 
+    const missingWalkthroughCode =
+      result.record.codeWalkthrough?.examples.filter(
+        (example) => !example.code,
+      ) ?? [];
+    if (missingWalkthroughCode.length > 0) {
+      errors.push(
+        `${result.record.id}: code walkthrough source was not materialized for ${missingWalkthroughCode
+          .map((example) => example.source)
+          .join(', ')}`,
+      );
+      continue;
+    }
+
     if (!remainingPages.has(result.record.id)) {
       errors.push(
         `${result.record.id}: registry entry has no matching docs/cookbook/${result.record.id}.mdx page`,
