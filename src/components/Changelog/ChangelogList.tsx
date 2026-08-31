@@ -66,7 +66,7 @@ export default function ChangelogList({
             Category
           </label>
           <select
-            className={styles.filterSelect}
+            className="gdt-select"
             id="changelog-category"
             value={categoryFilter}
             onChange={(event) => setCategoryFilter(event.target.value)}
@@ -85,7 +85,7 @@ export default function ChangelogList({
             Attention
           </label>
           <select
-            className={styles.filterSelect}
+            className="gdt-select"
             id="changelog-impact"
             value={impactFilter}
             onChange={(event) =>

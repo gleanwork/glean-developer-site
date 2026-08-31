@@ -239,7 +239,7 @@ export default function DeprecationsEntries({
             onChange={(e) =>
               handleFilterChange(e.target.value as RemovalFilter)
             }
-            className={styles.filterSelect}
+            className="gdt-select"
           >
             <option value="all">All upcoming</option>
             {removalDates.map((date) => (
