@@ -13,7 +13,9 @@ import RecipeLayout, {
   RecipeCodeWalkthrough,
   RecipeSteps,
 } from './RecipeLayout';
-import FlagshipCard from './FlagshipCard';
+import RecipeShowcaseCarousel, {
+  selectShowcaseRecipes,
+} from './RecipeShowcaseCarousel';
 import type { RecipeRecord } from '../../types/recipe';
 import type { AuthKind } from './authContexts';
 import catStyles from './categories.module.css';
@@ -38,14 +40,19 @@ vi.mock('@theme/CodeBlock', () => ({
 
 const routerState = vi.hoisted(() => ({
   location: { pathname: '/cookbook', search: '' },
+  push: vi.fn((next: { pathname: string; search: string }) => {
+    routerState.location = next;
+  }),
 }));
 
 vi.mock('@docusaurus/router', () => ({
+  useHistory: () => ({ push: routerState.push }),
   useLocation: () => routerState.location,
 }));
 
 beforeEach(() => {
   routerState.location = { pathname: '/cookbook', search: '' };
+  routerState.push.mockClear();
 });
 
 function renderWithTenantFlag(ui: React.ReactElement, enabled = true) {
@@ -136,7 +143,8 @@ const flagship = makeRecipe({
   permalink: '/cookbook/build-engineering-portal',
   surfaces: ['connector-sdk', 'web-sdk'],
   category: 'portal',
-  level: 'Intermediate',
+  level: 'Advanced',
+  featured: true,
   tags: ['flagship'],
   combines: [
     {
@@ -157,6 +165,16 @@ const flagship = makeRecipe({
   ],
 });
 
+const searchQuickstart = makeRecipe({
+  id: 'search-with-discovered-filters',
+  title: 'Search Glean with discovered filters',
+  permalink: '/cookbook/search-with-discovered-filters',
+  surfaces: ['platform-api'],
+  capabilities: ['search'],
+  status: 'quickstart',
+  featured: true,
+});
+
 const recipes = [
   makeRecipe({}),
   makeRecipe({
@@ -164,117 +182,261 @@ const recipes = [
     title: 'Index a custom data source',
     permalink: '/cookbook/index-custom-source',
     surfaces: ['connector-sdk', 'indexing-api'],
+    capabilities: ['indexing'],
     category: 'index',
     level: 'Intermediate',
+    featured: true,
   }),
+  searchQuickstart,
   flagship,
 ];
 
 describe('RecipeIndex', () => {
   const props = {
     recipes,
-    surfaces: ['web-sdk', 'connector-sdk', 'indexing-api'],
+    capabilities: ['search', 'indexing', 'embed', 'chat'] as const,
+    surfaces: [
+      'platform-api',
+      'web-sdk',
+      'connector-sdk',
+      'indexing-api',
+    ] as const,
   };
 
-  it('renders the header, flagship hero, and grid cards', () => {
+  it('renders a featured carousel followed by clearly labeled learning levels', () => {
     render(<RecipeIndex {...props} />);
+
     expect(
       screen.getByText('Recipes for building on Glean'),
     ).toBeInTheDocument();
-    // flagship renders as the hero, not a grid card
-    expect(screen.getByText('End-to-end build')).toBeInTheDocument();
-    expect(screen.getByText('Open the build guide')).toBeInTheDocument();
+    expect(
+      screen.getByRole('region', { name: 'Featured recipes' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', {
+        level: 2,
+        name: 'Search Glean with discovered filters',
+      }),
+    ).toBeInTheDocument();
+    expect(screen.getByText('01 · Simple recipes')).toBeInTheDocument();
+    expect(screen.getByText('02 · Intermediate recipes')).toBeInTheDocument();
+    expect(screen.getByText('03 · Advanced recipes')).toBeInTheDocument();
     expect(screen.getByText('Embed search & chat')).toBeInTheDocument();
     expect(screen.getByText('Index a custom data source')).toBeInTheDocument();
-    expect(screen.getByText('3 recipes')).toBeInTheDocument();
+    expect(screen.getByText('Build an engineering portal')).toBeInTheDocument();
+    expect(screen.getByText('4 recipes')).toBeInTheDocument();
   });
 
-  it('filters grid cards via a single-select chip, keeping the flagship pinned', async () => {
+  it('filters by capability and implementation surface with intersection semantics', async () => {
     const user = userEvent.setup();
     render(<RecipeIndex {...props} />);
 
-    await user.click(screen.getByRole('button', { name: 'Indexing API' }));
-    expect(screen.queryByText('Embed search & chat')).not.toBeInTheDocument();
-    expect(screen.getByText('End-to-end build')).toBeInTheDocument();
-    expect(screen.getByText('2 recipes')).toBeInTheDocument();
-
-    await user.click(screen.getByRole('button', { name: 'All' }));
-    expect(screen.getByText('End-to-end build')).toBeInTheDocument();
+    await user.selectOptions(
+      screen.getByRole('combobox', { name: 'Capability' }),
+      'search',
+    );
+    expect(screen.getByText('Embed search & chat')).toBeInTheDocument();
+    expect(
+      screen.queryByText('Index a custom data source'),
+    ).not.toBeInTheDocument();
     expect(screen.getByText('3 recipes')).toBeInTheDocument();
+
+    await user.selectOptions(
+      screen.getByRole('combobox', { name: 'Surface' }),
+      'platform-api',
+    );
+    expect(screen.queryByText('Embed search & chat')).not.toBeInTheDocument();
+    expect(screen.getByText('1 recipe')).toBeInTheDocument();
+
+    await user.selectOptions(
+      screen.getByRole('combobox', { name: 'Capability' }),
+      'all',
+    );
+    expect(screen.getByText('1 recipe')).toBeInTheDocument();
   });
 
-  it('reveals only an exact preview recipe id and preserves the flag in its link', () => {
-    const previewRecipes = recipes.map((recipe) =>
-      recipe.id === 'embed-search-chat'
-        ? {
-            ...recipe,
-            surfaces: ['platform-api' as const],
-            visibility: 'preview' as const,
-          }
+  it('initializes valid URL filters and recovers from unknown values', () => {
+    routerState.location = {
+      pathname: '/cookbook',
+      search: '?capability=search&surface=platform-api',
+    };
+    const { rerender } = render(<RecipeIndex {...props} />);
+    expect(screen.getByText('1 recipe')).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Capability' })).toHaveValue(
+      'search',
+    );
+
+    routerState.location = {
+      pathname: '/cookbook',
+      search: '?capability=unknown&surface=unknown',
+    };
+    rerender(<RecipeIndex {...props} />);
+    expect(screen.getByText('4 recipes')).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Capability' })).toHaveValue(
+      'all',
+    );
+  });
+
+  it('restores filters when browser navigation changes the URL', async () => {
+    const user = userEvent.setup();
+    const { rerender } = render(<RecipeIndex {...props} />);
+
+    await user.selectOptions(
+      screen.getByRole('combobox', { name: 'Capability' }),
+      'search',
+    );
+    expect(routerState.push).toHaveBeenLastCalledWith({
+      pathname: '/cookbook',
+      search: '?capability=search',
+    });
+
+    routerState.location = { pathname: '/cookbook', search: '' };
+    rerender(<RecipeIndex {...props} />);
+    expect(screen.getByText('4 recipes')).toBeInTheDocument();
+  });
+
+  it('reveals an exact preview recipe id and preserves the flag in its links', () => {
+    const gatedRecipes = recipes.map((recipe) =>
+      recipe.id === searchQuickstart.id
+        ? { ...recipe, visibility: 'preview' as const }
         : recipe,
     );
-    const previewProps = {
-      ...props,
-      surfaces: [...props.surfaces, 'platform-api'],
-    };
-    routerState.location = {
-      pathname: '/cookbook',
-      search: '?ff_recipe=embed-search-cha',
-    };
     const { rerender } = render(
-      <RecipeIndex {...previewProps} recipes={previewRecipes} />,
+      <RecipeIndex {...props} recipes={gatedRecipes} />,
     );
 
-    expect(screen.queryByText('Embed search & chat')).not.toBeInTheDocument();
     expect(
-      screen.queryByRole('button', { name: 'Platform API' }),
+      screen.queryByText('Search Glean with discovered filters'),
     ).not.toBeInTheDocument();
-    expect(screen.getByText('2 recipes')).toBeInTheDocument();
+    expect(
+      screen.queryByRole('option', { name: 'Platform API' }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByText('3 recipes')).toBeInTheDocument();
 
     routerState.location = {
       pathname: '/cookbook',
-      search: '?ff_recipe=other&ff_recipe=embed-search-chat',
+      search: '?ff_recipe=search-with-discovered-filters',
     };
-    rerender(<RecipeIndex {...previewProps} recipes={previewRecipes} />);
+    rerender(<RecipeIndex {...props} recipes={gatedRecipes} />);
 
+    const previewLinks = screen
+      .getAllByRole('link')
+      .filter((link) =>
+        link.getAttribute('href')?.includes('search-with-discovered-filters'),
+      );
+    expect(previewLinks).not.toHaveLength(0);
+    for (const link of previewLinks) {
+      expect(link).toHaveAttribute(
+        'href',
+        '/cookbook/search-with-discovered-filters?ff_recipe=search-with-discovered-filters',
+      );
+    }
     expect(
-      screen.getByRole('button', { name: 'Platform API' }),
+      screen.getByRole('option', { name: 'Platform API' }),
     ).toBeInTheDocument();
+    expect(screen.getByText('4 recipes')).toBeInTheDocument();
+  });
+
+  it('uses scalable dropdown controls instead of a growing chip matrix', () => {
+    render(<RecipeIndex {...props} />);
+
+    expect(screen.getAllByRole('combobox')).toHaveLength(2);
     expect(
-      screen.getByText('Embed search & chat').closest('a'),
-    ).toHaveAttribute(
-      'href',
-      '/cookbook/embed-search-chat?ff_recipe=embed-search-chat',
+      screen.getByRole('combobox', { name: 'Capability' }),
+    ).toHaveDisplayValue('All capabilities');
+    expect(
+      screen.getByRole('combobox', { name: 'Surface' }),
+    ).toHaveDisplayValue('All surfaces');
+    expect(
+      screen.queryByRole('button', { name: 'Search' }),
+    ).not.toBeInTheDocument();
+
+    const css = readCss('RecipeIndex.module.css');
+    expect(css).toMatch(
+      /\.filterBar\s*\{[^}]*background:\s*var\(--gdt-bg-light\)[^}]*border-radius:/s,
     );
-    expect(screen.getByText('3 recipes')).toBeInTheDocument();
+    expect(css).toMatch(
+      /\.filterControls\s*\{[^}]*display:\s*grid[^}]*grid-template-columns:\s*repeat\(2,/s,
+    );
+    expect(css).not.toMatch(/overflow-x:\s*(auto|scroll)/);
   });
 
   it('shows the empty state when no recipes exist', () => {
-    render(<RecipeIndex recipes={[]} surfaces={[]} />);
+    render(<RecipeIndex recipes={[]} capabilities={[]} surfaces={[]} />);
     expect(screen.getByText(/coming soon/i)).toBeInTheDocument();
   });
 });
 
-describe('FlagshipCard', () => {
-  it('renders the combines mini-list', () => {
-    render(<FlagshipCard recipe={flagship} />);
-    expect(screen.getByText('Combines three recipes')).toBeInTheDocument();
-    expect(screen.getByText('Index a developer catalog')).toBeInTheDocument();
-    expect(screen.getByText('Ground chat in the catalog')).toBeInTheDocument();
+describe('RecipeShowcaseCarousel', () => {
+  it('selects one curated public recipe per learning level from generated data', () => {
+    const publicRecipes = recipesData.recipes.filter(
+      (recipe) => recipe.visibility === 'public',
+    ) as RecipeRecord[];
+    expect(
+      selectShowcaseRecipes(publicRecipes).map((recipe) => recipe.level),
+    ).toEqual(['Beginner', 'Intermediate', 'Advanced']);
+    expect(
+      selectShowcaseRecipes(recipesData.recipes as RecipeRecord[])[0].id,
+    ).toBe('search-with-discovered-filters');
   });
 
-  it('uses the regular light border and a neutral pill', () => {
-    const css = readCss('FlagshipCard.module.css');
+  it('moves through one featured recipe per level and prefers the quickstart', async () => {
+    const user = userEvent.setup();
+    render(<RecipeShowcaseCarousel recipes={recipes} />);
+
+    expect(
+      screen.getByRole('region', { name: 'Featured recipes' }),
+    ).toHaveAttribute('aria-roledescription', 'carousel');
+    expect(
+      screen.getByRole('heading', {
+        level: 2,
+        name: 'Search Glean with discovered filters',
+      }),
+    ).toBeInTheDocument();
+
+    await user.click(
+      screen.getByRole('button', {
+        name: 'Pause featured recipe rotation',
+      }),
+    );
+    expect(
+      screen.getByRole('button', {
+        name: 'Resume featured recipe rotation',
+      }),
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Next recipe' }));
+    expect(
+      screen.getByRole('heading', {
+        level: 2,
+        name: 'Index a custom data source',
+      }),
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Next recipe' }));
+    expect(
+      screen.getByRole('heading', {
+        level: 2,
+        name: 'Build an engineering portal',
+      }),
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Previous recipe' }));
+    expect(
+      screen.getByRole('heading', {
+        level: 2,
+        name: 'Index a custom data source',
+      }),
+    ).toBeInTheDocument();
+  });
+
+  it('uses a rounded, bordered, responsive showcase treatment', () => {
+    const css = readCss('RecipeShowcaseCarousel.module.css');
     expect(css).toMatch(
-      /\.card\s*\{[^}]*border:\s*1px solid var\(--gdt-border-light\)/s,
+      /\.carousel\s*\{[^}]*border:\s*1px solid var\(--gdt-border-light\)[^}]*border-radius:\s*22px/s,
     );
-    expect(css).not.toMatch(
-      /\.card\s*\{[^}]*border:\s*1\.5px solid var\(--gdt-primary\)/s,
-    );
-    expect(css).toMatch(/\.pill\s*\{[^}]*background:\s*var\(--gdt-bg-mid\)/s);
-    expect(css).not.toMatch(
-      /\.pill\s*\{[^}]*background:\s*var\(--gdt-primary\)/s,
-    );
+    expect(css).toMatch(/@media \(max-width:\s*900px\)/);
+    expect(css).toMatch(/@media \(prefers-reduced-motion:\s*reduce\)/);
   });
 });
 

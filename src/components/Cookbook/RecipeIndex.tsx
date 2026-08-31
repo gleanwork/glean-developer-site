@@ -1,38 +1,87 @@
 import type React from 'react';
-import { useMemo, useState } from 'react';
-import { useLocation } from '@docusaurus/router';
-import { RECIPE_SURFACE_LABELS, type RecipeRecord } from '../../types/recipe';
-import FlagshipCard from './FlagshipCard';
+import { useEffect, useMemo, useState } from 'react';
+import { useHistory, useLocation } from '@docusaurus/router';
+import {
+  RECIPE_CAPABILITY_LABELS,
+  RECIPE_LEVELS,
+  RECIPE_SURFACE_LABELS,
+  type RecipeCapability,
+  type RecipeRecord,
+  type RecipeSurface,
+} from '../../types/recipe';
+import RecipeShowcaseCarousel from './RecipeShowcaseCarousel';
 import RecipeCard from './RecipeCard';
 import { isRecipeAvailable } from './recipePreview';
 import styles from './RecipeIndex.module.css';
 
 interface RecipeIndexProps {
-  recipes: Array<RecipeRecord>;
+  recipes: RecipeRecord[];
+  /** Capability slugs present in the compiled data (from recipes.json). */
+  capabilities: readonly RecipeCapability[];
   /** Surface slugs present in the compiled data (from recipes.json). */
-  surfaces: Array<string>;
+  surfaces: readonly RecipeSurface[];
 }
 
-function label(slug: string): string {
+type Filter = string | 'all';
+
+type Level = (typeof RECIPE_LEVELS)[number];
+
+const LEVEL_SECTIONS: Record<Level, { heading: string; description: string }> =
+  {
+    Beginner: {
+      heading: '01 · Simple recipes',
+      description:
+        'Start with one clear outcome. Learn the API shape, authentication model, and verification loop without assembling a full system.',
+    },
+    Intermediate: {
+      heading: '02 · Intermediate recipes',
+      description:
+        'Combine capabilities into useful employee and customer workflows while keeping citations, identity, and permissions visible.',
+    },
+    Advanced: {
+      heading: '03 · Advanced recipes',
+      description:
+        'Coordinate agents, governed actions, human approval, and operational failure paths in end-to-end builds.',
+    },
+  };
+
+function sortRecipes(a: RecipeRecord, b: RecipeRecord): number {
   return (
-    RECIPE_SURFACE_LABELS[slug as keyof typeof RECIPE_SURFACE_LABELS] ?? slug
+    Number(b.status === 'quickstart') - Number(a.status === 'quickstart') ||
+    Number(b.featured) - Number(a.featured) ||
+    a.title.localeCompare(b.title)
   );
 }
 
-function matches(recipe: RecipeRecord, filter: string): boolean {
-  if (filter === 'all') return true;
-  return (recipe.surfaces as Array<string>).includes(filter);
+function validFilter(
+  value: string | null,
+  available: readonly string[],
+): Filter {
+  return value && available.includes(value) ? value : 'all';
+}
+
+function matches(
+  recipe: RecipeRecord,
+  capability: Filter,
+  surface: Filter,
+): boolean {
+  return (
+    (capability === 'all' ||
+      recipe.capabilities.some((value) => value === capability)) &&
+    (surface === 'all' || recipe.surfaces.some((value) => value === surface))
+  );
 }
 
 /**
- * Cookbook index per design handoff 4a: header, flagship hero, single-select
- * filter chips with a live count, and the 2-col recipe grid.
+ * Cookbook index: preserve the established flagship-and-grid composition while
+ * adding capability filters, shareable URL state, and gated preview records.
  */
 export default function RecipeIndex({
   recipes,
-  surfaces,
+  capabilities: catalogCapabilities = [],
+  surfaces: catalogSurfaces,
 }: RecipeIndexProps): React.ReactElement {
-  const [activeFilter, setActiveFilter] = useState('all');
+  const history = useHistory();
   const location = useLocation();
 
   const availableRecipes = useMemo(
@@ -40,30 +89,89 @@ export default function RecipeIndex({
       recipes.filter((recipe) => isRecipeAvailable(recipe, location.search)),
     [recipes, location.search],
   );
-  const availableSurfaces = useMemo(
+  const capabilities = useMemo(
     () =>
-      surfaces.filter((surface) =>
+      catalogCapabilities.filter((capability) =>
         availableRecipes.some((recipe) =>
-          recipe.surfaces.some((recipeSurface) => recipeSurface === surface),
+          recipe.capabilities.includes(capability),
         ),
       ),
-    [availableRecipes, surfaces],
+    [availableRecipes, catalogCapabilities],
   );
-  const flagship = availableRecipes.find((r) => r.tags.includes('flagship'));
-  const gridRecipes = availableRecipes.filter((r) => r !== flagship);
+  const surfaces = useMemo(
+    () =>
+      catalogSurfaces.filter((surface) =>
+        availableRecipes.some((recipe) => recipe.surfaces.includes(surface)),
+      ),
+    [availableRecipes, catalogSurfaces],
+  );
 
-  const chips = useMemo(
-    () => ['all', ...availableSurfaces],
-    [availableSurfaces],
+  const filtersFromUrl = () => {
+    const params = new URLSearchParams(location.search);
+    return {
+      capability: validFilter(params.get('capability'), capabilities),
+      surface: validFilter(params.get('surface'), surfaces),
+    };
+  };
+  const initialFilters = filtersFromUrl();
+  const [activeCapability, setActiveCapability] = useState<Filter>(
+    initialFilters.capability,
   );
+  const [activeSurface, setActiveSurface] = useState<Filter>(
+    initialFilters.surface,
+  );
+
+  useEffect(() => {
+    const next = filtersFromUrl();
+    setActiveCapability(next.capability);
+    setActiveSurface(next.surface);
+  }, [location.search, capabilities, surfaces]);
+
+  const updateFilter = (dimension: 'capability' | 'surface', value: Filter) => {
+    if (dimension === 'capability') setActiveCapability(value);
+    else setActiveSurface(value);
+
+    const params = new URLSearchParams(location.search);
+    if (value === 'all') params.delete(dimension);
+    else params.set(dimension, value);
+    history.push({
+      pathname: location.pathname,
+      search: params.size > 0 ? `?${params.toString()}` : '',
+    });
+  };
 
   const visibleRecipes = useMemo(
-    () => gridRecipes.filter((r) => matches(r, activeFilter)),
-    [gridRecipes, activeFilter],
+    () =>
+      availableRecipes
+        .filter((recipe) => matches(recipe, activeCapability, activeSurface))
+        .sort(sortRecipes),
+    [availableRecipes, activeCapability, activeSurface],
   );
+  const recipesByLevel = useMemo(
+    () =>
+      Object.fromEntries(
+        RECIPE_LEVELS.map((level) => [
+          level,
+          visibleRecipes.filter((recipe) => recipe.level === level),
+        ]),
+      ) as Record<Level, RecipeRecord[]>,
+    [visibleRecipes],
+  );
+  const count = visibleRecipes.length;
+  const hasActiveFilters =
+    activeCapability !== 'all' || activeSurface !== 'all';
 
-  const flagshipVisible = Boolean(flagship);
-  const count = visibleRecipes.length + (flagshipVisible ? 1 : 0);
+  const resetFilters = () => {
+    setActiveCapability('all');
+    setActiveSurface('all');
+    const params = new URLSearchParams(location.search);
+    params.delete('capability');
+    params.delete('surface');
+    history.push({
+      pathname: location.pathname,
+      search: params.size > 0 ? `?${params.toString()}` : '',
+    });
+  };
 
   return (
     <div className={styles.wrap}>
@@ -81,40 +189,105 @@ export default function RecipeIndex({
         </div>
       ) : (
         <>
-          {flagship && flagshipVisible ? (
-            <FlagshipCard recipe={flagship} />
-          ) : null}
+          <RecipeShowcaseCarousel recipes={availableRecipes} />
 
           <div className={styles.filterBar}>
-            <div className={styles.chipRow}>
-              {chips.map((chip) => (
-                <button
-                  aria-pressed={activeFilter === chip}
-                  className={`${styles.chip} ${
-                    activeFilter === chip ? styles.chipActive : ''
+            <div className={styles.filterControls}>
+              <div className={styles.filterGroup}>
+                <label
+                  className={styles.filterLabel}
+                  htmlFor="recipe-capability"
+                >
+                  Capability
+                </label>
+                <select
+                  className={`${styles.filterSelect} ${
+                    activeCapability !== 'all' ? styles.filterSelectActive : ''
                   }`}
-                  key={chip}
-                  onClick={() => setActiveFilter(chip)}
+                  id="recipe-capability"
+                  onChange={(event) =>
+                    updateFilter('capability', event.target.value)
+                  }
+                  value={activeCapability}
+                >
+                  <option value="all">All capabilities</option>
+                  {capabilities.map((capability) => (
+                    <option key={capability} value={capability}>
+                      {RECIPE_CAPABILITY_LABELS[capability]}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className={styles.filterGroup}>
+                <label className={styles.filterLabel} htmlFor="recipe-surface">
+                  Surface
+                </label>
+                <select
+                  className={`${styles.filterSelect} ${
+                    activeSurface !== 'all' ? styles.filterSelectActive : ''
+                  }`}
+                  id="recipe-surface"
+                  onChange={(event) =>
+                    updateFilter('surface', event.target.value)
+                  }
+                  value={activeSurface}
+                >
+                  <option value="all">All surfaces</option>
+                  {surfaces.map((surface) => (
+                    <option key={surface} value={surface}>
+                      {RECIPE_SURFACE_LABELS[surface]}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className={styles.filterMeta}>
+              <span aria-live="polite" className={styles.count}>
+                {count} recipe{count === 1 ? '' : 's'}
+              </span>
+              {hasActiveFilters ? (
+                <button
+                  className={styles.clearButton}
+                  onClick={resetFilters}
                   type="button"
                 >
-                  {chip === 'all' ? 'All' : label(chip)}
+                  Clear filters
                 </button>
-              ))}
+              ) : null}
             </div>
-            <span className={styles.count}>
-              {count} recipe{count === 1 ? '' : 's'}
-            </span>
           </div>
 
-          <div className={styles.grid}>
-            {visibleRecipes.map((recipe) => (
-              <RecipeCard key={recipe.id} recipe={recipe} />
-            ))}
-          </div>
+          {count > 0 ? (
+            <div className={styles.sections}>
+              {RECIPE_LEVELS.map((level) => {
+                const levelRecipes = recipesByLevel[level];
+                if (levelRecipes.length === 0) return null;
+                const section = LEVEL_SECTIONS[level];
+                return (
+                  <section className={styles.recipeSection} key={level}>
+                    <div className={styles.sectionHeading}>
+                      <h2>{section.heading}</h2>
+                      <span className={styles.sectionRule} />
+                    </div>
+                    <p className={styles.sectionDescription}>
+                      {section.description}
+                    </p>
+                    <div className={styles.grid}>
+                      {levelRecipes.map((recipe) => (
+                        <RecipeCard key={recipe.id} recipe={recipe} />
+                      ))}
+                    </div>
+                  </section>
+                );
+              })}
+            </div>
+          ) : null}
 
           {count === 0 ? (
             <div className={styles.empty}>
-              <p>No recipes match the selected filter.</p>
+              <p>No recipes match both selected filters.</p>
             </div>
           ) : null}
         </>
