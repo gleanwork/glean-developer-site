@@ -5,6 +5,7 @@ import CodeBlock from '@theme/CodeBlock';
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 import {
+  RECIPE_CAPABILITY_LABELS,
   RECIPE_STATUS_LABELS,
   RECIPE_SURFACE_LABELS,
   type CookbookPlugin,
@@ -673,6 +674,14 @@ export default function RecipeLayout({
             <div className={styles.railCard}>
               <div className={styles.railLabel}>At a glance</div>
               <div className={styles.glanceRows}>
+                <div className={styles.glanceRow}>
+                  <span className={styles.glanceKey}>Capabilities</span>
+                  <span className={styles.glanceVal}>
+                    {recipe.capabilities
+                      .map((capability) => RECIPE_CAPABILITY_LABELS[capability])
+                      .join(', ')}
+                  </span>
+                </div>
                 <div className={styles.glanceRow}>
                   <span className={styles.glanceKey}>Surfaces</span>
                   <span className={styles.glanceVal}>

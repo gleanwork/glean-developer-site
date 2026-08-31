@@ -7,6 +7,7 @@ function listedEntry(id: string) {
     title: id,
     description: 'A recipe.',
     surfaces: ['web-sdk'],
+    capabilities: ['embed'],
     status: 'production-pattern',
     category: 'search',
     level: 'Beginner',

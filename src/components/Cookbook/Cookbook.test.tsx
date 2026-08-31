@@ -75,6 +75,7 @@ function makeRecipe(overrides: Partial<RecipeRecord>): RecipeRecord {
     description: 'Put Glean search and chat inside an internal app.',
     permalink: '/cookbook/embed-search-chat',
     surfaces: ['web-sdk'],
+    capabilities: ['search', 'embed'],
     status: 'production-pattern',
     visibility: 'public',
     category: 'search',
@@ -409,7 +410,9 @@ describe('RecipeLayout', () => {
     expect(screen.queryByText('Code assets')).not.toBeInTheDocument();
     expect(screen.getByText('SEARCH')).toBeInTheDocument();
     expect(screen.getByText('CHAT')).toBeInTheDocument();
-    expect(screen.getByText('At a glance')).toBeInTheDocument();
+    const glance = screen.getByText('At a glance').parentElement!;
+    expect(glance).toHaveTextContent('CapabilitiesSearch, Embed');
+    expect(glance).toHaveTextContent('StatusProduction pattern');
     expect(screen.getByText('Beginner')).toBeInTheDocument();
     expect(screen.getByText('Body content')).toBeInTheDocument();
   });

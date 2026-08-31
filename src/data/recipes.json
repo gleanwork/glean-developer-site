@@ -14,6 +14,11 @@
       "surfaces": [
         "platform-api"
       ],
+      "capabilities": [
+        "search",
+        "chat",
+        "agents"
+      ],
       "status": "showcase",
       "visibility": "public",
       "category": "workflow",
@@ -300,7 +305,7 @@
       "aiPrompt": "Build a Customer 360 account workspace following https://developers.glean.com/cookbook/customer-360. Ask whether to use (A) Platform Search plus experimental Platform Chat or (B) Platform Agents, then ask for the account name and the selected path's required configuration. Do not research another account unless the user explicitly asks for help; if they do, run one bounded search and offer at most three choices. Keep the assistant above the fold, display only cited account claims, and derive overview counts directly from Search results. Use the scaffold's shipped login command rather than implementing authentication. Verify before leaving the app running.",
       "llmContext": "Use Platform Search for evidence sections, experimental Platform Chat through glean.chat.create for synthesis, and Platform Agents for the optional agent path. Set stream:false, store:false, and X_GLEAN_INCLUDE_EXPERIMENTAL=true. Read ASSISTANT OUTPUT_TEXT content and citations from annotations[].sources. Keep tokens server-side. Read the account from GLEAN_ACCOUNT_NAME. The overview may show the supplied account name and deterministic Search result counts; never infer CRM facts from loosely matching documents. Use GLEAN_SERVER_URL directly.",
       "goDependency": false,
-      "featured": false,
+      "featured": true,
       "hidden": false,
       "tags": [
         "dual-implementation",
@@ -316,6 +321,9 @@
       "sidebarLabel": "IT Helpdesk (Lovable)",
       "surfaces": [
         "client-api"
+      ],
+      "capabilities": [
+        "chat"
       ],
       "status": "showcase",
       "visibility": "public",
@@ -421,7 +429,7 @@
       "pastePrompt": "Build \"IT Deflection Page\", a single-page chat tool that answers\ncommon IT helpdesk questions (SSO/password resets, laptop issues, VPN\nsetup) using the Glean Chat API, so employees get an answer before they\nfile a ticket. I don't want to write or review implementation code; you\nown that. I do want to review the running app and its use of secrets.\n\nThe browser must never see a Glean API token. If a question calls a\nGlean API from the client, the token is exposed to anyone who opens\ndevtools, and that's not acceptable here. Route the Glean call through\nwhatever server-side mechanism you use for secrets and backend calls.\nYou may need to connect a backend/database integration to get one.\nAsk me before you do, and ask me for the two values below when it's\nready. Don't skip this by calling Glean directly from React.\n\n1. Build a polished React assistant called \"IT Help.\" On desktop, use a\n   compact two-column workspace: a short \"Ask before you file a ticket\"\n   intro with three suggested questions on the left, and the assistant on\n   the right. The three questions are \"How do I get help with <topic>?\",\n   \"How do I reset my SSO password?\", and \"How do I request a new laptop?\"\n   Keep the assistant, its composer, and the latest answer above\n   the fold. On mobile, put the assistant first. The assistant is a real\n   thread: append user and assistant messages, keep the composer pinned,\n   auto-scroll inside the thread, and show citations as compact source chips\n   directly under each answer.\n\n2. Server-side, install `@gleanwork/api-client` (pin the version; do\n   not use a `^` or `latest` range) and construct the client like this:\n\n   ```ts\n   import { Glean } from '@gleanwork/api-client';\n\n   const glean = new Glean({\n     apiToken: process.env.GLEAN_API_TOKEN,\n     instance: process.env.GLEAN_INSTANCE, // e.g. \"<your-glean-instance>\"\n   });\n   ```\n\n   Both `GLEAN_API_TOKEN` and `GLEAN_INSTANCE` must be stored as\n   server-side secrets, never hardcoded and never bundled into the\n   frontend. Stop and ask me for these two values by name before running\n   the app. Do not invent placeholder values and move on.\n\n3. Call the Chat API like this. The response shape is specific, follow\n   it exactly rather than guessing at field names:\n\n   ```ts\n   export async function askGlean(question: string) {\n     const response = await glean.client.chat.create({\n       messages: [{ author: 'USER', fragments: [{ text: question }] }],\n     });\n\n     const contentMessages = (response.messages ?? []).filter(\n       (m) => m.messageType === 'CONTENT',\n     );\n     const fragments = contentMessages.flatMap((m) => m.fragments ?? []);\n\n     const answer = fragments.map((f) => f.text ?? '').join('');\n\n     const citations = fragments\n       .map((f) => f.citation?.sourceDocument)\n       .filter(\n         (doc): doc is NonNullable<typeof doc> => !!doc?.title && !!doc?.url,\n       );\n     const uniqueCitations = Array.from(\n       new Map(citations.map((doc) => [doc.url, doc])).values(),\n     );\n\n     return { answer, citations: uniqueCitations };\n   }\n   ```\n\n   Notes on the response shape, since guessing at field names here is\n   easy to get wrong:\n   - The response can include earlier step-narration messages (search/read\n     progress) before the real answer. Filter to `messageType === 'CONTENT'`\n     or that narration text ends up prepended to the answer.\n   - Citations live per-fragment, in `fragment.citation.sourceDocument`,\n     not a top-level `citedDocuments` field, and not the\n     `message.citations[]` field, which is deprecated and not populated\n     on a live agentic response. Dedupe by `url` since the same source is\n     commonly cited by more than one fragment.\n\n4. Frontend: on submit, call your server-side function with the question,\n   append the response to the thread, and render each citation as a safe\n   link using its `title` and `url`. Show a visible loading message, disable\n   duplicate submits, keep the thread scrolled to the newest message, and\n   show an inline retryable error if the request fails.\n\n5. Style it like the Glean cookbook demos: light gray `#f7f8fa` page,\n   white cards with subtle `#e7e8ed` borders, 16px radii, restrained shadows,\n   Inter/system sans, strong typographic hierarchy, and `#343ced` as the\n   primary accent. Avoid a generic chatbot bubble, oversized hero, gradients\n   behind text, and a separate answer box below the form. Use this\n   exact mark as the page's logo/icon instead of a generic chat icon.\n   Inline the SVG directly rather than approximating it:\n\n   ```svg\n   <svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 32 32\" width=\"32\" height=\"32\" fill=\"none\" role=\"img\" aria-label=\"Glean\">\n     <path d=\"M24.3006 2.95427L20.7656 0.199951L17.9028 3.99527C13.5653 1.93495 8.23019 3.08439 5.19394 7.00983C1.65888 11.5642 2.483 18.1138 7.03738 21.6489C8.77238 22.9935 10.7893 23.7092 12.8279 23.8177C16.1461 24.0128 19.5077 22.6248 21.6765 19.8055C24.7344 15.88 24.5175 10.4148 21.4596 6.72789L24.3006 2.95427ZM18.1197 17.0512C16.1028 19.632 12.3725 20.1091 9.77001 18.0922C7.18919 16.0752 6.71207 12.3233 8.72901 9.74246C9.70494 8.48458 11.1146 7.68214 12.6761 7.48696C13.0448 7.44358 13.4135 7.4219 13.7822 7.44358C14.975 7.50865 16.1244 7.94239 17.0787 8.67977C19.6595 10.7184 20.1366 14.4703 18.1197 17.0512Z\" fill=\"#4718F2\"></path>\n     <path d=\"M24.5176 21.6922C23.932 22.4513 23.2814 23.1236 22.5657 23.7525C21.8717 24.3381 21.1127 24.8803 20.3102 25.3357C19.5295 25.7695 18.6837 26.1382 17.8378 26.4201C16.992 26.702 16.1028 26.8972 15.2137 27.0057C14.3245 27.1141 13.4353 27.1575 12.5244 27.0924C11.6135 27.0273 10.7243 26.8755 9.85684 26.6587L9.66165 27.3743L8.77246 30.9962C9.90021 31.2998 11.0497 31.4733 12.2208 31.56C12.2642 31.56 12.3292 31.56 12.3726 31.56C13.5003 31.6251 14.6498 31.5817 15.7558 31.4516C16.927 31.2998 18.0981 31.0395 19.2258 30.6708C20.3536 30.3022 21.4597 29.825 22.5007 29.2395C23.5634 28.6539 24.561 27.9382 25.4935 27.1575C26.4478 26.355 27.3153 25.4442 28.0744 24.4465C28.1828 24.3164 28.2695 24.1646 28.378 24.0128L24.7779 21.3452C24.6694 21.4537 24.6044 21.5838 24.5176 21.6922Z\" fill=\"#4718F2\"></path>\n   </svg>\n   ```\n\n6. Give the assistant a short system framing so it stays on-topic: it\n   should present itself as \"IT Help\" and answer IT/helpdesk\n   questions using only what Glean returns. Don't have it improvise\n   troubleshooting steps Glean didn't cite.\n\n7. When you're done, tell me the two things I need to test:\n   - Ask \"Where do I reset my SSO password?\" and confirm the answer\n     cites a source from my own indexed content.\n   - Ask \"How do I request a new laptop?\" and confirm the answer\n     cites a source from my own indexed content.\n\nThis is a private, single-user prototype. The backend token is one service\nidentity: every request has the token owner's Glean access, not the person\nopening the page. Keep the project private and do not deploy or share it. If\nI ask for a multi-user deployment, stop and require app authentication plus\na per-user Glean OAuth token; never represent a shared token as per-user\npermission enforcement. Do not add a ticketing integration.",
       "llmContext": "Keep this single-user prototype private. Its shared backend token is one service identity, so every request has the token owner's access. Multi-user deployment requires app authentication and per-user Glean OAuth. Keep the token in Lovable's server-side secret store, call Client Chat from a backend function, and read CONTENT text and fragment.citation.sourceDocument citations. GLEAN_INSTANCE is Instance name from https://app.glean.com/admin/about-glean, for example acme.",
       "goDependency": false,
-      "featured": false,
+      "featured": true,
       "hidden": false,
       "tags": [
         "no-code",
@@ -436,6 +444,9 @@
       "sidebarLabel": "PTO Lookup (Replit)",
       "surfaces": [
         "client-api"
+      ],
+      "capabilities": [
+        "chat"
       ],
       "status": "showcase",
       "visibility": "public",
@@ -562,6 +573,10 @@
       "surfaces": [
         "web-sdk",
         "platform-api"
+      ],
+      "capabilities": [
+        "chat",
+        "embed"
       ],
       "status": "showcase",
       "visibility": "public",
@@ -854,6 +869,13 @@
         "agents",
         "tools"
       ],
+      "capabilities": [
+        "search",
+        "chat",
+        "agents",
+        "tools",
+        "workflows"
+      ],
       "status": "showcase",
       "visibility": "public",
       "category": "agent",
@@ -1065,6 +1087,10 @@
       "surfaces": [
         "platform-api"
       ],
+      "capabilities": [
+        "chat",
+        "workflows"
+      ],
       "status": "showcase",
       "visibility": "public",
       "category": "workflow",
@@ -1253,6 +1279,210 @@
         "workflow"
       ],
       "permalink": "/cookbook/rfp-responder"
+    },
+    {
+      "id": "search-with-discovered-filters",
+      "title": "Search Glean with discovered filters",
+      "description": "Use the official TypeScript API client to discover the datasources and common filter fields available in your Glean instance, then apply a returned selection to permission-aware Platform Search.",
+      "sidebarLabel": "Search with filters",
+      "codeWalkthrough": {
+        "intro": "The runnable scaffold uses the published Glean auth package for tenant discovery and refreshable OAuth credentials, gives that token provider to the official API client, and keeps the Search sequence explicit.",
+        "examples": [
+          {
+            "title": "Configure the API client",
+            "description": "Resolve the backend from work email or an explicit server URL, then give the Glean client the auth package's async token provider, a finite timeout per attempt, and bounded exponential backoff. A user-scoped SEARCH token remains an explicit fallback.",
+            "source": "src/client.ts",
+            "language": "typescript",
+            "code": "import { Glean, type SDKOptions } from '@gleanwork/api-client';\nimport type { XGleanOptions } from '@gleanwork/api-client/hooks/x-glean-options.js';\nimport { createGleanTokenProvider, discoverGleanTenant } from '@gleanwork/auth';\n\nconst LOOPBACK_HOSTS = new Set(['127.0.0.1', '::1', 'localhost']);\n\ninterface GleanClientTarget {\n  email?: string;\n  serverUrl?: string;\n}\n\nasync function resolveServerUrl({ email, serverUrl }: GleanClientTarget) {\n  const explicit = serverUrl?.trim();\n  if (explicit) return explicit;\n\n  const workEmail = email?.trim();\n  if (workEmail) return (await discoverGleanTenant(workEmail)).serverUrl;\n\n  const configured = process.env.GLEAN_SERVER_URL?.trim();\n  if (configured) return configured;\n\n  throw new Error(\n    'Pass --email or --server-url, or set GLEAN_SERVER_URL in your environment.',\n  );\n}\n\nexport async function createGleanClient(target: GleanClientTarget) {\n  const serverURL = await resolveServerUrl(target);\n  const server = new URL(serverURL);\n  const loopback = LOOPBACK_HOSTS.has(server.hostname);\n  if (\n    (server.protocol !== 'https:' && !loopback) ||\n    server.username ||\n    server.password ||\n    server.search ||\n    server.hash ||\n    (server.pathname && server.pathname !== '/') ||\n    (!loopback && server.port)\n  ) {\n    throw new Error('Use a complete Glean backend HTTPS origin.');\n  }\n\n  const staticToken = process.env.GLEAN_API_TOKEN?.trim();\n  const options = {\n    serverURL: server.origin,\n    apiToken:\n      staticToken ||\n      createGleanTokenProvider({\n        serverUrl: server.origin,\n        scopes: ['search'],\n      }),\n    includeExperimental: true,\n    timeoutMs: 30_000,\n    retryConfig: {\n      strategy: 'backoff',\n      backoff: {\n        initialInterval: 500,\n        maxInterval: 5_000,\n        exponent: 2,\n        maxElapsedTime: 90_000,\n      },\n      retryConnectionErrors: true,\n    },\n  } satisfies SDKOptions & XGleanOptions;\n\n  return new Glean(options);\n}\n"
+          },
+          {
+            "title": "Discover filters, then search",
+            "description": "Keep the API sequence explicit: list visible fields, request query-specific suggestions for one datasource, and pass the selected filter to Search.",
+            "source": "src/search.ts",
+            "language": "typescript",
+            "code": "import {\n  chooseDatasource,\n  chooseFilter,\n  createTerminal,\n  parseCliOptions,\n  printSearchResponse,\n} from './cli.js';\nimport { createGleanClient } from './client.js';\nimport { formatSdkError } from './errors.js';\n\n/**\n * Lists visible datasources and common filter fields, requests query-specific\n * values for one datasource, then searches with the selected filter.\n *\n * @remarks\n * Filter discovery returns a best-effort catalog and may omit valid fields.\n * Query-specific values are bounded suggestions, not guaranteed matches. The\n * final Search request still enforces the caller's permissions.\n */\nasync function main() {\n  const cliOptions = parseCliOptions();\n  const glean = await createGleanClient({\n    email: cliOptions.email,\n    serverUrl: cliOptions.serverUrl,\n  });\n  const terminal = createTerminal();\n\n  try {\n    const { result: catalog } = await glean.search.listFilters();\n    const datasource = await chooseDatasource(\n      catalog.datasources,\n      cliOptions.datasource,\n      cliOptions.autoSelect,\n      terminal,\n    );\n\n    const { result: suggestions } = await glean.search.listFilters(\n      [datasource],\n      cliOptions.query,\n    );\n    const filterInfo = suggestions.datasources.find(\n      (candidate) => candidate.datasource === datasource,\n    );\n    if (!filterInfo) {\n      throw new Error(\n        `No filter metadata for \"${datasource}\" (request ${suggestions.request_id}).`,\n      );\n    }\n\n    const filter = await chooseFilter(\n      filterInfo,\n      cliOptions.filter,\n      cliOptions.autoSelect,\n      terminal,\n    );\n    const searchResponse = await glean.search.query({\n      query: cliOptions.query,\n      page_size: 10,\n      datasources: [datasource],\n      ...(filter ? { filters: [filter] } : {}),\n    });\n\n    printSearchResponse(searchResponse, datasource, filter);\n  } finally {\n    terminal?.close();\n  }\n}\n\nmain().catch((error: unknown) => {\n  console.error(formatSdkError(error));\n  process.exitCode = 1;\n});\n"
+          }
+        ]
+      },
+      "surfaces": [
+        "platform-api"
+      ],
+      "capabilities": [
+        "search"
+      ],
+      "status": "quickstart",
+      "visibility": "preview",
+      "category": "search",
+      "level": "Beginner",
+      "levels": {
+        "minimal": true,
+        "wow": false
+      },
+      "timeEstimate": "~15 min",
+      "requiredScopes": [
+        "SEARCH"
+      ],
+      "authMethod": [
+        "client-api-oauth-or-token"
+      ],
+      "buildMethod": "scaffold",
+      "languages": [
+        "typescript"
+      ],
+      "prerequisites": [
+        "Node 22.12.0 or newer",
+        "A Glean instance with content indexed",
+        "Your work email, or the complete Glean backend origin shown under Server instance (QE)",
+        "A tenant that permits this public OAuth client and search scope through DCR; an administrator-provisioned OAuth client or user-scoped SEARCH token is the fallback",
+        "Experimental Platform APIs enabled through the SDK's includeExperimental constructor option, which the scaffold sets automatically"
+      ],
+      "demoQueries": [
+        {
+          "query": "Search for a topic you know exists in your Glean instance",
+          "expectedBehavior": "Lists the datasources and common filter fields visible to you, selects a datasource returned by discovery, applies a suggested EQUALS field value when one is available, and returns a valid permission-aware Search response without assuming a fixed result count."
+        }
+      ],
+      "codeAssets": [
+        {
+          "repoPath": "recipes/search-with-discovered-filters",
+          "language": "typescript",
+          "description": "Interactive TypeScript CLI using @gleanwork/api-client for Search Filters discovery and filtered Platform Search"
+        }
+      ],
+      "scaffoldActions": [],
+      "steps": [
+        {
+          "kind": "scaffold",
+          "title": "Scaffold the project",
+          "description": "Copies the runnable TypeScript Search CLI and fixture tests into a new directory. OAuth login and secure token storage come from the pinned @gleanwork/auth package.",
+          "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/search-with-discovered-filters search-with-discovered-filters"
+        },
+        {
+          "kind": "install",
+          "title": "Install dependencies",
+          "command": "cd search-with-discovered-filters && npm install"
+        },
+        {
+          "kind": "manual",
+          "title": "Check the request flow with fixtures",
+          "description": "Runs executable fixture tests, ESLint, and the TypeScript compiler to validate catalog discovery, query-backed suggestions, retries, typed errors, field-filter propagation, and experimental headers without credentials or network access.",
+          "command": "cd search-with-discovered-filters && npm run check"
+        },
+        {
+          "kind": "authenticate",
+          "title": "Sign in with OAuth",
+          "description": "Discovers your Glean backend from work email, completes Authorization Code with PKCE for search and offline_access, and stores refreshable credentials outside the project. Use --server-url for an explicit backend, GLEAN_OAUTH_CLIENT_ID for an administrator-provisioned public client, or GLEAN_API_TOKEN as a user-scoped fallback.",
+          "command": "cd search-with-discovered-filters && npm run login -- --email \"<work-email>\""
+        },
+        {
+          "kind": "verify-live",
+          "title": "Verify against your instance",
+          "description": "Uses your topic to discover current filters, automatically selects a returned datasource and suggested field value when available, then validates the Search response shape and pagination state.",
+          "command": "cd search-with-discovered-filters && npm run verify -- --email \"<work-email>\" --query \"<search-query>\""
+        },
+        {
+          "kind": "run",
+          "title": "Discover filters and search",
+          "description": "Runs the non-interactive CLI path, selecting the first returned datasource and suggested field value, then prints results, warnings, pagination state, and request IDs. Omit --auto-select when running interactively to choose them yourself.",
+          "command": "cd search-with-discovered-filters && npm start -- --email \"<work-email>\" --query \"<search-query>\" --auto-select"
+        }
+      ],
+      "execution": {
+        "type": "cli",
+        "questions": [
+          {
+            "id": "work-email",
+            "prompt": "What is your work email address?",
+            "required": true
+          },
+          {
+            "id": "search-query",
+            "prompt": "What topic do you know exists in your Glean content?",
+            "required": true
+          }
+        ],
+        "auth": [
+          {
+            "kind": "oauth-with-token-fallback",
+            "scopes": [
+              "search"
+            ],
+            "setupCommand": "cd search-with-discovered-filters && npm run login -- --email \"<work-email>\"",
+            "credentialVariable": "GLEAN_API_TOKEN"
+          }
+        ],
+        "verification": {
+          "kind": "automated",
+          "command": "cd search-with-discovered-filters && npm run verify -- --email \"<work-email>\" --query \"<search-query>\"",
+          "expectedDuration": "about 1 minute after sign-in",
+          "startsOwnServer": false
+        },
+        "run": {
+          "command": "cd search-with-discovered-filters && npm start -- --email \"<work-email>\" --query \"<search-query>\" --auto-select",
+          "userBrowser": false
+        }
+      },
+      "architecture": [
+        {
+          "label": "Your CLI",
+          "caption": "query and filter choice",
+          "icon": "terminal",
+          "emphasized": false
+        },
+        {
+          "label": "TypeScript API client",
+          "caption": "typed requests and responses",
+          "icon": "Code",
+          "emphasized": false
+        },
+        {
+          "label": "Search Filters",
+          "caption": "visible datasources and fields",
+          "category": "search",
+          "emphasized": true
+        },
+        {
+          "label": "Platform Search",
+          "caption": "permission-aware results",
+          "category": "search",
+          "emphasized": false
+        }
+      ],
+      "content": {
+        "problem": "Search filters differ across Glean instances and connected sources. Hard-coding a datasource or field from another environment makes a first integration brittle, while hand-writing HTTP hides the supported client developers should use. This quickstart uses the official TypeScript API client to discover what the signed-in user can filter, then carries that returned selection into a typed Search request that matches the reader's own instance and permissions.",
+        "takeItFurther": [
+          "Follow next_cursor to paginate without treating it as data or constructing it yourself.",
+          "Persist the catalog briefly for UI rendering, but refresh it and continue to treat it as best effort rather than an exhaustive schema.",
+          "Build a faceted search interface that requests query-specific values after the user chooses one datasource.",
+          "Add time_range alongside discovered filters for bounded recency searches."
+        ],
+        "limitations": [
+          {
+            "title": "Discovery is best effort",
+            "description": "A field omitted from Search Filters may still be valid, and suggested values are bounded and non-exhaustive. Reusing a returned value does not guarantee matching results."
+          },
+          {
+            "title": "OAuth policy varies by tenant",
+            "description": "DCR may be disabled, restricted to approved applications or redirect URI patterns, or unable to grant search. Use an administrator-provisioned public OAuth client when available; a user-scoped SEARCH token is the tutorial fallback."
+          },
+          {
+            "title": "Experimental API",
+            "description": "Both endpoints may change. The scaffold opts in explicitly and should be evaluated before production adoption."
+          }
+        ]
+      },
+      "aiPrompt": "Scaffold and run the verified Search with discovered filters quickstart. Ask for the user's work email and one topic they know exists in their Glean instance. Run the fixture tests, sign in with @gleanwork/auth through DCR OAuth using the search scope, run live verification, then start the interactive CLI. Use @gleanwork/api-client's glean.search.listFilters() for catalog and query-backed discovery, then pass a returned datasource and either a suggested filter value or an explicit custom field/value to glean.search.query(). Enable experimental features through the SDK's documented includeExperimental constructor option. Do not recreate auth or SDK transport, impersonate another user, or claim the best-effort filter catalog is exhaustive.",
+      "llmContext": "Use @gleanwork/auth for tenant discovery, OAuth login, secure state, and refresh, then pass its async token provider to @gleanwork/api-client's apiToken option. Glean-issued OAuth tokens need no X-Glean-Auth-Type. If DCR cannot grant search, use an administrator-provisioned public client or explicit user-scoped SEARCH token. Use typed glean.search.listFilters() and glean.search.query(), with includeExperimental enabled. Catalog discovery returns datasource IDs and common fields. Query-backed discovery accepts one datasource and returns bounded, non-exhaustive suggestions. Apply returned values unchanged with EQUALS, but treat discovery as advisory and allow explicit nonblank custom fields. The caller's credentials remain the permission boundary. Let the SDK validate responses and surface typed errors; display warnings, request IDs, Retry-After guidance, and next_cursor without logging credentials or storing results.",
+      "goDependency": false,
+      "featured": true,
+      "hidden": false,
+      "tags": [
+        "search",
+        "filters",
+        "quickstart",
+        "platform-api"
+      ],
+      "permalink": "/cookbook/search-with-discovered-filters"
     }
   ],
   "surfaces": [
@@ -1263,7 +1493,7 @@
     "agents"
   ],
   "generatedAt": "2026-08-21T00:00:00.000Z",
-  "totalRecipes": 6,
+  "totalRecipes": 7,
   "plugin": {
     "marketplaceName": "glean-cookbook",
     "pluginName": "cookbook",

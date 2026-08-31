@@ -38,7 +38,22 @@ export const RECIPE_SURFACES = [
   'agents',
 ] as const;
 
-export const RECIPE_STATUSES = ['showcase', 'production-pattern'] as const;
+export const RECIPE_CAPABILITIES = [
+  'search',
+  'chat',
+  'agents',
+  'indexing',
+  'embed',
+  'tools',
+  'mcp',
+  'workflows',
+] as const;
+
+export const RECIPE_STATUSES = [
+  'quickstart',
+  'showcase',
+  'production-pattern',
+] as const;
 
 export const RECIPE_VISIBILITIES = ['public', 'preview'] as const;
 
@@ -57,10 +72,25 @@ export const RECIPE_SURFACE_LABELS: Record<
   agents: 'Agents',
 };
 
+export const RECIPE_CAPABILITY_LABELS: Record<
+  (typeof RECIPE_CAPABILITIES)[number],
+  string
+> = {
+  search: 'Search',
+  chat: 'Chat',
+  agents: 'Agents',
+  indexing: 'Indexing',
+  embed: 'Embed',
+  tools: 'Tools',
+  mcp: 'MCP',
+  workflows: 'Workflows',
+};
+
 export const RECIPE_STATUS_LABELS: Record<
   (typeof RECIPE_STATUSES)[number],
   string
 > = {
+  quickstart: 'Quickstart',
   showcase: 'Showcase',
   'production-pattern': 'Production pattern',
 };
@@ -375,6 +405,9 @@ export const recipeMetaSchema = z.strictObject({
   /** Opts a recipe into a source-backed code walkthrough on its docs page. */
   codeWalkthrough: recipeCodeWalkthroughSchema.optional(),
   surfaces: z.array(z.enum(RECIPE_SURFACES)).min(1),
+  /** User goals taught materially by this recipe. */
+  capabilities: z.array(z.enum(RECIPE_CAPABILITIES)).min(1),
+  /** Displayed as the recipe type; retained as `status` for registry compatibility. */
   status: z.enum(RECIPE_STATUSES),
   /** Preview recipes are generated but require an exact `ff_recipe` query value on the docs site. */
   visibility: z.enum(RECIPE_VISIBILITIES).default('public'),
@@ -427,6 +460,7 @@ export const recipeMetaSchema = z.strictObject({
   tags: z.array(z.string().min(1)).default([]),
 });
 
+export type RecipeCapability = (typeof RECIPE_CAPABILITIES)[number];
 export type RecipeCodeAsset = z.infer<typeof recipeCodeAssetSchema>;
 export type RecipeCodeWalkthrough = z.infer<typeof recipeCodeWalkthroughSchema>;
 export type RecipeDemoQuery = z.infer<typeof recipeDemoQuerySchema>;
