@@ -12,6 +12,7 @@ function validEntry() {
     description:
       'Put permission-aware Glean search and chat inside an internal app with the Web SDK.',
     surfaces: ['web-sdk', 'platform-api'],
+    capabilities: ['search', 'embed'],
     status: 'production-pattern',
     category: 'search',
     level: 'Beginner',
@@ -45,6 +46,26 @@ describe('parseRecipeEntry', () => {
     expect(result.record.visibility).toBe('public');
     expect(isListedOnDocs(result.record)).toBe(true);
     expect(result.record.goDependency).toBe(false);
+  });
+
+  it('accepts quickstart status and required capabilities', () => {
+    const entry = { ...validEntry(), status: 'quickstart' };
+    const result = parseRecipeEntry(entry, 'embed-search-chat');
+    expect(result.success).toBe(true);
+    if (!result.success) return;
+    expect(result.record.status).toBe('quickstart');
+    expect(result.record.capabilities).toEqual(['search', 'embed']);
+  });
+
+  it('rejects missing or unknown capabilities', () => {
+    const { capabilities: _capabilities, ...missing } = validEntry();
+    expect(parseRecipeEntry(missing, 'embed-search-chat').success).toBe(false);
+    expect(
+      parseRecipeEntry(
+        { ...validEntry(), capabilities: ['unknown'] },
+        'embed-search-chat',
+      ).success,
+    ).toBe(false);
   });
 
   it('accepts preview visibility without hiding the docs page', () => {
