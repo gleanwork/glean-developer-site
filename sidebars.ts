@@ -798,12 +798,6 @@ const baseSidebars: SidebarsConfig = {
             {
               type: 'category',
               label: 'Agents',
-              description:
-                'Discover available agents, inspect their schemas, and create agent runs.',
-              customProps: {
-                icon: 'agent',
-                iconSet: 'glean',
-              },
               link: {
                 type: 'doc',
                 id: 'api/platform-api/agents-overview',
@@ -838,12 +832,6 @@ const baseSidebars: SidebarsConfig = {
             {
               type: 'category',
               label: 'Chat',
-              description:
-                'Create chat responses grounded in your Glean instance.',
-              customProps: {
-                icon: 'chat',
-                iconSet: 'glean',
-              },
               link: {
                 type: 'doc',
                 id: 'api/platform-api/chat-overview',
@@ -860,12 +848,6 @@ const baseSidebars: SidebarsConfig = {
             {
               type: 'category',
               label: 'Search',
-              description:
-                'Build permission-aware search experiences with relevant results, filters, and time ranges.',
-              customProps: {
-                icon: 'Search',
-                iconSet: 'feather',
-              },
               link: {
                 type: 'doc',
                 id: 'api/platform-api/search-overview',
@@ -888,12 +870,6 @@ const baseSidebars: SidebarsConfig = {
             {
               type: 'category',
               label: 'Skills',
-              description:
-                'Discover, validate, import, synchronize, and manage skills through the Platform API.',
-              customProps: {
-                icon: 'Settings',
-                iconSet: 'feather',
-              },
               link: {
                 type: 'doc',
                 id: 'api/platform-api/skills-overview',
@@ -988,12 +964,6 @@ const baseSidebars: SidebarsConfig = {
             {
               type: 'category',
               label: 'Triggers',
-              description:
-                'Subscribe to Glean content events and receive signed webhooks using curated trigger presets.',
-              customProps: {
-                icon: 'Zap',
-                iconSet: 'feather',
-              },
               link: {
                 type: 'doc',
                 id: 'api/platform-api/triggers-overview',
