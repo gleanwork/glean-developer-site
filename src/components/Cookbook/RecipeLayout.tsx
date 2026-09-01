@@ -319,12 +319,43 @@ function renderInlineCode(text: string): React.ReactNode {
   });
 }
 
+type DisplayStep = {
+  title: string;
+  description?: string;
+  command?: string;
+};
+
+const CHANGE_DIRECTORY_PREFIX = /^(cd\s+("[^"]+"|'[^']+'|[^\s&]+)\s+&&\s+)/u;
+
+/**
+ * Registry commands are independently cwd-safe because verification may run
+ * each one in a fresh shell. For a displayed sequence, keep the first exact
+ * directory prefix and remove only later repetitions without mutating source
+ * steps or normalizing commands that name a different directory.
+ */
+export function humanizeStepCommands<T extends DisplayStep>(steps: T[]): T[] {
+  const enteredDirectoryPrefixes = new Set<string>();
+
+  return steps.map((step) => {
+    const match = step.command?.match(CHANGE_DIRECTORY_PREFIX);
+    if (!match) return step;
+
+    const prefix = match[1];
+    if (!enteredDirectoryPrefixes.has(prefix)) {
+      enteredDirectoryPrefixes.add(prefix);
+      return step;
+    }
+
+    return { ...step, command: step.command!.slice(prefix.length) };
+  });
+}
+
 function StepRow({
   index,
   step,
 }: {
   index: number;
-  step: { title: string; description?: string; command?: string };
+  step: DisplayStep;
 }): React.ReactElement {
   return (
     <div className={styles.stepRow}>
@@ -335,9 +366,9 @@ function StepRow({
         </p>
         {step.description && <p>{renderInlineCode(step.description)}</p>}
         {step.command && (
-          <pre className={styles.stepCommand}>
-            <code>{step.command}</code>
-          </pre>
+          <div className={styles.stepCommand}>
+            <CodeBlock language="bash">{step.command}</CodeBlock>
+          </div>
         )}
       </div>
     </div>
@@ -389,7 +420,7 @@ export function RecipeSteps({
       {recipe.steps && recipe.steps.length > 0 && (
         <div className={styles.stepsWrap}>
           <div className={styles.stepsRail} />
-          {recipe.steps.map((step, i) => (
+          {humanizeStepCommands(recipe.steps).map((step, i) => (
             <StepRow key={step.title} index={i + 1} step={step} />
           ))}
         </div>
@@ -404,7 +435,7 @@ export function RecipeSteps({
             >
               <div className={styles.stepsWrap}>
                 <div className={styles.stepsRail} />
-                {asset.steps!.map((step, i) => (
+                {humanizeStepCommands(asset.steps!).map((step, i) => (
                   <StepRow key={step.title} index={i + 1} step={step} />
                 ))}
               </div>
@@ -415,7 +446,7 @@ export function RecipeSteps({
         variantsWithSteps.map((asset) => (
           <div className={styles.stepsWrap} key={asset.repoPath}>
             <div className={styles.stepsRail} />
-            {asset.steps!.map((step, i) => (
+            {humanizeStepCommands(asset.steps!).map((step, i) => (
               <StepRow key={step.title} index={i + 1} step={step} />
             ))}
           </div>
