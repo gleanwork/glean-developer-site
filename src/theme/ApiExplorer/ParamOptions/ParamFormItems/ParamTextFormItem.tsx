@@ -8,6 +8,7 @@ import { useEffect, useId } from 'react';
 import { parameterPlaceholder } from '@site/src/lib/unresolvedPlaceholders';
 
 import { usePlaceholderValidation } from '../../placeholderValidation';
+import styles from './styles.module.css';
 
 interface ParamProps {
   param: Param;
@@ -103,7 +104,7 @@ export default function ParamTextFormItem({
         </div>
       ) : (
         unresolved && (
-          <div className="margin-top--xs text--secondary" id={helpId}>
+          <div className={styles.placeholderHelp} id={helpId}>
             {translate(
               {
                 id: 'theme.openapi.placeholder.help',
