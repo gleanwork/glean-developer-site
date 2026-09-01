@@ -52,7 +52,6 @@ const baseSidebars: SidebarsConfig = {
           customProps: {
             icon: 'BookOpen',
             iconSet: 'feather',
-            flag: 'cookbook',
           },
           link: {
             type: 'doc',
@@ -435,11 +434,7 @@ const baseSidebars: SidebarsConfig = {
         {
           type: 'category',
           label: 'Indexing SDK',
-          customProps: {
-            // Gated until the glean-indexing-sdk 1.0.0 release. Enable the
-            // `indexing-sdk` flag (FF_INDEXING_SDK=true locally) to show it.
-            flag: 'indexing-sdk',
-          },
+
           items: [
             {
               type: 'doc',

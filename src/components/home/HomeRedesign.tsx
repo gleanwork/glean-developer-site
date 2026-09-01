@@ -5,7 +5,6 @@ import {
   getClientIcon,
   type ClientId,
 } from '@gleanwork/mcp-config-schema/browser';
-import FeatureFlag from '../FeatureFlag';
 import TerminalPanel from './TerminalPanel';
 import {
   AGENTS_BAND_CODE,
@@ -173,7 +172,7 @@ export function HeroCarousel(): React.ReactElement {
   );
 }
 
-/** Flag-gated cookbook teaser — hidden until the cookbook flag flips. */
+/** Cookbook teaser shown on the homepage. */
 export function CookbookStrip(): React.ReactElement {
   return (
     <Link className={styles.cookbookStrip} to="/cookbook">
@@ -492,15 +491,13 @@ export function AgentsBand(): React.ReactElement {
   );
 }
 
-/** The full redesigned homepage (handoff direction 1a), flag-gated. */
+/** The full redesigned homepage (handoff direction 1a). */
 export default function HomeRedesign(): React.ReactElement {
   return (
     <div className={`${styles.page} home-redesign-root`}>
       <AnnouncementBand />
       <HeroCarousel />
-      <FeatureFlag flag="cookbook">
-        <CookbookStrip />
-      </FeatureFlag>
+      <CookbookStrip />
       <PathCards />
       <QuickstartTabs />
       <SdkGrid />

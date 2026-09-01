@@ -2,11 +2,11 @@ openapi: 3.0.0
 info:
   version: 0.9.0
   title: Glean API - Agents
-  x-source-commit-sha: af1b4d6aee0115bc6cff834b70b34841688d178b
+  x-source-commit-sha: 607c4a4291218dcc0edb79494bf20e6ac3362cf9
   description: API endpoints for Agents
   x-logo:
     url: https://app.glean.com/images/glean-text2.svg
-  x-open-api-commit-sha: 0ac3ee5ea61948cc9059de8e1a2f4a52fafefe4a
+  x-open-api-commit-sha: efc6383f39292ed5941021d5bd19afeca4e04a38
   x-speakeasy-name: Glean API
 servers:
   - url: '{serverUrl}'
@@ -156,74 +156,18 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
         '500':
           description: Internal server error
+      x-glean-deprecated:
+        docs: https://developers.glean.com/api/platform-api/agents-overview
+        id: e01a59ea-5de0-481f-97b6-d28dd65379e6
+        introduced: '2026-08-25'
+        message: Use GET /api/agents/{agent_id} instead.
+        removal: '2027-04-15'
+      deprecated: true
+      x-speakeasy-deprecation-message: 'Deprecated on 2026-08-25, removal scheduled for 2027-04-15: Use GET /api/agents/{agent_id} instead.'
       security:
         - APIToken: []
       x-speakeasy-group: client.agents
       x-speakeasy-name-override: retrieve
-      x-codeSamples:
-        - lang: Python
-          label: Python (API Client)
-          source: |-
-            from glean.api_client import Glean
-            import os
-
-
-            with Glean(
-                api_token=os.getenv("GLEAN_API_TOKEN", ""),
-                server_url="https://mycompany-be.glean.com",
-            ) as glean:
-
-                res = glean.client.agents.retrieve(agent_id="<id>")
-
-                # Handle response
-                print(res)
-        - lang: JavaScript
-          label: Typescript (API Client)
-          source: |-
-            import { Glean } from "@gleanwork/api-client";
-
-            const glean = new Glean({
-              apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
-              serverURL: "https://mycompany-be.glean.com",
-            });
-
-            async function run() {
-              const result = await glean.client.agents.retrieve("<id>");
-
-              console.log(result);
-            }
-
-            run();
-        - lang: Go
-          label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Client.Agents.Retrieve(ctx, \"<id>\", nil, nil)\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.Agent != nil {\n        // handle response\n    }\n}"
-        - lang: Java
-          label: Java (API Client)
-          source: |-
-            package hello.world;
-
-            import com.glean.api_client.glean_api_client.Glean;
-            import com.glean.api_client.glean_api_client.models.errors.ErrorResponse;
-            import com.glean.api_client.glean_api_client.models.operations.GetAgentResponse;
-            import java.lang.Exception;
-
-            public class Application {
-
-                public static void main(String[] args) throws ErrorResponse, Exception {
-
-                    Glean sdk = Glean.builder()
-                            .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
-                        .build();
-
-                    GetAgentResponse res = sdk.client().agents().retrieve()
-                            .agentId("<id>")
-                            .call();
-
-                    if (res.agent().isPresent()) {
-                        System.out.println(res.agent().get());
-                    }
-                }
-            }
     post:
       tags:
         - Agents
@@ -377,74 +321,18 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
         '500':
           description: Internal server error
+      x-glean-deprecated:
+        docs: https://developers.glean.com/api/platform-api/agents-overview
+        id: 9ca398ba-cf22-4523-9d9c-86e5f82d6ec7
+        introduced: '2026-08-25'
+        message: Use GET /api/agents/{agent_id}/schemas instead.
+        removal: '2027-04-15'
+      deprecated: true
+      x-speakeasy-deprecation-message: 'Deprecated on 2026-08-25, removal scheduled for 2027-04-15: Use GET /api/agents/{agent_id}/schemas instead.'
       security:
         - APIToken: []
       x-speakeasy-group: client.agents
       x-speakeasy-name-override: retrieveSchemas
-      x-codeSamples:
-        - lang: Python
-          label: Python (API Client)
-          source: |-
-            from glean.api_client import Glean
-            import os
-
-
-            with Glean(
-                api_token=os.getenv("GLEAN_API_TOKEN", ""),
-                server_url="https://mycompany-be.glean.com",
-            ) as glean:
-
-                res = glean.client.agents.retrieve_schemas(agent_id="<id>")
-
-                # Handle response
-                print(res)
-        - lang: JavaScript
-          label: Typescript (API Client)
-          source: |-
-            import { Glean } from "@gleanwork/api-client";
-
-            const glean = new Glean({
-              apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
-              serverURL: "https://mycompany-be.glean.com",
-            });
-
-            async function run() {
-              const result = await glean.client.agents.retrieveSchemas("<id>");
-
-              console.log(result);
-            }
-
-            run();
-        - lang: Go
-          label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Client.Agents.RetrieveSchemas(ctx, \"<id>\", nil, nil)\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.AgentSchemas != nil {\n        // handle response\n    }\n}"
-        - lang: Java
-          label: Java (API Client)
-          source: |-
-            package hello.world;
-
-            import com.glean.api_client.glean_api_client.Glean;
-            import com.glean.api_client.glean_api_client.models.errors.ErrorResponse;
-            import com.glean.api_client.glean_api_client.models.operations.GetAgentSchemasResponse;
-            import java.lang.Exception;
-
-            public class Application {
-
-                public static void main(String[] args) throws ErrorResponse, Exception {
-
-                    Glean sdk = Glean.builder()
-                            .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
-                        .build();
-
-                    GetAgentSchemasResponse res = sdk.client().agents().retrieveSchemas()
-                            .agentId("<id>")
-                            .call();
-
-                    if (res.agentSchemas().isPresent()) {
-                        System.out.println(res.agentSchemas().get());
-                    }
-                }
-            }
   /rest/api/v1/agents/{agent_id}/import:
     post:
       tags:
@@ -611,81 +499,18 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
         '500':
           description: Internal server error
+      x-glean-deprecated:
+        docs: https://developers.glean.com/api/platform-api/agents-overview
+        id: 3ab6f4c0-0b97-4a0b-b5da-e888e4bb7706
+        introduced: '2026-08-25'
+        message: Use POST /api/agents/search instead.
+        removal: '2027-04-15'
+      deprecated: true
+      x-speakeasy-deprecation-message: 'Deprecated on 2026-08-25, removal scheduled for 2027-04-15: Use POST /api/agents/search instead.'
       security:
         - APIToken: []
       x-speakeasy-group: client.agents
       x-speakeasy-name-override: list
-      x-codeSamples:
-        - lang: Python
-          label: Python (API Client)
-          source: |-
-            from glean.api_client import Glean
-            import os
-
-
-            with Glean(
-                api_token=os.getenv("GLEAN_API_TOKEN", ""),
-                server_url="https://mycompany-be.glean.com",
-            ) as glean:
-
-                res = glean.client.agents.list(name="HR Policy Agent")
-
-                # Handle response
-                print(res)
-        - lang: JavaScript
-          label: Typescript (API Client)
-          source: |-
-            import { Glean } from "@gleanwork/api-client";
-
-            const glean = new Glean({
-              apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
-              serverURL: "https://mycompany-be.glean.com",
-            });
-
-            async function run() {
-              const result = await glean.client.agents.list({
-                name: "HR Policy Agent",
-              });
-
-              console.log(result);
-            }
-
-            run();
-        - lang: Go
-          label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Client.Agents.List(ctx, components.SearchAgentsRequest{\n        Name: apiclientgo.Pointer(\"HR Policy Agent\"),\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.SearchAgentsResponse != nil {\n        // handle response\n    }\n}"
-        - lang: Java
-          label: Java (API Client)
-          source: |-
-            package hello.world;
-
-            import com.glean.api_client.glean_api_client.Glean;
-            import com.glean.api_client.glean_api_client.models.components.SearchAgentsRequest;
-            import com.glean.api_client.glean_api_client.models.errors.ErrorResponse;
-            import com.glean.api_client.glean_api_client.models.operations.SearchAgentsResponse;
-            import java.lang.Exception;
-
-            public class Application {
-
-                public static void main(String[] args) throws ErrorResponse, Exception {
-
-                    Glean sdk = Glean.builder()
-                            .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
-                        .build();
-
-                    SearchAgentsRequest req = SearchAgentsRequest.builder()
-                            .name("HR Policy Agent")
-                            .build();
-
-                    SearchAgentsResponse res = sdk.client().agents().list()
-                            .request(req)
-                            .call();
-
-                    if (res.searchAgentsResponse().isPresent()) {
-                        System.out.println(res.searchAgentsResponse().get());
-                    }
-                }
-            }
   /rest/api/v1/agents/runs/stream:
     post:
       tags:
@@ -748,97 +573,18 @@ paths:
                 $ref: '#/components/schemas/UnauthorizedAgentToolsError'
         '500':
           description: Internal server error
+      x-glean-deprecated:
+        docs: https://developers.glean.com/api/platform-api/agents-overview
+        id: db3f42a5-8820-451e-b57a-14bf6ca3915c
+        introduced: '2026-08-25'
+        message: Use POST /api/agents/{agent_id}/runs with stream=true instead.
+        removal: '2027-04-15'
+      deprecated: true
+      x-speakeasy-deprecation-message: 'Deprecated on 2026-08-25, removal scheduled for 2027-04-15: Use POST /api/agents/{agent_id}/runs with stream=true instead.'
       security:
         - APIToken: []
       x-speakeasy-group: client.agents
       x-speakeasy-name-override: runStream
-      x-codeSamples:
-        - lang: Python
-          label: Python (API Client)
-          source: |-
-            from glean.api_client import Glean
-            import os
-
-
-            with Glean(
-                api_token=os.getenv("GLEAN_API_TOKEN", ""),
-                server_url="https://mycompany-be.glean.com",
-            ) as glean:
-
-                res = glean.client.agents.run_stream(agent_id="<id>", messages=[
-                    {
-                        "role": "USER",
-                    },
-                ])
-
-                # Handle response
-                print(res)
-        - lang: JavaScript
-          label: Typescript (API Client)
-          source: |-
-            import { Glean } from "@gleanwork/api-client";
-
-            const glean = new Glean({
-              apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
-              serverURL: "https://mycompany-be.glean.com",
-            });
-
-            async function run() {
-              const result = await glean.client.agents.runStream({
-                agent_id: "<id>",
-                messages: [
-                  {
-                    role: "USER",
-                  },
-                ],
-              });
-
-              console.log(result);
-            }
-
-            run();
-        - lang: Go
-          label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Client.Agents.RunStream(ctx, components.AgentRunCreate{\n        AgentID: \"<id>\",\n        Messages: []components.Message{\n            components.Message{\n                Role: apiclientgo.Pointer(\"USER\"),\n            },\n        },\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.Res != nil {\n        // handle response\n    }\n}"
-        - lang: Java
-          label: Java (API Client)
-          source: |-
-            package hello.world;
-
-            import com.glean.api_client.glean_api_client.Glean;
-            import com.glean.api_client.glean_api_client.models.components.AgentRunCreate;
-            import com.glean.api_client.glean_api_client.models.components.Message;
-            import com.glean.api_client.glean_api_client.models.errors.ErrorResponse;
-            import com.glean.api_client.glean_api_client.models.errors.UnauthorizedAgentToolsError;
-            import com.glean.api_client.glean_api_client.models.operations.CreateAndStreamRunResponse;
-            import java.lang.Exception;
-            import java.util.List;
-
-            public class Application {
-
-                public static void main(String[] args) throws ErrorResponse, UnauthorizedAgentToolsError, Exception {
-
-                    Glean sdk = Glean.builder()
-                            .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
-                        .build();
-
-                    AgentRunCreate req = AgentRunCreate.builder()
-                            .agentId("<id>")
-                            .messages(List.of(
-                                Message.builder()
-                                    .role("USER")
-                                    .build()))
-                            .build();
-
-                    CreateAndStreamRunResponse res = sdk.client().agents().runStream()
-                            .request(req)
-                            .call();
-
-                    if (res.res().isPresent()) {
-                        System.out.println(res.res().get());
-                    }
-                }
-            }
   /rest/api/v1/agents/runs/wait:
     post:
       tags:
@@ -876,96 +622,18 @@ paths:
                 $ref: '#/components/schemas/UnauthorizedAgentToolsError'
         '500':
           description: Internal server error
+      x-glean-deprecated:
+        docs: https://developers.glean.com/api/platform-api/agents-overview
+        id: 683b90e1-48d3-4d7a-a32d-b48eb194fcf0
+        introduced: '2026-08-25'
+        message: Use POST /api/agents/{agent_id}/runs instead.
+        removal: '2027-04-15'
+      deprecated: true
+      x-speakeasy-deprecation-message: 'Deprecated on 2026-08-25, removal scheduled for 2027-04-15: Use POST /api/agents/{agent_id}/runs instead.'
       security:
         - APIToken: []
       x-speakeasy-group: client.agents
       x-speakeasy-name-override: run
-      x-codeSamples:
-        - lang: Python
-          label: Python (API Client)
-          source: |-
-            from glean.api_client import Glean
-            import os
-
-
-            with Glean(
-                api_token=os.getenv("GLEAN_API_TOKEN", ""),
-                server_url="https://mycompany-be.glean.com",
-            ) as glean:
-
-                res = glean.client.agents.run(agent_id="<id>", messages=[
-                    {
-                        "role": "USER",
-                    },
-                ])
-
-                # Handle response
-                print(res)
-        - lang: JavaScript
-          label: Typescript (API Client)
-          source: |-
-            import { Glean } from "@gleanwork/api-client";
-
-            const glean = new Glean({
-              apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
-              serverURL: "https://mycompany-be.glean.com",
-            });
-
-            async function run() {
-              const result = await glean.client.agents.run({
-                agent_id: "<id>",
-                messages: [
-                  {
-                    role: "USER",
-                  },
-                ],
-              });
-
-              console.log(result);
-            }
-
-            run();
-        - lang: Go
-          label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Client.Agents.Run(ctx, components.AgentRunCreate{\n        AgentID: \"<id>\",\n        Messages: []components.Message{\n            components.Message{\n                Role: apiclientgo.Pointer(\"USER\"),\n            },\n        },\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.AgentRunWaitResponse != nil {\n        // handle response\n    }\n}"
-        - lang: Java
-          label: Java (API Client)
-          source: |-
-            package hello.world;
-
-            import com.glean.api_client.glean_api_client.Glean;
-            import com.glean.api_client.glean_api_client.models.components.AgentRunCreate;
-            import com.glean.api_client.glean_api_client.models.components.Message;
-            import com.glean.api_client.glean_api_client.models.errors.UnauthorizedAgentToolsError;
-            import com.glean.api_client.glean_api_client.models.operations.CreateAndWaitRunResponse;
-            import java.lang.Exception;
-            import java.util.List;
-
-            public class Application {
-
-                public static void main(String[] args) throws UnauthorizedAgentToolsError, Exception {
-
-                    Glean sdk = Glean.builder()
-                            .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
-                        .build();
-
-                    AgentRunCreate req = AgentRunCreate.builder()
-                            .agentId("<id>")
-                            .messages(List.of(
-                                Message.builder()
-                                    .role("USER")
-                                    .build()))
-                            .build();
-
-                    CreateAndWaitRunResponse res = sdk.client().agents().run()
-                            .request(req)
-                            .call();
-
-                    if (res.agentRunWaitResponse().isPresent()) {
-                        System.out.println(res.agentRunWaitResponse().get());
-                    }
-                }
-            }
 components:
   schemas:
     AgentExecutionStatus:

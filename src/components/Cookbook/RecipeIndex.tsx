@@ -201,8 +201,8 @@ export default function RecipeIndex({
                   Capability
                 </label>
                 <select
-                  className={`${styles.filterSelect} ${
-                    activeCapability !== 'all' ? styles.filterSelectActive : ''
+                  className={`gdt-select ${
+                    activeCapability !== 'all' ? 'gdt-select--active' : ''
                   }`}
                   id="recipe-capability"
                   onChange={(event) =>
@@ -224,8 +224,8 @@ export default function RecipeIndex({
                   Surface
                 </label>
                 <select
-                  className={`${styles.filterSelect} ${
-                    activeSurface !== 'all' ? styles.filterSelectActive : ''
+                  className={`gdt-select ${
+                    activeSurface !== 'all' ? 'gdt-select--active' : ''
                   }`}
                   id="recipe-surface"
                   onChange={(event) =>

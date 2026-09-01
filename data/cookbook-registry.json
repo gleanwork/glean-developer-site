@@ -244,14 +244,14 @@
   {
     "id": "company-answers",
     "title": "Company Answers: a cited Q&A page on your own content",
-    "description": "The hello-world of Glean apps: one page, one input, one permission-aware cited answer — built two ways, with the Web SDK and with the Chat API.",
+    "description": "The hello-world of Glean apps: one page, one input, one permission-aware cited answer, built two ways, with the Web SDK and with the Chat API.",
     "sidebarLabel": "Company Answers",
     "preview": {
       "path": "recipes/company-answers/assets/preview.webp",
       "alt": "Company Answers showing a grounded response with source citations",
       "caption": "A permission-aware answer grounded in company knowledge."
     },
-    "surfaces": ["client-api", "sdk-client", "web-sdk"],
+    "surfaces": ["web-sdk", "platform-api"],
     "capabilities": ["chat", "embed"],
     "status": "showcase",
     "category": "search",
@@ -264,9 +264,10 @@
     "buildMethod": "scaffold",
     "languages": ["typescript"],
     "prerequisites": [
-      "A Glean instance with content indexed",
-      "For the Web SDK path: an existing Glean session in your normal browser",
-      "Node 20.19+ or 22.12+"
+      "Node 20.19+ or 22.12+",
+      "Your work email, so setup can find your Glean tenant",
+      "Content already indexed in Glean",
+      "Web SDK path only: you are already signed in to Glean in your normal browser"
     ],
     "demoQueries": [
       {
@@ -317,29 +318,37 @@
         },
         "steps": [
           {
-            "title": "Scaffold the project",
+            "title": "Copy the project onto your machine",
             "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/company-answers/web-sdk company-answers",
-            "kind": "scaffold"
+            "kind": "scaffold",
+            "description": "Creates a company-answers folder in whatever directory you run this from. Every command after this one runs inside that folder."
           },
           {
             "title": "Install dependencies",
             "command": "cd company-answers && npm install",
-            "kind": "install"
+            "kind": "install",
+            "description": "Installs the Glean Web SDK and the Vite dev server that hosts the page."
           },
           {
-            "title": "Configure the tenant",
+            "title": "Find your Glean tenant",
             "command": "cd company-answers && npm run configure -- --email \"<work-email>\"",
-            "description": "Enter the user's work email when prompted. The shipped discovery command writes VITE_GLEAN_BACKEND to .env.local. Set VITE_GLEAN_INITIAL_MESSAGE to the topic they supplied.",
+            "description": "Your email is used once to find which Glean tenant you belong to. The command creates .env.local and fills in VITE_GLEAN_BACKEND. It does not set the first question.",
             "kind": "configure"
           },
           {
-            "title": "Run it",
-            "command": "cd company-answers && npm run dev",
-            "kind": "run"
+            "title": "Set the first question",
+            "description": "Open .env.local and set VITE_GLEAN_INITIAL_MESSAGE to a question about content you know exists in Glean, for example your PTO policy. The page seeds chat with that question.",
+            "kind": "configure"
           },
           {
-            "title": "Verify",
-            "description": "Give the user the exact printed local URL to open in their normal signed-in browser. Ask them to try a topic they know exists in their Glean instance and confirm a real, cited answer renders inside Glean's chat UI.",
+            "title": "Open the page",
+            "command": "cd company-answers && npm run dev",
+            "kind": "run",
+            "description": "Starts Vite and prints a Local URL. Open that URL yourself in your normal browser where you are already signed in to Glean."
+          },
+          {
+            "title": "Check it against your own content",
+            "description": "Once the page is open in your signed-in browser, confirm Glean's chat UI renders a cited answer to the question you set. Try a second topic you know exists.",
             "kind": "verify-live"
           }
         ]
@@ -347,7 +356,7 @@
       {
         "repoPath": "recipes/company-answers/chat-api",
         "language": "typescript",
-        "description": "Chat API variant — one chat.create call, citations rendered",
+        "description": "Chat API variant — glean.chat.create, citations rendered",
         "execution": {
           "type": "local-web",
           "questions": [
@@ -384,31 +393,45 @@
         },
         "steps": [
           {
-            "title": "Scaffold the project",
+            "title": "Copy the project onto your machine",
             "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/company-answers/chat-api company-answers",
-            "kind": "scaffold"
+            "kind": "scaffold",
+            "description": "Creates a company-answers folder in whatever directory you run this from. Every command after this one runs inside that folder."
           },
           {
             "title": "Install dependencies",
             "command": "cd company-answers && npm install",
-            "kind": "install"
+            "kind": "install",
+            "description": "Installs the Glean API client and the small local server that serves the page."
           },
           {
-            "title": "Set credentials",
+            "title": "See it work before you connect anything",
+            "command": "cd company-answers && npm run verify:fixture",
+            "description": "Runs the page against recorded answers for a fictional company named Acme, so you can see cited PTO answers before you connect anything. This needs no Glean credentials.",
+            "kind": "verify-fixture"
+          },
+          {
+            "title": "Sign in to Glean",
             "command": "cd company-answers && npm run login -- --email \"<work-email>\"",
-            "description": "The shipped command discovers the tenant from the user's work email, signs them in with OAuth, and writes the backend plus short-lived access token to ignored .env. Set GLEAN_DEMO_QUERY to the supplied topic. If tenant OAuth is unavailable, enter a CHAT-scoped API token as the fallback.",
+            "description": "Your email is used once to find which Glean tenant you belong to, then a browser window opens for you to approve access. The command creates the .env file for you and fills in GLEAN_SERVER_URL and GLEAN_API_TOKEN. If your tenant has not enabled OAuth, skip this command and do it by hand instead: copy .env.example to .env, then fill in your Glean instance URL and a Glean API token that has the CHAT scope.",
             "kind": "authenticate"
           },
           {
-            "title": "Verify",
+            "title": "Choose a question you know your docs can answer",
+            "description": "Signing in does not pick a topic for you, so open .env and set GLEAN_DEMO_QUERY to a question about your own content, for example your PTO policy.",
+            "kind": "configure"
+          },
+          {
+            "title": "Check it against your own content",
             "command": "cd company-answers && npm run verify",
-            "description": "Takes about 1–3 minutes. It starts its own server and checks the configured topic for a non-empty answer with deduplicated citations.",
+            "description": "Takes 1 to 3 minutes. It starts its own server, asks your Glean instance the question you set, and fails if the answer comes back without citing a real document.",
             "kind": "verify-live"
           },
           {
-            "title": "Run it",
+            "title": "Open the page",
             "command": "cd company-answers && npm start",
-            "kind": "run"
+            "kind": "run",
+            "description": "Starts the server and prints a Local URL. Open that URL in your browser."
           }
         ]
       }
@@ -416,7 +439,7 @@
     "steps": [
       {
         "title": "Pick a path",
-        "description": "Path A (Web SDK) renders Glean's own chat UI for you — fastest to stand up, no backend code. Path B (Chat API) calls the Chat API directly from your own backend — you own every pixel of the UI and the request/response shape. Both reach the same place: a permission-aware, cited answer.",
+        "description": "Path A (Web SDK) renders Glean's own chat UI for you. Fastest to stand up, no backend code. Path B (Chat API) calls glean.chat.create from your own backend. You own every pixel of the UI. Both end in the same place: a permission-aware, cited answer.",
         "kind": "choose"
       }
     ],
@@ -434,7 +457,7 @@
       },
       {
         "label": "Path B: Chat API",
-        "caption": "chat.create — you own the UI",
+        "caption": "glean.chat.create — you own the UI",
         "category": "agent"
       },
       {
@@ -443,19 +466,18 @@
         "emphasized": true
       }
     ],
-    "aiPrompt": "Build Company Answers following https://developers.glean.com/cookbook/company-answers. Ask whether to use (A) Web SDK or (B) Chat API. Path A requires the tenant's HTTPS backend origin and a topic the user knows exists; pass the backend explicitly to renderChat, start Vite, report its exact URL, and wait for the user to verify it in their normal signed-in browser without browser automation. Path B keeps the CHAT-scoped token server-side, calls glean.client.chat.create, joins CONTENT fragments, and renders deduplicated fragment citations. Verify a tenant-relevant cited answer and do not claim a live check without the user's result.",
-    "llmContext": "Path A uses renderChat with an explicit backend and the user's existing Glean browser session; live verification is user-mediated in their normal signed-in browser. Path B constructs Glean with apiToken plus instance or serverURL, reads answer text only from CONTENT messages, collects citations from fragment.citation.sourceDocument, deduplicates by URL, keeps the token server-side, sets saveChat:false for verification, and treats an empty joined answer as retryable.",
+    "aiPrompt": "Build Company Answers following https://developers.glean.com/cookbook/company-answers. Ask whether to use (A) Web SDK or (B) Chat API, then collect that path's inputs before starting. Path A: run the shipped configure command with the work email already supplied, write VITE_GLEAN_BACKEND, then set VITE_GLEAN_INITIAL_MESSAGE to the topic they know exists. Start Vite, report the exact local URL, and wait for the user to open it in their normal signed-in browser. Never automate that browser. Path B: run npm run verify:fixture first (no credentials). Sign in with the shipped login command, which writes GLEAN_SERVER_URL and GLEAN_API_TOKEN only. Then set GLEAN_DEMO_QUERY to their topic. Keep the token server-side. Call the Chat API with glean.chat.create, stream:false, store:false, and X_GLEAN_INCLUDE_EXPERIMENTAL=true. Parse ASSISTANT OUTPUT_TEXT content and citations from annotations[].sources. Retry empty output once. Verify a cited answer on the user's own content before claiming live success.",
+    "llmContext": "Path A uses renderChat with an explicit backend and the user's existing Glean browser session; live verification is user-mediated in their normal signed-in browser. Path B uses the Chat API through glean.chat.create with stream:false, store:false, and X_GLEAN_INCLUDE_EXPERIMENTAL=true. Construct Glean with apiToken plus serverURL. Read ASSISTANT OUTPUT_TEXT content and citations from annotations[].sources. Retry empty output once. Default first run is npm run verify:fixture with GLEAN_USE_FIXTURE=true. Login does not write GLEAN_DEMO_QUERY.",
     "goDependency": false,
     "featured": true,
     "hidden": true,
     "tags": ["starter", "dual-implementation"],
-    "lastVerified": "2026-08-02",
+    "lastVerified": "2026-08-24",
     "content": {
       "problem": "Every team has the same first Glean app: a single page where anyone can ask\na company question and get a cited, permission-aware answer. There are two\nequally valid ways to build it — this recipe builds both, side by side, so\nyou can pick the trade-off that fits your app.",
       "takeItFurther": [
-        "Swap in a specific agent by passing its `agentId` — to the chat component for Path A, or in the `chat.create` request for Path B.",
-        "Stream responses instead of waiting for the full answer (both the Web SDK and the Chat API support streaming).",
-        "Add follow-up prompt suggestions from the Chat API response's `followUpPrompts`."
+        "Swap in a specific agent by passing its `agentId` to `renderChat` on Path A.",
+        "Keep Path B on `stream:false` until you own a stream parser for Chat API events."
       ]
     }
   },
@@ -2874,7 +2896,7 @@
   {
     "id": "search-with-discovered-filters",
     "title": "Search Glean with discovered filters",
-    "description": "Use the official TypeScript API client to discover the datasources and common filter fields available in your Glean instance, then apply a returned selection to permission-aware Platform Search.",
+    "description": "Use the official TypeScript API client to search across all of your Glean content by default, or discover datasources and common filter fields before applying an explicit selection to permission-aware Platform Search.",
     "sidebarLabel": "Search with filters",
     "codeWalkthrough": {
       "intro": "The runnable scaffold uses the published Glean auth package for tenant discovery and refreshable OAuth credentials, gives that token provider to the official API client, and keeps the Search sequence explicit.",
@@ -2888,17 +2910,17 @@
         },
         {
           "title": "Discover filters, then search",
-          "description": "Keep the API sequence explicit: list visible fields, request query-specific suggestions for one datasource, and pass the selected filter to Search.",
+          "description": "Search broadly by default, or list visible fields and request query-specific suggestions when you explicitly narrow the query to one datasource.",
           "source": "src/search.ts",
           "language": "typescript",
-          "code": "import {\n  chooseDatasource,\n  chooseFilter,\n  createTerminal,\n  parseCliOptions,\n  printSearchResponse,\n} from './cli.js';\nimport { createGleanClient } from './client.js';\nimport { formatSdkError } from './errors.js';\n\n/**\n * Lists visible datasources and common filter fields, requests query-specific\n * values for one datasource, then searches with the selected filter.\n *\n * @remarks\n * Filter discovery returns a best-effort catalog and may omit valid fields.\n * Query-specific values are bounded suggestions, not guaranteed matches. The\n * final Search request still enforces the caller's permissions.\n */\nasync function main() {\n  const cliOptions = parseCliOptions();\n  const glean = await createGleanClient({\n    email: cliOptions.email,\n    serverUrl: cliOptions.serverUrl,\n  });\n  const terminal = createTerminal();\n\n  try {\n    const { result: catalog } = await glean.search.listFilters();\n    const datasource = await chooseDatasource(\n      catalog.datasources,\n      cliOptions.datasource,\n      cliOptions.autoSelect,\n      terminal,\n    );\n\n    const { result: suggestions } = await glean.search.listFilters(\n      [datasource],\n      cliOptions.query,\n    );\n    const filterInfo = suggestions.datasources.find(\n      (candidate) => candidate.datasource === datasource,\n    );\n    if (!filterInfo) {\n      throw new Error(\n        `No filter metadata for \"${datasource}\" (request ${suggestions.request_id}).`,\n      );\n    }\n\n    const filter = await chooseFilter(\n      filterInfo,\n      cliOptions.filter,\n      cliOptions.autoSelect,\n      terminal,\n    );\n    const searchResponse = await glean.search.query({\n      query: cliOptions.query,\n      page_size: 10,\n      datasources: [datasource],\n      ...(filter ? { filters: [filter] } : {}),\n    });\n\n    printSearchResponse(searchResponse, datasource, filter);\n  } finally {\n    terminal?.close();\n  }\n}\n\nmain().catch((error: unknown) => {\n  console.error(formatSdkError(error));\n  process.exitCode = 1;\n});\n"
+          "code": "import {\n  chooseDatasources,\n  chooseFilter,\n  createTerminal,\n  parseCliOptions,\n  printSearchResponse,\n} from './cli.js';\nimport { createGleanClient } from './client.js';\nimport type { PlatformFilter } from '@gleanwork/api-client/models/components';\nimport { formatSdkError } from './errors.js';\n\n/**\n * Searches across all datasources by default. When a datasource list is\n * supplied, discovers query-specific values for a single datasource and\n * applies the selected filter.\n *\n * @remarks\n * Filter discovery returns a best-effort catalog and may omit valid fields.\n * Query-specific values are bounded suggestions, not guaranteed matches. The\n * final Search request still enforces the caller's permissions.\n */\nasync function main() {\n  const cliOptions = parseCliOptions();\n  const glean = await createGleanClient({\n    email: cliOptions.email,\n    serverUrl: cliOptions.serverUrl,\n  });\n  const terminal = createTerminal();\n\n  try {\n    let datasources: string[] | undefined;\n    let filter: PlatformFilter | undefined = cliOptions.filter;\n\n    if (cliOptions.datasources || cliOptions.autoSelect || filter) {\n      const { result: catalog } = await glean.search.listFilters();\n      datasources = await chooseDatasources(\n        catalog.datasources,\n        cliOptions.datasources,\n        cliOptions.autoSelect,\n        terminal,\n      );\n\n      if (!filter && datasources.length === 1) {\n        const datasource = datasources[0];\n        const { result: suggestions } = await glean.search.listFilters(\n          datasources,\n          cliOptions.query,\n        );\n        const filterInfo = suggestions.datasources.find(\n          (candidate) => candidate.datasource === datasource,\n        );\n        if (!filterInfo) {\n          throw new Error(\n            `No filter metadata for \"${datasource}\" (request ${suggestions.request_id}).`,\n          );\n        }\n\n        filter = await chooseFilter(\n          filterInfo,\n          undefined,\n          cliOptions.autoSelect,\n          terminal,\n        );\n      }\n    }\n\n    const searchRequest = {\n      query: cliOptions.query,\n      page_size: 10,\n      ...(datasources ? { datasources } : {}),\n      ...(filter ? { filters: [filter] } : {}),\n    };\n    let cursor: string | undefined;\n    let resultOffset = 0;\n\n    for (let page = 1; page <= cliOptions.pages; page += 1) {\n      const searchResponse = await glean.search.query({\n        ...searchRequest,\n        ...(cursor ? { cursor } : {}),\n      });\n\n      printSearchResponse(\n        searchResponse,\n        datasources,\n        filter,\n        page,\n        resultOffset,\n        cliOptions.pages,\n      );\n      resultOffset += searchResponse.results.length;\n\n      if (!searchResponse.has_more) break;\n      if (!searchResponse.next_cursor) {\n        throw new Error('Search reported has_more without a next_cursor.');\n      }\n      if (searchResponse.next_cursor === cursor) {\n        throw new Error(\n          'Search returned the same cursor for consecutive pages.',\n        );\n      }\n      cursor = searchResponse.next_cursor;\n    }\n  } finally {\n    terminal?.close();\n  }\n}\n\nmain().catch((error: unknown) => {\n  console.error(formatSdkError(error));\n  process.exitCode = 1;\n});\n"
         }
       ]
     },
     "surfaces": ["platform-api"],
     "capabilities": ["search"],
     "status": "quickstart",
-    "visibility": "preview",
+    "visibility": "public",
     "category": "search",
     "level": "Beginner",
     "levels": { "minimal": true, "wow": false },
@@ -2917,7 +2939,7 @@
     "demoQueries": [
       {
         "query": "Search for a topic you know exists in your Glean instance",
-        "expectedBehavior": "Lists the datasources and common filter fields visible to you, selects a datasource returned by discovery, applies a suggested EQUALS field value when one is available, and returns a valid permission-aware Search response without assuming a fixed result count."
+        "expectedBehavior": "Searches across all datasources by default and returns a valid permission-aware Search response without assuming a fixed result count. Explicit --datasources or --auto-select enables datasource and suggested-filter discovery."
       }
     ],
     "codeAssets": [
@@ -2940,9 +2962,9 @@
         "kind": "install"
       },
       {
-        "title": "Check the request flow with fixtures",
-        "description": "Runs executable fixture tests, ESLint, and the TypeScript compiler to validate catalog discovery, query-backed suggestions, retries, typed errors, field-filter propagation, and experimental headers without credentials or network access.",
-        "command": "cd search-with-discovered-filters && npm run check",
+        "title": "Run the fixture tests",
+        "description": "Runs the Vitest fixture suite without credentials or network access, covering catalog discovery, query-backed suggestions, retries, typed errors, field-filter propagation, and experimental headers.",
+        "command": "cd search-with-discovered-filters && npm test",
         "kind": "manual"
       },
       {
@@ -2953,14 +2975,14 @@
       },
       {
         "title": "Verify against your instance",
-        "description": "Uses your topic to discover current filters, automatically selects a returned datasource and suggested field value when available, then validates the Search response shape and pagination state.",
+        "description": "Searches your topic across all datasources and validates the Search response shape and pagination state. Add --pages 2 to fetch a second page, --datasources to narrow the query, or --auto-select to exercise the discovered datasource and suggested-filter path.",
         "command": "cd search-with-discovered-filters && npm run verify -- --email \"<work-email>\" --query \"<search-query>\"",
         "kind": "verify-live"
       },
       {
         "title": "Discover filters and search",
-        "description": "Runs the non-interactive CLI path, selecting the first returned datasource and suggested field value, then prints results, warnings, pagination state, and request IDs. Omit --auto-select when running interactively to choose them yourself.",
-        "command": "cd search-with-discovered-filters && npm start -- --email \"<work-email>\" --query \"<search-query>\" --auto-select",
+        "description": "Runs the non-interactive CLI path, selecting the first returned datasource and suggested field value, then prints results, warnings, pagination state, and request IDs. Add --pages 2 to fetch the next result page. Omit --auto-select when running interactively to choose them yourself.",
+        "command": "cd search-with-discovered-filters && npm start -- --email \"<work-email>\" --query \"<search-query>\" --auto-select --pages 2",
         "kind": "run"
       }
     ],
@@ -2988,7 +3010,7 @@
         "startsOwnServer": false
       },
       "run": {
-        "command": "cd search-with-discovered-filters && npm start -- --email \"<work-email>\" --query \"<search-query>\" --auto-select",
+        "command": "cd search-with-discovered-filters && npm start -- --email \"<work-email>\" --query \"<search-query>\" --auto-select --pages 2",
         "userBrowser": false
       }
     },
@@ -3015,8 +3037,8 @@
         "category": "search"
       }
     ],
-    "aiPrompt": "Scaffold and run the verified Search with discovered filters quickstart. Ask for the user's work email and one topic they know exists in their Glean instance. Run the fixture tests, sign in with @gleanwork/auth through DCR OAuth using the search scope, run live verification, then start the interactive CLI. Use @gleanwork/api-client's glean.search.listFilters() for catalog and query-backed discovery, then pass a returned datasource and either a suggested filter value or an explicit custom field/value to glean.search.query(). Enable experimental features through the SDK's documented includeExperimental constructor option. Do not recreate auth or SDK transport, impersonate another user, or claim the best-effort filter catalog is exhaustive.",
-    "llmContext": "Use @gleanwork/auth for tenant discovery, OAuth login, secure state, and refresh, then pass its async token provider to @gleanwork/api-client's apiToken option. Glean-issued OAuth tokens need no X-Glean-Auth-Type. If DCR cannot grant search, use an administrator-provisioned public client or explicit user-scoped SEARCH token. Use typed glean.search.listFilters() and glean.search.query(), with includeExperimental enabled. Catalog discovery returns datasource IDs and common fields. Query-backed discovery accepts one datasource and returns bounded, non-exhaustive suggestions. Apply returned values unchanged with EQUALS, but treat discovery as advisory and allow explicit nonblank custom fields. The caller's credentials remain the permission boundary. Let the SDK validate responses and surface typed errors; display warnings, request IDs, Retry-After guidance, and next_cursor without logging credentials or storing results.",
+    "aiPrompt": "Scaffold and run the verified Search with discovered filters quickstart. Ask for the user's work email and one topic they know exists in their Glean instance. Run the fixture tests, sign in with @gleanwork/auth through DCR OAuth using the search scope, run live verification across all datasources by default, then start the interactive CLI. Use @gleanwork/api-client's glean.search.listFilters() only when the user explicitly narrows the search with --datasources or --auto-select, then pass returned datasources and either a suggested filter value or an explicit custom field/value to glean.search.query(). Enable experimental features through the SDK's documented includeExperimental constructor option. Do not recreate auth or SDK transport, impersonate another user, or claim the best-effort filter catalog is exhaustive.",
+    "llmContext": "Use @gleanwork/auth for tenant discovery, OAuth login, secure state, and refresh, then pass its async token provider to @gleanwork/api-client's apiToken option. Glean-issued OAuth tokens need no X-Glean-Auth-Type. If DCR cannot grant search, use an administrator-provisioned public client or explicit user-scoped SEARCH token. Use typed glean.search.listFilters() and glean.search.query(), with includeExperimental enabled. Catalog discovery returns datasource IDs and common fields. Query-backed discovery accepts one datasource and returns bounded, non-exhaustive suggestions. Apply returned values unchanged with EQUALS, but treat discovery as advisory and allow explicit nonblank custom fields. The caller's credentials remain the permission boundary. Let the SDK validate responses and surface typed errors; display warnings and request IDs, and pass next_cursor back as cursor for bounded pagination without logging credentials or exposing the opaque token.",
     "goDependency": false,
     "featured": true,
     "hidden": false,
@@ -3024,7 +3046,7 @@
     "content": {
       "problem": "Search filters differ across Glean instances and connected sources. Hard-coding a datasource or field from another environment makes a first integration brittle, while hand-writing HTTP hides the supported client developers should use. This quickstart uses the official TypeScript API client to discover what the signed-in user can filter, then carries that returned selection into a typed Search request that matches the reader's own instance and permissions.",
       "takeItFurther": [
-        "Follow next_cursor to paginate without treating it as data or constructing it yourself.",
+        "Use --pages to follow next_cursor through a bounded number of Search requests without treating the cursor as data or constructing it yourself.",
         "Persist the catalog briefly for UI rendering, but refresh it and continue to treat it as best effort rather than an exhaustive schema.",
         "Build a faceted search interface that requests query-specific values after the user chooses one datasource.",
         "Add time_range alongside discovered filters for bounded recency searches."

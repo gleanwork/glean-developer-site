@@ -9,6 +9,7 @@ import { tenantProfileStore } from '@site/src/lib/tenantProfile';
 import recipesData from '@site/src/data/recipes.json';
 import RecipeIndex from './RecipeIndex';
 import RecipeLayout, {
+  humanizeStepCommands,
   RecipeArchitecture,
   RecipeCodeWalkthrough,
   RecipeSteps,
@@ -31,6 +32,9 @@ vi.mock('@theme/CodeBlock', () => ({
   }) => (
     <div>
       {title ? <span>{title}</span> : null}
+      <button aria-label="Copy code to clipboard" type="button">
+        Copy
+      </button>
       <pre>
         <code>{children}</code>
       </pre>
@@ -340,7 +344,11 @@ describe('RecipeIndex', () => {
   it('uses scalable dropdown controls instead of a growing chip matrix', () => {
     render(<RecipeIndex {...props} />);
 
-    expect(screen.getAllByRole('combobox')).toHaveLength(2);
+    const selects = screen.getAllByRole('combobox');
+    expect(selects).toHaveLength(2);
+    expect(
+      selects.every((select) => select.classList.contains('gdt-select')),
+    ).toBe(true);
     expect(
       screen.getByRole('combobox', { name: 'Capability' }),
     ).toHaveDisplayValue('All capabilities');
@@ -352,6 +360,8 @@ describe('RecipeIndex', () => {
     ).not.toBeInTheDocument();
 
     const css = readCss('RecipeIndex.module.css');
+    expect(css).not.toMatch(/\.filterSelect\s*\{/);
+    expect(css).not.toMatch(/\.filterGroup::after\s*\{/);
     expect(css).toMatch(
       /\.filterBar\s*\{[^}]*background:\s*var\(--gdt-bg-light\)[^}]*border-radius:/s,
     );
@@ -488,6 +498,54 @@ describe('RecipeLayout', () => {
     ).toBeInTheDocument();
     expect(screen.getByText('Run it yourself')).toBeInTheDocument();
     expect(screen.getByText('Install dependencies')).toBeInTheDocument();
+  });
+
+  it('renders each walkthrough command as a copyable Bash block', () => {
+    render(
+      <RecipeLayout
+        plugin={plugin}
+        recipe={makeRecipe({
+          buildMethod: 'scaffold',
+          steps: [
+            {
+              kind: 'install',
+              title: 'Install dependencies',
+              command: 'cd project && npm install',
+            },
+            {
+              kind: 'run',
+              title: 'Run the app',
+              command: 'cd project && npm start',
+            },
+          ],
+        })}
+      >
+        <RecipeSteps />
+      </RecipeLayout>,
+    );
+
+    expect(screen.getByText('cd project && npm install')).toBeInTheDocument();
+    expect(screen.getByText('npm start')).toBeInTheDocument();
+    expect(
+      screen.queryByText('cd project && npm start'),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getAllByRole('button', { name: 'Copy code to clipboard' }),
+    ).toHaveLength(2);
+  });
+
+  it('preserves the first directory change and different directories', () => {
+    const commands = humanizeStepCommands([
+      { title: 'Install', command: 'cd project && npm install' },
+      { title: 'Test', command: 'cd project && npm test' },
+      { title: 'Other project', command: 'cd other && npm start' },
+    ]);
+
+    expect(commands.map((step) => step.command)).toEqual([
+      'cd project && npm install',
+      'npm test',
+      'cd other && npm start',
+    ]);
   });
 
   it('renders a compact preview that opens and closes a full-size dialog', async () => {

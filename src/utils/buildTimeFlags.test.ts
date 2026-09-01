@@ -1,26 +1,25 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-const originalCookbooks = process.env.FF_COOKBOOKS;
+const originalExample = process.env.FF_EXAMPLE_FLAG;
 
 afterEach(() => {
-  if (originalCookbooks === undefined) {
-    delete process.env.FF_COOKBOOKS;
+  if (originalExample === undefined) {
+    delete process.env.FF_EXAMPLE_FLAG;
   } else {
-    process.env.FF_COOKBOOKS = originalCookbooks;
+    process.env.FF_EXAMPLE_FLAG = originalExample;
   }
   vi.resetModules();
 });
 
 describe('getBuildTimeFlags', () => {
-  it('maps the documented FF_COOKBOOKS variable to the cookbook flag', async () => {
-    process.env.FF_COOKBOOKS = 'true';
+  it('maps FF_ variables to kebab-case feature flag names', async () => {
+    process.env.FF_EXAMPLE_FLAG = 'true';
     vi.resetModules();
 
     const { getBuildTimeFlags } = await import('./buildTimeFlags');
 
     expect(getBuildTimeFlags()).toMatchObject({
-      cookbook: { enabled: true },
+      'example-flag': { enabled: true },
     });
-    expect(getBuildTimeFlags()).not.toHaveProperty('cookbooks');
   });
 });
