@@ -92,9 +92,8 @@ To add a recipe:
    `"visibility": "preview"` gets an unlisted, no-index page but is omitted from
    public discovery and cookbook plugin actions; use
    `?ff_recipe=<recipe-id>` to reveal its card and detail page.
-3. Verify with `pnpm recipes:compile`, `pnpm test`, and `pnpm build`. The Cookbooks
-   nav and homepage band are behind the `cookbook` feature flag — build with
-   `FF_COOKBOOKS=true` to see them.
+3. Verify with `pnpm recipes:compile`, `pnpm test`, and `pnpm build`. The Cookbook
+   nav and homepage band are public by default.
 
 Only document verified APIs. Source samples from the published guides (e.g.
 `docs/libraries/web-sdk/`), never from memory: scope names, endpoints and function
