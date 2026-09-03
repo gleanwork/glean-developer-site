@@ -990,7 +990,9 @@ describe('RecipeLayout', () => {
         .getByRole('heading', { name: 'Iterate createStream events' })
         .querySelector('code')?.textContent,
     ).toBe('createStream');
-    expect(screen.getByText('EventStream').tagName).toBe('CODE');
+    expect(
+      document.querySelector(`.${layoutStyles.archCaption} code`)?.textContent,
+    ).toBe('EventStream');
     expect(
       document.querySelector(`.${layoutStyles.archLabel} code`)?.textContent,
     ).toBe('createStream');
