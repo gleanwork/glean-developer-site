@@ -12,7 +12,11 @@ import RecipeLayout, {
   humanizeStepCommands,
   RecipeArchitecture,
   RecipeCodeWalkthrough,
+  RecipeDemoQueries,
+  RecipePrereqs,
+  RecipeSection,
   RecipeSteps,
+  TakeItFurther,
 } from './RecipeLayout';
 import RecipeShowcaseCarousel, {
   selectShowcaseRecipes,
@@ -926,6 +930,123 @@ describe('RecipeLayout', () => {
       screen.getByText('https://app.glean.com/admin/about-glean').tagName,
     ).toBe('CODE');
     expect(screen.getByText('acme').tagName).toBe('CODE');
+  });
+
+  it('renders backticks in banner, walkthrough, architecture, and prereqs as code', () => {
+    render(
+      <RecipeLayout
+        plugin={plugin}
+        recipe={makeRecipe({
+          description: "Use the client's `createStream` `EventStream`.",
+          codeWalkthrough: {
+            intro: 'The scaffold uses `glean.chat.createStream`.',
+            examples: [
+              {
+                title: 'Iterate `createStream` events',
+                description: 'For-await the typed `EventStream`.',
+                source: 'src/stream.ts',
+                language: 'typescript',
+                code: 'await client.chat.createStream({});',
+              },
+            ],
+          },
+          architecture: [
+            {
+              label: '`createStream`',
+              caption: 'typed `EventStream`',
+              emphasized: true,
+            },
+          ],
+          prerequisites: ['The steps use `npx` and `npm`.'],
+          demoQueries: [
+            {
+              query: 'What is the PTO policy?',
+              expectedBehavior:
+                'Returns a streamed response with a `conversation_id`.',
+            },
+          ],
+          preview: {
+            path: 'recipes/embed-search-chat/assets/preview.webp',
+            alt: 'Preview',
+            caption: 'A `createStream` session with citations.',
+          },
+        })}
+      >
+        <RecipeCodeWalkthrough />
+        <RecipeArchitecture />
+        <RecipePrereqs />
+        <RecipeDemoQueries />
+      </RecipeLayout>,
+    );
+
+    const banner = document.querySelector(`.${layoutStyles.bannerDesc}`);
+    expect(banner?.querySelectorAll('code')).toHaveLength(2);
+    expect(banner?.textContent).toBe(
+      "Use the client's createStream EventStream.",
+    );
+    expect(screen.getByText('glean.chat.createStream').tagName).toBe('CODE');
+    expect(
+      screen
+        .getByRole('heading', { name: 'Iterate createStream events' })
+        .querySelector('code')?.textContent,
+    ).toBe('createStream');
+    expect(screen.getByText('EventStream').tagName).toBe('CODE');
+    expect(
+      document.querySelector(`.${layoutStyles.archLabel} code`)?.textContent,
+    ).toBe('createStream');
+    expect(screen.getByText('npx').tagName).toBe('CODE');
+    expect(screen.getByText('conversation_id').tagName).toBe('CODE');
+    expect(
+      document.querySelector(`.${layoutStyles.previewDialogCaption} code`)
+        ?.textContent,
+    ).toBe('createStream');
+  });
+
+  it('renders RecipeSection labels and string children as inline code', () => {
+    render(
+      <RecipeLayout plugin={plugin} recipe={makeRecipe({})}>
+        <RecipeSection label="`createStream` is SDK-only">
+          SDK callers use `createStream()` instead of setting `stream`.
+        </RecipeSection>
+      </RecipeLayout>,
+    );
+
+    expect(
+      document.querySelector(`.${layoutStyles.sectionLabel} code`)?.textContent,
+    ).toBe('createStream');
+    expect(screen.getByText('createStream()').tagName).toBe('CODE');
+    expect(screen.getByText('stream').tagName).toBe('CODE');
+    expect(screen.queryByText(/`createStream`/)).not.toBeInTheDocument();
+  });
+
+  it('renders TakeItFurther markdown list strings as inline code', () => {
+    render(
+      <RecipeLayout plugin={plugin} recipe={makeRecipe({})}>
+        <TakeItFurther>
+          {`- Persist \`conversation_id\` in a session.
+- Add cancellation with \`AbortController\`.`}
+        </TakeItFurther>
+      </RecipeLayout>,
+    );
+
+    expect(screen.getByText('conversation_id').tagName).toBe('CODE');
+    expect(screen.getByText('AbortController').tagName).toBe('CODE');
+    expect(screen.queryByText(/`conversation_id`/)).not.toBeInTheDocument();
+  });
+
+  it('renders TakeItFurther list item children as inline code', () => {
+    render(
+      <RecipeLayout plugin={plugin} recipe={makeRecipe({})}>
+        <TakeItFurther>
+          <ul>
+            <li>Render spans using `start_index` and `end_index`.</li>
+          </ul>
+        </TakeItFurther>
+      </RecipeLayout>,
+    );
+
+    expect(screen.getByText('start_index').tagName).toBe('CODE');
+    expect(screen.getByText('end_index').tagName).toBe('CODE');
   });
 
   it('shows the email lookup on third-party recipes when tenant personalization is on', async () => {
