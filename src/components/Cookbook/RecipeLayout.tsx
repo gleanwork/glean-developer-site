@@ -20,6 +20,7 @@ import RecipeInstanceLookup from './RecipeInstanceLookup';
 import { humanizeVariantLabel, variantScopeGroups } from './authContexts';
 import styles from './RecipeLayout.module.css';
 import catStyles from './categories.module.css';
+import { renderInlineCode, renderProse } from './inlineCode';
 
 /** Base URL for runnable recipe code — the glean-cookbook repo (private until launch). */
 export const COOKBOOK_REPO_URL =
@@ -146,6 +147,33 @@ function ActionCard({
   );
 }
 
+/**
+ * MDX parses the callout body, so bullets normally arrive as a list element
+ * that `renderProse` walks. A recipe that reaches the component with the raw
+ * markdown string instead still gets one row per bullet.
+ */
+function takeItFurtherItems(children: React.ReactNode): React.ReactNode[] {
+  const items: React.ReactNode[] = [];
+
+  const pushMarkdownLines = (text: string): void => {
+    for (const line of text.split('\n')) {
+      const bullet = line.replace(/^\s*[-*]\s+/, '').trim();
+      if (bullet) items.push(renderInlineCode(bullet));
+    }
+  };
+
+  React.Children.forEach(children, (child) => {
+    if (child == null || typeof child === 'boolean') return;
+    if (typeof child === 'string') {
+      pushMarkdownLines(child);
+      return;
+    }
+    items.push(renderProse(child));
+  });
+
+  return items;
+}
+
 /** Section label — 12px uppercase blue, per handoff 4b. */
 export function RecipeSection({
   label,
@@ -156,8 +184,8 @@ export function RecipeSection({
 }): React.ReactElement {
   return (
     <div className={styles.section}>
-      <div className={styles.sectionLabel}>{label}</div>
-      {children}
+      <div className={styles.sectionLabel}>{renderInlineCode(label)}</div>
+      {renderProse(children)}
     </div>
   );
 }
@@ -177,12 +205,14 @@ export function RecipeCodeWalkthrough(): React.ReactElement | null {
 
   return (
     <RecipeSection label="Code walkthrough">
-      <p className={styles.walkthroughIntro}>{walkthrough.intro}</p>
+      <p className={styles.walkthroughIntro}>
+        {renderInlineCode(walkthrough.intro)}
+      </p>
       <div className={styles.walkthroughExamples}>
         {walkthrough.examples.map((example) => (
           <div className={styles.walkthroughExample} key={example.source}>
-            <h3>{example.title}</h3>
-            <p>{example.description}</p>
+            <h3>{renderInlineCode(example.title)}</h3>
+            <p>{renderInlineCode(example.description)}</p>
             <CodeBlock
               language={example.language}
               showLineNumbers
@@ -232,8 +262,12 @@ export function RecipeArchitecture(): React.ReactElement | null {
                 >
                   <ArchNodeIcon node={node} />
                 </span>
-                <span className={styles.archLabel}>{node.label}</span>
-                <span className={styles.archCaption}>{node.caption}</span>
+                <span className={styles.archLabel}>
+                  {renderInlineCode(node.label)}
+                </span>
+                <span className={styles.archCaption}>
+                  {renderInlineCode(node.caption)}
+                </span>
               </div>
             </React.Fragment>
           ))}
@@ -256,7 +290,7 @@ export function RecipePrereqs(): React.ReactElement {
               height: 18,
               color: 'var(--gdt-success)',
             })}
-            <span>{item}</span>
+            <span>{renderInlineCode(item)}</span>
           </div>
         ))}
       </div>
@@ -291,7 +325,7 @@ export function RecipeDemoQueries(): React.ReactElement | null {
               <p>
                 <strong>{demo.query}</strong>
               </p>
-              <p>{demo.expectedBehavior}</p>
+              <p>{renderInlineCode(demo.expectedBehavior)}</p>
             </div>
           </div>
         ))}
@@ -306,17 +340,6 @@ export function RecipeDemoQueries(): React.ReactElement | null {
       )}
     </RecipeSection>
   );
-}
-
-/** One numbered row in a steps timeline. */
-function renderInlineCode(text: string): React.ReactNode {
-  const parts = text.split(/(`[^`]+`)/);
-  return parts.map((part, index) => {
-    if (part.startsWith('`') && part.endsWith('`') && part.length > 2) {
-      return <code key={index}>{part.slice(1, -1)}</code>;
-    }
-    return part;
-  });
 }
 
 type DisplayStep = {
@@ -362,7 +385,7 @@ function StepRow({
       <span className={styles.stepNum}>{index}</span>
       <div className={styles.stepBody}>
         <p>
-          <strong>{step.title}</strong>
+          <strong>{renderInlineCode(step.title)}</strong>
         </p>
         {step.description && <p>{renderInlineCode(step.description)}</p>}
         {step.command && (
@@ -404,7 +427,7 @@ export function RecipeSteps({
           {steps.map((step, i) => (
             <div className={styles.stepRow} key={i}>
               <span className={styles.stepNum}>{i + 1}</span>
-              <div className={styles.stepBody}>{step}</div>
+              <div className={styles.stepBody}>{renderProse(step)}</div>
             </div>
           ))}
         </div>
@@ -462,7 +485,7 @@ export function RecipeNote({
 }: {
   children: React.ReactNode;
 }): React.ReactElement {
-  return <div className={styles.note}>{children}</div>;
+  return <div className={styles.note}>{renderProse(children)}</div>;
 }
 
 /** Warm "Take it further" callout; children are the extension bullets. */
@@ -471,7 +494,7 @@ export function TakeItFurther({
 }: {
   children: React.ReactNode;
 }): React.ReactElement {
-  const items = React.Children.toArray(children);
+  const items = takeItFurtherItems(children);
   return (
     <div className={styles.further}>
       <div className={styles.furtherHeader}>
@@ -577,7 +600,9 @@ function RecipePreview({
               height="720"
             />
           </BrowserFrame>
-          <p className={styles.previewDialogCaption}>{caption}</p>
+          <p className={styles.previewDialogCaption}>
+            {renderInlineCode(caption)}
+          </p>
         </div>
       </dialog>
     </>
@@ -673,7 +698,9 @@ export default function RecipeLayout({
             <div>
               <div className={styles.bannerMain}>
                 <h1 className={styles.bannerTitle}>{recipe.title}</h1>
-                <p className={styles.bannerDesc}>{recipe.description}</p>
+                <p className={styles.bannerDesc}>
+                  {renderInlineCode(recipe.description)}
+                </p>
               </div>
               <div className={styles.metaRow}>
                 {metaPill(
