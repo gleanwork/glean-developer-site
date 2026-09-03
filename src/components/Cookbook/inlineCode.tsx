@@ -16,10 +16,9 @@ function isCodeLikeElement(element: React.ReactElement): boolean {
   if (type === 'code' || type === 'pre') return true;
   const props = element.props as { language?: unknown };
   if (props.language != null) return true;
-  if (typeof type === 'string') return false;
-  const name =
-    (typeof type === 'function' && (type.displayName || type.name)) || '';
-  return /CodeBlock/i.test(name);
+  if (typeof type !== 'function') return false;
+  const component = type as { displayName?: string; name?: string };
+  return /CodeBlock/i.test(component.displayName ?? component.name ?? '');
 }
 
 /**
