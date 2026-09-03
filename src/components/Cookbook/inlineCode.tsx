@@ -1,5 +1,13 @@
 import React from 'react';
 
+/**
+ * Drop the backticks for places that take plain text, such as `<meta>`
+ * content, where markup would be shown literally rather than rendered.
+ */
+export function stripInlineCode(text: string): string {
+  return text.replace(/`([^`]+)`/g, '$1');
+}
+
 /** Turn `` `identifier` `` spans in recipe JSON/MDX strings into <code>. */
 export function renderInlineCode(text: string): React.ReactNode {
   const parts = text.split(/(`[^`]+`)/);

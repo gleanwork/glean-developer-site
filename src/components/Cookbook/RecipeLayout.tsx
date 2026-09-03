@@ -147,6 +147,11 @@ function ActionCard({
   );
 }
 
+/**
+ * MDX parses the callout body, so bullets normally arrive as a list element
+ * that `renderProse` walks. A recipe that reaches the component with the raw
+ * markdown string instead still gets one row per bullet.
+ */
 function takeItFurtherItems(children: React.ReactNode): React.ReactNode[] {
   const items: React.ReactNode[] = [];
 
@@ -161,26 +166,6 @@ function takeItFurtherItems(children: React.ReactNode): React.ReactNode[] {
     if (child == null || typeof child === 'boolean') return;
     if (typeof child === 'string') {
       pushMarkdownLines(child);
-      return;
-    }
-    if (
-      React.isValidElement(child) &&
-      (child.type === 'ul' || child.type === 'ol')
-    ) {
-      React.Children.forEach(
-        (child.props as { children?: React.ReactNode }).children,
-        (li) => {
-          if (React.isValidElement(li) && li.type === 'li') {
-            items.push(
-              renderProse(
-                (li.props as { children?: React.ReactNode }).children,
-              ),
-            );
-            return;
-          }
-          if (typeof li === 'string') pushMarkdownLines(li);
-        },
-      );
       return;
     }
     items.push(renderProse(child));
