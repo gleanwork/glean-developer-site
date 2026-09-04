@@ -88,9 +88,10 @@ The build is orchestrated by Turbo with these key dependencies:
 Recipe metadata is **authored in `gleanwork/glean-cookbook`**, one file per recipe
 at `recipes/<id>/recipe.json`. That repo is the source of truth.
 
-Two files here are generated from it and must never be hand-edited:
+These files are generated from it and must never be hand-edited:
 
 - `data/cookbook-registry.json` — a sync of the cookbook's built `registry.json`
+- `data/cookbook-taxonomy.json` — capability/surface values, labels, and order
 - `src/data/recipes.json` — compiled from that sync by `pnpm recipes:compile`
 
 Both are committed and neither is gitignored, so they look editable, and a recipe
@@ -103,7 +104,7 @@ its registry entry by filename. Do not write one by hand.
 
 To add a recipe, add `recipes/<id>/recipe.json` in `glean-cookbook` and run
 `npm run build:registry` there. That is the whole change: the `sync-cookbook-registry`
-workflow regenerates all three files here every 15 minutes and opens an auto-merging pull
-request, so a companion PR on this repo is not part of shipping a recipe. See AGENTS.md for
-the one exception — a recipe introducing an enum value `src/types/recipe.ts` doesn't know,
-which fails the sync until the adapter learns it.
+workflow regenerates all of them here every 15 minutes and opens an auto-merging pull
+request, so a companion PR on this repo is not part of shipping a recipe. Capabilities and
+surfaces are synced from the cookbook taxonomy too, so adding either does not require site
+code. See AGENTS.md for the narrower case where a new value carries presentation behavior.

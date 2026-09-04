@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import cookbookTaxonomy from '../../data/cookbook-taxonomy.json';
 
 /**
  * Dev-site adapter for the cookbook-owned recipe contract.
@@ -21,33 +22,43 @@ import { z } from 'zod';
  * projects this adapter back to JSON Schema so CI can detect structural drift.
  */
 
-export const RECIPE_SURFACES = [
-  'mcp',
-  /** The Client/REST SDK surface (glean.client.*) — chat, search, agents
-   * as shaped for building your own UI. Distinct from 'platform-api' below. */
-  'client-api',
-  /** The new data-first retrieval surface (glean.search.query() et al.) —
-   * Experimental as of its 2026-07 launch; see llmContext on recipes using it
-   * for the X-Glean-Include-Experimental opt-in requirement. */
-  'platform-api',
-  'web-sdk',
-  'connector-sdk',
-  'indexing-api',
-  'sdk-client',
-  'tools',
-  'agents',
-] as const;
+const recipeTaxonomySchema = z.strictObject({
+  capabilities: z
+    .array(
+      z.strictObject({
+        id: z.string().regex(/^[a-z][a-z0-9-]*$/),
+        label: z.string().min(1),
+      }),
+    )
+    .min(1),
+  surfaces: z
+    .array(
+      z.strictObject({
+        id: z.string().regex(/^[a-z][a-z0-9-]*$/),
+        label: z.string().min(1),
+      }),
+    )
+    .min(1),
+});
 
-export const RECIPE_CAPABILITIES = [
-  'search',
-  'chat',
-  'agents',
-  'indexing',
-  'embed',
-  'tools',
-  'mcp',
-  'workflows',
-] as const;
+const recipeTaxonomy = recipeTaxonomySchema.parse(cookbookTaxonomy);
+for (const dimension of ['capabilities', 'surfaces'] as const) {
+  const ids = recipeTaxonomy[dimension].map(({ id }) => id);
+  if (new Set(ids).size !== ids.length) {
+    throw new Error(`cookbook taxonomy contains duplicate ${dimension} ids`);
+  }
+}
+
+/** Synced from glean-cookbook; order is the display and filter order. */
+export const RECIPE_SURFACES = recipeTaxonomy.surfaces.map(({ id }) => id) as [
+  string,
+  ...string[],
+];
+
+/** Synced from glean-cookbook; adding one does not require a site code change. */
+export const RECIPE_CAPABILITIES = recipeTaxonomy.capabilities.map(
+  ({ id }) => id,
+) as [string, ...string[]];
 
 export const RECIPE_STATUSES = [
   'quickstart',
@@ -57,34 +68,14 @@ export const RECIPE_STATUSES = [
 
 export const RECIPE_VISIBILITIES = ['public', 'preview'] as const;
 
-export const RECIPE_SURFACE_LABELS: Record<
-  (typeof RECIPE_SURFACES)[number],
-  string
-> = {
-  mcp: 'MCP',
-  'client-api': 'Client API',
-  'platform-api': 'Platform API',
-  'web-sdk': 'Web SDK',
-  'connector-sdk': 'Connector SDK',
-  'indexing-api': 'Indexing API',
-  'sdk-client': 'API clients',
-  tools: 'Tools',
-  agents: 'Agents',
-};
+export const RECIPE_SURFACE_LABELS: Record<string, string> = Object.fromEntries(
+  recipeTaxonomy.surfaces.map(({ id, label }) => [id, label]),
+);
 
-export const RECIPE_CAPABILITY_LABELS: Record<
-  (typeof RECIPE_CAPABILITIES)[number],
-  string
-> = {
-  search: 'Search',
-  chat: 'Chat',
-  agents: 'Agents',
-  indexing: 'Indexing',
-  embed: 'Embed',
-  tools: 'Tools',
-  mcp: 'MCP',
-  workflows: 'Workflows',
-};
+export const RECIPE_CAPABILITY_LABELS: Record<string, string> =
+  Object.fromEntries(
+    recipeTaxonomy.capabilities.map(({ id, label }) => [id, label]),
+  );
 
 export const RECIPE_STATUS_LABELS: Record<
   (typeof RECIPE_STATUSES)[number],
@@ -497,6 +488,7 @@ export type RecipesData = {
    */
   _generated?: string;
   recipes: RecipeRecord[];
+  capabilities: string[];
   surfaces: string[];
   generatedAt: string;
   totalRecipes: number;
