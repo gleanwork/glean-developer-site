@@ -92,6 +92,7 @@ These files are generated from it and must never be hand-edited:
 
 - `data/cookbook-registry.json` — a sync of the cookbook's built `registry.json`
 - `data/cookbook-taxonomy.json` — capability/surface values, labels, and order
+- `schemas/recipe.schema.json` — the adapter projection with synced taxonomy enums
 - `src/data/recipes.json` — compiled from that sync by `pnpm recipes:compile`
 
 Both are committed and neither is gitignored, so they look editable, and a recipe

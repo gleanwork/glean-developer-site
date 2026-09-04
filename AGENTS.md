@@ -73,6 +73,7 @@ This repo holds only generated recipe content plus the presentation layer:
 | `docs/cookbook/<id>.mdx` | **generated** — page composition from the cookbook's structured content |
 | `data/cookbook-registry.json` | **generated** — a sync of the cookbook's built `registry.json` |
 | `data/cookbook-taxonomy.json` | **generated** — capability/surface values, labels, and filter order |
+| `schemas/recipe.schema.json` | **generated** — structural adapter projected with the synced taxonomy enums |
 | `src/data/recipes.json` | **generated** — compiled from that sync by `pnpm recipes:compile` |
 | `static/img/cookbook/previews/<id>/` | **generated** — cookbook-owned previews declared in `recipe.json` |
 
