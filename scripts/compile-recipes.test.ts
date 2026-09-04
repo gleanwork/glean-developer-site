@@ -1,8 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  compileRecipeCatalog,
-  compileRecipeFacets,
-} from './compile-recipes';
+import { compileRecipeCatalog, compileRecipeFacets } from './compile-recipes';
 
 function listedEntry(id: string) {
   return {

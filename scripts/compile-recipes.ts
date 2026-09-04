@@ -2,10 +2,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { isListedOnDocs, parseRecipeEntry } from '../src/types/recipe';
-import {
-  RECIPE_CAPABILITIES,
-  RECIPE_SURFACES,
-} from '../src/types/recipe';
+import { RECIPE_CAPABILITIES, RECIPE_SURFACES } from '../src/types/recipe';
 import type {
   CookbookPlugin,
   RecipeRecord,
