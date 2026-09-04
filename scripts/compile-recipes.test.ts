@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { compileRecipeCatalog } from './compile-recipes';
+import {
+  compileRecipeCatalog,
+  compileRecipeFacets,
+} from './compile-recipes';
 
 function listedEntry(id: string) {
   return {
@@ -121,5 +124,22 @@ describe('compileRecipeCatalog', () => {
     );
 
     expect(errors.join('\n')).toMatch(/has no matching docs\/cookbook/);
+  });
+
+  it('compiles capabilities in schema order without duplicates', () => {
+    const { records, errors } = compileRecipeCatalog(
+      [
+        { ...listedEntry('publish-skill'), capabilities: ['skills', 'tools'] },
+        { ...listedEntry('search'), capabilities: ['search', 'skills'] },
+      ],
+      new Set(['publish-skill', 'search']),
+    );
+
+    expect(errors).toEqual([]);
+    expect(compileRecipeFacets(records).capabilities).toEqual([
+      'search',
+      'tools',
+      'skills',
+    ]);
   });
 });

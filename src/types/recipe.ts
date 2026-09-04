@@ -46,6 +46,7 @@ export const RECIPE_CAPABILITIES = [
   'embed',
   'tools',
   'mcp',
+  'skills',
   'workflows',
 ] as const;
 
@@ -83,6 +84,7 @@ export const RECIPE_CAPABILITY_LABELS: Record<
   embed: 'Embed',
   tools: 'Tools',
   mcp: 'MCP',
+  skills: 'Skills',
   workflows: 'Workflows',
 };
 
@@ -497,6 +499,7 @@ export type RecipesData = {
    */
   _generated?: string;
   recipes: RecipeRecord[];
+  capabilities: RecipeCapability[];
   surfaces: string[];
   generatedAt: string;
   totalRecipes: number;

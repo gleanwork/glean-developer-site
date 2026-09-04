@@ -57,6 +57,15 @@ describe('parseRecipeEntry', () => {
     expect(result.record.capabilities).toEqual(['search', 'embed']);
   });
 
+  it('accepts the Skills capability on the Platform API surface', () => {
+    const entry = {
+      ...validEntry(),
+      surfaces: ['platform-api'],
+      capabilities: ['skills'],
+    };
+    expect(parseRecipeEntry(entry, 'embed-search-chat').success).toBe(true);
+  });
+
   it('rejects missing or unknown capabilities', () => {
     const { capabilities: _capabilities, ...missing } = validEntry();
     expect(parseRecipeEntry(missing, 'embed-search-chat').success).toBe(false);
