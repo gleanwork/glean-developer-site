@@ -2,8 +2,8 @@ openapi: 3.1.0
 info:
   version: '2026-04-01'
   title: Glean Platform API
-  x-source-commit-sha: 607c4a4291218dcc0edb79494bf20e6ac3362cf9
-  x-open-api-commit-sha: efc6383f39292ed5941021d5bd19afeca4e04a38
+  x-source-commit-sha: 44ecdf386badc05a2a870ecee8d15b4d75d30155
+  x-open-api-commit-sha: af01c6e765fd7b9ee67cf5ed99bb83075fea4e70
 servers:
   - url: '{serverUrl}'
     description: Replace {serverUrl} with your complete Glean API server URL. Find it at https://developers.glean.com/get-started/authentication#finding-your-server-url.
@@ -142,6 +142,7 @@ paths:
           name: agent_id
           description: ID of the agent to retrieve.
           required: true
+          example: '{agent_id}'
           schema:
             type: string
             minLength: 1
@@ -183,7 +184,7 @@ paths:
                 server_url="https://mycompany-be.glean.com",
             ) as glean:
 
-                res = glean.agents.get(agent_id="<id>")
+                res = glean.agents.get(agent_id="{agent_id}")
 
                 # Handle response
                 print(res)
@@ -198,7 +199,7 @@ paths:
             });
 
             async function run() {
-              const result = await glean.agents.get("<id>");
+              const result = await glean.agents.get("{agent_id}");
 
               console.log(result);
             }
@@ -206,7 +207,7 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Agents.Get(ctx, \"<id>\")\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformAgentGetResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Agents.Get(ctx, \"{agent_id}\")\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformAgentGetResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -226,7 +227,7 @@ paths:
                         .build();
 
                     PlatformAgentsGetResponse res = sdk.agents().get()
-                            .agentId("<id>")
+                            .agentId("{agent_id}")
                             .call();
 
                     if (res.platformAgentGetResponse().isPresent()) {
@@ -248,6 +249,7 @@ paths:
           name: agent_id
           description: ID of the agent whose schemas should be retrieved.
           required: true
+          example: '{agent_id}'
           schema:
             type: string
             minLength: 1
@@ -296,7 +298,7 @@ paths:
                 server_url="https://mycompany-be.glean.com",
             ) as glean:
 
-                res = glean.agents.get_schemas(agent_id="<id>", include_tools=False)
+                res = glean.agents.get_schemas(agent_id="{agent_id}", include_tools=False)
 
                 # Handle response
                 print(res)
@@ -311,7 +313,7 @@ paths:
             });
 
             async function run() {
-              const result = await glean.agents.getSchemas("<id>");
+              const result = await glean.agents.getSchemas("{agent_id}");
 
               console.log(result);
             }
@@ -319,7 +321,7 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Agents.GetSchemas(ctx, \"<id>\", apiclientgo.Pointer(false))\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformAgentSchemasResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Agents.GetSchemas(ctx, \"{agent_id}\", apiclientgo.Pointer(false))\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformAgentSchemasResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -339,7 +341,7 @@ paths:
                         .build();
 
                     PlatformAgentsGetSchemasResponse res = sdk.agents().getSchemas()
-                            .agentId("<id>")
+                            .agentId("{agent_id}")
                             .includeTools(false)
                             .call();
 
@@ -363,6 +365,7 @@ paths:
           name: agent_id
           description: ID of the agent to run.
           required: true
+          example: '{agent_id}'
           schema:
             type: string
             minLength: 1
@@ -437,7 +440,7 @@ paths:
                 server_url="https://mycompany-be.glean.com",
             ) as glean:
 
-                res = glean.agents.create_run(agent_id="<id>", messages=[
+                res = glean.agents.create_run(agent_id="{agent_id}", messages=[
                     {
                         "role": models.PlatformMessageRole.USER,
                         "content": [
@@ -474,7 +477,7 @@ paths:
                     ],
                   },
                 ],
-              }, "<id>");
+              }, "{agent_id}");
 
               console.log(result);
             }
@@ -482,7 +485,7 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Agents.CreateRun(ctx, \"<id>\", components.PlatformAgentRunCreateRequest{\n        Messages: []components.PlatformMessage{\n            components.PlatformMessage{\n                Role: components.PlatformMessageRoleUser,\n                Content: []components.PlatformMessageTextBlock{\n                    components.PlatformMessageTextBlock{\n                        Text: \"What is our parental leave policy?\",\n                        Type: components.PlatformContentTypeText,\n                    },\n                },\n            },\n        },\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformAgentRunWaitResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Agents.CreateRun(ctx, \"{agent_id}\", components.PlatformAgentRunCreateRequest{\n        Messages: []components.PlatformMessage{\n            components.PlatformMessage{\n                Role: components.PlatformMessageRoleUser,\n                Content: []components.PlatformMessageTextBlock{\n                    components.PlatformMessageTextBlock{\n                        Text: \"What is our parental leave policy?\",\n                        Type: components.PlatformContentTypeText,\n                    },\n                },\n            },\n        },\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformAgentRunWaitResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -505,7 +508,7 @@ paths:
                         .build();
 
                     PlatformAgentsCreateRunResponse res = sdk.agents().createRun()
-                            .agentId("<id>")
+                            .agentId("{agent_id}")
                             .platformAgentRunCreateRequest(PlatformAgentRunCreateRequest.builder()
                                 .messages(List.of(
                                     PlatformMessage.builder()
@@ -530,7 +533,7 @@ paths:
         - Chat
       summary: Create a chat response
       description: |
-        Run an assistant turn. Set `stream` to true to receive server-sent events; otherwise the response is a typed JSON response object.
+        Run an assistant turn. The default response is JSON. HTTP clients request server-sent events by setting `stream` to true in the JSON body. An `Accept: text/event-stream` header does not replace `stream`.
       operationId: platform-chat-create
       x-visibility: Public
       x-glean-experimental:
@@ -542,7 +545,16 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PlatformChatCreateRequest'
+              allOf:
+                - $ref: '#/components/schemas/PlatformChatCreateRequest'
+                - type: object
+                  required:
+                    - stream
+                  properties:
+                    stream:
+                      type: boolean
+                      const: false
+                      default: false
       responses:
         '200':
           description: Successful response.
@@ -550,31 +562,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PlatformChatCompletedResponse'
-            text/event-stream:
-              schema:
-                type: string
-                description: |
-                  Server-sent events for a streaming chat run. Event payloads are documented under ChatStream* schemas.
-                example: |
-                  id: 1
-                  event: RESPONSE_CREATED
-                  data: {"type":"RESPONSE_CREATED","response_id":"resp_e65a0a77-97a2-4c91-be60-eae7f6238015"}
-
-                  id: 2
-                  event: RESPONSE_PROGRESS
-                  data: {"type":"RESPONSE_PROGRESS","response_id":"resp_e65a0a77-97a2-4c91-be60-eae7f6238015","text":"**Searching:** foo"}
-
-                  id: 3
-                  event: RESPONSE_OUTPUT_TEXT_DELTA
-                  data: {"type":"RESPONSE_OUTPUT_TEXT_DELTA","response_id":"resp_e65a0a77-97a2-4c91-be60-eae7f6238015","delta":"Hello"}
-
-                  id: 4
-                  event: RESPONSE_OUTPUT_TEXT_DONE
-                  data: {"type":"RESPONSE_OUTPUT_TEXT_DONE","response_id":"resp_e65a0a77-97a2-4c91-be60-eae7f6238015","text":"Hello"}
-
-                  id: 5
-                  event: RESPONSE_COMPLETED
-                  data: {"type":"RESPONSE_COMPLETED","response_id":"resp_e65a0a77-97a2-4c91-be60-eae7f6238015","response":{"id":"resp_e65a0a77-97a2-4c91-be60-eae7f6238015","object":"RESPONSE","status":"COMPLETED","output":[{"type":"MESSAGE","role":"ASSISTANT","content":[{"type":"OUTPUT_TEXT","text":"Hello"}]}],"store":true,"request_id":"req_123","created_at":"2026-07-14T20:00:00Z"}}
         '400':
           $ref: '#/components/responses/PlatformBadRequest'
         '401':
@@ -611,7 +598,7 @@ paths:
                 include_experimental=True,
             ) as glean:
 
-                res = glean.chat.create(input="What is our parental leave policy?", stream=False, store=True)
+                res = glean.chat.create(input="What is our parental leave policy?", store=True)
 
                 # Handle response
                 print(res)
@@ -637,7 +624,7 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Chat.Create(ctx, components.PlatformChatCreateRequest{\n        Input: components.CreateInputStr(\n            \"What is our parental leave policy?\",\n        ),\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformChatCompletedResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/operations\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Chat.Create(ctx, operations.PlatformChatCreateRequest{\n        Input: operations.CreatePlatformChatCreateInputStr(\n            \"What is our parental leave policy?\",\n        ),\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformChatCompletedResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -645,10 +632,8 @@ paths:
 
             import com.glean.api_client.glean_api_client.Glean;
             import com.glean.api_client.glean_api_client.hooks.GleanBuilder;
-            import com.glean.api_client.glean_api_client.models.components.Input;
-            import com.glean.api_client.glean_api_client.models.components.PlatformChatCreateRequest;
             import com.glean.api_client.glean_api_client.models.errors.PlatformProblemDetailException;
-            import com.glean.api_client.glean_api_client.models.operations.PlatformChatCreateResponse;
+            import com.glean.api_client.glean_api_client.models.operations.*;
             import java.lang.Exception;
 
             public class Application {
@@ -661,7 +646,7 @@ paths:
                         .build();
 
                     PlatformChatCreateRequest req = PlatformChatCreateRequest.builder()
-                            .input(Input.of("What is our parental leave policy?"))
+                            .input(PlatformChatCreateInput.of("What is our parental leave policy?"))
                             .build();
 
                     PlatformChatCreateResponse res = sdk.chat().create()
@@ -1412,6 +1397,7 @@ paths:
           in: path
           required: true
           description: Glean skill ID.
+          example: '{skill_id}'
           schema:
             type: string
             minLength: 1
@@ -1465,7 +1451,7 @@ paths:
                 include_experimental=True,
             ) as glean:
 
-                res = glean.skills.update(skill_id="<id>", status=models.PlatformSkillUpdateStatus.ENABLED)
+                res = glean.skills.update(skill_id="{skill_id}", status=models.PlatformSkillUpdateStatus.ENABLED)
 
                 # Handle response
                 print(res)
@@ -1483,7 +1469,7 @@ paths:
             async function run() {
               const result = await glean.skills.update({
                 status: "ENABLED",
-              }, "<id>");
+              }, "{skill_id}");
 
               console.log(result);
             }
@@ -1491,7 +1477,7 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Skills.Update(ctx, \"<id>\", components.PlatformSkillUpdateRequest{\n        Status: components.PlatformSkillUpdateStatusEnabled,\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformSkillUpdateResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Skills.Update(ctx, \"{skill_id}\", components.PlatformSkillUpdateRequest{\n        Status: components.PlatformSkillUpdateStatusEnabled,\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformSkillUpdateResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -1515,7 +1501,7 @@ paths:
                         .build();
 
                     PlatformSkillsUpdateResponse res = sdk.skills().update()
-                            .skillId("<id>")
+                            .skillId("{skill_id}")
                             .platformSkillUpdateRequest(PlatformSkillUpdateRequest.builder()
                                 .status(PlatformSkillUpdateStatus.ENABLED)
                                 .build())
@@ -1551,6 +1537,7 @@ paths:
           in: path
           required: true
           description: Glean skill ID.
+          example: '{skill_id}'
           schema:
             type: string
             minLength: 1
@@ -1589,7 +1576,7 @@ paths:
                 include_experimental=True,
             ) as glean:
 
-                glean.skills.delete(skill_id="<id>")
+                glean.skills.delete(skill_id="{skill_id}")
 
                 # Use the SDK ...
         - lang: JavaScript
@@ -1604,7 +1591,7 @@ paths:
             });
 
             async function run() {
-              await glean.skills.delete("<id>");
+              await glean.skills.delete("{skill_id}");
 
 
             }
@@ -1612,7 +1599,7 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Skills.Delete(ctx, \"<id>\")\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Skills.Delete(ctx, \"{skill_id}\")\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -1634,7 +1621,7 @@ paths:
                         .build();
 
                     PlatformSkillsDeleteResponse res = sdk.skills().delete()
-                            .skillId("<id>")
+                            .skillId("{skill_id}")
                             .call();
 
                     // handle response
@@ -1665,6 +1652,7 @@ paths:
           in: path
           required: true
           description: Glean skill ID.
+          example: '{skill_id}'
           schema:
             type: string
             minLength: 1
@@ -1707,7 +1695,7 @@ paths:
                 include_experimental=True,
             ) as glean:
 
-                res = glean.skills.retrieve(skill_id="<id>")
+                res = glean.skills.retrieve(skill_id="{skill_id}")
 
                 # Handle response
                 print(res)
@@ -1723,7 +1711,7 @@ paths:
             });
 
             async function run() {
-              const result = await glean.skills.retrieve("<id>");
+              const result = await glean.skills.retrieve("{skill_id}");
 
               console.log(result);
             }
@@ -1731,7 +1719,7 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Skills.Retrieve(ctx, \"<id>\")\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformSkillGetResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Skills.Retrieve(ctx, \"{skill_id}\")\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformSkillGetResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -1753,7 +1741,7 @@ paths:
                         .build();
 
                     PlatformSkillsGetResponse res = sdk.skills().retrieve()
-                            .skillId("<id>")
+                            .skillId("{skill_id}")
                             .call();
 
                     if (res.platformSkillGetResponse().isPresent()) {
@@ -1787,6 +1775,7 @@ paths:
           in: path
           required: true
           description: Glean skill ID.
+          example: '{skill_id}'
           schema:
             type: string
             minLength: 1
@@ -1835,7 +1824,7 @@ paths:
                 include_experimental=True,
             ) as glean:
 
-                res = glean.skills.retrieve_content(skill_id="<id>")
+                res = glean.skills.retrieve_content(skill_id="{skill_id}")
 
                 # Handle response
                 print(res)
@@ -1851,7 +1840,7 @@ paths:
             });
 
             async function run() {
-              const result = await glean.skills.retrieveContent("<id>");
+              const result = await glean.skills.retrieveContent("{skill_id}");
 
               console.log(result);
             }
@@ -1859,7 +1848,7 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Skills.RetrieveContent(ctx, \"<id>\")\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.ResponseStream != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Skills.RetrieveContent(ctx, \"{skill_id}\")\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.ResponseStream != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -1881,7 +1870,7 @@ paths:
                         .build();
 
                     PlatformSkillsGetContentResponse res = sdk.skills().retrieveContent()
-                            .skillId("<id>")
+                            .skillId("{skill_id}")
                             .call();
 
                     if (res.responseStream().isPresent()) {
@@ -1915,6 +1904,7 @@ paths:
           in: path
           required: true
           description: ID of the GitHub-imported skill to sync.
+          example: '{skill_id}'
           schema:
             type: string
             minLength: 1
@@ -1961,7 +1951,7 @@ paths:
                 include_experimental=True,
             ) as glean:
 
-                res = glean.skills.sync(skill_id="<id>")
+                res = glean.skills.sync(skill_id="{skill_id}")
 
                 # Handle response
                 print(res)
@@ -1977,7 +1967,7 @@ paths:
             });
 
             async function run() {
-              const result = await glean.skills.sync("<id>");
+              const result = await glean.skills.sync("{skill_id}");
 
               console.log(result);
             }
@@ -1985,7 +1975,7 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Skills.Sync(ctx, \"<id>\")\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformSkillSyncResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Skills.Sync(ctx, \"{skill_id}\")\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformSkillSyncResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -2007,7 +1997,7 @@ paths:
                         .build();
 
                     PlatformSkillsSyncResponse res = sdk.skills().sync()
-                            .skillId("<id>")
+                            .skillId("{skill_id}")
                             .call();
 
                     if (res.platformSkillSyncResponse().isPresent()) {
@@ -2041,6 +2031,7 @@ paths:
           in: path
           required: true
           description: Glean skill ID.
+          example: '{skill_id}'
           schema:
             type: string
             minLength: 1
@@ -2094,7 +2085,7 @@ paths:
                 include_experimental=True,
             ) as glean:
 
-                res = glean.skills.create_version(skill_id="<id>", file={
+                res = glean.skills.create_version(skill_id="{skill_id}", file={
                     "file_name": "example.file",
                     "content": open("example.file", "rb"),
                 })
@@ -2116,7 +2107,7 @@ paths:
             async function run() {
               const result = await glean.skills.createVersion({
                 file: await openAsBlob("example.file"),
-              }, "<id>");
+              }, "{skill_id}");
 
               console.log(result);
             }
@@ -2124,7 +2115,7 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    example, fileErr := os.Open(\"example.file\")\n    if fileErr != nil {\n        panic(fileErr)\n    }\n\n    res, err := s.Skills.CreateVersion(ctx, \"<id>\", components.PlatformSkillVersionCreateRequest{\n        File: components.PlatformSkillVersionCreateRequestFile{\n            FileName: \"example.file\",\n            Content: example,\n        },\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformSkillVersionCreateResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    example, fileErr := os.Open(\"example.file\")\n    if fileErr != nil {\n        panic(fileErr)\n    }\n\n    res, err := s.Skills.CreateVersion(ctx, \"{skill_id}\", components.PlatformSkillVersionCreateRequest{\n        File: components.PlatformSkillVersionCreateRequestFile{\n            FileName: \"example.file\",\n            Content: example,\n        },\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformSkillVersionCreateResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -2150,7 +2141,7 @@ paths:
                         .build();
 
                     PlatformSkillsCreateVersionResponse res = sdk.skills().createVersion()
-                            .skillId("<id>")
+                            .skillId("{skill_id}")
                             .platformSkillVersionCreateRequest(PlatformSkillVersionCreateRequest.builder()
                                 .file(PlatformSkillVersionCreateRequestFile.builder()
                                     .fileName("example.file")
@@ -2194,6 +2185,7 @@ paths:
           in: path
           required: true
           description: Glean skill ID.
+          example: '{skill_id}'
           schema:
             type: string
             minLength: 1
@@ -2251,7 +2243,7 @@ paths:
                 include_experimental=True,
             ) as glean:
 
-                res = glean.skills.list_versions(skill_id="<id>")
+                res = glean.skills.list_versions(skill_id="{skill_id}")
 
                 # Handle response
                 print(res)
@@ -2267,7 +2259,7 @@ paths:
             });
 
             async function run() {
-              const result = await glean.skills.listVersions("<id>");
+              const result = await glean.skills.listVersions("{skill_id}");
 
               console.log(result);
             }
@@ -2275,7 +2267,7 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Skills.ListVersions(ctx, \"<id>\", nil, nil)\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformSkillVersionsListResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Skills.ListVersions(ctx, \"{skill_id}\", nil, nil)\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformSkillVersionsListResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -2297,7 +2289,7 @@ paths:
                         .build();
 
                     PlatformSkillsListVersionsResponse res = sdk.skills().listVersions()
-                            .skillId("<id>")
+                            .skillId("{skill_id}")
                             .call();
 
                     if (res.platformSkillVersionsListResponse().isPresent()) {
@@ -2331,6 +2323,7 @@ paths:
           in: path
           required: true
           description: Glean skill ID.
+          example: '{skill_id}'
           schema:
             type: string
             minLength: 1
@@ -2338,6 +2331,7 @@ paths:
           in: path
           required: true
           description: Major version number.
+          example: 1
           schema:
             type: integer
             minimum: 1
@@ -2380,7 +2374,7 @@ paths:
                 include_experimental=True,
             ) as glean:
 
-                res = glean.skills.retrieve_version(skill_id="<id>", version=495658)
+                res = glean.skills.retrieve_version(skill_id="{skill_id}", version=1)
 
                 # Handle response
                 print(res)
@@ -2396,7 +2390,7 @@ paths:
             });
 
             async function run() {
-              const result = await glean.skills.retrieveVersion("<id>", 495658);
+              const result = await glean.skills.retrieveVersion("{skill_id}", 1);
 
               console.log(result);
             }
@@ -2404,7 +2398,7 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Skills.RetrieveVersion(ctx, \"<id>\", 495658)\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformSkillVersionGetResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Skills.RetrieveVersion(ctx, \"{skill_id}\", 1)\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformSkillVersionGetResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -2426,8 +2420,8 @@ paths:
                         .build();
 
                     PlatformSkillsGetVersionResponse res = sdk.skills().retrieveVersion()
-                            .skillId("<id>")
-                            .version(495658L)
+                            .skillId("{skill_id}")
+                            .version(1L)
                             .call();
 
                     if (res.platformSkillVersionGetResponse().isPresent()) {
@@ -2461,6 +2455,7 @@ paths:
           in: path
           required: true
           description: Glean skill ID.
+          example: '{skill_id}'
           schema:
             type: string
             minLength: 1
@@ -2468,6 +2463,7 @@ paths:
           in: path
           required: true
           description: Major version number.
+          example: 1
           schema:
             type: integer
             minimum: 1
@@ -2516,7 +2512,7 @@ paths:
                 include_experimental=True,
             ) as glean:
 
-                res = glean.skills.retrieve_version_content(skill_id="<id>", version=117760)
+                res = glean.skills.retrieve_version_content(skill_id="{skill_id}", version=1)
 
                 # Handle response
                 print(res)
@@ -2532,7 +2528,7 @@ paths:
             });
 
             async function run() {
-              const result = await glean.skills.retrieveVersionContent("<id>", 117760);
+              const result = await glean.skills.retrieveVersionContent("{skill_id}", 1);
 
               console.log(result);
             }
@@ -2540,7 +2536,7 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Skills.RetrieveVersionContent(ctx, \"<id>\", 117760)\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.ResponseStream != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Skills.RetrieveVersionContent(ctx, \"{skill_id}\", 1)\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.ResponseStream != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -2562,8 +2558,8 @@ paths:
                         .build();
 
                     PlatformSkillsGetVersionContentResponse res = sdk.skills().retrieveVersionContent()
-                            .skillId("<id>")
-                            .version(117760L)
+                            .skillId("{skill_id}")
+                            .version(1L)
                             .call();
 
                     if (res.responseStream().isPresent()) {
@@ -2634,10 +2630,7 @@ paths:
                 include_experimental=True,
             ) as glean:
 
-                res = glean.search.query(query="quarterly planning 2026", page_size=10, datasources=[
-                    "confluence",
-                    "google_drive",
-                ], filters=[
+                res = glean.search.query(query="quarterly planning 2026", page_size=10, filters=[
                     {
                         "field": "type",
                         "values": [
@@ -2663,19 +2656,6 @@ paths:
             async function run() {
               const result = await glean.search.query({
                 query: "quarterly planning 2026",
-                datasources: [
-                  "confluence",
-                  "google_drive",
-                ],
-                filters: [
-                  {
-                    field: "type",
-                    values: [
-                      "spreadsheet",
-                      "presentation",
-                    ],
-                  },
-                ],
               });
 
               console.log(result);
@@ -2684,7 +2664,7 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Search.Query(ctx, components.PlatformSearchRequest{\n        Query: \"quarterly planning 2026\",\n        Datasources: []string{\n            \"confluence\",\n            \"google_drive\",\n        },\n        Filters: []components.PlatformFilter{\n            components.PlatformFilter{\n                Field: \"type\",\n                Values: []string{\n                    \"spreadsheet\",\n                    \"presentation\",\n                },\n            },\n        },\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformSearchResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Search.Query(ctx, components.PlatformSearchRequest{\n        Query: \"quarterly planning 2026\",\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformSearchResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -2692,12 +2672,10 @@ paths:
 
             import com.glean.api_client.glean_api_client.Glean;
             import com.glean.api_client.glean_api_client.hooks.GleanBuilder;
-            import com.glean.api_client.glean_api_client.models.components.PlatformFilter;
             import com.glean.api_client.glean_api_client.models.components.PlatformSearchRequest;
             import com.glean.api_client.glean_api_client.models.errors.PlatformProblemDetailException;
             import com.glean.api_client.glean_api_client.models.operations.PlatformSearchResponse;
             import java.lang.Exception;
-            import java.util.List;
 
             public class Application {
 
@@ -2710,16 +2688,6 @@ paths:
 
                     PlatformSearchRequest req = PlatformSearchRequest.builder()
                             .query("quarterly planning 2026")
-                            .datasources(List.of(
-                                "confluence",
-                                "google_drive"))
-                            .filters(List.of(
-                                PlatformFilter.builder()
-                                    .field("type")
-                                    .values(List.of(
-                                        "spreadsheet",
-                                        "presentation"))
-                                    .build()))
                             .build();
 
                     PlatformSearchResponse res = sdk.search().query()
@@ -2969,7 +2937,7 @@ paths:
         - lang: Python
           label: Python (API Client)
           source: |-
-            from glean.api_client import Glean, models
+            from glean.api_client import Glean
             import os
 
 
@@ -2980,13 +2948,9 @@ paths:
             ) as glean:
 
                 res = glean.triggers.create(preset_id="GITHUB_1", delivery={
-                    "webhook_url": "https://customer.app/webhook",
-                    "auth": {
-                        "type": models.PlatformTriggerAuthType.BEARER,
-                        "secret": "secret_test_123",
-                    },
+                    "webhook_url": "https://example.com/webhook",
                 }, description="Reviews I am tagged on, sent to my team's review channel", inputs={
-                    "repository": "acme/payments-api",
+                    "repository": "{repository}",
                 })
 
                 # Handle response
@@ -3005,16 +2969,11 @@ paths:
             async function run() {
               const result = await glean.triggers.create({
                 preset_id: "GITHUB_1",
-                description: "Reviews I am tagged on, sent to my team's review channel",
                 inputs: {
-                  "repository": "acme/payments-api",
+                  "repository": "{repository}",
                 },
                 delivery: {
-                  webhook_url: "https://customer.app/webhook",
-                  auth: {
-                    type: "BEARER",
-                    secret: "secret_test_123",
-                  },
+                  webhook_url: "https://example.com/webhook",
                 },
               });
 
@@ -3024,7 +2983,7 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Triggers.Create(ctx, components.PlatformTriggerCreateRequest{\n        PresetID: \"GITHUB_1\",\n        Description: apiclientgo.Pointer(\"Reviews I am tagged on, sent to my team's review channel\"),\n        Inputs: map[string]any{\n            \"repository\": \"acme/payments-api\",\n        },\n        Delivery: components.PlatformTriggerDelivery{\n            WebhookURL: \"https://customer.app/webhook\",\n            Auth: &components.PlatformTriggerAuth{\n                Type: components.PlatformTriggerAuthTypeBearer,\n                Secret: \"secret_test_123\",\n            },\n        },\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformTriggerCreateResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Triggers.Create(ctx, components.PlatformTriggerCreateRequest{\n        PresetID: \"GITHUB_1\",\n        Inputs: map[string]any{\n            \"repository\": \"{repository}\",\n        },\n        Delivery: components.PlatformTriggerDelivery{\n            WebhookURL: \"https://example.com/webhook\",\n        },\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformTriggerCreateResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -3032,7 +2991,8 @@ paths:
 
             import com.glean.api_client.glean_api_client.Glean;
             import com.glean.api_client.glean_api_client.hooks.GleanBuilder;
-            import com.glean.api_client.glean_api_client.models.components.*;
+            import com.glean.api_client.glean_api_client.models.components.PlatformTriggerCreateRequest;
+            import com.glean.api_client.glean_api_client.models.components.PlatformTriggerDelivery;
             import com.glean.api_client.glean_api_client.models.errors.PlatformProblemDetailException;
             import com.glean.api_client.glean_api_client.models.operations.PlatformTriggersCreateResponse;
             import java.lang.Exception;
@@ -3050,15 +3010,10 @@ paths:
                     PlatformTriggerCreateRequest req = PlatformTriggerCreateRequest.builder()
                             .presetId("GITHUB_1")
                             .delivery(PlatformTriggerDelivery.builder()
-                                .webhookUrl("https://customer.app/webhook")
-                                .auth(PlatformTriggerAuth.builder()
-                                    .type(PlatformTriggerAuthType.BEARER)
-                                    .secret("secret_test_123")
-                                    .build())
+                                .webhookUrl("https://example.com/webhook")
                                 .build())
-                            .description("Reviews I am tagged on, sent to my team's review channel")
                             .inputs(Map.ofEntries(
-                                Map.entry("repository", "acme/payments-api")))
+                                Map.entry("repository", "{repository}")))
                             .build();
 
                     PlatformTriggersCreateResponse res = sdk.triggers().create()
@@ -3234,6 +3189,7 @@ paths:
           name: trigger_id
           description: ID of the trigger to retrieve.
           required: true
+          example: '{trigger_id}'
           schema:
             type: string
             minLength: 1
@@ -3276,7 +3232,7 @@ paths:
                 include_experimental=True,
             ) as glean:
 
-                res = glean.triggers.get(trigger_id="<id>")
+                res = glean.triggers.get(trigger_id="{trigger_id}")
 
                 # Handle response
                 print(res)
@@ -3292,7 +3248,7 @@ paths:
             });
 
             async function run() {
-              const result = await glean.triggers.get("<id>");
+              const result = await glean.triggers.get("{trigger_id}");
 
               console.log(result);
             }
@@ -3300,7 +3256,7 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Triggers.Get(ctx, \"<id>\")\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformTriggerGetResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Triggers.Get(ctx, \"{trigger_id}\")\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformTriggerGetResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -3322,7 +3278,7 @@ paths:
                         .build();
 
                     PlatformTriggersGetResponse res = sdk.triggers().get()
-                            .triggerId("<id>")
+                            .triggerId("{trigger_id}")
                             .call();
 
                     if (res.platformTriggerGetResponse().isPresent()) {
@@ -3356,6 +3312,7 @@ paths:
           name: trigger_id
           description: ID of the trigger to update.
           required: true
+          example: '{trigger_id}'
           schema:
             type: string
             minLength: 1
@@ -3406,14 +3363,10 @@ paths:
                 include_experimental=True,
             ) as glean:
 
-                res = glean.triggers.update(trigger_id="<id>", status=models.PlatformTriggerStatus.ENABLED, description="Reviews I am tagged on, sent to my team's review channel", inputs={
-                    "repository": "acme/payments-api",
+                res = glean.triggers.update(trigger_id="{trigger_id}", status=models.PlatformTriggerStatus.ENABLED, description="Reviews I am tagged on, sent to my team's review channel", inputs={
+                    "repository": "{repository}",
                 }, delivery={
-                    "webhook_url": "https://customer.app/webhook",
-                    "auth": {
-                        "type": models.PlatformTriggerAuthType.BEARER,
-                        "secret": "secret_test_123",
-                    },
+                    "webhook_url": "https://example.com/webhook",
                 })
 
                 # Handle response
@@ -3431,19 +3384,13 @@ paths:
 
             async function run() {
               const result = await glean.triggers.update({
-                status: "ENABLED",
-                description: "Reviews I am tagged on, sent to my team's review channel",
                 inputs: {
-                  "repository": "acme/payments-api",
+                  "repository": "{repository}",
                 },
                 delivery: {
-                  webhook_url: "https://customer.app/webhook",
-                  auth: {
-                    type: "BEARER",
-                    secret: "secret_test_123",
-                  },
+                  webhook_url: "https://example.com/webhook",
                 },
-              }, "<id>");
+              }, "{trigger_id}");
 
               console.log(result);
             }
@@ -3451,7 +3398,7 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Triggers.Update(ctx, \"<id>\", components.PlatformTriggerUpdateRequest{\n        Status: components.PlatformTriggerStatusEnabled.ToPointer(),\n        Description: apiclientgo.Pointer(\"Reviews I am tagged on, sent to my team's review channel\"),\n        Inputs: map[string]any{\n            \"repository\": \"acme/payments-api\",\n        },\n        Delivery: &components.PlatformTriggerDelivery{\n            WebhookURL: \"https://customer.app/webhook\",\n            Auth: &components.PlatformTriggerAuth{\n                Type: components.PlatformTriggerAuthTypeBearer,\n                Secret: \"secret_test_123\",\n            },\n        },\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformTriggerGetResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Triggers.Update(ctx, \"{trigger_id}\", components.PlatformTriggerUpdateRequest{\n        Inputs: map[string]any{\n            \"repository\": \"{repository}\",\n        },\n        Delivery: &components.PlatformTriggerDelivery{\n            WebhookURL: \"https://example.com/webhook\",\n        },\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformTriggerGetResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -3459,7 +3406,8 @@ paths:
 
             import com.glean.api_client.glean_api_client.Glean;
             import com.glean.api_client.glean_api_client.hooks.GleanBuilder;
-            import com.glean.api_client.glean_api_client.models.components.*;
+            import com.glean.api_client.glean_api_client.models.components.PlatformTriggerDelivery;
+            import com.glean.api_client.glean_api_client.models.components.PlatformTriggerUpdateRequest;
             import com.glean.api_client.glean_api_client.models.errors.PlatformProblemDetailException;
             import com.glean.api_client.glean_api_client.models.operations.PlatformTriggersUpdateResponse;
             import java.lang.Exception;
@@ -3475,18 +3423,12 @@ paths:
                         .build();
 
                     PlatformTriggersUpdateResponse res = sdk.triggers().update()
-                            .triggerId("<id>")
+                            .triggerId("{trigger_id}")
                             .platformTriggerUpdateRequest(PlatformTriggerUpdateRequest.builder()
-                                .status(PlatformTriggerStatus.ENABLED)
-                                .description("Reviews I am tagged on, sent to my team's review channel")
                                 .inputs(Map.ofEntries(
-                                    Map.entry("repository", "acme/payments-api")))
+                                    Map.entry("repository", "{repository}")))
                                 .delivery(PlatformTriggerDelivery.builder()
-                                    .webhookUrl("https://customer.app/webhook")
-                                    .auth(PlatformTriggerAuth.builder()
-                                        .type(PlatformTriggerAuthType.BEARER)
-                                        .secret("secret_test_123")
-                                        .build())
+                                    .webhookUrl("https://example.com/webhook")
                                     .build())
                                 .build())
                             .call();
@@ -3521,6 +3463,7 @@ paths:
           name: trigger_id
           description: ID of the trigger to delete.
           required: true
+          example: '{trigger_id}'
           schema:
             type: string
             minLength: 1
@@ -3559,7 +3502,7 @@ paths:
                 include_experimental=True,
             ) as glean:
 
-                glean.triggers.delete(trigger_id="<id>")
+                glean.triggers.delete(trigger_id="{trigger_id}")
 
                 # Use the SDK ...
         - lang: JavaScript
@@ -3574,7 +3517,7 @@ paths:
             });
 
             async function run() {
-              await glean.triggers.delete("<id>");
+              await glean.triggers.delete("{trigger_id}");
 
 
             }
@@ -3582,7 +3525,7 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Triggers.Delete(ctx, \"<id>\")\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Triggers.Delete(ctx, \"{trigger_id}\")\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -3604,7 +3547,7 @@ paths:
                         .build();
 
                     PlatformTriggersDeleteResponse res = sdk.triggers().delete()
-                            .triggerId("<id>")
+                            .triggerId("{trigger_id}")
                             .call();
 
                     // handle response
@@ -3636,6 +3579,7 @@ paths:
           name: trigger_id
           description: ID of the trigger whose events to search.
           required: true
+          example: '{trigger_id}'
           schema:
             type: string
             minLength: 1
@@ -3686,7 +3630,7 @@ paths:
                 include_experimental=True,
             ) as glean:
 
-                res = glean.triggers.search_events(trigger_id="<id>", page_size=10)
+                res = glean.triggers.search_events(trigger_id="{trigger_id}", page_size=10)
 
                 # Handle response
                 print(res)
@@ -3702,7 +3646,7 @@ paths:
             });
 
             async function run() {
-              const result = await glean.triggers.searchEvents("<id>");
+              const result = await glean.triggers.searchEvents("{trigger_id}", {});
 
               console.log(result);
             }
@@ -3710,7 +3654,7 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Triggers.SearchEvents(ctx, \"<id>\", nil)\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformTriggerEventSearchResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Triggers.SearchEvents(ctx, \"{trigger_id}\", &components.PlatformTriggerEventSearchRequest{})\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformTriggerEventSearchResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -3718,6 +3662,7 @@ paths:
 
             import com.glean.api_client.glean_api_client.Glean;
             import com.glean.api_client.glean_api_client.hooks.GleanBuilder;
+            import com.glean.api_client.glean_api_client.models.components.PlatformTriggerEventSearchRequest;
             import com.glean.api_client.glean_api_client.models.errors.PlatformProblemDetailException;
             import com.glean.api_client.glean_api_client.models.operations.PlatformTriggersEventsSearchResponse;
             import java.lang.Exception;
@@ -3732,7 +3677,9 @@ paths:
                         .build();
 
                     PlatformTriggersEventsSearchResponse res = sdk.triggers().searchEvents()
-                            .triggerId("<id>")
+                            .triggerId("{trigger_id}")
+                            .platformTriggerEventSearchRequest(PlatformTriggerEventSearchRequest.builder()
+                                .build())
                             .call();
 
                     if (res.platformTriggerEventSearchResponse().isPresent()) {
@@ -3902,6 +3849,7 @@ paths:
           name: preset_id
           description: ID of the preset to retrieve.
           required: true
+          example: '{preset_id}'
           schema:
             type: string
             minLength: 1
@@ -3944,7 +3892,7 @@ paths:
                 include_experimental=True,
             ) as glean:
 
-                res = glean.triggers.get_preset(preset_id="<id>")
+                res = glean.triggers.get_preset(preset_id="{preset_id}")
 
                 # Handle response
                 print(res)
@@ -3960,7 +3908,7 @@ paths:
             });
 
             async function run() {
-              const result = await glean.triggers.getPreset("<id>");
+              const result = await glean.triggers.getPreset("{preset_id}");
 
               console.log(result);
             }
@@ -3968,7 +3916,7 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Triggers.GetPreset(ctx, \"<id>\")\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformTriggerPresetGetResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Triggers.GetPreset(ctx, \"{preset_id}\")\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformTriggerPresetGetResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -3990,7 +3938,7 @@ paths:
                         .build();
 
                     PlatformTriggerPresetsGetResponse res = sdk.triggers().getPreset()
-                            .presetId("<id>")
+                            .presetId("{preset_id}")
                             .call();
 
                     if (res.platformTriggerPresetGetResponse().isPresent()) {
@@ -4024,6 +3972,7 @@ paths:
           name: preset_id
           description: ID of the preset the input belongs to.
           required: true
+          example: '{preset_id}'
           schema:
             type: string
             minLength: 1
@@ -4031,6 +3980,7 @@ paths:
           name: field
           description: Field identifier of the input whose values to list.
           required: true
+          example: '{field}'
           schema:
             type: string
             minLength: 1
@@ -4080,7 +4030,7 @@ paths:
                 include_experimental=True,
             ) as glean:
 
-                res = glean.triggers.list_preset_input_values(preset_id="<id>", field="<value>")
+                res = glean.triggers.list_preset_input_values(preset_id="{preset_id}", field="{field}")
 
                 # Handle response
                 print(res)
@@ -4096,7 +4046,7 @@ paths:
             });
 
             async function run() {
-              const result = await glean.triggers.listPresetInputValues("<id>", "<value>");
+              const result = await glean.triggers.listPresetInputValues("{preset_id}", "{field}");
 
               console.log(result);
             }
@@ -4104,7 +4054,7 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Triggers.ListPresetInputValues(ctx, \"<id>\", \"<value>\", nil)\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformTriggerPresetInputValueListResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Triggers.ListPresetInputValues(ctx, \"{preset_id}\", \"{field}\", nil)\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformTriggerPresetInputValueListResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -4126,8 +4076,8 @@ paths:
                         .build();
 
                     PlatformTriggerPresetsInputValuesListResponse res = sdk.triggers().listPresetInputValues()
-                            .presetId("<id>")
-                            .field("<value>")
+                            .presetId("{preset_id}")
+                            .field("{field}")
                             .call();
 
                     if (res.platformTriggerPresetInputValueListResponse().isPresent()) {
@@ -4161,6 +4111,7 @@ paths:
           name: preset_id
           description: ID of the preset to preview.
           required: true
+          example: '{preset_id}'
           schema:
             type: string
             minLength: 1
@@ -4211,8 +4162,8 @@ paths:
                 include_experimental=True,
             ) as glean:
 
-                res = glean.triggers.search_preset_events(preset_id="<id>", inputs={
-                    "repository": "acme/payments-api",
+                res = glean.triggers.search_preset_events(preset_id="{preset_id}", inputs={
+                    "repository": "{repository}",
                 }, page_size=10)
 
                 # Handle response
@@ -4229,9 +4180,9 @@ paths:
             });
 
             async function run() {
-              const result = await glean.triggers.searchPresetEvents("<id>", {
+              const result = await glean.triggers.searchPresetEvents("{preset_id}", {
                 inputs: {
-                  "repository": "acme/payments-api",
+                  "repository": "{repository}",
                 },
               });
 
@@ -4241,7 +4192,7 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Triggers.SearchPresetEvents(ctx, \"<id>\", &components.PlatformTriggerPresetEventSearchRequest{\n        Inputs: map[string]string{\n            \"repository\": \"acme/payments-api\",\n        },\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformTriggerEventSearchResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Triggers.SearchPresetEvents(ctx, \"{preset_id}\", &components.PlatformTriggerPresetEventSearchRequest{\n        Inputs: map[string]string{\n            \"repository\": \"{repository}\",\n        },\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformTriggerEventSearchResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -4265,10 +4216,10 @@ paths:
                         .build();
 
                     PlatformTriggerPresetsEventsSearchResponse res = sdk.triggers().searchPresetEvents()
-                            .presetId("<id>")
+                            .presetId("{preset_id}")
                             .platformTriggerPresetEventSearchRequest(PlatformTriggerPresetEventSearchRequest.builder()
                                 .inputs(Map.ofEntries(
-                                    Map.entry("repository", "acme/payments-api")))
+                                    Map.entry("repository", "{repository}")))
                                 .build())
                             .call();
 
@@ -4277,6 +4228,163 @@ paths:
                     }
                 }
             }
+  /api/chat#stream:
+    post:
+      tags:
+        - Chat
+      summary: SDK-only logical operation. HTTP clients must call the base path; the URL fragment is not sent. Create a chat response
+      description: |
+        SDK-only logical operation. HTTP clients must call the base path; the URL fragment is not sent. Run an assistant turn. The default response is JSON. HTTP clients request server-sent events by setting `stream` to true in the JSON body. An `Accept: text/event-stream` header does not replace `stream`.
+      operationId: platform-chat-create-stream
+      x-visibility: Public
+      x-glean-experimental:
+        id: e65a0a77-97a2-4c91-be60-eae7f6238015
+        introduced: '2026-07-14'
+      x-codegen-request-body-name: payload
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/PlatformChatCreateRequest'
+                - type: object
+                  required:
+                    - stream
+                  properties:
+                    stream:
+                      type: boolean
+                      const: true
+                      default: true
+      responses:
+        '200':
+          description: Successful response.
+          content:
+            text/event-stream:
+              schema:
+                $ref: '#/components/schemas/PlatformChatStreamEventServerSentEvent'
+        '400':
+          $ref: '#/components/responses/PlatformBadRequest'
+        '401':
+          $ref: '#/components/responses/PlatformUnauthorized'
+        '403':
+          $ref: '#/components/responses/PlatformForbidden'
+        '404':
+          $ref: '#/components/responses/PlatformNotFound'
+        '408':
+          $ref: '#/components/responses/PlatformRequestTimeout'
+        '413':
+          $ref: '#/components/responses/PlatformRequestTooLarge'
+        '422':
+          $ref: '#/components/responses/PlatformUnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/PlatformTooManyRequests'
+        '500':
+          $ref: '#/components/responses/PlatformInternalServerError'
+        '503':
+          $ref: '#/components/responses/PlatformServiceUnavailable'
+      x-speakeasy-group: chat
+      x-speakeasy-name-override: createStream
+      x-codeSamples:
+        - lang: Python
+          label: Python (API Client)
+          source: |-
+            from glean.api_client import Glean
+            import os
+
+
+            with Glean(
+                api_token=os.getenv("GLEAN_API_TOKEN", ""),
+                server_url="https://mycompany-be.glean.com",
+                include_experimental=True,
+            ) as glean:
+
+                res = glean.chat.create_stream(input="What is our parental leave policy?", store=True)
+
+                with res as event_stream:
+                    for event in event_stream:
+                        # handle event
+                        print(event, flush=True)
+        - lang: JavaScript
+          label: Typescript (API Client)
+          source: |-
+            import { Glean } from "@gleanwork/api-client";
+
+            const glean = new Glean({
+              apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
+              serverURL: "https://mycompany-be.glean.com",
+              includeExperimental: true,
+            });
+
+            async function run() {
+              const result = await glean.chat.createStream({
+                input: "What is our parental leave policy?",
+              });
+
+              for await (const event of result) {
+                console.log(event);
+              }
+            }
+
+            run();
+        - lang: Go
+          label: Go (API Client)
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/operations\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Chat.CreateStream(ctx, operations.PlatformChatCreateStreamRequest{\n        Input: operations.CreatePlatformChatCreateStreamInputStr(\n            \"What is our parental leave policy?\",\n        ),\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformChatStreamEventServerSentEvent != nil {\n        defer res.PlatformChatStreamEventServerSentEvent.Close()\n\n        for res.PlatformChatStreamEventServerSentEvent.Next() {\n            event := res.PlatformChatStreamEventServerSentEvent.Value()\n            log.Print(event)\n            // Handle the event\n\t      }\n    }\n}"
+        - lang: Java
+          label: Java (API Client)
+          source: |-
+            package hello.world;
+
+            import com.glean.api_client.glean_api_client.Glean;
+            import com.glean.api_client.glean_api_client.hooks.GleanBuilder;
+            import com.glean.api_client.glean_api_client.models.components.PlatformChatStreamEventServerSentEvent;
+            import com.glean.api_client.glean_api_client.models.errors.PlatformProblemDetailException;
+            import com.glean.api_client.glean_api_client.models.operations.*;
+            import com.glean.api_client.glean_api_client.utils.EventStream;
+            import java.lang.Exception;
+            import java.util.stream.Stream;
+
+            public class Application {
+
+                public static void main(String[] args) throws PlatformProblemDetailException, Exception {
+
+                    Glean sdk = GleanBuilder.create()
+                            .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
+                            .includeExperimental(true)
+                        .build();
+
+                    PlatformChatCreateStreamRequest req = PlatformChatCreateStreamRequest.builder()
+                            .input(PlatformChatCreateStreamInput.of("What is our parental leave policy?"))
+                            .build();
+
+                    PlatformChatCreateStreamResponse res = sdk.chat().createStream()
+                            .request(req)
+                            .call();
+
+                    // handle event stream, must be closed after use!
+                    try (EventStream<PlatformChatStreamEventServerSentEvent> events = res.events()) {
+                        // Option 1: Use for-each loop
+                        for (PlatformChatStreamEventServerSentEvent event : events) {
+                            System.out.println(event);
+                        }
+
+                        // Option 2: Use Stream API
+                        try (Stream<PlatformChatStreamEventServerSentEvent> stream = events.stream()) {
+                             stream.forEach(System.out::println);
+                        }
+                    }
+                }
+            }
+      parameters:
+        - in: header
+          name: X-Glean-Include-Experimental
+          description: This endpoint is experimental, so requests must include this header set to `true`. See [How experimental APIs work](https://developers.glean.com/experimental/overview) for details.
+          required: true
+          schema:
+            type: boolean
+            default: true
+          example: true
+          value: 'true'
 components:
   securitySchemes:
     APIToken:
@@ -4769,7 +4877,7 @@ components:
         stream:
           type: boolean
           description: |
-            When true, respond with `text/event-stream`. When false or omitted, respond with `application/json`.
+            When true, the HTTP response is `text/event-stream`. When false or omitted, the HTTP response is `application/json`.
           default: false
         store:
           type: boolean
@@ -5013,6 +5121,188 @@ components:
         request_id:
           type: string
           minLength: 1
+    PlatformChatStreamResponseCreated:
+      type: object
+      additionalProperties: false
+      required:
+        - type
+        - response_id
+      properties:
+        type:
+          type: string
+          enum:
+            - RESPONSE_CREATED
+        response_id:
+          $ref: '#/components/schemas/PlatformChatStreamResponseId'
+    PlatformChatStreamProgress:
+      type: object
+      additionalProperties: false
+      required:
+        - type
+        - response_id
+        - text
+      properties:
+        type:
+          type: string
+          enum:
+            - RESPONSE_PROGRESS
+        response_id:
+          $ref: '#/components/schemas/PlatformChatStreamResponseId'
+        text:
+          type: string
+          minLength: 1
+          description: |
+            Verbatim concatenated fragment text from an assistant UPDATE wire message. Display-oriented passthrough only; not part of the final answer and not present on terminal response snapshots.
+    PlatformChatStreamOutputTextDelta:
+      type: object
+      additionalProperties: false
+      required:
+        - type
+        - response_id
+        - delta
+      properties:
+        type:
+          type: string
+          enum:
+            - RESPONSE_OUTPUT_TEXT_DELTA
+        response_id:
+          $ref: '#/components/schemas/PlatformChatStreamResponseId'
+        delta:
+          type: string
+    PlatformChatStreamOutputTextDone:
+      type: object
+      additionalProperties: false
+      required:
+        - type
+        - response_id
+        - text
+      properties:
+        type:
+          type: string
+          enum:
+            - RESPONSE_OUTPUT_TEXT_DONE
+        response_id:
+          $ref: '#/components/schemas/PlatformChatStreamResponseId'
+        text:
+          type: string
+    PlatformChatStreamResponseCompleted:
+      type: object
+      additionalProperties: false
+      required:
+        - type
+        - response_id
+        - response
+      properties:
+        type:
+          type: string
+          enum:
+            - RESPONSE_COMPLETED
+        response_id:
+          $ref: '#/components/schemas/PlatformChatStreamResponseId'
+        response:
+          $ref: '#/components/schemas/PlatformChatCompletedResponse'
+    PlatformChatResponseError:
+      type: object
+      additionalProperties: false
+      required:
+        - message
+      properties:
+        code:
+          type:
+            - string
+            - 'null'
+          description: |
+            Open snake_case error code aligned with ProblemDetail codes when present. Clients must tolerate unknown values; the set of codes is not a closed enum. Limit failures use `spend_limit_exceeded` (billing spend limit) and `token_limit_exceeded` (model context/token limit).
+          example: spend_limit_exceeded
+        message:
+          type: string
+          minLength: 1
+    PlatformChatFailedResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - object
+        - created_at
+        - status
+        - output
+        - store
+        - request_id
+        - error
+      properties:
+        id:
+          $ref: '#/components/schemas/PlatformChatStreamResponseId'
+        object:
+          type: string
+          enum:
+            - RESPONSE
+        created_at:
+          type: string
+          format: date-time
+          description: RFC 3339 UTC timestamp when the response was created.
+        status:
+          type: string
+          enum:
+            - FAILED
+        output:
+          type: array
+          maxItems: 1
+          items:
+            $ref: '#/components/schemas/PlatformChatOutputMessage'
+        store:
+          type: boolean
+        conversation_id:
+          type:
+            - string
+            - 'null'
+          minLength: 1
+          description: Present when the interaction was persisted.
+        request_id:
+          type: string
+          minLength: 1
+        error:
+          $ref: '#/components/schemas/PlatformChatResponseError'
+    PlatformChatStreamResponseFailed:
+      type: object
+      additionalProperties: false
+      required:
+        - type
+        - response_id
+        - response
+      properties:
+        type:
+          type: string
+          enum:
+            - RESPONSE_FAILED
+        response_id:
+          $ref: '#/components/schemas/PlatformChatStreamResponseId'
+        response:
+          $ref: '#/components/schemas/PlatformChatFailedResponse'
+    PlatformChatStreamEvent:
+      description: |
+        JSON object written to the SSE `data` field. This schema is the payload for SDK transform, not the raw HTTP body. Do not run JSON response conformance on stream bodies. A typical wire frame is:
+        id: 1
+        event: RESPONSE_CREATED
+        data: {"type":"RESPONSE_CREATED","response_id":"resp_e65a0a77-97a2-4c91-be60-eae7f6238015"}
+      example:
+        type: RESPONSE_CREATED
+        response_id: resp_e65a0a77-97a2-4c91-be60-eae7f6238015
+      oneOf:
+        - $ref: '#/components/schemas/PlatformChatStreamResponseCreated'
+        - $ref: '#/components/schemas/PlatformChatStreamProgress'
+        - $ref: '#/components/schemas/PlatformChatStreamOutputTextDelta'
+        - $ref: '#/components/schemas/PlatformChatStreamOutputTextDone'
+        - $ref: '#/components/schemas/PlatformChatStreamResponseCompleted'
+        - $ref: '#/components/schemas/PlatformChatStreamResponseFailed'
+      discriminator:
+        propertyName: type
+        mapping:
+          RESPONSE_CREATED: '#/components/schemas/PlatformChatStreamResponseCreated'
+          RESPONSE_PROGRESS: '#/components/schemas/PlatformChatStreamProgress'
+          RESPONSE_OUTPUT_TEXT_DELTA: '#/components/schemas/PlatformChatStreamOutputTextDelta'
+          RESPONSE_OUTPUT_TEXT_DONE: '#/components/schemas/PlatformChatStreamOutputTextDone'
+          RESPONSE_COMPLETED: '#/components/schemas/PlatformChatStreamResponseCompleted'
+          RESPONSE_FAILED: '#/components/schemas/PlatformChatStreamResponseFailed'
     PlatformSkillStatus:
       type: string
       enum:
@@ -5573,14 +5863,6 @@ components:
         - query
       example:
         query: quarterly planning 2026
-        datasources:
-          - confluence
-          - google_drive
-        filters:
-          - field: type
-            values:
-              - spreadsheet
-              - presentation
       properties:
         query:
           type: string
@@ -5883,6 +6165,12 @@ components:
       required:
         - preset_id
         - delivery
+      example:
+        preset_id: GITHUB_1
+        inputs:
+          repository: '{repository}'
+        delivery:
+          webhook_url: https://example.com/webhook
       properties:
         preset_id:
           type: string
@@ -6054,6 +6342,11 @@ components:
       type: object
       additionalProperties: false
       description: Partial update. Only the supplied fields are changed.
+      example:
+        inputs:
+          repository: '{repository}'
+        delivery:
+          webhook_url: https://example.com/webhook
       properties:
         status:
           $ref: '#/components/schemas/PlatformTriggerStatus'
@@ -6072,6 +6365,8 @@ components:
     PlatformTriggerEventSearchRequest:
       type: object
       additionalProperties: false
+      example:
+        page_size: 10
       properties:
         page_size:
           type: integer
@@ -6338,6 +6633,10 @@ components:
     PlatformTriggerPresetEventSearchRequest:
       type: object
       additionalProperties: false
+      example:
+        inputs:
+          repository: '{repository}'
+        page_size: 10
       properties:
         inputs:
           type: object
@@ -6353,6 +6652,102 @@ components:
           minimum: 1
           maximum: 100
           default: 10
+    PlatformChatStreamResponseCreatedServerSentEvent:
+      type: object
+      required:
+        - event
+        - data
+      properties:
+        id:
+          type: string
+        event:
+          type: string
+          const: RESPONSE_CREATED
+        data:
+          $ref: '#/components/schemas/PlatformChatStreamResponseCreated'
+    PlatformChatStreamProgressServerSentEvent:
+      type: object
+      required:
+        - event
+        - data
+      properties:
+        id:
+          type: string
+        event:
+          type: string
+          const: RESPONSE_PROGRESS
+        data:
+          $ref: '#/components/schemas/PlatformChatStreamProgress'
+    PlatformChatStreamOutputTextDeltaServerSentEvent:
+      type: object
+      required:
+        - event
+        - data
+      properties:
+        id:
+          type: string
+        event:
+          type: string
+          const: RESPONSE_OUTPUT_TEXT_DELTA
+        data:
+          $ref: '#/components/schemas/PlatformChatStreamOutputTextDelta'
+    PlatformChatStreamOutputTextDoneServerSentEvent:
+      type: object
+      required:
+        - event
+        - data
+      properties:
+        id:
+          type: string
+        event:
+          type: string
+          const: RESPONSE_OUTPUT_TEXT_DONE
+        data:
+          $ref: '#/components/schemas/PlatformChatStreamOutputTextDone'
+    PlatformChatStreamResponseCompletedServerSentEvent:
+      type: object
+      required:
+        - event
+        - data
+      properties:
+        id:
+          type: string
+        event:
+          type: string
+          const: RESPONSE_COMPLETED
+        data:
+          $ref: '#/components/schemas/PlatformChatStreamResponseCompleted'
+    PlatformChatStreamResponseFailedServerSentEvent:
+      type: object
+      required:
+        - event
+        - data
+      properties:
+        id:
+          type: string
+        event:
+          type: string
+          const: RESPONSE_FAILED
+        data:
+          $ref: '#/components/schemas/PlatformChatStreamResponseFailed'
+    PlatformChatStreamEventServerSentEvent:
+      description: A typed server-sent event.
+      oneOf:
+        - $ref: '#/components/schemas/PlatformChatStreamResponseCreatedServerSentEvent'
+        - $ref: '#/components/schemas/PlatformChatStreamProgressServerSentEvent'
+        - $ref: '#/components/schemas/PlatformChatStreamOutputTextDeltaServerSentEvent'
+        - $ref: '#/components/schemas/PlatformChatStreamOutputTextDoneServerSentEvent'
+        - $ref: '#/components/schemas/PlatformChatStreamResponseCompletedServerSentEvent'
+        - $ref: '#/components/schemas/PlatformChatStreamResponseFailedServerSentEvent'
+      discriminator:
+        propertyName: event
+        mapping:
+          RESPONSE_CREATED: '#/components/schemas/PlatformChatStreamResponseCreatedServerSentEvent'
+          RESPONSE_PROGRESS: '#/components/schemas/PlatformChatStreamProgressServerSentEvent'
+          RESPONSE_OUTPUT_TEXT_DELTA: '#/components/schemas/PlatformChatStreamOutputTextDeltaServerSentEvent'
+          RESPONSE_OUTPUT_TEXT_DONE: '#/components/schemas/PlatformChatStreamOutputTextDoneServerSentEvent'
+          RESPONSE_COMPLETED: '#/components/schemas/PlatformChatStreamResponseCompletedServerSentEvent'
+          RESPONSE_FAILED: '#/components/schemas/PlatformChatStreamResponseFailedServerSentEvent'
   responses:
     PlatformBadRequest:
       description: Invalid request (malformed JSON, invalid parameter values, unknown fields).
