@@ -72,6 +72,8 @@ This repo holds only generated recipe content plus the presentation layer:
 | --- | --- |
 | `docs/cookbook/<id>.mdx` | **generated** — page composition from the cookbook's structured content |
 | `data/cookbook-registry.json` | **generated** — a sync of the cookbook's built `registry.json` |
+| `data/cookbook-taxonomy.json` | **generated** — capability/surface values, labels, and filter order |
+| `schemas/recipe.schema.json` | **generated** — structural adapter projected with the synced taxonomy enums |
 | `src/data/recipes.json` | **generated** — compiled from that sync by `pnpm recipes:compile` |
 | `static/img/cookbook/previews/<id>/` | **generated** — cookbook-owned previews declared in `recipe.json` |
 
@@ -91,13 +93,14 @@ commands locally to preview a recipe is fine; submitting the result is not. A ha
 sync duplicates the cron and someone has to close it, so
 `scripts/check-generated-recipe-data.mjs` rejects one.
 
-The exception is a recipe that uses an enum value this adapter doesn't know:
-`recipes:compile` exits 1 on one, which fails the sync job for every recipe until the value
-is added. Land that change here first, carrying the adapter alone — `src/types/recipe.ts`
-and its label map, `scripts/compile-recipes.ts` if the value needs a filter facet, the
-tests, and the regenerated `schemas/recipe.schema.json`. An enum member no recipe uses yet
-is inert, so it is safe to merge ahead of the recipe. Verify with `pnpm recipes:compile`,
-`pnpm test`, and `pnpm build`.
+Capabilities and surfaces are not an exception. Their values, labels, and order come from
+the cookbook's `config/recipe-taxonomy.json`, which the workflow syncs before compiling.
+Adding either remains a one-repo cookbook change.
+
+Enums with presentation behavior — a new category or status, for example — can still need
+code here. Carry only that consumer behavior and its tests; the scheduled sync still owns
+the registry snapshot, generated page, compiled recipe data, and assets. Verify consumer
+changes with `pnpm recipes:compile`, `pnpm test`, and `pnpm build`.
 
 Visibility is set upstream. A recipe with `"hidden": true` stays in the registry snapshot
 and the plugin, but sync generates no MDX page for it. A recipe with
