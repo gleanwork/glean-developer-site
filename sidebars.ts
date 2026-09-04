@@ -850,6 +850,13 @@ const baseSidebars: SidebarsConfig = {
                   label: 'Create a chat response',
                   className: 'api-method post',
                 },
+                {
+                  type: 'doc',
+                  id: 'api/platform-api/platform-chat-create-stream',
+                  label:
+                    'SDK-only logical operation. HTTP clients must call the base path; the URL fragment is not sent. Create a chat response',
+                  className: 'api-method post',
+                },
               ],
             },
             {
