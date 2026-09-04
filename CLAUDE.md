@@ -98,10 +98,12 @@ added to them renders correctly. It is then deleted by the next sync, which writ
 whatever upstream says. `scripts/check-generated-recipe-data.mjs` fails CI when the
 two disagree.
 
-To add a recipe:
+`docs/cookbook/<id>.mdx` is generated too — from the recipe's `content` block, matched to
+its registry entry by filename. Do not write one by hand.
 
-1. In `glean-cookbook`: add `recipes/<id>/recipe.json`, run `npm run build:registry`.
-2. Here: `pnpm registry:sync`, then `pnpm recipes:compile`.
-3. Add the prose page at `docs/cookbook/<id>.mdx`. It carries **no metadata
-   frontmatter** — it is matched to its registry entry by filename, and its title,
-   description and demo queries all come from the registry.
+To add a recipe, add `recipes/<id>/recipe.json` in `glean-cookbook` and run
+`npm run build:registry` there. That is the whole change: the `sync-cookbook-registry`
+workflow regenerates all three files here every 15 minutes and opens an auto-merging pull
+request, so a companion PR on this repo is not part of shipping a recipe. See AGENTS.md for
+the one exception — a recipe introducing an enum value `src/types/recipe.ts` doesn't know,
+which fails the sync until the adapter learns it.

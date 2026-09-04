@@ -79,21 +79,31 @@ Do not edit generated recipe files or assets. They are committed and not gitigno
 look editable, and a recipe added to them renders correctly — then disappears on the
 next sync, which writes whatever upstream says.
 
-To add a recipe:
+Adding a recipe is work in `glean-cookbook`, not here: add `recipes/<id>/recipe.json`
+(schema: `schemas/recipe.schema.json`; this repo's `src/types/recipe.ts` is a consumer
+adapter and must mirror that canonical contract) and the runnable code under
+`recipes/<id>/`, then run `npm run build:registry` and `npm run validate:registry` there.
 
-1. **In `glean-cookbook`:** add `recipes/<id>/recipe.json` (schema:
-   `schemas/recipe.schema.json`; this repo's `src/types/recipe.ts` is a consumer
-   adapter and must mirror that canonical contract), add the runnable code under `recipes/<id>/`, then
-   `npm run build:registry` and `npm run validate:registry`.
-2. **Here:** `pnpm registry:sync`, then `pnpm recipes:compile`. The sync generates
-   the MDX page and copies any declared preview asset; do not recreate either by hand.
-   A recipe with `"hidden": true` stays in the registry snapshot and the plugin, but
-   sync does not generate an MDX page for it. A recipe with
-   `"visibility": "preview"` gets an unlisted, no-index page but is omitted from
-   public discovery and cookbook plugin actions; use
-   `?ff_recipe=<recipe-id>` to reveal its card and detail page.
-3. Verify with `pnpm recipes:compile`, `pnpm test`, and `pnpm build`. The Cookbook
-   nav and homepage band are public by default.
+**Publishing it needs no commit here.** The `sync-cookbook-registry` workflow runs
+`pnpm registry:sync` and `pnpm recipes:compile` every 15 minutes and opens an auto-merging
+pull request with the generated page, snapshot and preview assets. Running those two
+commands locally to preview a recipe is fine; submitting the result is not. A hand-carried
+sync duplicates the cron and someone has to close it, so
+`scripts/check-generated-recipe-data.mjs` rejects one.
+
+The exception is a recipe that uses an enum value this adapter doesn't know:
+`recipes:compile` exits 1 on one, which fails the sync job for every recipe until the value
+is added. Land that change here first, carrying the adapter alone — `src/types/recipe.ts`
+and its label map, `scripts/compile-recipes.ts` if the value needs a filter facet, the
+tests, and the regenerated `schemas/recipe.schema.json`. An enum member no recipe uses yet
+is inert, so it is safe to merge ahead of the recipe. Verify with `pnpm recipes:compile`,
+`pnpm test`, and `pnpm build`.
+
+Visibility is set upstream. A recipe with `"hidden": true` stays in the registry snapshot
+and the plugin, but sync generates no MDX page for it. A recipe with
+`"visibility": "preview"` gets an unlisted, no-index page but is omitted from public
+discovery and cookbook plugin actions; use `?ff_recipe=<recipe-id>` to reveal its card and
+detail page. The Cookbook nav and homepage band are public by default.
 
 Only document verified APIs. Source samples from the published guides (e.g.
 `docs/libraries/web-sdk/`), never from memory: scope names, endpoints and function
