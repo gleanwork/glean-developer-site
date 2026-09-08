@@ -5,7 +5,7 @@ description: A human-readable file system format for defining Glean agents.
 
 # Glean Agent Specification
 
-The Glean agent specification is a human-readable file system format for defining a Glean agent — its instructions, tools, knowledge sources, skills, and subagents — as a directory of files. It is the source format consumed by the Glean Agents MCP tools and the GitHub Action, so Glean agents can be authored and version-controlled outside the UI.
+The Glean agent specification is a human-readable file system format for defining a Glean agent — its instructions, tools, knowledge sources, skills, dependencies, and subagents — as a directory of files. It is the source format consumed by the Glean Agents MCP tools and the GitHub Action, so Glean agents can be authored and version-controlled outside the UI.
 
 Once authored, pass the specification directory to the Glean Agents MCP tools or the GitHub Action to create or update agents in Glean.
 
@@ -34,6 +34,7 @@ Notes:
 - `subagents/` is optional.
 - Skills should have `SKILL.md` file.
 - Subagents can have skills, but cannot contain nested subagents.
+- Published skills and agents can be referenced with `dependencies`.
 - The directory names should use kebab-case.
 - The display name of agents / subagents shown to users is defined in `spec.yaml`.
 
@@ -51,9 +52,10 @@ Common top-level fields:
 | `description` | Yes | Short description of what the agent does. |
 | `instructionFile` | No | Path to the instructions file. Defaults to `instructions.md`. |
 | `model` | No | Which agentic model the agent runs on and how hard it reasons. |
-| `trigger` | No | How the agent is invoked. Defaults to chat based trigger. |
+| `trigger` | No | How the agent is invoked. Defaults to `CHAT_MESSAGE` when omitted. |
 | `skills` | No | List of skill directory paths to include. |
 | `subagents` | No | List of subagent directory paths to include. |
+| `dependencies` | No | Published skills or agents referenced by platform ID. |
 | `tools` | No | Tool providers and selected tools exposed to the agent. |
 | `gleanSearchConfig` | No | Company-knowledge access configuration. |
 
@@ -82,10 +84,16 @@ skills:
 subagents:
   - subagents/research-subagent/
 
+dependencies:
+  - type: skill
+    id: f1e2d3c4b5a697887766554433221100
+  - type: agent
+    id: 0f1e2d3c4b5a697887766554433221100
+
 tools:
   - toolProviderId: a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6
     customisationData:
-      skipUserInteraction: true
+      skipConfirmation: true
     selectedTools:
       - name: create-doc
       - name: update-doc
@@ -132,6 +140,10 @@ The `model` block configures which agentic model the agent runs on and how hard 
 - `ADVANCED` — high reasoning effort. The default when `mode` is omitted.
 - `FAST` — low reasoning effort. This should be used only for simple tasks.
 
+Prefer `autoUpgrade: true`. Set it to `false` only when the agent is
+intentionally pinned to a named model set. `autoUpgrade: false` must not be
+used without also specifying `name`.
+
 Example:
 
 ```yaml snippet=specification/snippet-02.yaml
@@ -143,7 +155,9 @@ model:
 
 ### Trigger
 
-`trigger` controls how the agent is invoked.
+`trigger` controls how the top-level agent is invoked. It is optional and
+defaults to `CHAT_MESSAGE` when omitted. Subagents are never triggered
+directly and must not declare a `trigger`.
 
 Supported `type` values:
 
@@ -151,6 +165,7 @@ Supported `type` values:
 | --- | --- |
 | `CHAT_MESSAGE` | The user converses with the agent. This is the default when `trigger` is omitted. |
 | `INPUT_FORM` | The agent receives a typed set of `trigger.inputFields` provided by the user at invocation time. When `inputFields` is empty, the agent runs without any user input. |
+| `CONTENT_TRIGGER` | The agent runs in response to a document event declared in `trigger.content.triggers`. |
 
 Examples:
 
@@ -180,6 +195,72 @@ trigger:
       optional: true
 ```
 
+#### No-input trigger
+
+An agent that runs without user-supplied input uses `INPUT_FORM` with no
+`inputFields`:
+
+```yaml
+trigger:
+  type: INPUT_FORM
+```
+
+There is no separate `MANUAL` trigger type.
+
+#### Content-triggered agent
+
+Content-triggered agents run in response to document events. Declare events
+under `trigger.content.triggers`. Entries in `triggers` are ORed; conditions
+within one entry are ANDed, and values within one condition are ORed.
+
+```yaml
+trigger:
+  type: CONTENT_TRIGGER
+  content:
+    triggers:
+      - datasource: JIRA
+        templateId: JIRA_TICKET_CREATED
+        docType: task
+        conditions:
+          - fieldName: priority
+            operator: IS_ONE_OF
+            values: [High, Critical]
+      - datasource: GOOGLECALENDAR
+        templateId: GOOGLECALENDAR_EVENT_SCHEDULED
+        docType: event
+        timeOffset: 1800
+```
+
+Each content trigger requires `datasource` and `templateId`. `docType`,
+`timeOffset`, and `conditions` are optional. A `conditions` entry requires
+`fieldName`, `operator`, and `values` (except for `FIELD_CHANGED`). Supported
+operators are `IS_ONE_OF`, `CONTAINS`, `IS_NOT_ONE_OF`, and `FIELD_CHANGED`.
+Use `TITLE` or `CONTENT` for document title/body matching; only `IS_ONE_OF`
+and `CONTAINS` apply to those fields. At most 20 trigger entries are allowed.
+
+Do not declare `trigger.schedule` for content-triggered agents. Runtime fields
+such as `content`, `eventTime`, and `system.event` are managed internally and
+must not be declared as input fields.
+
+#### Scheduled execution
+
+Chat and input-form agents can also run on a wall-clock schedule:
+
+```yaml
+trigger:
+  type: INPUT_FORM
+  schedule:
+    frequency: "0 9 * * 1-5"
+    timezone: America/Los_Angeles
+    startTime: "2026-03-02 09:00:00"
+```
+
+- `frequency` is a required five-field Unix cron expression. Cron descriptors
+  and six-field expressions with seconds are not supported.
+- `timezone` is a required IANA timezone name.
+- `startTime` is optional and uses `YYYY-MM-DD HH:MM:SS` in the specified
+  timezone.
+
 #### `inputFields` entry schema
 
 Each entry in `trigger.inputFields` accepts the following keys:
@@ -201,6 +282,20 @@ Supported `type` values:
 | `SELECT` | Single choice from a closed set declared via `options`. |
 | `DATE` | Calendar date in `YYYY-MM-DD` format. |
 
+`displayName` is also the placeholder identifier used in `instructions.md`,
+for example `[[Account Name]]`, and must be unique within the agent. For
+`SELECT`, `defaultValue` must match an option. For `DATE`, use `YYYY-MM-DD`.
+
+#### Trigger authoring rules
+
+- `CHAT_MESSAGE` must not declare `inputFields`.
+- `INPUT_FORM` with fields is an input-form agent; `INPUT_FORM` without fields
+  is a no-input agent.
+- `inputFields` is valid for `INPUT_FORM` and `CONTENT_TRIGGER`.
+- `schedule` is valid for `CHAT_MESSAGE` and `INPUT_FORM`.
+- `content` is valid only for `CONTENT_TRIGGER` and requires at least one
+  content trigger.
+
 ### Tools
 
 Tools are optional. Add them when the agent needs to perform actions outside its instructions and built-in knowledge, such as search, email, or API calls. If you declare tools, make sure every instructed external action has a corresponding tool.
@@ -210,6 +305,12 @@ Each tool entry includes:
 - `toolProviderId`: Glean internal identifier for tool provider which can also be MCP server.
 - `selectedTools` : list of selected tools for the specified provider
 - `customisationData` : optional provider-level configuration passed to all tools in the provider
+
+#### `customisationData`
+
+Provider-level customization is optional. Users should set
+`skipConfirmation: true` only when they want the provider to run without
+confirmation.
 
 ### `gleanSearchConfig`
 
@@ -239,7 +340,32 @@ A skill defines:
 - when to use it
 - how it works
 
-Each skill directory must contain a `SKILL.md` file. The display name on the UI is directly derived from the folder name.
+Each skill directory must contain a `SKILL.md` file. The display name on the UI
+is derived from the folder name, converted from kebab-case to title case.
+
+### Dependencies
+
+Dependencies reference published skills or agents by platform ID. They are not
+copied into the agent directory and must not also be listed under `skills/` or
+`subagents/`:
+
+```yaml
+dependencies:
+  - type: skill
+    id: f1e2d3c4b5a697887766554433221100
+  - type: agent
+    id: 0f1e2d3c4b5a697887766554433221100
+```
+
+Use `type: skill` for a published skill and `type: agent` for a published
+agent that the parent can dispatch as a reusable subagent. Inline subagents
+listed under `subagents` are authored as folders in the agent directory;
+published agent dependencies are referenced by ID instead. Dependency IDs must
+be unique for each dependency type.
+
+The top-level agent may declare both dependency types. A subagent may declare
+skill dependencies, but must not declare an agent dependency because nested
+subagents are not supported.
 
 ### Subagents
 
@@ -249,8 +375,12 @@ Rules:
 
 - A subagent has its own `spec.yaml` and `instructions.md`.
 - A subagent may have its own `skills/` directory.
-- A subagent must not declare its own `subagents` field since nested subagents are not supported
+- A subagent must not declare `subagents` or `trigger`; nested subagents are not supported and subagents are never invoked directly.
+- A subagent may reference published skills with `dependencies`.
 - The parent agent receives only the subagent's final result.
+
+Subagent `spec.yaml` uses the same fields as the parent except for `trigger`
+and `subagents`.
 
 ## Minimal example
 
