@@ -21,24 +21,37 @@ jobs:
             contents: write
             pull-requests: write
         steps:
+            - name: Generate App Token
+              id: app-token
+              uses: actions/create-github-app-token@v2
+              with:
+                  app-id: ${{ secrets.APP_ID }}
+                  private-key: ${{ secrets.APP_PRIVATE_KEY }}
+                  owner: gleanwork
+                  repositories: >-
+                      glean-developer-site,open-api,api-client-java,api-client-python,
+                      api-client-typescript,api-client-go,glean-agent-toolkit,mcp-server,
+                      mcp-config,configure-mcp-server,glean-indexing-sdk,langchain-glean
+
             - name: Checkout
               uses: actions/checkout@v4
               with:
                   fetch-depth: 0
+                  token: ${{ steps.app-token.outputs.token }}
 
             - name: Checkout target worktree
               uses: actions/checkout@v4
               with:
                   fetch-depth: 0
                   path: pr-worktree
-                  token: ${{ secrets.CHANGELOG_PAT }}
+                  token: ${{ steps.app-token.outputs.token }}
 
             - name: Set up mise
               uses: jdx/mise-action@v4
               with:
                   cache: true
               env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
 
             - name: Install deps
               run: pnpm install --frozen-lockfile
@@ -55,7 +68,7 @@ jobs:
 
             - name: Run changelog generator
               env:
-                  GITHUB_TOKEN: ${{ secrets.CHANGELOG_PAT }}
+                  GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
                   CHANGELOG_WORKTREE: pr-worktree
                   GLEAN_API_TOKEN: ${{ secrets.CHANGELOG_GLEAN_API_TOKEN }}
                   GLEAN_INSTANCE: ${{ secrets.CHANGELOG_GLEAN_INSTANCE }}
