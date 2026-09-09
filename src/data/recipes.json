@@ -315,6 +315,230 @@
       "permalink": "/cookbook/customer-360"
     },
     {
+      "id": "import-skill-from-github",
+      "title": "Import a skill from GitHub",
+      "description": "Preview a public GitHub skill at a commit SHA with the official TypeScript API client, import the selected URL, sync that captured skill, confirm it with get and list, then delete only IDs this run created.",
+      "sidebarLabel": "Import from GitHub",
+      "codeWalkthrough": {
+        "intro": "The runnable scaffold opts into the experimental Skills API through the official SDK, previews a GitHub URL without persisting a source, imports only selected URLs, and syncs one captured skill.",
+        "examples": [
+          {
+            "title": "Configure the Skills API client",
+            "description": "Resolve the reader's tenant, use the native Skills scopes or the recorded legacy compatibility mode, and enable experimental endpoints through the SDK constructor.",
+            "source": "src/client.ts",
+            "language": "typescript",
+            "code": "import fs from 'node:fs/promises';\nimport path from 'node:path';\nimport { Glean, type SDKOptions } from '@gleanwork/api-client';\nimport type { XGleanOptions } from '@gleanwork/api-client/hooks/x-glean-options.js';\nimport { createGleanTokenProvider, discoverGleanTenant } from '@gleanwork/auth';\n\nconst LOOPBACK_HOSTS = new Set(['127.0.0.1', '::1', 'localhost']);\nconst SCOPE_MODE_FILE = '.glean-scope-mode';\n\nexport interface GleanClientTarget {\n  email?: string;\n  serverUrl?: string;\n}\n\nasync function loadDotEnv() {\n  let text: string;\n  try {\n    text = await fs.readFile(path.join(process.cwd(), '.env'), 'utf8');\n  } catch (error) {\n    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return;\n    throw error;\n  }\n  for (const raw of text.split(/\\r?\\n/)) {\n    const line = raw.trim();\n    if (!line || line.startsWith('#')) continue;\n    const eq = line.indexOf('=');\n    if (eq <= 0) continue;\n    const key = line.slice(0, eq).trim();\n    let value = line.slice(eq + 1).trim();\n    if (\n      (value.startsWith('\"') && value.endsWith('\"')) ||\n      (value.startsWith(\"'\") && value.endsWith(\"'\"))\n    ) {\n      value = value.slice(1, -1);\n    }\n    if (process.env[key] === undefined) process.env[key] = value;\n  }\n}\n\nasync function resolveServerUrl({ email, serverUrl }: GleanClientTarget) {\n  const explicit = serverUrl?.trim();\n  if (explicit) return explicit;\n\n  const workEmail = email?.trim();\n  if (workEmail) return (await discoverGleanTenant(workEmail)).serverUrl;\n\n  const configured = process.env.GLEAN_SERVER_URL?.trim();\n  if (configured) return configured;\n\n  throw new Error(\n    'Pass --email or --server-url, or set GLEAN_SERVER_URL in your environment.',\n  );\n}\n\nasync function configuredScopes(log: (message: string) => void) {\n  const envMode = process.env.GLEAN_SKILLS_SCOPE_MODE?.trim();\n  let fileMode: string | undefined;\n  try {\n    fileMode = (\n      await fs.readFile(path.join(process.cwd(), SCOPE_MODE_FILE), 'utf8')\n    ).trim();\n  } catch (error) {\n    if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;\n  }\n  if (envMode && fileMode && envMode !== fileMode) {\n    log(\n      `GLEAN_SKILLS_SCOPE_MODE=${envMode} overrides .glean-scope-mode (${fileMode}).`,\n    );\n  } else if (envMode) {\n    log(`Using GLEAN_SKILLS_SCOPE_MODE=${envMode}.`);\n  } else if (fileMode) {\n    log(`Using .glean-scope-mode (${fileMode}).`);\n  } else {\n    log('Using native skills:read and skills:write scopes.');\n  }\n  const mode = envMode || fileMode;\n  return mode === 'legacy' ? ['SKILLS'] : ['skills:read', 'skills:write'];\n}\n\nexport async function createGleanClient(\n  target: GleanClientTarget,\n  log: (message: string) => void = () => undefined,\n) {\n  await loadDotEnv();\n  const serverURL = await resolveServerUrl(target);\n  const server = new URL(serverURL);\n  const loopback = LOOPBACK_HOSTS.has(server.hostname);\n  if (\n    (server.protocol !== 'https:' && !loopback) ||\n    server.username ||\n    server.password ||\n    server.search ||\n    server.hash ||\n    (server.pathname && server.pathname !== '/') ||\n    (!loopback && server.port)\n  ) {\n    throw new Error('Use a complete Glean backend HTTPS origin.');\n  }\n\n  const staticToken = process.env.GLEAN_API_TOKEN?.trim();\n  let apiToken: string | ReturnType<typeof createGleanTokenProvider>;\n  if (staticToken) {\n    log('Using GLEAN_API_TOKEN from the environment.');\n    apiToken = staticToken;\n  } else {\n    const scopes = await configuredScopes(log);\n    log(`Using the OAuth session (${scopes.join(', ')}).`);\n    apiToken = createGleanTokenProvider({\n      serverUrl: server.origin,\n      scopes,\n    });\n  }\n\n  const options = {\n    serverURL: server.origin,\n    apiToken,\n    includeExperimental: true,\n    timeoutMs: 30_000,\n    retryConfig: {\n      strategy: 'backoff',\n      backoff: {\n        initialInterval: 500,\n        maxInterval: 5_000,\n        exponent: 2,\n        maxElapsedTime: 90_000,\n      },\n      retryConnectionErrors: true,\n    },\n  } satisfies SDKOptions & XGleanOptions;\n\n  return new Glean(options);\n}\n"
+          },
+          {
+            "title": "Preview, import, and sync",
+            "description": "Call previewSource with stream false by default, import the selected GitHub URL, sync that captured skill, and delete only IDs this run created.",
+            "source": "src/workflow.ts",
+            "language": "typescript",
+            "code": "import type { Glean } from '@gleanwork/api-client';\nimport {\n  GleanBaseError,\n  PlatformProblemDetailError,\n} from '@gleanwork/api-client/models/errors';\nimport { PreviewSourceAcceptEnum } from '@gleanwork/api-client/sdk/skills.js';\nimport type { PlatformSkillSourcePreviewResponse } from '@gleanwork/api-client/models/components';\nimport { CleanupFailedError, formatCliError } from './errors.js';\nimport { PINNED_SOURCE_URL } from './fixture.js';\nimport { parsePreviewResult } from './preview.js';\n\nexport type SkillsApi = Pick<\n  Glean['skills'],\n  'delete' | 'import' | 'list' | 'previewSource' | 'retrieve' | 'sync'\n>;\n\nexport interface ImportResult {\n  ids: string[];\n  displayName: string;\n  sourceUrl: string;\n  commitSha: string;\n  updated: boolean;\n}\n\nfunction rethrow(error: unknown): never {\n  throw error instanceof Error ? error : new Error('Verification failed.');\n}\n\nexport function cleanupCommand(\n  skillId: string,\n  auth: { email?: string; serverUrl?: string } = {},\n) {\n  const parts = [`npm start -- cleanup --id ${skillId} --yes`];\n  if (auth.serverUrl?.trim()) {\n    parts.push(`--server-url ${auth.serverUrl.trim()}`);\n  } else if (auth.email?.trim()) {\n    parts.push(`--email ${auth.email.trim()}`);\n  } else {\n    parts.push('--email <your-work-email>');\n  }\n  return parts.join(' ');\n}\n\nexport function importedSuccessLine(result: ImportResult) {\n  return `Imported ${result.displayName} (${result.ids.join(', ')}) from ${result.sourceUrl} at ${result.commitSha}; cleanup completed.`;\n}\n\nfunction githubFetchError(error: unknown): Error {\n  const summary = formatCliError(error).error;\n  return new Error(\n    `This tenant could not fetch GitHub: ${summary}. The import recipe fails rather than skipping.`,\n  );\n}\n\nfunction isSkillsApiNotFound(error: unknown) {\n  if (error instanceof PlatformProblemDetailError) return error.status === 404;\n  if (error instanceof GleanBaseError) return error.statusCode === 404;\n  return false;\n}\n\nfunction reraiseSourceError(error: unknown): never {\n  if (isSkillsApiNotFound(error)) throw error;\n  if (\n    error instanceof PlatformProblemDetailError ||\n    error instanceof GleanBaseError\n  ) {\n    throw githubFetchError(error);\n  }\n  throw error instanceof Error ? error : new Error('Verification failed.');\n}\n\nexport async function findSkillById(api: SkillsApi, skillId: string) {\n  let cursor: string | undefined;\n  do {\n    const page = await api.list(100, cursor);\n    if (page.skills.some((skill) => skill.id === skillId)) return true;\n    cursor = page.next_cursor ?? undefined;\n  } while (cursor);\n  return false;\n}\n\nexport async function deleteCapturedIds(\n  api: SkillsApi,\n  ids: string[],\n  log: (message: string) => void,\n) {\n  const remaining: string[] = [];\n  for (const id of ids) {\n    log(`Deleting run-owned skill ${id}...`);\n    try {\n      await api.delete(id);\n    } catch {\n      remaining.push(id);\n    }\n  }\n  return remaining;\n}\n\nexport async function resolvePreview(\n  api: SkillsApi,\n  sourceUrl: string,\n  stream: boolean,\n  log: (message: string) => void = () => undefined,\n): Promise<PlatformSkillSourcePreviewResponse> {\n  try {\n    const preview = await api.previewSource(\n      { source_url: sourceUrl, stream },\n      stream\n        ? { acceptHeaderOverride: PreviewSourceAcceptEnum.textEventStream }\n        : undefined,\n    );\n    return parsePreviewResult(preview, log);\n  } catch (error) {\n    reraiseSourceError(error);\n  }\n}\n\nexport async function importSkillFromGithub(\n  api: SkillsApi,\n  options: {\n    sourceUrl?: string;\n    stream?: boolean;\n    cleanup: boolean;\n    auth?: { email?: string; serverUrl?: string };\n    log?: (message: string) => void;\n  },\n): Promise<ImportResult> {\n  const log = options.log ?? (() => undefined);\n  const sourceUrl = options.sourceUrl?.trim() || PINNED_SOURCE_URL;\n  const createdIds: string[] = [];\n  let result: ImportResult | undefined;\n  let workError: unknown;\n\n  try {\n    log(`Previewing ${sourceUrl} without persisting a source...`);\n    const preview = await resolvePreview(\n      api,\n      sourceUrl,\n      options.stream === true,\n      log,\n    );\n    const selected = preview.skills.at(0);\n    if (!selected) {\n      const failures = preview.failures\n        .map((failure) => `${failure.code}: ${failure.detail}`)\n        .join('; ');\n      throw new Error(\n        failures\n          ? `GitHub preview returned no importable skills (${failures}).`\n          : 'GitHub preview returned no importable skills.',\n      );\n    }\n\n    log(`Importing ${selected.source_url}...`);\n    let imported;\n    try {\n      imported = await api.import({ source_urls: [selected.source_url] });\n    } catch (error) {\n      reraiseSourceError(error);\n    }\n    const skill = imported.skills.at(0);\n    if (!skill) {\n      throw new Error('Import returned no skills.');\n    }\n    createdIds.push(...imported.skills.map((item) => item.id));\n\n    log('Confirming get and list return the imported skill...');\n    const retrieved = await api.retrieve(skill.id);\n    if (retrieved.skill.id !== skill.id) {\n      throw new Error('Direct retrieval returned a different skill.');\n    }\n    if (!(await findSkillById(api, skill.id))) {\n      throw new Error('List did not include the skill this run just imported.');\n    }\n\n    log(`Syncing imported skill ${skill.id} from its stored GitHub URL...`);\n    let synced;\n    try {\n      synced = await api.sync(skill.id);\n    } catch (error) {\n      reraiseSourceError(error);\n    }\n\n    result = {\n      ids: [...createdIds],\n      displayName: retrieved.skill.display_name,\n      sourceUrl: selected.source_url,\n      commitSha: synced.commit_sha,\n      updated: synced.updated,\n    };\n  } catch (error) {\n    workError = error;\n  }\n\n  const remaining = options.cleanup\n    ? await deleteCapturedIds(api, createdIds, log)\n    : [];\n  if (remaining.length > 0) {\n    throw new CleanupFailedError(\n      remaining,\n      remaining.map((id) => cleanupCommand(id, options.auth)).join('\\n  '),\n      workError,\n    );\n  }\n  if (workError) rethrow(workError);\n  if (!result) throw new Error('Verification did not produce a result.');\n  return result;\n}\n"
+          }
+        ]
+      },
+      "surfaces": [
+        "platform-api"
+      ],
+      "capabilities": [
+        "skills"
+      ],
+      "status": "production-pattern",
+      "visibility": "preview",
+      "category": "workflow",
+      "level": "Intermediate",
+      "levels": {
+        "minimal": true,
+        "wow": false
+      },
+      "timeEstimate": "~20 min",
+      "requiredScopes": [
+        "skills:read",
+        "skills:write"
+      ],
+      "authMethod": [
+        "client-api-oauth-or-token"
+      ],
+      "buildMethod": "scaffold",
+      "languages": [
+        "typescript"
+      ],
+      "prerequisites": [
+        "Node.js 22.12.0 or newer",
+        "A Glean instance with the experimental Skills Platform APIs enabled",
+        "Your work email, or the complete Glean backend HTTPS origin",
+        "A tenant that permits the native skills:read and skills:write OAuth scopes; the legacy SKILLS compatibility scope or a user-scoped token is the fallback",
+        "A tenant that can fetch the public GitHub skill-creator directory at commit 41bbe19d1a1a7eaab5e7bb9050a417e5c6cffc8f; verification fails rather than skipping if GitHub is unreachable"
+      ],
+      "demoQueries": [
+        {
+          "query": "Preview, import, and sync the pinned public GitHub skill-creator fixture, then delete run-owned IDs",
+          "expectedBehavior": "Stdout ends with Imported skill-creator (<id>) from the commit-SHA GitHub URL at <sha>; cleanup completed. If the tenant cannot fetch GitHub, the run fails with a GitHub-fetch error instead of skipping. If delete fails, the process exits non-zero and does not print that success line."
+        }
+      ],
+      "codeAssets": [
+        {
+          "repoPath": "recipes/import-skill-from-github",
+          "language": "typescript",
+          "description": "TypeScript CLI using @gleanwork/api-client to preview, import, and sync a public GitHub skill at a commit SHA, then delete only run-owned IDs"
+        }
+      ],
+      "scaffoldActions": [],
+      "steps": [
+        {
+          "kind": "scaffold",
+          "title": "Copy the project onto your machine",
+          "description": "Copy the runnable TypeScript GitHub import CLI and credential-free MSW fixture tests into a new directory. OAuth login and secure token storage come from the pinned @gleanwork/auth package.",
+          "command": "npx -y tiged@2.12.8 gleanwork/glean-cookbook/recipes/import-skill-from-github import-skill-from-github"
+        },
+        {
+          "kind": "install",
+          "title": "Install dependencies",
+          "command": "cd import-skill-from-github && npm install"
+        },
+        {
+          "kind": "manual",
+          "title": "Run the fixture tests",
+          "description": "Run Vitest with recorded preview payloads and MSW, without GitHub or Glean credentials, covering JSON preview, optional SSE preview, import, sync, and captured-ID cleanup.",
+          "command": "cd import-skill-from-github && npm test"
+        },
+        {
+          "kind": "authenticate",
+          "title": "Sign in with OAuth",
+          "description": "Discover your Glean backend from work email and request skills:read and skills:write. Only a recognized scope-grant failure triggers one retry with legacy SKILLS. If OAuth is not available, skip this command: copy .env.example to .env and fill GLEAN_API_TOKEN and GLEAN_SERVER_URL.",
+          "command": "cd import-skill-from-github && npm run login -- --email \"<work-email>\""
+        },
+        {
+          "kind": "configure",
+          "title": "Pass an explicit backend if you need one",
+          "description": "If email discovery is wrong, pass --server-url with the complete Glean backend HTTPS origin on login, verify, and start. If DCR is restricted, export GLEAN_OAUTH_CLIENT_ID in your shell before npm run login. npm run login does not read .env, so do not store that client id only in .env."
+        },
+        {
+          "kind": "verify-live",
+          "title": "Verify against your instance",
+          "description": "Preview the public GitHub skill-creator directory at commit 41bbe19d1a1a7eaab5e7bb9050a417e5c6cffc8f, import the selected URL, sync that captured skill, confirm get and list, then permanently delete only IDs this run created. Fails if the tenant cannot fetch GitHub. Success prints an Imported line that ends with cleanup completed.",
+          "command": "cd import-skill-from-github && npm run verify -- --email \"<work-email>\""
+        },
+        {
+          "kind": "run",
+          "title": "Watch repository scan progress",
+          "description": "Run the same preview, import, and sync path with --stream. Scan events print as the tenant walks the GitHub directory. This command still deletes the captured skill when it finishes; there is no keep path. Pass --yes when the terminal is not interactive.",
+          "command": "cd import-skill-from-github && npm start -- --email \"<work-email>\" --yes --stream"
+        }
+      ],
+      "execution": {
+        "type": "cli",
+        "questions": [
+          {
+            "id": "work-email",
+            "prompt": "What is your work email address?",
+            "required": true
+          }
+        ],
+        "auth": [
+          {
+            "kind": "oauth-with-token-fallback",
+            "scopes": [
+              "skills:read",
+              "skills:write"
+            ],
+            "setupCommand": "cd import-skill-from-github && npm run login -- --email \"<work-email>\"",
+            "credentialVariable": "GLEAN_API_TOKEN"
+          }
+        ],
+        "verification": {
+          "kind": "automated",
+          "command": "cd import-skill-from-github && npm run verify -- --email \"<work-email>\"",
+          "expectedDuration": "about 2 minutes after sign-in",
+          "startsOwnServer": false
+        },
+        "run": {
+          "command": "cd import-skill-from-github && npm start -- --email \"<work-email>\" --yes --stream",
+          "userBrowser": false
+        }
+      },
+      "architecture": [
+        {
+          "label": "Public GitHub URL",
+          "caption": "skill-creator at a commit SHA",
+          "icon": "Github",
+          "emphasized": false
+        },
+        {
+          "label": "Source preview",
+          "caption": "no persisted source",
+          "category": "workflow",
+          "emphasized": false
+        },
+        {
+          "label": "Skills import",
+          "caption": "selected URLs only",
+          "category": "workflow",
+          "emphasized": true
+        },
+        {
+          "label": "Sync",
+          "caption": "refresh one captured ID",
+          "icon": "RefreshCw",
+          "emphasized": false
+        }
+      ],
+      "content": {
+        "problem": "Some teams keep Agent Skills in GitHub rather than a local SKILL.md. Previewing that URL, importing only the selected skills, and syncing a captured ID is a different job from the first persist or name-based versioning. This recipe uses a public GitHub skill directory at a commit SHA so the run is answerable on the reader's tenant without a seeded corpus.",
+        "takeItFurther": [
+          "Pass --source-url to preview a different public GitHub skill directory after the default commit-SHA source succeeds.",
+          "Use the Intermediate publishing recipe when the source of truth is a local bundle and you need version supersession or zip sandboxing.",
+          "Call glean.skills.createVersion() or PATCH enable/disable only after you already have a captured skill ID."
+        ],
+        "guardrails": [
+          {
+            "title": "Preview before import",
+            "rule": "Inspect the GitHub URL with previewSource first. Preview persists neither a source nor any skill."
+          },
+          {
+            "title": "Import selected URLs only",
+            "rule": "Pass source URLs returned by preview. Import is atomic: if any selected URL cannot be fetched, validated, or persisted, no skills are created."
+          },
+          {
+            "title": "Fail when GitHub is unreachable",
+            "rule": "If this tenant cannot fetch GitHub, stop. Do not skip verification or treat an empty preview as success."
+          },
+          {
+            "title": "Delete by captured ID only",
+            "rule": "Cleanup deletes only IDs this run created. Never choose a cleanup target by display name or a broad catalog search. If delete fails, do not report cleanup completed."
+          }
+        ],
+        "limitations": [
+          {
+            "title": "Experimental API",
+            "description": "The scaffold opts in with includeExperimental, but the Skills endpoints may still be unavailable on a tenant or change before general availability."
+          },
+          {
+            "title": "GitHub must be fetchable",
+            "description": "Preview, import, and sync require the Glean tenant to fetch the public GitHub fixture. A blocked or unconfigured GitHub fetch is a failed verify, not a skipped one."
+          },
+          {
+            "title": "OAuth policy varies by tenant",
+            "description": "Native Skills scopes may not yet be grantable everywhere. The login wrapper uses the legacy compatibility scope only for a recognized scope-grant failure; a user-scoped token remains an explicit fallback."
+          }
+        ]
+      },
+      "aiPrompt": "Scaffold and run the verified Skills GitHub import recipe. Ask for the user's work email. Run credential-free MSW fixture tests before authentication. Sign in with native skills:read and skills:write; use legacy SKILLS only after the wrapper recognizes a scope-grant failure. Enable experimental APIs through the SDK constructor. Preview POST /api/skills/sources/preview against https://github.com/anthropics/skills/tree/41bbe19d1a1a7eaab5e7bb9050a417e5c6cffc8f/skills/skill-creator with stream false by default. Import the selected URL via POST /api/skills/import. Sync one imported skill with POST /api/skills/{skill_id}/sync. Confirm with get and list, paginating list. Delete only IDs this run created. If cleanup cannot delete a captured ID, exit non-zero. If the tenant cannot fetch GitHub, fail loudly instead of skipping. A 404 from Skills APIs is not a GitHub-fetch failure. With --stream, print scan progress events. Do not treat PATCH update or POST .../versions as the primary path. Never execute retrieved files or infer cleanup targets from names or catalog search.",
+      "llmContext": "The experimental Skills Platform API manages portable bundles; it does not execute them. Use @gleanwork/api-client 0.20.4 with includeExperimental. This Intermediate recipe is a different source of truth from local SKILL.md publishing: previewSource (stream false by default, optional stream true like Search --auto-select), import selected URLs, and sync one captured GitHub-imported skill. Default source is https://github.com/anthropics/skills/tree/41bbe19d1a1a7eaab5e7bb9050a417e5c6cffc8f/skills/skill-creator. Native OAuth scopes are skills:read and skills:write; legacy SKILLS is compatibility-only. Capture mutation IDs and restrict deletion to those IDs. Failed cleanup must not report success. Fail, do not skip, when the tenant cannot fetch GitHub. Leave PATCH update and POST .../versions as take-it-further.",
+      "goDependency": false,
+      "featured": false,
+      "hidden": false,
+      "tags": [
+        "skills",
+        "github",
+        "import",
+        "platform-api",
+        "experimental"
+      ],
+      "permalink": "/cookbook/import-skill-from-github"
+    },
+    {
       "id": "no-code-it-helpdesk-lovable",
       "title": "Build an IT helpdesk page in Lovable",
       "description": "Paste a prompt into Lovable to get a private page that answers common IT questions from your Glean docs.",
@@ -1485,6 +1709,248 @@
       "permalink": "/cookbook/search-with-discovered-filters"
     },
     {
+      "id": "skill-publishing-pipeline",
+      "title": "Publish a versioned skill bundle",
+      "description": "After a first persist, prove name-based version supersession, retrieve a specific version, stage downloaded bytes in a bounded zip sandbox, and delete only the run-owned skill.",
+      "sidebarLabel": "Version a skill",
+      "codeWalkthrough": {
+        "intro": "The runnable scaffold opts into the experimental Skills API through the official SDK, keeps validation separate from persistence, verifies version supersession directly, and treats downloaded archives as untrusted.",
+        "examples": [
+          {
+            "title": "Configure the Skills API client",
+            "description": "Resolve the reader's tenant, use the native Skills scopes or the recorded legacy compatibility mode, and enable experimental endpoints through the SDK constructor.",
+            "source": "src/client.ts",
+            "language": "typescript",
+            "code": "import fs from 'node:fs/promises';\nimport path from 'node:path';\nimport { Glean, type SDKOptions } from '@gleanwork/api-client';\nimport type { XGleanOptions } from '@gleanwork/api-client/hooks/x-glean-options.js';\nimport { createGleanTokenProvider, discoverGleanTenant } from '@gleanwork/auth';\n\nconst LOOPBACK_HOSTS = new Set(['127.0.0.1', '::1', 'localhost']);\nconst SCOPE_MODE_FILE = '.glean-scope-mode';\n\nexport interface GleanClientTarget {\n  email?: string;\n  serverUrl?: string;\n}\n\nasync function loadDotEnv() {\n  let text: string;\n  try {\n    text = await fs.readFile(path.join(process.cwd(), '.env'), 'utf8');\n  } catch (error) {\n    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return;\n    throw error;\n  }\n  for (const raw of text.split(/\\r?\\n/)) {\n    const line = raw.trim();\n    if (!line || line.startsWith('#')) continue;\n    const eq = line.indexOf('=');\n    if (eq <= 0) continue;\n    const key = line.slice(0, eq).trim();\n    let value = line.slice(eq + 1).trim();\n    if (\n      (value.startsWith('\"') && value.endsWith('\"')) ||\n      (value.startsWith(\"'\") && value.endsWith(\"'\"))\n    ) {\n      value = value.slice(1, -1);\n    }\n    if (process.env[key] === undefined) process.env[key] = value;\n  }\n}\n\nasync function resolveServerUrl({ email, serverUrl }: GleanClientTarget) {\n  const explicit = serverUrl?.trim();\n  if (explicit) return explicit;\n\n  const workEmail = email?.trim();\n  if (workEmail) return (await discoverGleanTenant(workEmail)).serverUrl;\n\n  const configured = process.env.GLEAN_SERVER_URL?.trim();\n  if (configured) return configured;\n\n  throw new Error(\n    'Pass --email or --server-url, or set GLEAN_SERVER_URL in your environment.',\n  );\n}\n\nasync function configuredScopes(log: (message: string) => void) {\n  const envMode = process.env.GLEAN_SKILLS_SCOPE_MODE?.trim();\n  let fileMode: string | undefined;\n  try {\n    fileMode = (\n      await fs.readFile(path.join(process.cwd(), SCOPE_MODE_FILE), 'utf8')\n    ).trim();\n  } catch (error) {\n    if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;\n  }\n  if (envMode && fileMode && envMode !== fileMode) {\n    log(\n      `GLEAN_SKILLS_SCOPE_MODE=${envMode} overrides .glean-scope-mode (${fileMode}).`,\n    );\n  } else if (envMode) {\n    log(`Using GLEAN_SKILLS_SCOPE_MODE=${envMode}.`);\n  } else if (fileMode) {\n    log(`Using .glean-scope-mode (${fileMode}).`);\n  } else {\n    log('Using native skills:read and skills:write scopes.');\n  }\n  const mode = envMode || fileMode;\n  return mode === 'legacy' ? ['SKILLS'] : ['skills:read', 'skills:write'];\n}\n\nexport async function createGleanClient(\n  target: GleanClientTarget,\n  log: (message: string) => void = () => undefined,\n) {\n  await loadDotEnv();\n  const serverURL = await resolveServerUrl(target);\n  const server = new URL(serverURL);\n  const loopback = LOOPBACK_HOSTS.has(server.hostname);\n  if (\n    (server.protocol !== 'https:' && !loopback) ||\n    server.username ||\n    server.password ||\n    server.search ||\n    server.hash ||\n    (server.pathname && server.pathname !== '/') ||\n    (!loopback && server.port)\n  ) {\n    throw new Error('Use a complete Glean backend HTTPS origin.');\n  }\n\n  const staticToken = process.env.GLEAN_API_TOKEN?.trim();\n  let apiToken: string | ReturnType<typeof createGleanTokenProvider>;\n  if (staticToken) {\n    log('Using GLEAN_API_TOKEN from the environment.');\n    apiToken = staticToken;\n  } else {\n    const scopes = await configuredScopes(log);\n    log(`Using the OAuth session (${scopes.join(', ')}).`);\n    apiToken = createGleanTokenProvider({\n      serverUrl: server.origin,\n      scopes,\n    });\n  }\n\n  const options = {\n    serverURL: server.origin,\n    apiToken,\n    includeExperimental: true,\n    timeoutMs: 30_000,\n    retryConfig: {\n      strategy: 'backoff',\n      backoff: {\n        initialInterval: 500,\n        maxInterval: 5_000,\n        exponent: 2,\n        maxElapsedTime: 90_000,\n      },\n      retryConnectionErrors: true,\n    },\n  } satisfies SDKOptions & XGleanOptions;\n\n  return new Glean(options);\n}\n"
+          },
+          {
+            "title": "Prove supersession and inspect a version",
+            "description": "Publish the same unique name twice, confirm the skill ID is stable while the version advances, then retrieve that version's metadata and content directly.",
+            "source": "src/workflow.ts",
+            "language": "typescript",
+            "code": "import fs from 'node:fs/promises';\nimport path from 'node:path';\nimport { randomBytes } from 'node:crypto';\nimport type { Glean } from '@gleanwork/api-client';\nimport { CleanupFailedError } from './errors.js';\nimport { readBundle, readStream, stageDownloadedBundle } from './bundle.js';\n\nexport type SkillsApi = Pick<\n  Glean['skills'],\n  | 'create'\n  | 'delete'\n  | 'list'\n  | 'listVersions'\n  | 'retrieve'\n  | 'retrieveContent'\n  | 'retrieveVersion'\n  | 'retrieveVersionContent'\n  | 'validate'\n>;\n\nexport interface PublishResult {\n  id: string;\n  displayName: string;\n  version: number;\n  minorVersion: number;\n}\n\nfunction rethrow(error: unknown): never {\n  throw error instanceof Error ? error : new Error('Verification failed.');\n}\n\nexport function cleanupCommand(\n  skillId: string,\n  auth: { email?: string; serverUrl?: string } = {},\n) {\n  const parts = [`npm start -- cleanup --id ${skillId} --yes`];\n  if (auth.serverUrl?.trim()) {\n    parts.push(`--server-url ${auth.serverUrl.trim()}`);\n  } else if (auth.email?.trim()) {\n    parts.push(`--email ${auth.email.trim()}`);\n  } else {\n    parts.push('--email <your-work-email>');\n  }\n  return parts.join(' ');\n}\n\nexport function publishedSkillLine(result: PublishResult) {\n  return `Published ${result.displayName} (${result.id}) at version ${result.version}.${result.minorVersion}.`;\n}\n\nexport function verifiedSuccessLine(result: PublishResult) {\n  return `Verified ${result.displayName} (${result.id}) at version ${result.version}.${result.minorVersion}; cleanup completed.`;\n}\n\nexport function stagingDestination(\n  stageDir: string,\n  id: string,\n  version: number,\n  minorVersion: number,\n) {\n  return path.resolve(stageDir, id, `v${version}.${minorVersion}`);\n}\n\nexport async function findSkillByName(\n  api: SkillsApi,\n  displayName: string,\n): Promise<string | undefined> {\n  let cursor: string | undefined;\n  do {\n    const page = await api.list(100, cursor);\n    const match = page.skills.find(\n      (skill) => skill.display_name === displayName,\n    );\n    if (match) return match.id;\n    cursor = page.next_cursor ?? undefined;\n  } while (cursor);\n  return undefined;\n}\n\nexport async function deleteCapturedIds(\n  api: SkillsApi,\n  ids: string[],\n  log: (message: string) => void,\n) {\n  const remaining: string[] = [];\n  for (const id of ids) {\n    log(`Deleting run-owned skill ${id}...`);\n    try {\n      await api.delete(id);\n    } catch {\n      remaining.push(id);\n    }\n  }\n  return remaining;\n}\n\nexport async function publishBundle(\n  api: SkillsApi,\n  bundlePath: string,\n): Promise<PublishResult> {\n  const bundle = await readBundle(bundlePath);\n  const validation = await api.validate({ file: bundle });\n  const created = await api.create({ file: bundle });\n  if (created.skill.display_name !== validation.metadata.display_name) {\n    throw new Error('Published skill name does not match validated metadata.');\n  }\n  return {\n    id: created.skill.id,\n    displayName: created.skill.display_name,\n    version: created.skill.latest_version,\n    minorVersion: created.skill.latest_minor_version,\n  };\n}\n\nexport async function publishAndStage(\n  api: SkillsApi,\n  options: {\n    bundlePath: string;\n    stageDir: string;\n    log: (message: string) => void;\n  },\n) {\n  const result = await publishBundle(api, options.bundlePath);\n  options.log(publishedSkillLine(result));\n  const destination = stagingDestination(\n    options.stageDir,\n    result.id,\n    result.version,\n    result.minorVersion,\n  );\n  const response = await api.retrieveContent(result.id);\n  const files = await stageDownloadedBundle(\n    await readStream(response.result),\n    destination,\n  );\n  return { result, files, destination };\n}\n\nfunction manifest(displayName: string, description: string) {\n  return `---\\nname: ${displayName}\\ndescription: ${description}\\n---\\n\\n# Publishing verification\\n\\nThis fixture verifies the Skills publishing lifecycle. It contains no executable code.\\n`;\n}\n\nfunction versionAdvanced(\n  first: { latest_version: number; latest_minor_version: number },\n  second: { latest_version: number; latest_minor_version: number },\n) {\n  return (\n    second.latest_version > first.latest_version ||\n    (second.latest_version === first.latest_version &&\n      second.latest_minor_version > first.latest_minor_version)\n  );\n}\n\nasync function assertManifest(\n  api: SkillsApi,\n  skillId: string,\n  expectedName: string,\n  destination: string,\n  version?: number,\n) {\n  const response =\n    version === undefined\n      ? await api.retrieveContent(skillId)\n      : await api.retrieveVersionContent(skillId, version);\n  const archive = await readStream(response.result);\n  const files = await stageDownloadedBundle(archive, destination);\n  const manifestPath = files.find(\n    (file) => path.posix.basename(file) === 'SKILL.md',\n  );\n  if (!manifestPath) throw new Error('Staged bundle has no SKILL.md.');\n  const content = await fs.readFile(\n    path.join(destination, manifestPath),\n    'utf8',\n  );\n  if (!content.includes(`name: ${expectedName}`)) {\n    throw new Error('Downloaded SKILL.md does not match the published skill.');\n  }\n}\n\nexport async function verifyPublishingLifecycle(\n  api: SkillsApi,\n  options: {\n    workDir: string;\n    cleanup: boolean;\n    auth?: { email?: string; serverUrl?: string };\n    log?: (message: string) => void;\n  },\n): Promise<PublishResult> {\n  const log = options.log ?? (() => undefined);\n  const uniqueName = `cookbook-publish-${randomBytes(8).toString('hex')}`;\n  const runRoot = path.join(options.workDir, uniqueName);\n  const firstPath = path.join(runRoot, 'v1', 'SKILL.md');\n  const secondPath = path.join(runRoot, 'v2', 'SKILL.md');\n  let createdId: string | undefined;\n  let result: PublishResult | undefined;\n  let workError: unknown;\n\n  await fs.mkdir(path.dirname(firstPath), { recursive: true });\n  await fs.mkdir(path.dirname(secondPath), { recursive: true });\n  await fs.writeFile(\n    firstPath,\n    manifest(uniqueName, 'Cookbook publishing verification version one.'),\n    { flag: 'wx', mode: 0o600 },\n  );\n  await fs.writeFile(\n    secondPath,\n    manifest(uniqueName, 'Cookbook publishing verification version two.'),\n    { flag: 'wx', mode: 0o600 },\n  );\n\n  try {\n    log('Validating the first bundle without persisting it...');\n    const firstBundle = await readBundle(firstPath);\n    const validation = await api.validate({ file: firstBundle });\n    if (validation.metadata.display_name !== uniqueName) {\n      throw new Error('Validation returned an unexpected skill name.');\n    }\n\n    log('Confirming invalid frontmatter is rejected without a create call...');\n    const invalidPath = path.join(runRoot, 'invalid', 'SKILL.md');\n    await fs.mkdir(path.dirname(invalidPath), { recursive: true });\n    await fs.writeFile(invalidPath, '# Missing frontmatter\\n', {\n      flag: 'wx',\n      mode: 0o600,\n    });\n    let rejected = false;\n    try {\n      await api.validate({ file: await readBundle(invalidPath) });\n    } catch {\n      rejected = true;\n    }\n    if (!rejected) throw new Error('Invalid SKILL.md unexpectedly validated.');\n\n    log('Publishing the first version of a uniquely named skill...');\n    const first = await api.create({ file: firstBundle });\n    createdId = first.skill.id;\n    const retrieved = await api.retrieve(createdId);\n    if (retrieved.skill.id !== createdId) {\n      throw new Error('Direct retrieval returned a different skill.');\n    }\n    await assertManifest(\n      api,\n      createdId,\n      uniqueName,\n      path.join(runRoot, 'staged-latest-v1'),\n    );\n\n    log('Publishing the same name again to create a newer version...');\n    const second = await api.create({ file: await readBundle(secondPath) });\n    if (second.skill.id !== createdId) {\n      throw new Error('Name-based supersession created a different skill ID.');\n    }\n    if (!versionAdvanced(first.skill, second.skill)) {\n      throw new Error('The second publish did not advance the skill version.');\n    }\n\n    const versions = await api.listVersions(createdId, 100);\n    const latest = versions.versions.find(\n      (version) =>\n        version.version === second.skill.latest_version && version.is_latest,\n    );\n    if (!latest)\n      throw new Error('The new version is missing from listVersions.');\n    const version = await api.retrieveVersion(\n      createdId,\n      second.skill.latest_version,\n    );\n    if (version.version.skill_id !== createdId || !version.version.is_latest) {\n      throw new Error(\n        'Direct version retrieval did not return the latest version.',\n      );\n    }\n    await assertManifest(\n      api,\n      createdId,\n      uniqueName,\n      path.join(runRoot, 'staged-version-v2'),\n      second.skill.latest_version,\n    );\n\n    result = {\n      id: createdId,\n      displayName: second.skill.display_name,\n      version: second.skill.latest_version,\n      minorVersion: second.skill.latest_minor_version,\n    };\n  } catch (error) {\n    workError = error;\n  }\n\n  const remaining =\n    createdId && options.cleanup\n      ? await deleteCapturedIds(api, [createdId], log)\n      : [];\n  await fs.rm(runRoot, { recursive: true, force: true });\n  if (remaining.length > 0) {\n    throw new CleanupFailedError(\n      remaining,\n      remaining.map((id) => cleanupCommand(id, options.auth)).join('\\n  '),\n      workError,\n    );\n  }\n  if (workError) rethrow(workError);\n  if (!result) throw new Error('Verification did not produce a result.');\n  return result;\n}\n"
+          },
+          {
+            "title": "Stage downloaded bundles safely",
+            "description": "Extract into a fresh sandbox while rejecting traversal, links, special files, overwrites, and configured size limits. Retrieved content is never executed.",
+            "source": "src/bundle.ts",
+            "language": "typescript",
+            "code": "import fs from 'node:fs/promises';\nimport path from 'node:path';\nimport yauzl, { type Entry, type ZipFile } from 'yauzl';\n\nexport interface BundleLimits {\n  maxEntries: number;\n  maxFileBytes: number;\n  maxTotalBytes: number;\n}\n\nexport const DEFAULT_LIMITS: BundleLimits = {\n  maxEntries: 100,\n  maxFileBytes: 2 * 1024 * 1024,\n  maxTotalBytes: 10 * 1024 * 1024,\n};\n\nexport async function readBundle(filePath: string) {\n  const resolved = path.resolve(filePath);\n  const stats = await fs.stat(resolved);\n  if (!stats.isFile()) {\n    throw new Error('Bundle must be a SKILL.md, .zip, or .skill file.');\n  }\n  const fileName = path.basename(resolved);\n  if (\n    fileName !== 'SKILL.md' &&\n    !fileName.endsWith('.zip') &&\n    !fileName.endsWith('.skill')\n  ) {\n    throw new Error('Bundle must be named SKILL.md or end in .zip or .skill.');\n  }\n  return { fileName, content: new Uint8Array(await fs.readFile(resolved)) };\n}\n\nexport async function readStream(\n  stream: ReadableStream<Uint8Array>,\n  maxBytes = DEFAULT_LIMITS.maxTotalBytes,\n): Promise<Buffer> {\n  const reader = stream.getReader();\n  const chunks: Uint8Array[] = [];\n  let total = 0;\n  while (true) {\n    const { done, value } = await reader.read();\n    if (done) break;\n    total += value.byteLength;\n    if (total > maxBytes) {\n      await reader.cancel();\n      throw new Error(`Downloaded bundle exceeds ${maxBytes} bytes.`);\n    }\n    chunks.push(value);\n  }\n  return Buffer.concat(chunks);\n}\n\nfunction openZip(buffer: Buffer): Promise<ZipFile> {\n  return new Promise((resolve, reject) => {\n    yauzl.fromBuffer(buffer, { lazyEntries: true }, (error, zipFile) => {\n      if (error) reject(error);\n      else if (!zipFile) reject(new Error('Could not open downloaded bundle.'));\n      else resolve(zipFile);\n    });\n  });\n}\n\nfunction validateEntry(entry: Entry): {\n  relativePath: string;\n  directory: boolean;\n} {\n  const relativePath = entry.fileName;\n  if (\n    !relativePath ||\n    relativePath.includes('\\\\') ||\n    relativePath.includes('\\0') ||\n    path.posix.isAbsolute(relativePath) ||\n    path.posix.normalize(relativePath) !== relativePath ||\n    relativePath.split('/').includes('..')\n  ) {\n    throw new Error(`Unsafe bundle path: ${JSON.stringify(relativePath)}`);\n  }\n  if ((entry.generalPurposeBitFlag & 0x1) !== 0) {\n    throw new Error(\n      `Encrypted bundle entries are not supported: ${relativePath}`,\n    );\n  }\n\n  const unixMode = entry.externalFileAttributes >>> 16;\n  const fileType = unixMode & 0o170000;\n  if (fileType === 0o120000) {\n    throw new Error(`Symbolic links are not allowed: ${relativePath}`);\n  }\n\n  const directory = relativePath.endsWith('/');\n  if (\n    fileType !== 0 &&\n    fileType !== 0o100000 &&\n    !(directory && fileType === 0o040000)\n  ) {\n    throw new Error(\n      `Only regular files and directories are allowed: ${relativePath}`,\n    );\n  }\n  return { relativePath, directory };\n}\n\nfunction readEntry(\n  zipFile: ZipFile,\n  entry: Entry,\n  maxBytes: number,\n): Promise<Buffer> {\n  return new Promise((resolve, reject) => {\n    zipFile.openReadStream(entry, (error, stream) => {\n      if (error) {\n        reject(error);\n        return;\n      }\n      if (!stream) {\n        reject(new Error(`Could not read ${entry.fileName}.`));\n        return;\n      }\n      const chunks: Buffer[] = [];\n      let total = 0;\n      let settled = false;\n      stream.on('data', (chunk: Buffer) => {\n        total += chunk.byteLength;\n        if (total > maxBytes) {\n          settled = true;\n          stream.destroy();\n          reject(\n            new Error(`${entry.fileName} exceeds the per-file size limit.`),\n          );\n          return;\n        }\n        chunks.push(chunk);\n      });\n      stream.once('error', (error) => {\n        if (!settled) reject(error);\n      });\n      stream.once('end', () => {\n        if (!settled) resolve(Buffer.concat(chunks));\n      });\n    });\n  });\n}\n\nexport async function stageDownloadedBundle(\n  archive: Buffer,\n  destination: string,\n  limits: BundleLimits = DEFAULT_LIMITS,\n): Promise<string[]> {\n  const root = path.resolve(destination);\n  await fs.mkdir(path.dirname(root), { recursive: true });\n  await fs.mkdir(root, { recursive: false, mode: 0o700 });\n\n  const zipFile = await openZip(archive);\n  const staged: string[] = [];\n  let entries = 0;\n  let totalBytes = 0;\n\n  try {\n    await new Promise<void>((resolve, reject) => {\n      const fail = (error: unknown) => {\n        zipFile.close();\n        reject(error instanceof Error ? error : new Error(String(error)));\n      };\n\n      zipFile.once('error', fail);\n      zipFile.once('end', resolve);\n      zipFile.on('entry', (entry: Entry) => {\n        void (async () => {\n          entries += 1;\n          if (entries > limits.maxEntries) {\n            throw new Error(\n              `Bundle contains more than ${limits.maxEntries} entries.`,\n            );\n          }\n          const { relativePath, directory } = validateEntry(entry);\n          const target = path.resolve(root, relativePath);\n          if (target !== root && !target.startsWith(`${root}${path.sep}`)) {\n            throw new Error(`Bundle path escapes the sandbox: ${relativePath}`);\n          }\n          if (directory) {\n            await fs.mkdir(target, { recursive: true, mode: 0o700 });\n          } else {\n            if (entry.uncompressedSize > limits.maxFileBytes) {\n              throw new Error(\n                `${relativePath} exceeds the per-file size limit.`,\n              );\n            }\n            const content = await readEntry(\n              zipFile,\n              entry,\n              limits.maxFileBytes,\n            );\n            if (content.byteLength > limits.maxFileBytes) {\n              throw new Error(\n                `${relativePath} exceeds the per-file size limit.`,\n              );\n            }\n            totalBytes += content.byteLength;\n            if (totalBytes > limits.maxTotalBytes) {\n              throw new Error('Bundle exceeds the aggregate size limit.');\n            }\n            await fs.mkdir(path.dirname(target), {\n              recursive: true,\n              mode: 0o700,\n            });\n            await fs.writeFile(target, content, { flag: 'wx', mode: 0o600 });\n            staged.push(relativePath);\n          }\n          zipFile.readEntry();\n        })().catch(fail);\n      });\n      zipFile.readEntry();\n    });\n  } catch (error) {\n    await fs.rm(root, { recursive: true, force: true });\n    throw error;\n  } finally {\n    zipFile.close();\n  }\n\n  if (!staged.some((file) => path.posix.basename(file) === 'SKILL.md')) {\n    await fs.rm(root, { recursive: true, force: true });\n    throw new Error('Downloaded bundle does not contain SKILL.md.');\n  }\n  return staged;\n}\n"
+          }
+        ]
+      },
+      "surfaces": [
+        "platform-api"
+      ],
+      "capabilities": [
+        "skills"
+      ],
+      "status": "production-pattern",
+      "visibility": "preview",
+      "category": "workflow",
+      "level": "Intermediate",
+      "levels": {
+        "minimal": true,
+        "wow": false
+      },
+      "timeEstimate": "~20 min",
+      "requiredScopes": [
+        "skills:read",
+        "skills:write"
+      ],
+      "authMethod": [
+        "client-api-oauth-or-token"
+      ],
+      "buildMethod": "scaffold",
+      "languages": [
+        "typescript"
+      ],
+      "prerequisites": [
+        "Node.js 22.12.0 or newer",
+        "A Glean instance with the experimental Skills Platform APIs enabled",
+        "Your work email, or the complete Glean backend HTTPS origin",
+        "A tenant that permits the native skills:read and skills:write OAuth scopes; the legacy SKILLS compatibility scope or a user-scoped token is the fallback",
+        "The scaffold includes a sample SKILL.md at fixtures/sample-skill/SKILL.md; the later publish step can use that sample or your own bundle"
+      ],
+      "demoQueries": [
+        {
+          "query": "Publish a uniquely named sample skill twice, inspect the new version, then clean up the run-owned skill",
+          "expectedBehavior": "Stdout ends with Verified <name> (<id>) at version <n>.<m>; cleanup completed. If delete fails, the process exits non-zero, prints the remaining ID and a cleanup command that includes --id, --yes, and the same --email or --server-url used for the run, and does not print that success line."
+        }
+      ],
+      "codeAssets": [
+        {
+          "repoPath": "recipes/skill-publishing-pipeline",
+          "language": "typescript",
+          "description": "TypeScript CLI using @gleanwork/api-client for Skills version supersession, version inspection, bounded zip sandboxing, and captured-ID cleanup"
+        }
+      ],
+      "scaffoldActions": [],
+      "steps": [
+        {
+          "kind": "scaffold",
+          "title": "Copy the project onto your machine",
+          "description": "Copy the Skills versioning CLI, sample bundle, CI example, and credential-free fixture tests into a new directory. OAuth login and secure token storage come from the pinned @gleanwork/auth package.",
+          "command": "npx -y tiged@2.12.8 gleanwork/glean-cookbook/recipes/skill-publishing-pipeline skill-publishing-pipeline"
+        },
+        {
+          "kind": "install",
+          "title": "Install dependencies",
+          "command": "cd skill-publishing-pipeline && npm install"
+        },
+        {
+          "kind": "manual",
+          "title": "Run the fixture tests",
+          "description": "Run name-based supersession, version retrieval, scope fallback classification, and adversarial archive tests without credentials or network access.",
+          "command": "cd skill-publishing-pipeline && npm test"
+        },
+        {
+          "kind": "authenticate",
+          "title": "Sign in with OAuth",
+          "description": "Discover your Glean backend from work email and request skills:read and skills:write. Only a recognized scope-grant failure triggers one retry with legacy SKILLS. If OAuth is not available, skip this command: copy .env.example to .env and fill GLEAN_API_TOKEN and GLEAN_SERVER_URL.",
+          "command": "cd skill-publishing-pipeline && npm run login -- --email \"<work-email>\""
+        },
+        {
+          "kind": "configure",
+          "title": "Pass an explicit backend if you need one",
+          "description": "If email discovery is wrong, pass --server-url with the complete Glean backend HTTPS origin on login, verify, and start. If DCR is restricted, export GLEAN_OAUTH_CLIENT_ID in your shell before npm run login. npm run login does not read .env, so do not store that client id only in .env."
+        },
+        {
+          "kind": "verify-live",
+          "title": "Verify versioning on your instance",
+          "description": "Create a cryptographically unique sample, publish a second version under the same name, retrieve and stage that version's content in a bounded sandbox, then permanently delete only the ID returned by this run. Success prints a Verified line that ends with cleanup completed.",
+          "command": "cd skill-publishing-pipeline && npm run verify -- --email \"<work-email>\""
+        },
+        {
+          "kind": "run",
+          "title": "Publish a new version of your bundle",
+          "description": "Validate fixtures/sample-skill/SKILL.md by default, confirm before name-based supersession if that display name already exists, and stage the returned zip under staged/ID/vVERSION.MINOR so a second publish does not overwrite the first. Pass --bundle with your own SKILL.md, .zip, or .skill, and --stage-dir to choose a different parent folder. The command prints the exact ID before staging, which you need for optional cleanup.",
+          "command": "cd skill-publishing-pipeline && npm start -- publish --email \"<work-email>\""
+        },
+        {
+          "kind": "manual",
+          "title": "Push this directory as a GitHub repository",
+          "description": "Treat this scaffold directory as the GitHub repository root. The workflow at .github/workflows/publish-skill.yml is already in the scaffold and already points at fixtures/sample-skill/SKILL.md. Push this directory, then set a user-scoped token secret and backend-origin variable in that repository."
+        },
+        {
+          "kind": "manual",
+          "title": "Delete the published skill only when you intend to",
+          "description": "Deletion permanently removes every version. Pass only the exact ID printed by your publish run and read the confirmation prompt.",
+          "command": "cd skill-publishing-pipeline && npm start -- cleanup --id \"PASTE_THE_ID_PRINTED_BY_PUBLISH\" --email \"<work-email>\""
+        }
+      ],
+      "execution": {
+        "type": "cli",
+        "questions": [
+          {
+            "id": "work-email",
+            "prompt": "What is your work email address?",
+            "required": true
+          }
+        ],
+        "auth": [
+          {
+            "kind": "oauth-with-token-fallback",
+            "scopes": [
+              "skills:read",
+              "skills:write"
+            ],
+            "setupCommand": "cd skill-publishing-pipeline && npm run login -- --email \"<work-email>\"",
+            "credentialVariable": "GLEAN_API_TOKEN"
+          }
+        ],
+        "verification": {
+          "kind": "automated",
+          "command": "cd skill-publishing-pipeline && npm run verify -- --email \"<work-email>\"",
+          "expectedDuration": "about 2 minutes after sign-in",
+          "startsOwnServer": false
+        },
+        "run": {
+          "command": "cd skill-publishing-pipeline && npm start -- publish --email \"<work-email>\"",
+          "userBrowser": false
+        }
+      },
+      "architecture": [
+        {
+          "label": "Your skill bundle",
+          "caption": "SKILL.md, .zip, or .skill",
+          "icon": "FileCode",
+          "emphasized": false
+        },
+        {
+          "label": "Validation",
+          "caption": "metadata and normalized layout",
+          "category": "workflow",
+          "emphasized": false
+        },
+        {
+          "label": "Versioned Skills API",
+          "caption": "stable ID, advancing version",
+          "category": "workflow",
+          "emphasized": true
+        },
+        {
+          "label": "Fresh sandbox",
+          "caption": "bounded zip extraction",
+          "icon": "Folder",
+          "emphasized": false
+        }
+      ],
+      "content": {
+        "problem": "After a first Skills persist, teams still need to prove a later publish becomes a version rather than a duplicate, retrieve that exact version, and inspect the stored zip without executing it. This recipe is that versioning job. The Beginner validate-and-publish-skill quickstart owns the first persist.",
+        "takeItFurther": [
+          "Use glean.skills.createVersion() when your system already tracks a specific skill ID and explicit version creation is clearer than name-based supersession.",
+          "PATCH a captured skill ID to enable or disable it without changing stored content.",
+          "Import and sync from GitHub in a later Skills recipe instead of folding that source of truth into this pipeline."
+        ],
+        "guardrails": [
+          {
+            "title": "Validate before persistence",
+            "rule": "Call validate first and stop on any error. Validation itself never creates or updates a skill."
+          },
+          {
+            "title": "Confirm supersession",
+            "rule": "If the validated display name already exists, show its ID and require confirmation before create adds a version."
+          },
+          {
+            "title": "Treat content as untrusted",
+            "rule": "Stage downloaded bundles in a fresh bounded sandbox, never overwrite files, and never execute bundle contents."
+          },
+          {
+            "title": "Delete by captured ID only",
+            "rule": "Deletion removes every version. Never choose a cleanup target by display name or a broad catalog search. If delete fails, do not report cleanup completed."
+          }
+        ],
+        "limitations": [
+          {
+            "title": "Experimental API",
+            "description": "The scaffold opts in with includeExperimental, but the Skills endpoints may still be unavailable on a tenant or change before general availability."
+          },
+          {
+            "title": "Publishing is not execution",
+            "description": "The API stores and distributes skill bundles. This recipe does not run the skill or prove how an agent host will interpret it."
+          },
+          {
+            "title": "OAuth policy varies by tenant",
+            "description": "Native Skills scopes may not yet be grantable everywhere. The login wrapper uses the legacy compatibility scope only for a recognized scope-grant failure; a user-scoped token remains an explicit fallback."
+          }
+        ]
+      },
+      "aiPrompt": "Scaffold and run the verified Skills versioning recipe. This is not the first persist; the Beginner validate-and-publish-skill quickstart owns that. Ask for the user's work email. Run credential-free fixture tests before authentication. Sign in with native skills:read and skills:write; use legacy SKILLS only after the wrapper recognizes a scope-grant failure. Enable experimental APIs through the SDK constructor. Verify with a cryptographically unique sample: validate it, create it twice under one name, confirm the returned skill ID is stable and the version advances, retrieve listVersions/getVersion/getVersionContent, stage the zip in a bounded sandbox, then delete only the captured run-owned ID. npm start -- publish with no --bundle uses fixtures/sample-skill/SKILL.md; pass --bundle for a different local file. Print the returned skill ID immediately after create, before staging. Do not delete automatically after publish. Do not teach a hello-world list/create/delete path, do not import from GitHub, and do not use createVersion() or PATCH as the primary path. Never execute retrieved files or infer cleanup targets from names or catalog search.",
+      "llmContext": "The experimental Skills Platform API manages portable bundles; it does not execute them. Use @gleanwork/api-client 0.20.4 with includeExperimental. This Intermediate recipe is the versioning job: name-based create() supersession, listVersions/getVersion/getVersionContent, and bounded zip sandboxing. The first persist belongs to validate-and-publish-skill. Create with an owned existing name adds a version. Validation persists nothing. Retrieve content as untrusted bytes and extract only into a fresh sandbox with normalized relative paths, no links or special files, bounded sizes and counts, no overwrites, and non-executable permissions. Native OAuth scopes are skills:read and skills:write; legacy SKILLS is compatibility-only. Capture mutation IDs and restrict deletion to those IDs. GitHub import and sync belong in a later recipe. Leave PATCH update and POST .../versions as take-it-further.",
+      "goDependency": false,
+      "featured": false,
+      "hidden": false,
+      "tags": [
+        "skills",
+        "publishing",
+        "versioning",
+        "platform-api",
+        "experimental"
+      ],
+      "permalink": "/cookbook/skill-publishing-pipeline"
+    },
+    {
       "id": "streaming-chat-with-citations",
       "title": "Stream a cited Chat response",
       "description": "Use the modern Platform Chat API to send a permission-aware question, continue the conversation, and read server-sent events with the official TypeScript API client's `createStream` `EventStream`.",
@@ -1698,6 +2164,229 @@
         "platform-api"
       ],
       "permalink": "/cookbook/streaming-chat-with-citations"
+    },
+    {
+      "id": "validate-and-publish-skill",
+      "title": "Validate and publish a skill",
+      "description": "Use the official TypeScript API client to validate a local SKILL.md, persist it once to your Glean instance, confirm list, get, and latest content, then delete only the skill ID this run created.",
+      "sidebarLabel": "Validate and publish",
+      "codeWalkthrough": {
+        "intro": "The runnable scaffold opts into the experimental Skills API through the official SDK, keeps validation separate from persistence, and treats downloaded latest content as untrusted bytes.",
+        "examples": [
+          {
+            "title": "Configure the Skills API client",
+            "description": "Resolve the reader's tenant, use the native Skills scopes or the recorded legacy compatibility mode, and enable experimental endpoints through the SDK constructor.",
+            "source": "src/client.ts",
+            "language": "typescript",
+            "code": "import fs from 'node:fs/promises';\nimport path from 'node:path';\nimport { Glean, type SDKOptions } from '@gleanwork/api-client';\nimport type { XGleanOptions } from '@gleanwork/api-client/hooks/x-glean-options.js';\nimport { createGleanTokenProvider, discoverGleanTenant } from '@gleanwork/auth';\n\nconst LOOPBACK_HOSTS = new Set(['127.0.0.1', '::1', 'localhost']);\nconst SCOPE_MODE_FILE = '.glean-scope-mode';\n\nexport interface GleanClientTarget {\n  email?: string;\n  serverUrl?: string;\n}\n\nasync function loadDotEnv() {\n  let text: string;\n  try {\n    text = await fs.readFile(path.join(process.cwd(), '.env'), 'utf8');\n  } catch (error) {\n    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return;\n    throw error;\n  }\n  for (const raw of text.split(/\\r?\\n/)) {\n    const line = raw.trim();\n    if (!line || line.startsWith('#')) continue;\n    const eq = line.indexOf('=');\n    if (eq <= 0) continue;\n    const key = line.slice(0, eq).trim();\n    let value = line.slice(eq + 1).trim();\n    if (\n      (value.startsWith('\"') && value.endsWith('\"')) ||\n      (value.startsWith(\"'\") && value.endsWith(\"'\"))\n    ) {\n      value = value.slice(1, -1);\n    }\n    if (process.env[key] === undefined) process.env[key] = value;\n  }\n}\n\nasync function resolveServerUrl({ email, serverUrl }: GleanClientTarget) {\n  const explicit = serverUrl?.trim();\n  if (explicit) return explicit;\n\n  const workEmail = email?.trim();\n  if (workEmail) return (await discoverGleanTenant(workEmail)).serverUrl;\n\n  const configured = process.env.GLEAN_SERVER_URL?.trim();\n  if (configured) return configured;\n\n  throw new Error(\n    'Pass --email or --server-url, or set GLEAN_SERVER_URL in your environment.',\n  );\n}\n\nasync function configuredScopes(log: (message: string) => void) {\n  const envMode = process.env.GLEAN_SKILLS_SCOPE_MODE?.trim();\n  let fileMode: string | undefined;\n  try {\n    fileMode = (\n      await fs.readFile(path.join(process.cwd(), SCOPE_MODE_FILE), 'utf8')\n    ).trim();\n  } catch (error) {\n    if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;\n  }\n  if (envMode && fileMode && envMode !== fileMode) {\n    log(\n      `GLEAN_SKILLS_SCOPE_MODE=${envMode} overrides .glean-scope-mode (${fileMode}).`,\n    );\n  } else if (envMode) {\n    log(`Using GLEAN_SKILLS_SCOPE_MODE=${envMode}.`);\n  } else if (fileMode) {\n    log(`Using .glean-scope-mode (${fileMode}).`);\n  } else {\n    log('Using native skills:read and skills:write scopes.');\n  }\n  const mode = envMode || fileMode;\n  return mode === 'legacy' ? ['SKILLS'] : ['skills:read', 'skills:write'];\n}\n\nexport async function createGleanClient(\n  target: GleanClientTarget,\n  log: (message: string) => void = () => undefined,\n) {\n  await loadDotEnv();\n  const serverURL = await resolveServerUrl(target);\n  const server = new URL(serverURL);\n  const loopback = LOOPBACK_HOSTS.has(server.hostname);\n  if (\n    (server.protocol !== 'https:' && !loopback) ||\n    server.username ||\n    server.password ||\n    server.search ||\n    server.hash ||\n    (server.pathname && server.pathname !== '/') ||\n    (!loopback && server.port)\n  ) {\n    throw new Error('Use a complete Glean backend HTTPS origin.');\n  }\n\n  const staticToken = process.env.GLEAN_API_TOKEN?.trim();\n  let apiToken: string | ReturnType<typeof createGleanTokenProvider>;\n  if (staticToken) {\n    log('Using GLEAN_API_TOKEN from the environment.');\n    apiToken = staticToken;\n  } else {\n    const scopes = await configuredScopes(log);\n    log(`Using the OAuth session (${scopes.join(', ')}).`);\n    apiToken = createGleanTokenProvider({\n      serverUrl: server.origin,\n      scopes,\n    });\n  }\n\n  const options = {\n    serverURL: server.origin,\n    apiToken,\n    includeExperimental: true,\n    timeoutMs: 30_000,\n    retryConfig: {\n      strategy: 'backoff',\n      backoff: {\n        initialInterval: 500,\n        maxInterval: 5_000,\n        exponent: 2,\n        maxElapsedTime: 90_000,\n      },\n      retryConnectionErrors: true,\n    },\n  } satisfies SDKOptions & XGleanOptions;\n\n  return new Glean(options);\n}\n"
+          },
+          {
+            "title": "Validate, persist once, and retrieve latest content",
+            "description": "Create a uniquely named skill, confirm it with list and get, download GET .../content without unpacking it, and delete only the captured skill ID.",
+            "source": "src/workflow.ts",
+            "language": "typescript",
+            "code": "import fs from 'node:fs/promises';\nimport path from 'node:path';\nimport { randomBytes } from 'node:crypto';\nimport type { Glean } from '@gleanwork/api-client';\nimport { CleanupFailedError } from './errors.js';\nimport { readSkillMd, readStream, saveLatestContent } from './skill-md.js';\n\nexport type SkillsApi = Pick<\n  Glean['skills'],\n  'create' | 'delete' | 'list' | 'retrieve' | 'retrieveContent' | 'validate'\n>;\n\nexport interface FirstPersistResult {\n  id: string;\n  displayName: string;\n  version: number;\n  minorVersion: number;\n  contentPath: string;\n  contentBytes: number;\n}\n\nfunction manifest(displayName: string) {\n  return `---\\nname: ${displayName}\\ndescription: Cookbook first-persist verification for the Skills API.\\n---\\n\\n# First persist verification\\n\\nThis fixture verifies a first Skills persist. It contains no executable code.\\n`;\n}\n\nfunction rethrow(error: unknown): never {\n  throw error instanceof Error ? error : new Error('Verification failed.');\n}\n\nexport function cleanupCommand(\n  skillId: string,\n  auth: { email?: string; serverUrl?: string } = {},\n) {\n  const parts = [`npm start -- cleanup --id ${skillId} --yes`];\n  if (auth.serverUrl?.trim()) {\n    parts.push(`--server-url ${auth.serverUrl.trim()}`);\n  } else if (auth.email?.trim()) {\n    parts.push(`--email ${auth.email.trim()}`);\n  } else {\n    parts.push('--email <your-work-email>');\n  }\n  return parts.join(' ');\n}\n\nexport function verifiedSuccessLine(result: FirstPersistResult) {\n  return `Verified ${result.displayName} (${result.id}) at version ${result.version}.${result.minorVersion}; downloaded ${result.contentBytes} byte(s); cleanup completed.`;\n}\n\nexport async function findSkillById(api: SkillsApi, skillId: string) {\n  let cursor: string | undefined;\n  do {\n    const page = await api.list(100, cursor);\n    if (page.skills.some((skill) => skill.id === skillId)) return true;\n    cursor = page.next_cursor ?? undefined;\n  } while (cursor);\n  return false;\n}\n\nexport async function findSkillByName(api: SkillsApi, displayName: string) {\n  let cursor: string | undefined;\n  do {\n    const page = await api.list(100, cursor);\n    const match = page.skills.find(\n      (skill) => skill.display_name === displayName,\n    );\n    if (match) return match.id;\n    cursor = page.next_cursor ?? undefined;\n  } while (cursor);\n  return undefined;\n}\n\nexport async function deleteCapturedIds(\n  api: SkillsApi,\n  ids: string[],\n  log: (message: string) => void,\n) {\n  const remaining: string[] = [];\n  for (const id of ids) {\n    log(`Deleting run-owned skill ${id}...`);\n    try {\n      await api.delete(id);\n    } catch {\n      remaining.push(id);\n    }\n  }\n  return remaining;\n}\n\nasync function rejectInvalidFrontmatter(api: SkillsApi, runRoot: string) {\n  const invalidPath = path.join(runRoot, 'invalid', 'SKILL.md');\n  await fs.mkdir(path.dirname(invalidPath), { recursive: true });\n  await fs.writeFile(invalidPath, '# Missing frontmatter\\n', {\n    flag: 'wx',\n    mode: 0o600,\n  });\n  let rejected = false;\n  try {\n    await api.validate({ file: await readSkillMd(invalidPath) });\n  } catch {\n    rejected = true;\n  }\n  if (!rejected) throw new Error('Invalid SKILL.md unexpectedly validated.');\n}\n\nexport async function verifyFirstPersist(\n  api: SkillsApi,\n  options: {\n    workDir: string;\n    cleanup: boolean;\n    bundlePath?: string;\n    auth?: { email?: string; serverUrl?: string };\n    log?: (message: string) => void;\n  },\n): Promise<FirstPersistResult> {\n  const log = options.log ?? (() => undefined);\n  const uniqueName = `cookbook-validate-${randomBytes(8).toString('hex')}`;\n  const runRoot = path.join(options.workDir, uniqueName);\n  const skillPath = options.bundlePath\n    ? path.resolve(options.bundlePath)\n    : path.join(runRoot, 'SKILL.md');\n  const contentPath = path.join(runRoot, 'downloaded', `${uniqueName}.content`);\n  let createdId: string | undefined;\n  let result: FirstPersistResult | undefined;\n  let workError: unknown;\n\n  await fs.mkdir(runRoot, { recursive: true, mode: 0o700 });\n  if (!options.bundlePath) {\n    await fs.writeFile(skillPath, manifest(uniqueName), {\n      flag: 'wx',\n      mode: 0o600,\n    });\n  }\n\n  try {\n    log('Validating the local SKILL.md without persisting it...');\n    const bundle = await readSkillMd(skillPath);\n    const validation = await api.validate({ file: bundle });\n    const displayName = validation.metadata.display_name;\n    if (!options.bundlePath && displayName !== uniqueName) {\n      throw new Error('Validation returned an unexpected skill name.');\n    }\n\n    log('Confirming invalid frontmatter is rejected without a create call...');\n    await rejectInvalidFrontmatter(api, runRoot);\n\n    if (options.bundlePath) {\n      const existing = await findSkillByName(api, displayName);\n      if (existing) {\n        throw new Error(\n          `A skill named \"${displayName}\" already exists as ${existing}. This first persist does not add versions.`,\n        );\n      }\n    }\n\n    log('Publishing the skill once...');\n    const created = await api.create({ file: bundle });\n    createdId = created.skill.id;\n    if (created.skill.display_name !== displayName) {\n      throw new Error('Created skill name does not match validated metadata.');\n    }\n\n    log('Confirming list and get return the captured ID...');\n    if (!(await findSkillById(api, createdId))) {\n      throw new Error('List did not include the skill this run just created.');\n    }\n    const retrieved = await api.retrieve(createdId);\n    if (retrieved.skill.id !== createdId) {\n      throw new Error('Direct retrieval returned a different skill.');\n    }\n\n    log('Downloading the latest skill content without unpacking it...');\n    const response = await api.retrieveContent(createdId);\n    const bytes = await readStream(response.result);\n    if (bytes.byteLength === 0) {\n      throw new Error('Latest skill content was empty.');\n    }\n    const isZip = bytes.length >= 2 && bytes[0] === 0x50 && bytes[1] === 0x4b;\n    if (!bytes.toString('utf8').includes(displayName) && !isZip) {\n      throw new Error(\n        'Downloaded content does not include the published name.',\n      );\n    }\n    const saved = await saveLatestContent(bytes, contentPath);\n\n    result = {\n      id: createdId,\n      displayName: created.skill.display_name,\n      version: created.skill.latest_version,\n      minorVersion: created.skill.latest_minor_version,\n      contentPath: saved,\n      contentBytes: bytes.byteLength,\n    };\n  } catch (error) {\n    workError = error;\n  }\n\n  const remaining =\n    createdId && options.cleanup\n      ? await deleteCapturedIds(api, [createdId], log)\n      : [];\n  await fs.rm(runRoot, { recursive: true, force: true });\n  if (remaining.length > 0) {\n    throw new CleanupFailedError(\n      remaining,\n      remaining.map((id) => cleanupCommand(id, options.auth)).join('\\n  '),\n      workError,\n    );\n  }\n  if (workError) rethrow(workError);\n  if (!result) throw new Error('Verification did not produce a result.');\n  return result;\n}\n"
+          }
+        ]
+      },
+      "surfaces": [
+        "platform-api"
+      ],
+      "capabilities": [
+        "skills"
+      ],
+      "status": "quickstart",
+      "visibility": "preview",
+      "category": "workflow",
+      "level": "Beginner",
+      "levels": {
+        "minimal": true,
+        "wow": false
+      },
+      "timeEstimate": "~15 min",
+      "requiredScopes": [
+        "skills:read",
+        "skills:write"
+      ],
+      "authMethod": [
+        "client-api-oauth-or-token"
+      ],
+      "buildMethod": "scaffold",
+      "languages": [
+        "typescript"
+      ],
+      "prerequisites": [
+        "Node.js 22.12.0 or newer",
+        "A Glean instance with the experimental Skills Platform APIs enabled",
+        "Your work email, or the complete Glean backend HTTPS origin",
+        "A tenant that permits the native skills:read and skills:write OAuth scopes; the legacy SKILLS compatibility scope or a user-scoped token is the fallback",
+        "A local SKILL.md; the scaffold includes a non-executable sample at fixtures/sample-skill/SKILL.md, and npm start uses that path by default"
+      ],
+      "demoQueries": [
+        {
+          "query": "Validate and publish a uniquely named sample skill, then delete the captured ID",
+          "expectedBehavior": "Stdout ends with Verified <name> (<id>) at version <n>.<m>; downloaded <n> byte(s); cleanup completed. If delete fails, the process exits non-zero, prints the remaining ID and a cleanup command that includes --id, --yes, and the same --email or --server-url used for the run, and does not print that success line."
+        }
+      ],
+      "codeAssets": [
+        {
+          "repoPath": "recipes/validate-and-publish-skill",
+          "language": "typescript",
+          "description": "TypeScript CLI using @gleanwork/api-client for a first Skills persist: validate, create once, list, get, latest content, and captured-ID cleanup"
+        }
+      ],
+      "scaffoldActions": [],
+      "steps": [
+        {
+          "kind": "scaffold",
+          "title": "Copy the project onto your machine",
+          "description": "Copy the runnable TypeScript Skills CLI, sample SKILL.md, and credential-free fixture tests into a new directory. OAuth login and secure token storage come from the pinned @gleanwork/auth package.",
+          "command": "npx -y tiged@2.12.8 gleanwork/glean-cookbook/recipes/validate-and-publish-skill validate-and-publish-skill"
+        },
+        {
+          "kind": "install",
+          "title": "Install dependencies",
+          "command": "cd validate-and-publish-skill && npm install"
+        },
+        {
+          "kind": "manual",
+          "title": "Run the fixture tests",
+          "description": "Run the Vitest fixture suite without credentials or network access, covering validation-before-create, a single persist, list/get, latest content download, and captured-ID cleanup.",
+          "command": "cd validate-and-publish-skill && npm test"
+        },
+        {
+          "kind": "authenticate",
+          "title": "Sign in with OAuth",
+          "description": "Discover your Glean backend from work email and request skills:read and skills:write. Only a recognized scope-grant failure triggers one retry with legacy SKILLS. If OAuth is not available, skip this command: copy .env.example to .env and fill GLEAN_API_TOKEN and GLEAN_SERVER_URL.",
+          "command": "cd validate-and-publish-skill && npm run login -- --email \"<work-email>\""
+        },
+        {
+          "kind": "configure",
+          "title": "Pass an explicit backend if you need one",
+          "description": "If email discovery is wrong, pass --server-url with the complete Glean backend HTTPS origin on login, verify, and start. If DCR is restricted, export GLEAN_OAUTH_CLIENT_ID in your shell before npm run login. npm run login does not read .env, so do not store that client id only in .env."
+        },
+        {
+          "kind": "verify-live",
+          "title": "Verify against your instance",
+          "description": "Validate a cryptographically unique SKILL.md, persist it once, confirm list/get/latest content, then permanently delete only the ID returned by this run. Success prints a Verified line that ends with cleanup completed.",
+          "command": "cd validate-and-publish-skill && npm run verify -- --email \"<work-email>\""
+        },
+        {
+          "kind": "run",
+          "title": "Persist your local SKILL.md",
+          "description": "Validate fixtures/sample-skill/SKILL.md, persist it once, then delete only that captured ID. Pass --bundle with your own SKILL.md to use a different file. This run still deletes the skill it creates; pass --yes when the terminal is not interactive.",
+          "command": "cd validate-and-publish-skill && npm start -- --email \"<work-email>\" --yes"
+        }
+      ],
+      "execution": {
+        "type": "cli",
+        "questions": [
+          {
+            "id": "work-email",
+            "prompt": "What is your work email address?",
+            "required": true
+          }
+        ],
+        "auth": [
+          {
+            "kind": "oauth-with-token-fallback",
+            "scopes": [
+              "skills:read",
+              "skills:write"
+            ],
+            "setupCommand": "cd validate-and-publish-skill && npm run login -- --email \"<work-email>\"",
+            "credentialVariable": "GLEAN_API_TOKEN"
+          }
+        ],
+        "verification": {
+          "kind": "automated",
+          "command": "cd validate-and-publish-skill && npm run verify -- --email \"<work-email>\"",
+          "expectedDuration": "about 1 minute after sign-in",
+          "startsOwnServer": false
+        },
+        "run": {
+          "command": "cd validate-and-publish-skill && npm start -- --email \"<work-email>\" --yes",
+          "userBrowser": false
+        }
+      },
+      "architecture": [
+        {
+          "label": "Your SKILL.md",
+          "caption": "sample SKILL.md, or --bundle",
+          "icon": "FileCode",
+          "emphasized": false
+        },
+        {
+          "label": "Validation",
+          "caption": "metadata, no persist",
+          "category": "workflow",
+          "emphasized": false
+        },
+        {
+          "label": "Skills API",
+          "caption": "create, list, get, content",
+          "category": "workflow",
+          "emphasized": true
+        },
+        {
+          "label": "Latest content",
+          "caption": "untrusted downloaded bytes",
+          "icon": "Download",
+          "emphasized": false
+        }
+      ],
+      "content": {
+        "problem": "A first Skills integration should prove one successful persist against the reader's own instance: validate a local SKILL.md, create it once, and read it back. Hard-coding a shared demo corpus or jumping straight into versioning and zip sandboxing makes that first run harder than Search or Chat. This quickstart uses the official TypeScript API client for that first persist, then deletes only the skill ID this run created.",
+        "takeItFurther": [
+          "Use the Intermediate publishing recipe to prove name-based version supersession, inspect a specific version, and stage a downloaded zip in a bounded sandbox.",
+          "Use the GitHub import recipe when the source of truth is a public repository rather than a local SKILL.md.",
+          "Call glean.skills.createVersion() or PATCH enable/disable only after you already have a captured skill ID from a first persist."
+        ],
+        "guardrails": [
+          {
+            "title": "Validate before persistence",
+            "rule": "Call validate first and stop on any error. Validation itself never creates or updates a skill."
+          },
+          {
+            "title": "Persist once",
+            "rule": "This first run creates the skill a single time. Do not publish the same name again here; versioning is a later job."
+          },
+          {
+            "title": "Treat content as untrusted",
+            "rule": "Download latest content as bytes. Do not unpack archives or execute retrieved files."
+          },
+          {
+            "title": "Delete by captured ID only",
+            "rule": "Deletion removes the skill. Never choose a cleanup target by display name or a broad catalog search. If delete fails, do not report cleanup completed."
+          }
+        ],
+        "limitations": [
+          {
+            "title": "Experimental API",
+            "description": "The scaffold opts in with includeExperimental, but the Skills endpoints may still be unavailable on a tenant or change before general availability."
+          },
+          {
+            "title": "Publishing is not execution",
+            "description": "The API stores and distributes skill bundles. This recipe does not run the skill or prove how an agent host will interpret it."
+          },
+          {
+            "title": "OAuth policy varies by tenant",
+            "description": "Native Skills scopes may not yet be grantable everywhere. The login wrapper uses the legacy compatibility scope only for a recognized scope-grant failure; a user-scoped token remains an explicit fallback."
+          }
+        ]
+      },
+      "aiPrompt": "Scaffold and run the verified Skills first-persist quickstart. Ask for the user's work email. Run credential-free fixture tests before authentication. Sign in with native skills:read and skills:write; use legacy SKILLS only after the wrapper recognizes a scope-grant failure. Enable experimental APIs through the SDK constructor. Verify with a cryptographically unique SKILL.md: validate it, reject invalid frontmatter without creating anything, create it once, confirm list and get return the captured ID, download GET .../content without unpacking a zip, then delete only that captured run-owned ID. npm start with no --bundle uses fixtures/sample-skill/SKILL.md; pass --bundle for a different local SKILL.md. Do not put --bundle in the npm start script. npm run verify is the verify subcommand and generates a unique name when --bundle is omitted. If cleanup cannot delete a captured ID, exit non-zero, print the work error, and print the remaining ID plus a cleanup command that includes --id, --yes, and the same --email or --server-url used for the run. Do not publish a second version, do not extract archives, and do not import from GitHub. Never execute retrieved files or infer cleanup targets from names or catalog search.",
+      "llmContext": "The experimental Skills Platform API manages portable bundles; it does not execute them. Use @gleanwork/api-client 0.20.4 with includeExperimental. This Beginner recipe is the first persist: validate a local SKILL.md, create once, list, get, and GET .../content for the latest bundle only. npm run verify generates a unique name. npm start defaults to fixtures/sample-skill/SKILL.md in cli.ts, not in the npm script, so npm start -- --bundle path/to/SKILL.md parses. Validation persists nothing. Treat retrieved content as untrusted bytes and do not unpack it here. Native OAuth scopes are skills:read and skills:write; legacy SKILLS is compatibility-only. Capture mutation IDs and restrict deletion to those IDs. Failed cleanup must not report success. Version supersession, zip sandboxing, and GitHub import belong in later Skills recipes.",
+      "goDependency": false,
+      "featured": false,
+      "hidden": false,
+      "tags": [
+        "skills",
+        "quickstart",
+        "platform-api",
+        "experimental"
+      ],
+      "permalink": "/cookbook/validate-and-publish-skill"
     }
   ],
   "capabilities": [
@@ -1706,6 +2395,7 @@
     "agents",
     "embed",
     "tools",
+    "skills",
     "workflows"
   ],
   "surfaces": [
@@ -1716,7 +2406,7 @@
     "agents"
   ],
   "generatedAt": "2026-08-21T00:00:00.000Z",
-  "totalRecipes": 8,
+  "totalRecipes": 11,
   "plugin": {
     "marketplaceName": "glean-cookbook",
     "pluginName": "cookbook",
