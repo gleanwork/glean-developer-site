@@ -6,6 +6,8 @@
  *
  * - registry.json -> data/cookbook-registry.json (recipe metadata; the single
  *   source of truth, consumed by scripts/compile-recipes.ts)
+ * - config/recipe-taxonomy.json -> data/cookbook-taxonomy.json (capability and
+ *   surface values, display labels, and filter order)
  * - docs/cookbook/<id>.mdx pages generated from each registry entry's structured
  *   content. The cookbook owns semantics; this repository owns presentation.
  * - codeWalkthrough sources fetched from each recipe directory and embedded in
@@ -48,11 +50,13 @@ const REPO = 'gleanwork/glean-cookbook';
  */
 const REF = process.env.GLEAN_COOKBOOK_REF ?? '';
 const REGISTRY_PATH = 'registry.json';
+const TAXONOMY_PATH = 'config/recipe-taxonomy.json';
 // Claude Code's manifest specifically: all three targets carry the same
 // marketplace and plugin names, and this one has the broadest schema.
 const MARKETPLACE_PATH = '.claude-plugin/marketplace.json';
 const repoRoot = path.resolve(import.meta.dirname, '..');
 const registryFile = path.join(repoRoot, 'data', 'cookbook-registry.json');
+const taxonomyFile = path.join(repoRoot, 'data', 'cookbook-taxonomy.json');
 const pluginFile = path.join(repoRoot, 'data', 'cookbook-plugin.json');
 const previewsDir = path.join(
   repoRoot,
@@ -107,6 +111,36 @@ async function fetchSourceBuffer(sourcePath) {
 
 async function fetchSource(sourcePath) {
   return (await fetchSourceBuffer(sourcePath)).toString('utf8');
+}
+
+export function parseRecipeTaxonomy(raw) {
+  const taxonomy = JSON.parse(raw);
+  for (const dimension of ['capabilities', 'surfaces']) {
+    const entries = taxonomy?.[dimension];
+    if (!Array.isArray(entries) || entries.length === 0) {
+      throw new Error(
+        `${TAXONOMY_PATH}: ${dimension} must be a non-empty array.`,
+      );
+    }
+    const ids = entries.map((entry) => entry?.id);
+    if (
+      entries.some(
+        (entry) =>
+          typeof entry?.id !== 'string' ||
+          !/^[a-z][a-z0-9-]*$/.test(entry.id) ||
+          typeof entry?.label !== 'string' ||
+          entry.label.trim() === '',
+      )
+    ) {
+      throw new Error(
+        `${TAXONOMY_PATH}: every ${dimension} entry needs a kebab-case id and non-empty label.`,
+      );
+    }
+    if (new Set(ids).size !== ids.length) {
+      throw new Error(`${TAXONOMY_PATH}: ${dimension} contains duplicate ids.`);
+    }
+  }
+  return taxonomy;
 }
 
 const MAX_WALKTHROUGH_SOURCE_BYTES = 30_000;
@@ -510,6 +544,7 @@ async function main() {
   }
 
   const rawRegistry = await fetchSource(REGISTRY_PATH);
+  const taxonomy = parseRecipeTaxonomy(await fetchSource(TAXONOMY_PATH));
 
   // Fail loudly on malformed content rather than committing garbage.
   const registryEntries = JSON.parse(rawRegistry);
@@ -522,6 +557,16 @@ async function main() {
   );
 
   fs.mkdirSync(path.dirname(registryFile), { recursive: true });
+  fs.writeFileSync(
+    taxonomyFile,
+    await prettier.format(JSON.stringify(taxonomy), {
+      ...(await prettier.resolveConfig(taxonomyFile)),
+      filepath: taxonomyFile,
+    }),
+  );
+  console.log(
+    `✅ Wrote recipe taxonomy to ${path.relative(repoRoot, taxonomyFile)}`,
+  );
   fs.writeFileSync(
     registryFile,
     await prettier.format(JSON.stringify(parsed), {

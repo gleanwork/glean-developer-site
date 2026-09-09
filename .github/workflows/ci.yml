@@ -55,9 +55,11 @@ jobs:
       # Recipe metadata is authored in gleanwork/glean-cookbook. The two files
       # here are generated from it, and four separate PRs added recipes by editing
       # them directly — which builds, renders, and is then deleted by the next
-      # sync. Fail at the door rather than a week later.
+      # sync. Fail at the door rather than a week later. The head ref lets the
+      # same check reject a correctly generated sync carried by hand, which the
+      # scheduled workflow would have produced anyway.
       - name: Generated recipe data not hand-edited
-        run: node scripts/check-generated-recipe-data.mjs origin/${{ github.base_ref || 'main' }}
+        run: node scripts/check-generated-recipe-data.mjs origin/${{ github.base_ref || 'main' }} ${{ github.head_ref }}
 
       - name: Run tests
         run: pnpm test

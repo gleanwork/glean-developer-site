@@ -33,7 +33,7 @@ vi.mock('@site/src/data/recipes.json', () => ({
       {
         id: 'preview-search',
         title: 'Preview search',
-        description: 'Try the next search recipe.',
+        description: 'Read about `createStream` first.',
         permalink: '/cookbook/preview-search',
         visibility: 'preview',
       },
@@ -118,5 +118,28 @@ describe('RecipePage preview gate', () => {
       'content',
       'noindex,nofollow',
     );
+  });
+
+  // <meta> content is plain text, so a backtick there reaches search results
+  // and link previews as a literal character instead of inline code.
+  it('strips backticks from the description meta tags', async () => {
+    routerState.location.search = '?ff_recipe=preview-search';
+
+    render(
+      <RecipePage recipeId="preview-search">
+        <p>Preview-only body</p>
+      </RecipePage>,
+    );
+
+    expect(await screen.findByText('Preview-only body')).toBeVisible();
+    for (const selector of [
+      'meta[name="description"]',
+      'meta[property="og:description"]',
+    ]) {
+      expect([...document.querySelectorAll(selector)].at(-1)).toHaveAttribute(
+        'content',
+        'Read about createStream first.',
+      );
+    }
   });
 });

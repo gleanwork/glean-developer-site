@@ -8,11 +8,44 @@ import {
   extractPluginCoordinates,
   listedRecipes,
   materializeCodeWalkthroughSources,
+  parseRecipeTaxonomy,
   publicRecipes,
   renderPage,
   syncPreviewAssets,
   writeRecipePages,
 } from './sync-registry.mjs';
+
+describe('parseRecipeTaxonomy', () => {
+  it('accepts data-driven capabilities and surfaces', () => {
+    expect(
+      parseRecipeTaxonomy(
+        JSON.stringify({
+          capabilities: [
+            { id: 'future-capability', label: 'Future capability' },
+          ],
+          surfaces: [{ id: 'future-api', label: 'Future API' }],
+        }),
+      ),
+    ).toEqual({
+      capabilities: [{ id: 'future-capability', label: 'Future capability' }],
+      surfaces: [{ id: 'future-api', label: 'Future API' }],
+    });
+  });
+
+  it('rejects duplicate ids before writing the snapshot', () => {
+    expect(() =>
+      parseRecipeTaxonomy(
+        JSON.stringify({
+          capabilities: [
+            { id: 'search', label: 'Search' },
+            { id: 'search', label: 'Search again' },
+          ],
+          surfaces: [{ id: 'client-api', label: 'Client API' }],
+        }),
+      ),
+    ).toThrow('capabilities contains duplicate ids');
+  });
+});
 
 /**
  * The real manifest as pluginpack emits it at the root of gleanwork/

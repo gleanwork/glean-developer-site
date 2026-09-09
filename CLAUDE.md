@@ -88,9 +88,11 @@ The build is orchestrated by Turbo with these key dependencies:
 Recipe metadata is **authored in `gleanwork/glean-cookbook`**, one file per recipe
 at `recipes/<id>/recipe.json`. That repo is the source of truth.
 
-Two files here are generated from it and must never be hand-edited:
+These files are generated from it and must never be hand-edited:
 
 - `data/cookbook-registry.json` — a sync of the cookbook's built `registry.json`
+- `data/cookbook-taxonomy.json` — capability/surface values, labels, and order
+- `schemas/recipe.schema.json` — the adapter projection with synced taxonomy enums
 - `src/data/recipes.json` — compiled from that sync by `pnpm recipes:compile`
 
 Both are committed and neither is gitignored, so they look editable, and a recipe
@@ -98,10 +100,12 @@ added to them renders correctly. It is then deleted by the next sync, which writ
 whatever upstream says. `scripts/check-generated-recipe-data.mjs` fails CI when the
 two disagree.
 
-To add a recipe:
+`docs/cookbook/<id>.mdx` is generated too — from the recipe's `content` block, matched to
+its registry entry by filename. Do not write one by hand.
 
-1. In `glean-cookbook`: add `recipes/<id>/recipe.json`, run `npm run build:registry`.
-2. Here: `pnpm registry:sync`, then `pnpm recipes:compile`.
-3. Add the prose page at `docs/cookbook/<id>.mdx`. It carries **no metadata
-   frontmatter** — it is matched to its registry entry by filename, and its title,
-   description and demo queries all come from the registry.
+To add a recipe, add `recipes/<id>/recipe.json` in `glean-cookbook` and run
+`npm run build:registry` there. That is the whole change: the `sync-cookbook-registry`
+workflow regenerates all of them here every 15 minutes and opens an auto-merging pull
+request, so a companion PR on this repo is not part of shipping a recipe. Capabilities and
+surfaces are synced from the cookbook taxonomy too, so adding either does not require site
+code. See AGENTS.md for the narrower case where a new value carries presentation behavior.
