@@ -4,10 +4,9 @@
 # sync. Components and layout are chosen by scripts/sync-registry.mjs in this repo.
 hide_table_of_contents: true
 hide_title: true
-unlisted: true
 pagination_label: "Import from GitHub"
-pagination_prev: null
-pagination_next: null
+pagination_prev: "cookbook/customer-360"
+pagination_next: "cookbook/no-code-it-helpdesk-lovable"
 ---
 
 import RecipePage from '@site/src/components/Cookbook/RecipePage';
@@ -25,7 +24,7 @@ import {
 
 <RecipeSection label="Problem">
 
-Some teams keep Agent Skills in GitHub rather than a local SKILL.md. Previewing that URL, importing only the selected skills, and syncing a captured ID is a different job from the first persist or name-based versioning. This recipe uses a public GitHub skill directory at a commit SHA so the run is answerable on the reader's tenant without a seeded corpus.
+Some teams keep Agent Skills in GitHub rather than a local SKILL.md. Previewing that URL, importing only the selected skills, and syncing a captured ID is a different job from the first persist or name-based versioning. This recipe uses a public GitHub skill directory on the main branch so the run is answerable on the reader's tenant without a seeded corpus.
 
 </RecipeSection>
 
@@ -69,7 +68,7 @@ The scaffold opts in with includeExperimental, but the Skills endpoints may stil
 
 <RecipeSection label="GitHub must be fetchable">
 
-Preview, import, and sync require the Glean tenant to fetch the public GitHub fixture. A blocked or unconfigured GitHub fetch is a failed verify, not a skipped one.
+Preview, import, and sync require GitHub import. The default source is a branch URL because commit permalinks are unsupported. HTTP 400 means an unsupported URL or ref. HTTP 503 means GitHub import is disabled or unavailable. HTTP 403 means this credential cannot import. HTTP 429 means rate-limiting. Any of those statuses is a failed verify, not a skipped one.
 
 </RecipeSection>
 
@@ -81,7 +80,7 @@ Native Skills scopes may not yet be grantable everywhere. The login wrapper uses
 
 <TakeItFurther>
 
-- Pass --source-url to preview a different public GitHub skill directory after the default commit-SHA source succeeds.
+- Pass --source-url to preview a different public GitHub skill directory after the default branch source succeeds.
 - Use the Intermediate publishing recipe when the source of truth is a local bundle and you need version supersession or zip sandboxing.
 - Call glean.skills.createVersion() or PATCH enable/disable only after you already have a captured skill ID.
 
