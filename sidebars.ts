@@ -52,7 +52,6 @@ const baseSidebars: SidebarsConfig = {
           customProps: {
             icon: 'BookOpen',
             iconSet: 'feather',
-            flag: 'cookbook',
           },
           link: {
             type: 'doc',
@@ -435,11 +434,7 @@ const baseSidebars: SidebarsConfig = {
         {
           type: 'category',
           label: 'Indexing SDK',
-          customProps: {
-            // Gated until the glean-indexing-sdk 1.0.0 release. Enable the
-            // `indexing-sdk` flag (FF_INDEXING_SDK=true locally) to show it.
-            flag: 'indexing-sdk',
-          },
+
           items: [
             {
               type: 'doc',
@@ -853,6 +848,13 @@ const baseSidebars: SidebarsConfig = {
                   type: 'doc',
                   id: 'api/platform-api/platform-chat-create',
                   label: 'Create a chat response',
+                  className: 'api-method post',
+                },
+                {
+                  type: 'doc',
+                  id: 'api/platform-api/platform-chat-create-stream',
+                  label:
+                    'SDK-only logical operation. HTTP clients must call the base path; the URL fragment is not sent. Create a chat response',
                   className: 'api-method post',
                 },
               ],

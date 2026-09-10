@@ -3,6 +3,7 @@ import Link from '@docusaurus/Link';
 import { getIcon } from '@gleanwork/docusaurus-theme-glean/Icons';
 import { RECIPE_SURFACE_LABELS, type RecipeRecord } from '../../types/recipe';
 import { CategoryTile } from './categories';
+import { renderInlineCode } from './inlineCode';
 import { recipeHref } from './recipePreview';
 import styles from './RecipeCard.module.css';
 
@@ -24,7 +25,7 @@ export default function RecipeCard({
         <CategoryTile category={recipe.category} iconOverride={recipe.icon} />
       </div>
       <span className={styles.title}>{recipe.title}</span>
-      <p className={styles.summary}>{recipe.description}</p>
+      <p className={styles.summary}>{renderInlineCode(recipe.description)}</p>
       <div className={styles.footer}>
         <span className={styles.metaItem}>
           {getIcon('Clock', 'feather', {

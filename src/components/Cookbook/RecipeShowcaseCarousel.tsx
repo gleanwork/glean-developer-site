@@ -10,6 +10,7 @@ import {
   type RecipeRecord,
 } from '../../types/recipe';
 import { recipeHref } from './recipePreview';
+import { renderInlineCode } from './inlineCode';
 import styles from './RecipeShowcaseCarousel.module.css';
 
 interface RecipeShowcaseCarouselProps {
@@ -150,7 +151,9 @@ export default function RecipeShowcaseCarousel({
             Featured · {recipe.level}
           </div>
           <h2 className={styles.title}>{recipe.title}</h2>
-          <p className={styles.description}>{recipe.description}</p>
+          <p className={styles.description}>
+            {renderInlineCode(recipe.description)}
+          </p>
           <div className={styles.meta}>
             <span>{recipe.timeEstimate.replace(/\s*\(.*\)$/, '')}</span>
             <span>{capabilitySummary}</span>

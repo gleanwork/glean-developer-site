@@ -6,6 +6,7 @@ import { useLocation } from '@docusaurus/router';
 import recipesData from '@site/src/data/recipes.json';
 import type { RecipesData } from '../../types/recipe';
 import RecipeLayout from './RecipeLayout';
+import { stripInlineCode } from './inlineCode';
 import { isRecipeAvailable } from './recipePreview';
 
 interface RecipePageProps {
@@ -61,6 +62,8 @@ export default function RecipePage({
     );
   }
 
+  const metaDescription = stripInlineCode(recipe.description);
+
   if (!isAvailable) {
     return (
       <>
@@ -89,9 +92,9 @@ export default function RecipePage({
           registry the one source, the same way the sidebar labels do. */}
       <Head>
         <title>{`${recipe.title} | Glean Developer`}</title>
-        <meta name="description" content={recipe.description} />
+        <meta name="description" content={metaDescription} />
         <meta property="og:title" content={recipe.title} />
-        <meta property="og:description" content={recipe.description} />
+        <meta property="og:description" content={metaDescription} />
         {isPreview ? <meta name="robots" content="noindex,nofollow" /> : null}
       </Head>
       <RecipeLayout plugin={data.plugin} recipe={recipe}>

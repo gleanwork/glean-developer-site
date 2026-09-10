@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   parseRecipeEntry,
+  RECIPE_CAPABILITY_LABELS,
   RECIPE_SCAFFOLD_ACTIONS,
   isListedOnDocs,
 } from './recipe';
@@ -55,6 +56,16 @@ describe('parseRecipeEntry', () => {
     if (!result.success) return;
     expect(result.record.status).toBe('quickstart');
     expect(result.record.capabilities).toEqual(['search', 'embed']);
+  });
+
+  it('accepts capabilities and labels synced from the cookbook taxonomy', () => {
+    const entry = {
+      ...validEntry(),
+      surfaces: ['platform-api'],
+      capabilities: ['skills'],
+    };
+    expect(parseRecipeEntry(entry, 'embed-search-chat').success).toBe(true);
+    expect(RECIPE_CAPABILITY_LABELS.skills).toBe('Skills');
   });
 
   it('rejects missing or unknown capabilities', () => {
