@@ -2,8 +2,8 @@ openapi: 3.1.0
 info:
   version: '2026-04-01'
   title: Glean Platform API
-  x-source-commit-sha: c7223f0e466c632820e8ef482ecdbb03a025224a
-  x-open-api-commit-sha: 3c1ac65b05f5133def947499c01ef4e2ca3a6abd
+  x-source-commit-sha: 31a8965bc9e49871a44c872a19d7442c25790b41
+  x-open-api-commit-sha: 50797dafaa6c32f59f7dd18b9a5766b5321fffaa
 servers:
   - url: '{serverUrl}'
     description: Replace {serverUrl} with your complete Glean API server URL. Find it at https://developers.glean.com/get-started/authentication#finding-your-server-url.
@@ -536,9 +536,6 @@ paths:
         Run an assistant turn. The default response is JSON. HTTP clients request server-sent events by setting `stream` to true in the JSON body. An `Accept: text/event-stream` header does not replace `stream`.
       operationId: platform-chat-create
       x-visibility: Public
-      x-glean-experimental:
-        id: e65a0a77-97a2-4c91-be60-eae7f6238015
-        introduced: '2026-07-14'
       x-codegen-request-body-name: payload
       requestBody:
         required: true
@@ -595,7 +592,6 @@ paths:
             with Glean(
                 api_token=os.getenv("GLEAN_API_TOKEN", ""),
                 server_url="https://mycompany-be.glean.com",
-                include_experimental=True,
             ) as glean:
 
                 res = glean.chat.create(input="What is our parental leave policy?", store=True)
@@ -610,7 +606,6 @@ paths:
             const glean = new Glean({
               apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
               serverURL: "https://mycompany-be.glean.com",
-              includeExperimental: true,
             });
 
             async function run() {
@@ -624,14 +619,13 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/operations\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Chat.Create(ctx, operations.PlatformChatCreateRequest{\n        Input: operations.CreatePlatformChatCreateInputStr(\n            \"What is our parental leave policy?\",\n        ),\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformChatCompletedResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/operations\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Chat.Create(ctx, operations.PlatformChatCreateRequest{\n        Input: operations.CreatePlatformChatCreateInputStr(\n            \"What is our parental leave policy?\",\n        ),\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformChatCompletedResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
             package hello.world;
 
             import com.glean.api_client.glean_api_client.Glean;
-            import com.glean.api_client.glean_api_client.hooks.GleanBuilder;
             import com.glean.api_client.glean_api_client.models.errors.PlatformProblemDetailException;
             import com.glean.api_client.glean_api_client.models.operations.*;
             import java.lang.Exception;
@@ -640,9 +634,8 @@ paths:
 
                 public static void main(String[] args) throws PlatformProblemDetailException, Exception {
 
-                    Glean sdk = GleanBuilder.create()
+                    Glean sdk = Glean.builder()
                             .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
-                            .includeExperimental(true)
                         .build();
 
                     PlatformChatCreateRequest req = PlatformChatCreateRequest.builder()
@@ -658,16 +651,6 @@ paths:
                     }
                 }
             }
-      parameters:
-        - in: header
-          name: X-Glean-Include-Experimental
-          description: This endpoint is experimental, so requests must include this header set to `true`. See [How experimental APIs work](https://developers.glean.com/experimental/overview) for details.
-          required: true
-          schema:
-            type: boolean
-            default: true
-          example: true
-          value: 'true'
   /api/skills:
     post:
       tags:
@@ -2577,9 +2560,6 @@ paths:
         Errors: HTTP 422 `unprocessable_query` returns no `results` or `next_cursor`. See `warnings` on the response for non-blocking issues such as partially available results. Not every query issue produces a warning or error.
       operationId: platform-search
       x-visibility: Public
-      x-glean-experimental:
-        id: 5ab612fc-ed50-4419-bec3-e5fe83934653
-        introduced: '2026-04-08'
       x-codegen-request-body-name: payload
       requestBody:
         required: true
@@ -2627,7 +2607,6 @@ paths:
             with Glean(
                 api_token=os.getenv("GLEAN_API_TOKEN", ""),
                 server_url="https://mycompany-be.glean.com",
-                include_experimental=True,
             ) as glean:
 
                 res = glean.search.query(query="quarterly planning 2026", page_size=10, filters=[
@@ -2650,7 +2629,6 @@ paths:
             const glean = new Glean({
               apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
               serverURL: "https://mycompany-be.glean.com",
-              includeExperimental: true,
             });
 
             async function run() {
@@ -2664,14 +2642,13 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Search.Query(ctx, components.PlatformSearchRequest{\n        Query: \"quarterly planning 2026\",\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformSearchResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Search.Query(ctx, components.PlatformSearchRequest{\n        Query: \"quarterly planning 2026\",\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformSearchResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
             package hello.world;
 
             import com.glean.api_client.glean_api_client.Glean;
-            import com.glean.api_client.glean_api_client.hooks.GleanBuilder;
             import com.glean.api_client.glean_api_client.models.components.PlatformSearchRequest;
             import com.glean.api_client.glean_api_client.models.errors.PlatformProblemDetailException;
             import com.glean.api_client.glean_api_client.models.operations.PlatformSearchResponse;
@@ -2681,9 +2658,8 @@ paths:
 
                 public static void main(String[] args) throws PlatformProblemDetailException, Exception {
 
-                    Glean sdk = GleanBuilder.create()
+                    Glean sdk = Glean.builder()
                             .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
-                            .includeExperimental(true)
                         .build();
 
                     PlatformSearchRequest req = PlatformSearchRequest.builder()
@@ -2699,16 +2675,6 @@ paths:
                     }
                 }
             }
-      parameters:
-        - in: header
-          name: X-Glean-Include-Experimental
-          description: This endpoint is experimental, so requests must include this header set to `true`. See [How experimental APIs work](https://developers.glean.com/experimental/overview) for details.
-          required: true
-          schema:
-            type: boolean
-            default: true
-          example: true
-          value: 'true'
   /api/search/filters:
     get:
       tags:
@@ -2719,19 +2685,7 @@ paths:
         Without `query`, returns field metadata only and does not run a search. With a nonblank `query`, provide exactly one `datasources` value to request suggested filter values for that query; no documents are returned and this endpoint does not include warning objects. See `FilterFieldInfo.values` for limitations on suggested values. Rate-limited requests return HTTP 429 with `Retry-After`; temporary backend unavailability returns HTTP 503.
       operationId: platform-search-filters
       x-visibility: Public
-      x-glean-experimental:
-        id: 0b585621-13fb-4544-bf20-5e1c99452735
-        introduced: '2026-05-12'
       parameters:
-        - in: header
-          name: X-Glean-Include-Experimental
-          description: This endpoint is experimental, so requests must include this header set to `true`. See [How experimental APIs work](https://developers.glean.com/experimental/overview) for details.
-          required: true
-          schema:
-            type: boolean
-            default: true
-          example: true
-          value: 'true'
         - in: query
           name: datasources
           description: |
@@ -2794,7 +2748,6 @@ paths:
             with Glean(
                 api_token=os.getenv("GLEAN_API_TOKEN", ""),
                 server_url="https://mycompany-be.glean.com",
-                include_experimental=True,
             ) as glean:
 
                 res = glean.search.list_filters()
@@ -2809,7 +2762,6 @@ paths:
             const glean = new Glean({
               apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
               serverURL: "https://mycompany-be.glean.com",
-              includeExperimental: true,
             });
 
             async function run() {
@@ -2821,14 +2773,13 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Search.ListFilters(ctx, nil, nil)\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformSearchFiltersResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Search.ListFilters(ctx, nil, nil)\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformSearchFiltersResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
             package hello.world;
 
             import com.glean.api_client.glean_api_client.Glean;
-            import com.glean.api_client.glean_api_client.hooks.GleanBuilder;
             import com.glean.api_client.glean_api_client.models.errors.PlatformProblemDetailException;
             import com.glean.api_client.glean_api_client.models.operations.PlatformSearchFiltersResponse;
             import java.lang.Exception;
@@ -2837,9 +2788,8 @@ paths:
 
                 public static void main(String[] args) throws PlatformProblemDetailException, Exception {
 
-                    Glean sdk = GleanBuilder.create()
+                    Glean sdk = Glean.builder()
                             .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
-                            .includeExperimental(true)
                         .build();
 
                     PlatformSearchFiltersResponse res = sdk.search().listFilters()
@@ -4237,9 +4187,6 @@ paths:
         SDK-only logical operation. HTTP clients must call the base path; the URL fragment is not sent. Run an assistant turn as server-sent events. HTTP clients request this mode by setting `stream` to true in the JSON body.
       operationId: platform-chat-create-stream
       x-visibility: Public
-      x-glean-experimental:
-        id: e65a0a77-97a2-4c91-be60-eae7f6238015
-        introduced: '2026-07-14'
       x-codegen-request-body-name: payload
       requestBody:
         required: true
@@ -4296,7 +4243,6 @@ paths:
             with Glean(
                 api_token=os.getenv("GLEAN_API_TOKEN", ""),
                 server_url="https://mycompany-be.glean.com",
-                include_experimental=True,
             ) as glean:
 
                 res = glean.chat.create_stream(input="What is our parental leave policy?", store=True)
@@ -4313,7 +4259,6 @@ paths:
             const glean = new Glean({
               apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
               serverURL: "https://mycompany-be.glean.com",
-              includeExperimental: true,
             });
 
             async function run() {
@@ -4329,14 +4274,13 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/operations\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Chat.CreateStream(ctx, operations.PlatformChatCreateStreamRequest{\n        Input: operations.CreatePlatformChatCreateStreamInputStr(\n            \"What is our parental leave policy?\",\n        ),\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformChatStreamEventServerSentEvent != nil {\n        defer res.PlatformChatStreamEventServerSentEvent.Close()\n\n        for res.PlatformChatStreamEventServerSentEvent.Next() {\n            event := res.PlatformChatStreamEventServerSentEvent.Value()\n            log.Print(event)\n            // Handle the event\n\t      }\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/operations\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Chat.CreateStream(ctx, operations.PlatformChatCreateStreamRequest{\n        Input: operations.CreatePlatformChatCreateStreamInputStr(\n            \"What is our parental leave policy?\",\n        ),\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformChatStreamEventServerSentEvent != nil {\n        defer res.PlatformChatStreamEventServerSentEvent.Close()\n\n        for res.PlatformChatStreamEventServerSentEvent.Next() {\n            event := res.PlatformChatStreamEventServerSentEvent.Value()\n            log.Print(event)\n            // Handle the event\n\t      }\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
             package hello.world;
 
             import com.glean.api_client.glean_api_client.Glean;
-            import com.glean.api_client.glean_api_client.hooks.GleanBuilder;
             import com.glean.api_client.glean_api_client.models.components.PlatformChatStreamEventServerSentEvent;
             import com.glean.api_client.glean_api_client.models.errors.PlatformProblemDetailException;
             import com.glean.api_client.glean_api_client.models.operations.*;
@@ -4348,9 +4292,8 @@ paths:
 
                 public static void main(String[] args) throws PlatformProblemDetailException, Exception {
 
-                    Glean sdk = GleanBuilder.create()
+                    Glean sdk = Glean.builder()
                             .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
-                            .includeExperimental(true)
                         .build();
 
                     PlatformChatCreateStreamRequest req = PlatformChatCreateStreamRequest.builder()
@@ -4375,16 +4318,6 @@ paths:
                     }
                 }
             }
-      parameters:
-        - in: header
-          name: X-Glean-Include-Experimental
-          description: This endpoint is experimental, so requests must include this header set to `true`. See [How experimental APIs work](https://developers.glean.com/experimental/overview) for details.
-          required: true
-          schema:
-            type: boolean
-            default: true
-          example: true
-          value: 'true'
 components:
   securitySchemes:
     APIToken:
