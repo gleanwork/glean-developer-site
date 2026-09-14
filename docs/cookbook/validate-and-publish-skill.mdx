@@ -4,7 +4,7 @@
 # sync. Components and layout are chosen by scripts/sync-registry.mjs in this repo.
 hide_table_of_contents: true
 hide_title: true
-pagination_label: "Validate and publish"
+pagination_label: "Validate publishing"
 pagination_prev: "cookbook/streaming-chat-with-citations"
 pagination_next: null
 ---
@@ -24,7 +24,7 @@ import {
 
 <RecipeSection label="Problem">
 
-You have a local SKILL.md file and want to publish it to your Glean instance. Before adding version management or GitHub imports, start by validating the file, creating a skill, and checking that you can retrieve it. This quickstart uses the official TypeScript API client to complete that workflow, then deletes the test skill. It verifies that the downloaded SKILL.md matches the uploaded file byte for byte, without extracting files to disk or executing the skill.
+You want to confirm that a local SKILL.md can be published and retrieved through the Skills API. This quickstart first checks access with a generated sample, then tests your file. Each command compares the downloaded SKILL.md with the upload byte for byte and deletes the test skill. It does not extract or execute retrieved files.
 
 </RecipeSection>
 
@@ -56,7 +56,7 @@ Limit the ZIP download to 10 MiB. Read its single regular root SKILL.md in memor
 
 <RecipeSection label="Delete by captured ID only">
 
-Deletion is permanent. Clean up only the new skill identified by the create response, never a name-search result. If the API returns a later version, stop without deleting it. If deletion fails, the command reports the remaining ID and exits with an error.
+Deletion is permanent. Clean up only the new skill identified by the create response, never a name-search result. New skills start at version 1.1. If the API returns any other version, stop without deleting it. If deletion fails, the command reports the remaining ID and exits with an error.
 
 </RecipeSection>
 
@@ -74,7 +74,7 @@ The API stores and distributes skill bundles. This quickstart verifies the bytes
 
 <RecipeSection label="Sign-in permissions vary by instance">
 
-Your instance must allow the SKILLS scope. If OAuth is unavailable, use a user-scoped token with that scope. The newer skills:read and skills:write scopes are not supported yet.
+Your instance must allow the SKILLS OAuth scope or the SKILLS permission on a user-scoped token.
 
 </RecipeSection>
 
