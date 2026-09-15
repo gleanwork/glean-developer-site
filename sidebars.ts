@@ -178,11 +178,6 @@ const baseSidebars: SidebarsConfig = {
           items: [
             {
               type: 'doc',
-              id: 'guides/tools/overview',
-              label: 'Overview',
-            },
-            {
-              type: 'doc',
               id: 'guides/tools/authentication',
               label: 'Authentication',
             },
