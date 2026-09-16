@@ -202,11 +202,6 @@ const baseSidebars: SidebarsConfig = {
                 },
                 {
                   type: 'doc',
-                  id: 'guides/tools/examples/google-calendar-events',
-                  label: 'Google Calendar Events',
-                },
-                {
-                  type: 'doc',
                   id: 'guides/tools/examples/google-docs-update',
                   label: 'Google Docs Update',
                 },
