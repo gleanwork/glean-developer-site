@@ -210,11 +210,6 @@ const baseSidebars: SidebarsConfig = {
                   id: 'guides/tools/examples/google-docs-update',
                   label: 'Google Docs Update',
                 },
-                {
-                  type: 'doc',
-                  id: 'guides/tools/examples/zendesk-ticket-redirection',
-                  label: 'Zendesk Ticket Redirection',
-                },
               ],
             },
             {
