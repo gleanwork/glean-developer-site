@@ -2,7 +2,7 @@ openapi: 3.0.0
 info:
   version: 0.9.0
   title: Glean API
-  x-source-commit-sha: c7223f0e466c632820e8ef482ecdbb03a025224a
+  x-source-commit-sha: f48ffe1febb9065be985fab6ce718b324b69e9f5
   description: |
     # Introduction
     In addition to the data sources that Glean has built-in support for, Glean also provides a REST API that enables customers to put arbitrary content in the search index. This is useful, for example, for doing permissions-aware search over content in internal tools that reside on-prem as well as for searching over applications that Glean does not currently support first class. In addition these APIs allow the customer to push organization data (people info, organization structure etc) into Glean.
@@ -22,7 +22,7 @@ info:
     These API clients provide type-safe, idiomatic interfaces for working with Glean IndexingAPIs in your language of choice.
   x-logo:
     url: https://app.glean.com/images/glean-text2.svg
-  x-open-api-commit-sha: 3c1ac65b05f5133def947499c01ef4e2ca3a6abd
+  x-open-api-commit-sha: 26e595ebe7c0366d3e1e7ff9ab6fae96a58ed509
   x-speakeasy-name: Glean API
 servers:
   - url: '{serverUrl}'
@@ -141730,7 +141730,7 @@ paths:
         - lang: Python
           label: Python (API Client)
           source: |-
-            from glean.api_client import Glean
+            from glean.api_client import Glean, models
             import os
 
 
@@ -141742,7 +141742,7 @@ paths:
                 res = glean.client.agents.import_(agent_id="<id>", bundle={
                     "file_name": "example.file",
                     "content": open("example.file", "rb"),
-                })
+                }, version_source=models.VersionSource.USER)
 
                 # Handle response
                 print(res)
@@ -166463,6 +166463,18 @@ components:
           description: Optional commit message for the imported version.
         syncMode:
           $ref: '#/components/schemas/ImportAgentSyncMode'
+        versionSource:
+          type: string
+          enum:
+            - GIT
+            - USER
+          default: USER
+          description: |
+            Provenance recorded on the staged commit or published version this import produces. Doesn't change the agent's management mode (workflowSource). GIT: synced from a Git repository. USER: uploaded by a user. Defaults to USER when omitted. Ignored for transient imports.
+        publishedBaselineHash:
+          type: string
+          description: |
+            Optional baseline hash of the currently published agent definition. When publish hash validation is enabled, an import updating an existing agent with syncMode PUBLISHED is rejected with HTTP 409 if the current published definition hash is nonempty and does not match this baseline. Leading and trailing whitespace is trimmed; omitted or blank values skip validation. Ignored for STAGED imports, new agents, and transient previews.
         isDraft:
           type: boolean
           description: |
@@ -166500,6 +166512,163 @@ components:
       type: string
       enum:
         - text
+    ChatDocumentSource:
+      type: object
+      additionalProperties: false
+      required:
+        - type
+      properties:
+        type:
+          type: string
+          x-discriminator: true
+          enum:
+            - DOCUMENT
+        document_id:
+          type: string
+          minLength: 1
+        url:
+          type: string
+          minLength: 1
+        title:
+          type: string
+        datasource:
+          type: string
+      anyOf:
+        - required:
+            - document_id
+          properties:
+            document_id:
+              type: string
+              minLength: 1
+        - required:
+            - url
+          properties:
+            url:
+              type: string
+              minLength: 1
+    ChatPersonSource:
+      type: object
+      additionalProperties: false
+      required:
+        - type
+        - person_id
+      properties:
+        type:
+          type: string
+          x-discriminator: true
+          enum:
+            - PERSON
+        person_id:
+          type: string
+          minLength: 1
+        name:
+          type: string
+        url:
+          type: string
+    ChatFileSource:
+      type: object
+      additionalProperties: false
+      required:
+        - type
+        - file_id
+      properties:
+        type:
+          type: string
+          x-discriminator: true
+          enum:
+            - FILE
+        file_id:
+          type: string
+          minLength: 1
+        title:
+          type: string
+        url:
+          type: string
+        datasource:
+          type: string
+    ChatCustomEntitySource:
+      type: object
+      additionalProperties: false
+      required:
+        - type
+        - entity_id
+      properties:
+        type:
+          type: string
+          x-discriminator: true
+          enum:
+            - CUSTOM_ENTITY
+        entity_id:
+          type: string
+          minLength: 1
+        name:
+          type: string
+        title:
+          type: string
+        url:
+          type: string
+        datasource:
+          type: string
+    ChatCitationSource:
+      description: Four-variant citation source union.
+      x-multiple-discriminators: true
+      oneOf:
+        - $ref: '#/components/schemas/ChatDocumentSource'
+        - $ref: '#/components/schemas/ChatPersonSource'
+        - $ref: '#/components/schemas/ChatFileSource'
+        - $ref: '#/components/schemas/ChatCustomEntitySource'
+      discriminator:
+        propertyName: type
+        mapping:
+          DOCUMENT: '#/components/schemas/ChatDocumentSource'
+          PERSON: '#/components/schemas/ChatPersonSource'
+          FILE: '#/components/schemas/ChatFileSource'
+          CUSTOM_ENTITY: '#/components/schemas/ChatCustomEntitySource'
+    ChatCitationSnippet:
+      type: object
+      additionalProperties: false
+      required:
+        - text
+      properties:
+        text:
+          type: string
+          minLength: 1
+        page_number:
+          type:
+            - integer
+            - 'null'
+    ChatCitationAnnotation:
+      type: object
+      additionalProperties: false
+      required:
+        - type
+        - sources
+      properties:
+        type:
+          type: string
+          enum:
+            - CITATION
+        sources:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/ChatCitationSource'
+        start_index:
+          type:
+            - integer
+            - 'null'
+          minimum: 0
+        end_index:
+          type:
+            - integer
+            - 'null'
+          minimum: 0
+        snippets:
+          type:
+            - array
+            - 'null'
+          items:
+            $ref: '#/components/schemas/ChatCitationSnippet'
     Message:
       type: object
       properties:
@@ -166519,6 +166688,11 @@ components:
                 type: string
               type:
                 $ref: '#/components/schemas/ContentType'
+              annotations:
+                type: array
+                readOnly: true
+                items:
+                  $ref: '#/components/schemas/ChatCitationAnnotation'
             required:
               - text
               - type
@@ -168123,8 +168297,7 @@ components:
               - SUGGESTION
         resultSize:
           type: integer
-          description: |
-            Maximum number of results to be returned. If no value is provided, the backend will cap at 200.
+          description: Maximum number of results to be returned. If no value is provided, the backend will cap at 200.
           example: 10
         authTokens:
           type: array
@@ -168394,6 +168567,8 @@ components:
               - KNOWLEDGE_GAP
               - ARTIFACT_CREATION
               - EDIT_DOC
+              - CHAT_TO_ARTIFACT
+              - SHARE_ARTIFACT
           description: Categories of content requested. An allowlist gives flexibility to request content separately or together.
         requestOptions:
           $ref: '#/components/schemas/FeedRequestOptions'
@@ -168867,6 +169042,8 @@ components:
             - KNOWLEDGE_GAP
             - ARTIFACT_CREATION
             - EDIT_DOC
+            - CHAT_TO_ARTIFACT
+            - SHARE_ARTIFACT
           description: Type of the justification.
         justification:
           type: string
@@ -168964,6 +169141,8 @@ components:
             - KNOWLEDGE_GAP
             - ARTIFACT_CREATION
             - EDIT_DOC
+            - CHAT_TO_ARTIFACT
+            - SHARE_ARTIFACT
           description: Category of the result, one of the requested categories in incoming request.
         primaryEntry:
           $ref: '#/components/schemas/FeedEntry'

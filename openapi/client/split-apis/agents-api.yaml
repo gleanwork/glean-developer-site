@@ -2,11 +2,11 @@ openapi: 3.0.0
 info:
   version: 0.9.0
   title: Glean API - Agents
-  x-source-commit-sha: c7223f0e466c632820e8ef482ecdbb03a025224a
+  x-source-commit-sha: f48ffe1febb9065be985fab6ce718b324b69e9f5
   description: API endpoints for Agents
   x-logo:
     url: https://app.glean.com/images/glean-text2.svg
-  x-open-api-commit-sha: 3c1ac65b05f5133def947499c01ef4e2ca3a6abd
+  x-open-api-commit-sha: 26e595ebe7c0366d3e1e7ff9ab6fae96a58ed509
   x-speakeasy-name: Glean API
 servers:
   - url: '{serverUrl}'
@@ -387,7 +387,7 @@ paths:
         - lang: Python
           label: Python (API Client)
           source: |-
-            from glean.api_client import Glean
+            from glean.api_client import Glean, models
             import os
 
 
@@ -399,7 +399,7 @@ paths:
                 res = glean.client.agents.import_(agent_id="<id>", bundle={
                     "file_name": "example.file",
                     "content": open("example.file", "rb"),
-                })
+                }, version_source=models.VersionSource.USER)
 
                 # Handle response
                 print(res)
@@ -880,6 +880,19 @@ components:
         description:
           type: string
           description: Short summary of what this specific tool invocation will do.
+    ChatCitationSnippet:
+      type: object
+      additionalProperties: false
+      required:
+        - text
+      properties:
+        text:
+          type: string
+          minLength: 1
+        page_number:
+          type:
+            - integer
+            - 'null'
     CustomFieldValueHyperlink:
       properties:
         urlAnchor:
@@ -1095,6 +1108,46 @@ components:
         isUserGenerated:
           type: boolean
           description: true iff the email was manually added by a user from within Glean (aka not from the original data source)
+    ChatPersonSource:
+      type: object
+      additionalProperties: false
+      required:
+        - type
+        - person_id
+      properties:
+        type:
+          type: string
+          x-discriminator: true
+          enum:
+            - PERSON
+        person_id:
+          type: string
+          minLength: 1
+        name:
+          type: string
+        url:
+          type: string
+    ChatFileSource:
+      type: object
+      additionalProperties: false
+      required:
+        - type
+        - file_id
+      properties:
+        type:
+          type: string
+          x-discriminator: true
+          enum:
+            - FILE
+        file_id:
+          type: string
+          minLength: 1
+        title:
+          type: string
+        url:
+          type: string
+        datasource:
+          type: string
     DatasourceProfile:
       required:
         - datasource
@@ -1169,6 +1222,29 @@ components:
         scope: email profile https://www.googleapis.com/auth/gmail.readonly
         tokenType: Bearer
         authUser: '1'
+    ChatCustomEntitySource:
+      type: object
+      additionalProperties: false
+      required:
+        - type
+        - entity_id
+      properties:
+        type:
+          type: string
+          x-discriminator: true
+          enum:
+            - CUSTOM_ENTITY
+        entity_id:
+          type: string
+          minLength: 1
+        name:
+          type: string
+        title:
+          type: string
+        url:
+          type: string
+        datasource:
+          type: string
     ActionSummary:
       type: object
       description: Represents a minimal summary of an action.
@@ -1480,6 +1556,40 @@ components:
           items:
             type: string
           description: The plaintext content of the document.
+    ChatDocumentSource:
+      type: object
+      additionalProperties: false
+      required:
+        - type
+      properties:
+        type:
+          type: string
+          x-discriminator: true
+          enum:
+            - DOCUMENT
+        document_id:
+          type: string
+          minLength: 1
+        url:
+          type: string
+          minLength: 1
+        title:
+          type: string
+        datasource:
+          type: string
+      anyOf:
+        - required:
+            - document_id
+          properties:
+            document_id:
+              type: string
+              minLength: 1
+        - required:
+            - url
+          properties:
+            url:
+              type: string
+              minLength: 1
     DocumentSpec:
       x-multiple-discriminators: true
       oneOf:
@@ -1608,6 +1718,18 @@ components:
           description: Optional commit message for the imported version.
         syncMode:
           $ref: '#/components/schemas/ImportAgentSyncMode'
+        versionSource:
+          type: string
+          enum:
+            - GIT
+            - USER
+          default: USER
+          description: |
+            Provenance recorded on the staged commit or published version this import produces. Doesn't change the agent's management mode (workflowSource). GIT: synced from a Git repository. USER: uploaded by a user. Defaults to USER when omitted. Ignored for transient imports.
+        publishedBaselineHash:
+          type: string
+          description: |
+            Optional baseline hash of the currently published agent definition. When publish hash validation is enabled, an import updating an existing agent with syncMode PUBLISHED is rejected with HTTP 409 if the current published definition hash is nonempty and does not match this baseline. Leading and trailing whitespace is trimmed; omitted or blank values skip validation. Ignored for STAGED imports, new agents, and transient previews.
         isDraft:
           type: boolean
           description: |
@@ -2086,29 +2208,6 @@ components:
               description: ID of the VCS user (e.g. GitHub username) who last saved the draft. Set only by the draft save path via the external Git integration API.
             lastUpdatedBy:
               $ref: '#/components/schemas/Person'
-    Message:
-      type: object
-      properties:
-        role:
-          type: string
-          title: Role
-          description: The role of the message.
-          example: USER
-        content:
-          title: Content
-          description: The content of the message.
-          type: array
-          items:
-            type: object
-            properties:
-              text:
-                type: string
-              type:
-                $ref: '#/components/schemas/ContentType'
-            required:
-              - text
-              - type
-            title: MessageTextBlock
     ServerToolRequest:
       x-visibility: Preview
       x-glean-experimental:
@@ -2317,6 +2416,38 @@ components:
           description: Filters which restrict who should see the pinned document. Values are taken from the corresponding filters in people search.
           items:
             $ref: '#/components/schemas/FacetFilter'
+    ChatCitationAnnotation:
+      type: object
+      additionalProperties: false
+      required:
+        - type
+        - sources
+      properties:
+        type:
+          type: string
+          enum:
+            - CITATION
+        sources:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/ChatCitationSource'
+        start_index:
+          type:
+            - integer
+            - 'null'
+          minimum: 0
+        end_index:
+          type:
+            - integer
+            - 'null'
+          minimum: 0
+        snippets:
+          type:
+            - array
+            - 'null'
+          items:
+            $ref: '#/components/schemas/ChatCitationSnippet'
     Permissions:
       description: |-
         Describes the permissions levels that a user has for permissioned features. When the client sends this, Permissions.read and Permissions.write are the additional permissions granted to a user on top of what they have via their roles.
@@ -2374,6 +2505,21 @@ components:
                         description: RelatedDocuments object
               type: object
           type: object
+    ChatCitationSource:
+      description: Four-variant citation source union.
+      x-multiple-discriminators: true
+      oneOf:
+        - $ref: '#/components/schemas/ChatDocumentSource'
+        - $ref: '#/components/schemas/ChatPersonSource'
+        - $ref: '#/components/schemas/ChatFileSource'
+        - $ref: '#/components/schemas/ChatCustomEntitySource'
+      discriminator:
+        propertyName: type
+        mapping:
+          DOCUMENT: '#/components/schemas/ChatDocumentSource'
+          PERSON: '#/components/schemas/ChatPersonSource'
+          FILE: '#/components/schemas/ChatFileSource'
+          CUSTOM_ENTITY: '#/components/schemas/ChatCustomEntitySource'
     Workflow:
       allOf:
         - $ref: '#/components/schemas/PermissionedObject'
@@ -2398,6 +2544,34 @@ components:
               readOnly: true
               description: |
                 For a CUSTOM_WEBHOOK-triggered agent, the full inbound webhook URL (.../webhooks/custom/<token>) minted for the agent. Empty for other trigger types.
+    Message:
+      type: object
+      properties:
+        role:
+          type: string
+          title: Role
+          description: The role of the message.
+          example: USER
+        content:
+          title: Content
+          description: The content of the message.
+          type: array
+          items:
+            type: object
+            properties:
+              text:
+                type: string
+              type:
+                $ref: '#/components/schemas/ContentType'
+              annotations:
+                type: array
+                readOnly: true
+                items:
+                  $ref: '#/components/schemas/ChatCitationAnnotation'
+            required:
+              - text
+              - type
+            title: MessageTextBlock
     CollectionPinnedMetadata:
       properties:
         existingPins:
