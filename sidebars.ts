@@ -197,11 +197,6 @@ const baseSidebars: SidebarsConfig = {
                 },
                 {
                   type: 'doc',
-                  id: 'guides/tools/examples/jira-issue-creation-redirect',
-                  label: 'Jira Issue Creation Redirect',
-                },
-                {
-                  type: 'doc',
                   id: 'guides/tools/examples/google-calendar-events',
                   label: 'Google Calendar Events',
                 },
