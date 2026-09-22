@@ -16,14 +16,14 @@ This policy applies to the official client libraries:
 
 ## Summary
 
-- The client libraries follow [Semantic Versioning](https://semver.org/). From `1.0.0` onward, a breaking change to a library's public interface always means a new major version.
+- The client libraries follow [Semantic Versioning](https://semver.org/) for their stable public interface. From `1.0.0` onward, breaking changes to that interface require a new major version.
 - The library version describes the library, not the API. API stability is governed separately by the [API evolution and deprecation policy](/deprecations/overview).
-- Stable API endpoints are covered by the library's compatibility promise. Experimental endpoints are included in the library but are opt-in and can change at any time.
+- Stable API endpoints are covered by the library's compatibility promise. Experimental endpoints are opt-in and explicitly outside that promise.
 - Major library versions are released on the same fixed dates that deprecated API features are removed: January 15, April 15, July 15, and October 15. A release candidate is published at least two weeks before the removal date.
 
 ## What the version number covers
 
-The version number covers the library's public interface:
+The version number covers the library's stable public interface:
 
 - Method names, parameters, and return types for stable operations
 - Request and response models, including field names and types
@@ -38,35 +38,17 @@ The version number does not cover:
 - Undocumented behavior, internal modules, and generated helper code that is not part of the documented interface.
 - API behavior such as ranking or results. That behavior is governed by the [API evolution and deprecation policy](/deprecations/overview), not the library version.
 
-## Version numbers
+## Semantic Versioning
 
-Given a version in the form `MAJOR.MINOR.PATCH`:
+Glean uses `MAJOR.MINOR.PATCH` as defined by [Semantic Versioning](https://semver.org/) for the stable public interface:
 
-### Major (`2.0.0`)
+| Version | Glean use |
+| --- | --- |
+| Major (`2.0.0`) | A breaking change, such as removing a deprecated member or dropping support for a runtime that has not reached end of life |
+| Minor (`1.1.0`) | Backwards-compatible capability, such as a new stable endpoint, field, or optional parameter; a deprecation marker; or support changes after a runtime reaches end of life |
+| Patch (`1.0.1`) | A library bug fix, type or documentation correction that does not change the contract, or a dependency update |
 
-A major version contains a breaking change to the library's public interface. Examples include:
-
-- A deprecated API field or endpoint is removed after its deprecation window closes
-- A method signature, model type, or error class changes in a way that existing code does not compile or run against
-- Support for a runtime version that has not reached end of life is dropped
-
-### Minor (`1.1.0`)
-
-A minor version adds capability without breaking existing code. Examples include:
-
-- New endpoints, methods, optional parameters, or response fields
-- New enum values. Your code should tolerate unknown values.
-- A field or method is marked deprecated. It keeps working.
-- Changes to experimental endpoints
-- Support for a runtime version that has reached end of life is dropped, after the grace period noted in each library's README
-
-### Patch (`1.0.1`)
-
-A patch version fixes an issue without changing the interface. Examples include:
-
-- Bug fixes in the library
-- Type or documentation corrections that do not change the API contract
-- Dependency updates
+The [API change mapping](#how-api-changes-map-to-library-releases) below describes how these rules apply to Glean's generated clients. Experimental interfaces are the explicit exception; they are not covered by the compatibility promise.
 
 ## How API changes map to library releases
 
@@ -77,8 +59,8 @@ The libraries are generated from Glean's OpenAPI specification, so API changes r
 | New stable endpoint or field | Minor |
 | Field or endpoint marked deprecated | Minor. The member is marked deprecated in the library but still works. |
 | Deprecated field or endpoint removed on a removal date | Major, released on the removal date |
-| Experimental endpoint added, changed, or removed | Minor |
-| Experimental endpoint promoted to stable | Minor |
+| Experimental endpoint added, changed, or removed | Any release; outside the SemVer compatibility promise |
+| Experimental endpoint promoted to stable | Minor; this policy applies from that release forward |
 | API bug fix with no interface change | No library release needed |
 | Library bug fix, type correction, or dependency update | Patch |
 
@@ -86,9 +68,9 @@ Removal dates and the six-month minimum notice are defined by the [API evolution
 
 ## Experimental endpoints
 
-Some endpoints are marked experimental in the API reference. They are included in the libraries so you can try them, but they are excluded from the compatibility promise:
+Some endpoints are marked experimental in the API reference. They are included in the libraries so you can try them, but they are explicitly outside the Semantic Versioning compatibility promise:
 
-- They can change or be removed in any release, including a minor or patch release.
+- They can be added, changed, or removed in any release, including a minor or patch release.
 - The API serves them only when you opt in by sending the `X-Glean-Include-Experimental: true` header. Each library exposes a configuration option for this, such as `include_experimental=True` in Python or `WithIncludeExperimental(true)` in Go.
 - Do not depend on experimental endpoints in production.
 
