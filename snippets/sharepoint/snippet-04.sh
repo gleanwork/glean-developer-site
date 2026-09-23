@@ -1,1 +1,1 @@
-yo @microsoft/sharepoint
+npm install
