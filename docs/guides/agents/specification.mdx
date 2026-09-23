@@ -7,7 +7,7 @@ description: A human-readable file system format for defining Glean agents.
 
 The Glean agent specification is a human-readable file system format for defining a Glean agent — its instructions, tools, knowledge sources, skills, dependencies, and subagents — as a directory of files. Use it to author and version-control Glean agents outside the UI.
 
-To create or update an agent from a specification directory, package the directory as a zip and send it to the [Import an agent](/api/client-api/agents/import-agent) endpoint.
+To create or update an agent from a specification directory, zip the directory so the archive contains one top-level agent folder, and send it to the [Import an agent](/api/client-api/agents/import-agent) endpoint.
 
 ## Directory layout
 
@@ -52,7 +52,7 @@ Common top-level fields:
 | `description` | No | Short description of what the agent does. At most 300 characters. |
 | `instructionFile` | No | Path to the instructions file. Defaults to `instructions.md`. The file is limited to 32,000 characters. |
 | `model` | No | Which agentic model the agent runs on and how hard it reasons. |
-| `trigger` | Yes, for the top-level agent | How the agent is invoked. Always declare it explicitly. Subagents must not declare it. |
+| `trigger` | No | How the top-level agent is invoked. Defaults to `CHAT_MESSAGE` when omitted; declaring it explicitly is recommended. Subagents do not use it. |
 | `skills` | No | List of skill directory paths to include. |
 | `subagents` | No | List of subagent directory paths to include. |
 | `dependencies` | No | Published skills or agents referenced by platform ID. |
@@ -70,7 +70,6 @@ description: >
 instructionFile: instructions.md
 
 model:
-  name: GPT_5_4_MS
   mode: ADVANCED
 
 trigger:
@@ -150,15 +149,15 @@ Example:
 
 ```yaml snippet=specification/snippet-02.yaml
 model:
-  name: GPT_5_4_MS
   mode: ADVANCED
 ```
 
 ### Trigger
 
-`trigger` controls how the top-level agent is invoked. Always declare it
-explicitly, including for chat agents. Subagents are never triggered directly
-and must not declare a `trigger`.
+`trigger` controls how the top-level agent is invoked. It defaults to
+`CHAT_MESSAGE` when omitted; declaring it explicitly, even for chat agents,
+keeps the intent clear. Subagents are never triggered directly, so a
+`trigger` in a subagent's `spec.yaml` has no effect; leave it out.
 
 Supported `type` values:
 
