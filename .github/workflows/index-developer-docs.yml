@@ -23,10 +23,23 @@ on:
         required: false
         type: boolean
         default: false
+      test_alert:
+        description: 'Test the failure alert: fail at the credentials check (nothing is uploaded) and open or update the tracking issue'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
 
 jobs:
   run-indexer:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read # Record failed step reads this run's job list
+    outputs:
+      failed_step: ${{ steps.failed-step.outputs.name }}
     timeout-minutes: 45
     steps:
       - name: Checkout repository
@@ -72,7 +85,13 @@ jobs:
           GLEAN_SERVER_URL: ${{ secrets.GLEAN_SERVER_URL }}
           # Deprecated fallback, used only while GLEAN_SERVER_URL is unset.
           GLEAN_INSTANCE: ${{ secrets.GLEAN_INSTANCE }}
-        run: uv run glean-idx doctor --datasource devdocs --output text
+          TEST_ALERT: ${{ inputs.test_alert }}
+        run: |
+          if [ "$TEST_ALERT" = "true" ]; then
+            echo "::error::test_alert: failing on purpose to exercise the failure alert"
+            exit 1
+          fi
+          uv run glean-idx doctor --datasource devdocs --output text
 
       - name: Configure datasource
         if: inputs.dry_run != true
@@ -110,3 +129,37 @@ jobs:
           # Deprecated fallback, used only while GLEAN_SERVER_URL is unset.
           GLEAN_INSTANCE: ${{ secrets.GLEAN_INSTANCE }}
         run: uv run glean-idx datasource process --datasource devdocs --yes --output text
+
+      # Record which step failed so the alert can name it and suggest a cause.
+      - name: Record failed step
+        id: failed-step
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          name="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/attempts/$GITHUB_RUN_ATTEMPT/jobs" \
+            --jq '[.jobs[] | select(.name == "run-indexer") | .steps[] | select(.conclusion == "failure") | .name][0] // ""')"
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+
+  # Scheduled runs only (plus test_alert): a failing nightly opens, or comments
+  # on, an issue, and the next successful nightly closes it. Other manual runs
+  # never touch the issue.
+  alert:
+    needs: run-indexer
+    if: always() && (github.event_name == 'schedule' || inputs.test_alert)
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: scripts/indexing/ci
+
+      - name: Report run status
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RESULT: ${{ needs.run-indexer.result }}
+          FAILED_STEP: ${{ needs.run-indexer.outputs.failed_step }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: bash scripts/indexing/ci/report-run.sh
