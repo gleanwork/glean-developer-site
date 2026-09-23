@@ -97,7 +97,33 @@ function toSemanticName(key: string): string {
 }
 
 // ---------------------------------------------------------------------------
-// 4. Detect dev-site-only icons
+// 4. Read the current manifest so a sync never removes or remaps a name
+// ---------------------------------------------------------------------------
+
+/**
+ * Returns the monorepo-synced entries already published in the manifest.
+ * Docs and recipes reference these names, and the monorepo renames and
+ * retires glyphs over time, so the sync is additive: an existing name keeps
+ * its file, and only names that are new to the site are added.
+ */
+function readPublishedEntries(): Map<string, string> {
+  const published = new Map<string, string>();
+  if (!fs.existsSync(MANIFEST_PATH)) return published;
+  const source = fs.readFileSync(MANIFEST_PATH, 'utf-8');
+  const re =
+    /^\s+'?([a-z0-9-]+)'?:\s*\{\s*file:\s*'([^']+)\.svg',\s*path:\s*'\/img\/glean\/icons\/'/gm;
+  let match: RegExpExecArray | null;
+  while ((match = re.exec(source)) !== null) {
+    const [, name, filename] = match;
+    if (fs.existsSync(path.join(ICONS_OUTPUT_DIR, `${filename}.svg`))) {
+      published.set(name, filename);
+    }
+  }
+  return published;
+}
+
+// ---------------------------------------------------------------------------
+// 5. Detect dev-site-only icons
 // ---------------------------------------------------------------------------
 
 function getDevSiteOnlyIcons(
@@ -119,7 +145,7 @@ function getDevSiteOnlyIcons(
 }
 
 // ---------------------------------------------------------------------------
-// 5. Main
+// 6. Main
 // ---------------------------------------------------------------------------
 
 function main() {
@@ -179,16 +205,24 @@ function main() {
     deduped.set(entry.semanticName, entry);
   }
 
-  // Copy SVGs
+  // Published names keep their existing file; only new names are copied.
+  const published = readPublishedEntries();
   let copied = 0;
   for (const entry of deduped.values()) {
+    if (published.has(entry.semanticName)) continue;
     const svgFile = `${entry.filename}.svg`;
-    const src = path.join(IMAGES_DIR, svgFile);
-    const dest = path.join(ICONS_OUTPUT_DIR, svgFile);
-    fs.copyFileSync(src, dest);
+    fs.copyFileSync(
+      path.join(IMAGES_DIR, svgFile),
+      path.join(ICONS_OUTPUT_DIR, svgFile),
+    );
     copied++;
   }
-  console.log(`Copied ${copied} SVGs to ${ICONS_OUTPUT_DIR}`);
+  for (const [semanticName, filename] of published) {
+    deduped.set(semanticName, { semanticName, filename, key: semanticName });
+  }
+  console.log(
+    `Kept ${published.size} published icons; copied ${copied} new SVGs to ${ICONS_OUTPUT_DIR}`,
+  );
 
   // Build set for overlap detection
   const monoSemanticNames = new Set(deduped.keys());

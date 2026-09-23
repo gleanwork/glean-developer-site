@@ -4,6 +4,7 @@ import useBaseUrl from '@docusaurus/useBaseUrl';
 
 import { GLEAN_ICON_MAP, AVAILABLE_GLEAN_ICONS } from './glean-icon-manifest';
 import type { GleanIconName } from './glean-icon-manifest';
+import { recolorSvg } from './recolorSvg';
 
 interface IconProps {
   width?: number;
@@ -32,30 +33,7 @@ function GleanIcon({
     if (!entry) return;
     fetch(iconUrl)
       .then((response) => response.text())
-      .then((text) => {
-        // Remove hardcoded fill and stroke attributes to allow CSS control
-        // Also preserve viewBox and remove fixed width/height to allow proper scaling
-        let cleanedSvg = text
-          .replace(/fill="[^"]*"/g, 'fill="currentColor"')
-          .replace(/stroke="[^"]*"/g, 'stroke="currentColor"')
-          .replace(/<svg([^>]*)\s+width="[^"]*"/, '<svg$1')
-          .replace(/<svg([^>]*)\s+height="[^"]*"/, '<svg$1')
-          .replace(/<svg/, '<svg style="width: 100%; height: 100%"');
-
-        // For stroke-only paths (no explicit fill): use fill="none" to preserve
-        // the stroke-only design intent. Without this, the path gets filled solid.
-        cleanedSvg = cleanedSvg.replace(
-          /<path(?=[^>]*stroke=)(?![^>]*fill=)([^>]*)>/g,
-          '<path$1 fill="none">',
-        );
-        // For paths with neither stroke nor fill: add fill="currentColor"
-        cleanedSvg = cleanedSvg.replace(
-          /<path(?![^>]*stroke=)(?![^>]*fill=)([^>]*)>/g,
-          '<path$1 fill="currentColor">',
-        );
-
-        setSvgContent(cleanedSvg);
-      })
+      .then((text) => setSvgContent(recolorSvg(text)))
       .catch((error) => {
         console.error(`Failed to load SVG icon: ${name}`, error);
       });
