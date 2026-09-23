@@ -1,6 +1,6 @@
 """Data client that reads documentation content from Docusaurus build output.
 
-Instead of scraping the live site with Playwright, this reads from:
+Reads from:
 - build/mcp/docs.json — full markdown for all pages
 - docs/api/**/*.RequestSchema.json — request schemas
 - docs/api/**/*.StatusCodes.json — response codes
@@ -264,12 +264,6 @@ class DeveloperDocsDataClient(BaseDataClient[Union[DocumentationPage, ApiReferen
             response_content_type="application/json",
             response_body=response_body,
             response_codes=response_codes,
-            authentication="",
-            python_code_sample="",
-            go_code_sample="",
-            java_code_sample="",
-            typescript_code_sample="",
-            curl_code_sample="",
             url=url,
             page_type="api_reference",
             created_at=ts.get("createdAt"),

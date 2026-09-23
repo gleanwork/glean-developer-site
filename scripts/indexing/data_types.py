@@ -27,12 +27,6 @@ class ApiReferencePage(TypedDict):
     response_content_type: str
     response_body: str
     response_codes: List[str]
-    authentication: str
-    python_code_sample: str
-    go_code_sample: str
-    java_code_sample: str
-    typescript_code_sample: str
-    curl_code_sample: str
     url: str
     page_type: str
     created_at: Optional[int]
