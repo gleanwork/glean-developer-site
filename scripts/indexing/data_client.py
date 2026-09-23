@@ -8,11 +8,14 @@ Instead of scraping the live site with Playwright, this reads from:
 """
 
 from dataclasses import dataclass
-from typing import Union, List, Optional, TYPE_CHECKING
+from typing import Any, Union, List, Optional, TYPE_CHECKING
 from pathlib import Path, PurePosixPath
+import os
 import uuid
 import json
 import logging
+
+from glean.indexing.connectors import BaseDataClient
 
 from data_types import DocumentationPage, ApiReferencePage
 
@@ -58,8 +61,12 @@ class ApiRoute:
         return "overview" in self.slug
 
 
-class DeveloperDocsDataClient:
-    """Reads documentation content from Docusaurus build output files."""
+class DeveloperDocsDataClient(BaseDataClient[Union[DocumentationPage, ApiReferencePage]]):
+    """Reads documentation content from Docusaurus build output files.
+
+    The repo root defaults to this file's location; set DEVDOCS_REPO_ROOT to
+    read a build from elsewhere.
+    """
 
     MAX_SCHEMA_CHARS = 20_000
 
@@ -69,7 +76,7 @@ class DeveloperDocsDataClient:
         indexing_logger: Optional["IndexingLogger"] = None,
     ):
         if repo_root is None:
-            repo_root = str(Path(__file__).parent.parent.parent)
+            repo_root = os.getenv("DEVDOCS_REPO_ROOT") or str(Path(__file__).parent.parent.parent)
         self.repo_root = Path(repo_root)
         self.indexing_logger = indexing_logger
 
@@ -77,6 +84,9 @@ class DeveloperDocsDataClient:
         self.timestamps_path = self.repo_root / "build" / "indexing" / "timestamps.json"
         self.api_docs_dir = self.repo_root / "docs" / "api"
         self._timestamps: Optional[dict[str, dict]] = None
+        # Pages found by the last get_source_data() call, before any caller
+        # truncates the result (e.g. `glean-idx test --max-items`).
+        self.last_fetch_count: Optional[int] = None
 
     def _load_timestamps(self) -> dict[str, dict]:
         """Load timestamps map produced by the doc-timestamps Docusaurus plugin.
@@ -276,9 +286,13 @@ class DeveloperDocsDataClient:
         )
 
     def get_source_data(
-        self, since: Optional[str] = None
+        self, since: Optional[str] = None, **kwargs: Any
     ) -> List[Union[DocumentationPage, ApiReferencePage]]:
-        """Read all documentation pages from the build output."""
+        """Read all documentation pages from the build output.
+
+        Always returns the whole site: the build output has no change feed, so
+        ``since`` is accepted for interface compatibility and ignored.
+        """
         if not self.docs_json_path.exists():
             raise RuntimeError(
                 f"docs.json not found at {self.docs_json_path}. "
@@ -324,4 +338,5 @@ class DeveloperDocsDataClient:
             pages.append(page)
 
         self._log(f"  Processed {info_count} info pages and {api_count} API reference pages")
+        self.last_fetch_count = len(pages)
         return pages

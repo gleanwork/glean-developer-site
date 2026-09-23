@@ -69,3 +69,28 @@ jobs:
         env:
           TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
           TURBO_TEAM: ${{ vars.TURBO_TEAM }}
+
+  indexing:
+    name: Indexing Connector
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: scripts/indexing
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up mise
+        uses: jdx/mise-action@v4
+        with:
+          cache: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install indexing dependencies
+        run: uv sync --locked
+
+      # Fixture-based: no site build or Glean credentials needed. The
+      # end-to-end check against real build output (glean-idx test --phase
+      # mock) runs in the Index Developer Docs workflow after `pnpm build`.
+      - name: Run connector tests
+        run: uv run pytest -q
