@@ -808,6 +808,18 @@ const baseSidebars: SidebarsConfig = {
                   label: 'Create agent run',
                   className: 'api-method post',
                 },
+                {
+                  type: 'doc',
+                  id: 'api/platform-api/platform-agents-cancel-run',
+                  label: 'Cancel an agent run',
+                  className: 'api-method post',
+                },
+                {
+                  type: 'doc',
+                  id: 'api/platform-api/platform-agents-get-run',
+                  label: 'Get agent run',
+                  className: 'api-method get',
+                },
               ],
             },
             {
