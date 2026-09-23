@@ -3,12 +3,12 @@ title: Faceted Filtering
 icon: bars-filter
 ---
 
-We provide the functionality of filtering the list of possible facets of a particular type (obtained in the [`facetResults`](/api/client-api/search/search#responses) above) using a prefix. If you want to filter the [`buckets`](/api/client-api/search/search#responses) of a particular [`sourceName`](/api/client-api/search/search#responses) in the [`facetResults`](/api/client-api/search/search#responses) using a specific prefix, you can set the [`facetBucketFilter`](/api/client-api/search/search#request) object. It has the following two fields:
+You can narrow the facet values returned in [`facetResults`](/api/client-api/search/search#responses) by prefix. This is useful for type-ahead filter pickers. To filter the [`buckets`](/api/client-api/search/search#responses) of one [`sourceName`](/api/client-api/search/search#responses), set the [`facetBucketFilter`](/api/client-api/search/search#request) object in `requestOptions`. It has two fields:
 
 1. [`facet`](/api/client-api/search/search#request) - The facet fieldName that you want to filter on.
 2. [`prefix`](/api/client-api/search/search#request) - The prefix by which you want to filter the buckets of that facet by.
 
-To use this Facet Bucket Filtering make sure that the [`responseHints`](/api/client-api/search/search#request) contains "FACET_RESULTS" . See the sample request body below that filters the "type" bucket using the prefix “co”:
+Include `FACET_RESULTS` in [`responseHints`](/api/client-api/search/search#request). This request filters the `type` buckets by the prefix `co`:
 
 ```json snippet=faceted-filters/snippet-01.json
 {
@@ -26,7 +26,9 @@ To use this Facet Bucket Filtering make sure that the [`responseHints`](/api/cli
 
 Within the `facetResults` field in the response to this query, you will find that the bucket for `sourceName`="type" contains only those values with the prefix "co" in any word.
 
-You can limit the maximum number of buckets you get within the `facetResults` for all `sourceName` by passing your desired value into `facetBucketSize`. In the example above, we limit buckets to 3000
+The required `facetBucketSize` sets the maximum number of buckets returned for each `sourceName`. The example above allows 3000.
+
+To find which facets a datasource supports, see [Datasource Filters](/guides/search/datasource-filters). Platform API users get query-specific filter suggestions from [List search filters](/api/platform-api/platform-search-filters); see the [Search with discovered filters](/cookbook/search-with-discovered-filters) recipe.
 
 ### Preferred Name prefix matching
 

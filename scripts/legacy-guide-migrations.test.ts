@@ -227,7 +227,7 @@ describe('legacy guide migration manifest', () => {
           .length,
       ]),
     );
-    expect(counts).toEqual({ retain: 11, update: 7, convert: 10, retire: 9 });
+    expect(counts).toEqual({ retain: 14, update: 7, convert: 7, retire: 9 });
   });
 
   it('tracks every current guide source and rejects unclassified additions', () => {

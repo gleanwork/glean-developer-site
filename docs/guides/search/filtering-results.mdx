@@ -3,13 +3,17 @@ title: Filtering Results
 icon: filter
 ---
 
-Filters are a powerful tool to narrow down your search results. We support filters that are generalized to every document, as well as filters that are specific to different datasources.
+Filters narrow the results of a Client API [search](/api/client-api/search/search) request. Some filters apply to every document; others are specific to a datasource.
 
-This guide will focus on our general filters and how to utilize them.
+This guide covers the general filters. To find the filters a datasource supports, see [Datasource Filters](/guides/search/datasource-filters).
+
+:::tip Using the Platform API?
+Platform Search uses a different filter model: `filters`, `time_range`, and filter discovery through [List search filters](/api/platform-api/platform-search-filters). For a runnable example, see the [Search with discovered filters](/cookbook/search-with-discovered-filters) recipe.
+:::
 
 ## How to Use
 
-In order to filter search results to show documents that match certain fields via the [/search REST API](/api/client-api/search/overview), you need to construct a list of `facetFilter` objects and pass it into the [`requestOptions`](/api/client-api/search/search#request) object.
+To filter results by field, pass a list of `facetFilter` objects in [`requestOptions.facetFilters`](/api/client-api/search/search#request). `requestOptions` also requires `facetBucketSize`.
 
 Each facetFilter object has the following relevant fields:
 
@@ -23,11 +27,11 @@ A facetFilterValue object has the following relevant fields:
 | Field Name     | Description                                      |
 | -------------- | ------------------------------------------------ |
 | `value`        | string value that results are being filtered to. |
-| `relationType` | can take on the values below:                    |
+| `relationType` | One of `EQUALS`, `ID_EQUALS`, `NOT_EQUALS`, `LT`, or `GT`. See [Time filters](#time-filters) for `LT` and `GT`. |
 
 ### Basic Example
 
-To filter to only the document type pdf search results, you would send the following in the facetFilter field. This is the equivalent of adding “type:pdf” to your search query.
+To return only PDF documents, set `requestOptions.facetFilters` to the following. This is equivalent to adding `type:pdf` to the query.
 
 ```json snippet=filtering-results/snippet-01.json
 [
@@ -51,9 +55,8 @@ To filter to only the document type pdf search results, you would send the follo
 | ----------------- | ----------------------------------------------------------------------------------------------------------------------- |
 | `last_updated_at` | Filter by document last updated at                                                                                      |
 | `from`            | Filter by user who created/modified the document. Supports special value "me" for the current user                      |
-| `my`              | Filter by documents that are in the current user's history. Supports special value "history"                            |
+| `suggested`       | Filter by suggestion: `my history` for documents in the current user's history (`my:history`), or the go links value (`has:golink`). Copy go links and other values from `facetResults` |
 | `collection`      | Filter by collection name                                                                                               |
-| `has`             | Filter by whether a document has a specific field. Supports special value "golink" to filter by documents with a golink |
 | `type`            | Filter by document type                                                                                                 |
 
 ### Entity Field Names
@@ -127,11 +130,11 @@ Open date range example for filtering to documents from dates 6/11 onwards:
 
 For special values, we allow the values `past_day, past_week, past_month, yesterday, today, past_n_days, past_n_weeks, past_n_months, past_n_years `for the relation type `EQUALS`, where n is a number, ie 5 in `past_5_days`. For all past* prefixed values, we also support the last* prefix, they mean the same thing (ie `last_week` is a viable substitute for `past_week`).
 
-We allow the values `past_day, past_week, past_month, yesterday,today `for the relation type `LT`.
+We allow the values `past_day`, `past_week`, `past_month`, `yesterday`, and `today` for the relation type `LT`.
 
-We allow the values `yesterday `for the relation type `GT`.
+We allow the value `yesterday` for the relation type `GT`.
 
-If you pass in an invalid special value, you will get an 422 error letting you know you have an invalid operator. Invalid special values for time filters are the only case in which a 422 error is returned.
+Use only the values listed above.
 
 If you are used to using operators and values in the query string, here are some examples of translations of query string value to REST API value.
 
@@ -172,45 +175,38 @@ Sample:
 
 #### Timezone considerations
 
-We factor in user’s timezone for all queries except when you use the value `past_week`, `past_year`, `past_month` and `past_day` with the relationType `EQUALS`. (these are handled by built-in elastic date aggregation that doesn’t account for timezone).
+Time filters use the user's timezone, except for `past_day`, `past_week`, `past_month`, and `past_year` with the relation type `EQUALS`. Those values do not account for timezone.
 
 ### History filter
 
-`my:` facet will only ever have the value “history”. It filters to show only documents the user has viewed before. The object always looks like this:
+The `my:history` query operator shows only documents the user has viewed. In `facetFilters`, it is the `suggested` field with the value `my history`:
 
 ```json snippet=filtering-results/snippet-07.json
 {
   "fieldName": "suggested",
-  "groupName": "",
   "values": [{ "relationType": "EQUALS", "value": "my history" }]
 }
 ```
 
 ### From filter (or any user filter):
 
-If you would like to specify a specific user, for example, if there are 2 people with the same name, “User one”, you can specify which one you mean by using the email address they authenticated with Glean as the `value` . IE user[at]glean.com and userone[at]glean.com would facet by different “User One”s even if they have the same name.
+To choose one person when several share a name, use the email address they sign in to Glean with as the `value`. For example, `user@example.com` and `userone@example.com` filter to different people named "User One".
 
-Sample query:
+The query `from:"User One" updated:today type:document` becomes:
 
 ```json snippet=filtering-results/snippet-08.json
-from:"User one" updated:today type:document
-requestOptions.facetFilters:
-[{ "fieldName": "from",
-    "values": [ {
-        "relationType": "EQUALS",
-        "value": "userone@glean.com"
-      }] },
+[
+  {
+    "fieldName": "from",
+    "values": [{ "relationType": "EQUALS", "value": "userone@example.com" }]
+  },
   {
     "fieldName": "last_updated_at",
-    "values": [{
-        "relationType": "EQUALS",
-        "value": "today"
-      }] },
+    "values": [{ "relationType": "EQUALS", "value": "today" }]
+  },
   {
     "fieldName": "type",
-    "values": [{
-        "relationType": "EQUALS",
-        "value": "document"
-      }]}
+    "values": [{ "relationType": "EQUALS", "value": "document" }]
+  }
 ]
 ```
