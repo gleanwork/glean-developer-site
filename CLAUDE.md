@@ -34,9 +34,9 @@ pnpm changelog:entry:new
 The `scripts/indexing/` directory contains a Python-based Glean indexing pipeline. Use mise tasks from the repo root:
 
 ```bash
-mise run indexing:dry-run    # Test extraction without uploading
+mise run indexing:test       # Connector unit tests
+mise run indexing:dry-run    # glean-idx test --phase mock against the local build (no upload)
 mise run indexing:run        # Full indexing (requires GLEAN_INDEXING_API_TOKEN, GLEAN_SERVER_URL)
-mise run indexing:setup      # Install deps and Playwright browsers
 ```
 
 ## Architecture

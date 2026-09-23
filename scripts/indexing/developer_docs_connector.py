@@ -16,7 +16,9 @@ from glean.api_client.models import (
 from data_client import DeveloperDocsDataClient
 from data_types import DocumentationPage, ApiReferencePage
 
-logger = logging.getLogger(__name__)
+# Under the "glean" namespace so the SDK logging setup (glean-idx run
+# --log-level, setup_connector_logging) routes and levels these lines too.
+logger = logging.getLogger("glean.devdocs.connector")
 
 DATASOURCE_NAME = "devdocs"
 

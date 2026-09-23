@@ -13,14 +13,19 @@ python = "3.13.12"
 uv = "0.7"
 
 [tasks."indexing:run"]
-description = "Run the Glean indexing script"
+description = "Index the docs into Glean (requires GLEAN_INDEXING_API_TOKEN, GLEAN_SERVER_URL; run pnpm build first)"
 dir = "scripts/indexing"
-run = "uv run main.py"
+run = "uv run glean-idx datasource configure --yes && uv run glean-idx run --yes"
 
 [tasks."indexing:dry-run"]
-description = "Dry run: fetch and transform data without uploading (outputs JSON)"
+description = "Run the connector against the local build with Glean mocked (no upload)"
 dir = "scripts/indexing"
-run = "DRY_RUN=true uv run main.py"
+run = "uv run glean-idx test --phase mock"
+
+[tasks."indexing:test"]
+description = "Run the indexing connector unit tests"
+dir = "scripts/indexing"
+run = "uv run pytest -q"
 
 [tasks."indexing:sync"]
 description = "Sync indexing dependencies"

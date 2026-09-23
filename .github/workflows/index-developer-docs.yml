@@ -9,7 +9,7 @@ on:
         required: false
         default: 'Manual trigger'
       dry_run:
-        description: 'Dry run (validate extraction without uploading)'
+        description: 'Dry run (run the connector against a mocked Glean; nothing is uploaded)'
         required: false
         type: boolean
         default: false
@@ -50,16 +50,40 @@ jobs:
 
       - name: Install indexing dependencies
         working-directory: scripts/indexing
-        run: uv sync
+        run: uv sync --locked
 
-      - name: Run indexing script
+      # The connector runs through the glean-idx CLI from glean-indexing-sdk,
+      # configured by scripts/indexing/glean_deployment.yaml.
+
+      # Runs the real connector end to end against this build with Glean
+      # mocked: fetch, transform, batching, and output validation. A broken
+      # build fails here, before anything reaches Glean.
+      - name: Test connector against the build (mocked Glean)
+        working-directory: scripts/indexing
+        run: uv run glean-idx test --phase mock --output text
+
+      - name: Configure datasource
+        if: inputs.dry_run != true
         working-directory: scripts/indexing
         env:
           GLEAN_INDEXING_API_TOKEN: ${{ secrets.GLEAN_INDEXING_API_TOKEN }}
           GLEAN_INSTANCE: ${{ secrets.GLEAN_INSTANCE }}
-          DRY_RUN: ${{ inputs.dry_run }}
+        run: uv run glean-idx datasource configure --yes --output text
+
+      - name: Index documents
+        if: inputs.dry_run != true
+        working-directory: scripts/indexing
+        env:
+          GLEAN_INDEXING_API_TOKEN: ${{ secrets.GLEAN_INDEXING_API_TOKEN }}
+          GLEAN_INSTANCE: ${{ secrets.GLEAN_INSTANCE }}
           DISABLE_STALE_DELETION_CHECK: ${{ inputs.disable_stale_deletion_check }}
-        run: uv run main.py
+        run: |
+          args=()
+          if [ "$DISABLE_STALE_DELETION_CHECK" = "true" ]; then
+            echo "::warning::Stale document deletion safeguard is DISABLED for this run"
+            args+=(--disable-stale-deletion-check)
+          fi
+          uv run glean-idx run --yes --output text "${args[@]}"
 
       - name: Force reindex
         if: inputs.force_reindex && inputs.dry_run != true
@@ -67,11 +91,4 @@ jobs:
         env:
           GLEAN_INDEXING_API_TOKEN: ${{ secrets.GLEAN_INDEXING_API_TOKEN }}
           GLEAN_INSTANCE: ${{ secrets.GLEAN_INSTANCE }}
-        run: |
-          uv run python3 -c "
-          from glean.indexing.common import api_client
-          from glean.api_client.models import ProcessAllDocumentsRequest
-          with api_client() as client:
-              client.indexing.documents.process_all(request=ProcessAllDocumentsRequest(datasource='devdocs'))
-          print('processalldocuments called for devdocs')
-          "
+        run: uv run glean-idx datasource process --datasource devdocs --yes --output text
