@@ -6,11 +6,19 @@ from pathlib import Path
 
 import pytest
 from glean.api_client.models import DocCategory
+from glean.indexing.cli.project import (
+    instantiate_connector,
+    load_connector,
+    load_project_config,
+)
+from glean.indexing.connectors import BaseDataClient
 from glean.indexing.models import ConnectorOptions
 from glean.indexing.testing import mock_glean_client, run_connector
 
 from data_client import DeveloperDocsDataClient
 from developer_docs_connector import DeveloperDocsConnector, TooFewDocumentsError
+
+INDEXING_DIR = Path(__file__).parent.parent
 
 
 class SmallSiteConnector(DeveloperDocsConnector):
@@ -20,7 +28,7 @@ class SmallSiteConnector(DeveloperDocsConnector):
 
 
 def _connector(repo: Path, cls: type[DeveloperDocsConnector] = SmallSiteConnector):
-    return cls(name="devdocs", data_client=DeveloperDocsDataClient(repo_root=str(repo)))
+    return cls(DeveloperDocsDataClient(repo_root=str(repo)))
 
 
 class TestIndexData:
@@ -74,6 +82,50 @@ class TestMinimumDocumentGuard:
                 connector.index_data()
 
         client.indexing.documents.bulk_index.assert_not_called()
+
+
+class TestCliContract:
+    """What `glean-idx run` / `test` / `datasource configure` rely on."""
+
+    def test_project_file_loads_the_connector_without_arguments(self) -> None:
+        cls = load_connector(INDEXING_DIR, load_project_config(INDEXING_DIR))
+        connector = instantiate_connector(cls)
+
+        assert isinstance(connector, DeveloperDocsConnector)
+        assert connector.name == "devdocs"
+
+    def test_data_client_is_discoverable_by_the_test_harness(self) -> None:
+        # `glean-idx test` finds clients by BaseDataClient type; --max-items
+        # and --phase integration depend on it.
+        assert isinstance(DeveloperDocsConnector().data_client, BaseDataClient)
+
+    def test_repo_root_can_be_overridden_from_the_environment(
+        self, fake_repo: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("DEVDOCS_REPO_ROOT", str(fake_repo))
+
+        assert DeveloperDocsDataClient().repo_root == fake_repo
+
+
+class TestMinimumDocumentGuardUnderTruncation:
+    def test_judges_the_full_crawl_not_the_truncated_sample(self, fake_repo: Path) -> None:
+        # `glean-idx test --max-items N` wraps the data client and slices its
+        # result; the guard must still see the four pages actually read.
+        class FloorOfFour(DeveloperDocsConnector):
+            MIN_DOCUMENTS = 4
+
+        connector = _connector(fake_repo, FloorOfFour)
+        inner = connector.data_client
+
+        class Truncating(BaseDataClient):
+            """Shaped like the SDK harness wrapper: no attribute passthrough."""
+
+            def get_source_data(self, **kwargs):
+                return list(inner.get_source_data(**kwargs))[:1]
+
+        connector.data_client = Truncating()
+
+        assert len(connector.get_data()) == 1
 
 
 class TestConfigureDatasource:

@@ -13,9 +13,12 @@ from glean.api_client.models import (
     DocumentPermissionsDefinition,
     ObjectDefinition,
 )
+from data_client import DeveloperDocsDataClient
 from data_types import DocumentationPage, ApiReferencePage
 
 logger = logging.getLogger(__name__)
+
+DATASOURCE_NAME = "devdocs"
 
 
 class TooFewDocumentsError(RuntimeError):
@@ -76,7 +79,7 @@ class DeveloperDocsConnector(BaseDatasourceConnector[Union[DocumentationPage, Ap
     MIN_DOCUMENTS = 100
 
     configuration: CustomDatasourceConfig = CustomDatasourceConfig(
-        name="devdocs",
+        name=DATASOURCE_NAME,
         display_name="Glean Developer Docs",
         datasource_category=DatasourceCategory.KNOWLEDGE_HUB,
         url_regex="https://developers.glean.com/.*",
@@ -98,13 +101,25 @@ class DeveloperDocsConnector(BaseDatasourceConnector[Union[DocumentationPage, Ap
         ],
     )
 
+    def __init__(self, data_client: Optional[DeveloperDocsDataClient] = None) -> None:
+        # Zero-argument construction is what lets `glean-idx run` / `test` /
+        # `datasource configure` load the connector from glean_deployment.yaml.
+        super().__init__(DATASOURCE_NAME, data_client or DeveloperDocsDataClient())
+        # The test harness may swap self.data_client for a wrapper that caps
+        # results; keep the real reader to judge the full crawl size.
+        self._source = self.data_client
+
     def get_data(
         self, since: Optional[str] = None
     ) -> Sequence[Union[DocumentationPage, ApiReferencePage]]:
         pages = super().get_data(since)
-        if len(pages) < self.MIN_DOCUMENTS:
+        # Judge the build by what was actually read from it, not by what a
+        # test harness chose to keep (`glean-idx test --max-items 5`).
+        fetched = getattr(self._source, "last_fetch_count", None)
+        found = len(pages) if fetched is None else fetched
+        if found < self.MIN_DOCUMENTS:
             raise TooFewDocumentsError(
-                f"Refusing to index {len(pages)} pages: expected at least "
+                f"Refusing to index {found} pages: expected at least "
                 f"{self.MIN_DOCUMENTS}. A FULL upload replaces the datasource, so "
                 "this would mark the rest of the site stale. Check the site build."
             )

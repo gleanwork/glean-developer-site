@@ -39,7 +39,7 @@ def main():
             indexing_logger.start("Starting indexing operation")
 
         data_client = DeveloperDocsDataClient(indexing_logger=indexing_logger)
-        connector = DeveloperDocsConnector(name="devdocs", data_client=data_client)
+        connector = DeveloperDocsConnector(data_client=data_client)
 
         if dry_run:
             data = connector.get_data()
