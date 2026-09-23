@@ -1,0 +1,24 @@
+{
+  // Compiler settings for the Vercel functions in api/. @vercel/node finds the
+  // nearest tsconfig.json, and without this file it would use the root one,
+  // which extends @docusaurus/tsconfig (module: esnext, for the site bundler).
+  //
+  // With TypeScript 7, @vercel/node compiles through the native tsc and no
+  // longer overrides `module`. It emitted ESM `import` statements into a
+  // CommonJS package, and every /mcp request failed with "Cannot use import
+  // statement outside a module".
+  //
+  // NodeNext emits CommonJS here, because package.json has no "type": "module",
+  // so __dirname keeps working. It keeps `await import()` as a real dynamic
+  // import, which the ESM-only docusaurus-plugin-mcp-server needs.
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "strict": false,
+    "noEmit": true
+  },
+  "include": ["./**/*.ts"]
+}
