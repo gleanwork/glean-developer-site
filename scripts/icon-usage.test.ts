@@ -3,6 +3,8 @@ import path from 'node:path';
 import * as FeatherIcons from 'react-feather';
 import { describe, expect, it } from 'vitest';
 import { GLEAN_ICON_MAP } from '../packages/docusaurus-theme-glean/src/theme/Icons/glean-icon-manifest';
+import { BRAND_ICON_SRC } from '../src/components/Cookbook/brandIcons';
+import registry from '../data/cookbook-registry.json';
 
 function collectMdxFiles(directory: string): string[] {
   return fs.readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
@@ -73,5 +75,30 @@ describe('MDX card icons', () => {
 
     expect(mismatches).toEqual([]);
     expect([...usages.keys()].sort()).toEqual(Object.keys(canonical).sort());
+  });
+});
+
+describe('Cookbook recipe icons', () => {
+  // Recipe cards and architecture nodes resolve `icon` as a brand mark, then
+  // a Glean icon. Anything else renders an empty tile.
+  const resolves = (icon: string) =>
+    icon in BRAND_ICON_SRC || icon in GLEAN_ICON_MAP;
+
+  it('gives every recipe card an icon that resolves', () => {
+    const invalid = registry
+      .filter((recipe) => !recipe.icon || !resolves(recipe.icon))
+      .map((recipe) => `${recipe.id}: ${recipe.icon ?? '(missing)'}`);
+
+    expect(invalid).toEqual([]);
+  });
+
+  it('only uses architecture node icons that resolve', () => {
+    const invalid = registry.flatMap((recipe) =>
+      (recipe.architecture ?? [])
+        .filter((node) => node.icon && !resolves(node.icon))
+        .map((node) => `${recipe.id} "${node.label}": ${node.icon}`),
+    );
+
+    expect(invalid).toEqual([]);
   });
 });
