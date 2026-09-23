@@ -1,0 +1,125 @@
+name: MCP Smoke Test
+
+# Checks the developer docs MCP server (developers.glean.com/mcp) with
+# @gleanwork/mcp-server-tester in direct mode: MCP handshake, tool discovery,
+# and a docs_search plus docs_fetch that go through Glean.
+#
+#   schedule           hourly against production. Opens a GitHub issue when
+#                      it fails and closes it once the check passes again.
+#   deployment_status  every successful Vercel deploy, against that deploy's
+#                      URL, so a PR that breaks /mcp gets a failing check.
+#                      #766 took /mcp down for 13 days before anyone noticed.
+#   workflow_dispatch  manual run, optionally against another URL.
+
+on:
+  schedule:
+    - cron: '17 * * * *'
+  deployment_status:
+  workflow_dispatch:
+    inputs:
+      url:
+        description: 'MCP endpoint to check (defaults to production)'
+        type: string
+        required: false
+      test_alert:
+        description: 'Report the run as failed to test issue alerting'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mcp-smoke-${{ github.event.deployment.id || github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  smoke:
+    name: /mcp smoke test
+    # deployment_status fires for every status change. Only test successful
+    # Vercel deploys.
+    if: >-
+      github.event_name != 'deployment_status' ||
+      (github.event.deployment_status.state == 'success' &&
+       github.event.deployment.creator.login == 'vercel[bot]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      reason: ${{ steps.summary.outputs.reason }}
+      url: ${{ steps.target.outputs.url }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # On deploys, test the code that was deployed.
+          ref: ${{ github.event.deployment.sha || github.sha }}
+
+      - name: Set up mise
+        uses: jdx/mise-action@v4
+        with:
+          cache: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install smoke test dependencies
+        # --ignore-scripts skips the root `prepare` (turbo prepare-dev), which
+        # builds site data this job does not need.
+        run: pnpm install --frozen-lockfile --filter mcp-smoke --ignore-scripts
+
+      - name: Resolve endpoint
+        id: target
+        env:
+          INPUT_URL: ${{ inputs.url }}
+          DEPLOY_URL: ${{ github.event.deployment_status.environment_url }}
+        run: |
+          if [ -n "$INPUT_URL" ]; then
+            url="$INPUT_URL"
+          elif [ -n "$DEPLOY_URL" ]; then
+            url="${DEPLOY_URL%/}/mcp"
+          else
+            url="https://developers.glean.com/mcp"
+          fi
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "Checking $url" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Run smoke tests
+        working-directory: packages/mcp-smoke
+        env:
+          MCP_URL: ${{ steps.target.outputs.url }}
+        run: pnpm test
+
+      - name: Summarize failures
+        id: summary
+        if: failure()
+        working-directory: packages/mcp-smoke
+        run: |
+          reason="$(bash ci/summarize-results.sh test-results/results.json | tr -d '\n')"
+          echo "Failure summary: $reason"
+          echo "reason=$reason" >> "$GITHUB_OUTPUT"
+          echo "**Failure:** $reason" >> "$GITHUB_STEP_SUMMARY"
+
+  alert:
+    name: Report scheduled result
+    needs: smoke
+    # Only the hourly run owns the issue: a failing preview deploy already
+    # shows up as a failing check on its PR. test_alert forces a failure
+    # report to exercise this path.
+    if: >-
+      !cancelled() &&
+      (github.event_name == 'schedule' || inputs.test_alert == true)
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: packages/mcp-smoke/ci
+
+      - name: Open, update, or close the alert issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RESULT: ${{ inputs.test_alert == true && 'failure' || needs.smoke.result }}
+          REASON: ${{ inputs.test_alert == true && format('test alert (the real result was {0}); ignore', needs.smoke.result) || needs.smoke.outputs.reason }}
+          MCP_URL: ${{ needs.smoke.outputs.url || 'https://developers.glean.com/mcp' }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: bash packages/mcp-smoke/ci/report.sh
