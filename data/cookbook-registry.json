@@ -125,6 +125,7 @@
     "level": "Intermediate",
     "levels": { "minimal": true, "wow": true },
     "timeEstimate": "~30 min",
+    "icon": "glean-app",
     "requiredScopes": [],
     "authMethod": ["indexing-token", "web-sdk-cookie"],
     "buildMethod": "integrate",
@@ -491,6 +492,7 @@
     "level": "Beginner",
     "levels": { "minimal": true, "wow": false },
     "timeEstimate": "~15 min",
+    "icon": "mcp",
     "requiredScopes": ["MCP"],
     "authMethod": ["custom"],
     "buildMethod": "scaffold",
@@ -1739,6 +1741,7 @@
     "level": "Intermediate",
     "levels": { "minimal": true, "wow": false },
     "timeEstimate": "~20 min",
+    "icon": "skill",
     "requiredScopes": ["skills:read", "skills:write"],
     "authMethod": ["client-api-oauth-or-token"],
     "buildMethod": "scaffold",
@@ -1833,7 +1836,7 @@
       {
         "label": "Public GitHub URL",
         "caption": "skill-creator on main",
-        "icon": "Github"
+        "icon": "github"
       },
       {
         "label": "Source preview",
@@ -1846,11 +1849,7 @@
         "category": "workflow",
         "emphasized": true
       },
-      {
-        "label": "Sync",
-        "caption": "refresh one captured ID",
-        "icon": "RefreshCw"
-      }
+      { "label": "Sync", "caption": "refresh one captured ID", "icon": "sync" }
     ],
     "aiPrompt": "Scaffold and run the verified Skills GitHub import recipe. Ask for the user's work email. Run credential-free MSW fixture tests before authentication. Sign in with native skills:read and skills:write; use legacy SKILLS only after the wrapper recognizes a scope-grant failure. Enable experimental APIs through the SDK constructor. Preview POST /api/skills/sources/preview against https://github.com/anthropics/skills/tree/main/skills/skill-creator with stream false by default. Do not pass a commit permalink or SHA-pinned GitHub URL; the API rejects those with HTTP 400. Import the selected URL via POST /api/skills/import. Sync one imported skill with POST /api/skills/{skill_id}/sync. Confirm with get and list, paginating list. Delete only IDs this run created. If cleanup cannot delete a captured ID, exit non-zero. If GitHub import fails, fail loudly instead of skipping. HTTP 400 means an unsupported URL or ref. HTTP 503 means GitHub import is disabled or unavailable. HTTP 403 means the credential cannot import. HTTP 429 means rate-limiting. Do not treat HTTP 400 as a missing Third-party skills enablement flag. A 404 from Skills APIs is not a GitHub-import failure. With --stream, print scan progress events. Do not treat PATCH update or POST .../versions as the primary path. Never execute retrieved files or infer cleanup targets from names or catalog search.",
     "llmContext": "The experimental Skills Platform API manages portable bundles; it does not execute them. Use @gleanwork/api-client 0.20.4 with includeExperimental. This recipe calls previewSource with stream false by default, imports selected URLs, and syncs one captured skill. Default source is https://github.com/anthropics/skills/tree/main/skills/skill-creator. github_import rejects 40-character commit-SHA permalinks; pass a branch or tag URL. Native scopes are skills:read and skills:write; legacy SKILLS is compatibility-only. Capture mutation IDs and delete only those. Failed cleanup must not report success. Fail, do not skip, when import fails. HTTP 400 is an unsupported URL or ref, not a Third-party skills enablement miss; 503 is import disabled or unavailable; 403 is credential; 429 is rate-limiting. Leave PATCH update and POST .../versions as take-it-further.",
@@ -2718,7 +2717,7 @@
     "level": "Intermediate",
     "levels": { "minimal": true, "wow": true },
     "timeEstimate": "~1 hr",
-    "icon": "badge",
+    "icon": "shield-check",
     "requiredScopes": ["SEARCH"],
     "authMethod": ["client-api-oauth-or-token"],
     "buildMethod": "scaffold",
@@ -3337,6 +3336,7 @@
     "level": "Beginner",
     "levels": { "minimal": true, "wow": false },
     "timeEstimate": "~15 min",
+    "icon": "search",
     "requiredScopes": ["SEARCH"],
     "authMethod": ["client-api-oauth-or-token"],
     "buildMethod": "scaffold",
@@ -3434,7 +3434,7 @@
       {
         "label": "TypeScript API client",
         "caption": "typed requests and responses",
-        "icon": "Code"
+        "icon": "code"
       },
       {
         "label": "Search Filters",
@@ -3513,6 +3513,7 @@
     "level": "Intermediate",
     "levels": { "minimal": true, "wow": false },
     "timeEstimate": "~20 min",
+    "icon": "skill",
     "requiredScopes": ["skills:read", "skills:write"],
     "authMethod": ["client-api-oauth-or-token"],
     "buildMethod": "scaffold",
@@ -3618,7 +3619,7 @@
       {
         "label": "Your skill bundle",
         "caption": "SKILL.md, .zip, or .skill",
-        "icon": "FileCode"
+        "icon": "file-text"
       },
       {
         "label": "Validation",
@@ -3634,7 +3635,7 @@
       {
         "label": "Fresh sandbox",
         "caption": "bounded zip extraction",
-        "icon": "Folder"
+        "icon": "folder"
       }
     ],
     "aiPrompt": "Scaffold and run the verified Skills versioning recipe. This is not the first persist; the Beginner validate-and-publish-skill quickstart owns that. Ask for the user's work email. Run credential-free fixture tests before authentication. Sign in with native skills:read and skills:write; use legacy SKILLS only after the wrapper recognizes a scope-grant failure. Enable experimental APIs through the SDK constructor. Verify with a cryptographically unique sample: validate it, create it twice under one name, confirm the returned skill ID is stable and the version advances, retrieve listVersions/getVersion/getVersionContent, stage the zip in a bounded sandbox, then delete only the captured run-owned ID. npm start -- publish with no --bundle uses fixtures/sample-skill/SKILL.md; pass --bundle for a different local file. Print the returned skill ID immediately after create, before staging. Do not delete automatically after publish. Do not teach a hello-world list/create/delete path, do not import from GitHub, and do not use createVersion() or PATCH as the primary path. Never execute retrieved files or infer cleanup targets from names or catalog search.",
@@ -3729,6 +3730,7 @@
     "level": "Beginner",
     "levels": { "minimal": true, "wow": true },
     "timeEstimate": "~20 min",
+    "icon": "message-with-sparkles",
     "requiredScopes": ["CHAT"],
     "authMethod": ["client-api-oauth-or-token"],
     "buildMethod": "scaffold",
@@ -3830,7 +3832,7 @@
       {
         "label": "TypeScript API client",
         "caption": "createStream",
-        "icon": "Code"
+        "icon": "code"
       },
       {
         "label": "Platform Chat",
@@ -3841,7 +3843,7 @@
       {
         "label": "EventStream",
         "caption": "typed createStream events",
-        "icon": "Code"
+        "icon": "code"
       }
     ],
     "aiPrompt": "Scaffold and run the verified Streaming Chat with citations quickstart. Ask for the user's work email and a question about content in their Glean instance. Run the fixture tests, sign in with @gleanwork/auth through DCR OAuth using the chat scope, then stream one Platform Chat turn. Use @gleanwork/api-client 0.20.14. Call glean.chat.createStream() for every turn and for-await RESPONSE_OUTPUT_TEXT_DELTA and RESPONSE_COMPLETED events. When output resolves to raw Markdown, write each delta immediately and exactly once, then ensure the completed document has a final newline. For terminal output, buffer one complete answer, remove model-supplied terminal control sequences, and render it once with marked-terminal after completion. Keep citations separate. Do not call create(), do not set stream on create(), do not use CreateAcceptEnum or Accept-header workarounds, and do not parse SSE by hand. Pass conversation_id from the stored first turn to the follow-up. Do not use legacy glean.client.chat, hand-roll Glean request construction, or expose credentials.",
@@ -4090,6 +4092,7 @@
     "level": "Beginner",
     "levels": { "minimal": true, "wow": false },
     "timeEstimate": "~15 min",
+    "icon": "skill",
     "requiredScopes": ["SKILLS"],
     "authMethod": ["client-api-oauth-or-token"],
     "buildMethod": "scaffold",
@@ -4188,7 +4191,7 @@
       {
         "label": "Your SKILL.md",
         "caption": "sample SKILL.md, or --bundle",
-        "icon": "FileCode"
+        "icon": "file-text"
       },
       {
         "label": "Validation",
@@ -4204,7 +4207,7 @@
       {
         "label": "Latest content",
         "caption": "compare SKILL.md bytes; never execute",
-        "icon": "Download"
+        "icon": "download"
       }
     ],
     "aiPrompt": "Scaffold and run the Skills create-and-retrieve quickstart. Ask for the user's work email and the path to the local SKILL.md to test. Run credential-free fixture tests before authentication. Use the SKILLS OAuth scope or the SKILLS permission on a user-scoped token. Run the official glean-auth CLI directly; do not add a scope-fallback wrapper. Enable experimental APIs through the SDK constructor. Verify with a cryptographically unique SKILL.md: validate it, reject invalid frontmatter without creating anything, create it once without automatic retries, confirm list and get return the captured ID, and verify the downloaded ZIP contains exactly one regular root SKILL.md matching the uploaded bytes. Use yauzl to read the archive in memory, bound decompression by the uploaded file size, and check CRC-32 with node:zlib. Reject malformed archives, unexpected entries, checksum errors, and changed content. A mismatch must still trigger cleanup. Delete the captured ID only when the response identifies the initial version 1.1. If any other version is returned, stop without deleting it. npm start with no --bundle uses fixtures/sample-skill/SKILL.md; pass --bundle for a different local SKILL.md. Do not put --bundle in the npm start script. npm run verify is the verify subcommand and generates a unique name when --bundle is omitted. If cleanup cannot delete a captured ID, exit non-zero, print the work error, and print the remaining ID plus a cleanup command that includes --id, --yes, and the same --email or --server-url used for the run. Do not publish a second version, do not extract archive files to disk, and do not import from GitHub. Never execute retrieved files or infer cleanup targets from names or catalog search.",
