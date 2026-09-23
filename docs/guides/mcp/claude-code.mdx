@@ -83,12 +83,12 @@ import TerminalPanel from '@site/src/components/home/TerminalPanel';
       },
       {
         type: 'list',
-        label: 'Setup the Glean MCP connection',
+        label: 'Set up the Glean MCP connection',
         description:
           "Connect the plugin to your Glean instance. Authentication uses Glean's OAuth server where enabled, or a Glean API token as a fallback. You only need to do this once per machine.",
         items: [
           <>
-            In Claude Code, run: <code>/glean_run setup my Glean</code>
+            In Claude Code, prompt: <code>Set up Glean for me</code>
           </>,
           'Enter your work email when prompted.',
           'Finish authentication using the method configured for your Glean instance: OAuth in the browser where enabled, or the Glean API-token fallback provided by your administrator.',
@@ -105,16 +105,15 @@ import TerminalPanel from '@site/src/components/home/TerminalPanel';
         </p>
         <p>
           It&rsquo;s an environment variable, so add it under the{' '}
-          <code>env</code> key of a Claude Code <code>settings.json</code> file:
+          <code>env</code> key of a Claude Code <code>settings.json</code>{' '}
+          file, merged into the existing settings object:
         </p>
         <div style={{ marginBottom: 14, maxWidth: 560 }}>
           <TerminalPanel
             filename=".claude/settings.json"
             copy
             code={`{
-  // ...your other Claude Code settings
   "env": {
-    // ...your other environment variables
     "USE_CLAUDE_PROJECT_DIR": "1"
   }
 }`}
@@ -123,15 +122,19 @@ import TerminalPanel from '@site/src/components/home/TerminalPanel';
         <p>Pick the scope that fits:</p>
         <ul>
           <li>
+            <strong>Every project on this machine</strong> — add it to{' '}
+            <code>~/.claude/settings.json</code>.
+          </li>
+          <li>
             <strong>One project</strong> — add it to{' '}
             <code>.claude/settings.json</code> (checked into git, shared with
             your team) or <code>.claude/settings.local.json</code> (just you).
           </li>
           <li>
-            <strong>Every project</strong> — ask your Claude Code admin to set
-            it in your organization&rsquo;s managed settings
-            (<code>managed-settings.json</code>), which applies to all projects
-            and can&rsquo;t be overridden locally.
+            <strong>Your whole organization</strong> — ask your Claude Code
+            admin to set it in managed settings
+            (<code>managed-settings.json</code>), which can&rsquo;t be
+            overridden locally.
           </li>
         </ul>
         <p>
