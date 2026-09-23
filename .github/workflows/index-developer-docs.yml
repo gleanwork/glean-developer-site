@@ -67,6 +67,8 @@ jobs:
         working-directory: scripts/indexing
         env:
           GLEAN_INDEXING_API_TOKEN: ${{ secrets.GLEAN_INDEXING_API_TOKEN }}
+          GLEAN_SERVER_URL: ${{ secrets.GLEAN_SERVER_URL }}
+          # Deprecated fallback, used only while GLEAN_SERVER_URL is unset.
           GLEAN_INSTANCE: ${{ secrets.GLEAN_INSTANCE }}
         run: uv run glean-idx datasource configure --yes --output text
 
@@ -75,6 +77,8 @@ jobs:
         working-directory: scripts/indexing
         env:
           GLEAN_INDEXING_API_TOKEN: ${{ secrets.GLEAN_INDEXING_API_TOKEN }}
+          GLEAN_SERVER_URL: ${{ secrets.GLEAN_SERVER_URL }}
+          # Deprecated fallback, used only while GLEAN_SERVER_URL is unset.
           GLEAN_INSTANCE: ${{ secrets.GLEAN_INSTANCE }}
           DISABLE_STALE_DELETION_CHECK: ${{ inputs.disable_stale_deletion_check }}
         run: |
@@ -90,5 +94,7 @@ jobs:
         working-directory: scripts/indexing
         env:
           GLEAN_INDEXING_API_TOKEN: ${{ secrets.GLEAN_INDEXING_API_TOKEN }}
+          GLEAN_SERVER_URL: ${{ secrets.GLEAN_SERVER_URL }}
+          # Deprecated fallback, used only while GLEAN_SERVER_URL is unset.
           GLEAN_INSTANCE: ${{ secrets.GLEAN_INSTANCE }}
         run: uv run glean-idx datasource process --datasource devdocs --yes --output text

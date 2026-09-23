@@ -25,3 +25,25 @@ updates:
         # @docusaurus/* packages bump together.
         exclude-patterns:
           - "@docusaurus/*"
+
+  # The devdocs indexing connector (a uv project). Keeps glean-indexing-sdk
+  # current; the Indexing Connector CI job tests each bump.
+  - package-ecosystem: "uv"
+    directory: "/scripts/indexing"
+    schedule:
+      interval: "monthly"
+    cooldown:
+      default-days: 5
+      semver-major-days: 30
+      semver-minor-days: 7
+      semver-patch-days: 3
+    groups:
+      # glean-api-client comes with the SDK; bump them together.
+      glean:
+        patterns:
+          - "glean-*"
+      python-dependencies:
+        patterns:
+          - "*"
+        exclude-patterns:
+          - "glean-*"
