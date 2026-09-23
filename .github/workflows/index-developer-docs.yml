@@ -62,6 +62,18 @@ jobs:
         working-directory: scripts/indexing
         run: uv run glean-idx test --phase mock --output text
 
+      # Read-only: resolves the server URL and reads the datasource's status,
+      # proving the credentials work before anything is uploaded. Runs on dry
+      # runs too, so a dry run also verifies the secrets.
+      - name: Check Glean credentials
+        working-directory: scripts/indexing
+        env:
+          GLEAN_INDEXING_API_TOKEN: ${{ secrets.GLEAN_INDEXING_API_TOKEN }}
+          GLEAN_SERVER_URL: ${{ secrets.GLEAN_SERVER_URL }}
+          # Deprecated fallback, used only while GLEAN_SERVER_URL is unset.
+          GLEAN_INSTANCE: ${{ secrets.GLEAN_INSTANCE }}
+        run: uv run glean-idx doctor --datasource devdocs --output text
+
       - name: Configure datasource
         if: inputs.dry_run != true
         working-directory: scripts/indexing
