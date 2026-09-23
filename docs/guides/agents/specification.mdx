@@ -5,9 +5,9 @@ description: A human-readable file system format for defining Glean agents.
 
 # Glean Agent Specification
 
-The Glean agent specification is a human-readable file system format for defining a Glean agent — its instructions, tools, knowledge sources, skills, dependencies, and subagents — as a directory of files. It is the source format consumed by the Glean Agents MCP tools and the GitHub Action, so Glean agents can be authored and version-controlled outside the UI.
+The Glean agent specification is a human-readable file system format for defining a Glean agent — its instructions, tools, knowledge sources, skills, dependencies, and subagents — as a directory of files. Use it to author and version-control Glean agents outside the UI.
 
-Once authored, pass the specification directory to the Glean Agents MCP tools or the GitHub Action to create or update agents in Glean.
+To create or update an agent from a specification directory, package the directory as a zip and send it to the [Import an agent](/api/client-api/agents/import-agent) endpoint.
 
 ## Directory layout
 
@@ -47,12 +47,12 @@ Common top-level fields:
 
 | Field | Required | Description |
 | --- | --- | --- |
-| `id` | Yes | Stable unique agent identifier. Do not change it after creation. |
-| `name` | Yes | Human-readable agent name shown to users. |
-| `description` | Yes | Short description of what the agent does. |
-| `instructionFile` | No | Path to the instructions file. Defaults to `instructions.md`. |
+| `id` | Yes | Stable unique agent identifier: a 32-character lowercase hex string, such as a `uuid.uuid4().hex` value. Do not change it after creation. |
+| `name` | Yes | Human-readable agent name shown to users. At most 100 characters. |
+| `description` | No | Short description of what the agent does. At most 300 characters. |
+| `instructionFile` | No | Path to the instructions file. Defaults to `instructions.md`. The file is limited to 32,000 characters. |
 | `model` | No | Which agentic model the agent runs on and how hard it reasons. |
-| `trigger` | No | How the agent is invoked. Defaults to `CHAT_MESSAGE` when omitted. |
+| `trigger` | Yes, for the top-level agent | How the agent is invoked. Always declare it explicitly. Subagents must not declare it. |
 | `skills` | No | List of skill directory paths to include. |
 | `subagents` | No | List of subagent directory paths to include. |
 | `dependencies` | No | Published skills or agents referenced by platform ID. |
@@ -72,7 +72,6 @@ instructionFile: instructions.md
 model:
   name: GPT_5_4_MS
   mode: ADVANCED
-  autoUpgrade: true
 
 trigger:
   type: CHAT_MESSAGE
@@ -88,7 +87,7 @@ dependencies:
   - type: skill
     id: f1e2d3c4b5a697887766554433221100
   - type: agent
-    id: 0f1e2d3c4b5a697887766554433221100
+    id: 0f1e2d3c4b5a69788776655443322110
 
 tools:
   - toolProviderId: a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6
@@ -131,18 +130,21 @@ The `model` block configures which agentic model the agent runs on and how hard 
 
 | Key | Description |
 | --- | --- |
-| `name` | Model Name |
+| `name` | Agentic model set ID. Tenant-specific; omit it to use the tenant default. |
 | `mode` | Reasoning effort per turn. `ADVANCED` (default) or `FAST`. |
-| `autoUpgrade` | Boolean. When `true`, Glean rolls the agent onto newer models as they ship. |
+| `autoUpgrade` | Boolean. Omit it by default. See the rules below. |
 
 `mode` values:
 
 - `ADVANCED` — high reasoning effort. The default when `mode` is omitted.
 - `FAST` — low reasoning effort. This should be used only for simple tasks.
 
-Prefer `autoUpgrade: true`. Set it to `false` only when the agent is
-intentionally pinned to a named model set. `autoUpgrade: false` must not be
-used without also specifying `name`.
+`autoUpgrade` rules:
+
+- Without `name`, omit `autoUpgrade`. The tenant controls model upgrades.
+- With `name`, omitting `autoUpgrade` pins the agent to that model.
+- Set `autoUpgrade: true` to opt a named model into upgrades.
+- `autoUpgrade: false` pins explicitly and requires `name`; a spec with `false` and no `name` is rejected.
 
 Example:
 
@@ -150,27 +152,26 @@ Example:
 model:
   name: GPT_5_4_MS
   mode: ADVANCED
-  autoUpgrade: true
 ```
 
 ### Trigger
 
-`trigger` controls how the top-level agent is invoked. It is optional and
-defaults to `CHAT_MESSAGE` when omitted. Subagents are never triggered
-directly and must not declare a `trigger`.
+`trigger` controls how the top-level agent is invoked. Always declare it
+explicitly, including for chat agents. Subagents are never triggered directly
+and must not declare a `trigger`.
 
 Supported `type` values:
 
 | `type` | Description |
 | --- | --- |
-| `CHAT_MESSAGE` | The user converses with the agent. This is the default when `trigger` is omitted. |
+| `CHAT_MESSAGE` | The user converses with the agent. |
 | `INPUT_FORM` | The agent receives a typed set of `trigger.inputFields` provided by the user at invocation time. When `inputFields` is empty, the agent runs without any user input. |
 | `CONTENT_TRIGGER` | The agent runs in response to a document event declared in `trigger.content.triggers`. |
 
 Examples:
 
 ```yaml snippet=specification/snippet-03.yaml
-# Chat trigger (default)
+# Chat trigger
 trigger:
   type: CHAT_MESSAGE
 ```
@@ -229,8 +230,9 @@ trigger:
         timeOffset: 1800
 ```
 
-Each content trigger requires `datasource` and `templateId`. `docType`,
-`timeOffset`, and `conditions` are optional. A `conditions` entry requires
+`triggers` accepts at most 20 entries. Each content trigger requires
+`datasource` and `templateId`. `docType` is required when the subscribed event
+does not specify a document type. `timeOffset` and `conditions` are optional. A `conditions` entry requires
 `fieldName`, `operator`, and `values` (except for `FIELD_CHANGED`). Supported
 operators are `IS_ONE_OF`, `CONTAINS`, `IS_NOT_ONE_OF`, and `FIELD_CHANGED`.
 Use `TITLE` or `CONTENT` for document title/body matching; only `IS_ONE_OF`
@@ -251,7 +253,8 @@ trigger:
     startTime: "2026-03-02 09:00:00"
 ```
 
-- `frequency` is a required five-field Unix cron expression. 
+- `frequency` is a required five-field Unix cron expression. Cron descriptors
+  such as `@daily` and six-field expressions with a seconds column are rejected.
 - `timezone` is a required IANA timezone name.
 - `startTime` is optional and uses `YYYY-MM-DD HH:MM:SS` in the specified
   timezone.
@@ -264,7 +267,7 @@ Each entry in `trigger.inputFields` accepts the following keys:
 | --- | --- | --- | --- | --- |
 | `displayName` | Yes | string | — | Human-readable label, and the identifier referenced from `instructions.md` as `[[displayName]]`. Must be unique within the agent. |
 | `description` | No | string | — | Helper text describing the field. |
-| `type` | Yes | enum | — | One of `TEXT`, `SELECT`, or `DATE`. |
+| `type` | Yes | enum | — | One of `TEXT`, `SELECT`, `DATE`, or `DOCUMENT`. |
 | `optional` | No | boolean | `false` | When `true`, the field may be left empty. |
 | `defaultValue` | No | string | — | Pre-filled value. For `SELECT`, must match one of `options[*].value`. For `DATE`, use `YYYY-MM-DD`. |
 | `options` | For `SELECT` | list | — | List of `{ value: <choice> }` entries. Required when `type` is `SELECT`. |
@@ -276,6 +279,7 @@ Supported `type` values:
 | `TEXT` | Free-form string. Use for open-ended values the agent reads or interpolates verbatim. |
 | `SELECT` | Single choice from a closed set declared via `options`. |
 | `DATE` | Calendar date in `YYYY-MM-DD` format. |
+| `DOCUMENT` | A file the agent reads on each run. The value is a Glean file ID, not the file contents. |
 
 `displayName` is also the placeholder identifier used in `instructions.md`,
 for example `[[Account Name]]`, and must be unique within the agent. For
@@ -297,7 +301,7 @@ Tools are optional. Add them when the agent needs to perform actions outside its
 
 Each tool entry includes:
 
-- `toolProviderId`: Glean internal identifier for tool provider which can also be MCP server.
+- `toolProviderId`: identifier of the tool provider, such as an MCP server. Use `native` for Glean's built-in tools.
 - `selectedTools` : list of selected tools for the specified provider
 - `customisationData` : optional provider-level configuration passed to all tools in the provider
 
@@ -335,7 +339,10 @@ A skill defines:
 - when to use it
 - how it works
 
-Each skill directory must contain a `SKILL.md` file. The display name on the UI is directly derived from the folder name.
+Each skill directory must contain a `SKILL.md` file with frontmatter `name`
+(at most 128 characters) and `description` (at most 1,000 characters). The
+display name is the title-cased folder name; for example,
+`lead-qualification` becomes "Lead Qualification".
 
 ### Dependencies
 
@@ -348,7 +355,7 @@ dependencies:
   - type: skill
     id: f1e2d3c4b5a697887766554433221100
   - type: agent
-    id: 0f1e2d3c4b5a697887766554433221100
+    id: 0f1e2d3c4b5a69788776655443322110
 ```
 
 Use `type: skill` for a published skill and `type: agent` for a published
