@@ -63,9 +63,9 @@ The same commands are available as `mise run indexing:test`,
 ### Environment variables
 
 - `GLEAN_INDEXING_API_TOKEN`: indexing API token.
-- `GLEAN_SERVER_URL`: your Glean backend URL (find it at
-  app.glean.com/admin/about-glean). The deprecated `GLEAN_INSTANCE` is still
-  accepted.
+- `GLEAN_SERVER_URL`: your Glean backend URL, for example
+  `https://your-company-be.glean.com` (find it at
+  app.glean.com/admin/about-glean).
 - `DEVDOCS_REPO_ROOT` (optional): read the build from another checkout.
 
 Copy `.env.example` to `.env` to set these locally.
