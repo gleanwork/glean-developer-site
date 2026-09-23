@@ -86,11 +86,6 @@ const baseSidebars: SidebarsConfig = {
               id: 'guides/chat/overview',
               label: 'Overview',
             },
-            {
-              type: 'doc',
-              id: 'guides/chat/chatbot-example',
-              label: 'Chatbot Example',
-            },
           ],
         },
         {
