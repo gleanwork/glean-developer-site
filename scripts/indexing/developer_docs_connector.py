@@ -30,8 +30,8 @@ class TooFewDocumentsError(RuntimeError):
 def _format_api_reference(page: ApiReferencePage) -> str:
     """Format an API reference page as a single coherent plain-text document.
 
-    Assembles all extracted data (endpoint info, parameters, schemas,
-    code samples) into a readable document with clear headings.
+    Assembles endpoint info, parameters, and request/response schemas into a
+    readable document with clear headings.
     """
     sections = []
 
@@ -43,9 +43,6 @@ def _format_api_reference(page: ApiReferencePage) -> str:
 
     if page.get("description"):
         sections.append(f"\n## Description\n{page['description']}")
-
-    if page.get("authentication"):
-        sections.append(f"\n## Authentication\n{page['authentication']}")
 
     if page.get("request_content_type"):
         sections.append(f"\n## Request Content Type\n{page['request_content_type']}")
