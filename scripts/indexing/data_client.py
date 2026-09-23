@@ -8,7 +8,7 @@ Instead of scraping the live site with Playwright, this reads from:
 """
 
 from dataclasses import dataclass
-from typing import Any, Union, List, Optional, TYPE_CHECKING
+from typing import Any, Union, List, Optional
 from pathlib import Path, PurePosixPath
 import os
 import uuid
@@ -19,10 +19,9 @@ from glean.indexing.connectors import BaseDataClient
 
 from data_types import DocumentationPage, ApiReferencePage
 
-if TYPE_CHECKING:
-    from indexing_logger import IndexingLogger
-
-logger = logging.getLogger(__name__)
+# Under the "glean" namespace so the SDK logging setup (glean-idx run
+# --log-level, setup_connector_logging) routes and levels these lines too.
+logger = logging.getLogger("glean.devdocs.data_client")
 
 
 @dataclass(frozen=True)
@@ -70,15 +69,10 @@ class DeveloperDocsDataClient(BaseDataClient[Union[DocumentationPage, ApiReferen
 
     MAX_SCHEMA_CHARS = 20_000
 
-    def __init__(
-        self,
-        repo_root: Optional[str] = None,
-        indexing_logger: Optional["IndexingLogger"] = None,
-    ):
+    def __init__(self, repo_root: Optional[str] = None):
         if repo_root is None:
             repo_root = os.getenv("DEVDOCS_REPO_ROOT") or str(Path(__file__).parent.parent.parent)
         self.repo_root = Path(repo_root)
-        self.indexing_logger = indexing_logger
 
         self.docs_json_path = self.repo_root / "build" / "mcp" / "docs.json"
         self.timestamps_path = self.repo_root / "build" / "indexing" / "timestamps.json"
@@ -97,25 +91,22 @@ class DeveloperDocsDataClient(BaseDataClient[Union[DocumentationPage, ApiReferen
         if self._timestamps is not None:
             return self._timestamps
         if not self.timestamps_path.exists():
-            self._log(
-                f"  No timestamps file at {self.timestamps_path}; "
-                "documents will be indexed without created_at/updated_at"
+            logger.warning(
+                "No timestamps file at %s; documents will be indexed without "
+                "created_at/updated_at",
+                self.timestamps_path,
             )
             self._timestamps = {}
             return self._timestamps
         try:
             self._timestamps = json.loads(self.timestamps_path.read_text())
-            self._log(
-                f"  Loaded {len(self._timestamps)} timestamp entries from {self.timestamps_path}"
+            logger.info(
+                "Loaded %d timestamp entries from %s", len(self._timestamps), self.timestamps_path
             )
         except (json.JSONDecodeError, OSError) as e:
-            self._log(f"  Failed to load timestamps file: {e}; continuing without")
+            logger.warning("Failed to load timestamps file: %s; continuing without", e)
             self._timestamps = {}
         return self._timestamps
-
-    def _log(self, msg: str) -> None:
-        if self.indexing_logger:
-            self.indexing_logger.log(msg)
 
     def _is_api_reference(self, route: str) -> bool:
         """Check if a route is an API reference page (not an overview)."""
@@ -300,7 +291,7 @@ class DeveloperDocsDataClient(BaseDataClient[Union[DocumentationPage, ApiReferen
             )
 
         docs = json.loads(self.docs_json_path.read_text())
-        self._log(f"  Loaded {len(docs)} pages from {self.docs_json_path}")
+        logger.info("Loaded %d pages from %s", len(docs), self.docs_json_path)
 
         pages: List[Union[DocumentationPage, ApiReferencePage]] = []
         info_count = 0
@@ -311,32 +302,13 @@ class DeveloperDocsDataClient(BaseDataClient[Union[DocumentationPage, ApiReferen
             if self._is_api_reference(route):
                 page = self._build_api_reference(url, doc)
                 api_count += 1
-                if self.indexing_logger:
-                    self.indexing_logger.log_document(
-                        url=url,
-                        doc_type="api_reference",
-                        title=page["title"],
-                        content_length=len(page.get("request_body", "")),
-                        status="success",
-                        duration_ms=0,
-                        tag=page["tag"],
-                        method=page["method"],
-                        endpoint=page["endpoint"],
-                    )
+                logger.debug("api_reference %s %s %s", page["method"], page["endpoint"], url)
             else:
                 page = self._build_info_page(url, doc)
                 info_count += 1
-                if self.indexing_logger:
-                    self.indexing_logger.log_document(
-                        url=url,
-                        doc_type="info_page",
-                        title=page["title"],
-                        content_length=len(page["content"]),
-                        status="success",
-                        duration_ms=0,
-                    )
+                logger.debug("info_page %s", url)
             pages.append(page)
 
-        self._log(f"  Processed {info_count} info pages and {api_count} API reference pages")
+        logger.info("Read %d info pages and %d API reference pages", info_count, api_count)
         self.last_fetch_count = len(pages)
         return pages

@@ -50,15 +50,22 @@ The repository uses `mise.toml` in the root to manage tool versions:
 
 ### Local Development
 
-Run the indexing script locally:
+The connector is run with the `glean-idx` CLI that ships with
+`glean-indexing-sdk`; `glean_deployment.yaml` tells it which connector to load.
+It reads the site build, so run `pnpm build` at the repo root first.
 
 ```bash
-# Set required environment variables
+# Unit tests (fixtures only, no build needed)
+uv run pytest -q
+
+# Run the connector end to end against the build, with Glean mocked
+uv run glean-idx test --phase mock
+
+# Index into Glean
 export GLEAN_INDEXING_API_TOKEN="your-api-token"
 export GLEAN_SERVER_URL="https://your-company-be.glean.com"
-
-# Run the script
-uv run main.py
+uv run glean-idx datasource configure --yes
+uv run glean-idx run --yes
 ```
 
 ### Environment Variables
