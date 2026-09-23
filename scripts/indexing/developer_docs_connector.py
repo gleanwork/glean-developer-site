@@ -1,21 +1,25 @@
 import logging
-from typing import Union, List, Sequence
+from typing import List, Optional, Sequence, Union
 
 from glean.indexing.connectors import BaseDatasourceConnector
-from glean.indexing.common import api_client
 from glean.indexing.models import (
     ContentDefinition,
     CustomDatasourceConfig,
     DocumentDefinition,
 )
 from glean.api_client.models import (
-    ObjectDefinition,
     DatasourceCategory,
+    DocCategory,
     DocumentPermissionsDefinition,
+    ObjectDefinition,
 )
 from data_types import DocumentationPage, ApiReferencePage
 
 logger = logging.getLogger(__name__)
+
+
+class TooFewDocumentsError(RuntimeError):
+    """Raised when a crawl returns fewer pages than the site can plausibly have."""
 
 
 def _format_api_reference(page: ApiReferencePage) -> str:
@@ -65,6 +69,12 @@ def _format_api_reference(page: ApiReferencePage) -> str:
 
 
 class DeveloperDocsConnector(BaseDatasourceConnector[Union[DocumentationPage, ApiReferencePage]]):
+    # Every run is a FULL crawl, which replaces the datasource contents. A
+    # broken build (empty docs.json, a filtering regression) would otherwise
+    # upload an empty or tiny batch and mark every other page stale. The site
+    # has ~380 pages; refuse to upload far fewer than that.
+    MIN_DOCUMENTS = 100
+
     configuration: CustomDatasourceConfig = CustomDatasourceConfig(
         name="devdocs",
         display_name="Glean Developer Docs",
@@ -78,39 +88,27 @@ class DeveloperDocsConnector(BaseDatasourceConnector[Union[DocumentationPage, Ap
             ObjectDefinition(
                 name="infoPage",
                 display_label="Information Page",
-                doc_category=DatasourceCategory.KNOWLEDGE_HUB,
+                doc_category=DocCategory.KNOWLEDGE_HUB,
             ),
             ObjectDefinition(
                 name="apiReference",
                 display_label="API Reference",
-                doc_category=DatasourceCategory.KNOWLEDGE_HUB,
+                doc_category=DocCategory.KNOWLEDGE_HUB,
             ),
         ],
     )
 
-    def configure_datasource(self, is_test: bool = False) -> None:
-        """Configure the datasource, working around a camelCase serialization
-        bug in glean-indexing-sdk where config.model_dump() returns camelCase
-        keys but datasources.add() expects snake_case kwargs."""
-        config = self.configuration
-        if is_test:
-            config.is_test_datasource = True
-
-        logger.info(f"Configuring datasource: {config.name}")
-
-        # Map camelCase model_dump keys to snake_case for datasources.add()
-        alias_to_field = {
-            info.alias or name: name
-            for name, info in type(config).model_fields.items()
-        }
-        kwargs = {
-            alias_to_field.get(k, k): v
-            for k, v in config.model_dump(exclude_unset=True).items()
-        }
-
-        with api_client() as client:
-            client.indexing.datasources.add(**kwargs)
-        logger.info(f"Successfully configured datasource: {config.name}")
+    def get_data(
+        self, since: Optional[str] = None
+    ) -> Sequence[Union[DocumentationPage, ApiReferencePage]]:
+        pages = super().get_data(since)
+        if len(pages) < self.MIN_DOCUMENTS:
+            raise TooFewDocumentsError(
+                f"Refusing to index {len(pages)} pages: expected at least "
+                f"{self.MIN_DOCUMENTS}. A FULL upload replaces the datasource, so "
+                "this would mark the rest of the site stale. Check the site build."
+            )
+        return pages
 
     def transform(
         self, data: List[Union[DocumentationPage, ApiReferencePage]]
