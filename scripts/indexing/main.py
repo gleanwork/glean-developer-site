@@ -14,6 +14,7 @@ if env_path.exists():
 from data_client import DeveloperDocsDataClient
 from developer_docs_connector import DeveloperDocsConnector
 from glean.indexing.models import ConnectorOptions, IndexingMode
+from glean.indexing.observability import setup_connector_logging
 from indexing_logger import create_logger
 
 
@@ -24,6 +25,12 @@ def main():
     ).lower() in ("true", "1", "yes")
     log_format = os.getenv("LOG_FORMAT", "stdout")
     indexing_logger = create_logger(format=log_format, verbose=True)
+    # Surface the SDK's own batch/upload logs, which default to WARNING.
+    setup_connector_logging(
+        "devdocs",
+        log_level=os.getenv("LOG_LEVEL", "INFO"),
+        use_structured_logging=log_format == "json",
+    )
 
     try:
         if dry_run:
