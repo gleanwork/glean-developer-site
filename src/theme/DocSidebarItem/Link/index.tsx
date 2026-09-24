@@ -37,6 +37,12 @@ export default function DocSidebarItemLink({
   const { href, label, className, autoAddBaseUrl } = item;
   const isActive = isActiveSidebarItem(item, activePath);
   const isExperimental = isExperimentalItem((item as any).docId);
+  // The OpenAPI plugin sets this class from the operation's own `deprecated`
+  // flag, not from deprecated parameters, request fields, or response schemas.
+  const sidebarClasses = className?.split(/\s+/) ?? [];
+  const isDeprecated =
+    sidebarClasses.includes('api-method') &&
+    sidebarClasses.includes('menu__list-item--deprecated');
   const isInternalLink = isInternalUrl(href);
   // Hide links whose declared feature flag is disabled.
   const { isEnabled } = React.useContext(FeatureFlagsContext);
@@ -78,14 +84,28 @@ export default function DocSidebarItemLink({
           />
         )}
         {label}
-        {isExperimental && (
-          <span
-            className={styles.experimentalBadge}
-            title="Experimental"
-            aria-label="Experimental"
-            role="img"
-          >
-            <BeakerIcon className={styles.experimentalIcon} />
+        {(isExperimental || isDeprecated) && (
+          <span className={styles.statusBadges}>
+            {isExperimental && (
+              <span
+                className={clsx(styles.statusBadge, styles.experimentalBadge)}
+                title="Experimental"
+                aria-label="Experimental"
+                role="img"
+              >
+                <BeakerIcon className={styles.statusIcon} />
+              </span>
+            )}
+            {isDeprecated && (
+              <span
+                className={clsx(styles.statusBadge, styles.deprecatedBadge)}
+                title="Deprecated"
+                aria-label="Deprecated"
+                role="img"
+              >
+                <Icon name="AlertTriangle" className={styles.statusIcon} />
+              </span>
+            )}
           </span>
         )}
         {!isInternalLink && <IconExternalLink />}
