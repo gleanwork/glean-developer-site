@@ -10,7 +10,7 @@ vi.mock('@site/src/theme/Root', () => ({
 
 // Mock Docusaurus Link (the real export fails to transform under vitest)
 vi.mock('@docusaurus/Link', () => ({
-  default: ({ to, href, children, ...rest }: any) => (
+  default: ({ to, href, autoAddBaseUrl, children, ...rest }: any) => (
     <a href={to ?? href} {...rest}>
       {children}
     </a>

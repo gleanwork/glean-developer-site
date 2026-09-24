@@ -25,6 +25,18 @@ export default defineConfig({
     dedupe: ['react', 'react-dom'],
     alias: {
       '@site': path.resolve(__dirname, './'),
+      '@docusaurus/plugin-content-docs/client': path.resolve(
+        __dirname,
+        './node_modules/@docusaurus/plugin-content-docs/lib/client/index.js',
+      ),
+      '@docusaurus/theme-common': path.resolve(
+        __dirname,
+        './node_modules/@docusaurus/theme-common/lib/index.js',
+      ),
+      '@theme/Icons': path.resolve(
+        __dirname,
+        './packages/docusaurus-theme-glean/src/theme/Icons',
+      ),
       '@theme/ApiExplorer/Body': path.resolve(
         __dirname,
         './src/theme/ApiExplorer/Body',
