@@ -64,6 +64,13 @@ jobs:
       - name: Run tests
         run: pnpm test
 
+      # The live /mcp smoke tests run in mcp-smoke.yml against each deploy.
+      # Here we only typecheck them and test the alerting scripts.
+      - name: Check MCP smoke test package
+        run: |
+          pnpm --filter mcp-smoke typecheck
+          bash packages/mcp-smoke/ci/test-ci.sh
+
       - name: Build website
         run: pnpm build
         env:
