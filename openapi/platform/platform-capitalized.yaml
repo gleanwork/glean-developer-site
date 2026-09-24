@@ -2,8 +2,8 @@ openapi: 3.1.0
 info:
   version: '2026-04-01'
   title: Glean Platform API
-  x-source-commit-sha: e8f438ce5a6250368b2fae2c7e92ee53c7cffcac
-  x-open-api-commit-sha: d61ec8776f9391cdf71e244b5a418146d1531d79
+  x-source-commit-sha: 5f9a6f3457f35994a3a7578542088fae44012174
+  x-open-api-commit-sha: 05422ef27e89f97a4b54015abcd2befafbe7c3b0
 servers:
   - url: '{serverUrl}'
     description: Replace {serverUrl} with your complete Glean API server URL. Find it at https://developers.glean.com/get-started/authentication#finding-your-server-url.
@@ -356,7 +356,7 @@ paths:
         - Agents
       summary: Create agent run
       description: |
-        Execute an agent run. By default, set `stream` to true to receive server-sent events; otherwise the response contains the final agent messages. Set `execution_mode` to `DURABLE` to persist a new run and return its initial snapshot with HTTP 201 without waiting for execution. Poll the agent-scoped GET run endpoint for progress. Durable execution continues after an HTTP disconnect, but is not automatically resumed after a QE restart or crash. An active turn becomes overdue more than 40 minutes after acceptance (a 30-minute execution timeout plus 10 minutes of grace). The next GET of the run marks the overdue turn FAILED without replay; there is no periodic sweep. Without a GET, the stored run can remain RUNNING. Failure does not prove that external tool work has stopped. Paused runs are not expired. Each POST creates a new run; retrying a POST can create another execution. Cancellation can be requested through the run cancellations endpoint. A run tracks one workflow execution; automatic background-subagent wake turns are separate executions, not continuations tracked by this run ID.
+        Execute an agent run. By default, set `stream` to true to receive server-sent events; otherwise the response contains the final agent messages. Set `execution_mode` to `DURABLE` to persist a new run and return its initial snapshot with HTTP 201 without waiting for execution. Poll the agent-scoped GET run endpoint for progress. Durable execution continues after an HTTP disconnect, but is not automatically resumed after a QE restart or crash. An active turn becomes overdue more than 40 minutes after acceptance (a 30-minute execution timeout plus 10 minutes of grace). The next GET of the run marks the overdue turn FAILED without replay; there is no periodic sweep. Without a GET, the stored run can remain RUNNING. Failure does not prove that external tool work has stopped. Paused runs are not expired; an accepted approval continuation starts a fresh deadline. Each POST creates a new run; retrying a POST can create another execution. Submit pending approval decisions through the run responses endpoint, and cancellation can be requested through the run cancellations endpoint. A run tracks one workflow execution; automatic background-subagent wake turns are separate executions, not continuations tracked by this run ID.
       operationId: platform-agents-create-run
       x-visibility: Public
       x-codegen-request-body-name: payload
@@ -768,6 +768,147 @@ paths:
                             .agentId("{agent_id}")
                             .platformAgentRunCancellationRequest(PlatformAgentRunCancellationRequest.builder()
                                 .runId("{run_id}")
+                                .build())
+                            .call();
+
+                    if (res.platformAgentRunResponse().isPresent()) {
+                        System.out.println(res.platformAgentRunResponse().get());
+                    }
+                }
+            }
+  /api/agents/{agent_id}/responses:
+    post:
+      tags:
+        - Agents
+      summary: Respond to agent run approvals
+      description: |
+        Submit decisions for every pending tool approval in the paused run's current batch. The run is identified by `run_id` in the JSON body. Decisions apply only to the stored invocations and arguments; argument edits, authentication responses, and session-wide grants are not supported. The caller must own the run, still have agent access, and have the agents.run scope. Acceptance persists the decisions before resuming the same run and chat session. Identical accepted decisions return the current snapshot without another continuation. Conflicting, stale, incomplete, or non-pending decisions return 409. Cancellation registration failure returns 503 without accepting the decisions; retry the same approval batch. This retry guarantee does not cover an indeterminate database commit outcome. Go workflow approval resumes currently support one tool invocation and one approval response. Unsupported multi-tool or multi-decision Go resumes fail without executing tools. The resumed action must resolve to the tool identified by the stored approval request and paused checkpoint. Missing or inconsistent identity fails without executing tools. Execution continues after HTTP disconnects, but is not automatically resumed after a QE crash. Each accepted continuation starts a fresh 30-minute execution timeout and 40-minute cleanup deadline. Identical retries do not extend that deadline. Waiting for approval does not expire a run. The next GET marks an overdue active turn FAILED without replaying execution.
+      operationId: platform-agents-create-run-responses
+      x-visibility: Public
+      parameters:
+        - in: path
+          name: agent_id
+          description: ID of the agent that owns the run.
+          required: true
+          example: '{agent_id}'
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 256
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlatformAgentRunResponsesRequest'
+      responses:
+        '200':
+          description: Decisions accepted, or an identical retry. Poll GET run for continued execution.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlatformAgentRunResponse'
+        '400':
+          $ref: '#/components/responses/PlatformBadRequest'
+        '401':
+          $ref: '#/components/responses/PlatformUnauthorized'
+        '403':
+          $ref: '#/components/responses/PlatformForbidden'
+        '404':
+          $ref: '#/components/responses/PlatformNotFound'
+        '408':
+          $ref: '#/components/responses/PlatformRequestTimeout'
+        '409':
+          $ref: '#/components/responses/PlatformConflict'
+        '413':
+          $ref: '#/components/responses/PlatformRequestTooLarge'
+        '429':
+          $ref: '#/components/responses/PlatformTooManyRequests'
+        '500':
+          $ref: '#/components/responses/PlatformInternalServerError'
+        '503':
+          $ref: '#/components/responses/PlatformServiceUnavailable'
+      x-speakeasy-group: agents
+      x-speakeasy-name-override: respondToRun
+      x-codeSamples:
+        - lang: Python
+          label: Python (API Client)
+          source: |-
+            from glean.api_client import Glean, models
+            import os
+
+
+            with Glean(
+                api_token=os.getenv("GLEAN_API_TOKEN", ""),
+                server_url="https://mycompany-be.glean.com",
+            ) as glean:
+
+                res = glean.agents.respond_to_run(agent_id="{agent_id}", run_id="{run_id}", responses=[
+                    {
+                        "interaction_id": "{interaction_id}",
+                        "decision": models.Decision.APPROVE,
+                    },
+                ])
+
+                # Handle response
+                print(res)
+        - lang: JavaScript
+          label: Typescript (API Client)
+          source: |-
+            import { Glean } from "@gleanwork/api-client";
+
+            const glean = new Glean({
+              apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
+              serverURL: "https://mycompany-be.glean.com",
+            });
+
+            async function run() {
+              const result = await glean.agents.respondToRun({
+                run_id: "{run_id}",
+                responses: [
+                  {
+                    interaction_id: "{interaction_id}",
+                    decision: "APPROVE",
+                  },
+                ],
+              }, "{agent_id}");
+
+              console.log(result);
+            }
+
+            run();
+        - lang: Go
+          label: Go (API Client)
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Agents.RespondToRun(ctx, \"{agent_id}\", components.PlatformAgentRunResponsesRequest{\n        RunID: \"{run_id}\",\n        Responses: []components.PlatformAgentRunApprovalDecision{\n            components.PlatformAgentRunApprovalDecision{\n                InteractionID: \"{interaction_id}\",\n                Decision: components.DecisionApprove,\n            },\n        },\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformAgentRunResponse != nil {\n        // handle response\n    }\n}"
+        - lang: Java
+          label: Java (API Client)
+          source: |-
+            package hello.world;
+
+            import com.glean.api_client.glean_api_client.Glean;
+            import com.glean.api_client.glean_api_client.models.components.*;
+            import com.glean.api_client.glean_api_client.models.errors.PlatformProblemDetailException;
+            import com.glean.api_client.glean_api_client.models.operations.PlatformAgentsCreateRunResponsesResponse;
+            import java.lang.Exception;
+            import java.util.List;
+
+            public class Application {
+
+                public static void main(String[] args) throws PlatformProblemDetailException, Exception {
+
+                    Glean sdk = Glean.builder()
+                            .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
+                        .build();
+
+                    PlatformAgentsCreateRunResponsesResponse res = sdk.agents().respondToRun()
+                            .agentId("{agent_id}")
+                            .platformAgentRunResponsesRequest(PlatformAgentRunResponsesRequest.builder()
+                                .runId("{run_id}")
+                                .responses(List.of(
+                                    PlatformAgentRunApprovalDecision.builder()
+                                        .interactionId("{interaction_id}")
+                                        .decision(Decision.APPROVE)
+                                        .build()))
                                 .build())
                             .call();
 
@@ -5449,6 +5590,50 @@ components:
           minLength: 1
           maxLength: 256
           description: ID of the run to cancel. Must belong to the agent identified in the path.
+    PlatformAgentRunApprovalDecision:
+      type: object
+      additionalProperties: false
+      description: Approve or reject the invocation identified by a pending interaction ID.
+      required:
+        - interaction_id
+        - decision
+      properties:
+        interaction_id:
+          type: string
+          minLength: 1
+          maxLength: 256
+          description: The interaction_id returned in the run's pending_interactions.
+        decision:
+          type: string
+          enum:
+            - APPROVE
+            - REJECT
+          description: The decision for this invocation only. Rejection follows normal workflow behavior.
+    PlatformAgentRunResponsesRequest:
+      type: object
+      additionalProperties: false
+      description: Invocation-scoped decisions for the complete pending approval batch.
+      required:
+        - run_id
+        - responses
+      example:
+        run_id: '{run_id}'
+        responses:
+          - interaction_id: '{interaction_id}'
+            decision: APPROVE
+      properties:
+        run_id:
+          type: string
+          minLength: 1
+          maxLength: 256
+          description: ID of the run whose pending approvals are being answered. Must belong to the agent identified in the path.
+        responses:
+          type: array
+          minItems: 1
+          maxItems: 100
+          description: One decision per pending interaction. Interaction IDs must be unique.
+          items:
+            $ref: '#/components/schemas/PlatformAgentRunApprovalDecision'
     PlatformChatInputMessage:
       type: object
       additionalProperties: false
