@@ -815,6 +815,12 @@ const baseSidebars: SidebarsConfig = {
                   label: 'Get agent run',
                   className: 'api-method get',
                 },
+                {
+                  type: 'doc',
+                  id: 'api/platform-api/platform-agents-create-run-responses',
+                  label: 'Respond to agent run approvals',
+                  className: 'api-method post',
+                },
               ],
             },
             {
