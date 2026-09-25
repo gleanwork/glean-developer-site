@@ -978,6 +978,12 @@ const baseSidebars: SidebarsConfig = {
                   label: 'Update skill',
                   className: 'api-method patch',
                 },
+                {
+                  type: 'doc',
+                  id: 'api/platform-api/platform-skills-preview-source-stream',
+                  label: 'Preview a GitHub skill source as events',
+                  className: 'api-method post',
+                },
               ],
             },
             {
