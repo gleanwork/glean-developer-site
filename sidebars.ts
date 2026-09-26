@@ -559,6 +559,11 @@ const baseSidebars: SidebarsConfig = {
             },
             {
               type: 'doc',
+              id: 'libraries/api-clients/versioning',
+              label: 'Versioning policy',
+            },
+            {
+              type: 'doc',
               id: 'libraries/api-clients/python',
               label: 'Python',
             },
