@@ -99,6 +99,12 @@ export default class GleanSearchProvider {
   /**
    * Get a document. Tries the deterministic docId first (avoids stale URL→docId
    * mappings in Glean's index), then falls back to URL lookup.
+   *
+   * Returns null only when Glean answered and has no such page, which the
+   * plugin reports as "Page not found". If Glean could not answer (a rate
+   * limit, an auth failure, an outage), this throws, and the plugin returns a
+   * tool error instead. Reporting that as a missing page tells the client to
+   * give up on a page that exists.
    */
   async getDocument(url) {
     if (!this.client) {
@@ -119,51 +125,53 @@ export default class GleanSearchProvider {
   }
 
   async #retrieve(url, documentSpec, label) {
+    let response;
     try {
-      const response = await this.client.client.documents.retrieve({
+      response = await this.client.client.documents.retrieve({
         documentSpecs: [documentSpec],
         includeFields: ['DOCUMENT_CONTENT'],
       });
-
-      const docs = response.documents;
-      if (!docs) {
-        return null;
-      }
-
-      const docKey = Object.keys(docs)[0];
-      const doc = docs[docKey];
-
-      if (!doc || doc.error) {
-        return null;
-      }
-
-      const fullTextList = doc.content?.fullTextList ?? [];
-      const fullText = fullTextList.join('\n\n');
-
-      // Glean returns a document object even for non-existent URLs (with empty
-      // content). Treat empty content as a miss so the caller can fall back
-      // to the next lookup path or return null cleanly.
-      if (!fullText) {
-        console.warn(
-          `[Glean] Empty content for ${url} via ${label} (treating as miss)`,
-        );
-        return null;
-      }
-
-      return {
-        url,
-        title: doc.title ?? 'Untitled',
-        description: doc.metadata?.description ?? '',
-        markdown: fullText,
-        headings: [],
-      };
     } catch (error) {
       console.error(
         `[Glean] Get document error (${label}):`,
         error.message || error,
       );
+      throw error;
+    }
+
+    const docs = response.documents;
+    if (!docs) {
       return null;
     }
+
+    const docKey = Object.keys(docs)[0];
+    const doc = docs[docKey];
+
+    // A per-document error means Glean has nothing under this id or URL.
+    if (!doc || doc.error) {
+      return null;
+    }
+
+    const fullTextList = doc.content?.fullTextList ?? [];
+    const fullText = fullTextList.join('\n\n');
+
+    // Glean returns a document object even for non-existent URLs (with empty
+    // content). Treat empty content as a miss so the caller can fall back
+    // to the next lookup path or return null cleanly.
+    if (!fullText) {
+      console.warn(
+        `[Glean] Empty content for ${url} via ${label} (treating as miss)`,
+      );
+      return null;
+    }
+
+    return {
+      url,
+      title: doc.title ?? 'Untitled',
+      description: doc.metadata?.description ?? '',
+      markdown: fullText,
+      headings: [],
+    };
   }
 
   async healthCheck() {
