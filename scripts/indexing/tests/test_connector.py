@@ -36,8 +36,8 @@ class TestIndexData:
         client = run_connector(_connector(fake_repo))
 
         docs = client.documents_posted
-        assert len(docs) == 4
-        assert len({d.id for d in docs}) == 4
+        assert len(docs) == 5
+        assert len({d.id for d in docs}) == 5
         assert {d.object_type for d in docs} == {"infoPage", "apiReference"}
         assert all(d.datasource == "devdocs" for d in docs)
         assert all(d.permissions.allow_anonymous_access for d in docs)
@@ -62,11 +62,11 @@ class TestIndexData:
 
 class TestMinimumDocumentGuard:
     def test_refuses_to_upload_a_suspiciously_small_crawl(self, fake_repo: Path) -> None:
-        # Default floor (100) against the four-page fake repo.
+        # Default floor (100) against the five-page fake repo.
         connector = _connector(fake_repo, DeveloperDocsConnector)
 
         with mock_glean_client() as client:
-            with pytest.raises(TooFewDocumentsError, match="Refusing to index 4 pages"):
+            with pytest.raises(TooFewDocumentsError, match="Refusing to index 5 pages"):
                 connector.index_data()
 
         client.indexing.documents.bulk_index.assert_not_called()

@@ -5,8 +5,8 @@ specific files the data client expects:
 
     <repo>/build/mcp/docs.json
     <repo>/build/indexing/timestamps.json
-    <repo>/docs/api/client-api/<group>/<slug>.{RequestSchema,StatusCodes,ParamsDetails}.json
-    <repo>/docs/api/indexing-api/<slug>.{RequestSchema,StatusCodes,ParamsDetails}.json
+    <repo>/docs/api/client-api/<group>/<slug>.{api.mdx,RequestSchema,StatusCodes,ParamsDetails}
+    <repo>/docs/api/indexing-api/<slug>.{api.mdx,RequestSchema,StatusCodes,ParamsDetails}
 
 This lets us exercise the real file-loading paths without depending on a
 checked-out build/ tree or the actual API specs.
@@ -127,6 +127,13 @@ def _build_repo(tmp_path: Path) -> Path:
     """Materialize a minimal fake repo on disk."""
     api = tmp_path / "docs" / "api"
 
+    # Generated endpoint pages. The OpenAPI generator writes <slug>.api.mdx
+    # beside the schema files; that file is what marks a route as an endpoint.
+    for page in ("client-api/activity/feedback", "indexing-api/add-or-update-datasource"):
+        mdx = api / f"{page}.api.mdx"
+        mdx.parent.mkdir(parents=True, exist_ok=True)
+        mdx.write_text("---\nid: generated\n---\n")
+
     # client-api endpoint: /api/client-api/activity/feedback
     _write_json(api / "client-api" / "activity" / "feedback.RequestSchema.json", SIMPLE_REQUEST_SCHEMA)
     _write_json(api / "client-api" / "activity" / "feedback.StatusCodes.json", STATUS_CODES)
@@ -162,6 +169,14 @@ def _build_repo(tmp_path: Path) -> Path:
             "description": "Overview.",
             "route": "/api/client-api/search/overview",
             "markdown": "# Search Overview",
+        },
+        # Hand-written prose under /api/ with no generated endpoint page. Its
+        # slug has no "overview" in it, but it is still an info page.
+        "https://developers.glean.com/api/platform-api/getting-started": {
+            "title": "Platform API Quickstart",
+            "description": "Get started.",
+            "route": "/api/platform-api/getting-started",
+            "markdown": "# Platform API Quickstart\n\nCreate a token, then call /api/search.",
         },
     }
     _write_json(tmp_path / "build" / "mcp" / "docs.json", docs_json)

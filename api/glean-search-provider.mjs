@@ -14,29 +14,18 @@ import { v5 as uuidv5 } from 'uuid';
 
 const DATASOURCE = 'devdocs';
 
-function getObjectType(url) {
-  let pathname;
-  try {
-    pathname = new URL(url).pathname;
-  } catch {
-    pathname = url.startsWith('/') ? url : `/${url}`;
-  }
+// The indexer (scripts/indexing) gives every page one of these object types,
+// and Glean's document id includes it. Which one a page gets depends on
+// whether it is a generated endpoint page, which is decided from source files
+// this function cannot see. Asking for both ids in one call keeps the lookup
+// exact without copying that rule here, where it could drift.
+const OBJECT_TYPES = ['infoPage', 'apiReference'];
 
-  const isApiRoute =
-    pathname.startsWith('/api/client-api/') ||
-    pathname.startsWith('/api/indexing-api/');
-  if (!isApiRoute) {
-    return 'infoPage';
-  }
-
-  const lastSegment = pathname.replace(/\/+$/, '').split('/').pop() ?? '';
-  return lastSegment.includes('overview') ? 'infoPage' : 'apiReference';
-}
-
-function computeDocId(url) {
-  const objectType = getObjectType(url);
+function candidateDocIds(url) {
   const uuid = uuidv5(url, uuidv5.URL);
-  return `CUSTOM_${DATASOURCE.toUpperCase()}_${objectType}_${uuid}`;
+  return OBJECT_TYPES.map(
+    (objectType) => `CUSTOM_${DATASOURCE.toUpperCase()}_${objectType}_${uuid}`,
+  );
 }
 
 export default class GleanSearchProvider {
@@ -97,8 +86,8 @@ export default class GleanSearchProvider {
   }
 
   /**
-   * Get a document. Tries the deterministic docId first (avoids stale URL→docId
-   * mappings in Glean's index), then falls back to URL lookup.
+   * Get a document. Looks it up by its deterministic docId first (avoids stale
+   * URL→docId mappings in Glean's index), then falls back to URL lookup.
    *
    * Returns null only when Glean answered and has no such page, which the
    * plugin reports as "Page not found". If Glean could not answer (a rate
@@ -111,24 +100,28 @@ export default class GleanSearchProvider {
       throw new Error('[Glean] Provider not initialized');
     }
 
-    const docId = computeDocId(url);
+    const ids = candidateDocIds(url);
 
-    let result = await this.#retrieve(url, { id: docId }, `id=${docId}`);
+    const result = await this.#retrieve(
+      url,
+      ids.map((id) => ({ id })),
+      `id=${ids.join('|')}`,
+    );
     if (result) {
       return result;
     }
 
     console.warn(
-      `[Glean] docId lookup returned no document for ${url} (id=${docId}); falling back to URL lookup`,
+      `[Glean] docId lookup returned no document for ${url}; falling back to URL lookup`,
     );
-    return this.#retrieve(url, { url }, `url=${url}`);
+    return this.#retrieve(url, [{ url }], `url=${url}`);
   }
 
-  async #retrieve(url, documentSpec, label) {
+  async #retrieve(url, documentSpecs, label) {
     let response;
     try {
       response = await this.client.client.documents.retrieve({
-        documentSpecs: [documentSpec],
+        documentSpecs,
         includeFields: ['DOCUMENT_CONTENT'],
       });
     } catch (error) {
@@ -139,39 +132,26 @@ export default class GleanSearchProvider {
       throw error;
     }
 
-    const docs = response.documents;
-    if (!docs) {
-      return null;
+    // Glean keys results by the requested id or URL. A spec with no document
+    // comes back with an `error`, or (for URLs) with empty content; skip those
+    // and use the first spec that has the page.
+    for (const doc of Object.values(response.documents ?? {})) {
+      const fullText = doc?.error
+        ? ''
+        : (doc?.content?.fullTextList ?? []).join('\n\n');
+      if (fullText) {
+        return {
+          url,
+          title: doc.title ?? 'Untitled',
+          description: doc.metadata?.description ?? '',
+          markdown: fullText,
+          headings: [],
+        };
+      }
     }
 
-    const docKey = Object.keys(docs)[0];
-    const doc = docs[docKey];
-
-    // A per-document error means Glean has nothing under this id or URL.
-    if (!doc || doc.error) {
-      return null;
-    }
-
-    const fullTextList = doc.content?.fullTextList ?? [];
-    const fullText = fullTextList.join('\n\n');
-
-    // Glean returns a document object even for non-existent URLs (with empty
-    // content). Treat empty content as a miss so the caller can fall back
-    // to the next lookup path or return null cleanly.
-    if (!fullText) {
-      console.warn(
-        `[Glean] Empty content for ${url} via ${label} (treating as miss)`,
-      );
-      return null;
-    }
-
-    return {
-      url,
-      title: doc.title ?? 'Untitled',
-      description: doc.metadata?.description ?? '',
-      markdown: fullText,
-      headings: [],
-    };
+    console.warn(`[Glean] No document for ${url} via ${label}`);
+    return null;
   }
 
   async healthCheck() {

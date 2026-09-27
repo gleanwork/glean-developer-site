@@ -292,7 +292,7 @@ class TestLoadTimestamps:
 
 
 class TestIsApiReference:
-    """_is_api_reference uses ApiRoute.parse + is_overview."""
+    """_is_api_reference: a route is an endpoint when its generated .api.mdx exists."""
 
     @pytest.mark.parametrize(
         "route,expected",
@@ -301,6 +301,8 @@ class TestIsApiReference:
             ("/api/indexing-api/add-or-update-datasource", True),
             ("/api/client-api/search/overview", False),    # overview => info
             ("/api/indexing-api/authentication-overview", False),
+            ("/api/platform-api/getting-started", False),  # prose, no .api.mdx
+            ("/api/client-api/activity/unknown", False),   # endpoint shape, no page
             ("/guides/mcp", False),                         # not an api route
             ("/", False),
             ("", False),
@@ -401,11 +403,12 @@ class TestGetSourceData:
         self, client: DeveloperDocsDataClient
     ) -> None:
         pages = client.get_source_data()
-        # Fixture has 4 entries: 1 info + 1 nested API + 1 flat API + 1 overview (info)
-        assert len(pages) == 4
+        # Fixture has 5 entries: 1 info + 1 nested API + 1 flat API
+        # + 1 overview (info) + 1 prose page under /api/ (info)
+        assert len(pages) == 5
         info_pages = [p for p in pages if p["page_type"] == "info_page"]
         api_pages = [p for p in pages if p["page_type"] == "api_reference"]
-        assert len(info_pages) == 2  # getting-started + search/overview
+        assert len(info_pages) == 3
         assert len(api_pages) == 2
 
     def test_overview_routed_as_info_page(self, client: DeveloperDocsDataClient) -> None:
@@ -414,6 +417,16 @@ class TestGetSourceData:
             p for p in pages if p["url"].endswith("/api/client-api/search/overview")
         )
         assert overview["page_type"] == "info_page"
+
+    def test_prose_under_api_keeps_its_content(self, client: DeveloperDocsDataClient) -> None:
+        # Hand-written pages under /api/ were rebuilt as empty endpoint
+        # templates when classified by slug; they must keep their markdown.
+        pages = client.get_source_data()
+        page = next(
+            p for p in pages if p["url"].endswith("/api/platform-api/getting-started")
+        )
+        assert page["page_type"] == "info_page"
+        assert "call /api/search" in page["content"]
 
     def test_raises_when_docs_json_missing(self, empty_repo: Path) -> None:
         c = DeveloperDocsDataClient(repo_root=str(empty_repo))
