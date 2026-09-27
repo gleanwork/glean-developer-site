@@ -11,8 +11,13 @@ site, so run `pnpm build` at the repo root first. It indexes two object types:
 
 | Object type    | Source                                                                                         |
 | -------------- | ---------------------------------------------------------------------------------------------- |
-| `infoPage`     | Every non-API page in `build/mcp/docs.json`, as markdown                                       |
+| `infoPage`     | Every page in `build/mcp/docs.json` that is not a generated endpoint page, as markdown         |
 | `apiReference` | Each `/api/**` endpoint page, combined with its `docs/api/**` request, params, and status JSON |
+
+A route is an endpoint page when the OpenAPI generator wrote a matching
+`docs/api/**/<slug>.api.mdx`. Hand-written pages under `/api/`, such as
+overviews, getting started, and authentication, have no such file and are indexed
+as `infoPage` with their full markdown.
 
 Created and updated times come from `build/indexing/timestamps.json`. Document
 IDs are UUIDv5 of the page URL, so they are stable across runs.

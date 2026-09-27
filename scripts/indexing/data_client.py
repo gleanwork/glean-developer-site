@@ -2,6 +2,7 @@
 
 Reads from:
 - build/mcp/docs.json — full markdown for all pages
+- docs/api/**/*.api.mdx — which /api/* routes are generated endpoint pages
 - docs/api/**/*.RequestSchema.json — request schemas
 - docs/api/**/*.StatusCodes.json — response codes
 - docs/api/**/*.ParamsDetails.json — query/path parameters
@@ -55,10 +56,6 @@ class ApiRoute:
         """Relative directory under docs/api/ that holds this endpoint's schema files."""
         return f"{self.api}/{self.group}" if self.group else self.api
 
-    @property
-    def is_overview(self) -> bool:
-        return "overview" in self.slug
-
 
 class DeveloperDocsDataClient(BaseDataClient[Union[DocumentationPage, ApiReferencePage]]):
     """Reads documentation content from Docusaurus build output files.
@@ -109,9 +106,18 @@ class DeveloperDocsDataClient(BaseDataClient[Union[DocumentationPage, ApiReferen
         return self._timestamps
 
     def _is_api_reference(self, route: str) -> bool:
-        """Check if a route is an API reference page (not an overview)."""
+        """Check if a route is a generated API endpoint page.
+
+        The OpenAPI generator writes `<slug>.api.mdx` beside the schema files
+        this client reads, so that file is what makes a route an endpoint.
+        Hand-written pages under /api/ (overviews, getting started,
+        authentication) have no such file and are indexed as prose.
+        """
         parsed = ApiRoute.parse(route)
-        return parsed is not None and not parsed.is_overview
+        return (
+            parsed is not None
+            and (self.api_docs_dir / parsed.schema_dir / f"{parsed.slug}.api.mdx").is_file()
+        )
 
     def _simplify_schema(self, schema: dict, max_depth: int = 2, depth: int = 0) -> dict:
         """Simplify a JSON schema by limiting nesting depth."""

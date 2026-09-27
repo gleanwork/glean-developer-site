@@ -22,23 +22,6 @@ class TestApiRouteParseClientApi:
         assert r is not None
         assert r.schema_dir == "client-api/activity"
 
-    def test_overview_endpoint_marked_as_overview(self) -> None:
-        r = ApiRoute.parse("/api/client-api/search/overview")
-        assert r is not None
-        assert r.is_overview is True
-
-    def test_non_overview_endpoint_is_not_overview(self) -> None:
-        r = ApiRoute.parse("/api/client-api/activity/feedback")
-        assert r is not None
-        assert r.is_overview is False
-
-    def test_slug_containing_overview_substring_is_treated_as_overview(self) -> None:
-        # By design: "overview in slug" check is a substring match. Document the
-        # behavior so it's stable.
-        r = ApiRoute.parse("/api/client-api/search/search-overview-page")
-        assert r is not None
-        assert r.is_overview is True
-
 
 class TestApiRouteParseIndexingApi:
     """Flat 4-segment routes: /api/indexing-api/<slug>"""
@@ -54,16 +37,6 @@ class TestApiRouteParseIndexingApi:
         r = ApiRoute.parse("/api/indexing-api/add-or-update-datasource")
         assert r is not None
         assert r.schema_dir == "indexing-api"
-
-    def test_authentication_overview_recognized_as_overview(self) -> None:
-        r = ApiRoute.parse("/api/indexing-api/authentication-overview")
-        assert r is not None
-        assert r.is_overview is True
-
-    def test_non_overview_indexing_endpoint(self) -> None:
-        r = ApiRoute.parse("/api/indexing-api/bulk-index-documents")
-        assert r is not None
-        assert r.is_overview is False
 
 
 class TestApiRouteParseUnrecognized:
