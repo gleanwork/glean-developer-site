@@ -26,7 +26,7 @@ cat > "$tmp/results.json" <<'EOF'
       "title": "mcp.smoke.ts",
       "specs": [
         {
-          "title": "docs_search returns developer docs results from Glean",
+          "title": "docs_search returns developer docs results",
           "ok": false,
           "tests": [{ "results": [
             { "status": "failed", "error": { "message": "Error: first attempt" } },
@@ -48,7 +48,7 @@ cat > "$tmp/results.json" <<'EOF'
 }
 EOF
 got="$(bash "$here/summarize-results.sh" "$tmp/results.json")"
-want="docs_search returns developer docs results from Glean: Error: SSE error: Non-200 status code (500)"
+want="docs_search returns developer docs results: Error: SSE error: Non-200 status code (500)"
 if [ "$got" = "$want" ]; then pass "summary lists failed tests with their last error's first line"; else fail "summary: got '$got'"; fi
 
 echo '{"suites":[{"specs":[{"title":"a","ok":true,"tests":[]}]}]}' > "$tmp/green.json"
@@ -85,7 +85,7 @@ report() { # result open-issue reason last-reason
 }
 called() { grep -q -- "$1" "$tmp/log"; }
 
-crash="docs_search returns developer docs results from Glean: Error: SSE error: Non-200 status code (500)"
+crash="docs_search returns developer docs results: Error: SSE error: Non-200 status code (500)"
 
 report failure "" "$crash" ""
 if called "gh issue create"; then pass "first failure opens an issue"; else fail "first failure: $(cat "$tmp/log")"; fi

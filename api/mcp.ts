@@ -3,11 +3,9 @@
  * Deploy to Vercel and this will be available at /api/mcp
  * With the rewrite in vercel.json, also available at /mcp
  *
- * Uses Glean search provider to search documentation via Glean's API.
- *
- * Required environment variables:
- * - GLEAN_API_TOKEN: Your Glean API token (Client API token)
- * - GLEAN_SERVER_URL: Your Glean server URL (e.g., 'https://your-company-be.glean.com')
+ * Searches the build's own index (build/mcp/search-index.json) in process,
+ * so it needs no credentials and makes no outbound calls. It also serves the
+ * built-in docs-research skill from build/mcp/skills.json.
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
@@ -32,8 +30,7 @@ async function getServer(): Promise<McpDocsServer> {
       name: 'glean-developer-docs',
       version: '1.0.0',
       baseUrl: 'https://developers.glean.com',
-      // Use Glean search provider instead of local FlexSearch
-      search: path.join(__dirname, 'glean-search-provider.mjs'),
+      skillsPath: path.join(projectRoot, 'build/mcp/skills.json'),
     });
   }
 

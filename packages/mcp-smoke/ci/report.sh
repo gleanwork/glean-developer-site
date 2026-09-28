@@ -50,11 +50,8 @@ case "$reason" in
   *"Non-200 status code (404)"*)
     cause="\`/mcp\` is not routed. Check the \`/mcp\` rewrite in \`vercel.json\` and that \`api/mcp.ts\` was deployed."
     ;;
-  *"(401)"* | *"(403)"* | *"GLEAN_API_TOKEN"* | *"GLEAN_SERVER_URL"*)
-    cause="Glean rejected or is missing credentials. Check \`GLEAN_API_TOKEN\` (a Client API token) and \`GLEAN_SERVER_URL\` in the Vercel project's environment variables."
-    ;;
-  *"docs_search returns"* | *"docs_fetch returns"*)
-    cause="The server is up but search is failing, so the request to Glean is the likely problem. Check the Vercel Runtime Logs for the Glean API error, then \`GLEAN_API_TOKEN\` and \`GLEAN_SERVER_URL\`."
+  *"docs_search returns"* | *"docs_fetch returns"* | *"docs-research skill"*)
+    cause="The server is up but a tool or the skill is failing, so the bundled \`build/mcp/\` files are the likely problem. Check that the deploy's build wrote \`build/mcp/\` (docs.json, search-index.json, skills.json) and that \`vercel.json\` includes it in \`api/mcp.ts\`. The Vercel Runtime Logs name the file."
     ;;
   *"did not run"*)
     cause="The check itself broke before reaching \`/mcp\` (install or setup). See the run log."
