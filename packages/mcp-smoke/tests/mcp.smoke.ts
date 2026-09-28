@@ -2,7 +2,8 @@ import { test, expect } from '@gleanwork/mcp-server-tester/fixtures/mcp';
 
 // Direct-mode smoke tests: fixed tool calls with deterministic assertions, no
 // LLM. They cover the path a real agent takes: MCP handshake, tool discovery,
-// then a search and a fetch that go through Glean with the Vercel credentials.
+// the docs-research skill, then a search and a fetch against the index that
+// the build bundles into the function.
 //
 // Queries and URLs point at long-lived pages. If a page moves, update it here.
 
@@ -14,15 +15,20 @@ test('exposes docs_search and docs_fetch', async ({ mcp }) => {
   expect(names).toEqual(expect.arrayContaining(['docs_search', 'docs_fetch']));
 });
 
-test('docs_search returns developer docs results from Glean', async ({
-  mcp,
-}) => {
+test('publishes the docs-research skill', async ({ mcp }) => {
+  const { resources } = await mcp.client.listResources();
+  expect(resources.map((resource) => resource.uri)).toContain(
+    'skill://docs-research/SKILL.md',
+  );
+});
+
+test('docs_search returns developer docs results', async ({ mcp }) => {
   const result = await mcp.callTool('docs_search', {
     query: 'indexing sdk quickstart',
     limit: 3,
   });
-  // A Glean auth or config failure surfaces as a tool error. An empty index
-  // surfaces as "No matching documents found." Both should fail here.
+  // A missing or stale index surfaces as a tool error, and an empty one as
+  // "No matching documents found." Both should fail here.
   expect(result).not.toBeToolError();
   expect(result).toMatchToolPattern(/Found [0-9]+ result/);
   expect(result).toContainToolText('developers.glean.com');

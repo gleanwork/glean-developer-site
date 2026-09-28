@@ -1,9 +1,10 @@
 #!/usr/bin/env npx tsx
 /**
- * Local MCP server for testing the Glean search provider integration.
+ * Local MCP server over the build output, for trying /mcp without Vercel.
+ * Uses the same local search index and skills as api/mcp.ts.
  *
  * Usage:
- *   1. Create a .env file with GLEAN_API_TOKEN and GLEAN_SERVER_URL
+ *   1. Build the site: pnpm build
  *   2. Run: pnpm run mcp:local
  *
  * Then test with:
@@ -26,34 +27,17 @@ import { McpDocsServer } from 'docusaurus-plugin-mcp-server';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3456;
 
-// Check for required environment variables
-if (!process.env.GLEAN_API_TOKEN) {
-  console.error('Error: GLEAN_API_TOKEN environment variable is required');
-  process.exit(1);
-}
-
-if (!process.env.GLEAN_SERVER_URL) {
-  console.error(
-    'Error: GLEAN_SERVER_URL environment variable is required (e.g. https://your-company-be.glean.com)',
-  );
-  process.exit(1);
-}
-
-console.log('Initializing MCP server with Glean search provider...');
-
 const mcpServer = new McpDocsServer({
   docsPath: path.join(__dirname, '../build/mcp/docs.json'),
   indexPath: path.join(__dirname, '../build/mcp/search-index.json'),
   name: 'glean-developer-docs',
   version: '1.0.0',
   baseUrl: 'https://developers.glean.com',
-  // Use the Glean search provider
-  search: path.join(__dirname, '../api/glean-search-provider.mjs'),
+  skillsPath: path.join(__dirname, '../build/mcp/skills.json'),
 });
 
 async function main() {
   await mcpServer.initialize();
-  console.log('MCP server initialized with Glean search provider');
 
   const server = http.createServer(async (req, res) => {
     // Health check
@@ -90,7 +74,6 @@ async function main() {
   server.listen(PORT, () => {
     console.log(`
 MCP server running at http://localhost:${PORT}/mcp
-Using Glean: ${process.env.GLEAN_SERVER_URL}
 
 Test commands:
   curl http://localhost:${PORT}/health

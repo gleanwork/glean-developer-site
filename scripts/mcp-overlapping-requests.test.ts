@@ -4,9 +4,8 @@
 // them concurrently through one McpDocsServer. Every overlapping request must
 // get its own transport and server; reusing one fails with "Already connected
 // to a transport". This runs locally with a slow stub search provider so the
-// requests are guaranteed to overlap without calling Glean. A burst against
-// production cannot do that reliably without spending the shared Glean rate
-// limit that real users depend on.
+// requests are guaranteed to overlap; a burst against production cannot
+// guarantee that.
 import fs from 'node:fs';
 import http from 'node:http';
 import type { AddressInfo } from 'node:net';
@@ -40,7 +39,7 @@ beforeAll(async () => {
     }`,
   );
 
-  // Same shape as api/mcp.ts, with the stub in place of the Glean provider.
+  // Same shape as api/mcp.ts, with a slow stub in place of local search.
   const server = new McpDocsServer({
     docsPath: path.join(dir, 'docs.json'),
     indexPath: path.join(dir, 'search-index.json'),
