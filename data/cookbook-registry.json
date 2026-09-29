@@ -1726,7 +1726,7 @@
     "authMethod": ["client-api-oauth-or-token"],
     "buildMethod": "scaffold",
     "languages": ["typescript"],
-    "visibility": "preview",
+    "visibility": "public",
     "featured": false,
     "tags": ["human-in-the-loop", "approvals", "durable-runs", "slack"],
     "prerequisites": [
@@ -1761,7 +1761,7 @@
         "startsOwnServer": false
       },
       "run": {
-        "command": "npm start -- --agent-id \"<agent-id>\" --email \"<work-email>\"",
+        "command": "npm start -- --agent-id \"<agent-id>\" --email \"<work-email>\" --show-json",
         "userBrowser": false
       }
     },
@@ -1798,13 +1798,13 @@
       {
         "kind": "run",
         "title": "Run the agent and decide",
-        "command": "npm start -- --agent-id \"<agent-id>\" --email \"<work-email>\"",
-        "description": "The command starts one durable run, waits for the agent to pause, and shows the tool, what it does, and its exact arguments. Type a to approve that one call (the DM arrives), r to reject it (nothing is sent), c to cancel the run, or press Enter to leave it waiting. Add --show-json to also print each run Glean returns as JSON, under the SDK call that returned it; it includes the tool arguments, so keep it out of shared logs. If the run finishes without asking, the tool isn't selected, Run without confirmation is checked, or the agent wasn't saved. Closing the CLI or reaching the 120-second wait doesn't cancel the run; the CLI prints the full resume command, with the agent and run IDs, to continue. A resumed run can take a few minutes to finish after a decision; if the wait runs out, resume again. Without a terminal to ask in, resume prints a decision command bound to the pending interaction ID; run it only after a person has reviewed that call."
+        "command": "npm start -- --agent-id \"<agent-id>\" --email \"<work-email>\" --show-json",
+        "description": "The command starts one durable run, waits for the agent to pause, and shows the tool, what it does, and its exact arguments. Type a to approve that one call (the DM arrives), r to reject it (nothing is sent), c to cancel the run, or press Enter to leave it waiting. --show-json also prints each run Glean returns as JSON, under the SDK call that returned it, so you can see the API responses; leave it off to see only the review. The JSON includes the tool arguments, so keep it out of shared logs. If the run finishes without asking, the tool isn't selected, Run without confirmation is checked, or the agent wasn't saved. Closing the CLI or reaching the 120-second wait doesn't cancel the run; the CLI prints the full resume command, with the agent and run IDs, to continue. A resumed run can take a few minutes to finish after a decision; if the wait runs out, resume again. Without a terminal to ask in, resume prints a decision command bound to the pending interaction ID; run it only after a person has reviewed that call."
       },
       {
         "kind": "verify-live",
         "title": "Check approve, reject, and cancel",
-        "command": "npm start -- --agent-id \"<agent-id>\" --email \"<work-email>\"",
+        "command": "npm start -- --agent-id \"<agent-id>\" --email \"<work-email>\" --show-json",
         "description": "Approve one run and confirm exactly one DM arrives. Run the command again and reject; confirm no DM arrives and the agent says the message was not sent. Run it a third time, press Enter, then run the resume command it printed and cancel the run (c); it ends cancelled with nothing pending. Only Slack can show whether a message was sent."
       },
       {
