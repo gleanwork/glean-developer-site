@@ -21,7 +21,8 @@ This MCP server exposes the Glean developer documentation (developers.glean.com)
 ## Where things are
 
 - **Endpoint reference** lives under `/api/client-api/`, `/api/indexing-api/` and `/api/platform-api/`. Each endpoint has its own page, titled by the operation (for example "Create an agent" or "Bulk index documents"). Include the API name in the search when the same operation exists in more than one API.
-- **Authentication and getting started** for the Client and Indexing APIs are under `/api-info/`. Search `authentication` with the API name.
+- **Site-wide basics** are under `/get-started/`: the authentication overview (which API uses which token), key terms, and rate limits.
+- **Authentication and getting started** for the Client and Indexing APIs are under `/api-info/`. For the Platform API they are under `/api/platform-api/`. Search `authentication` with the API name.
 - **API clients and SDKs** are under `/libraries/`: the Python, TypeScript, Go and Java API clients, the Indexing SDK, and the Web SDK.
 - **Guides** (search, chat, agents, tools, triggers, MCP hosts) are under `/guides/`, and end-to-end examples are under `/cookbook/`.
 - **Error codes** such as `rate_limit_exceeded` each have a page under `/errors/`. Search the code or the HTTP status with a keyword, like `429 rate limit`.

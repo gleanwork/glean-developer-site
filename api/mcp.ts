@@ -38,7 +38,8 @@ async function getServer(): Promise<McpDocsServer> {
       name: manifest.serverName,
       // Vercel sets this at runtime. It is read here, not at build time,
       // because turbo can reuse a cached build from an earlier commit.
-      version: process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ?? 'dev',
+      // `||`, not `??`, so an empty value also falls back to 'dev'.
+      version: process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) || 'dev',
       baseUrl: 'https://developers.glean.com',
       skillsPath: path.join(projectRoot, 'build/mcp/skills.json'),
     });
