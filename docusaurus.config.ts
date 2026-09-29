@@ -304,11 +304,15 @@ const config: Config = {
     [
       'docusaurus-plugin-mcp-server',
       {
+        // api/mcp.ts reads the name from build/mcp/manifest.json, and reports
+        // the deploy's commit as the version.
         server: {
           name: 'glean-developer-docs',
-          version: '1.0.0',
         },
         excludeRoutes: previewRecipeRoutes,
+        // Serve our own docs-research skill instead of the built-in one, so
+        // its description says what these docs cover.
+        skills: { builtin: false, dir: 'mcp-skills' },
       },
     ],
     [
