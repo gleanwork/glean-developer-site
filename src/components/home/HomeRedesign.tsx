@@ -5,7 +5,14 @@ import {
   getClientIcon,
   type ClientId,
 } from '@gleanwork/mcp-config-schema/browser';
+import experimentalData from '@site/src/data/experimental.json';
+import BeakerIcon from '@site/src/components/BeakerIcon';
 import TerminalPanel from './TerminalPanel';
+import {
+  describePlatformStatuses,
+  getPlatformStatuses,
+  type PlatformCapabilityStatus,
+} from './platformStatus';
 import {
   AGENTS_BAND_CODE,
   HERO_SLIDES,
@@ -22,29 +29,73 @@ function feather(name: string, size = 18): React.ReactNode {
   });
 }
 
-/** Experimental Platform APIs announcement band (content-configurable). */
+const PLATFORM_STATUSES = getPlatformStatuses(experimentalData.endpoints);
+const PLATFORM_COPY = describePlatformStatuses(PLATFORM_STATUSES);
+
+/**
+ * Platform APIs announcement band. Per-capability GA/experimental status is
+ * derived from the generated `experimental.json`, so it tracks the spec.
+ */
 export function AnnouncementBand({
-  tag = 'Experimental',
-  title = 'Introducing Glean Platform APIs',
-  body = 'Build search experiences and run Glean agents in your applications with our new Platform APIs — now rolling out in experimental preview.',
+  statuses = PLATFORM_STATUSES,
+  tag = PLATFORM_COPY.tag,
+  title = PLATFORM_COPY.title,
+  body = PLATFORM_COPY.body,
   href = '/api/platform-api',
   cta = 'Explore Platform APIs',
 }: {
+  statuses?: PlatformCapabilityStatus[];
   tag?: string;
   title?: string;
   body?: string;
   href?: string;
   cta?: string;
 }): React.ReactElement {
+  const anyGa = statuses.some((s) => s.stage === 'ga');
   return (
     <div className={styles.bandWrap}>
       <Link className={styles.band} to={href}>
         <div className={styles.bandAccent} aria-hidden="true" />
         <div className={styles.bandContent}>
-          <span className={styles.bandTag}>{tag}</span>
+          <span
+            className={`${styles.bandTag} ${anyGa ? styles.bandTagGa : ''}`}
+          >
+            {anyGa ? (
+              feather('Check', 14)
+            ) : (
+              <BeakerIcon className={styles.bandIcon} />
+            )}
+            {tag}
+          </span>
           <div className={styles.bandText}>
             <h3 className={styles.bandTitle}>{title}</h3>
             <p className={styles.bandBody}>{body}</p>
+            {statuses.length > 0 && (
+              <ul className={styles.bandStatuses}>
+                {statuses.map(({ label, stage }) => (
+                  <li
+                    key={label}
+                    className={`${styles.bandStatus} ${
+                      stage === 'ga'
+                        ? styles.bandStatusGa
+                        : styles.bandStatusExperimental
+                    }`}
+                  >
+                    {stage === 'ga' ? (
+                      feather('Check', 13)
+                    ) : (
+                      <BeakerIcon className={styles.bandIcon} />
+                    )}
+                    {label}
+                    <span className={styles.srOnly}>
+                      {stage === 'ga'
+                        ? ' (generally available)'
+                        : ' (experimental)'}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         </div>
         <span className={styles.bandCta}>
