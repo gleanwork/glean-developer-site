@@ -15,6 +15,12 @@ test('exposes docs_search and docs_fetch', async ({ mcp }) => {
   expect(names).toEqual(expect.arrayContaining(['docs_search', 'docs_fetch']));
 });
 
+test('reports the deploy commit as its version', async ({ mcp }) => {
+  // A short commit on Vercel, 'dev' locally. The old hard-coded '1.0.0'
+  // meant a bad answer could not be traced to a deploy.
+  expect(mcp.client.getServerVersion()?.version).toMatch(/^([0-9a-f]{7}|dev)$/);
+});
+
 test('publishes the docs-research skill', async ({ mcp }) => {
   const { resources } = await mcp.client.listResources();
   expect(resources.map((resource) => resource.uri)).toContain(

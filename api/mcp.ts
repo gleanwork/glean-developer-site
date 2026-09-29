@@ -5,11 +5,16 @@
  *
  * Searches the build's own index (build/mcp/search-index.json) in process,
  * so it needs no credentials and makes no outbound calls. It also serves the
- * built-in docs-research skill from build/mcp/skills.json.
+ * site's docs-research skill (mcp-skills/) from build/mcp/skills.json.
+ *
+ * The server name comes from build/mcp/manifest.json, which the build writes
+ * from the plugin options in docusaurus.config.ts. The version is the commit
+ * of the deploy serving the request, so a bad answer can be traced to it.
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import type { McpDocsServer } from 'docusaurus-plugin-mcp-server';
+import type { McpDocsServer, McpManifest } from 'docusaurus-plugin-mcp-server';
+import { readFile } from 'fs/promises';
 import path from 'path';
 
 // Initialize the server (lazy-loaded on first request)
@@ -23,12 +28,18 @@ async function getServer(): Promise<McpDocsServer> {
     // Use path relative to project root - Vercel's includeFiles puts build/mcp/** in the function
     // __dirname is api/, so we go up one level to project root
     const projectRoot = path.join(__dirname, '..');
+    const manifest = JSON.parse(
+      await readFile(path.join(projectRoot, 'build/mcp/manifest.json'), 'utf8'),
+    ) as McpManifest;
 
     server = new McpDocsServer({
       docsPath: path.join(projectRoot, 'build/mcp/docs.json'),
       indexPath: path.join(projectRoot, 'build/mcp/search-index.json'),
-      name: 'glean-developer-docs',
-      version: '1.0.0',
+      name: manifest.serverName,
+      // Vercel sets this at runtime. It is read here, not at build time,
+      // because turbo can reuse a cached build from an earlier commit.
+      // `||`, not `??`, so an empty value also falls back to 'dev'.
+      version: process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) || 'dev',
       baseUrl: 'https://developers.glean.com',
       skillsPath: path.join(projectRoot, 'build/mcp/skills.json'),
     });
