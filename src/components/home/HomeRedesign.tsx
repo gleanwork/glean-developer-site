@@ -94,7 +94,7 @@ export function AnnouncementBand({
                 <div className={styles.bandPreviewGroup}>
                   {ga.length > 0 && (
                     <span className={styles.bandStatusLabel} aria-hidden="true">
-                      In preview
+                      Experimental
                     </span>
                   )}
                   <ul className={styles.bandStatusGroup}>
