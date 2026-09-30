@@ -19,6 +19,9 @@ import {
   QUICKSTART_SNIPPETS,
   SDK_CARDS,
 } from './snippets';
+import recipesData from '@site/src/data/recipes.json';
+import type { RecipeRecord } from '@site/src/types/recipe';
+import { heroRecipeLink } from './heroRecipes';
 import styles from './HomeRedesign.module.css';
 
 function feather(name: string, size = 18): React.ReactNode {
@@ -123,7 +126,11 @@ export function AnnouncementBand({
   );
 }
 
-/** Rotating hero: four API surfaces, paired copy + terminal panels. */
+const HERO_RECIPE_LINKS = HERO_SLIDES.map((slide) =>
+  heroRecipeLink(recipesData.recipes as RecipeRecord[], slide.recipeCapability),
+);
+
+/** Rotating hero: API surfaces, paired copy + terminal panels. */
 export function HeroCarousel(): React.ReactElement {
   const [active, setActive] = useState(0);
   const paused = useRef(false);
@@ -159,6 +166,7 @@ export function HeroCarousel(): React.ReactElement {
         <div className={styles.heroSlides}>
           {HERO_SLIDES.map((slide, i) => (
             <div
+              aria-hidden={i !== active}
               className={`${styles.heroSlide} ${
                 i === active ? styles.heroSlideActive : ''
               }`}
@@ -188,6 +196,19 @@ export function HeroCarousel(): React.ReactElement {
             {feather('BookOpen')}
             API reference
           </Link>
+        </div>
+        {/* Reserve the line on slides without recipes so the CTAs don't shift. */}
+        <div className={styles.heroRecipes}>
+          {HERO_RECIPE_LINKS[active] && (
+            <Link
+              aria-label={HERO_RECIPE_LINKS[active].ariaLabel}
+              className={styles.heroRecipesLink}
+              to={HERO_RECIPE_LINKS[active].href}
+            >
+              {HERO_RECIPE_LINKS[active].label}
+              {feather('ArrowRight', 14)}
+            </Link>
+          )}
         </div>
       </div>
 
@@ -236,30 +257,6 @@ export function HeroCarousel(): React.ReactElement {
         </div>
       </div>
     </div>
-  );
-}
-
-/** Cookbook teaser shown on the homepage. */
-export function CookbookStrip(): React.ReactElement {
-  return (
-    <Link className={styles.cookbookStrip} to="/cookbook">
-      <span className={styles.cookbookStripIcon}>
-        {feather('BookOpen', 20)}
-      </span>
-      <span className={styles.cookbookStripText}>
-        <span className={styles.cookbookStripTitle}>
-          New: Cookbooks
-          <span className={styles.cookbookStripBadge}>Recipes</span>
-        </span>
-        <span className={styles.cookbookStripBody}>
-          Runnable patterns that go from problem to working demo to scaffolded
-          starter code — auth and permissions laid out for each.
-        </span>
-      </span>
-      <span className={styles.cookbookStripArrow}>
-        {feather('ArrowRight', 18)}
-      </span>
-    </Link>
   );
 }
 
@@ -564,7 +561,6 @@ export default function HomeRedesign(): React.ReactElement {
     <div className={`${styles.page} home-redesign-root`}>
       <AnnouncementBand />
       <HeroCarousel />
-      <CookbookStrip />
       <PathCards />
       <QuickstartTabs />
       <SdkGrid />
