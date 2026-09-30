@@ -1787,9 +1787,24 @@
       },
       {
         "kind": "manual",
-        "title": "Create the agent in Agent Builder",
+        "title": "Create the agent and paste its instructions",
         "command": "cat agent-instructions.txt",
-        "description": "In Glean, open Agents from the left navigation and click Create agent; Auto mode is selected by default. Builder Assistant opens beside the agent; you don't need it here (if it asks you to describe the agent first, paste the instructions into it, then check each setting). Click the name at the top of the builder and rename it Cookbook approval demo. Replace any text under Instructions with the instructions this command prints. In the Capabilities tab, under Tools, search for Slack Actions and add it; under Write tools, keep only Send Slack message to user and leave Allow agent to use write tools without approval unchecked. That checkbox is the approval boundary. In the Triggers tab, set When should the agent run? to Manually run and What type of input does it need? to Chat message, then click Publish; until you publish, edits are only a draft. Copy the agent ID from the page URL (…/chat/agents/<agent-id>/edit): the 32-character ID after /agents/.\n\nA spec file can't do this step portably: it refers to Slack by a tool provider ID that is different on every Glean instance, so the Slack tool would be silently dropped on yours."
+        "description": "In Glean, open Agents from the left navigation and click Create agent. Auto mode is selected by default, and Builder Assistant opens beside the agent; you don't need it (if it asks you to describe the agent first, paste these instructions into it). Click the name at the top of the builder and rename it Cookbook approval demo. Replace any text under Instructions with the text this command prints."
+      },
+      {
+        "kind": "manual",
+        "title": "Add the Slack tool",
+        "description": "In the Capabilities tab, under Tools, search for Slack Actions and add it. Under Write tools, keep only Send Slack message to user. Leave Allow agent to use write tools without approval unchecked: that checkbox is the approval boundary this recipe demonstrates. A spec file can't set this up for you, because it refers to Slack by a tool provider ID that is different on every Glean instance."
+      },
+      {
+        "kind": "manual",
+        "title": "Set the trigger and publish",
+        "description": "In the Triggers tab, set When should the agent run? to Manually run and What type of input does it need? to Chat message. Click Publish. Until you publish, your edits are only a draft, and API runs use the published agent."
+      },
+      {
+        "kind": "manual",
+        "title": "Copy the agent ID",
+        "description": "Click Share at the top right of the agent. Under Publishing options, the API section shows the Agent ID with a copy button; use it as <agent-id> below. You don't need Create token there: the next step signs you in instead. The ID is also the 32-character value after /agents/ in the page URL."
       },
       {
         "kind": "authenticate",
@@ -1801,7 +1816,17 @@
         "kind": "run",
         "title": "Run the agent and decide",
         "command": "npm start -- --agent-id \"<agent-id>\" --email \"<work-email>\" --show-json",
-        "description": "The command starts one durable run, waits for the agent to pause, and shows the tool, what it does, and its exact arguments. Type a to approve that one call (the DM arrives), r to reject it (nothing is sent), c to cancel the run, or press Enter to leave it waiting. --show-json also prints each API request and response body under the SDK call that sent it, so you can follow the run_id and interaction_id from one call to the next. Leave it off to see only the review. The JSON includes the tool arguments, so keep it out of shared logs. If the run finishes without asking, the tool isn't added, Allow agent to use write tools without approval is checked, or the agent wasn't published. Closing the CLI or reaching the 120-second wait doesn't cancel the run; the CLI prints the full resume command, with the agent and run IDs, to continue. A resumed run can take a few minutes to finish after a decision; if the wait runs out, resume again. Without a terminal to ask in, resume prints a decision command bound to the pending interaction ID; run it only after a person has reviewed that call."
+        "description": "The command starts one durable run, waits for the agent to pause, and shows the tool, what it does, and its exact arguments. Type a to approve that one call (the DM arrives), r to reject it (nothing is sent), c to cancel the run, or press Enter to leave it waiting. If the run finishes without asking, the Slack tool isn't added, Allow agent to use write tools without approval is checked, or the agent wasn't published."
+      },
+      {
+        "kind": "manual",
+        "title": "Follow the API calls",
+        "description": "--show-json prints each API request and response body under the SDK call that sent it, so you can follow run_id and interaction_id from one call to the next. Leave it off to see only the review. The JSON includes the tool arguments, so keep it out of shared logs."
+      },
+      {
+        "kind": "manual",
+        "title": "Pick a waiting run back up",
+        "description": "Closing the CLI or reaching the 120-second wait doesn't cancel the run; the CLI prints the full resume command, with the agent and run IDs. After a decision, a resumed run can take a few minutes to finish; if the wait runs out, resume again. Without a terminal to ask in, resume prints a decision command bound to the pending interaction ID; run it only after a person has reviewed that call."
       },
       {
         "kind": "verify-live",
