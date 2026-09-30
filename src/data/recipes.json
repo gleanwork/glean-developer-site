@@ -594,7 +594,7 @@
         "Node.js 22.12+ and npm",
         "A Glean instance with durable agent runs available",
         "Permission to create agents in Agent Builder",
-        "Slack tools enabled for agents by a Glean admin, and your Slack account connected in Glean, so the agent can send you a direct message",
+        "The Slack Actions tool pack available in Agent Builder, and your Slack account connected in Glean, so the agent can send you a direct message",
         "Permission to sign in with the agents scope"
       ],
       "demoQueries": [
@@ -634,7 +634,7 @@
         {
           "kind": "manual",
           "title": "Create the agent in Agent Builder",
-          "description": "In Glean, open the Agent library and click Create agent; Auto mode is selected by default. Builder Assistant opens next to the configuration tabs; you don't need it here (if it asks you to describe the agent first, paste the instructions into it, then check each tab). Name the agent Cookbook approval demo. In the Instructions tab, replace any text with the instructions this command prints. In the Tools tab, add Slack and no other app; if Slack lists its tools, keep only the direct message tool (Send message as DM in Glean's Slack tools docs, Send Slack message to user in runs). Leave Run without user confirmation unchecked; new tools start unchecked. That setting is the approval boundary. In the Triggers tab, use Manual run with Chat message input, then click Save; until you save, edits are only a draft. Copy the agent ID from the page URL: the 32-character ID after /agents/.\n\nA spec file can't do this step portably: it refers to Slack by a tool provider ID that is different on every Glean instance, so the Slack tool would be silently dropped on yours.",
+          "description": "In Glean, open Agents from the left navigation and click Create agent; Auto mode is selected by default. Builder Assistant opens beside the agent; you don't need it here (if it asks you to describe the agent first, paste the instructions into it, then check each setting). Click the name at the top of the builder and rename it Cookbook approval demo. Replace any text under Instructions with the instructions this command prints. In the Capabilities tab, under Tools, search for Slack Actions and add it; under Write tools, keep only Send Slack message to user and leave Allow agent to use write tools without approval unchecked. That checkbox is the approval boundary. In the Triggers tab, set When should the agent run? to Manually run and What type of input does it need? to Chat message, then click Publish; until you publish, edits are only a draft. Copy the agent ID from the page URL (…/chat/agents/<agent-id>/edit): the 32-character ID after /agents/.\n\nA spec file can't do this step portably: it refers to Slack by a tool provider ID that is different on every Glean instance, so the Slack tool would be silently dropped on yours.",
           "command": "cat agent-instructions.txt"
         },
         {
@@ -646,7 +646,7 @@
         {
           "kind": "run",
           "title": "Run the agent and decide",
-          "description": "The command starts one durable run, waits for the agent to pause, and shows the tool, what it does, and its exact arguments. Type a to approve that one call (the DM arrives), r to reject it (nothing is sent), c to cancel the run, or press Enter to leave it waiting. --show-json also prints each run Glean returns as JSON, under the SDK call that returned it, so you can see the API responses; leave it off to see only the review. The JSON includes the tool arguments, so keep it out of shared logs. If the run finishes without asking, the tool isn't added, Run without user confirmation is checked, or the agent wasn't saved. Closing the CLI or reaching the 120-second wait doesn't cancel the run; the CLI prints the full resume command, with the agent and run IDs, to continue. A resumed run can take a few minutes to finish after a decision; if the wait runs out, resume again. Without a terminal to ask in, resume prints a decision command bound to the pending interaction ID; run it only after a person has reviewed that call.",
+          "description": "The command starts one durable run, waits for the agent to pause, and shows the tool, what it does, and its exact arguments. Type a to approve that one call (the DM arrives), r to reject it (nothing is sent), c to cancel the run, or press Enter to leave it waiting. --show-json also prints each run Glean returns as JSON, under the SDK call that returned it, so you can see the API responses; leave it off to see only the review. The JSON includes the tool arguments, so keep it out of shared logs. If the run finishes without asking, the tool isn't added, Allow agent to use write tools without approval is checked, or the agent wasn't published. Closing the CLI or reaching the 120-second wait doesn't cancel the run; the CLI prints the full resume command, with the agent and run IDs, to continue. A resumed run can take a few minutes to finish after a decision; if the wait runs out, resume again. Without a terminal to ask in, resume prints a decision command bound to the pending interaction ID; run it only after a person has reviewed that call.",
           "command": "npm start -- --agent-id \"<agent-id>\" --email \"<work-email>\" --show-json"
         },
         {
@@ -726,7 +726,7 @@
         "guardrails": [
           {
             "title": "Keep the approval boundary on the tool",
-            "rule": "Leave Run without user confirmation unchecked for the tool you want reviewed. Asking for consent in the agent instructions is not an approval gate. If a run finishes without pausing, treat it as a configuration error."
+            "rule": "Leave Allow agent to use write tools without approval unchecked for the tool you want reviewed. Asking for consent in the agent instructions is not an approval gate. If a run finishes without pausing, treat it as a configuration error."
           },
           {
             "title": "Decide on the call you showed",
@@ -760,7 +760,7 @@
           }
         ]
       },
-      "aiPrompt": "Copy the scaffold and follow its numbered steps in one shell session. Guide the user through creating the agent in Agent Builder with the supplied instructions and Slack's direct message tool (Send Slack message to user), with Run without user confirmation unchecked, and ask for the saved agent ID. Do not create the agent from a spec file. Use the shipped npm run login and npm start commands; do not recreate authentication. When the CLI shows a pending tool call, show the user the tool and exact arguments and ask them to decide. Never run a --decision command, approve, reject, or cancel without the user choosing it for that exact interaction ID. Starting the recipe is not permission to approve. Run the offline tests without credentials; only Slack can confirm whether a message was sent.",
+      "aiPrompt": "Copy the scaffold and follow its numbered steps in one shell session. Guide the user through creating and publishing the agent in Agent Builder with the supplied instructions and the Slack Actions tool Send Slack message to user, with Allow agent to use write tools without approval unchecked, then ask for the agent ID. Do not create the agent from a spec file. Use the shipped npm run login and npm start commands; do not recreate authentication. When the CLI shows a pending tool call, show the user the tool and exact arguments and ask them to decide. Never run a --decision command, approve, reject, or cancel without the user choosing it for that exact interaction ID. Starting the recipe is not permission to approve. Run the offline tests without credentials; only Slack can confirm whether a message was sent.",
       "llmContext": "Uses @gleanwork/api-client 0.20.15 with an @gleanwork/auth createGleanTokenProvider session for the agents scope (GLEAN_API_TOKEN only as a fallback). createRun with execution_mode: DURABLE and stream: false; getRun polls; respondToRun and cancelRun post to /api/agents/{agent_id}/responses and /api/agents/{agent_id}/cancellations with run_id in the body. A pending approval has interaction_id, type TOOL_APPROVAL, display_name, description, tool_id, and arguments. Decisions are APPROVE or REJECT for the reviewed interaction_id only and cannot edit arguments. The client never retries automatically, because a retried start creates a second run. resume, status, and cancel take --agent-id and --run-id. Agent spec files refer to built-in tools such as Slack by a per-instance toolProviderId, so this recipe has the user create the agent in Agent Builder instead of importing a spec.",
       "goDependency": false,
       "featured": false,
