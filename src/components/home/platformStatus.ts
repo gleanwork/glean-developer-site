@@ -75,7 +75,7 @@ export function describePlatformStatuses(
   if (ga.length === 0) {
     return {
       tag: 'Experimental',
-      title: 'Introducing Glean Platform APIs',
+      title: 'Glean Platform APIs',
       body: `${joinLabels(experimental)} are rolling out in experimental preview.`,
     };
   }
@@ -89,7 +89,7 @@ export function describePlatformStatuses(
 
   return {
     tag: 'Generally available',
-    title: 'Glean Platform APIs are generally available',
+    title: 'Glean Platform APIs',
     body: `Build search, chat, and agent experiences into your applications. ${gaSentence}${previewSentence}`,
   };
 }

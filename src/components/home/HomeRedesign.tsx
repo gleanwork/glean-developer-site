@@ -57,18 +57,24 @@ export function AnnouncementBand({
       <Link className={styles.band} to={href}>
         <div className={styles.bandAccent} aria-hidden="true" />
         <div className={styles.bandContent}>
-          <span
-            className={`${styles.bandTag} ${anyGa ? styles.bandTagGa : ''}`}
-          >
-            {anyGa ? (
-              feather('Check', 14)
-            ) : (
-              <BeakerIcon className={styles.bandIcon} />
-            )}
-            {tag}
+          <span className={styles.bandIconTile} aria-hidden="true">
+            {getIcon('platform', 'glean', {
+              width: 20,
+              height: 20,
+              color: 'currentColor',
+            })}
           </span>
           <div className={styles.bandText}>
-            <h3 className={styles.bandTitle}>{title}</h3>
+            <h3 className={styles.bandTitle}>
+              {title}
+              <span
+                className={`${styles.bandBadge} ${
+                  anyGa ? styles.bandBadgeGa : ''
+                }`}
+              >
+                {tag}
+              </span>
+            </h3>
             <p className={styles.bandBody}>{body}</p>
             {statuses.length > 0 && (
               <ul className={styles.bandStatuses}>
