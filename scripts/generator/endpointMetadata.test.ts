@@ -50,9 +50,18 @@ describe('deriveRelease', () => {
       stage: 'deprecated',
       since: '2026-08-25',
       removal: '2027-04-15',
+      message: 'Use POST /api/agents/search instead.',
       docs: 'https://developers.glean.com/api/platform-api/agents-overview',
       version: undefined,
     });
+  });
+
+  it('drops a deprecation message that only restates the badge', () => {
+    const generic = {
+      ...endpointDeprecation,
+      message: 'Endpoint is deprecated',
+    };
+    expect(deriveRelease(base, [generic]).message).toBeUndefined();
   });
 
   it('reads x-glean-experimental and its introduced date', () => {

@@ -7,7 +7,7 @@ The deprecation system displays warnings on API documentation pages when fields,
 1. **OpenAPI specs** contain `x-glean-deprecated` extensions on deprecated fields
 2. **`generate-deprecations.ts`** extracts these deprecations and outputs `deprecations.json`
 3. **`customMdGenerators.ts`** injects the `<EndpointMetadata>` component into generated API docs, passing the endpoint's active deprecations
-4. **`EndpointMetadata`** renders them: an endpoint-level deprecation sets the release stage to Deprecated (with removal date and migration link); field, parameter, and enum deprecations appear in a Deprecations row
+4. **`EndpointMetadata`** renders them: an endpoint-level deprecation sets the release stage to Deprecated (with its replacement message, removal date, and migration link; generic messages such as "Endpoint is deprecated" are omitted); field, parameter, and enum deprecations appear in a Deprecations row
 
 ## Adding Local Test Deprecations
 

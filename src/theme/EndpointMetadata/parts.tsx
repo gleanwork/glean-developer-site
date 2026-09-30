@@ -77,7 +77,8 @@ function stageDetailItems(release: EndpointRelease): ReactNode[] {
     case 'deprecated': {
       const removal = formatDate(release.removal);
       return [
-        since && `Since ${since}`,
+        // The replacement guidance is more useful than the start date.
+        release.message ?? (since && `Since ${since}`),
         removal && `Removal on ${removal}`,
         release.docs ? (
           <Link to={release.docs}>Migration guide</Link>
@@ -94,7 +95,8 @@ function stageDetailItems(release: EndpointRelease): ReactNode[] {
 /**
  * Muted one-liner beside the badge, in the same style as the Authorization
  * row, e.g. "Introduced June 23, 2026 · How experimental APIs work" or
- * "Since August 25, 2026 · Removal on April 15, 2027 · Migration guide".
+ * "Use POST /api/agents/search instead. · Removal on April 15, 2027 ·
+ * Migration guide".
  */
 export function StageDetails({
   release,

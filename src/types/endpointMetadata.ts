@@ -29,6 +29,11 @@ export interface EndpointRelease {
   /** Deprecated stage only: removal date and migration guide URL. */
   removal?: string;
   docs?: string;
+  /**
+   * Deprecated stage only: replacement guidance, e.g. "Use POST
+   * /api/agents/search instead." Omitted when it only restates the badge.
+   */
+  message?: string;
 }
 
 export interface EndpointScopes {

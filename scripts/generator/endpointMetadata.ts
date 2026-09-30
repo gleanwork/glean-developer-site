@@ -72,6 +72,22 @@ function normalizeStage(stage: string | undefined) {
 }
 
 /**
+ * The deprecation's message, unless it only restates the badge
+ * ("Endpoint is deprecated"). Replacement guidance such as
+ * "Use POST /api/agents/search instead." is kept.
+ */
+export function deprecationMessage(
+  message: string | undefined,
+): string | undefined {
+  const trimmed = message?.trim();
+  if (!trimmed) return undefined;
+  if (/^(this )?endpoint (is|has been) deprecated\.?$/i.test(trimmed)) {
+    return undefined;
+  }
+  return trimmed;
+}
+
+/**
  * Derive the lifecycle stage. Precedence: an endpoint-level deprecation wins
  * (it is the most actionable), then `x-glean-release.stage` when present,
  * then the legacy experimental/beta markers, then GA.
@@ -90,6 +106,7 @@ export function deriveRelease(
       stage: 'deprecated',
       since: endpointDeprecation?.introduced,
       removal: endpointDeprecation?.removal,
+      message: deprecationMessage(endpointDeprecation?.message),
       docs: endpointDeprecation?.docs,
       version: releaseVersion,
     };
