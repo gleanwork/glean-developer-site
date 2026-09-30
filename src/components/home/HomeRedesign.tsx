@@ -92,18 +92,18 @@ export function AnnouncementBand({
               )}
               {preview.length > 0 && (
                 <div className={styles.bandPreviewGroup}>
-                  {ga.length > 0 && (
-                    <span className={styles.bandStatusLabel} aria-hidden="true">
-                      Experimental
-                    </span>
-                  )}
-                  <ul className={styles.bandStatusGroup}>
+                  <span className={styles.bandStatusLabel} aria-hidden="true">
+                    <BeakerIcon className={styles.bandIcon} />
+                    {ga.length > 0 && 'Experimental:'}
+                  </span>
+                  <ul
+                    className={`${styles.bandStatusGroup} ${styles.bandPreviewList}`}
+                  >
                     {preview.map(({ label }) => (
                       <li
                         key={label}
                         className={`${styles.bandStatus} ${styles.bandStatusExperimental}`}
                       >
-                        <BeakerIcon className={styles.bandIcon} />
                         {label}
                         <span className={styles.srOnly}> (experimental)</span>
                       </li>

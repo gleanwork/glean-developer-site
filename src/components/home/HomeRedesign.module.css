@@ -48,7 +48,8 @@
   padding: 22px 28px;
   text-decoration: none;
   background: linear-gradient(100deg, #343ced 0%, #3b34dd 46%, #4a2fb2 100%);
-  box-shadow: 0 12px 28px -10px rgba(52, 60, 237, 0.55);
+  /* Kept soft so the band doesn't outweigh the hero's primary CTA. */
+  box-shadow: 0 8px 20px -12px rgba(52, 60, 237, 0.35);
 }
 
 .band:hover {
@@ -116,45 +117,44 @@
   flex-shrink: 0;
 }
 
+/* Plain-text status line: no pill shapes, so the badge and CTA stay the only
+ * chips in the band and nothing reads as a separate button. */
 .bandStatuses {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px 12px;
+  gap: 6px 16px;
+  font-size: 14px;
+  line-height: 20px;
 }
 
 .bandStatusGroup {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 4px 16px;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-/* Keeps the "Experimental" label on the same line as the chips it explains. */
+/* Keeps the "Experimental:" label on the same line as the names it explains. */
 .bandPreviewGroup {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 /* Doubled class beats Infima's `li + li` list-item spacing. */
 .bandStatusGroup > .bandStatus {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  height: 28px;
+  gap: 5px;
   margin: 0;
-  padding: 0 12px;
-  border-radius: 9999px;
-  font-size: 12.5px;
-  font-weight: 600;
 }
 
 .bandStatusGa {
-  background: rgba(255, 255, 255, 0.16);
   color: #fff;
+  font-weight: 500;
 }
 
 .bandStatusGa svg {
@@ -162,19 +162,29 @@
 }
 
 .bandStatusExperimental {
-  border: 1px dashed rgba(255, 255, 255, 0.45);
-  color: rgba(255, 255, 255, 0.8);
-  font-weight: 500;
+  color: rgba(255, 255, 255, 0.75);
 }
 
-/* Divider + group label that explains the dashed chips. */
+/* Experimental names read as one list: "Skills · Triggers". */
+.bandPreviewList {
+  gap: 4px 6px;
+}
+
+/* The li's own 5px gap spaces the dot from the name after it; the list's 6px
+ * column gap spaces it from the name before. */
+.bandPreviewList > .bandStatus + .bandStatus::before {
+  content: '·';
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* Divider + label that introduces the experimental names. */
 .bandStatusLabel {
-  padding-left: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding-left: 16px;
   border-left: 1px solid rgba(255, 255, 255, 0.3);
   color: rgba(255, 255, 255, 0.75);
-  font-size: 12.5px;
-  font-weight: 500;
-  line-height: 18px;
   white-space: nowrap;
 }
 
@@ -225,8 +235,8 @@
 
 /* Sized off the band itself, not the viewport: the docs sidebar makes the
  * available width jump around 996px. */
-/* ~920px is where every chip still fits on one line beside the CTA. */
-@container band (max-width: 920px) {
+/* ~840px is where the status line still fits on one row beside the CTA. */
+@container band (max-width: 840px) {
   .band {
     flex-direction: column;
     align-items: flex-start;
