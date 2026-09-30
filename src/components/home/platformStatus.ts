@@ -58,38 +58,14 @@ export function getPlatformStatuses(
   }));
 }
 
-function joinLabels(labels: string[]): string {
-  if (labels.length <= 2) return labels.join(' and ');
-  return `${labels.slice(0, -1).join(', ')}, and ${labels[labels.length - 1]}`;
-}
-
-/** Announcement copy derived from capability statuses. */
-export function describePlatformStatuses(
-  statuses: PlatformCapabilityStatus[],
-): { tag: string; title: string; body: string } {
-  const ga = statuses.filter((s) => s.stage === 'ga').map((s) => s.label);
-  const experimental = statuses
-    .filter((s) => s.stage === 'experimental')
-    .map((s) => s.label);
-
-  if (ga.length === 0) {
-    return {
-      tag: 'Experimental',
-      title: 'Glean Platform APIs',
-      body: `${joinLabels(experimental)} are rolling out in experimental preview.`,
-    };
-  }
-
-  const verb = (labels: string[]) => (labels.length === 1 ? 'is' : 'are');
-  const gaSentence = `${joinLabels(ga)} ${verb(ga)} ready for production.`;
-  const previewSentence =
-    experimental.length > 0
-      ? ` ${joinLabels(experimental)} ${verb(experimental)} available in experimental preview.`
-      : '';
-
-  return {
-    tag: 'Generally available',
-    title: 'Glean Platform APIs',
-    body: `Build search, chat, and agent experiences into your applications. ${gaSentence}${previewSentence}`,
-  };
+/**
+ * Title badge: GA once any capability has graduated; the chips carry the
+ * per-capability detail.
+ */
+export function platformBadge(statuses: PlatformCapabilityStatus[]): {
+  label: string;
+  ga: boolean;
+} {
+  const ga = statuses.some((s) => s.stage === 'ga');
+  return { label: ga ? 'Generally available' : 'Experimental', ga };
 }

@@ -34,6 +34,7 @@
 
 /* Announcement band */
 .bandWrap {
+  container: band / inline-size;
   padding-top: 8px;
 }
 
@@ -44,7 +45,7 @@
   align-items: center;
   gap: 24px;
   border-radius: 16px;
-  padding: 26px 30px;
+  padding: 22px 28px;
   text-decoration: none;
   background: linear-gradient(100deg, #343ced 0%, #3b34dd 46%, #4a2fb2 100%);
   box-shadow: 0 12px 28px -10px rgba(52, 60, 237, 0.55);
@@ -69,7 +70,7 @@
 .bandContent {
   position: relative;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 18px;
   flex: 1;
   min-width: 0;
@@ -118,14 +119,28 @@
 .bandStatuses {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+
+.bandStatusGroup {
+  display: flex;
+  flex-wrap: wrap;
   gap: 8px;
-  margin: 14px 0 0;
+  margin: 0;
   padding: 0;
   list-style: none;
 }
 
+/* Keeps the "In preview" label on the same line as the chips it explains. */
+.bandPreviewGroup {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 /* Doubled class beats Infima's `li + li` list-item spacing. */
-.bandStatuses > .bandStatus {
+.bandStatusGroup > .bandStatus {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -152,6 +167,17 @@
   font-weight: 500;
 }
 
+/* Divider + group label that explains the dashed chips. */
+.bandStatusLabel {
+  padding-left: 12px;
+  border-left: 1px solid rgba(255, 255, 255, 0.3);
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 12.5px;
+  font-weight: 500;
+  line-height: 18px;
+  white-space: nowrap;
+}
+
 .srOnly {
   position: absolute;
   width: 1px;
@@ -165,6 +191,7 @@
 }
 
 .bandText {
+  flex: 1;
   min-width: 0;
 }
 
@@ -178,15 +205,7 @@
   letter-spacing: -0.5px;
   font-weight: 700;
   color: #fff;
-  margin: 0 0 5px;
-}
-
-.bandBody {
-  font-size: 14.5px;
-  line-height: 1.5;
-  color: rgba(255, 255, 255, 0.9);
-  margin: 0;
-  max-width: 560px;
+  margin: 0 0 10px;
 }
 
 .bandCta {
@@ -204,20 +223,48 @@
   font-weight: 600;
 }
 
-@media (max-width: 900px) {
+/* Sized off the band itself, not the viewport: the docs sidebar makes the
+ * available width jump around 996px. */
+/* ~880px is where every chip still fits on one line beside the CTA. */
+@container band (max-width: 880px) {
   .band {
     flex-direction: column;
     align-items: flex-start;
   }
 
   .bandContent {
+    width: 100%;
+  }
+
+  /* Line the CTA up with the text column (44px tile + 18px gap). */
+  .bandCta {
+    margin-left: 62px;
+  }
+
+  /* The chip groups can wrap onto separate lines here, so drop the divider. */
+  .bandStatusLabel {
+    padding-left: 0;
+    border-left: 0;
+  }
+
+  .bandAccent {
+    display: none;
+  }
+}
+
+@container band (max-width: 440px) {
+  .bandContent {
     flex-direction: column;
     align-items: flex-start;
     gap: 14px;
   }
 
-  .bandAccent {
-    display: none;
+  .bandText {
+    width: 100%;
+  }
+
+  .bandCta {
+    margin-left: 0;
   }
 }
 

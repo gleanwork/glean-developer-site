@@ -9,8 +9,8 @@ import experimentalData from '@site/src/data/experimental.json';
 import BeakerIcon from '@site/src/components/BeakerIcon';
 import TerminalPanel from './TerminalPanel';
 import {
-  describePlatformStatuses,
   getPlatformStatuses,
+  platformBadge,
   type PlatformCapabilityStatus,
 } from './platformStatus';
 import {
@@ -30,7 +30,6 @@ function feather(name: string, size = 18): React.ReactNode {
 }
 
 const PLATFORM_STATUSES = getPlatformStatuses(experimentalData.endpoints);
-const PLATFORM_COPY = describePlatformStatuses(PLATFORM_STATUSES);
 
 /**
  * Platform APIs announcement band. Per-capability GA/experimental status is
@@ -38,20 +37,18 @@ const PLATFORM_COPY = describePlatformStatuses(PLATFORM_STATUSES);
  */
 export function AnnouncementBand({
   statuses = PLATFORM_STATUSES,
-  tag = PLATFORM_COPY.tag,
-  title = PLATFORM_COPY.title,
-  body = PLATFORM_COPY.body,
+  title = 'Glean Platform APIs',
   href = '/api/platform-api',
   cta = 'Explore Platform APIs',
 }: {
   statuses?: PlatformCapabilityStatus[];
-  tag?: string;
   title?: string;
-  body?: string;
   href?: string;
   cta?: string;
 }): React.ReactElement {
-  const anyGa = statuses.some((s) => s.stage === 'ga');
+  const badge = platformBadge(statuses);
+  const ga = statuses.filter((s) => s.stage === 'ga');
+  const preview = statuses.filter((s) => s.stage === 'experimental');
   return (
     <div className={styles.bandWrap}>
       <Link className={styles.band} to={href}>
@@ -69,39 +66,52 @@ export function AnnouncementBand({
               {title}
               <span
                 className={`${styles.bandBadge} ${
-                  anyGa ? styles.bandBadgeGa : ''
+                  badge.ga ? styles.bandBadgeGa : ''
                 }`}
               >
-                {tag}
+                {badge.label}
               </span>
             </h3>
-            <p className={styles.bandBody}>{body}</p>
-            {statuses.length > 0 && (
-              <ul className={styles.bandStatuses}>
-                {statuses.map(({ label, stage }) => (
-                  <li
-                    key={label}
-                    className={`${styles.bandStatus} ${
-                      stage === 'ga'
-                        ? styles.bandStatusGa
-                        : styles.bandStatusExperimental
-                    }`}
-                  >
-                    {stage === 'ga' ? (
-                      feather('Check', 13)
-                    ) : (
-                      <BeakerIcon className={styles.bandIcon} />
-                    )}
-                    {label}
-                    <span className={styles.srOnly}>
-                      {stage === 'ga'
-                        ? ' (generally available)'
-                        : ' (experimental)'}
+            <div className={styles.bandStatuses}>
+              {ga.length > 0 && (
+                <ul className={styles.bandStatusGroup}>
+                  {ga.map(({ label }) => (
+                    <li
+                      key={label}
+                      className={`${styles.bandStatus} ${styles.bandStatusGa}`}
+                    >
+                      {feather('Check', 13)}
+                      {label}
+                      <span className={styles.srOnly}>
+                        {' '}
+                        (generally available)
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {preview.length > 0 && (
+                <div className={styles.bandPreviewGroup}>
+                  {ga.length > 0 && (
+                    <span className={styles.bandStatusLabel} aria-hidden="true">
+                      In preview
                     </span>
-                  </li>
-                ))}
-              </ul>
-            )}
+                  )}
+                  <ul className={styles.bandStatusGroup}>
+                    {preview.map(({ label }) => (
+                      <li
+                        key={label}
+                        className={`${styles.bandStatus} ${styles.bandStatusExperimental}`}
+                      >
+                        <BeakerIcon className={styles.bandIcon} />
+                        {label}
+                        <span className={styles.srOnly}> (experimental)</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
           </div>
         </div>
         <span className={styles.bandCta}>

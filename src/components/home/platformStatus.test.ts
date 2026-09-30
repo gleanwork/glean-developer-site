@@ -5,8 +5,8 @@ import experimentalData from '@site/src/data/experimental.json';
 import {
   PLATFORM_CAPABILITIES,
   belongsToCapability,
-  describePlatformStatuses,
   getPlatformStatuses,
+  platformBadge,
 } from './platformStatus';
 
 const doc = (slug: string) => ({ docId: `api/platform-api/${slug}` });
@@ -50,50 +50,20 @@ describe('getPlatformStatuses', () => {
   });
 });
 
-describe('describePlatformStatuses', () => {
-  it('leads with GA and names the preview capabilities', () => {
-    const copy = describePlatformStatuses([
-      { label: 'Search', stage: 'ga' },
-      { label: 'Chat', stage: 'ga' },
-      { label: 'Agents', stage: 'ga' },
-      { label: 'Skills', stage: 'experimental' },
-      { label: 'Triggers', stage: 'experimental' },
-    ]);
+describe('platformBadge', () => {
+  it('reads GA once any capability has graduated', () => {
+    expect(
+      platformBadge([
+        { label: 'Search', stage: 'ga' },
+        { label: 'Skills', stage: 'experimental' },
+      ]),
+    ).toEqual({ label: 'Generally available', ga: true });
+  });
 
-    expect(copy.tag).toBe('Generally available');
-    expect(copy.body).toContain(
-      'Search, Chat, and Agents are ready for production.',
+  it('falls back to experimental when nothing is GA', () => {
+    expect(platformBadge([{ label: 'Skills', stage: 'experimental' }])).toEqual(
+      { label: 'Experimental', ga: false },
     );
-    expect(copy.body).toContain(
-      'Skills and Triggers are available in experimental preview.',
-    );
-  });
-
-  it('drops the preview sentence once everything is GA', () => {
-    const copy = describePlatformStatuses([
-      { label: 'Search', stage: 'ga' },
-      { label: 'Skills', stage: 'ga' },
-    ]);
-
-    expect(copy.body).not.toMatch(/experimental/i);
-  });
-
-  it('uses singular agreement for one capability', () => {
-    const copy = describePlatformStatuses([
-      { label: 'Search', stage: 'ga' },
-      { label: 'Skills', stage: 'experimental' },
-    ]);
-
-    expect(copy.body).toContain('Search is ready for production.');
-    expect(copy.body).toContain('Skills is available in experimental preview.');
-  });
-
-  it('falls back to experimental framing when nothing is GA', () => {
-    const copy = describePlatformStatuses([
-      { label: 'Skills', stage: 'experimental' },
-    ]);
-
-    expect(copy.tag).toBe('Experimental');
   });
 });
 
