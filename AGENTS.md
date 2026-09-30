@@ -106,7 +106,8 @@ Visibility is set upstream. A recipe with `"hidden": true` stays in the registry
 and the plugin, but sync generates no MDX page for it. A recipe with
 `"visibility": "preview"` gets an unlisted, no-index page but is omitted from public
 discovery and cookbook plugin actions; use `?ff_recipe=<recipe-id>` to reveal its card and
-detail page. The Cookbook nav and homepage band are public by default.
+detail page. The Cookbook nav and the homepage hero's per-slide recipe links are public by
+default; the links count only publicly listed recipes.
 
 Only document verified APIs. Source samples from the published guides (e.g.
 `docs/libraries/web-sdk/`), never from memory: scope names, endpoints and function

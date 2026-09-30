@@ -293,15 +293,15 @@
   }
 }
 
+/* Slides share one grid cell, so the stack is as tall as the tallest slide
+ * and the CTAs sit right under the copy instead of below a fixed box. */
 .heroSlides {
-  position: relative;
-  height: 300px;
-  margin-bottom: 4px;
+  display: grid;
+  margin-bottom: 28px;
 }
 
 .heroSlide {
-  position: absolute;
-  inset: 0;
+  grid-area: 1 / 1;
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.35s ease;
@@ -355,9 +355,36 @@
 
 .heroCtas {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 12px;
-  margin-bottom: 24px;
+}
+
+/* Wrap whole buttons on narrow screens rather than their labels. */
+.heroCtas > a {
+  white-space: nowrap;
+}
+
+.heroRecipes {
+  min-height: 22px;
+  margin-top: 18px;
+}
+
+.heroRecipesLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  /* Same theme-aware blue as the hero eyebrow; --gdt-primary is too dark on
+   * the dark page. */
+  color: var(--gdt-info-fg);
+  text-decoration: none;
+}
+
+.heroRecipesLink:hover {
+  color: var(--gdt-info-fg);
+  text-decoration: underline;
 }
 
 .heroPrimary {
@@ -998,78 +1025,6 @@ html[data-theme='dark'] .mcpIconMono svg {
 
 .agentsPanel {
   box-shadow: none;
-}
-
-/* Cookbook strip (flag-gated) */
-.cookbookStrip {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin-top: 8px;
-  border-radius: 16px;
-  border: 1px solid var(--gdt-border-light);
-  padding: 18px 22px;
-  color: var(--gdt-text-primary);
-  text-decoration: none;
-  transition:
-    background 0.15s ease,
-    border-color 0.15s ease;
-}
-
-.cookbookStrip:hover {
-  background: var(--gdt-bg-light);
-  border-color: var(--gdt-border-dark);
-  color: var(--gdt-text-primary);
-  text-decoration: none;
-}
-
-.cookbookStripIcon {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  background: var(--gdt-selected-bg);
-  color: var(--gdt-primary);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.cookbookStripText {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  min-width: 0;
-}
-
-.cookbookStripTitle {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 15px;
-  font-weight: 600;
-}
-
-.cookbookStripBadge {
-  font-size: 10.5px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-  padding: 2px 8px;
-  border-radius: 9999px;
-  background: var(--gdt-primary);
-  color: #fff;
-}
-
-.cookbookStripBody {
-  font-size: 13.5px;
-  color: var(--gdt-text-secondary);
-}
-
-.cookbookStripArrow {
-  margin-left: auto;
-  color: var(--gdt-primary);
-  flex-shrink: 0;
 }
 
 /* ---- Dark mode: dark containers must stay distinct from the dark page.
