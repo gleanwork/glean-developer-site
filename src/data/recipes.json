@@ -560,6 +560,175 @@
       "title": "Approve an agent action from a CLI",
       "description": "Start a durable agent run from TypeScript, see the exact tool call it wants to make, and approve or reject it before it happens. The agent only sends you a Slack DM.",
       "sidebarLabel": "Human-in-the-loop agent",
+      "apiFlow": {
+        "intro": "An approval takes four calls, and each one needs a value from an earlier response. Keep the `run_id` from the start, poll until the run needs a decision, and answer with the `interaction_id` the person reviewed. These are the bodies from one approved run, with example IDs and empty messages left out.",
+        "inputs": [
+          {
+            "value": "agent_id",
+            "description": "The published agent's ID: the 32-character ID after /agents/ in its Agent Builder URL."
+          },
+          {
+            "value": "decision",
+            "description": "APPROVE or REJECT, chosen by the person who reviewed the tool call."
+          }
+        ],
+        "calls": [
+          {
+            "title": "Start a durable run",
+            "description": "Send the message for the agent. The response is the new run, still working.",
+            "sdkMethod": "glean.agents.createRun",
+            "method": "POST",
+            "path": "/api/agents/{agent_id}/runs",
+            "request": {
+              "source": "api-flow/1-create-run.request.json",
+              "body": "{\n  \"execution_mode\": \"DURABLE\",\n  \"stream\": false,\n  \"messages\": [\n    {\n      \"role\": \"USER\",\n      \"content\": [\n        {\n          \"type\": \"text\",\n          \"text\": \"Cookbook approval test 2026-09-29T21:51:07.008Z\"\n        }\n      ]\n    }\n  ]\n}"
+            },
+            "response": {
+              "source": "api-flow/1-create-run.response.json",
+              "body": "{\n  \"run\": {\n    \"run_id\": \"5d0c9e1f7a2b4c6e8f1a3b5c7d9e0f12\",\n    \"agent_id\": \"3a2139bdf60540248c270d77887053f0\",\n    \"state\": \"RUNNING\",\n    \"created_at\": \"2026-09-29T21:51:07.204Z\",\n    \"updated_at\": \"2026-09-29T21:51:07.204Z\",\n    \"pending_interactions\": []\n  },\n  \"request_id\": \"b7e41f0c2d9a4e6f8a1c3e5b7d9f0a24\"\n}"
+            },
+            "highlights": [
+              {
+                "in": "path",
+                "param": "agent_id",
+                "value": "agent_id"
+              },
+              {
+                "in": "request",
+                "pointer": "/execution_mode",
+                "note": "DURABLE keeps the run on the server, so it can stop and wait for a person."
+              },
+              {
+                "in": "request",
+                "pointer": "/stream",
+                "note": "false returns the run as one JSON body instead of a stream."
+              },
+              {
+                "in": "response",
+                "pointer": "/run/run_id",
+                "value": "run_id",
+                "note": "Keep this. Every later call names the run by it."
+              }
+            ]
+          },
+          {
+            "title": "Poll until the run needs a decision",
+            "description": "Get the run every 2 seconds while its state is QUEUED or RUNNING. REQUIRES_INPUT means the agent stopped before a tool that needs approval.",
+            "sdkMethod": "glean.agents.getRun",
+            "method": "GET",
+            "path": "/api/agents/{agent_id}/runs/{run_id}",
+            "response": {
+              "source": "api-flow/2-get-run.response.json",
+              "body": "{\n  \"run\": {\n    \"run_id\": \"5d0c9e1f7a2b4c6e8f1a3b5c7d9e0f12\",\n    \"agent_id\": \"3a2139bdf60540248c270d77887053f0\",\n    \"state\": \"REQUIRES_INPUT\",\n    \"created_at\": \"2026-09-29T21:51:07.000Z\",\n    \"updated_at\": \"2026-09-29T21:51:12.099Z\",\n    \"pending_interactions\": [\n      {\n        \"interaction_id\": \"call_7kQ2mV9xR4tL8nP3sW6yZ1aB\",\n        \"type\": \"TOOL_APPROVAL\",\n        \"tool_id\": \"9f2b6c1d4e8a4b7c9d0e1f2a3b4c5d6e\",\n        \"display_name\": \"Send Slack message to user\",\n        \"description\": \"Glean will send a direct message in Slack to the current user.\",\n        \"arguments\": {\n          \"message\": \"Cookbook approval test 2026-09-29T21:51:07.008Z\"\n        }\n      }\n    ],\n    \"output\": {\n      \"messages\": []\n    }\n  },\n  \"request_id\": \"c2d8a5f1e3b74c9a8d6f0b1e2a3c4d5f\"\n}"
+            },
+            "highlights": [
+              {
+                "in": "path",
+                "param": "agent_id",
+                "value": "agent_id"
+              },
+              {
+                "in": "path",
+                "param": "run_id",
+                "value": "run_id"
+              },
+              {
+                "in": "response",
+                "pointer": "/run/state",
+                "note": "Stop polling here. The run waits for a decision; it doesn't time out while it waits."
+              },
+              {
+                "in": "response",
+                "pointer": "/run/pending_interactions/0/interaction_id",
+                "value": "interaction_id",
+                "note": "Identifies this exact tool call. The decision must name it."
+              },
+              {
+                "in": "response",
+                "pointer": "/run/pending_interactions/0/arguments",
+                "note": "Show the person display_name, description, and these exact arguments. A decision can't change them."
+              }
+            ]
+          },
+          {
+            "title": "Send the person's decision",
+            "description": "Answer the call the person reviewed. To stop instead, send the same run_id to POST /api/agents/{agent_id}/cancellations.",
+            "sdkMethod": "glean.agents.respondToRun",
+            "method": "POST",
+            "path": "/api/agents/{agent_id}/responses",
+            "request": {
+              "source": "api-flow/3-respond-to-run.request.json",
+              "body": "{\n  \"run_id\": \"5d0c9e1f7a2b4c6e8f1a3b5c7d9e0f12\",\n  \"responses\": [\n    {\n      \"interaction_id\": \"call_7kQ2mV9xR4tL8nP3sW6yZ1aB\",\n      \"decision\": \"APPROVE\"\n    }\n  ]\n}"
+            },
+            "response": {
+              "source": "api-flow/3-respond-to-run.response.json",
+              "body": "{\n  \"run\": {\n    \"run_id\": \"5d0c9e1f7a2b4c6e8f1a3b5c7d9e0f12\",\n    \"agent_id\": \"3a2139bdf60540248c270d77887053f0\",\n    \"state\": \"RUNNING\",\n    \"created_at\": \"2026-09-29T21:51:07.000Z\",\n    \"updated_at\": \"2026-09-29T21:52:08.331Z\",\n    \"pending_interactions\": [],\n    \"output\": {\n      \"messages\": []\n    }\n  },\n  \"request_id\": \"d4f0b7a3c5e94d1b8f2a6c0e3b5d7f9a\"\n}"
+            },
+            "highlights": [
+              {
+                "in": "path",
+                "param": "agent_id",
+                "value": "agent_id"
+              },
+              {
+                "in": "request",
+                "pointer": "/run_id",
+                "value": "run_id",
+                "note": "The run ID goes in the body here, not the path."
+              },
+              {
+                "in": "request",
+                "pointer": "/responses/0/interaction_id",
+                "value": "interaction_id",
+                "note": "Use the ID the person reviewed, never a newly polled one."
+              },
+              {
+                "in": "request",
+                "pointer": "/responses/0/decision",
+                "value": "decision"
+              },
+              {
+                "in": "response",
+                "pointer": "/run/state",
+                "note": "The same run continues. The tool runs only if the decision was APPROVE."
+              }
+            ]
+          },
+          {
+            "title": "Poll until the run ends",
+            "description": "Keep getting the run until it reaches SUCCEEDED, FAILED, CANCELLED, or EXPIRED. If it pauses again, that's a new tool call to review.",
+            "sdkMethod": "glean.agents.getRun",
+            "method": "GET",
+            "path": "/api/agents/{agent_id}/runs/{run_id}",
+            "response": {
+              "source": "api-flow/4-get-run.response.json",
+              "body": "{\n  \"run\": {\n    \"run_id\": \"5d0c9e1f7a2b4c6e8f1a3b5c7d9e0f12\",\n    \"agent_id\": \"3a2139bdf60540248c270d77887053f0\",\n    \"state\": \"SUCCEEDED\",\n    \"created_at\": \"2026-09-29T21:51:07.000Z\",\n    \"updated_at\": \"2026-09-29T21:52:13.000Z\",\n    \"pending_interactions\": [],\n    \"output\": {\n      \"messages\": [\n        {\n          \"content\": [\n            {\n              \"text\": \"Sent your Slack message.\",\n              \"type\": \"text\"\n            }\n          ],\n          \"role\": \"GLEAN_AI\"\n        }\n      ]\n    }\n  },\n  \"request_id\": \"e6a2c9b5d7f14e3a9b0c2d4f6a8b1c3e\"\n}"
+            },
+            "highlights": [
+              {
+                "in": "path",
+                "param": "agent_id",
+                "value": "agent_id"
+              },
+              {
+                "in": "path",
+                "param": "run_id",
+                "value": "run_id"
+              },
+              {
+                "in": "response",
+                "pointer": "/run/state",
+                "note": "The run is done."
+              },
+              {
+                "in": "response",
+                "pointer": "/run/output/messages/0/content/0/text",
+                "note": "The agent's reply is the last text part in output.messages. A real run can also return messages with empty content."
+              }
+            ]
+          }
+        ]
+      },
       "surfaces": [
         "platform-api",
         "agents",
@@ -646,7 +815,7 @@
         {
           "kind": "run",
           "title": "Run the agent and decide",
-          "description": "The command starts one durable run, waits for the agent to pause, and shows the tool, what it does, and its exact arguments. Type a to approve that one call (the DM arrives), r to reject it (nothing is sent), c to cancel the run, or press Enter to leave it waiting. --show-json also prints each run Glean returns as JSON, under the SDK call that returned it, so you can see the API responses; leave it off to see only the review. The JSON includes the tool arguments, so keep it out of shared logs. If the run finishes without asking, the tool isn't added, Allow agent to use write tools without approval is checked, or the agent wasn't published. Closing the CLI or reaching the 120-second wait doesn't cancel the run; the CLI prints the full resume command, with the agent and run IDs, to continue. A resumed run can take a few minutes to finish after a decision; if the wait runs out, resume again. Without a terminal to ask in, resume prints a decision command bound to the pending interaction ID; run it only after a person has reviewed that call.",
+          "description": "The command starts one durable run, waits for the agent to pause, and shows the tool, what it does, and its exact arguments. Type a to approve that one call (the DM arrives), r to reject it (nothing is sent), c to cancel the run, or press Enter to leave it waiting. --show-json also prints each API request and response body under the SDK call that sent it, so you can follow the run_id and interaction_id from one call to the next. Leave it off to see only the review. The JSON includes the tool arguments, so keep it out of shared logs. If the run finishes without asking, the tool isn't added, Allow agent to use write tools without approval is checked, or the agent wasn't published. Closing the CLI or reaching the 120-second wait doesn't cancel the run; the CLI prints the full resume command, with the agent and run IDs, to continue. A resumed run can take a few minutes to finish after a decision; if the wait runs out, resume again. Without a terminal to ask in, resume prints a decision command bound to the pending interaction ID; run it only after a person has reviewed that call.",
           "command": "npm start -- --agent-id \"<agent-id>\" --email \"<work-email>\" --show-json"
         },
         {
