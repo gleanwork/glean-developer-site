@@ -101,6 +101,61 @@ describe('compileRecipeCatalog', () => {
     expect(materialized.errors).toEqual([]);
   });
 
+  it('requires API flow bodies to arrive from the cookbook as JSON', () => {
+    const flowEntry = (response: { source: string; body?: string }) => ({
+      ...listedEntry('api-flow'),
+      apiFlow: {
+        intro: 'Follow the run ID.',
+        calls: [
+          {
+            title: 'Start',
+            description: 'Start a run.',
+            method: 'POST',
+            path: '/runs',
+            request: { source: 'flow/start.request.json', body: '{}' },
+            response,
+            highlights: [
+              { in: 'response', pointer: '/run_id', value: 'run_id' },
+            ],
+          },
+          {
+            title: 'Poll',
+            description: 'Poll the run.',
+            method: 'GET',
+            path: '/runs/{run_id}',
+            response: {
+              source: 'flow/poll.response.json',
+              body: '{"state": "DONE"}',
+            },
+            highlights: [{ in: 'path', param: 'run_id', value: 'run_id' }],
+          },
+        ],
+      },
+    });
+    const pages = new Set(['api-flow']);
+
+    for (const response of [
+      { source: 'flow/start.response.json' },
+      { source: 'flow/start.response.json', body: '{ nope' },
+      { source: 'flow/start.response.json', body: '"run-1"' },
+    ]) {
+      expect(
+        compileRecipeCatalog([flowEntry(response)], pages).errors.join('\n'),
+      ).toMatch(/API flow body was not materialized as JSON for flow\/start/);
+    }
+    const materialized = compileRecipeCatalog(
+      [
+        flowEntry({
+          source: 'flow/start.response.json',
+          body: '{"run_id": "run-1"}',
+        }),
+      ],
+      pages,
+    );
+    expect(materialized.errors).toEqual([]);
+    expect(materialized.records[0]!.apiFlow?.calls).toHaveLength(2);
+  });
+
   it('compiles preview recipes when their gated MDX page exists', () => {
     const { records, errors } = compileRecipeCatalog(
       [{ ...listedEntry('preview-search'), visibility: 'preview' }],

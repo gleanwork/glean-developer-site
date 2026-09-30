@@ -370,6 +370,83 @@ export const recipeCodeWalkthroughSchema = z
     'Optional source-backed code walkthrough rendered directly on the recipe documentation page.',
   );
 
+const API_FLOW_VALUE = /^[a-z][a-z0-9_]*$/;
+
+const recipeApiFlowBodySchema = z.strictObject({
+  source: z
+    .string()
+    .regex(
+      /^(?!\/)(?!.*(?:^|\/)\.\.(?:\/|$))[A-Za-z0-9._/-]+$/,
+      'source must be a relative path inside the recipe directory',
+    ),
+  /** Generated from `source` by the cookbook registry build; never authored in recipe.json. */
+  body: z
+    .string()
+    .min(2)
+    .max(8000)
+    .describe(
+      'Generated from source by the registry build; never authored in recipe.json.',
+    )
+    .optional(),
+});
+
+export const recipeApiFlowHighlightSchema = z.union([
+  z
+    .strictObject({
+      in: z.literal('path'),
+      param: z.string().regex(/^[A-Za-z_][A-Za-z0-9_]*$/),
+      value: z.string().regex(API_FLOW_VALUE),
+      note: z.string().min(1).optional(),
+    })
+    .describe(
+      'A path parameter, filled by an input or a value an earlier response returned.',
+    ),
+  z
+    .strictObject({
+      in: z.enum(['request', 'response']),
+      pointer: z.string().regex(/^(?:\/(?:[^~/]|~[01])*)+$/),
+      value: z.string().regex(API_FLOW_VALUE).optional(),
+      note: z.string().min(1).optional(),
+    })
+    .describe(
+      'A field in the request or response body, addressed by JSON Pointer. Name a value to link it across calls, or give only a note for a field worth reading.',
+    ),
+]);
+
+export const recipeApiFlowCallSchema = z.strictObject({
+  title: z.string().min(1),
+  description: z.string().min(1),
+  sdkMethod: z
+    .string()
+    .regex(/^[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)+$/)
+    .optional(),
+  method: z.enum(['GET', 'POST', 'PUT', 'PATCH', 'DELETE']),
+  path: z.string().regex(/^\/[A-Za-z0-9._~/{}-]*$/),
+  request: recipeApiFlowBodySchema.optional(),
+  response: recipeApiFlowBodySchema,
+  highlights: z.array(recipeApiFlowHighlightSchema).min(1),
+});
+
+export const recipeApiFlowSchema = z
+  .strictObject({
+    intro: z.string().min(1),
+    inputs: z
+      .array(
+        z.strictObject({
+          value: z.string().regex(API_FLOW_VALUE),
+          description: z.string().min(1),
+        }),
+      )
+      .describe(
+        'Values that come from the developer or a person rather than from a response.',
+      )
+      .optional(),
+    calls: z.array(recipeApiFlowCallSchema).min(2),
+  })
+  .describe(
+    "Optional sequence of API calls rendered on the recipe page: each call's request and response, and the values later calls reuse. Bodies come from JSON files in the recipe directory.",
+  );
+
 export const recipeMetaSchema = z.strictObject({
   id: z
     .string()
@@ -395,6 +472,8 @@ export const recipeMetaSchema = z.strictObject({
     .optional(),
   /** Opts a recipe into a source-backed code walkthrough on its docs page. */
   codeWalkthrough: recipeCodeWalkthroughSchema.optional(),
+  /** Opts a recipe into a request/response walkthrough of its API calls. */
+  apiFlow: recipeApiFlowSchema.optional(),
   surfaces: z.array(z.enum(RECIPE_SURFACES)).min(1),
   /** User goals taught materially by this recipe. */
   capabilities: z.array(z.enum(RECIPE_CAPABILITIES)).min(1),
@@ -455,6 +534,11 @@ export type RecipeSurface = (typeof RECIPE_SURFACES)[number];
 export type RecipeCapability = (typeof RECIPE_CAPABILITIES)[number];
 export type RecipeCodeAsset = z.infer<typeof recipeCodeAssetSchema>;
 export type RecipeCodeWalkthrough = z.infer<typeof recipeCodeWalkthroughSchema>;
+export type RecipeApiFlow = z.infer<typeof recipeApiFlowSchema>;
+export type RecipeApiFlowCall = z.infer<typeof recipeApiFlowCallSchema>;
+export type RecipeApiFlowHighlight = z.infer<
+  typeof recipeApiFlowHighlightSchema
+>;
 export type RecipeDemoQuery = z.infer<typeof recipeDemoQuerySchema>;
 export type RecipeMeta = z.infer<typeof recipeMetaSchema>;
 

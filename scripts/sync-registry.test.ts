@@ -189,6 +189,26 @@ describe('renderPage', () => {
     expect(page).toContain('RecipeCodeWalkthrough,');
   });
 
+  it('places an API flow right after the problem, and only when declared', () => {
+    const page = renderPage(
+      {
+        ...recipe,
+        apiFlow: { intro: 'Follow the IDs.', calls: [] },
+        codeWalkthrough: { intro: 'Read it.', examples: [] },
+      },
+      markdown,
+    );
+    const problem = page.indexOf('<RecipeSection label="Problem">');
+    const flow = page.indexOf('<RecipeApiFlow />');
+    const walkthrough = page.indexOf('<RecipeCodeWalkthrough />');
+
+    expect(problem).toBeGreaterThan(0);
+    expect(flow).toBeGreaterThan(problem);
+    expect(flow).toBeLessThan(walkthrough);
+    expect(page).toContain('  RecipeApiFlow,\n');
+    expect(renderPage(recipe, markdown)).not.toContain('RecipeApiFlow');
+  });
+
   it('keeps the sequence bounded to recipes at either end', () => {
     const first = renderPage(recipe, markdown, null, {
       id: 'embed-search-chat',
