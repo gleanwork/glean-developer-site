@@ -34,6 +34,7 @@
 
 /* Announcement band */
 .bandWrap {
+  container: band / inline-size;
   padding-top: 8px;
 }
 
@@ -44,10 +45,11 @@
   align-items: center;
   gap: 24px;
   border-radius: 16px;
-  padding: 26px 30px;
+  padding: 22px 28px;
   text-decoration: none;
   background: linear-gradient(100deg, #343ced 0%, #3b34dd 46%, #4a2fb2 100%);
-  box-shadow: 0 12px 28px -10px rgba(52, 60, 237, 0.55);
+  /* Kept soft so the band doesn't outweigh the hero's primary CTA. */
+  box-shadow: 0 8px 20px -12px rgba(52, 60, 237, 0.35);
 }
 
 .band:hover {
@@ -75,39 +77,145 @@
   min-width: 0;
 }
 
-.bandTag {
-  flex-shrink: 0;
+/* Icon tile + inline title badge mirror the Cookbook strip, inverted for
+ * the dark band. */
+.bandIconTile {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
   display: inline-flex;
   align-items: center;
-  height: 26px;
-  padding: 0 12px;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.bandBadge {
+  flex-shrink: 0;
+  font-family: var(--gdt-font-text);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  line-height: 1.6;
+  text-transform: uppercase;
+  padding: 2px 8px;
   border-radius: 9999px;
   background: rgba(255, 255, 255, 0.18);
   color: #fff;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.3px;
+}
+
+/* GA picks up the band's lime accent so status reads first. */
+.bandBadgeGa {
+  background: #daf181;
+  color: #1f2024;
+}
+
+.bandIcon {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+}
+
+/* Plain-text status line: no pill shapes, so the badge and CTA stay the only
+ * chips in the band and nothing reads as a separate button. */
+.bandStatuses {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 16px;
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.bandStatusGroup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Keeps the "Experimental:" label on the same line as the names it explains. */
+.bandPreviewGroup {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Doubled class beats Infima's `li + li` list-item spacing. */
+.bandStatusGroup > .bandStatus {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin: 0;
+}
+
+.bandStatusGa {
+  color: #fff;
+  font-weight: 500;
+}
+
+.bandStatusGa svg {
+  color: #daf181;
+}
+
+.bandStatusExperimental {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+/* Experimental names read as one list: "Skills · Triggers". */
+.bandPreviewList {
+  gap: 4px 6px;
+}
+
+/* The li's own 5px gap spaces the dot from the name after it; the list's 6px
+ * column gap spaces it from the name before. */
+.bandPreviewList > .bandStatus + .bandStatus::before {
+  content: '·';
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* Divider + label that introduces the experimental names. */
+.bandStatusLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding-left: 16px;
+  border-left: 1px solid rgba(255, 255, 255, 0.3);
+  color: rgba(255, 255, 255, 0.75);
+  white-space: nowrap;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .bandText {
+  flex: 1;
   min-width: 0;
 }
 
 .bandTitle {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
   font-family: var(--gdt-font-display);
   font-size: 22px;
   letter-spacing: -0.5px;
   font-weight: 700;
   color: #fff;
-  margin: 0 0 5px;
-}
-
-.bandBody {
-  font-size: 14.5px;
-  line-height: 1.5;
-  color: rgba(255, 255, 255, 0.9);
-  margin: 0;
-  max-width: 560px;
+  margin: 0 0 10px;
 }
 
 .bandCta {
@@ -125,14 +233,48 @@
   font-weight: 600;
 }
 
-@media (max-width: 900px) {
+/* Sized off the band itself, not the viewport: the docs sidebar makes the
+ * available width jump around 996px. */
+/* ~840px is where the status line still fits on one row beside the CTA. */
+@container band (max-width: 840px) {
   .band {
     flex-direction: column;
     align-items: flex-start;
   }
 
+  .bandContent {
+    width: 100%;
+  }
+
+  /* Line the CTA up with the text column (44px tile + 18px gap). */
+  .bandCta {
+    margin-left: 62px;
+  }
+
+  /* The chip groups can wrap onto separate lines here, so drop the divider. */
+  .bandStatusLabel {
+    padding-left: 0;
+    border-left: 0;
+  }
+
   .bandAccent {
     display: none;
+  }
+}
+
+@container band (max-width: 440px) {
+  .bandContent {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+  }
+
+  .bandText {
+    width: 100%;
+  }
+
+  .bandCta {
+    margin-left: 0;
   }
 }
 

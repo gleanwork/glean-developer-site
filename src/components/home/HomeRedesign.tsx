@@ -5,7 +5,14 @@ import {
   getClientIcon,
   type ClientId,
 } from '@gleanwork/mcp-config-schema/browser';
+import experimentalData from '@site/src/data/experimental.json';
+import BeakerIcon from '@site/src/components/BeakerIcon';
 import TerminalPanel from './TerminalPanel';
+import {
+  getPlatformStatuses,
+  platformBadge,
+  type PlatformCapabilityStatus,
+} from './platformStatus';
 import {
   AGENTS_BAND_CODE,
   HERO_SLIDES,
@@ -22,29 +29,89 @@ function feather(name: string, size = 18): React.ReactNode {
   });
 }
 
-/** Experimental Platform APIs announcement band (content-configurable). */
+const PLATFORM_STATUSES = getPlatformStatuses(experimentalData.endpoints);
+
+/**
+ * Platform APIs announcement band. Per-capability GA/experimental status is
+ * derived from the generated `experimental.json`, so it tracks the spec.
+ */
 export function AnnouncementBand({
-  tag = 'Experimental',
-  title = 'Introducing Glean Platform APIs',
-  body = 'Build search experiences and run Glean agents in your applications with our new Platform APIs — now rolling out in experimental preview.',
+  statuses = PLATFORM_STATUSES,
+  title = 'Glean Platform APIs',
   href = '/api/platform-api',
   cta = 'Explore Platform APIs',
 }: {
-  tag?: string;
+  statuses?: PlatformCapabilityStatus[];
   title?: string;
-  body?: string;
   href?: string;
   cta?: string;
 }): React.ReactElement {
+  const badge = platformBadge(statuses);
+  const ga = statuses.filter((s) => s.stage === 'ga');
+  const preview = statuses.filter((s) => s.stage === 'experimental');
   return (
     <div className={styles.bandWrap}>
       <Link className={styles.band} to={href}>
         <div className={styles.bandAccent} aria-hidden="true" />
         <div className={styles.bandContent}>
-          <span className={styles.bandTag}>{tag}</span>
+          <span className={styles.bandIconTile} aria-hidden="true">
+            {getIcon('platform', 'glean', {
+              width: 20,
+              height: 20,
+              color: 'currentColor',
+            })}
+          </span>
           <div className={styles.bandText}>
-            <h3 className={styles.bandTitle}>{title}</h3>
-            <p className={styles.bandBody}>{body}</p>
+            <h3 className={styles.bandTitle}>
+              {title}
+              <span
+                className={`${styles.bandBadge} ${
+                  badge.ga ? styles.bandBadgeGa : ''
+                }`}
+              >
+                {badge.label}
+              </span>
+            </h3>
+            <div className={styles.bandStatuses}>
+              {ga.length > 0 && (
+                <ul className={styles.bandStatusGroup}>
+                  {ga.map(({ label }) => (
+                    <li
+                      key={label}
+                      className={`${styles.bandStatus} ${styles.bandStatusGa}`}
+                    >
+                      {feather('Check', 13)}
+                      {label}
+                      <span className={styles.srOnly}>
+                        {' '}
+                        (generally available)
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {preview.length > 0 && (
+                <div className={styles.bandPreviewGroup}>
+                  <span className={styles.bandStatusLabel} aria-hidden="true">
+                    <BeakerIcon className={styles.bandIcon} />
+                    {ga.length > 0 && 'Experimental:'}
+                  </span>
+                  <ul
+                    className={`${styles.bandStatusGroup} ${styles.bandPreviewList}`}
+                  >
+                    {preview.map(({ label }) => (
+                      <li
+                        key={label}
+                        className={`${styles.bandStatus} ${styles.bandStatusExperimental}`}
+                      >
+                        {label}
+                        <span className={styles.srOnly}> (experimental)</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
           </div>
         </div>
         <span className={styles.bandCta}>
