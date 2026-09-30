@@ -6,8 +6,8 @@ The deprecation system displays warnings on API documentation pages when fields,
 
 1. **OpenAPI specs** contain `x-glean-deprecated` extensions on deprecated fields
 2. **`generate-deprecations.ts`** extracts these deprecations and outputs `deprecations.json`
-3. **`customMdGenerators.ts`** injects the `<ApiDeprecations>` component into generated API docs
-4. **`ApiDeprecations`** component renders the deprecation warnings
+3. **`customMdGenerators.ts`** injects the `<EndpointMetadata>` component into generated API docs, passing the endpoint's active deprecations
+4. **`EndpointMetadata`** renders them: an endpoint-level deprecation sets the release stage to Deprecated (with its replacement message, removal date, and migration link; generic messages such as "Endpoint is deprecated" are omitted); field, parameter, and enum deprecations appear in a Deprecations row
 
 ## Adding Local Test Deprecations
 
@@ -187,10 +187,10 @@ The deprecations page at `/deprecations` shows all active deprecations. To view 
 cat src/data/deprecations.json | jq '.endpoints[] | .path'
 ```
 
-### Check if ApiDeprecations is in generated MDX
+### Check if deprecations are in generated MDX
 
 ```bash
-grep -l "ApiDeprecations" docs/api/client-api/**/*.api.mdx
+grep -l '"deprecations":\[{' docs/api/client-api/**/*.api.mdx
 ```
 
 ### Run the deprecation generator tests
@@ -205,8 +205,9 @@ pnpm test scripts/deprecations-lib.test.ts
 |------|-------------|
 | `scripts/generate-deprecations.ts` | Main script to generate deprecations.json |
 | `scripts/deprecations-lib.ts` | Library for parsing x-glean-deprecated from OpenAPI |
-| `scripts/generator/customMdGenerators.ts` | Injects ApiDeprecations into generated docs |
+| `scripts/generator/customMdGenerators.ts` | Injects EndpointMetadata into generated docs |
+| `scripts/generator/endpointMetadata.ts` | Derives release stage, authorization, and scopes for EndpointMetadata |
 | `src/data/deprecations.json` | Generated deprecations data |
-| `src/theme/ApiDeprecations/index.tsx` | React component for API page deprecation UI |
+| `src/theme/EndpointMetadata/index.tsx` | Endpoint metadata table on API pages (stage, auth, scopes, deprecations) |
 | `src/components/Deprecations/DeprecationsEntries.tsx` | Component for /deprecations page |
 | `docs/deprecations/index.mdx` | The deprecations listing page |
