@@ -21,7 +21,7 @@ import RecipeInstanceLookup from './RecipeInstanceLookup';
 import { humanizeVariantLabel, variantScopeGroups } from './authContexts';
 import styles from './RecipeLayout.module.css';
 import catStyles from './categories.module.css';
-import { renderInlineCode, renderProse } from './inlineCode';
+import { renderInlineMarkup, renderProse } from './inlineMarkup';
 
 /** Base URL for runnable recipe code — the glean-cookbook repo (private until launch). */
 export const COOKBOOK_REPO_URL =
@@ -159,7 +159,7 @@ function takeItFurtherItems(children: React.ReactNode): React.ReactNode[] {
   const pushMarkdownLines = (text: string): void => {
     for (const line of text.split('\n')) {
       const bullet = line.replace(/^\s*[-*]\s+/, '').trim();
-      if (bullet) items.push(renderInlineCode(bullet));
+      if (bullet) items.push(renderInlineMarkup(bullet));
     }
   };
 
@@ -185,7 +185,7 @@ export function RecipeSection({
 }): React.ReactElement {
   return (
     <div className={styles.section}>
-      <div className={styles.sectionLabel}>{renderInlineCode(label)}</div>
+      <div className={styles.sectionLabel}>{renderInlineMarkup(label)}</div>
       {renderProse(children)}
     </div>
   );
@@ -218,13 +218,13 @@ export function RecipeCodeWalkthrough(): React.ReactElement | null {
   return (
     <RecipeSection label="Code walkthrough">
       <p className={styles.walkthroughIntro}>
-        {renderInlineCode(walkthrough.intro)}
+        {renderInlineMarkup(walkthrough.intro)}
       </p>
       <div className={styles.walkthroughExamples}>
         {walkthrough.examples.map((example) => (
           <div className={styles.walkthroughExample} key={example.source}>
-            <h3>{renderInlineCode(example.title)}</h3>
-            <p>{renderInlineCode(example.description)}</p>
+            <h3>{renderInlineMarkup(example.title)}</h3>
+            <p>{renderInlineMarkup(example.description)}</p>
             <CodeBlock
               language={example.language}
               showLineNumbers
@@ -275,10 +275,10 @@ export function RecipeArchitecture(): React.ReactElement | null {
                   <ArchNodeIcon node={node} />
                 </span>
                 <span className={styles.archLabel}>
-                  {renderInlineCode(node.label)}
+                  {renderInlineMarkup(node.label)}
                 </span>
                 <span className={styles.archCaption}>
-                  {renderInlineCode(node.caption)}
+                  {renderInlineMarkup(node.caption)}
                 </span>
               </div>
             </React.Fragment>
@@ -302,7 +302,7 @@ export function RecipePrereqs(): React.ReactElement {
               height: 18,
               color: 'var(--gdt-success)',
             })}
-            <span>{renderInlineCode(item)}</span>
+            <span>{renderInlineMarkup(item)}</span>
           </div>
         ))}
       </div>
@@ -337,7 +337,7 @@ export function RecipeDemoQueries(): React.ReactElement | null {
               <p>
                 <strong>{demo.query}</strong>
               </p>
-              <p>{renderInlineCode(demo.expectedBehavior)}</p>
+              <p>{renderInlineMarkup(demo.expectedBehavior)}</p>
             </div>
           </div>
         ))}
@@ -397,9 +397,9 @@ function StepRow({
       <span className={styles.stepNum}>{index}</span>
       <div className={styles.stepBody}>
         <p>
-          <strong>{renderInlineCode(step.title)}</strong>
+          <strong>{renderInlineMarkup(step.title)}</strong>
         </p>
-        {step.description && <p>{renderInlineCode(step.description)}</p>}
+        {step.description && <p>{renderInlineMarkup(step.description)}</p>}
         {step.command && (
           <div className={styles.stepCommand}>
             <CodeBlock language="bash">{step.command}</CodeBlock>
@@ -613,7 +613,7 @@ function RecipePreview({
             />
           </BrowserFrame>
           <p className={styles.previewDialogCaption}>
-            {renderInlineCode(caption)}
+            {renderInlineMarkup(caption)}
           </p>
         </div>
       </dialog>
@@ -711,7 +711,7 @@ export default function RecipeLayout({
               <div className={styles.bannerMain}>
                 <h1 className={styles.bannerTitle}>{recipe.title}</h1>
                 <p className={styles.bannerDesc}>
-                  {renderInlineCode(recipe.description)}
+                  {renderInlineMarkup(recipe.description)}
                 </p>
               </div>
               <div className={styles.metaRow}>

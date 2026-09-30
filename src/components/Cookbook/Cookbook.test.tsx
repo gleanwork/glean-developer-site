@@ -932,6 +932,28 @@ describe('RecipeLayout', () => {
     expect(screen.getByText('acme').tagName).toBe('CODE');
   });
 
+  it('renders **bold** spans in structured steps as strong text', () => {
+    render(
+      <RecipeLayout
+        plugin={plugin}
+        recipe={makeRecipe({
+          steps: [
+            {
+              title: 'Publish the agent',
+              description: 'Click **Publish**, then copy the **Agent ID**.',
+            },
+          ],
+        })}
+      >
+        <RecipeSteps />
+      </RecipeLayout>,
+    );
+
+    expect(screen.getByText('Publish').tagName).toBe('STRONG');
+    expect(screen.getByText('Agent ID').tagName).toBe('STRONG');
+    expect(screen.queryByText(/\*\*/)).not.toBeInTheDocument();
+  });
+
   it('renders backticks in banner, walkthrough, architecture, and prereqs as code', () => {
     render(
       <RecipeLayout
