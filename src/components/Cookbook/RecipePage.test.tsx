@@ -33,7 +33,7 @@ vi.mock('@site/src/data/recipes.json', () => ({
       {
         id: 'preview-search',
         title: 'Preview search',
-        description: 'Read about `createStream` first.',
+        description: 'Read about `createStream` **first**.',
         permalink: '/cookbook/preview-search',
         visibility: 'preview',
       },
@@ -120,9 +120,9 @@ describe('RecipePage preview gate', () => {
     );
   });
 
-  // <meta> content is plain text, so a backtick there reaches search results
-  // and link previews as a literal character instead of inline code.
-  it('strips backticks from the description meta tags', async () => {
+  // <meta> content is plain text, so a backtick or ** there reaches search
+  // results and link previews as literal characters instead of formatting.
+  it('strips code and bold marks from the description meta tags', async () => {
     routerState.location.search = '?ff_recipe=preview-search';
 
     render(

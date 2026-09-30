@@ -4,7 +4,7 @@ import type {
   RecipeApiFlowCall,
   RecipeApiFlowHighlight,
 } from '../../types/recipe';
-import { renderInlineCode } from './inlineCode';
+import { renderInlineMarkup } from './inlineMarkup';
 import styles from './ApiFlow.module.css';
 
 const PALETTE = [
@@ -438,7 +438,7 @@ export default function ApiFlow({
 
   return (
     <div className={styles.flow}>
-      <p className={styles.intro}>{renderInlineCode(flow.intro)}</p>
+      <p className={styles.intro}>{renderInlineMarkup(flow.intro)}</p>
 
       <div
         className={styles.track}
@@ -524,7 +524,7 @@ export default function ApiFlow({
               <dt>
                 <Chip value={input.value} color={colorOf(input.value)} />
               </dt>
-              <dd>{renderInlineCode(input.description)}</dd>
+              <dd>{renderInlineMarkup(input.description)}</dd>
             </div>
           ))}
         </dl>
@@ -555,7 +555,7 @@ export default function ApiFlow({
       </div>
 
       <div className={styles.detail} key={active}>
-        <h3 className={styles.title}>{renderInlineCode(model.call.title)}</h3>
+        <h3 className={styles.title}>{renderInlineMarkup(model.call.title)}</h3>
         <p className={styles.request}>
           <span className={styles.method} data-method={model.call.method}>
             {model.call.method}
@@ -566,7 +566,7 @@ export default function ApiFlow({
           ) : null}
         </p>
         <p className={styles.description}>
-          {renderInlineCode(model.call.description)}
+          {renderInlineMarkup(model.call.description)}
         </p>
 
         <dl className={styles.links}>
@@ -656,7 +656,7 @@ export default function ApiFlow({
                       {note.side === 'request' ? 'Request' : 'Response'}{' '}
                       <code>{fieldPath(highlight.pointer)}</code>
                     </span>
-                    {renderInlineCode(highlight.note ?? input)}
+                    {renderInlineMarkup(highlight.note ?? input)}
                   </span>
                 </li>
               );

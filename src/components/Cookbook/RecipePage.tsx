@@ -6,7 +6,7 @@ import { useLocation } from '@docusaurus/router';
 import recipesData from '@site/src/data/recipes.json';
 import type { RecipesData } from '../../types/recipe';
 import RecipeLayout from './RecipeLayout';
-import { stripInlineCode } from './inlineCode';
+import { stripInlineMarkup } from './inlineMarkup';
 import { isRecipeAvailable } from './recipePreview';
 
 interface RecipePageProps {
@@ -62,7 +62,7 @@ export default function RecipePage({
     );
   }
 
-  const metaDescription = stripInlineCode(recipe.description);
+  const metaDescription = stripInlineMarkup(recipe.description);
 
   if (!isAvailable) {
     return (
