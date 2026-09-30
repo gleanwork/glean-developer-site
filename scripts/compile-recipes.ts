@@ -31,6 +31,16 @@ const pluginFile = path.join(repoRoot, 'data', 'cookbook-plugin.json');
 const recipesDir = path.join(repoRoot, 'docs', 'cookbook');
 const outputFile = path.join(repoRoot, 'src', 'data', 'recipes.json');
 
+function isJsonBody(body: string | undefined): boolean {
+  if (body === undefined) return false;
+  try {
+    const value: unknown = JSON.parse(body);
+    return value !== null && typeof value === 'object';
+  } catch {
+    return false;
+  }
+}
+
 export function compileRecipeCatalog(
   registry: unknown[],
   pageIds: Set<string>,
@@ -69,6 +79,20 @@ export function compileRecipeCatalog(
       errors.push(
         `${result.record.id}: code walkthrough source was not materialized for ${missingWalkthroughCode
           .map((example) => example.source)
+          .join(', ')}`,
+      );
+      continue;
+    }
+
+    const unreadableFlowBodies = (result.record.apiFlow?.calls ?? [])
+      .flatMap((call) =>
+        call.request ? [call.request, call.response] : [call.response],
+      )
+      .filter((body) => !isJsonBody(body.body));
+    if (unreadableFlowBodies.length > 0) {
+      errors.push(
+        `${result.record.id}: API flow body was not materialized as JSON for ${unreadableFlowBodies
+          .map((body) => body.source)
           .join(', ')}`,
       );
       continue;

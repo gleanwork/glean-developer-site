@@ -440,6 +440,7 @@ export function renderPage(
       `<RecipeSection label="Problem">\n\n${problem.body}\n\n</RecipeSection>`,
     );
   }
+  if (recipe.apiFlow) parts.push('<RecipeApiFlow />');
   if (recipe.codeWalkthrough) parts.push('<RecipeCodeWalkthrough />');
   parts.push('<RecipeArchitecture />', '<RecipePrereqs />');
   // RecipeSteps renders the registry's structured steps when a recipe has them and
@@ -479,7 +480,7 @@ pagination_next: ${nextRecipe ? JSON.stringify(`cookbook/${nextRecipe.id}`) : 'n
 import RecipePage from '@site/src/components/Cookbook/RecipePage';
 import {
   RecipeSection,
-${recipe.codeWalkthrough ? '  RecipeCodeWalkthrough,\n' : ''}  RecipeArchitecture,
+${recipe.apiFlow ? '  RecipeApiFlow,\n' : ''}${recipe.codeWalkthrough ? '  RecipeCodeWalkthrough,\n' : ''}  RecipeArchitecture,
   RecipePrereqs,
   RecipeSteps,
   RecipeDemoQueries,

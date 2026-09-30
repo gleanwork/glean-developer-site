@@ -12,6 +12,7 @@ import {
   type RecipeRecord,
 } from '../../types/recipe';
 import BrowserFrame from '../BrowserFrame';
+import ApiFlow from './ApiFlow';
 import PluginRunButton from './PluginRunButton';
 import { AdaptiveBrandIcon, CATEGORY_ICONS } from './categories';
 import { BRAND_ICON_SRC } from './brandIcons';
@@ -187,6 +188,17 @@ export function RecipeSection({
       <div className={styles.sectionLabel}>{renderInlineCode(label)}</div>
       {renderProse(children)}
     </div>
+  );
+}
+
+/** The recipe's API calls, and the values each one passes to the next. */
+export function RecipeApiFlow(): React.ReactElement | null {
+  const recipe = useRecipe('RecipeApiFlow');
+  if (!recipe.apiFlow) return null;
+  return (
+    <RecipeSection label="API flow">
+      <ApiFlow flow={recipe.apiFlow} />
+    </RecipeSection>
   );
 }
 
