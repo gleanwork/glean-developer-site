@@ -50,8 +50,8 @@ function createFixture(options?: {
         items: [
           {
             type: 'doc',
-            id: 'guides/chat/overview',
-            label: 'Overview',
+            id: 'guides/chat/chatbot-example',
+            label: 'Chatbot Example',
           },
         ],
       },
@@ -353,7 +353,9 @@ describe('sync-api-sidebar', () => {
     expect(sidebar).toMatch(
       /label: 'Chat',[\s\S]*?id: 'api\/platform-api\/platform-chat-create',[\s\S]*?\n {10}\},\n {8}\],\n {6}\},\n {6}\{\n {8}type: 'link',\n {8}href: 'https:\/\/developers\.glean\.com\/oas\/platform',\n {8}label: 'OpenAPI Spec',/,
     );
-    expect(sidebar.match(/id: 'guides\/chat\/overview'/g)).toHaveLength(1);
+    expect(sidebar.match(/id: 'guides\/chat\/chatbot-example'/g)).toHaveLength(
+      1,
+    );
     expect(run(root, '--check').status).toBe(0);
   });
 

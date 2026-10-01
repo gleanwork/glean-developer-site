@@ -29,7 +29,7 @@ export const HERO_SLIDES: HeroSlide[] = [
   {
     surface: 'Chat API',
     recipeCapability: 'chat',
-    primaryHref: '/guides/chat/overview',
+    primaryHref: '/api/platform-api/chat-overview',
     secondaryHref: '/api/client-api/chat/overview',
     headline: 'Chat grounded in company knowledge',
     subcopy:
@@ -54,7 +54,7 @@ with Glean(
   {
     surface: 'Search API',
     recipeCapability: 'search',
-    primaryHref: '/guides/search/overview',
+    primaryHref: '/api/platform-api/search-overview',
     secondaryHref: '/api/client-api/search/overview',
     headline: 'Search your entire knowledge graph',
     subcopy:
