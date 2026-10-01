@@ -83,11 +83,6 @@ const baseSidebars: SidebarsConfig = {
           items: [
             {
               type: 'doc',
-              id: 'guides/chat/overview',
-              label: 'Overview',
-            },
-            {
-              type: 'doc',
               id: 'guides/chat/chatbot-example',
               label: 'Chatbot Example',
             },
@@ -101,11 +96,6 @@ const baseSidebars: SidebarsConfig = {
             iconSet: 'feather',
           },
           items: [
-            {
-              type: 'doc',
-              id: 'guides/search/overview',
-              label: 'Overview',
-            },
             {
               type: 'doc',
               id: 'guides/search/filtering-results',
