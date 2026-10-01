@@ -109,7 +109,6 @@ function makeRecipe(overrides: Partial<RecipeRecord>): RecipeRecord {
     scaffoldActions: [],
     aiPrompt: 'Build the recipe.',
     goDependency: false,
-    featured: false,
     hidden: false,
     tags: [],
     ...overrides,
@@ -152,7 +151,6 @@ const flagship = makeRecipe({
   surfaces: ['connector-sdk', 'web-sdk'],
   category: 'portal',
   level: 'Advanced',
-  featured: true,
   tags: ['flagship'],
   combines: [
     {
@@ -180,7 +178,6 @@ const searchQuickstart = makeRecipe({
   surfaces: ['platform-api'],
   capabilities: ['search'],
   status: 'quickstart',
-  featured: true,
 });
 
 const recipes = [
@@ -193,7 +190,6 @@ const recipes = [
     capabilities: ['indexing'],
     category: 'index',
     level: 'Intermediate',
-    featured: true,
   }),
   searchQuickstart,
   flagship,
@@ -478,7 +474,7 @@ describe('RecipeShowcaseCarousel', () => {
     }
   });
 
-  it('skips a starter the reader cannot open and ignores featured', () => {
+  it('skips a starter the reader cannot open', () => {
     const withoutQuickstart = recipes.filter(
       (recipe) => recipe.id !== searchQuickstart.id,
     );
