@@ -5,9 +5,11 @@ import path from 'node:path';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore - plain .mjs module without type declarations
 import {
+  collectionNeighbours,
   extractPluginCoordinates,
   listedRecipes,
   materializeCodeWalkthroughSources,
+  parseRecipeCollections,
   parseRecipeTaxonomy,
   publicRecipes,
   renderPage,
@@ -284,6 +286,12 @@ describe('writeRecipePages', () => {
             content: stubContent,
           },
         ],
+        [
+          {
+            id: 'search',
+            recipes: ['company-answers', 'preview-search', 'embed-search-chat'],
+          },
+        ],
         output,
       );
 
@@ -311,6 +319,65 @@ describe('writeRecipePages', () => {
     } finally {
       fs.rmSync(output, { recursive: true, force: true });
     }
+  });
+});
+
+describe('collectionNeighbours', () => {
+  const entry = (id: string, extra: Record<string, unknown> = {}) => ({
+    id,
+    title: id,
+    content: { problem: 'p' },
+    ...extra,
+  });
+  const entries = [
+    entry('chat-1'),
+    entry('search-1'),
+    entry('search-2', { visibility: 'preview' }),
+    entry('search-3'),
+    entry('search-4', { hidden: true }),
+  ];
+
+  it('links recipes only to neighbours in the same collection', () => {
+    const neighbours = collectionNeighbours(entries, [
+      { id: 'chat', recipes: ['chat-1'] },
+      {
+        id: 'search',
+        recipes: ['search-1', 'search-2', 'search-3', 'search-4'],
+      },
+    ]);
+
+    expect(neighbours.get('chat-1')).toEqual({
+      previousRecipe: null,
+      nextRecipe: null,
+    });
+    // Preview and hidden recipes are skipped, so the public path is search-1 -> search-3.
+    expect(neighbours.get('search-1')?.previousRecipe).toBeNull();
+    expect(neighbours.get('search-1')?.nextRecipe?.id).toBe('search-3');
+    expect(neighbours.get('search-3')?.previousRecipe?.id).toBe('search-1');
+    expect(neighbours.get('search-3')?.nextRecipe).toBeNull();
+    expect(neighbours.has('search-2')).toBe(false);
+  });
+});
+
+describe('parseRecipeCollections', () => {
+  it('returns the config when every collection lists recipe ids', () => {
+    const config = {
+      collections: [{ id: 'search', label: 'Search', recipes: ['a', 'b'] }],
+    };
+    expect(parseRecipeCollections(JSON.stringify(config))).toEqual(config);
+  });
+
+  it.each([
+    ['no collections', { collections: [] }],
+    ['a missing recipes array', { collections: [{ id: 'search' }] }],
+    [
+      'a non-string recipe id',
+      { collections: [{ id: 'search', recipes: [1] }] },
+    ],
+  ])('rejects %s before writing the snapshot', (_, config) => {
+    expect(() => parseRecipeCollections(JSON.stringify(config))).toThrow(
+      'config/recipe-collections.json',
+    );
   });
 });
 

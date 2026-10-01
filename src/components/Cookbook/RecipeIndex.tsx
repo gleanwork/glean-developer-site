@@ -1,11 +1,13 @@
 import type React from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { useHistory, useLocation } from '@docusaurus/router';
+import useBrokenLinks from '@docusaurus/useBrokenLinks';
 import {
   RECIPE_CAPABILITY_LABELS,
   RECIPE_LEVELS,
   RECIPE_SURFACE_LABELS,
   type RecipeCapability,
+  type RecipeCollection,
   type RecipeRecord,
   type RecipeSurface,
 } from '../../types/recipe';
@@ -16,6 +18,8 @@ import styles from './RecipeIndex.module.css';
 
 interface RecipeIndexProps {
   recipes: RecipeRecord[];
+  /** Collections in display order, each listing recipe ids in path order. */
+  collections: readonly RecipeCollection[];
   /** Capability slugs present in the compiled data (from recipes.json). */
   capabilities: readonly RecipeCapability[];
   /** Surface slugs present in the compiled data (from recipes.json). */
@@ -26,31 +30,14 @@ type Filter = string | 'all';
 
 type Level = (typeof RECIPE_LEVELS)[number];
 
-const LEVEL_SECTIONS: Record<Level, { heading: string; description: string }> =
-  {
-    Beginner: {
-      heading: '01 · Simple recipes',
-      description:
-        'Start with one clear outcome. Learn the API shape, authentication model, and verification loop without assembling a full system.',
-    },
-    Intermediate: {
-      heading: '02 · Intermediate recipes',
-      description:
-        'Combine capabilities into useful employee and customer workflows while keeping citations, identity, and permissions visible.',
-    },
-    Advanced: {
-      heading: '03 · Advanced recipes',
-      description:
-        'Coordinate agents, governed actions, human approval, and operational failure paths in end-to-end builds.',
-    },
-  };
-
-function sortRecipes(a: RecipeRecord, b: RecipeRecord): number {
-  return (
-    Number(b.status === 'quickstart') - Number(a.status === 'quickstart') ||
-    Number(b.featured) - Number(a.featured) ||
-    a.title.localeCompare(b.title)
+/** "Beginner → Advanced" for a collection's path, or one level if it has one. */
+function levelRange(recipes: readonly RecipeRecord[]): string {
+  const levels = RECIPE_LEVELS.filter((level: Level) =>
+    recipes.some((recipe) => recipe.level === level),
   );
+  return levels.length > 1
+    ? `${levels[0]} → ${levels[levels.length - 1]}`
+    : (levels[0] ?? '');
 }
 
 function validFilter(
@@ -78,11 +65,13 @@ function matches(
  */
 export default function RecipeIndex({
   recipes,
+  collections,
   capabilities: catalogCapabilities = [],
   surfaces: catalogSurfaces,
 }: RecipeIndexProps): React.ReactElement {
   const history = useHistory();
   const location = useLocation();
+  const brokenLinks = useBrokenLinks();
 
   const availableRecipes = useMemo(
     () =>
@@ -142,21 +131,38 @@ export default function RecipeIndex({
 
   const visibleRecipes = useMemo(
     () =>
-      availableRecipes
-        .filter((recipe) => matches(recipe, activeCapability, activeSurface))
-        .sort(sortRecipes),
+      availableRecipes.filter((recipe) =>
+        matches(recipe, activeCapability, activeSurface),
+      ),
     [availableRecipes, activeCapability, activeSurface],
   );
-  const recipesByLevel = useMemo(
-    () =>
-      Object.fromEntries(
-        RECIPE_LEVELS.map((level) => [
-          level,
-          visibleRecipes.filter((recipe) => recipe.level === level),
-        ]),
-      ) as Record<Level, RecipeRecord[]>,
-    [visibleRecipes],
-  );
+  // Each collection keeps its authored order. Positions count every available
+  // recipe in the path, so a filtered view still says "3 of 3", not "1 of 1".
+  const collectionSections = useMemo(() => {
+    const available = new Map(
+      availableRecipes.map((recipe) => [recipe.id, recipe]),
+    );
+    const visible = new Set(visibleRecipes.map((recipe) => recipe.id));
+    return collections
+      .map((collection) => {
+        const path = collection.recipes
+          .map((id) => available.get(id))
+          .filter((recipe): recipe is RecipeRecord => Boolean(recipe));
+        return {
+          collection,
+          path,
+          shown: path
+            .map((recipe, index) => ({ recipe, index: index + 1 }))
+            .filter(({ recipe }) => visible.has(recipe.id)),
+        };
+      })
+      .filter(({ shown }) => shown.length > 0);
+  }, [collections, availableRecipes, visibleRecipes]);
+  // Section ids are link targets (`/cookbook#agents`) from recipe pages and
+  // guides. Register them so the build's broken-anchor check can see them.
+  for (const { collection } of collectionSections) {
+    brokenLinks.collectAnchor(collection.id);
+  }
   const count = visibleRecipes.length;
   const hasActiveFilters =
     activeCapability !== 'all' || activeSurface !== 'all';
@@ -189,7 +195,10 @@ export default function RecipeIndex({
         </div>
       ) : (
         <>
-          <RecipeShowcaseCarousel recipes={availableRecipes} />
+          <RecipeShowcaseCarousel
+            collections={collections}
+            recipes={availableRecipes}
+          />
 
           <div className={styles.filterBar}>
             <div className={styles.filterControls}>
@@ -261,27 +270,37 @@ export default function RecipeIndex({
 
           {count > 0 ? (
             <div className={styles.sections}>
-              {RECIPE_LEVELS.map((level) => {
-                const levelRecipes = recipesByLevel[level];
-                if (levelRecipes.length === 0) return null;
-                const section = LEVEL_SECTIONS[level];
-                return (
-                  <section className={styles.recipeSection} key={level}>
-                    <div className={styles.sectionHeading}>
-                      <h2>{section.heading}</h2>
-                      <span className={styles.sectionRule} />
-                    </div>
-                    <p className={styles.sectionDescription}>
-                      {section.description}
-                    </p>
-                    <div className={styles.grid}>
-                      {levelRecipes.map((recipe) => (
-                        <RecipeCard key={recipe.id} recipe={recipe} />
-                      ))}
-                    </div>
-                  </section>
-                );
-              })}
+              {collectionSections.map(({ collection, path, shown }) => (
+                <section
+                  aria-labelledby={`collection-${collection.id}`}
+                  className={styles.recipeSection}
+                  id={collection.id}
+                  key={collection.id}
+                >
+                  <div className={styles.sectionHeading}>
+                    <h2 id={`collection-${collection.id}`}>
+                      {collection.label}
+                    </h2>
+                    <span className={styles.sectionRule} />
+                    <span className={styles.sectionMeta}>
+                      {path.length} recipe{path.length === 1 ? '' : 's'} ·{' '}
+                      {levelRange(path)}
+                    </span>
+                  </div>
+                  <p className={styles.sectionDescription}>
+                    {collection.description}
+                  </p>
+                  <div className={styles.grid}>
+                    {shown.map(({ recipe, index }) => (
+                      <RecipeCard
+                        key={recipe.id}
+                        position={{ index, total: path.length }}
+                        recipe={recipe}
+                      />
+                    ))}
+                  </div>
+                </section>
+              ))}
             </div>
           ) : null}
 

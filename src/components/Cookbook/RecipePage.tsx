@@ -5,9 +5,37 @@ import Link from '@docusaurus/Link';
 import { useLocation } from '@docusaurus/router';
 import recipesData from '@site/src/data/recipes.json';
 import type { RecipesData } from '../../types/recipe';
-import RecipeLayout from './RecipeLayout';
+import RecipeLayout, { type RecipeCollectionContext } from './RecipeLayout';
 import { stripInlineMarkup } from './inlineMarkup';
-import { isRecipeAvailable } from './recipePreview';
+import { isRecipeAvailable, recipeHref } from './recipePreview';
+
+/** The recipe's collection, with its path limited to recipes a reader can open. */
+function collectionContext(
+  data: RecipesData,
+  recipeId: string,
+  search: string,
+): RecipeCollectionContext | undefined {
+  const collection = data.collections.find((c) => c.recipes.includes(recipeId));
+  if (!collection) return undefined;
+  const path = collection.recipes
+    .map((id) => data.recipes.find((r) => r.id === id))
+    .filter(
+      (r): r is RecipesData['recipes'][number] =>
+        r !== undefined && (r.id === recipeId || isRecipeAvailable(r, search)),
+    )
+    .map((r) => ({
+      id: r.id,
+      label: r.title,
+      href: recipeHref(r),
+      level: r.level,
+    }));
+  return {
+    id: collection.id,
+    label: collection.label,
+    path,
+    index: path.findIndex((step) => step.id === recipeId),
+  };
+}
 
 interface RecipePageProps {
   recipeId: string;
@@ -97,7 +125,11 @@ export default function RecipePage({
         <meta property="og:description" content={metaDescription} />
         {isPreview ? <meta name="robots" content="noindex,nofollow" /> : null}
       </Head>
-      <RecipeLayout plugin={data.plugin} recipe={recipe}>
+      <RecipeLayout
+        collection={collectionContext(data, recipe.id, location.search)}
+        plugin={data.plugin}
+        recipe={recipe}
+      >
         {children}
       </RecipeLayout>
     </>

@@ -8,6 +8,9 @@
  *   source of truth, consumed by scripts/compile-recipes.ts)
  * - config/recipe-taxonomy.json -> data/cookbook-taxonomy.json (capability and
  *   surface values, display labels, and filter order)
+ * - config/recipe-collections.json -> data/cookbook-collections.json (ordered
+ *   collections of recipes; scripts/compile-recipes.ts validates them against
+ *   the published recipes, and recipe pages keep previous/next inside one)
  * - docs/cookbook/<id>.mdx pages generated from each registry entry's structured
  *   content. The cookbook owns semantics; this repository owns presentation.
  * - codeWalkthrough sources fetched from each recipe directory and embedded in
@@ -51,12 +54,18 @@ const REPO = 'gleanwork/glean-cookbook';
 const REF = process.env.GLEAN_COOKBOOK_REF ?? '';
 const REGISTRY_PATH = 'registry.json';
 const TAXONOMY_PATH = 'config/recipe-taxonomy.json';
+const COLLECTIONS_PATH = 'config/recipe-collections.json';
 // Claude Code's manifest specifically: all three targets carry the same
 // marketplace and plugin names, and this one has the broadest schema.
 const MARKETPLACE_PATH = '.claude-plugin/marketplace.json';
 const repoRoot = path.resolve(import.meta.dirname, '..');
 const registryFile = path.join(repoRoot, 'data', 'cookbook-registry.json');
 const taxonomyFile = path.join(repoRoot, 'data', 'cookbook-taxonomy.json');
+const collectionsFile = path.join(
+  repoRoot,
+  'data',
+  'cookbook-collections.json',
+);
 const pluginFile = path.join(repoRoot, 'data', 'cookbook-plugin.json');
 const previewsDir = path.join(
   repoRoot,
@@ -141,6 +150,31 @@ export function parseRecipeTaxonomy(raw) {
     }
   }
   return taxonomy;
+}
+
+/**
+ * Checks only the shape page generation relies on. The full schema and the
+ * rule that each published recipe sits in exactly one collection are enforced
+ * by `pnpm recipes:compile`.
+ */
+export function parseRecipeCollections(raw) {
+  const config = JSON.parse(raw);
+  const collections = config?.collections;
+  if (
+    !Array.isArray(collections) ||
+    collections.length === 0 ||
+    collections.some(
+      (collection) =>
+        typeof collection?.id !== 'string' ||
+        !Array.isArray(collection?.recipes) ||
+        collection.recipes.some((id) => typeof id !== 'string'),
+    )
+  ) {
+    throw new Error(
+      `${COLLECTIONS_PATH}: collections must be a non-empty array of { id, recipes: string[] }.`,
+    );
+  }
+  return config;
 }
 
 const MAX_WALKTHROUGH_SOURCE_BYTES = 30_000;
@@ -496,20 +530,39 @@ ${parts.join('\n\n')}
 }
 
 /**
+ * Previous and next recipe for each public recipe, within its collection's
+ * path. A path's first and last recipes have no neighbour on that side, so
+ * page navigation never jumps from one feature into another.
+ */
+export function collectionNeighbours(entries, collections) {
+  const byId = new Map(
+    publicRecipes(entries).map((entry) => [entry.id, entry]),
+  );
+  const neighbours = new Map();
+  for (const collection of collections) {
+    const path = collection.recipes.map((id) => byId.get(id)).filter(Boolean);
+    path.forEach((entry, index) => {
+      neighbours.set(entry.id, {
+        previousRecipe: path[index - 1] ?? null,
+        nextRecipe: path[index + 1] ?? null,
+      });
+    });
+  }
+  return neighbours;
+}
+
+/**
  * Writes listed recipe pages and deletes leftovers (including newly hidden ids).
  * `index.mdx` is hand-authored and is left alone.
  */
-export function writeRecipePages(entries, outputDir = pagesDir) {
+export function writeRecipePages(entries, collections, outputDir = pagesDir) {
   const listed = listedRecipes(entries);
-  const navigable = publicRecipes(entries);
+  const neighbours = collectionNeighbours(entries, collections);
   fs.mkdirSync(outputDir, { recursive: true });
   const written = new Set();
   for (const entry of listed) {
-    const navigationIndex = navigable.indexOf(entry);
-    const previousRecipe =
-      navigationIndex >= 0 ? navigable[navigationIndex - 1] : null;
-    const nextRecipe =
-      navigationIndex >= 0 ? navigable[navigationIndex + 1] : null;
+    const { previousRecipe = null, nextRecipe = null } =
+      neighbours.get(entry.id) ?? {};
     const sections = [
       `## Problem\n\n${entry.content.problem}`,
       ...(entry.content.guardrails ?? []).map(
@@ -546,6 +599,9 @@ async function main() {
 
   const rawRegistry = await fetchSource(REGISTRY_PATH);
   const taxonomy = parseRecipeTaxonomy(await fetchSource(TAXONOMY_PATH));
+  const collectionsConfig = parseRecipeCollections(
+    await fetchSource(COLLECTIONS_PATH),
+  );
 
   // Fail loudly on malformed content rather than committing garbage.
   const registryEntries = JSON.parse(rawRegistry);
@@ -569,6 +625,16 @@ async function main() {
     `✅ Wrote recipe taxonomy to ${path.relative(repoRoot, taxonomyFile)}`,
   );
   fs.writeFileSync(
+    collectionsFile,
+    await prettier.format(JSON.stringify(collectionsConfig), {
+      ...(await prettier.resolveConfig(collectionsFile)),
+      filepath: collectionsFile,
+    }),
+  );
+  console.log(
+    `✅ Wrote ${collectionsConfig.collections.length} recipe collection(s) to ${path.relative(repoRoot, collectionsFile)}`,
+  );
+  fs.writeFileSync(
     registryFile,
     await prettier.format(JSON.stringify(parsed), {
       ...(await prettier.resolveConfig(registryFile)),
@@ -589,7 +655,7 @@ async function main() {
 
   const listed = listedRecipes(parsed);
   console.log(`🧱 Rendering ${listed.length} page(s) from cookbook data...`);
-  const written = writeRecipePages(parsed);
+  const written = writeRecipePages(parsed, collectionsConfig.collections);
   console.log(`✅ Wrote ${written.size} recipe page(s) to docs/cookbook/`);
 
   console.log(`📡 Fetching ${MARKETPLACE_PATH} from ${REPO}...`);

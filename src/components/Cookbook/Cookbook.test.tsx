@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import React from 'react';
 import { beforeEach, describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { FeatureFlagsContext } from '@site/src/theme/Root';
 import { tenantProfileStore } from '@site/src/lib/tenantProfile';
@@ -199,9 +199,33 @@ const recipes = [
   flagship,
 ];
 
+// Path order deliberately differs from title order, so the tests prove the
+// index and carousel follow the authored collection, not a sort.
+const collections = [
+  {
+    id: 'search',
+    label: 'Search',
+    description: 'Search recipes, from one query to an embedded experience.',
+    recipes: ['search-with-discovered-filters', 'embed-search-chat'],
+  },
+  {
+    id: 'indexing',
+    label: 'Indexing',
+    description: 'Bring your own content into Glean.',
+    recipes: ['index-custom-source'],
+  },
+  {
+    id: 'complete-apps',
+    label: 'Complete apps',
+    description: 'End-to-end builds that combine features.',
+    recipes: ['build-engineering-portal'],
+  },
+];
+
 describe('RecipeIndex', () => {
   const props = {
     recipes,
+    collections,
     capabilities: ['search', 'indexing', 'embed', 'chat'] as const,
     surfaces: [
       'platform-api',
@@ -211,28 +235,71 @@ describe('RecipeIndex', () => {
     ] as const,
   };
 
-  it('renders a featured carousel followed by clearly labeled learning levels', () => {
+  function section(name: string): HTMLElement {
+    return screen.getByRole('region', { name });
+  }
+
+  it('renders a starter carousel followed by one section per collection, in order', () => {
     render(<RecipeIndex {...props} />);
 
     expect(
       screen.getByText('Recipes for building on Glean'),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole('region', { name: 'Featured recipes' }),
+      screen.getByRole('region', { name: 'Starter recipes' }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole('heading', {
-        level: 2,
-        name: 'Search Glean with discovered filters',
-      }),
+      screen
+        .getAllByRole('heading', { level: 2 })
+        .map((heading) => heading.textContent)
+        .filter((name) =>
+          ['Search', 'Indexing', 'Complete apps'].includes(name ?? ''),
+        ),
+    ).toEqual(['Search', 'Indexing', 'Complete apps']);
+    expect(
+      within(section('Search')).getByText(
+        'Search recipes, from one query to an embedded experience.',
+      ),
     ).toBeInTheDocument();
-    expect(screen.getByText('01 · Simple recipes')).toBeInTheDocument();
-    expect(screen.getByText('02 · Intermediate recipes')).toBeInTheDocument();
-    expect(screen.getByText('03 · Advanced recipes')).toBeInTheDocument();
-    expect(screen.getByText('Embed search & chat')).toBeInTheDocument();
-    expect(screen.getByText('Index a custom data source')).toBeInTheDocument();
-    expect(screen.getByText('Build an engineering portal')).toBeInTheDocument();
+    expect(
+      within(section('Search')).getByText('2 recipes · Beginner'),
+    ).toBeInTheDocument();
     expect(screen.getByText('4 recipes')).toBeInTheDocument();
+  });
+
+  it('lists each collection in path order with each recipe\u2019s position', () => {
+    render(<RecipeIndex {...props} />);
+
+    const cards = within(section('Search')).getAllByRole('link');
+    expect(cards.map((card) => card.getAttribute('href'))).toEqual([
+      '/cookbook/search-with-discovered-filters',
+      '/cookbook/embed-search-chat',
+    ]);
+    expect(within(cards[0]).getByText('1 of 2')).toBeInTheDocument();
+    expect(within(cards[1]).getByText('2 of 2')).toBeInTheDocument();
+    expect(
+      within(section('Complete apps')).getByText('1 of 1'),
+    ).toBeInTheDocument();
+  });
+
+  it('keeps a recipe\u2019s path position when filters hide the rest of its collection', async () => {
+    const user = userEvent.setup();
+    render(<RecipeIndex {...props} />);
+
+    await user.selectOptions(
+      screen.getByRole('combobox', { name: 'Surface' }),
+      'web-sdk',
+    );
+    expect(screen.getByText('2 recipes')).toBeInTheDocument();
+    expect(within(section('Search')).getByText('2 of 2')).toBeInTheDocument();
+    expect(
+      within(section('Search')).queryByText(
+        'Search Glean with discovered filters',
+      ),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('region', { name: 'Indexing' }),
+    ).not.toBeInTheDocument();
   });
 
   it('filters by capability and implementation surface with intersection semantics', async () => {
@@ -253,7 +320,9 @@ describe('RecipeIndex', () => {
       screen.getByRole('combobox', { name: 'Surface' }),
       'platform-api',
     );
-    expect(screen.queryByText('Embed search & chat')).not.toBeInTheDocument();
+    expect(
+      within(section('Search')).queryByText('Embed search & chat'),
+    ).not.toBeInTheDocument();
     expect(screen.getByText('1 recipe')).toBeInTheDocument();
 
     await user.selectOptions(
@@ -376,31 +445,64 @@ describe('RecipeIndex', () => {
   });
 
   it('shows the empty state when no recipes exist', () => {
-    render(<RecipeIndex recipes={[]} capabilities={[]} surfaces={[]} />);
+    render(
+      <RecipeIndex
+        recipes={[]}
+        collections={[]}
+        capabilities={[]}
+        surfaces={[]}
+      />,
+    );
     expect(screen.getByText(/coming soon/i)).toBeInTheDocument();
   });
 });
 
 describe('RecipeShowcaseCarousel', () => {
-  it('selects one curated public recipe per learning level from generated data', () => {
+  it('starts every generated collection with its first public recipe', () => {
     const publicRecipes = recipesData.recipes.filter(
       (recipe) => recipe.visibility === 'public',
     ) as RecipeRecord[];
-    expect(
-      selectShowcaseRecipes(publicRecipes).map((recipe) => recipe.level),
-    ).toEqual(['Beginner', 'Intermediate', 'Advanced']);
-    expect(
-      selectShowcaseRecipes(recipesData.recipes as RecipeRecord[])[0].id,
-    ).toBe('search-with-discovered-filters');
+    const slides = selectShowcaseRecipes(
+      publicRecipes,
+      recipesData.collections,
+    );
+    expect(slides.map(({ collection }) => collection.id)).toEqual(
+      recipesData.collections.map((collection) => collection.id),
+    );
+    for (const { collection, recipe } of slides) {
+      expect(recipe.id).toBe(
+        collection.recipes.find((id) =>
+          publicRecipes.some((candidate) => candidate.id === id),
+        ),
+      );
+    }
   });
 
-  it('moves through one featured recipe per level and prefers the quickstart', async () => {
+  it('skips a starter the reader cannot open and ignores featured', () => {
+    const withoutQuickstart = recipes.filter(
+      (recipe) => recipe.id !== searchQuickstart.id,
+    );
+    expect(
+      selectShowcaseRecipes(withoutQuickstart, collections).map(
+        ({ recipe }) => recipe.id,
+      ),
+    ).toEqual([
+      'embed-search-chat',
+      'index-custom-source',
+      'build-engineering-portal',
+    ]);
+  });
+
+  it('moves through one starter per collection in collection order', async () => {
     const user = userEvent.setup();
-    render(<RecipeShowcaseCarousel recipes={recipes} />);
+    render(
+      <RecipeShowcaseCarousel collections={collections} recipes={recipes} />,
+    );
 
     expect(
-      screen.getByRole('region', { name: 'Featured recipes' }),
+      screen.getByRole('region', { name: 'Starter recipes' }),
     ).toHaveAttribute('aria-roledescription', 'carousel');
+    expect(screen.getByText('Start here · Search')).toBeInTheDocument();
     expect(
       screen.getByRole('heading', {
         level: 2,
@@ -410,16 +512,17 @@ describe('RecipeShowcaseCarousel', () => {
 
     await user.click(
       screen.getByRole('button', {
-        name: 'Pause featured recipe rotation',
+        name: 'Pause starter recipe rotation',
       }),
     );
     expect(
       screen.getByRole('button', {
-        name: 'Resume featured recipe rotation',
+        name: 'Resume starter recipe rotation',
       }),
     ).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Next recipe' }));
+    expect(screen.getByText('Start here · Indexing')).toBeInTheDocument();
     expect(
       screen.getByRole('heading', {
         level: 2,
