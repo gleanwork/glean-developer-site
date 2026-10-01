@@ -1,106 +1,55 @@
 ---
 title: Building Agents with Glean
-description: Complete guide to building AI agents using Glean's ecosystem of tools and libraries
+description: Choose how to build a Glean agent and run it from your own code
 ---
 
+# Building agents with Glean
 
-# Building Agents with Glean
+A Glean agent is built and published in Glean, then run by people in the Glean app or by your application through the [Agents API](/api/platform-api/agents-overview). This page helps you pick where to define an agent and how to call it, then points you to the detailed guide for each path.
 
-Glean provides multiple ways to build AI agents that can search and reason over your organization's knowledge. This guide helps you choose the right approach and get started with building agent-powered applications.
+## Choose an approach
 
-## Choose Your Approach
+### Build in Agent Builder, then run it from code
 
-<CardGroup cols={2}>
-  <Card 
-    title="Direct API Integration"
-    icon="Cloud"
-    href="/guides/agents/direct-api"
-  >
-    Use Glean's REST APIs directly for maximum control and customization
-  </Card>
-  
-  <Card 
-    title="LangChain Integration" 
-    icon="langchain"
-    iconSet="glean"
-    href="./langchain"
-  >
-    Python LangChain integration for Glean's search and chat capabilities
-  </Card>
-  
-  <Card 
-    title="MCP Integration"
-    icon="mcp"
-    iconSet="glean"
-    href="../mcp"
-  >
-    Connect AI models and IDEs to Glean via standardized protocol
-  </Card>
-  
-  <Card 
-    title="Glean Agent Toolkit"
-    icon="tools"
-    iconSet="glean"
-    href="/guides/agents/toolkit"
-  >
-    Pre-built Glean tools that work across multiple agent frameworks
-  </Card>
-</CardGroup>
+Agent Builder in the Glean app creates and configures agents. In Auto mode you describe the outcome you want and refine and test the agent; Workflow mode builds a fixed, step-by-step process with explicit control over its execution. See the [Glean Agents documentation](https://docs.glean.com/agents/) for building and publishing.
 
-## Comparison & Decision Guide
+API runs use the published agent, so publish your edits before calling it. To get the agent ID, click **Share** on the agent and copy the **Agent ID** from the **API** section under **Publishing options**. The ID is also the 32-character value after `/agents/` in the agent's URL.
 
-| Approach | Complexity | Flexibility | Time to Deploy | Best For |
-|----------|------------|-------------|----------------|----------|
-| **Direct API** | High | Maximum | Medium | Custom integrations, multi-language |
-| **LangChain** | Medium | High | Fast | Python ecosystem, rich tooling |
-| **MCP** | Low | Medium | Fast | IDE integration, standardized tools |
-| **Glean Agent Toolkit** | Medium | High | Medium | Cross-platform compatibility, multi-framework tools |
+### Run agents with the Platform Agents API
 
-### Questions to Consider
+The Platform API is Glean's recommended API for new integrations. Its Agents API finds agents with [`POST /api/agents/search`](/api/platform-api/platform-agents-search), reads their input and output schemas, and runs them with [`POST /api/agents/{agent_id}/runs`](/api/platform-api/platform-agents-create-run). A run either streams server-sent events (`stream: true`) or returns the agent's final messages.
 
-1. **What's your technical background?**
-   - Non-technical → [Agent Builder](https://docs.glean.com/agents/)
-   - Python developer → LangChain
-   - Multi-language → Direct API
+For work that should outlive the HTTP request, set `execution_mode` to `DURABLE`. The create call returns the run's initial snapshot with HTTP `201` without waiting for execution; you then:
 
-2. **Where will the agent run?**
-   - IDE/Editor → MCP
-   - Web application → Direct API
-   - Multiple frameworks → Glean Agent Toolkit
+- Poll [`GET /api/agents/{agent_id}/runs/{run_id}`](/api/platform-api/platform-agents-get-run) for its `state`. An overdue run is marked `FAILED` only when it is read; without a read, the stored run can stay `RUNNING`.
+- When `state` is `REQUIRES_INPUT`, read `pending_interactions`. Each entry has `type: TOOL_APPROVAL`, the tool's name and description, and the exact `arguments` it wants to use.
+- Send an `APPROVE` or `REJECT` decision for every pending `interaction_id`, with the `run_id` in the body, to [`POST /api/agents/{agent_id}/responses`](/api/platform-api/platform-agents-create-run-responses). The same run then resumes.
+- Stop a run with [`POST /api/agents/{agent_id}/cancellations`](/api/platform-api/platform-agents-cancel-run). Cancellation is cooperative; poll the run for its final state.
 
-3. **How much customization do you need?**
-   - Simple Q&A → [Agent Builder](https://docs.glean.com/agents/)
-   - Complex workflows → Direct API
-   - Multi-framework tools → Glean Agent Toolkit
+The Client API endpoints for searching agents, getting an agent or its schemas, and running agents (`/rest/api/v1/agents/...`) are deprecated in favor of these endpoints. See the [deprecation list](/deprecations) for removal dates.
 
-## Authentication & Setup
+### Define agents as code
 
-All approaches require Glean API credentials:
+The [agent specification](/guides/agents/specification) describes an agent as a directory of files: `spec.yaml`, `instructions.md`, and optional skills and subagents. Keep the directory in version control, zip it, and send it to the Client API [Import an agent](/api/client-api/agents/import-agent) endpoint to create or update the agent.
 
-1. **Get API Token**: Request a [user-scoped API token](/api-info/client/authentication/glean-issued#available-scopes)
-2. **Required Scopes**: `agents` and `chat` are required for agent execution; `search` may be needed depending on your agent's configuration
-3. **Environment Setup**: Configure your Glean instance and token
+### Bring Glean into another agent framework
 
-## Need a No-Code Solution?
+If your agent runs in another host or framework, give it Glean's search, chat, and tools instead of calling a Glean agent:
 
-For creating agents without writing code, use Glean's built-in Agent Builder:
+- [Remote MCP server](/guides/mcp) connects MCP hosts, including IDEs, CLIs, desktop apps, and web apps, to Glean.
+- [Direct API integration](/guides/agents/direct-api) builds agent logic around Glean's search and chat APIs with the official client libraries.
+- [LangChain integration](/guides/agents/langchain), [Agent Toolkit](/guides/agents/toolkit), and the [NVIDIA NIM example](/guides/agents/nvidia-example) cover specific frameworks.
 
-<Card 
-  title="Glean Agent Builder"
-  icon="agent"
-  iconSet="glean"
-  href="https://docs.glean.com/agents/"
->
-  Create agents with drag-and-drop interface, pre-built templates, and custom instructions. Perfect for business users and rapid prototyping.
-</Card>
+## Authentication and scopes
 
-The Agent Builder provides a visual interface for creating agents directly in Glean. Agents created this way can still be accessed programmatically via the [Agents API](/api/client-api/agents/overview) for integration with your applications.
+The Agents API accepts OAuth access tokens and Glean-issued tokens. Prefer OAuth for per-user integrations. Use a Glean-issued token for global permissions with `X-Glean-ActAs`, or when no OAuth path exists. See [Platform API authentication](/api/platform-api/authentication).
 
-## Next Steps
+The Agents API endpoints require the `agents` scope. The caller must also have access to the agent, and a durable run can only be read, answered, or cancelled by the user who started it.
 
-- **New to Glean?** Start with [Agent Builder](https://docs.glean.com/agents/) (no-code solution)
-- **Python Developer?** Try [LangChain Integration](./langchain)  
-- **IDE User?** Set up [MCP Integration](../mcp)
-- **Multi-Framework?** Explore [Glean Agent Toolkit](/guides/agents/toolkit)
-- **Custom Needs?** Use [Direct API Integration](/guides/agents/direct-api)
-- **Need Help?** Check the [API Reference](/api/client-api/agents/overview) for technical details 
+If an agent uses tools the caller has not authorized yet, the run is rejected with `422` and `authentication_suggestions` naming each tool. Have the user authorize those tools, then retry the run.
+
+## Learn by building
+
+- [Triage one support issue](/cookbook/triage-support-issue): a JavaScript CLI that sends one issue to a published support-triage agent and prints a summary, evidence, next diagnostic step, and customer-safe response.
+- [Human-in-the-loop agent](/cookbook/human-in-the-loop-agent): a TypeScript CLI that starts a durable run, shows the exact tool call the agent wants to make, and lets you approve, reject, or cancel it.
+- [On-call Copilot](/cookbook/oncall-copilot): an on-call dashboard that takes an alarm to a proposed action behind a human approval gate. It replays recorded incidents, so it runs without credentials.
