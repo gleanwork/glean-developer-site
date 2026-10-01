@@ -42,7 +42,6 @@ describe('parseRecipeEntry', () => {
     expect(result.record.permalink).toBe('/cookbook/embed-search-chat');
     // defaults applied
     expect(result.record.tags).toEqual([]);
-    expect(result.record.featured).toBe(false);
     expect(result.record.hidden).toBe(false);
     expect(result.record.visibility).toBe('public');
     expect(isListedOnDocs(result.record)).toBe(true);

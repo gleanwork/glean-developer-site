@@ -520,7 +520,6 @@ export const recipeMetaSchema = z.strictObject({
   llmContext: z.string().min(1).optional(),
   lastVerified: z.iso.date().optional(),
   goDependency: z.boolean().default(false),
-  featured: z.boolean().default(false),
   hidden: z
     .boolean()
     .default(false)
