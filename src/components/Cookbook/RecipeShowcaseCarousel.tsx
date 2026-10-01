@@ -4,9 +4,9 @@ import Link from '@docusaurus/Link';
 import { getIcon } from '@gleanwork/docusaurus-theme-glean/Icons';
 import {
   RECIPE_CAPABILITY_LABELS,
-  RECIPE_LEVELS,
   RECIPE_STATUS_LABELS,
   RECIPE_SURFACE_LABELS,
+  type RecipeCollection,
   type RecipeRecord,
 } from '../../types/recipe';
 import { recipeHref } from './recipePreview';
@@ -14,26 +14,33 @@ import { renderInlineMarkup } from './inlineMarkup';
 import styles from './RecipeShowcaseCarousel.module.css';
 
 interface RecipeShowcaseCarouselProps {
+  /** Recipes the reader can open (public, plus any unlocked previews). */
   recipes: RecipeRecord[];
+  collections: readonly RecipeCollection[];
+}
+
+interface ShowcaseSlide {
+  recipe: RecipeRecord;
+  collection: RecipeCollection;
 }
 
 const ROTATION_INTERVAL_MS = 6000;
 
 /**
- * Select one editorially featured recipe per learning level. When preview
- * gating exposes a featured quickstart, it replaces the longer Beginner
- * showcase without changing the public carousel.
+ * One starter per collection: the first recipe in each path that the reader
+ * can open. The carousel follows collection order, so it previews every
+ * feature area rather than repeating one area at several levels.
  */
-export function selectShowcaseRecipes(recipes: RecipeRecord[]): RecipeRecord[] {
-  return RECIPE_LEVELS.flatMap((level) => {
-    const candidates = recipes
-      .filter((recipe) => recipe.featured && recipe.level === level)
-      .sort(
-        (a, b) =>
-          Number(b.status === 'quickstart') -
-            Number(a.status === 'quickstart') || a.title.localeCompare(b.title),
-      );
-    return candidates.slice(0, 1);
+export function selectShowcaseRecipes(
+  recipes: RecipeRecord[],
+  collections: readonly RecipeCollection[],
+): ShowcaseSlide[] {
+  const available = new Map(recipes.map((recipe) => [recipe.id, recipe]));
+  return collections.flatMap((collection) => {
+    const starter = collection.recipes
+      .map((id) => available.get(id))
+      .find((recipe) => recipe !== undefined);
+    return starter ? [{ recipe: starter, collection }] : [];
   });
 }
 
@@ -67,8 +74,12 @@ function previewRows(recipe: RecipeRecord) {
 
 export default function RecipeShowcaseCarousel({
   recipes,
+  collections,
 }: RecipeShowcaseCarouselProps): React.ReactElement | null {
-  const slides = useMemo(() => selectShowcaseRecipes(recipes), [recipes]);
+  const slides = useMemo(
+    () => selectShowcaseRecipes(recipes, collections),
+    [recipes, collections],
+  );
   const [active, setActive] = useState(0);
   const [autoRotationEnabled, setAutoRotationEnabled] = useState(true);
   const interactionPaused = useRef(false);
@@ -107,7 +118,7 @@ export default function RecipeShowcaseCarousel({
 
   if (slides.length === 0) return null;
 
-  const recipe = slides[active];
+  const { recipe, collection } = slides[active];
   const rows = previewRows(recipe);
   const capabilitySummary = recipe.capabilities
     .slice(0, 3)
@@ -120,7 +131,7 @@ export default function RecipeShowcaseCarousel({
 
   return (
     <section
-      aria-label="Featured recipes"
+      aria-label="Starter recipes"
       aria-roledescription="carousel"
       className={styles.carousel}
       onBlurCapture={(event) => {
@@ -148,7 +159,7 @@ export default function RecipeShowcaseCarousel({
         <div className={styles.copy}>
           <div className={styles.pill}>
             <span className={styles.pillDot} />
-            Featured · {recipe.level}
+            Start here · {collection.label}
           </div>
           <h2 className={styles.title}>{recipe.title}</h2>
           <p className={styles.description}>
@@ -186,14 +197,14 @@ export default function RecipeShowcaseCarousel({
       {slides.length > 1 ? (
         <div className={styles.controls}>
           <span className={styles.controlsNote}>
-            Featured across every experience level
+            One starter recipe per collection
           </span>
           <div className={styles.controlButtons}>
             <button
               aria-label={
                 autoRotationEnabled
-                  ? 'Pause featured recipe rotation'
-                  : 'Resume featured recipe rotation'
+                  ? 'Pause starter recipe rotation'
+                  : 'Resume starter recipe rotation'
               }
               className={styles.rotationButton}
               onClick={() => setAutoRotationEnabled((enabled) => !enabled)}
@@ -215,12 +226,12 @@ export default function RecipeShowcaseCarousel({
             </button>
             {slides.map((slide, index) => (
               <button
-                aria-label={`Show ${slide.level} recipe: ${slide.title}`}
+                aria-label={`Show ${slide.collection.label} starter: ${slide.recipe.title}`}
                 aria-pressed={index === active}
                 className={`${styles.dot} ${
                   index === active ? styles.dotActive : ''
                 }`}
-                key={slide.id}
+                key={slide.recipe.id}
                 onClick={() => goTo(index)}
                 type="button"
               />

@@ -9,6 +9,8 @@ import styles from './RecipeCard.module.css';
 
 interface RecipeCardProps {
   recipe: RecipeRecord;
+  /** Where the recipe sits in its collection's path, e.g. 2 of 3. */
+  position?: { index: number; total: number };
 }
 
 /**
@@ -18,11 +20,17 @@ interface RecipeCardProps {
  */
 export default function RecipeCard({
   recipe,
+  position,
 }: RecipeCardProps): React.ReactElement {
   return (
     <Link className={styles.card} to={recipeHref(recipe)}>
       <div className={styles.tileRow}>
         <CategoryTile category={recipe.category} iconOverride={recipe.icon} />
+        {position ? (
+          <span className={styles.position}>
+            {position.index} of {position.total}
+          </span>
+        ) : null}
       </div>
       <span className={styles.title}>{recipe.title}</span>
       <p className={styles.summary}>{renderInlineMarkup(recipe.description)}</p>

@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { compileRecipeCatalog, compileRecipeFacets } from './compile-recipes';
+import {
+  compileRecipeCatalog,
+  compileRecipeCollections,
+  compileRecipeFacets,
+} from './compile-recipes';
+import type { RecipeRecord } from '../src/types/recipe';
 
 function listedEntry(id: string) {
   return {
@@ -193,5 +198,66 @@ describe('compileRecipeCatalog', () => {
       'tools',
       'skills',
     ]);
+  });
+});
+
+describe('compileRecipeCollections', () => {
+  const records = ['chat-1', 'search-1', 'search-2'].map(
+    (id) => ({ id }) as RecipeRecord,
+  );
+  const collection = (id: string, recipes: string[]) => ({
+    id,
+    label: id,
+    description: `${id} recipes`,
+    recipes,
+  });
+
+  it('keeps collection and path order, limited to recipes published here', () => {
+    const { collections, errors } = compileRecipeCollections(
+      {
+        collections: [
+          collection('search', ['search-2', 'hidden-search', 'search-1']),
+          collection('chat', ['chat-1']),
+          collection('hidden-only', ['hidden-search']),
+        ],
+      },
+      records,
+    );
+
+    expect(errors).toEqual([]);
+    expect(collections.map(({ id, recipes }) => [id, recipes])).toEqual([
+      ['search', ['search-2', 'search-1']],
+      ['chat', ['chat-1']],
+    ]);
+  });
+
+  it('rejects a published recipe in no collection or in two', () => {
+    const { errors } = compileRecipeCollections(
+      {
+        collections: [
+          collection('search', ['search-1', 'search-2']),
+          collection('more-search', ['search-2']),
+        ],
+      },
+      records,
+    );
+
+    expect(errors).toEqual([
+      'search-2: in both the search and more-search collections',
+      'chat-1: not in any collection',
+    ]);
+  });
+
+  it('rejects a malformed collections file', () => {
+    const { collections, errors } = compileRecipeCollections(
+      { collections: [{ id: 'search', recipes: [] }] },
+      records,
+    );
+
+    expect(collections).toEqual([]);
+    expect(errors.length).toBeGreaterThan(0);
+    expect(errors.every((error) => error.startsWith('collections: '))).toBe(
+      true,
+    );
   });
 });

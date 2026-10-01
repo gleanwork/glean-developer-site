@@ -565,6 +565,27 @@ export type CookbookPlugin = {
   repo: string;
 };
 
+/**
+ * An ordered set of recipes that teaches one feature end to end, authored in
+ * glean-cookbook at config/recipe-collections.json.
+ */
+export const recipeCollectionsSchema = z.strictObject({
+  collections: z
+    .array(
+      z.strictObject({
+        id: z.string().regex(/^[a-z][a-z0-9-]*$/),
+        label: z.string().min(1),
+        description: z.string().min(1),
+        recipes: z.array(z.string().min(1)).min(1),
+      }),
+    )
+    .min(1),
+});
+
+export type RecipeCollection = z.infer<
+  typeof recipeCollectionsSchema
+>['collections'][number];
+
 export type RecipesData = {
   /**
    * Marker emitted as the first key of the generated file, so anyone opening it
@@ -572,6 +593,8 @@ export type RecipesData = {
    */
   _generated?: string;
   recipes: RecipeRecord[];
+  /** Display order; each lists only recipes published on this site, in path order. */
+  collections: RecipeCollection[];
   capabilities: string[];
   surfaces: string[];
   generatedAt: string;

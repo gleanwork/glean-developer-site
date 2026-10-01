@@ -1,4 +1,5 @@
 import React, { useRef, useState } from 'react';
+import Link from '@docusaurus/Link';
 import useBaseUrl from '@docusaurus/useBaseUrl';
 import { getIcon } from '@gleanwork/docusaurus-theme-glean/Icons';
 import CodeBlock from '@theme/CodeBlock';
@@ -533,11 +534,64 @@ export function TakeItFurther({
   );
 }
 
+/** The recipe's place in its collection, resolved by RecipePage. */
+export interface RecipeCollectionContext {
+  id: string;
+  label: string;
+  /** Recipes in path order, including this one. */
+  path: { id: string; label: string; href: string; level: string }[];
+  /** Zero-based index of this recipe in `path`. */
+  index: number;
+}
+
 interface RecipeLayoutProps {
   recipe: RecipeRecord;
   /** Plugin coordinates from recipes.json, for the rail's run button. */
   plugin: CookbookPlugin;
+  collection?: RecipeCollectionContext;
   children: React.ReactNode;
+}
+
+/** Rail card: the whole path this recipe belongs to, with this step marked. */
+function CollectionCard({
+  collection,
+}: {
+  collection: RecipeCollectionContext;
+}): React.ReactElement {
+  return (
+    <nav
+      aria-label={`${collection.label} collection`}
+      className={styles.railCard}
+    >
+      <div className={styles.railLabel}>
+        <Link to={`/cookbook#${collection.id}`}>{collection.label}</Link>{' '}
+        collection
+      </div>
+      <ol className={styles.collectionPath}>
+        {collection.path.map((step, index) => (
+          <li
+            aria-current={index === collection.index ? 'page' : undefined}
+            className={
+              index === collection.index
+                ? `${styles.collectionStep} ${styles.collectionStepCurrent}`
+                : styles.collectionStep
+            }
+            key={step.id}
+          >
+            <span className={styles.collectionNum}>{index + 1}</span>
+            <span className={styles.collectionText}>
+              {index === collection.index ? (
+                <span>{step.label}</span>
+              ) : (
+                <Link to={step.href}>{step.label}</Link>
+              )}
+              <span className={styles.collectionLevel}>{step.level}</span>
+            </span>
+          </li>
+        ))}
+      </ol>
+    </nav>
+  );
 }
 
 interface RecipePreviewProps {
@@ -691,6 +745,7 @@ function ArchNodeIcon({
 export default function RecipeLayout({
   recipe,
   plugin,
+  collection,
   children,
 }: RecipeLayoutProps): React.ReactElement {
   const previewFile = recipe.preview?.path.split('/').at(-1);
@@ -709,6 +764,15 @@ export default function RecipeLayout({
           >
             <div>
               <div className={styles.bannerMain}>
+                {collection ? (
+                  <Link
+                    className={styles.bannerCollection}
+                    to={`/cookbook#${collection.id}`}
+                  >
+                    {collection.label} · {collection.index + 1} of{' '}
+                    {collection.path.length}
+                  </Link>
+                ) : null}
                 <h1 className={styles.bannerTitle}>{recipe.title}</h1>
                 <p className={styles.bannerDesc}>
                   {renderInlineMarkup(recipe.description)}
@@ -738,6 +802,8 @@ export default function RecipeLayout({
 
           <div className={styles.rail}>
             <ActionCard plugin={plugin} recipe={recipe} />
+
+            {collection ? <CollectionCard collection={collection} /> : null}
 
             <RecipeAuthCard recipe={recipe} />
 

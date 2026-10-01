@@ -31,11 +31,28 @@ vi.mock('@site/src/data/recipes.json', () => ({
   default: {
     recipes: [
       {
+        id: 'first-search',
+        title: 'First search',
+        description: 'Run one search.',
+        permalink: '/cookbook/first-search',
+        visibility: 'public',
+        level: 'Beginner',
+      },
+      {
         id: 'preview-search',
         title: 'Preview search',
         description: 'Read about `createStream` **first**.',
         permalink: '/cookbook/preview-search',
         visibility: 'preview',
+        level: 'Intermediate',
+      },
+    ],
+    collections: [
+      {
+        id: 'search',
+        label: 'Search',
+        description: 'Search recipes.',
+        recipes: ['first-search', 'preview-search'],
       },
     ],
     plugin: {},
@@ -43,7 +60,23 @@ vi.mock('@site/src/data/recipes.json', () => ({
 }));
 
 vi.mock('./RecipeLayout', () => ({
-  default: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  default: ({
+    children,
+    collection,
+  }: {
+    children: React.ReactNode;
+    collection?: { label: string; index: number; path: { id: string }[] };
+  }) => (
+    <>
+      {collection ? (
+        <p data-testid="collection">
+          {collection.label} {collection.index + 1} of {collection.path.length}:{' '}
+          {collection.path.map((step) => step.id).join(',')}
+        </p>
+      ) : null}
+      {children}
+    </>
+  ),
 }));
 
 beforeEach(() => {
@@ -141,5 +174,18 @@ describe('RecipePage preview gate', () => {
         'Read about createStream first.',
       );
     }
+  });
+  it('places the recipe in its collection path, including an unlocked preview', async () => {
+    routerState.location.search = '?ff_recipe=preview-search';
+
+    render(
+      <RecipePage recipeId="preview-search">
+        <p>Preview-only body</p>
+      </RecipePage>,
+    );
+
+    expect(await screen.findByTestId('collection')).toHaveTextContent(
+      'Search 2 of 2: first-search,preview-search',
+    );
   });
 });

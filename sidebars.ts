@@ -3,6 +3,48 @@ import recipesData from './src/data/recipes.json';
 
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
 
+// Icons for cookbook collections. Collections that share a name with a
+// Guides section reuse its icon so the two sections read as a pair.
+const COLLECTION_ICONS: Record<string, { icon: string; iconSet: string }> = {
+  chat: { icon: 'chat', iconSet: 'glean' },
+  search: { icon: 'Search', iconSet: 'feather' },
+  agents: { icon: 'agent', iconSet: 'glean' },
+  skills: { icon: 'Package', iconSet: 'feather' },
+  triggers: { icon: 'Zap', iconSet: 'feather' },
+  'complete-apps': { icon: 'Layers', iconSet: 'feather' },
+};
+
+// Generated from the compiled recipe registry so the list can never drift
+// from the real set of recipe pages. One category per cookbook collection,
+// with recipes in the collection's path order. Recipe .mdx files carry no
+// frontmatter (metadata lives in the registry), so the sidebar label is set
+// explicitly here rather than relying on Docusaurus's `sidebar_label`.
+const cookbookCollections = recipesData.collections.flatMap((collection) => {
+  const items = collection.recipes
+    .map((id) => recipesData.recipes.find((r) => r.id === id))
+    .filter(
+      (recipe): recipe is (typeof recipesData.recipes)[number] =>
+        recipe !== undefined && recipe.visibility !== 'preview',
+    )
+    .map((recipe) => ({
+      type: 'doc' as const,
+      id: `cookbook/${recipe.id}`,
+      label: recipe.sidebarLabel ?? recipe.title,
+    }));
+  return items.length === 0
+    ? []
+    : [
+        {
+          type: 'category' as const,
+          label: collection.label,
+          collapsible: true,
+          collapsed: true,
+          customProps: COLLECTION_ICONS[collection.id],
+          items,
+        },
+      ];
+});
+
 const baseSidebars: SidebarsConfig = {
   docSidebar: [
     {
@@ -46,33 +88,6 @@ const baseSidebars: SidebarsConfig = {
       collapsible: false,
       collapsed: false,
       items: [
-        {
-          type: 'category',
-          label: 'Cookbook',
-          customProps: {
-            icon: 'BookOpen',
-            iconSet: 'feather',
-          },
-          link: {
-            type: 'doc',
-            id: 'cookbook/index',
-          },
-          // Generated from the compiled recipe registry so this list can
-          // never drift from the real set of recipe pages. Collapsed by
-          // default like its sibling categories below; auto-expands to show
-          // siblings when you're on a recipe page, same as Chat/Search/
-          // Agents/etc. Recipe .mdx files carry no frontmatter (metadata
-          // lives in the registry), so the short sidebar label is set
-          // explicitly here rather than relying on Docusaurus's own
-          // `sidebar_label` frontmatter fallback.
-          items: recipesData.recipes
-            .filter((recipe) => recipe.visibility !== 'preview')
-            .map((recipe) => ({
-              type: 'doc' as const,
-              id: `cookbook/${recipe.id}`,
-              label: recipe.sidebarLabel ?? recipe.title,
-            })),
-        },
         {
           type: 'category',
           label: 'Chat',
@@ -274,6 +289,24 @@ const baseSidebars: SidebarsConfig = {
             },
           ],
         },
+      ],
+    },
+    {
+      type: 'category',
+      label: 'Cookbook',
+      collapsible: false,
+      collapsed: false,
+      items: [
+        {
+          type: 'doc',
+          id: 'cookbook/index',
+          label: 'All recipes',
+          customProps: {
+            icon: 'BookOpen',
+            iconSet: 'feather',
+          },
+        },
+        ...cookbookCollections,
       ],
     },
     {

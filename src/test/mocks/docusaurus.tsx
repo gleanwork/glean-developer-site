@@ -22,6 +22,12 @@ vi.mock('@docusaurus/useBaseUrl', () => ({
   default: (url: string) => url,
 }));
 
+// Mock useBrokenLinks (pulls raw-JSX Docusaurus internals under vitest). Like
+// the client-side default, collecting links and anchors is a no-op.
+vi.mock('@docusaurus/useBrokenLinks', () => ({
+  default: () => ({ collectAnchor: () => {}, collectLink: () => {} }),
+}));
+
 // Mock BrowserOnly (the real export needs the Docusaurus browser context);
 // tests run in jsdom, so render the browser branch directly
 vi.mock('@docusaurus/BrowserOnly', () => ({
