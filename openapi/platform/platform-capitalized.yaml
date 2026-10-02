@@ -2,8 +2,8 @@ openapi: 3.1.0
 info:
   version: '2026-04-01'
   title: Glean Platform API
-  x-source-commit-sha: 0fef9ef256ed1e463d8534370e0afb074c4f3f8d
-  x-open-api-commit-sha: 9b119d21e4f1e6cc51f92c43f79d9ff2abba3d67
+  x-source-commit-sha: beed58d4df1a2fdf3f13a0c721f9478e75ccde7c
+  x-open-api-commit-sha: 4fb4b1c1b26732bca168a8e8338a19d217b2901c
 servers:
   - url: '{serverUrl}'
     description: Replace {serverUrl} with your complete Glean API server URL. Find it at https://developers.glean.com/get-started/authentication#finding-your-server-url.
@@ -22,6 +22,11 @@ paths:
       description: |
         Search agents available to the authenticated user by agent name.
       operationId: platform-agents-search
+      x-glean-scopes:
+        legacy:
+          - AGENTS
+        platform:
+          - agents:read
       x-visibility: Public
       x-codegen-request-body-name: payload
       requestBody:
@@ -136,6 +141,11 @@ paths:
       description: |
         Retrieve details for an agent available to the authenticated user.
       operationId: platform-agents-get
+      x-glean-scopes:
+        legacy:
+          - AGENTS
+        platform:
+          - agents:read
       x-visibility: Public
       parameters:
         - in: path
@@ -243,6 +253,11 @@ paths:
       description: |
         Retrieve an agent's input and output JSON schemas.
       operationId: platform-agents-get-schemas
+      x-glean-scopes:
+        legacy:
+          - AGENTS
+        platform:
+          - agents:read
       x-visibility: Public
       parameters:
         - in: path
@@ -358,6 +373,11 @@ paths:
       description: |
         Execute an agent run. By default, set `stream` to true to receive server-sent events; otherwise the response contains the final agent messages. Set `execution_mode` to `DURABLE` to persist a new run and return its initial snapshot with HTTP 201 without waiting for execution. Poll the agent-scoped GET run endpoint for progress. Durable execution continues after an HTTP disconnect, but is not automatically resumed after a QE restart or crash. An active turn becomes overdue more than 40 minutes after acceptance (a 30-minute execution timeout plus 10 minutes of grace). The next GET of the run marks the overdue turn FAILED without replay; there is no periodic sweep. Without a GET, the stored run can remain RUNNING. Failure does not prove that external tool work has stopped. Paused runs are not expired; an accepted approval continuation starts a fresh deadline. Each POST creates a new run; retrying a POST can create another execution. Submit pending approval decisions through the run responses endpoint, and cancellation can be requested through the run cancellations endpoint. A run tracks one workflow execution; automatic background-subagent wake turns are separate executions, not continuations tracked by this run ID.
       operationId: platform-agents-create-run
+      x-glean-scopes:
+        legacy:
+          - AGENTS
+        platform:
+          - agents:run
       x-visibility: Public
       x-codegen-request-body-name: payload
       parameters:
@@ -541,6 +561,11 @@ paths:
       description: |
         Retrieve a persisted workflow execution owned by the authenticated user. The run must belong to the specified agent, and the user must still have access to that agent. Unknown runs, runs owned by another user, and mismatched agent/run identifiers return 404. Requires the agents.run scope. Executions without a persisted workflow record are not available through this endpoint.
       operationId: platform-agents-get-run
+      x-glean-scopes:
+        legacy:
+          - AGENTS
+        platform:
+          - agents:run
       x-visibility: Public
       parameters:
         - in: path
@@ -659,6 +684,11 @@ paths:
       description: |
         Request cooperative cancellation of the durable agent run identified by `run_id` in the JSON body. Requires ownership, current agent access, and the agents.run scope. Sending a cancellation signal does not itself change an active run from RUNNING; poll GET run for the final state. Paused runs become CANCELLED without resuming execution. Repeated requests and requests for terminal runs return the current snapshot. Completion may win a race with cancellation. Completed tool side effects cannot be undone, and external work may continue if a tool does not support cancellation. Cancellation targets this run, not separate background-subagent executions. An active run without a cancellation registration returns 409. Cancellation signaling requires Redis. An interrupted active run can instead become FAILED through deadline cleanup; this does not verify that external tool work has stopped.
       operationId: platform-agents-cancel-run
+      x-glean-scopes:
+        legacy:
+          - AGENTS
+        platform:
+          - agents:run
       x-visibility: Public
       x-codegen-request-body-name: payload
       parameters:
@@ -784,6 +814,11 @@ paths:
       description: |
         Submit decisions for every pending tool approval in the paused run's current batch. The run is identified by `run_id` in the JSON body. Decisions apply only to the stored invocations and arguments; argument edits, authentication responses, and session-wide grants are not supported. The caller must own the run, still have agent access, and have the agents.run scope. Acceptance persists the decisions before resuming the same run and chat session. Identical accepted decisions return the current snapshot without another continuation. Conflicting, stale, incomplete, or non-pending decisions return 409. Cancellation registration failure returns 503 without accepting the decisions; retry the same approval batch. This retry guarantee does not cover an indeterminate database commit outcome. Go workflow approval resumes currently support one tool invocation and one approval response. Unsupported multi-tool or multi-decision Go resumes fail without executing tools. The resumed action must resolve to the tool identified by the stored approval request and paused checkpoint. Missing or inconsistent identity fails without executing tools. Execution continues after HTTP disconnects, but is not automatically resumed after a QE crash. Each accepted continuation starts a fresh 30-minute execution timeout and 40-minute cleanup deadline. Identical retries do not extend that deadline. Waiting for approval does not expire a run. The next GET marks an overdue active turn FAILED without replaying execution.
       operationId: platform-agents-create-run-responses
+      x-glean-scopes:
+        legacy:
+          - AGENTS
+        platform:
+          - agents:run
       x-visibility: Public
       parameters:
         - in: path
@@ -925,6 +960,11 @@ paths:
       description: |
         Run an assistant turn. The default response is JSON. HTTP clients request server-sent events by setting `stream` to true in the JSON body. An `Accept: text/event-stream` header does not replace `stream`.
       operationId: platform-chat-create
+      x-glean-scopes:
+        legacy:
+          - CHAT
+        platform:
+          - chat:write
       x-visibility: Public
       x-codegen-request-body-name: payload
       requestBody:
@@ -1112,10 +1152,12 @@ paths:
       description: |
         Create a skill from an uploaded SKILL.md, .zip, or .skill bundle. If the authenticated user already has a skill with the same name, the existing skill is superseded with a new version, unless it is source-managed: a same-name create over a GitHub-imported skill returns 409, and the caller syncs the existing skill instead. Two concurrent same-name creates can still produce two skills.
       operationId: platform-skills-create
+      x-glean-scopes:
+        legacy:
+          - SKILLS
+        platform:
+          - skills:write
       x-visibility: Public
-      x-glean-experimental:
-        id: 3cd55572-0d5c-4898-9ecf-1b86c520d1c7
-        introduced: '2026-06-24'
       requestBody:
         required: true
         content:
@@ -1163,7 +1205,6 @@ paths:
             with Glean(
                 api_token=os.getenv("GLEAN_API_TOKEN", ""),
                 server_url="https://mycompany-be.glean.com",
-                include_experimental=True,
             ) as glean:
 
                 res = glean.skills.create(file={
@@ -1182,7 +1223,6 @@ paths:
             const glean = new Glean({
               apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
               serverURL: "https://mycompany-be.glean.com",
-              includeExperimental: true,
             });
 
             async function run() {
@@ -1196,14 +1236,13 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    example, fileErr := os.Open(\"example.file\")\n    if fileErr != nil {\n        panic(fileErr)\n    }\n\n    res, err := s.Skills.Create(ctx, components.PlatformSkillCreateRequest{\n        File: components.PlatformSkillCreateRequestFile{\n            FileName: \"example.file\",\n            Content: example,\n        },\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformSkillCreateResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    example, fileErr := os.Open(\"example.file\")\n    if fileErr != nil {\n        panic(fileErr)\n    }\n\n    res, err := s.Skills.Create(ctx, components.PlatformSkillCreateRequest{\n        File: components.PlatformSkillCreateRequestFile{\n            FileName: \"example.file\",\n            Content: example,\n        },\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformSkillCreateResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
             package hello.world;
 
             import com.glean.api_client.glean_api_client.Glean;
-            import com.glean.api_client.glean_api_client.hooks.GleanBuilder;
             import com.glean.api_client.glean_api_client.models.components.PlatformSkillCreateRequest;
             import com.glean.api_client.glean_api_client.models.components.PlatformSkillCreateRequestFile;
             import com.glean.api_client.glean_api_client.models.errors.PlatformProblemDetailException;
@@ -1216,9 +1255,8 @@ paths:
 
                 public static void main(String[] args) throws PlatformProblemDetailException, Exception {
 
-                    Glean sdk = GleanBuilder.create()
+                    Glean sdk = Glean.builder()
                             .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
-                            .includeExperimental(true)
                         .build();
 
                     PlatformSkillCreateRequest req = PlatformSkillCreateRequest.builder()
@@ -1239,19 +1277,8 @@ paths:
           source: |-
             curl -L -X POST 'https://instance-name-be.glean.com/api/skills' \
               -H 'Accept: application/json' \
-              -H 'X-Glean-Include-Experimental: true' \
               -H 'Authorization: Bearer <token>' \
               -F 'file=@./SKILL.md'
-      parameters:
-        - in: header
-          name: X-Glean-Include-Experimental
-          description: This endpoint is experimental, so requests must include this header set to `true`. See [How experimental APIs work](https://developers.glean.com/experimental/overview) for details.
-          required: true
-          schema:
-            type: boolean
-            default: true
-          example: true
-          value: 'true'
     get:
       tags:
         - Skills
@@ -1259,28 +1286,22 @@ paths:
       description: |
         List every custom skill the authenticated caller can access. Built-in skills are excluded: they have no versions, content download, update, or delete, so their identifiers would fail most skill operations. Chat-authored skills shared with the caller without a listed grant are omitted: they stay retrievable by identifier when it is known, but this list does not discover them.
       operationId: platform-skills-list
+      x-glean-scopes:
+        legacy:
+          - SKILLS
+        platform:
+          - skills:read
       x-visibility: Public
-      x-glean-experimental:
-        id: 3eb65937-03a3-472b-9a00-be713f302b5f
-        introduced: '2026-06-23'
       parameters:
-        - in: header
-          name: X-Glean-Include-Experimental
-          description: This endpoint is experimental, so requests must include this header set to `true`. See [How experimental APIs work](https://developers.glean.com/experimental/overview) for details.
-          required: true
-          schema:
-            type: boolean
-            default: true
-          example: true
-          value: 'true'
         - in: query
           name: page_size
-          description: Maximum number of skills to return.
+          description: Maximum number of skills to return. Defaults to 20. Maximum is 100.
           required: false
           schema:
             type: integer
             minimum: 1
             maximum: 100
+            default: 20
         - in: query
           name: cursor
           description: Opaque pagination cursor from a previous response.
@@ -1324,7 +1345,6 @@ paths:
             with Glean(
                 api_token=os.getenv("GLEAN_API_TOKEN", ""),
                 server_url="https://mycompany-be.glean.com",
-                include_experimental=True,
             ) as glean:
 
                 res = glean.skills.list(page_size=20)
@@ -1339,7 +1359,6 @@ paths:
             const glean = new Glean({
               apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
               serverURL: "https://mycompany-be.glean.com",
-              includeExperimental: true,
             });
 
             async function run() {
@@ -1351,14 +1370,13 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Skills.List(ctx, apiclientgo.Pointer[int64](20), nil)\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformSkillsListResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Skills.List(ctx, apiclientgo.Pointer[int64](20), nil)\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformSkillsListResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
             package hello.world;
 
             import com.glean.api_client.glean_api_client.Glean;
-            import com.glean.api_client.glean_api_client.hooks.GleanBuilder;
             import com.glean.api_client.glean_api_client.models.errors.PlatformProblemDetailException;
             import com.glean.api_client.glean_api_client.models.operations.PlatformSkillsListResponse;
             import java.lang.Exception;
@@ -1367,9 +1385,8 @@ paths:
 
                 public static void main(String[] args) throws PlatformProblemDetailException, Exception {
 
-                    Glean sdk = GleanBuilder.create()
+                    Glean sdk = Glean.builder()
                             .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
-                            .includeExperimental(true)
                         .build();
 
                     PlatformSkillsListResponse res = sdk.skills().list()
@@ -1389,10 +1406,12 @@ paths:
       description: |
         Import one or more skills selected from a GitHub source preview. Each source URL is fetched and persisted as an independent skill with source provenance. This operation does not create a durable source resource. The import is atomic: if any source cannot be fetched, validated, or persisted, no skills are created.
       operationId: platform-skills-import
+      x-glean-scopes:
+        legacy:
+          - SKILLS
+        platform:
+          - skills:write
       x-visibility: Public
-      x-glean-experimental:
-        id: 9162d790-e101-437d-a9a0-25e4687d150b
-        introduced: '2026-07-28'
       x-codegen-request-body-name: request
       requestBody:
         required: true
@@ -1444,7 +1463,6 @@ paths:
             with Glean(
                 api_token=os.getenv("GLEAN_API_TOKEN", ""),
                 server_url="https://mycompany-be.glean.com",
-                include_experimental=True,
             ) as glean:
 
                 res = glean.skills.import_(source_urls=[
@@ -1461,7 +1479,6 @@ paths:
             const glean = new Glean({
               apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
               serverURL: "https://mycompany-be.glean.com",
-              includeExperimental: true,
             });
 
             async function run() {
@@ -1477,14 +1494,13 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Skills.Import(ctx, components.PlatformSkillImportRequest{\n        SourceUrls: []string{\n            \"https://github.com/anthropics/skills/tree/main/skills/skill-creator\",\n        },\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformSkillImportResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Skills.Import(ctx, components.PlatformSkillImportRequest{\n        SourceUrls: []string{\n            \"https://github.com/anthropics/skills/tree/main/skills/skill-creator\",\n        },\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformSkillImportResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
             package hello.world;
 
             import com.glean.api_client.glean_api_client.Glean;
-            import com.glean.api_client.glean_api_client.hooks.GleanBuilder;
             import com.glean.api_client.glean_api_client.models.components.PlatformSkillImportRequest;
             import com.glean.api_client.glean_api_client.models.errors.PlatformProblemDetailException;
             import com.glean.api_client.glean_api_client.models.errors.PlatformUnauthorizedAgentToolsProblemException;
@@ -1496,9 +1512,8 @@ paths:
 
                 public static void main(String[] args) throws PlatformUnauthorizedAgentToolsProblemException, PlatformProblemDetailException, Exception {
 
-                    Glean sdk = GleanBuilder.create()
+                    Glean sdk = Glean.builder()
                             .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
-                            .includeExperimental(true)
                         .build();
 
                     PlatformSkillImportRequest req = PlatformSkillImportRequest.builder()
@@ -1515,16 +1530,6 @@ paths:
                     }
                 }
             }
-      parameters:
-        - in: header
-          name: X-Glean-Include-Experimental
-          description: This endpoint is experimental, so requests must include this header set to `true`. See [How experimental APIs work](https://developers.glean.com/experimental/overview) for details.
-          required: true
-          schema:
-            type: boolean
-            default: true
-          example: true
-          value: 'true'
   /api/skills/validation:
     post:
       tags:
@@ -1533,10 +1538,12 @@ paths:
       description: |
         Validate a skill bundle without persisting it. Accepts a SKILL.md, .zip, or .skill upload and returns parsed metadata plus the normalized file layout.
       operationId: platform-skills-validate
+      x-glean-scopes:
+        legacy:
+          - SKILLS
+        platform:
+          - skills:write
       x-visibility: Public
-      x-glean-experimental:
-        id: 0b086fa6-30f8-4279-8d11-10ab0059c14a
-        introduced: '2026-06-24'
       requestBody:
         required: true
         content:
@@ -1582,7 +1589,6 @@ paths:
             with Glean(
                 api_token=os.getenv("GLEAN_API_TOKEN", ""),
                 server_url="https://mycompany-be.glean.com",
-                include_experimental=True,
             ) as glean:
 
                 res = glean.skills.validate(file={
@@ -1601,7 +1607,6 @@ paths:
             const glean = new Glean({
               apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
               serverURL: "https://mycompany-be.glean.com",
-              includeExperimental: true,
             });
 
             async function run() {
@@ -1615,14 +1620,13 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    example, fileErr := os.Open(\"example.file\")\n    if fileErr != nil {\n        panic(fileErr)\n    }\n\n    res, err := s.Skills.Validate(ctx, components.PlatformSkillValidationRequest{\n        File: components.PlatformSkillValidationRequestFile{\n            FileName: \"example.file\",\n            Content: example,\n        },\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformSkillValidationResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    example, fileErr := os.Open(\"example.file\")\n    if fileErr != nil {\n        panic(fileErr)\n    }\n\n    res, err := s.Skills.Validate(ctx, components.PlatformSkillValidationRequest{\n        File: components.PlatformSkillValidationRequestFile{\n            FileName: \"example.file\",\n            Content: example,\n        },\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformSkillValidationResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
             package hello.world;
 
             import com.glean.api_client.glean_api_client.Glean;
-            import com.glean.api_client.glean_api_client.hooks.GleanBuilder;
             import com.glean.api_client.glean_api_client.models.components.PlatformSkillValidationRequest;
             import com.glean.api_client.glean_api_client.models.components.PlatformSkillValidationRequestFile;
             import com.glean.api_client.glean_api_client.models.errors.PlatformProblemDetailException;
@@ -1635,9 +1639,8 @@ paths:
 
                 public static void main(String[] args) throws PlatformProblemDetailException, Exception {
 
-                    Glean sdk = GleanBuilder.create()
+                    Glean sdk = Glean.builder()
                             .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
-                            .includeExperimental(true)
                         .build();
 
                     PlatformSkillValidationRequest req = PlatformSkillValidationRequest.builder()
@@ -1658,19 +1661,8 @@ paths:
           source: |-
             curl -L -X POST 'https://instance-name-be.glean.com/api/skills/validation' \
               -H 'Accept: application/json' \
-              -H 'X-Glean-Include-Experimental: true' \
               -H 'Authorization: Bearer <token>' \
               -F 'file=@./SKILL.md'
-      parameters:
-        - in: header
-          name: X-Glean-Include-Experimental
-          description: This endpoint is experimental, so requests must include this header set to `true`. See [How experimental APIs work](https://developers.glean.com/experimental/overview) for details.
-          required: true
-          schema:
-            type: boolean
-            default: true
-          example: true
-          value: 'true'
   /api/skills/sources/preview:
     post:
       tags:
@@ -1679,10 +1671,12 @@ paths:
       description: |
         Inspect a GitHub URL without persisting a source or any discovered skills. Set stream to true to receive repository scan progress as server-sent events; otherwise the response contains the completed preview.
       operationId: platform-skills-preview-source
+      x-glean-scopes:
+        legacy:
+          - SKILLS
+        platform:
+          - skills:write
       x-visibility: Public
-      x-glean-experimental:
-        id: 1629009b-244a-400a-bf55-c441dfbc586c
-        introduced: '2026-07-23'
       x-codegen-request-body-name: request
       requestBody:
         required: true
@@ -1741,7 +1735,6 @@ paths:
             with Glean(
                 api_token=os.getenv("GLEAN_API_TOKEN", ""),
                 server_url="https://mycompany-be.glean.com",
-                include_experimental=True,
             ) as glean:
 
                 res = glean.skills.preview_source(source_url="https://github.com/anthropics/skills")
@@ -1756,7 +1749,6 @@ paths:
             const glean = new Glean({
               apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
               serverURL: "https://mycompany-be.glean.com",
-              includeExperimental: true,
             });
 
             async function run() {
@@ -1770,14 +1762,13 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/operations\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Skills.PreviewSource(ctx, operations.PlatformSkillsPreviewSourceRequest{\n        SourceURL: \"https://github.com/anthropics/skills\",\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformSkillSourcePreviewResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/operations\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Skills.PreviewSource(ctx, operations.PlatformSkillsPreviewSourceRequest{\n        SourceURL: \"https://github.com/anthropics/skills\",\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformSkillSourcePreviewResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
             package hello.world;
 
             import com.glean.api_client.glean_api_client.Glean;
-            import com.glean.api_client.glean_api_client.hooks.GleanBuilder;
             import com.glean.api_client.glean_api_client.models.errors.PlatformProblemDetailException;
             import com.glean.api_client.glean_api_client.models.errors.PlatformUnauthorizedAgentToolsProblemException;
             import com.glean.api_client.glean_api_client.models.operations.PlatformSkillsPreviewSourceRequest;
@@ -1788,9 +1779,8 @@ paths:
 
                 public static void main(String[] args) throws PlatformUnauthorizedAgentToolsProblemException, PlatformProblemDetailException, Exception {
 
-                    Glean sdk = GleanBuilder.create()
+                    Glean sdk = Glean.builder()
                             .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
-                            .includeExperimental(true)
                         .build();
 
                     PlatformSkillsPreviewSourceRequest req = PlatformSkillsPreviewSourceRequest.builder()
@@ -1806,38 +1796,21 @@ paths:
                     }
                 }
             }
-      parameters:
-        - in: header
-          name: X-Glean-Include-Experimental
-          description: This endpoint is experimental, so requests must include this header set to `true`. See [How experimental APIs work](https://developers.glean.com/experimental/overview) for details.
-          required: true
-          schema:
-            type: boolean
-            default: true
-          example: true
-          value: 'true'
   /api/skills/{skill_id}:
     patch:
       tags:
         - Skills
       summary: Update skill
       description: |
-        Update mutable metadata for a skill. V1 supports enabling or disabling a skill without changing its content.
+        Enable or disable the skill for the authenticated caller without changing its content. The owner's update sets the skill's stored status. Any other caller's update applies only to that caller.
       operationId: platform-skills-update
+      x-glean-scopes:
+        legacy:
+          - SKILLS
+        platform:
+          - skills:write
       x-visibility: Public
-      x-glean-experimental:
-        id: 262e1f6b-6c2d-4d6d-943b-fc251d2fb38b
-        introduced: '2026-07-20'
       parameters:
-        - in: header
-          name: X-Glean-Include-Experimental
-          description: This endpoint is experimental, so requests must include this header set to `true`. See [How experimental APIs work](https://developers.glean.com/experimental/overview) for details.
-          required: true
-          schema:
-            type: boolean
-            default: true
-          example: true
-          value: 'true'
         - name: skill_id
           in: path
           required: true
@@ -1893,7 +1866,6 @@ paths:
             with Glean(
                 api_token=os.getenv("GLEAN_API_TOKEN", ""),
                 server_url="https://mycompany-be.glean.com",
-                include_experimental=True,
             ) as glean:
 
                 res = glean.skills.update(skill_id="{skill_id}", status=models.PlatformSkillUpdateStatus.ENABLED)
@@ -1908,7 +1880,6 @@ paths:
             const glean = new Glean({
               apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
               serverURL: "https://mycompany-be.glean.com",
-              includeExperimental: true,
             });
 
             async function run() {
@@ -1922,14 +1893,13 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Skills.Update(ctx, \"{skill_id}\", components.PlatformSkillUpdateRequest{\n        Status: components.PlatformSkillUpdateStatusEnabled,\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformSkillUpdateResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Skills.Update(ctx, \"{skill_id}\", components.PlatformSkillUpdateRequest{\n        Status: components.PlatformSkillUpdateStatusEnabled,\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformSkillUpdateResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
             package hello.world;
 
             import com.glean.api_client.glean_api_client.Glean;
-            import com.glean.api_client.glean_api_client.hooks.GleanBuilder;
             import com.glean.api_client.glean_api_client.models.components.PlatformSkillUpdateRequest;
             import com.glean.api_client.glean_api_client.models.components.PlatformSkillUpdateStatus;
             import com.glean.api_client.glean_api_client.models.errors.PlatformProblemDetailException;
@@ -1940,9 +1910,8 @@ paths:
 
                 public static void main(String[] args) throws PlatformProblemDetailException, Exception {
 
-                    Glean sdk = GleanBuilder.create()
+                    Glean sdk = Glean.builder()
                             .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
-                            .includeExperimental(true)
                         .build();
 
                     PlatformSkillsUpdateResponse res = sdk.skills().update()
@@ -1964,20 +1933,13 @@ paths:
       description: |
         Delete a skill the authenticated caller is allowed to manage. This operation permanently removes all versions of the skill.
       operationId: platform-skills-delete
+      x-glean-scopes:
+        legacy:
+          - SKILLS
+        platform:
+          - skills:write
       x-visibility: Public
-      x-glean-experimental:
-        id: c4351fd0-4d28-4ad4-ab93-587ca4778173
-        introduced: '2026-07-31'
       parameters:
-        - in: header
-          name: X-Glean-Include-Experimental
-          description: This endpoint is experimental, so requests must include this header set to `true`. See [How experimental APIs work](https://developers.glean.com/experimental/overview) for details.
-          required: true
-          schema:
-            type: boolean
-            default: true
-          example: true
-          value: 'true'
         - name: skill_id
           in: path
           required: true
@@ -2018,7 +1980,6 @@ paths:
             with Glean(
                 api_token=os.getenv("GLEAN_API_TOKEN", ""),
                 server_url="https://mycompany-be.glean.com",
-                include_experimental=True,
             ) as glean:
 
                 glean.skills.delete(skill_id="{skill_id}")
@@ -2032,7 +1993,6 @@ paths:
             const glean = new Glean({
               apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
               serverURL: "https://mycompany-be.glean.com",
-              includeExperimental: true,
             });
 
             async function run() {
@@ -2044,14 +2004,13 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Skills.Delete(ctx, \"{skill_id}\")\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Skills.Delete(ctx, \"{skill_id}\")\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
             package hello.world;
 
             import com.glean.api_client.glean_api_client.Glean;
-            import com.glean.api_client.glean_api_client.hooks.GleanBuilder;
             import com.glean.api_client.glean_api_client.models.errors.PlatformProblemDetailException;
             import com.glean.api_client.glean_api_client.models.operations.PlatformSkillsDeleteResponse;
             import java.lang.Exception;
@@ -2060,9 +2019,8 @@ paths:
 
                 public static void main(String[] args) throws PlatformProblemDetailException, Exception {
 
-                    Glean sdk = GleanBuilder.create()
+                    Glean sdk = Glean.builder()
                             .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
-                            .includeExperimental(true)
                         .build();
 
                     PlatformSkillsDeleteResponse res = sdk.skills().delete()
@@ -2079,20 +2037,13 @@ paths:
       description: |
         Retrieve metadata for a skill available to the authenticated user.
       operationId: platform-skills-get
+      x-glean-scopes:
+        legacy:
+          - SKILLS
+        platform:
+          - skills:read
       x-visibility: Public
-      x-glean-experimental:
-        id: 8f8d1c92-a484-4769-9903-200613dc8a72
-        introduced: '2026-06-23'
       parameters:
-        - in: header
-          name: X-Glean-Include-Experimental
-          description: This endpoint is experimental, so requests must include this header set to `true`. See [How experimental APIs work](https://developers.glean.com/experimental/overview) for details.
-          required: true
-          schema:
-            type: boolean
-            default: true
-          example: true
-          value: 'true'
         - name: skill_id
           in: path
           required: true
@@ -2137,7 +2088,6 @@ paths:
             with Glean(
                 api_token=os.getenv("GLEAN_API_TOKEN", ""),
                 server_url="https://mycompany-be.glean.com",
-                include_experimental=True,
             ) as glean:
 
                 res = glean.skills.retrieve(skill_id="{skill_id}")
@@ -2152,7 +2102,6 @@ paths:
             const glean = new Glean({
               apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
               serverURL: "https://mycompany-be.glean.com",
-              includeExperimental: true,
             });
 
             async function run() {
@@ -2164,14 +2113,13 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Skills.Retrieve(ctx, \"{skill_id}\")\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformSkillGetResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Skills.Retrieve(ctx, \"{skill_id}\")\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformSkillGetResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
             package hello.world;
 
             import com.glean.api_client.glean_api_client.Glean;
-            import com.glean.api_client.glean_api_client.hooks.GleanBuilder;
             import com.glean.api_client.glean_api_client.models.errors.PlatformProblemDetailException;
             import com.glean.api_client.glean_api_client.models.operations.PlatformSkillsGetResponse;
             import java.lang.Exception;
@@ -2180,9 +2128,8 @@ paths:
 
                 public static void main(String[] args) throws PlatformProblemDetailException, Exception {
 
-                    Glean sdk = GleanBuilder.create()
+                    Glean sdk = Glean.builder()
                             .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
-                            .includeExperimental(true)
                         .build();
 
                     PlatformSkillsGetResponse res = sdk.skills().retrieve()
@@ -2202,20 +2149,13 @@ paths:
       description: |
         Download the latest installable bundle for a skill available to the authenticated user.
       operationId: platform-skills-get-content
+      x-glean-scopes:
+        legacy:
+          - SKILLS
+        platform:
+          - skills:read
       x-visibility: Public
-      x-glean-experimental:
-        id: fd6908d8-f230-4cd5-bf45-f71e69266b1d
-        introduced: '2026-06-24'
       parameters:
-        - in: header
-          name: X-Glean-Include-Experimental
-          description: This endpoint is experimental, so requests must include this header set to `true`. See [How experimental APIs work](https://developers.glean.com/experimental/overview) for details.
-          required: true
-          schema:
-            type: boolean
-            default: true
-          example: true
-          value: 'true'
         - name: skill_id
           in: path
           required: true
@@ -2266,7 +2206,6 @@ paths:
             with Glean(
                 api_token=os.getenv("GLEAN_API_TOKEN", ""),
                 server_url="https://mycompany-be.glean.com",
-                include_experimental=True,
             ) as glean:
 
                 res = glean.skills.retrieve_content(skill_id="{skill_id}")
@@ -2281,7 +2220,6 @@ paths:
             const glean = new Glean({
               apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
               serverURL: "https://mycompany-be.glean.com",
-              includeExperimental: true,
             });
 
             async function run() {
@@ -2293,14 +2231,13 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Skills.RetrieveContent(ctx, \"{skill_id}\")\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.ResponseStream != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Skills.RetrieveContent(ctx, \"{skill_id}\")\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.ResponseStream != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
             package hello.world;
 
             import com.glean.api_client.glean_api_client.Glean;
-            import com.glean.api_client.glean_api_client.hooks.GleanBuilder;
             import com.glean.api_client.glean_api_client.models.errors.PlatformProblemDetailException;
             import com.glean.api_client.glean_api_client.models.operations.PlatformSkillsGetContentResponse;
             import java.lang.Exception;
@@ -2309,9 +2246,8 @@ paths:
 
                 public static void main(String[] args) throws PlatformProblemDetailException, Exception {
 
-                    Glean sdk = GleanBuilder.create()
+                    Glean sdk = Glean.builder()
                             .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
-                            .includeExperimental(true)
                         .build();
 
                     PlatformSkillsGetContentResponse res = sdk.skills().retrieveContent()
@@ -2331,20 +2267,13 @@ paths:
       description: |
         Refresh one GitHub-imported skill from its stored source URL. If the skill content has changed, this operation creates a new skill version. If the skill is no longer present upstream, the stored skill is left unchanged and must be deleted explicitly.
       operationId: platform-skills-sync
+      x-glean-scopes:
+        legacy:
+          - SKILLS
+        platform:
+          - skills:write
       x-visibility: Public
-      x-glean-experimental:
-        id: 568aa3f8-2af8-449c-9e4f-818ed4b877ef
-        introduced: '2026-08-03'
       parameters:
-        - in: header
-          name: X-Glean-Include-Experimental
-          description: This endpoint is experimental, so requests must include this header set to `true`. See [How experimental APIs work](https://developers.glean.com/experimental/overview) for details.
-          required: true
-          schema:
-            type: boolean
-            default: true
-          example: true
-          value: 'true'
         - name: skill_id
           in: path
           required: true
@@ -2397,7 +2326,6 @@ paths:
             with Glean(
                 api_token=os.getenv("GLEAN_API_TOKEN", ""),
                 server_url="https://mycompany-be.glean.com",
-                include_experimental=True,
             ) as glean:
 
                 res = glean.skills.sync(skill_id="{skill_id}")
@@ -2412,7 +2340,6 @@ paths:
             const glean = new Glean({
               apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
               serverURL: "https://mycompany-be.glean.com",
-              includeExperimental: true,
             });
 
             async function run() {
@@ -2424,14 +2351,13 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Skills.Sync(ctx, \"{skill_id}\")\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformSkillSyncResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Skills.Sync(ctx, \"{skill_id}\")\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformSkillSyncResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
             package hello.world;
 
             import com.glean.api_client.glean_api_client.Glean;
-            import com.glean.api_client.glean_api_client.hooks.GleanBuilder;
             import com.glean.api_client.glean_api_client.models.errors.PlatformProblemDetailException;
             import com.glean.api_client.glean_api_client.models.errors.PlatformUnauthorizedAgentToolsProblemException;
             import com.glean.api_client.glean_api_client.models.operations.PlatformSkillsSyncResponse;
@@ -2441,9 +2367,8 @@ paths:
 
                 public static void main(String[] args) throws PlatformUnauthorizedAgentToolsProblemException, PlatformProblemDetailException, Exception {
 
-                    Glean sdk = GleanBuilder.create()
+                    Glean sdk = Glean.builder()
                             .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
-                            .includeExperimental(true)
                         .build();
 
                     PlatformSkillsSyncResponse res = sdk.skills().sync()
@@ -2461,22 +2386,15 @@ paths:
         - Skills
       summary: Create skill version
       description: |
-        Create a new immutable version for an existing caller-managed skill from an uploaded SKILL.md, .zip, or .skill bundle.
+        Create a new immutable version for an existing caller-managed skill from an uploaded SKILL.md, .zip, or .skill bundle. A create-version over a GitHub-imported skill returns 409, and the caller syncs the existing skill instead.
       operationId: platform-skills-create-version
+      x-glean-scopes:
+        legacy:
+          - SKILLS
+        platform:
+          - skills:write
       x-visibility: Public
-      x-glean-experimental:
-        id: 0d5e48e2-7a41-4d54-b3aa-5026f0dd65df
-        introduced: '2026-06-24'
       parameters:
-        - in: header
-          name: X-Glean-Include-Experimental
-          description: This endpoint is experimental, so requests must include this header set to `true`. See [How experimental APIs work](https://developers.glean.com/experimental/overview) for details.
-          required: true
-          schema:
-            type: boolean
-            default: true
-          example: true
-          value: 'true'
         - name: skill_id
           in: path
           required: true
@@ -2532,7 +2450,6 @@ paths:
             with Glean(
                 api_token=os.getenv("GLEAN_API_TOKEN", ""),
                 server_url="https://mycompany-be.glean.com",
-                include_experimental=True,
             ) as glean:
 
                 res = glean.skills.create_version(skill_id="{skill_id}", file={
@@ -2551,7 +2468,6 @@ paths:
             const glean = new Glean({
               apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
               serverURL: "https://mycompany-be.glean.com",
-              includeExperimental: true,
             });
 
             async function run() {
@@ -2565,14 +2481,13 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    example, fileErr := os.Open(\"example.file\")\n    if fileErr != nil {\n        panic(fileErr)\n    }\n\n    res, err := s.Skills.CreateVersion(ctx, \"{skill_id}\", components.PlatformSkillVersionCreateRequest{\n        File: components.PlatformSkillVersionCreateRequestFile{\n            FileName: \"example.file\",\n            Content: example,\n        },\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformSkillVersionCreateResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    example, fileErr := os.Open(\"example.file\")\n    if fileErr != nil {\n        panic(fileErr)\n    }\n\n    res, err := s.Skills.CreateVersion(ctx, \"{skill_id}\", components.PlatformSkillVersionCreateRequest{\n        File: components.PlatformSkillVersionCreateRequestFile{\n            FileName: \"example.file\",\n            Content: example,\n        },\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformSkillVersionCreateResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
             package hello.world;
 
             import com.glean.api_client.glean_api_client.Glean;
-            import com.glean.api_client.glean_api_client.hooks.GleanBuilder;
             import com.glean.api_client.glean_api_client.models.components.PlatformSkillVersionCreateRequest;
             import com.glean.api_client.glean_api_client.models.components.PlatformSkillVersionCreateRequestFile;
             import com.glean.api_client.glean_api_client.models.errors.PlatformProblemDetailException;
@@ -2585,9 +2500,8 @@ paths:
 
                 public static void main(String[] args) throws PlatformProblemDetailException, Exception {
 
-                    Glean sdk = GleanBuilder.create()
+                    Glean sdk = Glean.builder()
                             .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
-                            .includeExperimental(true)
                         .build();
 
                     PlatformSkillsCreateVersionResponse res = sdk.skills().createVersion()
@@ -2607,7 +2521,6 @@ paths:
           source: |-
             curl -L -X POST 'https://instance-name-be.glean.com/api/skills/<skill_id>/versions' \
               -H 'Accept: application/json' \
-              -H 'X-Glean-Include-Experimental: true' \
               -H 'Authorization: Bearer <token>' \
               -F 'file=@./SKILL.md'
     get:
@@ -2617,20 +2530,13 @@ paths:
       description: |
         List versions for a skill available to the authenticated user.
       operationId: platform-skills-list-versions
+      x-glean-scopes:
+        legacy:
+          - SKILLS
+        platform:
+          - skills:read
       x-visibility: Public
-      x-glean-experimental:
-        id: 9efbb8a3-d546-4304-a653-09bb427e3681
-        introduced: '2026-06-24'
       parameters:
-        - in: header
-          name: X-Glean-Include-Experimental
-          description: This endpoint is experimental, so requests must include this header set to `true`. See [How experimental APIs work](https://developers.glean.com/experimental/overview) for details.
-          required: true
-          schema:
-            type: boolean
-            default: true
-          example: true
-          value: 'true'
         - name: skill_id
           in: path
           required: true
@@ -2641,12 +2547,13 @@ paths:
             minLength: 1
         - in: query
           name: page_size
-          description: Maximum number of versions to return.
+          description: Maximum number of versions to return. Defaults to 20. Maximum is 100.
           required: false
           schema:
             type: integer
             minimum: 1
             maximum: 100
+            default: 20
         - in: query
           name: cursor
           description: Opaque pagination cursor from a previous response.
@@ -2690,7 +2597,6 @@ paths:
             with Glean(
                 api_token=os.getenv("GLEAN_API_TOKEN", ""),
                 server_url="https://mycompany-be.glean.com",
-                include_experimental=True,
             ) as glean:
 
                 res = glean.skills.list_versions(skill_id="{skill_id}", page_size=20)
@@ -2705,7 +2611,6 @@ paths:
             const glean = new Glean({
               apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
               serverURL: "https://mycompany-be.glean.com",
-              includeExperimental: true,
             });
 
             async function run() {
@@ -2717,14 +2622,13 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Skills.ListVersions(ctx, \"{skill_id}\", apiclientgo.Pointer[int64](20), nil)\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformSkillVersionsListResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Skills.ListVersions(ctx, \"{skill_id}\", apiclientgo.Pointer[int64](20), nil)\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformSkillVersionsListResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
             package hello.world;
 
             import com.glean.api_client.glean_api_client.Glean;
-            import com.glean.api_client.glean_api_client.hooks.GleanBuilder;
             import com.glean.api_client.glean_api_client.models.errors.PlatformProblemDetailException;
             import com.glean.api_client.glean_api_client.models.operations.PlatformSkillsListVersionsResponse;
             import java.lang.Exception;
@@ -2733,9 +2637,8 @@ paths:
 
                 public static void main(String[] args) throws PlatformProblemDetailException, Exception {
 
-                    Glean sdk = GleanBuilder.create()
+                    Glean sdk = Glean.builder()
                             .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
-                            .includeExperimental(true)
                         .build();
 
                     PlatformSkillsListVersionsResponse res = sdk.skills().listVersions()
@@ -2756,20 +2659,13 @@ paths:
       description: |
         Retrieve metadata for a skill version available to the authenticated user.
       operationId: platform-skills-get-version
+      x-glean-scopes:
+        legacy:
+          - SKILLS
+        platform:
+          - skills:read
       x-visibility: Public
-      x-glean-experimental:
-        id: d70986b1-ad80-48dd-8e52-f294e7251dda
-        introduced: '2026-06-24'
       parameters:
-        - in: header
-          name: X-Glean-Include-Experimental
-          description: This endpoint is experimental, so requests must include this header set to `true`. See [How experimental APIs work](https://developers.glean.com/experimental/overview) for details.
-          required: true
-          schema:
-            type: boolean
-            default: true
-          example: true
-          value: 'true'
         - name: skill_id
           in: path
           required: true
@@ -2822,7 +2718,6 @@ paths:
             with Glean(
                 api_token=os.getenv("GLEAN_API_TOKEN", ""),
                 server_url="https://mycompany-be.glean.com",
-                include_experimental=True,
             ) as glean:
 
                 res = glean.skills.retrieve_version(skill_id="{skill_id}", version=1)
@@ -2837,7 +2732,6 @@ paths:
             const glean = new Glean({
               apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
               serverURL: "https://mycompany-be.glean.com",
-              includeExperimental: true,
             });
 
             async function run() {
@@ -2849,14 +2743,13 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Skills.RetrieveVersion(ctx, \"{skill_id}\", 1)\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformSkillVersionGetResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Skills.RetrieveVersion(ctx, \"{skill_id}\", 1)\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformSkillVersionGetResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
             package hello.world;
 
             import com.glean.api_client.glean_api_client.Glean;
-            import com.glean.api_client.glean_api_client.hooks.GleanBuilder;
             import com.glean.api_client.glean_api_client.models.errors.PlatformProblemDetailException;
             import com.glean.api_client.glean_api_client.models.operations.PlatformSkillsGetVersionResponse;
             import java.lang.Exception;
@@ -2865,9 +2758,8 @@ paths:
 
                 public static void main(String[] args) throws PlatformProblemDetailException, Exception {
 
-                    Glean sdk = GleanBuilder.create()
+                    Glean sdk = Glean.builder()
                             .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
-                            .includeExperimental(true)
                         .build();
 
                     PlatformSkillsGetVersionResponse res = sdk.skills().retrieveVersion()
@@ -2888,20 +2780,13 @@ paths:
       description: |
         Download the installable bundle for a skill version available to the authenticated user.
       operationId: platform-skills-get-version-content
+      x-glean-scopes:
+        legacy:
+          - SKILLS
+        platform:
+          - skills:read
       x-visibility: Public
-      x-glean-experimental:
-        id: 70c85692-7042-403a-a3a5-5b315576432a
-        introduced: '2026-06-24'
       parameters:
-        - in: header
-          name: X-Glean-Include-Experimental
-          description: This endpoint is experimental, so requests must include this header set to `true`. See [How experimental APIs work](https://developers.glean.com/experimental/overview) for details.
-          required: true
-          schema:
-            type: boolean
-            default: true
-          example: true
-          value: 'true'
         - name: skill_id
           in: path
           required: true
@@ -2960,7 +2845,6 @@ paths:
             with Glean(
                 api_token=os.getenv("GLEAN_API_TOKEN", ""),
                 server_url="https://mycompany-be.glean.com",
-                include_experimental=True,
             ) as glean:
 
                 res = glean.skills.retrieve_version_content(skill_id="{skill_id}", version=1)
@@ -2975,7 +2859,6 @@ paths:
             const glean = new Glean({
               apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
               serverURL: "https://mycompany-be.glean.com",
-              includeExperimental: true,
             });
 
             async function run() {
@@ -2987,14 +2870,13 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Skills.RetrieveVersionContent(ctx, \"{skill_id}\", 1)\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.ResponseStream != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Skills.RetrieveVersionContent(ctx, \"{skill_id}\", 1)\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.ResponseStream != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
             package hello.world;
 
             import com.glean.api_client.glean_api_client.Glean;
-            import com.glean.api_client.glean_api_client.hooks.GleanBuilder;
             import com.glean.api_client.glean_api_client.models.errors.PlatformProblemDetailException;
             import com.glean.api_client.glean_api_client.models.operations.PlatformSkillsGetVersionContentResponse;
             import java.lang.Exception;
@@ -3003,9 +2885,8 @@ paths:
 
                 public static void main(String[] args) throws PlatformProblemDetailException, Exception {
 
-                    Glean sdk = GleanBuilder.create()
+                    Glean sdk = Glean.builder()
                             .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
-                            .includeExperimental(true)
                         .build();
 
                     PlatformSkillsGetVersionContentResponse res = sdk.skills().retrieveVersionContent()
@@ -3027,6 +2908,11 @@ paths:
         Search your organization's connected content and return ranked document results with cursor pagination. Use `GET /api/search/filters` to discover datasource identifiers and common filter fields. Built-in filter names are validated; other field names are accepted as custom filters and behavior depends on your Glean configuration and connected sources.
         Errors: HTTP 422 `unprocessable_query` returns no `results` or `next_cursor`. See `warnings` on the response for non-blocking issues such as partially available results. Not every query issue produces a warning or error.
       operationId: platform-search
+      x-glean-scopes:
+        legacy:
+          - SEARCH
+        platform:
+          - search:query
       x-visibility: Public
       x-codegen-request-body-name: payload
       requestBody:
@@ -3152,6 +3038,11 @@ paths:
         List datasources and common built-in filter fields visible to the authenticated user. This is a best-effort catalog, not an exhaustive list of every filter search accepts.
         Without `query`, returns field metadata only and does not run a search. With a nonblank `query`, provide exactly one `datasources` value to request suggested filter values for that query; no documents are returned and this endpoint does not include warning objects. See `FilterFieldInfo.values` for limitations on suggested values. Rate-limited requests return HTTP 429 with `Retry-After`; temporary backend unavailability returns HTTP 503.
       operationId: platform-search-filters
+      x-glean-scopes:
+        legacy:
+          - SEARCH
+        platform:
+          - search:query
       x-visibility: Public
       parameters:
         - in: query
@@ -3276,6 +3167,11 @@ paths:
       description: |
         Create a trigger from a preset and return it with its signing secret.
       operationId: platform-triggers-create
+      x-glean-scopes:
+        legacy:
+          - TRIGGERS
+        platform:
+          - triggers:write
       x-visibility: Public
       x-glean-experimental:
         id: eb175f18-74e6-4c9c-ba02-23bcc9018fc9
@@ -3460,6 +3356,11 @@ paths:
       description: |
         List triggers owned by the authenticated caller.
       operationId: platform-triggers-list
+      x-glean-scopes:
+        legacy:
+          - TRIGGERS
+        platform:
+          - triggers:read
       x-visibility: Public
       x-glean-experimental:
         id: e3554987-e043-4561-889a-a1117b1bce06
@@ -3589,6 +3490,11 @@ paths:
       description: |
         Retrieve a trigger owned by the authenticated caller.
       operationId: platform-triggers-get
+      x-glean-scopes:
+        legacy:
+          - TRIGGERS
+        platform:
+          - triggers:read
       x-visibility: Public
       x-glean-experimental:
         id: 46de62cb-ba31-4f71-9646-649c1d604816
@@ -3711,6 +3617,11 @@ paths:
       description: |
         Update a trigger.
       operationId: platform-triggers-update
+      x-glean-scopes:
+        legacy:
+          - TRIGGERS
+        platform:
+          - triggers:write
       x-visibility: Public
       x-glean-experimental:
         id: 3eb4c709-bd5c-4019-b913-0db36c766350
@@ -3863,6 +3774,11 @@ paths:
       description: |
         Delete a trigger.
       operationId: platform-triggers-delete
+      x-glean-scopes:
+        legacy:
+          - TRIGGERS
+        platform:
+          - triggers:write
       x-visibility: Public
       x-glean-experimental:
         id: e6564ed7-8b4b-4708-918b-eed97110859f
@@ -3979,6 +3895,11 @@ paths:
       description: |
         Search recent content events an existing trigger matches. Read-only — no webhook delivery is made. Covers the last seven days.
       operationId: platform-triggers-events-search
+      x-glean-scopes:
+        legacy:
+          - TRIGGERS
+        platform:
+          - triggers:read
       x-visibility: Public
       x-glean-experimental:
         id: c734a377-3dec-4ee2-9ec5-3848a8384f03
@@ -4113,6 +4034,11 @@ paths:
       description: |
         List the trigger presets available to the caller. A preset is a curated content-trigger template (e.g. a new Jira ticket) which is passed when creating a trigger.
       operationId: platform-trigger-presets-list
+      x-glean-scopes:
+        legacy:
+          - TRIGGERS
+        platform:
+          - triggers:read
       x-visibility: Public
       x-glean-experimental:
         id: f5b16196-0d4c-42f0-89bf-40313398728e
@@ -4249,6 +4175,11 @@ paths:
       description: |
         Retrieve a single trigger preset by id.
       operationId: platform-trigger-presets-get
+      x-glean-scopes:
+        legacy:
+          - TRIGGERS
+        platform:
+          - triggers:read
       x-visibility: Public
       x-glean-experimental:
         id: 5277167d-909b-4eee-95d1-8958b07016bb
@@ -4372,6 +4303,11 @@ paths:
       description: |
         Return up to 300 selectable values for a single picklist input on a preset. Results are intended for typeahead selection and are not cursor-paginated. When `is_truncated` is true, refine `query` to narrow the result set.
       operationId: platform-trigger-presets-input-values-list
+      x-glean-scopes:
+        legacy:
+          - TRIGGERS
+        platform:
+          - triggers:read
       x-visibility: Public
       x-glean-experimental:
         id: 24c5675d-a57a-48cb-9d71-3dece296f28c
@@ -4511,6 +4447,11 @@ paths:
       description: |
         Search recent content events an unsaved trigger built from this preset would match, to preview it before creating the trigger. Read-only — no trigger is created and no webhook delivery is made. Covers the last seven days.
       operationId: platform-trigger-presets-events-search
+      x-glean-scopes:
+        legacy:
+          - TRIGGERS
+        platform:
+          - triggers:read
       x-visibility: Public
       x-glean-experimental:
         id: a48efd80-78d6-46de-9f23-5b8c63ecd157
@@ -4654,6 +4595,11 @@ paths:
       description: |
         SDK-only logical operation. HTTP clients must call the base path; the URL fragment is not sent. Run an assistant turn as server-sent events. HTTP clients request this mode by setting `stream` to true in the JSON body.
       operationId: platform-chat-create-stream
+      x-glean-scopes:
+        legacy:
+          - CHAT
+        platform:
+          - chat:write
       x-visibility: Public
       x-codegen-request-body-name: payload
       requestBody:
@@ -4855,10 +4801,12 @@ paths:
       description: |
         SDK-only logical operation. HTTP clients must call the base path; the URL fragment is not sent. Inspect a GitHub URL as server-sent events. HTTP clients request this mode by setting `stream` to true in the JSON body.
       operationId: platform-skills-preview-source-stream
+      x-glean-scopes:
+        legacy:
+          - SKILLS
+        platform:
+          - skills:write
       x-visibility: Public
-      x-glean-experimental:
-        id: 1629009b-244a-400a-bf55-c441dfbc586c
-        introduced: '2026-07-23'
       x-codegen-request-body-name: request
       requestBody:
         required: true
@@ -4917,7 +4865,6 @@ paths:
             with Glean(
                 api_token=os.getenv("GLEAN_API_TOKEN", ""),
                 server_url="https://mycompany-be.glean.com",
-                include_experimental=True,
             ) as glean:
 
                 res = glean.skills.preview_source_stream(source_url="https://github.com/anthropics/skills")
@@ -4934,7 +4881,6 @@ paths:
             const glean = new Glean({
               apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
               serverURL: "https://mycompany-be.glean.com",
-              includeExperimental: true,
             });
 
             async function run() {
@@ -4950,14 +4896,13 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/operations\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Skills.PreviewSourceStream(ctx, operations.PlatformSkillsPreviewSourceStreamRequest{\n        SourceURL: \"https://github.com/anthropics/skills\",\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformSkillSourcePreviewStreamEventServerSentEvent != nil {\n        defer res.PlatformSkillSourcePreviewStreamEventServerSentEvent.Close()\n\n        for res.PlatformSkillSourcePreviewStreamEventServerSentEvent.Next() {\n            event := res.PlatformSkillSourcePreviewStreamEventServerSentEvent.Value()\n            log.Print(event)\n            // Handle the event\n\t      }\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/operations\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Skills.PreviewSourceStream(ctx, operations.PlatformSkillsPreviewSourceStreamRequest{\n        SourceURL: \"https://github.com/anthropics/skills\",\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformSkillSourcePreviewStreamEventServerSentEvent != nil {\n        defer res.PlatformSkillSourcePreviewStreamEventServerSentEvent.Close()\n\n        for res.PlatformSkillSourcePreviewStreamEventServerSentEvent.Next() {\n            event := res.PlatformSkillSourcePreviewStreamEventServerSentEvent.Value()\n            log.Print(event)\n            // Handle the event\n\t      }\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
             package hello.world;
 
             import com.glean.api_client.glean_api_client.Glean;
-            import com.glean.api_client.glean_api_client.hooks.GleanBuilder;
             import com.glean.api_client.glean_api_client.models.components.PlatformSkillSourcePreviewStreamEventServerSentEvent;
             import com.glean.api_client.glean_api_client.models.errors.PlatformProblemDetailException;
             import com.glean.api_client.glean_api_client.models.errors.PlatformUnauthorizedAgentToolsProblemException;
@@ -4971,9 +4916,8 @@ paths:
 
                 public static void main(String[] args) throws PlatformUnauthorizedAgentToolsProblemException, PlatformProblemDetailException, Exception {
 
-                    Glean sdk = GleanBuilder.create()
+                    Glean sdk = Glean.builder()
                             .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
-                            .includeExperimental(true)
                         .build();
 
                     PlatformSkillsPreviewSourceStreamRequest req = PlatformSkillsPreviewSourceStreamRequest.builder()
@@ -4998,16 +4942,6 @@ paths:
                     }
                 }
             }
-      parameters:
-        - in: header
-          name: X-Glean-Include-Experimental
-          description: This endpoint is experimental, so requests must include this header set to `true`. See [How experimental APIs work](https://developers.glean.com/experimental/overview) for details.
-          required: true
-          schema:
-            type: boolean
-            default: true
-          example: true
-          value: 'true'
 components:
   securitySchemes:
     APIToken:
@@ -6211,7 +6145,8 @@ components:
         - DRAFT
         - ENABLED
         - DISABLED
-      description: Current skill status.
+      description: |
+        The caller's effective activation. The owner sees the skill's stored status. Another caller sees their personal setting, or DISABLED when they have none. DRAFT is the stored draft state and is not set by update. Effective activation may also reflect workspace governance policy.
     PlatformSkillOrigin:
       type: string
       enum:
@@ -6696,7 +6631,8 @@ components:
       enum:
         - ENABLED
         - DISABLED
-      description: New status for the skill.
+      description: |
+        Activation to apply for the authenticated caller. For the owner, this updates the skill's stored status. For any other caller, it updates only that caller's setting.
     PlatformSkillUpdateRequest:
       type: object
       additionalProperties: false
