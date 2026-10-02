@@ -4,7 +4,33 @@ title: Skills API Overview
 
 # Skills API
 
-The Platform Skills API lets applications discover, validate, import, synchronize, version, and manage skills that can be used with Glean.
+The Platform Skills API lets applications discover, validate, import, synchronize, version, and manage skills that can be used with Glean. These endpoints are generally available. A request does not need the `X-Glean-Include-Experimental` header.
+
+## Workspace access
+
+Operations that read or write a stored skill return [`403`](/errors/insufficient-permissions) `insufficient_permissions` when the caller does not have access to Skills in the workspace. The response `detail` is `Skills is not enabled for this workspace.`
+
+That check runs on:
+
+- `GET /api/skills` and `POST /api/skills`
+- `GET`, `PATCH`, and `DELETE /api/skills/{skill_id}`
+- `GET /api/skills/{skill_id}/content`
+- `GET` and `POST /api/skills/{skill_id}/versions`
+- `GET /api/skills/{skill_id}/versions/{version}`
+- `GET /api/skills/{skill_id}/versions/{version}/content`
+
+`POST /api/skills` then checks whether the caller can create skills. Without that permission the `detail` is `You do not have permission to create skills.`
+
+`POST /api/skills/validation` checks a bundle's structure and metadata and does not read or write stored skills, so it does not apply the workspace access check.
+
+GitHub import and sync use one denial for a workspace where GitHub skill import is off and for a caller without Skills access:
+
+- `POST /api/skills/import` returns `detail` `You do not have permission to import skills from GitHub.`
+- `POST /api/skills/{skill_id}/sync` returns `detail` `You do not have permission to sync skills from GitHub.`
+
+Source preview checks the two conditions separately. When GitHub skill import is off, `POST /api/skills/sources/preview` returns `detail` `GitHub skill import is not enabled for this workspace.` When GitHub skill import is on and the caller does not have access to Skills, the `detail` is `You do not have permission to preview skill sources.`
+
+Import and preview also return `You do not have permission to create skills.` when the caller can reach the operation but cannot create skills.
 
 ## Explore Skills
 
@@ -27,3 +53,5 @@ The Platform Skills API lets applications discover, validate, import, synchroniz
 </CardGroup>
 
 Browse the complete [Skills API reference](/api/platform-api/platform-skills-list).
+
+For error responses, see [Platform API Errors](/errors) for the shared ProblemDetail code reference and remediation guidance.

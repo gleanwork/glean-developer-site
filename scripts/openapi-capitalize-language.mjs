@@ -170,6 +170,9 @@ function responseContentType(operation) {
  * its default cURL omits the required form part and sets an unusable multipart
  * Content-Type without a boundary. An explicit sample lets cURL construct the
  * multipart body and boundary from the selected file.
+ *
+ * Include `X-Glean-Include-Experimental` only while the operation still has
+ * `x-glean-experimental`, matching `injectExperimentalHeaders`.
  */
 export function injectSkillsMultipartCurlSamples(apiSpec) {
   const paths = apiSpec?.paths;
@@ -204,10 +207,14 @@ export function injectSkillsMultipartCurlSamples(apiSpec) {
       const lines = [
         `curl -L -X ${method.toUpperCase()} '${serverUrl}${requestPath}' \\`,
         `  -H 'Accept: ${responseContentType(operation)}' \\`,
-        `  -H '${EXPERIMENTAL_HEADER_NAME}: true' \\`,
+      ];
+      if (operation['x-glean-experimental']) {
+        lines.push(`  -H '${EXPERIMENTAL_HEADER_NAME}: true' \\`);
+      }
+      lines.push(
         `  -H 'Authorization: Bearer <token>' \\`,
         `  -F 'file=@./SKILL.md'`,
-      ];
+      );
 
       operation['x-codeSamples'].push({
         lang: 'curl',
