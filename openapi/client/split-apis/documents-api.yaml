@@ -2,11 +2,11 @@ openapi: 3.0.0
 info:
   version: 0.9.0
   title: Glean API - Documents
-  x-source-commit-sha: 0fef9ef256ed1e463d8534370e0afb074c4f3f8d
+  x-source-commit-sha: beed58d4df1a2fdf3f13a0c721f9478e75ccde7c
   description: API endpoints for Documents
   x-logo:
     url: https://app.glean.com/images/glean-text2.svg
-  x-open-api-commit-sha: 9b119d21e4f1e6cc51f92c43f79d9ff2abba3d67
+  x-open-api-commit-sha: 4fb4b1c1b26732bca168a8e8338a19d217b2901c
   x-speakeasy-name: Glean API
 servers:
   - url: '{serverUrl}'
@@ -583,6 +583,7 @@ components:
         - SPREADSHEET_TYPE
         - INLINE_HTML_TYPE
         - PODCAST_TYPE
+        - VIDEO_TYPE
         - WORKFLOWS_TYPE
     CustomFieldValueStr:
       properties:
@@ -1418,6 +1419,23 @@ components:
           additionalProperties:
             $ref: '#/components/schemas/DocumentOrError'
           description: The document details or the error if document is not found.
+    CollectionPinMetadata:
+      required:
+        - id
+        - target
+      properties:
+        id:
+          type: integer
+          description: The ID of the Collection.
+        target:
+          $ref: '#/components/schemas/CollectionPinTarget'
+    CustomerMetadata:
+      properties:
+        datasourceId:
+          type: string
+          description: The user visible id of the salesforce customer account.
+        customData:
+          $ref: '#/components/schemas/CustomData'
     AnswerLikes:
       required: &ref_151
         - likedBy
@@ -1440,6 +1458,9 @@ components:
                   - name
                   - obfuscatedId
                 properties:
+                  identityOnly:
+                    description: True when this is an authenticated identity fallback rather than a people profile. Directory metadata is unavailable.
+                    type: boolean
                   metadata: &ref_23
                     type: object
                     description: PersonMetadata object
@@ -1467,23 +1488,6 @@ components:
           description: The total number of likes for the answer.
           type: integer
       type: object
-    CollectionPinMetadata:
-      required:
-        - id
-        - target
-      properties:
-        id:
-          type: integer
-          description: The ID of the Collection.
-        target:
-          $ref: '#/components/schemas/CollectionPinTarget'
-    CustomerMetadata:
-      properties:
-        datasourceId:
-          type: string
-          description: The user visible id of the salesforce customer account.
-        customData:
-          $ref: '#/components/schemas/CustomData'
     DocumentOrError:
       x-omit-error-on-success: true
       oneOf:
@@ -1711,6 +1715,18 @@ components:
                   person: *ref_0
                 type: object
       type: object
+    PinDocumentMutableProperties:
+      properties:
+        queries:
+          type: array
+          description: The query strings for which the pinned result will show.
+          items:
+            type: string
+        audienceFilters:
+          type: array
+          description: Filters which restrict who should see the pinned document. Values are taken from the corresponding filters in people search.
+          items:
+            $ref: '#/components/schemas/FacetFilter'
     CalendarAttendees:
       properties:
         isLimit:
@@ -1758,18 +1774,6 @@ components:
           description: Total number of attendees in this event.
           type: integer
       type: object
-    PinDocumentMutableProperties:
-      properties:
-        queries:
-          type: array
-          description: The query strings for which the pinned result will show.
-          items:
-            type: string
-        audienceFilters:
-          type: array
-          description: Filters which restrict who should see the pinned document. Values are taken from the corresponding filters in people search.
-          items:
-            $ref: '#/components/schemas/FacetFilter'
     Permissions:
       description: |-
         Describes the permissions levels that a user has for permissioned features. When the client sends this, Permissions.read and Permissions.write are the additional permissions granted to a user on top of what they have via their roles.
@@ -1807,6 +1811,9 @@ components:
               example: *ref_6
               required: *ref_7
               properties:
+                identityOnly:
+                  description: True when this is an authenticated identity fallback rather than a people profile. Directory metadata is unavailable.
+                  type: boolean
                 metadata:
                   type: object
                   description: PersonMetadata object
@@ -2106,42 +2113,6 @@ components:
       required:
         - id
         - name
-    ShortcutMutableProperties:
-      properties:
-        addedRoles:
-          description: A list of user roles added for the Shortcut.
-          type: array
-          items: &ref_16
-            required: *ref_12
-            properties:
-              group: *ref_13
-              person: *ref_2
-              role: *ref_14
-              sourceDocumentSpec: *ref_15
-            type: object
-        description:
-          description: A short, plain text blurb to help people understand the intent of the shortcut.
-          type: string
-        destinationDocumentId:
-          description: Glean Document ID for the URL, if known.
-          type: string
-        destinationUrl:
-          description: Destination URL for the shortcut.
-          type: string
-        inputAlias:
-          description: Link text following go/ prefix as entered by the user.
-          type: string
-        removedRoles:
-          description: A list of user roles removed for the Shortcut.
-          type: array
-          items: *ref_16
-        unlisted:
-          description: Whether this shortcut is unlisted or not. Unlisted shortcuts are visible to author + admins only.
-          type: boolean
-        urlTemplate:
-          description: For variable shortcuts, contains the URL template; note, `destinationUrl` contains default URL.
-          type: string
-      type: object
     GeneratedQna:
       properties:
         answer:
@@ -2182,6 +2153,42 @@ components:
           type: string
         trackingToken:
           description: An opaque token that represents this particular result in this particular query. To be used for /feedback reporting.
+          type: string
+      type: object
+    ShortcutMutableProperties:
+      properties:
+        addedRoles:
+          description: A list of user roles added for the Shortcut.
+          type: array
+          items: &ref_16
+            required: *ref_12
+            properties:
+              group: *ref_13
+              person: *ref_2
+              role: *ref_14
+              sourceDocumentSpec: *ref_15
+            type: object
+        description:
+          description: A short, plain text blurb to help people understand the intent of the shortcut.
+          type: string
+        destinationDocumentId:
+          description: Glean Document ID for the URL, if known.
+          type: string
+        destinationUrl:
+          description: Destination URL for the shortcut.
+          type: string
+        inputAlias:
+          description: Link text following go/ prefix as entered by the user.
+          type: string
+        removedRoles:
+          description: A list of user roles removed for the Shortcut.
+          type: array
+          items: *ref_16
+        unlisted:
+          description: Whether this shortcut is unlisted or not. Unlisted shortcuts are visible to author + admins only.
+          type: boolean
+        urlTemplate:
+          description: For variable shortcuts, contains the URL template; note, `destinationUrl` contains default URL.
           type: string
       type: object
     CollectionMutableProperties:
@@ -2594,6 +2601,9 @@ components:
                 example: *ref_6
                 required: *ref_7
                 properties:
+                  identityOnly:
+                    description: True when this is an authenticated identity fallback rather than a people profile. Directory metadata is unavailable.
+                    type: boolean
                   metadata: *ref_23
                   name:
                     description: The display name.
@@ -2820,6 +2830,9 @@ components:
             example: *ref_6
             required: *ref_7
             properties:
+              identityOnly:
+                description: True when this is an authenticated identity fallback rather than a people profile. Directory metadata is unavailable.
+                type: boolean
               metadata: &ref_84
                 example: &ref_48
                   department: Movies
@@ -3376,6 +3389,9 @@ components:
           example: *ref_6
           required: *ref_7
           properties:
+            identityOnly:
+              description: True when this is an authenticated identity fallback rather than a people profile. Directory metadata is unavailable.
+              type: boolean
             metadata:
               example: *ref_48
               properties:
@@ -3693,6 +3709,14 @@ components:
           description: Server Unix timestamp of the update time (in seconds since epoch UTC).
           type: integer
       type: object
+    UserRoleSpecification:
+      required: *ref_12
+      properties:
+        group: *ref_13
+        person: *ref_63
+        role: *ref_14
+        sourceDocumentSpec: *ref_15
+      type: object
     CalendarAttendee:
       required: *ref_1
       properties:
@@ -3710,14 +3734,6 @@ components:
         responseStatus:
           enum: *ref_3
           type: string
-      type: object
-    UserRoleSpecification:
-      required: *ref_12
-      properties:
-        group: *ref_13
-        person: *ref_63
-        role: *ref_14
-        sourceDocumentSpec: *ref_15
       type: object
     InviteInfo:
       description: Information regarding the invite status of a person.
@@ -3884,6 +3900,9 @@ components:
       example: *ref_6
       required: *ref_7
       properties:
+        identityOnly:
+          description: True when this is an authenticated identity fallback rather than a people profile. Directory metadata is unavailable.
+          type: boolean
         metadata:
           example: *ref_48
           properties:
@@ -4145,6 +4164,9 @@ components:
           example: *ref_6
           required: *ref_7
           properties:
+            identityOnly:
+              description: True when this is an authenticated identity fallback rather than a people profile. Directory metadata is unavailable.
+              type: boolean
             metadata: *ref_84
             name:
               description: The display name.

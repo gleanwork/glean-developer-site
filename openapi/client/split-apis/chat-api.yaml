@@ -2,11 +2,11 @@ openapi: 3.0.0
 info:
   version: 0.9.0
   title: Glean API - Chat
-  x-source-commit-sha: 0fef9ef256ed1e463d8534370e0afb074c4f3f8d
+  x-source-commit-sha: beed58d4df1a2fdf3f13a0c721f9478e75ccde7c
   description: API endpoints for Chat
   x-logo:
     url: https://app.glean.com/images/glean-text2.svg
-  x-open-api-commit-sha: 9b119d21e4f1e6cc51f92c43f79d9ff2abba3d67
+  x-open-api-commit-sha: 4fb4b1c1b26732bca168a8e8338a19d217b2901c
   x-speakeasy-name: Glean API
 servers:
   - url: '{serverUrl}'
@@ -1645,6 +1645,7 @@ components:
         - SPREADSHEET_TYPE
         - INLINE_HTML_TYPE
         - PODCAST_TYPE
+        - VIDEO_TYPE
         - WORKFLOWS_TYPE
     DeleteChatFilesRequest:
       required:
@@ -2794,55 +2795,6 @@ components:
       properties:
         customData:
           $ref: '#/components/schemas/CustomData'
-    AnswerLikes:
-      required: &ref_151
-        - likedBy
-        - likedByUser
-        - numLikes
-      properties:
-        likedBy:
-          type: array
-          items:
-            properties:
-              createTime:
-                description: The time the user liked the answer in ISO format (ISO 8601).
-                format: date-time
-                type: string
-              user: &ref_2
-                example: &ref_6
-                  name: George Clooney
-                  obfuscatedId: abc123
-                required: &ref_7
-                  - name
-                  - obfuscatedId
-                properties:
-                  metadata: &ref_23
-                    type: object
-                    description: PersonMetadata object
-                  name:
-                    description: The display name.
-                    type: string
-                  obfuscatedId:
-                    description: An opaque identifier that can be used to request metadata for a Person.
-                    type: string
-                  relatedDocuments:
-                    description: A list of documents related to this person.
-                    type: array
-                    items: &ref_24
-                      type: object
-                      properties:
-                        RelatedDocuments:
-                          type: object
-                          description: RelatedDocuments object
-                type: object
-            type: object
-        likedByUser:
-          description: Whether the user in context liked the answer.
-          type: boolean
-        numLikes:
-          description: The total number of likes for the answer.
-          type: integer
-      type: object
     ChatMetadataResult:
       properties:
         chat:
@@ -2874,6 +2826,58 @@ components:
           description: The user visible id of the salesforce customer account.
         customData:
           $ref: '#/components/schemas/CustomData'
+    AnswerLikes:
+      required: &ref_151
+        - likedBy
+        - likedByUser
+        - numLikes
+      properties:
+        likedBy:
+          type: array
+          items:
+            properties:
+              createTime:
+                description: The time the user liked the answer in ISO format (ISO 8601).
+                format: date-time
+                type: string
+              user: &ref_2
+                example: &ref_6
+                  name: George Clooney
+                  obfuscatedId: abc123
+                required: &ref_7
+                  - name
+                  - obfuscatedId
+                properties:
+                  identityOnly:
+                    description: True when this is an authenticated identity fallback rather than a people profile. Directory metadata is unavailable.
+                    type: boolean
+                  metadata: &ref_23
+                    type: object
+                    description: PersonMetadata object
+                  name:
+                    description: The display name.
+                    type: string
+                  obfuscatedId:
+                    description: An opaque identifier that can be used to request metadata for a Person.
+                    type: string
+                  relatedDocuments:
+                    description: A list of documents related to this person.
+                    type: array
+                    items: &ref_24
+                      type: object
+                      properties:
+                        RelatedDocuments:
+                          type: object
+                          description: RelatedDocuments object
+                type: object
+            type: object
+        likedByUser:
+          description: Whether the user in context liked the answer.
+          type: boolean
+        numLikes:
+          description: The total number of likes for the answer.
+          type: integer
+      type: object
     FacetFilterSet:
       properties:
         filters:
@@ -3210,6 +3214,27 @@ components:
         mimeType:
           description: MIME type of the file.
           type: string
+    PinDocumentMutableProperties:
+      properties:
+        queries:
+          type: array
+          description: The query strings for which the pinned result will show.
+          items:
+            type: string
+        audienceFilters:
+          type: array
+          description: Filters which restrict who should see the pinned document. Values are taken from the corresponding filters in people search.
+          items:
+            $ref: '#/components/schemas/FacetFilter'
+    ReferenceRange:
+      description: Each text range from the response can correspond to an array of snippets from the citation source.
+      properties:
+        textRange:
+          $ref: '#/components/schemas/TextRange'
+        snippets:
+          type: array
+          items:
+            $ref: '#/components/schemas/SearchResultSnippet'
     CalendarAttendees:
       properties:
         isLimit:
@@ -3257,27 +3282,6 @@ components:
           description: Total number of attendees in this event.
           type: integer
       type: object
-    PinDocumentMutableProperties:
-      properties:
-        queries:
-          type: array
-          description: The query strings for which the pinned result will show.
-          items:
-            type: string
-        audienceFilters:
-          type: array
-          description: Filters which restrict who should see the pinned document. Values are taken from the corresponding filters in people search.
-          items:
-            $ref: '#/components/schemas/FacetFilter'
-    ReferenceRange:
-      description: Each text range from the response can correspond to an array of snippets from the citation source.
-      properties:
-        textRange:
-          $ref: '#/components/schemas/TextRange'
-        snippets:
-          type: array
-          items:
-            $ref: '#/components/schemas/SearchResultSnippet'
     AccessRequestPermissionDeniedResponse:
       type: object
       required:
@@ -3373,6 +3377,9 @@ components:
               example: *ref_6
               required: *ref_7
               properties:
+                identityOnly:
+                  description: True when this is an authenticated identity fallback rather than a people profile. Directory metadata is unavailable.
+                  type: boolean
                 metadata:
                   type: object
                   description: PersonMetadata object
@@ -3988,42 +3995,6 @@ components:
       required:
         - id
         - name
-    ShortcutMutableProperties:
-      properties:
-        addedRoles:
-          description: A list of user roles added for the Shortcut.
-          type: array
-          items: &ref_16
-            required: *ref_12
-            properties:
-              group: *ref_13
-              person: *ref_2
-              role: *ref_14
-              sourceDocumentSpec: *ref_15
-            type: object
-        description:
-          description: A short, plain text blurb to help people understand the intent of the shortcut.
-          type: string
-        destinationDocumentId:
-          description: Glean Document ID for the URL, if known.
-          type: string
-        destinationUrl:
-          description: Destination URL for the shortcut.
-          type: string
-        inputAlias:
-          description: Link text following go/ prefix as entered by the user.
-          type: string
-        removedRoles:
-          description: A list of user roles removed for the Shortcut.
-          type: array
-          items: *ref_16
-        unlisted:
-          description: Whether this shortcut is unlisted or not. Unlisted shortcuts are visible to author + admins only.
-          type: boolean
-        urlTemplate:
-          description: For variable shortcuts, contains the URL template; note, `destinationUrl` contains default URL.
-          type: string
-      type: object
     GeneratedQna:
       properties:
         answer:
@@ -4064,6 +4035,42 @@ components:
           type: string
         trackingToken:
           description: An opaque token that represents this particular result in this particular query. To be used for /feedback reporting.
+          type: string
+      type: object
+    ShortcutMutableProperties:
+      properties:
+        addedRoles:
+          description: A list of user roles added for the Shortcut.
+          type: array
+          items: &ref_16
+            required: *ref_12
+            properties:
+              group: *ref_13
+              person: *ref_2
+              role: *ref_14
+              sourceDocumentSpec: *ref_15
+            type: object
+        description:
+          description: A short, plain text blurb to help people understand the intent of the shortcut.
+          type: string
+        destinationDocumentId:
+          description: Glean Document ID for the URL, if known.
+          type: string
+        destinationUrl:
+          description: Destination URL for the shortcut.
+          type: string
+        inputAlias:
+          description: Link text following go/ prefix as entered by the user.
+          type: string
+        removedRoles:
+          description: A list of user roles removed for the Shortcut.
+          type: array
+          items: *ref_16
+        unlisted:
+          description: Whether this shortcut is unlisted or not. Unlisted shortcuts are visible to author + admins only.
+          type: boolean
+        urlTemplate:
+          description: For variable shortcuts, contains the URL template; note, `destinationUrl` contains default URL.
           type: string
       type: object
     CollectionMutableProperties:
@@ -4476,6 +4483,9 @@ components:
                 example: *ref_6
                 required: *ref_7
                 properties:
+                  identityOnly:
+                    description: True when this is an authenticated identity fallback rather than a people profile. Directory metadata is unavailable.
+                    type: boolean
                   metadata: *ref_23
                   name:
                     description: The display name.
@@ -4702,6 +4712,9 @@ components:
             example: *ref_6
             required: *ref_7
             properties:
+              identityOnly:
+                description: True when this is an authenticated identity fallback rather than a people profile. Directory metadata is unavailable.
+                type: boolean
               metadata: &ref_84
                 example: &ref_48
                   department: Movies
@@ -5258,6 +5271,9 @@ components:
           example: *ref_6
           required: *ref_7
           properties:
+            identityOnly:
+              description: True when this is an authenticated identity fallback rather than a people profile. Directory metadata is unavailable.
+              type: boolean
             metadata:
               example: *ref_48
               properties:
@@ -5575,6 +5591,14 @@ components:
           description: Server Unix timestamp of the update time (in seconds since epoch UTC).
           type: integer
       type: object
+    UserRoleSpecification:
+      required: *ref_12
+      properties:
+        group: *ref_13
+        person: *ref_63
+        role: *ref_14
+        sourceDocumentSpec: *ref_15
+      type: object
     CalendarAttendee:
       required: *ref_1
       properties:
@@ -5592,14 +5616,6 @@ components:
         responseStatus:
           enum: *ref_3
           type: string
-      type: object
-    UserRoleSpecification:
-      required: *ref_12
-      properties:
-        group: *ref_13
-        person: *ref_63
-        role: *ref_14
-        sourceDocumentSpec: *ref_15
       type: object
     InviteInfo:
       description: Information regarding the invite status of a person.
@@ -5766,6 +5782,9 @@ components:
       example: *ref_6
       required: *ref_7
       properties:
+        identityOnly:
+          description: True when this is an authenticated identity fallback rather than a people profile. Directory metadata is unavailable.
+          type: boolean
         metadata:
           example: *ref_48
           properties:
@@ -6027,6 +6046,9 @@ components:
           example: *ref_6
           required: *ref_7
           properties:
+            identityOnly:
+              description: True when this is an authenticated identity fallback rather than a people profile. Directory metadata is unavailable.
+              type: boolean
             metadata: *ref_84
             name:
               description: The display name.
