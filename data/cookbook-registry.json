@@ -1255,7 +1255,7 @@
       "questions": [
         {
           "id": "email",
-          "prompt": "What is your work email? It is used once to discover your Glean tenant."
+          "prompt": "What is your work email? It is used once to discover your Glean tenant; if you already know the backend, you can configure it directly instead."
         },
         {
           "id": "topic",
@@ -1273,8 +1273,9 @@
     "languages": ["typescript", "javascript"],
     "prerequisites": [
       "A Glean instance with content indexed",
-      "Your Glean web app domain (typically app.glean.com — see admin/about-glean)",
-      "A frontend app or page where you can install an npm package (or add a script tag) and a container element"
+      "Your Glean Web app URL from Admin > About Glean > Web app URL",
+      "A frontend app or page where you can install @gleanwork/web-sdk@2.4.0 and add sized container elements",
+      "For the React variant: Node 20.19+ or 22.12+ and a signed-in Glean browser session"
     ],
     "demoQueries": [
       {
@@ -1288,6 +1289,81 @@
       {
         "query": "Summarize our latest product update",
         "expectedBehavior": "Returns a non-empty answer with at least one citation carrying a real title and URL, drawn from your own indexed content."
+      }
+    ],
+    "codeAssets": [
+      {
+        "repoPath": "recipes/embed-search-chat/react",
+        "language": "typescript",
+        "description": "Runnable React example with Search Box, Search Results, and Chat",
+        "execution": {
+          "type": "local-web",
+          "questions": [
+            {
+              "id": "email",
+              "prompt": "What is your work email? It is used once to discover your Glean tenant; if you already know the backend, you can configure it directly instead."
+            },
+            {
+              "id": "topic",
+              "prompt": "What topic do you know exists in your Glean content?"
+            }
+          ],
+          "auth": [
+            {
+              "kind": "browser-cookie",
+              "scopes": [],
+              "setupCommand": "cd embed-search-chat && npm run configure -- --email \"<work-email>\"",
+              "configFile": ".env.local",
+              "backendVariable": "VITE_GLEAN_BACKEND"
+            }
+          ],
+          "verification": {
+            "kind": "user-browser",
+            "expectedDuration": "about 2 minutes",
+            "startsOwnServer": false
+          },
+          "run": {
+            "command": "cd embed-search-chat && npm run dev",
+            "url": "the Local URL printed by Vite",
+            "userBrowser": true
+          }
+        },
+        "steps": [
+          {
+            "title": "Copy the React example onto your machine",
+            "command": "npx -y tiged@2.12.8 --mode=git gleanwork/glean-cookbook/recipes/embed-search-chat/react embed-search-chat",
+            "kind": "scaffold",
+            "description": "Creates an embed-search-chat folder in whatever directory you run this from. Every command after this one runs inside that folder."
+          },
+          {
+            "title": "Install dependencies",
+            "command": "cd embed-search-chat && npm install",
+            "kind": "install",
+            "description": "Installs the pinned Glean Web SDK, React, and Vite dependencies."
+          },
+          {
+            "title": "Find your Glean backend",
+            "command": "cd embed-search-chat && npm run configure -- --email \"<work-email>\"",
+            "kind": "configure",
+            "description": "Uses your email once to find the tenant backend and writes VITE_GLEAN_BACKEND to .env.local. If the backend is already known, set that variable manually instead. This is setup-time configuration, not a runtime tenant picker, and it does not request or store an API key."
+          },
+          {
+            "title": "Configure the Web app URL and questions",
+            "description": "Open .env.local. Set VITE_GLEAN_WEB_APP_URL to the exact value shown in Glean Admin > About Glean > Web app URL; keep backend and Web app URL as setup/deployment configuration rather than runtime user inputs. Set VITE_GLEAN_INITIAL_QUERY and VITE_GLEAN_INITIAL_MESSAGE to topics you know exist in your Glean content.",
+            "kind": "configure"
+          },
+          {
+            "title": "Open the page",
+            "command": "cd embed-search-chat && npm run dev",
+            "kind": "run",
+            "description": "Starts Vite and prints a Local URL. Open that URL in a browser where the user is signed in to Glean."
+          },
+          {
+            "title": "Verify search, chat, and the user boundary",
+            "description": "Confirm autocomplete appears above Search Results, a known query returns accessible content with citations, and Chat answers the configured question. Repeat the check with a second authorized user and confirm neither Search nor Chat reveals content that user cannot access. If a vanity SSO hostname redirects an embedded frame to app.glean.com, confirm the exact Web app URL in Admin > About Glean; never proxy or frame the full app.",
+            "kind": "verify-live"
+          }
+        ]
       }
     ],
     "scaffoldActions": ["scaffold-web-sdk-embed"],
@@ -1304,9 +1380,8 @@
         "icon": "message-with-sparkles"
       },
       {
-        "label": "Auth",
-        "caption": "SSO or scoped token",
-        "category": "agent",
+        "label": "Browser SSO",
+        "caption": "signed-in user session",
         "icon": "verification"
       },
       {
@@ -1315,18 +1390,16 @@
         "emphasized": true
       }
     ],
-    "aiPrompt": "Embed Glean search and chat in my internal web app using the Glean Web\nSDK, following the recipe at\nhttps://developers.glean.com/cookbook/embed-search-chat\n\nSteps:\n1. Resolve my Glean backend from the work email already supplied by running the cookbook plugin's resolve-backend.mjs script.\n2. Install the SDK: npm install @gleanwork/web-sdk. (If the app has no\n   build toolchain, fall back to the script tag from my Glean app domain:\n   <script defer src=\"https://{GLEAN_APP_DOMAIN}/embedded-search-latest.min.js\"></script>\n   — the same methods appear on window.GleanWebSDK.)\n3. Add a search box and results container, then:\n   import { renderSearchBox, renderSearchResults } from \"@gleanwork/web-sdk\";\n   renderSearchBox(searchBoxElement, { backend, onSearch: (query) =>\n     renderSearchResults(resultsElement, { query }) });\n4. Add a chat container: position: relative, display: block, width: 100%,\n   height: 480px. Use the topic already supplied as initialMessage so the user-mediated check is relevant to my tenant.\n5. Default SSO auth needs no extra configuration. If I ask for\n   server-to-server auth instead, follow\n   https://developers.glean.com/libraries/web-sdk/authentication/server-to-server\n   and keep the API key strictly server-side.\n\nSee Verify below for what a correct build must do.",
-    "llmContext": "Use @gleanwork/web-sdk named exports renderSearchBox, renderSearchResults, and renderChat; the script-tag build exposes the same methods on window.GleanWebSDK. Set backend explicitly. Prefer the user's Glean SSO session; token auth must be minted by a backend and never exposed in browser code. Results remain permission-filtered for the signed-in user. Give every embedded widget an explicitly sized container.",
+    "aiPrompt": "Embed Glean Search and Chat in my internal web app using the Glean Web SDK, following the recipe at https://developers.glean.com/cookbook/embed-search-chat. Ask for my work email and a topic I know exists before changing the app.\n\nFor an existing app:\n1. Use the work email already supplied to resolve the Glean backend, or let the developer set the known backend directly.\n2. Install the pinned SDK with npm install @gleanwork/web-sdk@2.4.0.\n3. Ask for the Glean Web app URL from Admin > About Glean > Web app URL.\n4. Use the browser SSO flow with authMethod: 'sso' and the user's signed-in Glean session. Add explicitly sized search-box and search-results containers with coordinated onSearch callbacks, and add a chat container with position: relative, display: block, width: 100%, and height of at least 480px. Pass the supplied topic as initialMessage.\n\nIf the app cannot install npm packages, use the current script-tag instructions from the Glean Web SDK documentation. For the shipped React variant, copy the recipe asset, install its pinned dependencies, run the configure command, set VITE_GLEAN_WEB_APP_URL in .env.local, and start Vite. Ask the user to open the printed URL in a browser where they are signed in to Glean. Verify Search autocomplete, permission-aware results with citations, Chat with citations, and the same checks as a second authorized user.",
+    "llmContext": "Use @gleanwork/web-sdk 2.4.0 with the browser SSO flow: authMethod: 'sso', explicit backend and webAppUrl, and the signed-in user's permission-scoped session. Search requires coordinated renderSearchBox and renderSearchResults calls; both need onSearch, backend, webAppUrl, and explicit container sizing. Chat uses renderChat with the supplied initialMessage. The shipped React example uses React and Vite, resolves the backend during setup, and requires the exact Web app URL from Admin > About Glean. Live verification requires a signed-in browser session and a second authorized user.",
     "goDependency": false,
     "hidden": true,
     "tags": ["embed", "web-sdk"],
-    "lastVerified": "2026-08-02",
     "content": {
       "problem": "Your team lives in an internal tool and context-switches to find answers.\nInstead of sending them elsewhere, bring Glean's answers into the app they\nalready use — with permissions enforced per user, automatically.",
       "takeItFurther": [
         "Hand off context between search and chat so a search result opens a grounded conversation ([separate pages for chat and search](/libraries/web-sdk/components/chat)).",
         "Scope chat to a specific agent by passing its `agentId` to the chat component.",
-        "Go tokenless for guests with the Web SDK's guest auth provider for public-facing deployments.",
         "Add the [Modal Search](/libraries/web-sdk/components/modal-search) or [Sidebar](/libraries/web-sdk/components/sidebar) variants for search anywhere in the app."
       ]
     }
