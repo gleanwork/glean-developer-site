@@ -2,7 +2,7 @@ openapi: 3.0.0
 info:
   version: 0.9.0
   title: Glean API
-  x-source-commit-sha: 0fef9ef256ed1e463d8534370e0afb074c4f3f8d
+  x-source-commit-sha: beed58d4df1a2fdf3f13a0c721f9478e75ccde7c
   description: |
     # Introduction
     In addition to the data sources that Glean has built-in support for, Glean also provides a REST API that enables customers to put arbitrary content in the search index. This is useful, for example, for doing permissions-aware search over content in internal tools that reside on-prem as well as for searching over applications that Glean does not currently support first class. In addition these APIs allow the customer to push organization data (people info, organization structure etc) into Glean.
@@ -22,7 +22,7 @@ info:
     These API clients provide type-safe, idiomatic interfaces for working with Glean IndexingAPIs in your language of choice.
   x-logo:
     url: https://app.glean.com/images/glean-text2.svg
-  x-open-api-commit-sha: 9b119d21e4f1e6cc51f92c43f79d9ff2abba3d67
+  x-open-api-commit-sha: 4fb4b1c1b26732bca168a8e8338a19d217b2901c
   x-speakeasy-name: Glean API
 servers:
   - url: '{serverUrl}'
@@ -162598,6 +162598,9 @@ components:
         obfuscatedId:
           type: string
           description: An opaque identifier that can be used to request metadata for a Person.
+        identityOnly:
+          type: boolean
+          description: True when this is an authenticated identity fallback rather than a people profile. Directory metadata is unavailable.
         relatedDocuments:
           type: array
           items:
@@ -163411,6 +163414,7 @@ components:
         - SPREADSHEET_TYPE
         - INLINE_HTML_TYPE
         - PODCAST_TYPE
+        - VIDEO_TYPE
         - WORKFLOWS_TYPE
     FavoriteInfo:
       type: object
@@ -166635,9 +166639,8 @@ components:
           type: string
           minLength: 1
         page_number:
-          type:
-            - integer
-            - 'null'
+          type: integer
+          nullable: true
     ChatCitationAnnotation:
       type: object
       additionalProperties: false
@@ -166655,19 +166658,16 @@ components:
           items:
             $ref: '#/components/schemas/ChatCitationSource'
         start_index:
-          type:
-            - integer
-            - 'null'
+          type: integer
+          nullable: true
           minimum: 0
         end_index:
-          type:
-            - integer
-            - 'null'
+          type: integer
+          nullable: true
           minimum: 0
         snippets:
-          type:
-            - array
-            - 'null'
+          type: array
+          nullable: true
           items:
             $ref: '#/components/schemas/ChatCitationSnippet'
     Message:
@@ -167156,6 +167156,7 @@ components:
             - HOST_APPLICATIONS
             - TOOLS
             - SERVERS
+            - AUTH_METHODS
           description: Type of breakdown to return.
         hostApplications:
           type: array
@@ -167172,6 +167173,11 @@ components:
           items:
             type: string
           description: MCP servers to filter by. Empty array means all servers.
+        authMethods:
+          type: array
+          items:
+            type: string
+          description: Authentication methods to filter by, for example OAUTH_XAA for Cross App Access traffic. Empty array means all authentication methods.
     InsightsRequest:
       properties:
         overviewRequest:
@@ -167687,6 +167693,11 @@ components:
           items:
             type: string
           description: MCP servers used by this user in the specified time period.
+        authMethods:
+          type: array
+          items:
+            type: string
+          description: Authentication methods this user's MCP clients presented in the specified time period, for example OAUTH_XAA for Cross App Access.
     McpHostApplicationBreakdown:
       properties:
         hostApplication:
@@ -167730,6 +167741,22 @@ components:
           items:
             type: string
           description: Host applications using this server in the specified time period.
+    McpAuthMethodBreakdown:
+      properties:
+        authMethod:
+          type: string
+          description: Authentication method the MCP client presented, for example OAUTH_GLEAN, OAUTH_XAA (Cross App Access), or API_TOKEN.
+        totalCalls:
+          type: integer
+          description: Total number of MCP calls for this authentication method in the specified time period.
+        activeUsers:
+          type: integer
+          description: Total number of active users for this authentication method in the specified time period.
+        hostApplications:
+          type: array
+          items:
+            type: string
+          description: Host applications using this authentication method in the specified time period.
     McpBreakdownInsightsResponse:
       properties:
         usersBreakdown:
@@ -167748,6 +167775,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/McpServerBreakdown'
+        authMethodsBreakdown:
+          type: array
+          items:
+            $ref: '#/components/schemas/McpAuthMethodBreakdown'
     InsightsResponse:
       properties:
         gleanAssist:
@@ -168380,6 +168411,15 @@ components:
               - AUTOCOMPLETE_FUZZY_MATCH
               - AUTOCOMPLETE_ZERO_QUERY
               - NEW_TAB_PAGE
+    UgcAction:
+      description: An action to perform on user-generated content. This may be accompanied by `text` on the ChatMessageFragment, which acts as the display name content of the pill.
+      oneOf:
+        - type: object
+          required:
+            - create
+          properties:
+            create:
+              $ref: '#/components/schemas/UgcType'
     AutocompleteResult:
       required:
         - result
@@ -168422,6 +168462,8 @@ components:
           type: string
         structuredResult:
           $ref: '#/components/schemas/StructuredResult'
+        ugcAction:
+          $ref: '#/components/schemas/UgcAction'
         trackingToken:
           type: string
           description: A token to be passed in /feedback events associated with this autocomplete result.
@@ -168573,6 +168615,7 @@ components:
               - CREATE_AGENT
               - MANAGER_INVITE
               - ONBOARDING_AUTHORIZATION
+              - CHAT_REMINDER
           description: Categories of content requested. An allowlist gives flexibility to request content separately or together.
         requestOptions:
           $ref: '#/components/schemas/FeedRequestOptions'
@@ -168852,6 +168895,17 @@ components:
           items:
             $ref: '#/components/schemas/DigestSection'
           description: Array of digest sections from which the podcast was created.
+    ArtifactType:
+      type: string
+      description: Type of the Artifact
+      x-include-enum-class-prefix: true
+      enum:
+        - PAPER
+        - AGENT
+        - MESSAGE
+        - EMAIL
+        - HTML_CODE
+        - SLIDE
     ChatSuggestion:
       properties:
         query:
@@ -168863,6 +168917,9 @@ components:
         feature:
           type: string
           description: Targeted Glean Chat feature for the suggestion.
+        artifactType:
+          $ref: '#/components/schemas/ArtifactType'
+          description: The single artifact type to review for an unread artifact reminder.
         sourceDocumentIds:
           type: array
           items:
@@ -169051,6 +169108,7 @@ components:
             - CREATE_AGENT
             - MANAGER_INVITE
             - ONBOARDING_AUTHORIZATION
+            - CHAT_REMINDER
           description: Type of the justification.
         justification:
           type: string
@@ -169153,6 +169211,7 @@ components:
             - CREATE_AGENT
             - MANAGER_INVITE
             - ONBOARDING_AUTHORIZATION
+            - CHAT_REMINDER
           description: Category of the result, one of the requested categories in incoming request.
         primaryEntry:
           $ref: '#/components/schemas/FeedEntry'
@@ -169362,6 +169421,10 @@ components:
     PeopleRequest:
       type: object
       properties:
+        fallbackToAuthenticatedIdentity:
+          type: boolean
+          default: false
+          description: If true and the current user's people profile is missing, reads the stored SSO profile and returns a minimal Person with its display name, the authenticated user's email, the same obfuscatedId used by a normal self-lookup, and identityOnly set to true. If the SSO profile or its name is unavailable, preserves the missing-profile error. Applies only when emailIds and obfuscatedIds are empty and the request doesn't use act-as, a virtual identity, anonymous authentication, or the INVALID_ENTITIES includeType. The fallback doesn't mask lookup or enrichment errors and doesn't create a directory profile. Normal people profiles don't require an SSO lookup.
         timezoneOffset:
           type: integer
           description: The offset of the client's timezone in minutes from UTC. e.g. PDT is -420 because it's 7 hours behind UTC.

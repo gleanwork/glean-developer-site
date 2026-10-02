@@ -2,11 +2,11 @@ openapi: 3.0.0
 info:
   version: 0.9.0
   title: Glean API - Search
-  x-source-commit-sha: 0fef9ef256ed1e463d8534370e0afb074c4f3f8d
+  x-source-commit-sha: beed58d4df1a2fdf3f13a0c721f9478e75ccde7c
   description: API endpoints for Search
   x-logo:
     url: https://app.glean.com/images/glean-text2.svg
-  x-open-api-commit-sha: 9b119d21e4f1e6cc51f92c43f79d9ff2abba3d67
+  x-open-api-commit-sha: 4fb4b1c1b26732bca168a8e8338a19d217b2901c
   x-speakeasy-name: Glean API
 servers:
   - url: '{serverUrl}'
@@ -1499,6 +1499,17 @@ paths:
             }
 components:
   schemas:
+    ArtifactType:
+      type: string
+      description: Type of the Artifact
+      x-include-enum-class-prefix: true
+      enum:
+        - PAPER
+        - AGENT
+        - MESSAGE
+        - EMAIL
+        - HTML_CODE
+        - SLIDE
     CalendarRoomBookingStatus:
       type: string
       description: The current booking status of the room resource associated with an event.
@@ -1722,6 +1733,7 @@ components:
         - SPREADSHEET_TYPE
         - INLINE_HTML_TYPE
         - PODCAST_TYPE
+        - VIDEO_TYPE
         - WORKFLOWS_TYPE
     ChatZeroStateSuggestionOptions:
       properties:
@@ -2222,22 +2234,6 @@ components:
         countryCode:
           type: string
           description: Alpha-2 or Alpha-3 ISO 3166 country code, e.g. US or USA.
-    ChatSuggestion:
-      properties:
-        query:
-          type: string
-          description: The actionable chat query to run when the user selects this suggestion.
-        cta:
-          type: string
-          description: Button text to show for the suggestion action.
-        feature:
-          type: string
-          description: Targeted Glean Chat feature for the suggestion.
-        sourceDocumentIds:
-          type: array
-          items:
-            type: string
-          description: Document IDs that grounded the suggestion.
     DocumentCounts:
       type: object
       description: A map of {string, int} pairs representing counts of each document type associated with this customer.
@@ -2680,6 +2676,34 @@ components:
         provisioningId:
           type: string
           description: identifier for greenlist provisioning, aka sciokey
+    UgcAction:
+      description: An action to perform on user-generated content. This may be accompanied by `text` on the ChatMessageFragment, which acts as the display name content of the pill.
+      oneOf:
+        - type: object
+          required:
+            - create
+          properties:
+            create:
+              $ref: '#/components/schemas/UgcType'
+    ChatSuggestion:
+      properties:
+        query:
+          type: string
+          description: The actionable chat query to run when the user selects this suggestion.
+        cta:
+          type: string
+          description: Button text to show for the suggestion action.
+        feature:
+          type: string
+          description: Targeted Glean Chat feature for the suggestion.
+        artifactType:
+          $ref: '#/components/schemas/ArtifactType'
+          description: The single artifact type to review for an unread artifact reminder.
+        sourceDocumentIds:
+          type: array
+          items:
+            type: string
+          description: Document IDs that grounded the suggestion.
     Code:
       example: &ref_100
         repoName: scio
@@ -2835,6 +2859,31 @@ components:
       properties:
         workflow:
           $ref: '#/components/schemas/Workflow'
+    CollectionPinMetadata:
+      required:
+        - id
+        - target
+      properties:
+        id:
+          type: integer
+          description: The ID of the Collection.
+        target:
+          $ref: '#/components/schemas/CollectionPinTarget'
+    CustomerMetadata:
+      properties:
+        datasourceId:
+          type: string
+          description: The user visible id of the salesforce customer account.
+        customData:
+          $ref: '#/components/schemas/CustomData'
+    ResultsDescription:
+      properties:
+        text:
+          type: string
+          description: Textual description of the results. Can be shown at the top of SERP, e.g. 'People who write about this topic' for experts in people tab.
+        iconConfig:
+          $ref: '#/components/schemas/IconConfig'
+          description: The config for the icon that's displayed with this description
     AnswerLikes:
       required: &ref_151
         - likedBy
@@ -2857,6 +2906,9 @@ components:
                   - name
                   - obfuscatedId
                 properties:
+                  identityOnly:
+                    description: True when this is an authenticated identity fallback rather than a people profile. Directory metadata is unavailable.
+                    type: boolean
                   metadata: &ref_23
                     type: object
                     description: PersonMetadata object
@@ -2884,31 +2936,6 @@ components:
           description: The total number of likes for the answer.
           type: integer
       type: object
-    CollectionPinMetadata:
-      required:
-        - id
-        - target
-      properties:
-        id:
-          type: integer
-          description: The ID of the Collection.
-        target:
-          $ref: '#/components/schemas/CollectionPinTarget'
-    CustomerMetadata:
-      properties:
-        datasourceId:
-          type: string
-          description: The user visible id of the salesforce customer account.
-        customData:
-          $ref: '#/components/schemas/CustomData'
-    ResultsDescription:
-      properties:
-        text:
-          type: string
-          description: Textual description of the results. Can be shown at the top of SERP, e.g. 'People who write about this topic' for experts in people tab.
-        iconConfig:
-          $ref: '#/components/schemas/IconConfig'
-          description: The config for the icon that's displayed with this description
     FacetFilterSet:
       properties:
         filters:
@@ -3094,6 +3121,7 @@ components:
               - CREATE_AGENT
               - MANAGER_INVITE
               - ONBOARDING_AUTHORIZATION
+              - CHAT_REMINDER
           description: Categories of content requested. An allowlist gives flexibility to request content separately or together.
         requestOptions:
           $ref: '#/components/schemas/FeedRequestOptions'
@@ -3300,6 +3328,7 @@ components:
             - CREATE_AGENT
             - MANAGER_INVITE
             - ONBOARDING_AUTHORIZATION
+            - CHAT_REMINDER
           description: Category of the result, one of the requested categories in incoming request.
         primaryEntry:
           $ref: '#/components/schemas/FeedEntry'
@@ -3318,6 +3347,49 @@ components:
             - PROMO
             - PINNED
           description: Placement source for ranked feed results. ORGANIC means the card was emitted by normal feed ranking. PROMO means the card was inserted by the homepage cards promo framework. PINNED means the card was moved to the head of the ranked stack (e.g. knowledge-gap pilot cards).
+    EventClassification:
+      description: A generated classification of a given event.
+      properties:
+        name:
+          $ref: '#/components/schemas/EventClassificationName'
+        strategies:
+          type: array
+          items:
+            $ref: '#/components/schemas/EventStrategyName'
+    PinDocumentMutableProperties:
+      properties:
+        queries:
+          type: array
+          description: The query strings for which the pinned result will show.
+          items:
+            type: string
+        audienceFilters:
+          type: array
+          description: Filters which restrict who should see the pinned document. Values are taken from the corresponding filters in people search.
+          items:
+            $ref: '#/components/schemas/FacetFilter'
+    ResultsRequest:
+      properties:
+        timestamp:
+          type: string
+          description: The ISO 8601 timestamp associated with the client request.
+          format: date-time
+        trackingToken:
+          type: string
+          description: A previously received trackingToken for a search associated with the same query. Useful for more requests and requests for other tabs.
+        sessionInfo:
+          $ref: '#/components/schemas/SessionInfo'
+        sourceDocument:
+          $ref: '#/components/schemas/Document'
+          description: The document from which the ResultsRequest is issued, if any.
+        pageSize:
+          type: integer
+          example: 100
+          description: Hint to the server about how many results to send back. Server may return less or more. Structured results and clustered results don't count towards pageSize.
+        maxSnippetSize:
+          type: integer
+          description: Hint to the server about how many characters long a snippet may be. Server may return less or more.
+          example: 400
     CalendarAttendees:
       properties:
         isLimit:
@@ -3365,49 +3437,6 @@ components:
           description: Total number of attendees in this event.
           type: integer
       type: object
-    EventClassification:
-      description: A generated classification of a given event.
-      properties:
-        name:
-          $ref: '#/components/schemas/EventClassificationName'
-        strategies:
-          type: array
-          items:
-            $ref: '#/components/schemas/EventStrategyName'
-    PinDocumentMutableProperties:
-      properties:
-        queries:
-          type: array
-          description: The query strings for which the pinned result will show.
-          items:
-            type: string
-        audienceFilters:
-          type: array
-          description: Filters which restrict who should see the pinned document. Values are taken from the corresponding filters in people search.
-          items:
-            $ref: '#/components/schemas/FacetFilter'
-    ResultsRequest:
-      properties:
-        timestamp:
-          type: string
-          description: The ISO 8601 timestamp associated with the client request.
-          format: date-time
-        trackingToken:
-          type: string
-          description: A previously received trackingToken for a search associated with the same query. Useful for more requests and requests for other tabs.
-        sessionInfo:
-          $ref: '#/components/schemas/SessionInfo'
-        sourceDocument:
-          $ref: '#/components/schemas/Document'
-          description: The document from which the ResultsRequest is issued, if any.
-        pageSize:
-          type: integer
-          example: 100
-          description: Hint to the server about how many results to send back. Server may return less or more. Structured results and clustered results don't count towards pageSize.
-        maxSnippetSize:
-          type: integer
-          description: Hint to the server about how many characters long a snippet may be. Server may return less or more.
-          example: 400
     OperatorMetadata:
       required:
         - name
@@ -3591,6 +3620,9 @@ components:
               example: *ref_6
               required: *ref_7
               properties:
+                identityOnly:
+                  description: True when this is an authenticated identity fallback rather than a people profile. Directory metadata is unavailable.
+                  type: boolean
                 metadata:
                   type: object
                   description: PersonMetadata object
@@ -4100,65 +4132,6 @@ components:
           description: A URL, generated based on availability, that links to the position of the snippet text or to the nearest header above the snippet text.
           type: string
       type: object
-    AutocompleteResult:
-      required:
-        - result
-        - result_type
-      properties:
-        result:
-          type: string
-        keywords:
-          type: array
-          items:
-            type: string
-          description: A list of all possible keywords for given result.
-        resultType:
-          type: string
-          enum:
-            - ADDITIONAL_DOCUMENT
-            - APP
-            - BROWSER_HISTORY
-            - DATASOURCE
-            - DOCUMENT
-            - ENTITY
-            - GOLINK
-            - HISTORY
-            - CHAT_HISTORY
-            - NEW_CHAT
-            - OPERATOR
-            - OPERATOR_VALUE
-            - QUICKLINK
-            - SUGGESTION
-        score:
-          type: number
-          description: Higher indicates a more confident match.
-        operatorMetadata:
-          $ref: '#/components/schemas/OperatorMetadata'
-        quicklink:
-          $ref: '#/components/schemas/Quicklink'
-        document:
-          $ref: '#/components/schemas/Document'
-        url:
-          type: string
-        structuredResult:
-          $ref: '#/components/schemas/StructuredResult'
-        trackingToken:
-          type: string
-          description: A token to be passed in /feedback events associated with this autocomplete result.
-        ranges:
-          type: array
-          items:
-            $ref: '#/components/schemas/TextRange'
-          description: Subsections of the result string to which some special formatting should be applied (eg. bold)
-      example:
-        result: sample result
-        resultType: DOCUMENT
-        score: 4.56
-        url: https://www.example.com/
-        trackingToken: abcd
-        metadata:
-          - datasource: confluence
-          - objectType: page
     Announcement:
       allOf:
         - $ref: '#/components/schemas/AnnouncementMutableProperties'
@@ -4344,42 +4317,67 @@ components:
       required:
         - id
         - name
-    ShortcutMutableProperties:
+    AutocompleteResult:
+      required:
+        - result
+        - result_type
       properties:
-        addedRoles:
-          description: A list of user roles added for the Shortcut.
+        result:
+          type: string
+        keywords:
           type: array
-          items: &ref_16
-            required: *ref_12
-            properties:
-              group: *ref_13
-              person: *ref_2
-              role: *ref_14
-              sourceDocumentSpec: *ref_15
-            type: object
-        description:
-          description: A short, plain text blurb to help people understand the intent of the shortcut.
+          items:
+            type: string
+          description: A list of all possible keywords for given result.
+        resultType:
           type: string
-        destinationDocumentId:
-          description: Glean Document ID for the URL, if known.
+          enum:
+            - ADDITIONAL_DOCUMENT
+            - APP
+            - BROWSER_HISTORY
+            - DATASOURCE
+            - DOCUMENT
+            - ENTITY
+            - GOLINK
+            - HISTORY
+            - CHAT_HISTORY
+            - NEW_CHAT
+            - OPERATOR
+            - OPERATOR_VALUE
+            - QUICKLINK
+            - SUGGESTION
+        score:
+          type: number
+          description: Higher indicates a more confident match.
+        operatorMetadata:
+          $ref: '#/components/schemas/OperatorMetadata'
+        quicklink:
+          $ref: '#/components/schemas/Quicklink'
+        document:
+          $ref: '#/components/schemas/Document'
+        url:
           type: string
-        destinationUrl:
-          description: Destination URL for the shortcut.
+        structuredResult:
+          $ref: '#/components/schemas/StructuredResult'
+        ugcAction:
+          $ref: '#/components/schemas/UgcAction'
+        trackingToken:
           type: string
-        inputAlias:
-          description: Link text following go/ prefix as entered by the user.
-          type: string
-        removedRoles:
-          description: A list of user roles removed for the Shortcut.
+          description: A token to be passed in /feedback events associated with this autocomplete result.
+        ranges:
           type: array
-          items: *ref_16
-        unlisted:
-          description: Whether this shortcut is unlisted or not. Unlisted shortcuts are visible to author + admins only.
-          type: boolean
-        urlTemplate:
-          description: For variable shortcuts, contains the URL template; note, `destinationUrl` contains default URL.
-          type: string
-      type: object
+          items:
+            $ref: '#/components/schemas/TextRange'
+          description: Subsections of the result string to which some special formatting should be applied (eg. bold)
+      example:
+        result: sample result
+        resultType: DOCUMENT
+        score: 4.56
+        url: https://www.example.com/
+        trackingToken: abcd
+        metadata:
+          - datasource: confluence
+          - objectType: page
     GeneratedQna:
       properties:
         answer:
@@ -4420,6 +4418,42 @@ components:
           type: string
         trackingToken:
           description: An opaque token that represents this particular result in this particular query. To be used for /feedback reporting.
+          type: string
+      type: object
+    ShortcutMutableProperties:
+      properties:
+        addedRoles:
+          description: A list of user roles added for the Shortcut.
+          type: array
+          items: &ref_16
+            required: *ref_12
+            properties:
+              group: *ref_13
+              person: *ref_2
+              role: *ref_14
+              sourceDocumentSpec: *ref_15
+            type: object
+        description:
+          description: A short, plain text blurb to help people understand the intent of the shortcut.
+          type: string
+        destinationDocumentId:
+          description: Glean Document ID for the URL, if known.
+          type: string
+        destinationUrl:
+          description: Destination URL for the shortcut.
+          type: string
+        inputAlias:
+          description: Link text following go/ prefix as entered by the user.
+          type: string
+        removedRoles:
+          description: A list of user roles removed for the Shortcut.
+          type: array
+          items: *ref_16
+        unlisted:
+          description: Whether this shortcut is unlisted or not. Unlisted shortcuts are visible to author + admins only.
+          type: boolean
+        urlTemplate:
+          description: For variable shortcuts, contains the URL template; note, `destinationUrl` contains default URL.
           type: string
       type: object
     CalendarEvent:
@@ -5025,6 +5059,9 @@ components:
                 example: *ref_6
                 required: *ref_7
                 properties:
+                  identityOnly:
+                    description: True when this is an authenticated identity fallback rather than a people profile. Directory metadata is unavailable.
+                    type: boolean
                   metadata: *ref_23
                   name:
                     description: The display name.
@@ -5330,6 +5367,7 @@ components:
             - CREATE_AGENT
             - MANAGER_INVITE
             - ONBOARDING_AUTHORIZATION
+            - CHAT_REMINDER
           description: Type of the justification.
         justification:
           type: string
@@ -5383,6 +5421,9 @@ components:
             example: *ref_6
             required: *ref_7
             properties:
+              identityOnly:
+                description: True when this is an authenticated identity fallback rather than a people profile. Directory metadata is unavailable.
+                type: boolean
               metadata: &ref_84
                 example: &ref_48
                   department: Movies
@@ -5939,6 +5980,9 @@ components:
           example: *ref_6
           required: *ref_7
           properties:
+            identityOnly:
+              description: True when this is an authenticated identity fallback rather than a people profile. Directory metadata is unavailable.
+              type: boolean
             metadata:
               example: *ref_48
               properties:
@@ -6256,6 +6300,14 @@ components:
           description: Server Unix timestamp of the update time (in seconds since epoch UTC).
           type: integer
       type: object
+    UserRoleSpecification:
+      required: *ref_12
+      properties:
+        group: *ref_13
+        person: *ref_63
+        role: *ref_14
+        sourceDocumentSpec: *ref_15
+      type: object
     CalendarAttendee:
       required: *ref_1
       properties:
@@ -6273,14 +6325,6 @@ components:
         responseStatus:
           enum: *ref_3
           type: string
-      type: object
-    UserRoleSpecification:
-      required: *ref_12
-      properties:
-        group: *ref_13
-        person: *ref_63
-        role: *ref_14
-        sourceDocumentSpec: *ref_15
       type: object
     InviteInfo:
       description: Information regarding the invite status of a person.
@@ -6447,6 +6491,9 @@ components:
       example: *ref_6
       required: *ref_7
       properties:
+        identityOnly:
+          description: True when this is an authenticated identity fallback rather than a people profile. Directory metadata is unavailable.
+          type: boolean
         metadata:
           example: *ref_48
           properties:
@@ -6708,6 +6755,9 @@ components:
           example: *ref_6
           required: *ref_7
           properties:
+            identityOnly:
+              description: True when this is an authenticated identity fallback rather than a people profile. Directory metadata is unavailable.
+              type: boolean
             metadata: *ref_84
             name:
               description: The display name.
