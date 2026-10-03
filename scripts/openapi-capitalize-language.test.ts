@@ -279,16 +279,46 @@ paths:
       source: [
         "curl -L -X POST 'https://instance-name-be.glean.com/api/skills' \\",
         "  -H 'Accept: application/json' \\",
-        "  -H 'X-Glean-Include-Experimental: true' \\",
         "  -H 'Authorization: Bearer <token>' \\",
         "  -F 'file=@./SKILL.md'",
       ].join('\n'),
     });
     expect(createSample.source).not.toContain('Content-Type');
+    expect(createSample.source).not.toContain(HEADER_NAME);
 
     const versionSample =
       spec.paths['/api/skills/{skill_id}/versions'].post['x-codeSamples'][0];
     expect(versionSample.source).toContain('/api/skills/<skill_id>/versions');
+    expect(versionSample.source).not.toContain(HEADER_NAME);
+  });
+
+  it('keeps the experimental opt-in header while the operation is experimental', () => {
+    const spec = loadSpec(`
+openapi: "3.0.0"
+info:
+  title: Test API
+  version: "1.0.0"
+paths:
+  /api/skills/validation:
+    post:
+      operationId: platform-skills-validate
+      x-glean-experimental: true
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+      responses:
+        200:
+          content:
+            application/json: {}
+`);
+
+    injectSkillsMultipartCurlSamples(spec);
+
+    expect(
+      spec.paths['/api/skills/validation'].post['x-codeSamples'][0].source,
+    ).toContain(`-H '${HEADER_NAME}: true'`);
   });
 
   it('is idempotent and leaves unrelated multipart operations untouched', () => {
