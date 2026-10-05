@@ -297,9 +297,10 @@ const config: Config = {
     [
       'docusaurus-plugin-mcp-server',
       {
-        // api/mcp.ts reads the name from build/mcp/manifest.json, and reports
-        // the deploy's commit as the version. The manifest's own `version`
-        // field is the plugin default (1.0.0) and is not what /mcp serves.
+        // api/mcp.ts takes the name from the build's artifact bundle
+        // (build/mcp/bundle.json), and reports the deploy's commit as the
+        // version. The bundle's own `version` is the plugin default (1.0.0)
+        // and is not what /mcp serves.
         server: {
           name: 'glean-developer-docs',
         },

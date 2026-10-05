@@ -51,7 +51,7 @@ case "$reason" in
     cause="\`/mcp\` is not routed. Check the \`/mcp\` rewrite in \`vercel.json\` and that \`api/mcp.ts\` was deployed."
     ;;
   *"docs_search returns"* | *"docs_fetch returns"* | *"docs-research skill"*)
-    cause="The server is up but a tool or the skill is failing, so the bundled \`build/mcp/\` files are the likely problem. Check that the deploy's build wrote \`build/mcp/\` (docs.json, search-index.json, skills.json) and that \`vercel.json\` includes it in \`api/mcp.ts\`. The Vercel Runtime Logs name the file."
+    cause="The server is up but a tool or the skill is failing, so the bundled \`build/mcp/\` files are the likely problem. Check that the deploy's build wrote \`build/mcp/bundle.json\` and that \`vercel.json\` includes it in \`api/mcp.ts\`. The Vercel Runtime Logs name the file."
     ;;
   *"did not run"*)
     cause="The check itself broke before reaching \`/mcp\` (install or setup). See the run log."

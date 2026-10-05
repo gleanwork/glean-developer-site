@@ -19,29 +19,20 @@
  *     -d '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"docs_search","arguments":{"query":"OAuth"}}}'
  */
 
-import { readFileSync } from 'fs';
 import http from 'http';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { McpDocsServer, type McpManifest } from 'docusaurus-plugin-mcp-server';
+import { McpDocsServer } from 'docusaurus-plugin-mcp-server';
+import { readArtifactBundle } from 'docusaurus-plugin-mcp-server/adapters/node';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3456;
 
-const manifest = JSON.parse(
-  readFileSync(path.join(__dirname, '../build/mcp/manifest.json'), 'utf8'),
-) as McpManifest;
-
-const mcpServer = new McpDocsServer({
-  docsPath: path.join(__dirname, '../build/mcp/docs.json'),
-  indexPath: path.join(__dirname, '../build/mcp/search-index.json'),
-  name: manifest.serverName,
-  version: 'dev',
-  baseUrl: 'https://developers.glean.com',
-  skillsPath: path.join(__dirname, '../build/mcp/skills.json'),
-});
-
 async function main() {
+  const mcpServer = new McpDocsServer({
+    artifacts: await readArtifactBundle(path.join(__dirname, '../build/mcp')),
+    version: 'dev',
+  });
   await mcpServer.initialize();
 
   const server = http.createServer(async (req, res) => {
