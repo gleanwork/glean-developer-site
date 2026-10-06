@@ -368,7 +368,7 @@ describe('RecipeIndex', () => {
     expect(screen.getByText('4 recipes')).toBeInTheDocument();
   });
 
-  it('reveals an exact preview recipe id and preserves the flag in its links', () => {
+  it('reveals preview recipes with the preview-content flag and links to their permalinks', async () => {
     const gatedRecipes = recipes.map((recipe) =>
       recipe.id === searchQuickstart.id
         ? { ...recipe, visibility: 'preview' as const }
@@ -388,9 +388,10 @@ describe('RecipeIndex', () => {
 
     routerState.location = {
       pathname: '/cookbook',
-      search: '?ff_recipe=search-with-discovered-filters',
+      search: '?ff_preview-content=true',
     };
     rerender(<RecipeIndex {...props} recipes={gatedRecipes} />);
+    expect(await screen.findByText('4 recipes')).toBeInTheDocument();
 
     const previewLinks = screen
       .getAllByRole('link')
@@ -401,7 +402,7 @@ describe('RecipeIndex', () => {
     for (const link of previewLinks) {
       expect(link).toHaveAttribute(
         'href',
-        '/cookbook/search-with-discovered-filters?ff_recipe=search-with-discovered-filters',
+        '/cookbook/search-with-discovered-filters',
       );
     }
     expect(

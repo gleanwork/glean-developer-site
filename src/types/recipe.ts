@@ -479,7 +479,10 @@ export const recipeMetaSchema = z.strictObject({
   capabilities: z.array(z.enum(RECIPE_CAPABILITIES)).min(1),
   /** Displayed as the recipe type; retained as `status` for registry compatibility. */
   status: z.enum(RECIPE_STATUSES),
-  /** Preview recipes are generated but require an exact `ff_recipe` query value on the docs site. */
+  /**
+   * `preview` recipes show only with the `preview-content` flag. They still ship
+   * in the build (hidden, not secret). See `src/lib/previewContent.ts`.
+   */
   visibility: z.enum(RECIPE_VISIBILITIES).default('public'),
   category: z.enum(RECIPE_CATEGORIES),
   level: z.enum(RECIPE_LEVELS),

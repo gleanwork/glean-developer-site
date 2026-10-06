@@ -13,6 +13,9 @@ import {
   type RecipeRecord,
 } from '../../types/recipe';
 import BrowserFrame from '../BrowserFrame';
+import { RecipeVideo } from '../Videos/VideoEmbeds';
+import { isVideoAvailable, videoForRecipe } from '../Videos/videoData';
+import { usePreviewContent } from '../../lib/usePreviewContent';
 import ApiFlow from './ApiFlow';
 import PluginRunButton from './PluginRunButton';
 import { AdaptiveBrandIcon, CATEGORY_ICONS } from './categories';
@@ -752,6 +755,11 @@ export default function RecipeLayout({
   const previewUrl = previewFile
     ? `/img/cookbook/previews/${recipe.id}/${previewFile}`
     : null;
+  // A walkthrough video takes the banner's preview slot when one is available.
+  const previewsEnabled = usePreviewContent();
+  const video = videoForRecipe(recipe.id);
+  const showVideo = Boolean(video && isVideoAvailable(video, previewsEnabled));
+  const hasMedia = showVideo || Boolean(recipe.preview && previewUrl);
 
   return (
     <RecipeContext.Provider value={recipe}>
@@ -759,7 +767,7 @@ export default function RecipeLayout({
         <div className={styles.banner}>
           <div
             className={`${styles.bannerLayout} ${
-              recipe.preview && previewUrl ? styles.bannerLayoutWithPreview : ''
+              hasMedia ? styles.bannerLayoutWithPreview : ''
             }`}
           >
             <div>
@@ -787,7 +795,9 @@ export default function RecipeLayout({
               </div>
             </div>
 
-            {recipe.preview && previewUrl ? (
+            {showVideo && video ? (
+              <RecipeVideo id={video.id} />
+            ) : recipe.preview && previewUrl ? (
               <RecipePreview
                 url={previewUrl}
                 alt={recipe.preview.alt}

@@ -23,7 +23,7 @@ export function heroRecipeLink(
 ): HeroRecipeLink | null {
   const count = recipes.filter(
     (recipe) =>
-      isRecipeAvailable(recipe, '') &&
+      isRecipeAvailable(recipe, false) &&
       recipe.capabilities.some((value) => value === capability),
   ).length;
   if (count === 0) return null;

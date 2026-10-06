@@ -141,6 +141,25 @@ FLAGS_DEBUG=true
    - Caches in localStorage (5 min TTL)
    - CDN caches API responses (60s)
 
+## Preview Content (recipes and videos)
+
+Registry items carry their own `visibility` (`public` or `preview`) in
+`src/data/recipes.json` and `src/data/videos.json`. Nothing is gated per item id.
+
+Preview items ship in every build; the flag only decides whether they're shown
+(`src/lib/previewContent.ts`, `usePreviewContent()`). They aren't secret: anyone
+with a direct URL can fetch a preview page, data, or media file.
+
+- Public items always show.
+- Preview items show when the `preview-content` flag is on: Edge Config
+  (e.g. `allowedUsers`), build flags (`FF_PREVIEW_CONTENT=true`), or
+  `?ff_preview-content=true`. The URL grant lasts for the browser session;
+  `?ff_preview-content=false` clears it and shows the public view.
+- Previews never render in static HTML; they appear after hydration.
+
+Review a preview: add `?ff_preview-content=true` to any page, in production or a
+preview deployment.
+
 ## Flag Properties
 
 ```typescript

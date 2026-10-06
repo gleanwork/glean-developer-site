@@ -48,3 +48,8 @@ beforeAll(() => {
 afterAll(() => {
   console.error = originalError;
 });
+
+// The preview-content grant persists in sessionStorage; keep tests independent.
+afterEach(() => {
+  if (typeof window !== 'undefined') window.sessionStorage?.clear();
+});

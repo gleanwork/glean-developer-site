@@ -23,12 +23,15 @@ export type HeroSlide = {
   secondaryHref: string;
   /** Cookbook capability id for the slide's recipe link (data/cookbook-taxonomy.json). */
   recipeCapability: string;
+  /** Video id (src/data/videos.json) for the slide's "Watch" link; shown only once public. */
+  videoId?: string;
 };
 
 export const HERO_SLIDES: HeroSlide[] = [
   {
     surface: 'Chat API',
     recipeCapability: 'chat',
+    videoId: 'platform-chat',
     primaryHref: '/api/platform-api/chat-overview',
     secondaryHref: '/api/client-api/chat/overview',
     headline: 'Chat grounded in company knowledge',
@@ -54,6 +57,7 @@ with Glean(
   {
     surface: 'Search API',
     recipeCapability: 'search',
+    videoId: 'platform-search',
     primaryHref: '/api/platform-api/search-overview',
     secondaryHref: '/api/client-api/search/overview',
     headline: 'Search your entire knowledge graph',
@@ -75,6 +79,7 @@ with Glean(
   {
     surface: 'Agents',
     recipeCapability: 'agents',
+    videoId: 'platform-agents',
     primaryHref: '/guides/agents/overview',
     secondaryHref: '/api/client-api/agents/overview',
     headline: "Build agents on your company's knowledge",
@@ -121,6 +126,7 @@ renderChat(chatEl, {
   {
     surface: 'Indexing SDK',
     recipeCapability: 'indexing',
+    videoId: 'indexing-sdk',
     primaryHref: '/libraries/indexing-sdk/quickstart',
     secondaryHref: '/api/indexing-api/documents-overview',
     headline: 'Bring any data into Glean',

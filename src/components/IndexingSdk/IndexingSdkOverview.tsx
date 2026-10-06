@@ -1,6 +1,7 @@
 import React from 'react';
 import Link from '@docusaurus/Link';
 import TerminalPanel from '../home/TerminalPanel';
+import { VideoCta } from '../Videos/VideoEmbeds';
 import AgentInstall from './AgentInstall';
 import {
   ConnectorPipeline,
@@ -311,6 +312,7 @@ export default function IndexingSdkOverview(): React.ReactElement {
               {icon('Code', 17)}
               Write it by hand
             </Link>
+            <VideoCta className={styles.heroSecondary} id="indexing-sdk" />
           </div>
         </div>
         <div>
