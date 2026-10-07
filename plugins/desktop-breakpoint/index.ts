@@ -10,9 +10,9 @@ import type { Plugin as PostCssPlugin } from 'postcss';
  *
  * Docusaurus hardcodes 996px (https://github.com/facebook/docusaurus/issues/9603).
  * That shows three cramped columns (sidebar, docs, API explorer) on viewports
- * from 997px to ~1280px, for example a 1080px-wide portrait monitor.
+ * from 997px to 1280px, for example a 1080px-wide portrait monitor.
  */
-export const DESKTOP_BREAKPOINT = 1279;
+export const DESKTOP_BREAKPOINT = 1280;
 
 /** Docusaurus and Infima default: mobile at ≤ 996px, desktop at ≥ 997px. */
 const DOCUSAURUS_DESKTOP_BREAKPOINT = 996;

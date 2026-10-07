@@ -36,14 +36,14 @@ function listFiles(dir: string, pattern: RegExp): string[] {
 
 describe('remapBreakpointMediaQuery', () => {
   it('moves the Docusaurus mobile and desktop bounds', () => {
-    expect(remapBreakpointMediaQuery('(max-width: 996px)', 1279)).toBe(
-      '(max-width: 1279px)',
-    );
-    expect(remapBreakpointMediaQuery('(min-width: 997px)', 1279)).toBe(
-      '(min-width: 1280px)',
-    );
-    expect(remapBreakpointMediaQuery('(max-width: 997px)', 1279)).toBe(
+    expect(remapBreakpointMediaQuery('(max-width: 996px)', 1280)).toBe(
       '(max-width: 1280px)',
+    );
+    expect(remapBreakpointMediaQuery('(min-width: 997px)', 1280)).toBe(
+      '(min-width: 1281px)',
+    );
+    expect(remapBreakpointMediaQuery('(max-width: 997px)', 1280)).toBe(
+      '(max-width: 1281px)',
     );
   });
 
@@ -51,9 +51,9 @@ describe('remapBreakpointMediaQuery', () => {
     expect(
       remapBreakpointMediaQuery(
         'only screen and (min-width: 768px) and (max-width:996px)',
-        1279,
+        1280,
       ),
-    ).toBe('only screen and (min-width: 768px) and (max-width: 1279px)');
+    ).toBe('only screen and (min-width: 768px) and (max-width: 1280px)');
   });
 
   it('leaves other widths alone', () => {
@@ -63,7 +63,7 @@ describe('remapBreakpointMediaQuery', () => {
       '(max-width: 9960px)',
       'print',
     ]) {
-      expect(remapBreakpointMediaQuery(query, 1279)).toBe(query);
+      expect(remapBreakpointMediaQuery(query, 1280)).toBe(query);
     }
   });
 });
@@ -71,7 +71,7 @@ describe('remapBreakpointMediaQuery', () => {
 describe('desktopBreakpointPostCss', () => {
   const css = '@media (max-width: 996px) { .a { display: none; } }';
   const plugin = desktopBreakpointPostCss({
-    breakpoint: 1279,
+    breakpoint: 1280,
     appliesTo: (file) => isThemeCss(file, repoRoot),
   });
 
@@ -81,7 +81,7 @@ describe('desktopBreakpointPostCss', () => {
       path.join(repoRoot, 'src/theme/DocSidebarItem/Html/styles.module.css'),
     ]) {
       const result = await postcss([plugin]).process(css, { from });
-      expect(result.css).toContain('(max-width: 1279px)');
+      expect(result.css).toContain('(max-width: 1280px)');
     }
   });
 
@@ -108,7 +108,7 @@ describe('installed Docusaurus theme', () => {
 
   it('rejects a hook without the expected breakpoint', () => {
     expect(() =>
-      rewriteUseWindowSize('const DesktopBreakpoint = 1024;', 1279),
+      rewriteUseWindowSize('const DesktopBreakpoint = 1024;', 1280),
     ).toThrow(/Docusaurus changed how it defines the breakpoint/);
   });
 
