@@ -5,7 +5,7 @@
  * this constant (docs sidebar, navbar mobile sidebar, desktop TOC).
  *
  * This is CommonJS so the bundler can load it without a TypeScript step.
- * See ./index.ts for the matching CSS change.
+ * DESKTOP_BREAKPOINT and the matching CSS change are in docusaurus.config.ts.
  */
 const HARDCODED_BREAKPOINT = 'const DesktopBreakpoint = 996;';
 
@@ -19,7 +19,8 @@ function rewriteUseWindowSize(source, desktopBreakpoint) {
     throw new Error(
       `[desktop-breakpoint] Expected "${HARDCODED_BREAKPOINT}" in ` +
         "@docusaurus/theme-common's useWindowSize hook. Docusaurus changed " +
-        'how it defines the breakpoint; update plugins/desktop-breakpoint.',
+        'how it defines the breakpoint; update this loader and the ' +
+        'webpack-config plugin in docusaurus.config.ts.',
     );
   }
   return source.replace(
