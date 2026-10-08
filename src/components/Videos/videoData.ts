@@ -60,6 +60,11 @@ export function availableVideos(previewsEnabled: boolean): VideoRecord[] {
   return ALL_VIDEOS.filter((video) => isVideoAvailable(video, previewsEnabled));
 }
 
+/** What the /videos gallery lists: available videos, minus doc-page-only ones (`gallery: false`). */
+export function galleryVideos(previewsEnabled: boolean): VideoRecord[] {
+  return availableVideos(previewsEnabled).filter((v) => v.gallery !== false);
+}
+
 export function findVideo(id: string): VideoRecord | undefined {
   return ALL_VIDEOS.find((video) => video.id === id);
 }

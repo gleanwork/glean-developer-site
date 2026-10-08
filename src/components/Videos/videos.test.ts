@@ -6,7 +6,9 @@ import { videosFileSchema } from '../../types/video';
 import {
   ALL_VIDEOS,
   VIDEO_TRACKS,
+  findVideo,
   formatDuration,
+  galleryVideos,
   isVideoAvailable,
   seriesLength,
   spokenDuration,
@@ -123,6 +125,15 @@ describe('video helpers', () => {
     if (!preview) return;
     expect(isVideoAvailable(preview, false)).toBe(false);
     expect(isVideoAvailable(preview, true)).toBe(true);
+  });
+
+  it('keeps doc-page-only videos out of the gallery but playable on their page', () => {
+    const docsMcp = findVideo('docs-mcp');
+    expect(docsMcp?.gallery).toBe(false);
+    expect(galleryVideos(true).map((v) => v.id)).not.toContain('docs-mcp');
+    for (const video of ALL_VIDEOS.filter((v) => v.gallery === false)) {
+      expect(docFile(video.related.docId ?? ''), video.id).toBeTruthy();
+    }
   });
 
   it('formats durations for display and for screen readers', () => {

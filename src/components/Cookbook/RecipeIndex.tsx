@@ -18,9 +18,9 @@ import { usePreviewContent } from '../../lib/usePreviewContent';
 import styles from './RecipeIndex.module.css';
 import Link from '@docusaurus/Link';
 import { getIcon } from '@gleanwork/docusaurus-theme-glean/Icons';
-import { availableVideos } from '../Videos/videoData';
+import { galleryVideos } from '../Videos/videoData';
 
-const hasPublicVideos = availableVideos(false).length > 0;
+const hasPublicVideos = galleryVideos(false).length > 0;
 
 interface RecipeIndexProps {
   recipes: RecipeRecord[];

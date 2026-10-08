@@ -20,8 +20,8 @@ import {
   VideoPoster,
 } from './VideoPlayer';
 import {
-  availableVideos,
   formatDuration,
+  galleryVideos,
   totalRuntime,
   VIDEO_TRACKS,
   videoStage,
@@ -57,7 +57,7 @@ export default function VideoIndex(): React.ReactElement {
 
   const previewsEnabled = usePreviewContent();
   const videos = useMemo(
-    () => availableVideos(previewsEnabled),
+    () => galleryVideos(previewsEnabled),
     [previewsEnabled],
   );
   const previewCount = videos.filter((v) => v.visibility === 'preview').length;

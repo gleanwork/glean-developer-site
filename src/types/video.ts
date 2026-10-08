@@ -55,6 +55,8 @@ export const videoSchema = z.strictObject({
     })
     .optional(),
   type: z.enum(VIDEO_TYPES),
+  /** `false`: plays on its doc page (`related.doc`) but isn't in the /videos gallery. */
+  gallery: z.literal(false).optional(),
   /**
    * The lifecycle stage each capability has *in the video* (narration and
    * burned-in labels). Public videos must agree with the docs; see tests.
