@@ -359,33 +359,14 @@ type DisplayStep = {
   title: string;
   description?: string;
   command?: string;
+  newTerminal?: true;
 };
 
-const CHANGE_DIRECTORY_PREFIX = /^(cd\s+("[^"]+"|'[^']+'|[^\s&]+)\s+&&\s+)/u;
-
 /**
- * Registry commands are independently cwd-safe because verification may run
- * each one in a fresh shell. For a displayed sequence, keep the first exact
- * directory prefix and remove only later repetitions without mutating source
- * steps or normalizing commands that name a different directory.
+ * Commands render exactly as authored. The cookbook checks that each step
+ * sequence runs in one shell, so rewriting commands here would only hide a
+ * defect from readers of this page while the generated skill kept it.
  */
-export function humanizeStepCommands<T extends DisplayStep>(steps: T[]): T[] {
-  const enteredDirectoryPrefixes = new Set<string>();
-
-  return steps.map((step) => {
-    const match = step.command?.match(CHANGE_DIRECTORY_PREFIX);
-    if (!match) return step;
-
-    const prefix = match[1];
-    if (!enteredDirectoryPrefixes.has(prefix)) {
-      enteredDirectoryPrefixes.add(prefix);
-      return step;
-    }
-
-    return { ...step, command: step.command!.slice(prefix.length) };
-  });
-}
-
 function StepRow({
   index,
   step,
@@ -399,6 +380,7 @@ function StepRow({
       <div className={styles.stepBody}>
         <p>
           <strong>{renderInlineMarkup(step.title)}</strong>
+          {step.newTerminal && ' (new terminal)'}
         </p>
         {step.description && <p>{renderInlineMarkup(step.description)}</p>}
         {step.command && (
@@ -456,7 +438,7 @@ export function RecipeSteps({
       {recipe.steps && recipe.steps.length > 0 && (
         <div className={styles.stepsWrap}>
           <div className={styles.stepsRail} />
-          {humanizeStepCommands(recipe.steps).map((step, i) => (
+          {recipe.steps.map((step, i) => (
             <StepRow key={step.title} index={i + 1} step={step} />
           ))}
         </div>
@@ -471,7 +453,7 @@ export function RecipeSteps({
             >
               <div className={styles.stepsWrap}>
                 <div className={styles.stepsRail} />
-                {humanizeStepCommands(asset.steps!).map((step, i) => (
+                {asset.steps!.map((step, i) => (
                   <StepRow key={step.title} index={i + 1} step={step} />
                 ))}
               </div>
@@ -482,7 +464,7 @@ export function RecipeSteps({
         variantsWithSteps.map((asset) => (
           <div className={styles.stepsWrap} key={asset.repoPath}>
             <div className={styles.stepsRail} />
-            {humanizeStepCommands(asset.steps!).map((step, i) => (
+            {asset.steps!.map((step, i) => (
               <StepRow key={step.title} index={i + 1} step={step} />
             ))}
           </div>

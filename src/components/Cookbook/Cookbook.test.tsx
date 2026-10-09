@@ -9,7 +9,6 @@ import { tenantProfileStore } from '@site/src/lib/tenantProfile';
 import recipesData from '@site/src/data/recipes.json';
 import RecipeIndex from './RecipeIndex';
 import RecipeLayout, {
-  humanizeStepCommands,
   RecipeArchitecture,
   RecipeCodeWalkthrough,
   RecipeDemoQueries,
@@ -618,7 +617,7 @@ describe('RecipeLayout', () => {
             {
               kind: 'run',
               title: 'Run the app',
-              command: 'cd project && npm start',
+              command: 'npm start',
             },
           ],
         })}
@@ -630,25 +629,70 @@ describe('RecipeLayout', () => {
     expect(screen.getByText('cd project && npm install')).toBeInTheDocument();
     expect(screen.getByText('npm start')).toBeInTheDocument();
     expect(
-      screen.queryByText('cd project && npm start'),
-    ).not.toBeInTheDocument();
-    expect(
       screen.getAllByRole('button', { name: 'Copy code to clipboard' }),
     ).toHaveLength(2);
   });
 
-  it('preserves the first directory change and different directories', () => {
-    const commands = humanizeStepCommands([
-      { title: 'Install', command: 'cd project && npm install' },
-      { title: 'Test', command: 'cd project && npm test' },
-      { title: 'Other project', command: 'cd other && npm start' },
-    ]);
+  // The cookbook checks each step sequence in a real shell. Rewriting commands
+  // here once hid a repeated `cd` on the page while the generated skill kept it.
+  it('renders step commands exactly as authored', () => {
+    render(
+      <RecipeLayout
+        plugin={plugin}
+        recipe={makeRecipe({
+          buildMethod: 'scaffold',
+          steps: [
+            {
+              kind: 'install',
+              title: 'Install dependencies',
+              command: 'cd project && npm install',
+            },
+            {
+              kind: 'run',
+              title: 'Run the app',
+              command: 'cd project && npm start',
+            },
+          ],
+        })}
+      >
+        <RecipeSteps />
+      </RecipeLayout>,
+    );
 
-    expect(commands.map((step) => step.command)).toEqual([
-      'cd project && npm install',
-      'npm test',
-      'cd other && npm start',
-    ]);
+    expect(screen.getByText('cd project && npm start')).toBeInTheDocument();
+  });
+
+  it('labels a step that runs in a new terminal', () => {
+    render(
+      <RecipeLayout
+        plugin={plugin}
+        recipe={makeRecipe({
+          buildMethod: 'scaffold',
+          steps: [
+            {
+              kind: 'run',
+              title: 'Run the receiver',
+              command: 'cd project && npm start',
+            },
+            {
+              kind: 'configure',
+              title: 'Register the trigger',
+              command: 'cd project && npm run setup',
+              newTerminal: true,
+            },
+          ],
+        })}
+      >
+        <RecipeSteps />
+      </RecipeLayout>,
+    );
+
+    const label = (title: string) =>
+      screen.getByText(title).closest('p')?.textContent;
+    expect(label('Register the trigger')).toBe(
+      'Register the trigger (new terminal)',
+    );
+    expect(label('Run the receiver')).toBe('Run the receiver');
   });
 
   it('renders a compact preview that opens and closes a full-size dialog', async () => {
