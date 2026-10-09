@@ -2,6 +2,7 @@ import { themes as prismThemes } from 'prism-react-renderer';
 import path from 'path';
 import type { Config } from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
+import type { Plugin as PostCssPlugin } from 'postcss';
 import { openApiPluginOptions } from './openapi.config';
 import docTimestampsPlugin from './plugins/doc-timestamps';
 const redirects = [
@@ -55,6 +56,14 @@ import { flagsSnapshotToBooleans } from './src/lib/featureFlags';
 
 // Optional environment variable for Google site verification
 const googleSiteVerification = process.env.GOOGLE_SITE_VERIFICATION;
+
+// Widest viewport, in CSS px, that gets the mobile layout: hamburger navbar,
+// no docs sidebar or desktop TOC, and the API explorer below the endpoint docs.
+// Docusaurus hardcodes 996px and has no option for it
+// (https://github.com/facebook/docusaurus/issues/9603). At 997–1280px, that
+// gives three cramped columns (sidebar, docs, API explorer). The webpack-config
+// plugin below applies this value to the theme's JS and CSS.
+const DESKTOP_BREAKPOINT = 1280;
 
 const config: Config = {
   title: 'Glean Developer',
@@ -241,6 +250,25 @@ const config: Config = {
           const isDev = process.env.NODE_ENV === 'development';
 
           return {
+            module: {
+              rules: [
+                {
+                  // The JS half of the desktop breakpoint: the docs sidebar,
+                  // navbar mobile menu, and desktop TOC read this hook.
+                  test: /[\\/]@docusaurus[\\/]theme-common[\\/]lib[\\/]hooks[\\/]useWindowSize\.js$/,
+                  enforce: 'pre',
+                  use: [
+                    {
+                      loader: path.resolve(
+                        __dirname,
+                        'plugins/use-window-size-loader.cjs',
+                      ),
+                      options: { desktopBreakpoint: DESKTOP_BREAKPOINT },
+                    },
+                  ],
+                },
+              ],
+            },
             resolve: {
               fallback: {
                 fs: false,
@@ -272,6 +300,41 @@ const config: Config = {
                 }
               : {}),
           };
+        },
+        configurePostCss(postcssOptions) {
+          // The CSS half of the desktop breakpoint: remap the 996px (mobile)
+          // and 997px (desktop) media queries in theme CSS. That is Infima,
+          // theme-classic, the OpenAPI theme, and swizzled components in
+          // src/theme. Site components keep their own 996px grid queries.
+          const swizzledThemeDir =
+            path.join(__dirname, 'src', 'theme') + path.sep;
+          const remapBreakpoint: PostCssPlugin = {
+            postcssPlugin: 'desktop-breakpoint',
+            OnceExit(root, { result }) {
+              const file = result.opts.from ?? '';
+              if (
+                !/[\\/]node_modules[\\/]/.test(file) &&
+                !file.startsWith(swizzledThemeDir)
+              ) {
+                return;
+              }
+              root.walkAtRules('media', (rule) => {
+                rule.params = rule.params.replace(
+                  /\b(min|max)-width:\s*(996|997)px/g,
+                  (_match, bound: string, px: string) =>
+                    `${bound}-width: ${DESKTOP_BREAKPOINT + Number(px) - 996}px`,
+                );
+                if (/\b99[67]px\b/.test(rule.params)) {
+                  throw rule.error(
+                    `Cannot remap the Docusaurus breakpoint in "@media ${rule.params}". ` +
+                      'Update configurePostCss in docusaurus.config.ts.',
+                  );
+                }
+              });
+            },
+          };
+          postcssOptions.plugins.push(remapBreakpoint);
+          return postcssOptions;
         },
       };
     },
