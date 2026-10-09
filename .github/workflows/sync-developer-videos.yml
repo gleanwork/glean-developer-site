@@ -1,0 +1,88 @@
+name: Sync Developer Videos
+
+# Mirrors sync-cookbook-registry.yml. Videos are authored and approved in
+# gleanwork/glean-developer-videos (private); its registry.json pins each
+# approved MP4 and poster by SHA-256 and says where they're hosted
+# (mediaBaseUrl, a public Vercel Blob store). The site app (gleanwork-ci)
+# reads it with a separate token scoped to that repo, contents read-only.
+on:
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Reason for syncing (optional)'
+        required: false
+        default: 'Manual trigger'
+  # schedule:
+  #   - cron: '*/30 * * * *'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync-videos:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate App Token
+        id: app-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: gleanwork
+          repositories: glean-developer-site
+
+      - name: Generate a read-only token for the videos repo
+        id: videos-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: gleanwork
+          repositories: glean-developer-videos
+          permission-contents: read
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+
+      - name: Set up mise
+        uses: jdx/mise-action@v4
+        with:
+          cache: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Sync registry.json from gleanwork/glean-developer-videos
+        env:
+          GITHUB_TOKEN: ${{ steps.videos-token.outputs.token }}
+        run: pnpm videos:sync
+
+      - name: Check the synced videos
+        run: pnpm vitest run src/components/Videos scripts/sync-videos.test.ts
+        env:
+          CI: 'true'
+
+      - name: Create Pull Request
+        id: create-pr
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+          commit-message: 'chore: sync developer videos'
+          title: 'Sync developer videos'
+          body: |
+            Synced `registry.json` from gleanwork/glean-developer-videos.
+
+            **Trigger reason**: ${{ github.event.inputs.reason || 'Scheduled sync' }}
+
+            - `data/videos-registry.json`: snapshot (each video's approved media, pinned by SHA-256)
+            - `src/data/videos.json`: what the Videos components read, with hosted media URLs
+
+            A changed `sha256` means a new render was approved in the videos repo
+            (`gv registry --accept`); the frame comparison is in that repo's PR.
+          branch: ci/sync-developer-videos
+          delete-branch: true

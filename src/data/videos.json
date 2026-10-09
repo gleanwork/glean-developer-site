@@ -1,0 +1,563 @@
+{
+  "tracks": [
+    {
+      "id": "platform-apis",
+      "label": "Platform APIs",
+      "description": "Each API in its own video, from the basics to advanced patterns."
+    },
+    {
+      "id": "embed",
+      "label": "Embed Glean",
+      "description": "Glean search, chat, and agents inside the apps your teams already use."
+    },
+    {
+      "id": "developer-tools",
+      "label": "Developer tools",
+      "description": "Tools that help your coding agent build on Glean."
+    },
+    {
+      "id": "connect-data",
+      "label": "Connect your data",
+      "description": "Bring any source into Glean, with its permissions intact."
+    },
+    {
+      "id": "mcp",
+      "label": "MCP",
+      "description": "Glean in every AI tool your teams use, through the Model Context Protocol."
+    }
+  ],
+  "videos": [
+    {
+      "id": "platform-why",
+      "title": "Why the Platform APIs",
+      "summary": "The contract every Platform API shares: errors an agent can act on, predictable changes, and a release stage on every endpoint.",
+      "track": "platform-apis",
+      "series": {
+        "id": "platform-apis",
+        "label": "Platform APIs",
+        "position": 1
+      },
+      "type": "explainer",
+      "visibility": "public",
+      "featured": 1,
+      "durationSeconds": 71,
+      "version": 5,
+      "updated": "2026-10-02",
+      "related": {
+        "doc": "/api/platform-api",
+        "docId": "api/platform-api/platform-overview",
+        "docLabel": "Platform API overview"
+      },
+      "media": {
+        "src": "https://ib39uabuf4khdnj5.public.blob.vercel-storage.com/platform-why.537217493f.mp4",
+        "poster": "https://ib39uabuf4khdnj5.public.blob.vercel-storage.com/platform-why.a59825ee6e.webp",
+        "width": 1920,
+        "height": 1080
+      },
+      "transcript": [
+        "[upbeat] Glean's Platform APIs are the recommended way to build on Glean. And every one of them shares one consistent contract. So your code, and your agents, can rely on it.",
+        "[confident] Learn the conventions once. Every new API behaves the way you'd expect.",
+        "And errors? They're designed for agents, not just people. When something fails, you get a problem detail back. It has a stable code. A link to the fix. And a request ID. That linked page even tells you whether a retry will help. So your agent can figure out what to do next, and stay in the loop.",
+        "[confident] Changes are predictable, too. Breaking changes get at least six months of overlap. They're only removed on fixed quarterly dates. And if a response uses a deprecated feature, it tells you, right in a header.",
+        "And you always know what's stable. Every endpoint is marked either generally available, or experimental. Generally available APIs are covered by that deprecation policy. Experimental ones are opt in, with a single header.",
+        "[upbeat] Ready to dig in? The rest of this series takes each API, one at a time. Start at developers.glean.com."
+      ]
+    },
+    {
+      "id": "platform-search",
+      "title": "Search API",
+      "summary": "Search connected sources with one permission-aware call: a real request and response, then a second source in the same call.",
+      "track": "platform-apis",
+      "series": {
+        "id": "platform-apis",
+        "label": "Platform APIs",
+        "position": 2
+      },
+      "type": "walkthrough",
+      "narratedStages": { "Search": "ga" },
+      "visibility": "public",
+      "featured": 2,
+      "durationSeconds": 58,
+      "version": 4,
+      "updated": "2026-10-07",
+      "languages": ["TypeScript"],
+      "related": {
+        "doc": "/api/platform-api/search-overview",
+        "docId": "api/platform-api/search-overview",
+        "docLabel": "Search API overview",
+        "recipe": "search-with-discovered-filters"
+      },
+      "media": {
+        "src": "https://ib39uabuf4khdnj5.public.blob.vercel-storage.com/platform-search.33d4c380c4.mp4",
+        "poster": "https://ib39uabuf4khdnj5.public.blob.vercel-storage.com/platform-search.5c0bd3c8cb.webp",
+        "width": 1920,
+        "height": 1080
+      },
+      "transcript": [
+        "[upbeat] Your company's knowledge is spread across dozens of apps. The Search API searches them with one call. And every result respects the caller's permissions.",
+        "Here's a real request. Post a query to slash API slash search. This one names a single source, Glean's public help center. Back come ranked results. Each one has its source, the passages that matched, a title, and a link.",
+        "[confident] Now add a second source, the developer site. Same call. And you get one ranked list, across both.",
+        "To narrow it down, the filters endpoint lists the fields a source supports, like type, owner, or status. Then pass them back as filters.",
+        "Search is generally available. And it's in the official clients for Python, TypeScript, Go, and Java.",
+        "[upbeat] The cookbook builds a search that discovers its own filters. Find it at developers.glean.com."
+      ]
+    },
+    {
+      "id": "platform-chat",
+      "title": "Chat API",
+      "summary": "Stream cited, permission-aware answers from your company’s content, and continue the conversation by ID.",
+      "track": "platform-apis",
+      "series": {
+        "id": "platform-apis",
+        "label": "Platform APIs",
+        "position": 3
+      },
+      "type": "walkthrough",
+      "narratedStages": { "Chat": "ga" },
+      "visibility": "public",
+      "durationSeconds": 56,
+      "version": 4,
+      "updated": "2026-10-02",
+      "languages": ["TypeScript"],
+      "related": {
+        "doc": "/api/platform-api/chat-overview",
+        "docId": "api/platform-api/chat-overview",
+        "docLabel": "Chat API overview",
+        "recipe": "streaming-chat-with-citations"
+      },
+      "media": {
+        "src": "https://ib39uabuf4khdnj5.public.blob.vercel-storage.com/platform-chat.b24c6635aa.mp4",
+        "poster": "https://ib39uabuf4khdnj5.public.blob.vercel-storage.com/platform-chat.aec287a000.webp",
+        "width": 1920,
+        "height": 1080
+      },
+      "transcript": [
+        "[upbeat] The answers your teams need are spread across your company's apps. The Chat API answers a question in one call, with citations.",
+        "Here's a real request. Post a question to slash API slash chat. Back comes the answer, with citations. Each citation carries the passages it drew on, and the page they came from.",
+        "Pull out the answer text. It's Markdown: six steps for creating an agent, drawn from the Help Center.",
+        "[confident] Set stream to true, and the answer arrives as server-sent events. You get progress events first, then the text as it's written, then a completed event.",
+        "Chat is generally available, in the official clients. And it only answers from company content the caller is allowed to open.",
+        "[upbeat] The cookbook builds a streaming chat with citations. Find it at developers.glean.com."
+      ]
+    },
+    {
+      "id": "platform-agents",
+      "title": "Agents API",
+      "summary": "Run an agent you built in Agent Builder from your app, a script, or your own agent, with one call.",
+      "track": "platform-apis",
+      "series": {
+        "id": "platform-apis",
+        "label": "Platform APIs",
+        "position": 4
+      },
+      "type": "walkthrough",
+      "narratedStages": { "Agents": "ga" },
+      "visibility": "public",
+      "durationSeconds": 71,
+      "version": 4,
+      "updated": "2026-10-02",
+      "languages": ["JavaScript"],
+      "related": {
+        "doc": "/api/platform-api/agents-overview",
+        "docId": "api/platform-api/agents-overview",
+        "docLabel": "Agents API overview",
+        "recipe": "triage-support-issue"
+      },
+      "media": {
+        "src": "https://ib39uabuf4khdnj5.public.blob.vercel-storage.com/platform-agents.454db88f29.mp4",
+        "poster": "https://ib39uabuf4khdnj5.public.blob.vercel-storage.com/platform-agents.3e27e1b795.webp",
+        "width": 1920,
+        "height": 1080
+      },
+      "transcript": [
+        "[upbeat] The Agents API runs your Glean agents from your own code. Send one a message, and get back its answer, with citations.",
+        "For this video, we created an agent in Glean, called Glean Help Center.",
+        "It answers questions about Glean, and its only source is Glean's public help docs.",
+        "Here's a real request. Post a question to the agent's runs endpoint, using its ID. The call waits for the run to finish, and returns the agent's messages, with their citations.",
+        "[confident] For longer work, set the execution mode to durable. You get a run ID back right away, while the agent keeps working. And if a step ever needs a person's approval, it shows up in pending interactions.",
+        "Fetch the run by its ID. Now it has succeeded, and its output holds the answer.",
+        "Here's that answer, with a link to the page it came from.",
+        "The Agents API is generally available, in the official clients. And it runs the same agents your teams build in Glean.",
+        "[upbeat] Next, see an agent that waits for a person before it acts. Or build on this one with the triage recipe, at developers.glean.com."
+      ]
+    },
+    {
+      "id": "hitl-agent",
+      "title": "Agents with human approval",
+      "summary": "The advanced Agents episode: pause a durable run before a tool call, show the reviewer its arguments, and resume only when they approve.",
+      "track": "platform-apis",
+      "series": {
+        "id": "platform-apis",
+        "label": "Platform APIs",
+        "position": 5
+      },
+      "type": "walkthrough",
+      "narratedStages": { "Agents": "ga" },
+      "visibility": "public",
+      "durationSeconds": 79,
+      "version": 5,
+      "updated": "2026-10-07",
+      "languages": ["TypeScript"],
+      "related": {
+        "doc": "/cookbook/human-in-the-loop-agent",
+        "docId": "cookbook/human-in-the-loop-agent",
+        "docLabel": "Open the recipe",
+        "recipe": "human-in-the-loop-agent"
+      },
+      "media": {
+        "src": "https://ib39uabuf4khdnj5.public.blob.vercel-storage.com/hitl-agent.d8bc14e447.mp4",
+        "poster": "https://ib39uabuf4khdnj5.public.blob.vercel-storage.com/hitl-agent.1f53cdde8f.webp",
+        "width": 1920,
+        "height": 1080
+      },
+      "transcript": [
+        "[upbeat] Agents get more useful when they can act. Send a message. File a ticket. Update a record. But some actions need a person to say yes first.",
+        "With durable agent runs, Glean stops right before the tool call. It stores the exact call, and waits for a person.",
+        "This cookbook recipe shows it with a small TypeScript CLI. It starts a run, and waits for the pause. Then it shows you the tool, what it does, and its exact arguments. Press A to approve, and the same run carries on.",
+        "Under the hood, it's four API calls. And each one needs a value from an earlier response.",
+        "First, start a durable run. Keep the run ID it returns.",
+        "Then poll until the run needs input. The response names the exact tool call, and its interaction ID. And the arguments to show the reviewer.",
+        "Send the decision, with that same interaction ID. One decision covers one call.",
+        "Then the same run finishes. Reject instead, and nothing is sent.",
+        "[confident] The approval gate lives in Glean, not in a prompt. Every decision names the call that was reviewed. And in this recipe, nothing approves itself.",
+        "[upbeat] Try it in about five minutes. It's in the Glean cookbook, at developers.glean.com."
+      ]
+    },
+    {
+      "id": "platform-skills",
+      "title": "Skills API",
+      "summary": "Validate, publish, version, and download SKILL.md packages from code.",
+      "track": "platform-apis",
+      "series": {
+        "id": "platform-apis",
+        "label": "Platform APIs",
+        "position": 6
+      },
+      "type": "walkthrough",
+      "narratedStages": { "Skills": "ga" },
+      "visibility": "public",
+      "durationSeconds": 48,
+      "version": 3,
+      "updated": "2026-10-02",
+      "languages": ["TypeScript"],
+      "related": {
+        "doc": "/api/platform-api/skills-overview",
+        "docId": "api/platform-api/skills-overview",
+        "docLabel": "Skills API overview",
+        "recipe": "validate-and-publish-skill"
+      },
+      "media": {
+        "src": "https://ib39uabuf4khdnj5.public.blob.vercel-storage.com/platform-skills.7bcc75d1c6.mp4",
+        "poster": "https://ib39uabuf4khdnj5.public.blob.vercel-storage.com/platform-skills.fb78aa13bd.webp",
+        "width": 1920,
+        "height": 1080
+      },
+      "transcript": [
+        "A skill packages how your team does a task, in a SKILL.md file. So Glean can follow the same steps, every time.",
+        "The Skills API lets you publish, version, and retrieve those skills, right from code.",
+        "The cookbook's validation recipe runs the whole lifecycle. It validates the file without saving it. It checks that bad frontmatter is rejected. It publishes once, and finds it with list and get. Then it downloads the ZIP, compares it byte for byte, and deletes the test skill.",
+        "The Skills API is generally available. And it's in the official clients for Python, TypeScript, Go, and Java.",
+        "Try it in about fifteen minutes. It's in the Glean cookbook, at developers.glean.com."
+      ]
+    },
+    {
+      "id": "platform-triggers",
+      "title": "Triggers API",
+      "summary": "Subscribe to a preset such as “a meeting starts in 30 minutes” and receive signed webhooks at your own endpoint.",
+      "track": "platform-apis",
+      "series": {
+        "id": "platform-apis",
+        "label": "Platform APIs",
+        "position": 7
+      },
+      "type": "walkthrough",
+      "narratedStages": { "Triggers": "experimental" },
+      "visibility": "public",
+      "durationSeconds": 54,
+      "version": 3,
+      "updated": "2026-10-02",
+      "languages": ["JavaScript"],
+      "related": {
+        "doc": "/api/platform-api/triggers-overview",
+        "docId": "api/platform-api/triggers-overview",
+        "docLabel": "Triggers API overview",
+        "recipe": "customer-meeting-prep-trigger"
+      },
+      "media": {
+        "src": "https://ib39uabuf4khdnj5.public.blob.vercel-storage.com/platform-triggers.b65e0c7d29.mp4",
+        "poster": "https://ib39uabuf4khdnj5.public.blob.vercel-storage.com/platform-triggers.b71473d155.webp",
+        "width": 1920,
+        "height": 1080
+      },
+      "transcript": [
+        "Triggers let your code react to events across your apps. An upcoming meeting. A new Slack message. A bug moving to Done.",
+        "Pick a preset, and point it at your webhook. When it fires, Glean delivers a signed event.",
+        "The cookbook recipe reads the preset catalog. It picks the calendar preset that fires 30 minutes before a meeting, and creates the trigger. It saves the signing secret locally, and never prints it.",
+        "When a customer meeting is coming up, the receiver verifies the signature. Then it prints a prep request, ready to hand to an agent.",
+        "Triggers is experimental, so expect changes. Presets today cover sources like calendar, Slack, and Jira. And every delivery is signed, so you can verify it.",
+        "Try it in about twenty minutes. It's in the Glean cookbook, at developers.glean.com."
+      ]
+    },
+    {
+      "id": "web-sdk",
+      "title": "Web SDK",
+      "summary": "Put Glean chat, search, and recommendations in your own app: one render call, signed in as each user.",
+      "track": "embed",
+      "type": "walkthrough",
+      "visibility": "preview",
+      "previewReason": "New: awaiting review and approvals.",
+      "durationSeconds": 52,
+      "version": 1,
+      "updated": "2026-10-08",
+      "related": {
+        "doc": "/libraries/web-sdk/overview",
+        "docId": "libraries/web-sdk/overview",
+        "docLabel": "Web SDK"
+      },
+      "media": {
+        "src": "https://ib39uabuf4khdnj5.public.blob.vercel-storage.com/web-sdk.efeba192b9.mp4",
+        "poster": "https://ib39uabuf4khdnj5.public.blob.vercel-storage.com/web-sdk.33ece1f1f3.webp",
+        "width": 1920,
+        "height": 1080
+      },
+      "transcript": [
+        "[upbeat] The Web SDK puts Glean inside your own app. Chat, search, and recommendations, each one a single render call.",
+        "Install it from npm, then render chat into any element on your page. One call, pointed at your Glean backend.",
+        "Here's that chat component, live on the developer site and signed in to our own Glean. We ask something only our company's content can answer: what are the holidays for 2026?",
+        "It searches our company knowledge and answers right in the component, with citations back to the source.",
+        "[confident] Users sign in with your existing SSO, or with short-lived tokens from your backend. Either way, every answer covers only what that person can already see.",
+        "[upbeat] Start with the Web SDK overview, at developers.glean.com."
+      ]
+    },
+    {
+      "id": "indexing-sdk",
+      "title": "Indexing SDK",
+      "summary": "Describe a source to your coding agent and get a tested, permission-aware connector you can deploy on a schedule.",
+      "track": "connect-data",
+      "type": "explainer",
+      "visibility": "public",
+      "featured": 3,
+      "durationSeconds": 62,
+      "version": 5,
+      "updated": "2026-10-02",
+      "languages": ["Python"],
+      "related": {
+        "doc": "/libraries/indexing-sdk",
+        "docId": "libraries/indexing-sdk/index",
+        "docLabel": "Indexing SDK overview"
+      },
+      "media": {
+        "src": "https://ib39uabuf4khdnj5.public.blob.vercel-storage.com/indexing-sdk.1487dd2214.mp4",
+        "poster": "https://ib39uabuf4khdnj5.public.blob.vercel-storage.com/indexing-sdk.24fcb2a148.webp",
+        "width": 1920,
+        "height": 1080
+      },
+      "transcript": [
+        "[upbeat] Every company has systems Glean doesn't index yet. An internal wiki. A homegrown catalog. A database only one team understands.",
+        "The Glean Indexing SDK turns any of them into a connector. And you can start by just describing the source.",
+        "Install the Connector Builder plugin in Claude Code, Codex, or Cursor. Then tell your agent what to index. It reads the API, confirms a plan with you, and writes the connector against the SDK.",
+        "[warmly] Permissions come along. Each document keeps its real access controls, so people only find what they're already allowed to see.",
+        "Then test in phases. Mocked first. Then real source data, recorded and replayed. Live, only when you're ready.",
+        "When it passes, one command generates the Docker and Terraform to run it on a schedule. In AWS, or Google Cloud.",
+        "[confident] One CLI covers the whole loop. From checking credentials, to finding out why a document isn't in search.",
+        "[upbeat] Build your first connector at developers.glean.com."
+      ]
+    },
+    {
+      "id": "docs-mcp",
+      "title": "Docs MCP server",
+      "summary": "Give your coding agent Glean's current developer docs: one public URL, two tools, no sign-in.",
+      "track": "developer-tools",
+      "type": "walkthrough",
+      "gallery": false,
+      "visibility": "preview",
+      "previewReason": "New: awaiting review and approvals.",
+      "durationSeconds": 61,
+      "version": 4,
+      "updated": "2026-10-02",
+      "related": {
+        "doc": "/docs-mcp",
+        "docId": "docs-mcp",
+        "docLabel": "Docs MCP Server"
+      },
+      "media": {
+        "src": "https://ib39uabuf4khdnj5.public.blob.vercel-storage.com/docs-mcp.3d98b27376.mp4",
+        "poster": "https://ib39uabuf4khdnj5.public.blob.vercel-storage.com/docs-mcp.3a00e14f8b.webp",
+        "width": 1920,
+        "height": 1080
+      },
+      "transcript": [
+        "[upbeat] Your coding agent knows a lot. But Glean's APIs keep moving. The Docs MCP server gives your agent the current developer docs. Right in your editor.",
+        "[confident] It's one URL, with no sign-in. It's public, and it never touches your company's Glean data.",
+        "The setup is on the developer site. Open the MCP menu, and pick your tool. Cursor, VS Code, Codex, and more. For Claude Code, it's one command.",
+        "Add the server. Then list your servers. It's connected.",
+        "Now just ask. How do I authenticate to the Platform API? Your agent calls docs_search, and gets the top five pages. Then it answers, with a link to the page it used.",
+        "There are two tools. docs_search finds the right pages. docs_fetch pulls in any page, as markdown. And both only read the public docs.",
+        "[upbeat] Set it up in a minute. Find it at developers.glean.com."
+      ]
+    },
+    {
+      "id": "mcp-overview",
+      "title": "Glean MCP server",
+      "summary": "Bring your company's context, with permissions intact, into Claude, ChatGPT, Cursor, VS Code, and any other MCP host.",
+      "track": "mcp",
+      "series": { "id": "mcp", "label": "MCP", "position": 1 },
+      "type": "explainer",
+      "visibility": "preview",
+      "previewReason": "New MCP series: awaiting review and the series approvals.",
+      "durationSeconds": 80,
+      "version": 6,
+      "updated": "2026-10-02",
+      "related": {
+        "doc": "/guides/mcp",
+        "docId": "guides/mcp/_RemoteMCPContent",
+        "docLabel": "Remote MCP Server"
+      },
+      "media": {
+        "src": "https://ib39uabuf4khdnj5.public.blob.vercel-storage.com/mcp-overview.5df117c8cf.mp4",
+        "poster": "https://ib39uabuf4khdnj5.public.blob.vercel-storage.com/mcp-overview.db2d4998a0.webp",
+        "width": 1920,
+        "height": 1080
+      },
+      "transcript": [
+        "[upbeat] Your teams use AI in a lot of places. Claude. ChatGPT. Cursor. VS Code. [warmly] Glean's MCP server brings your company's context into every one of them.",
+        "[confident] Every Glean deployment comes with a default MCP server. Admins can add more, each with its own URL and tools, for a team or a use case. Any MCP host can connect. And each person signs in with their own Glean account.",
+        "So what does your agent get? Glean's own tools, like search, chat, and read document. Your Glean agents, as tools. And through the MCP Gateway, everything else. Your custom tools, other MCP servers, and connector tools.",
+        "[warmly] And it's all permission-aware. Answers come from Glean's knowledge graph, across every connected app. And each person only sees what they can already see in Glean.",
+        "Hosts connect with OAuth. You sign in with your company's single sign-on, and grant the host access to Glean. Most hosts register themselves. And API tokens are only a fallback.",
+        "[confident] Admins stay in control. They choose which servers and tools are on. And they can sign a person out of every host, at once.",
+        "[upbeat] The rest of this series takes each piece, one at a time. Start at developers.glean.com."
+      ]
+    },
+    {
+      "id": "mcp-connect",
+      "title": "Connect a host in a minute",
+      "summary": "Connect Codex to Glean's MCP server with one command, sign in with SSO, and ask your first question.",
+      "track": "mcp",
+      "series": { "id": "mcp", "label": "MCP", "position": 2 },
+      "type": "walkthrough",
+      "visibility": "preview",
+      "previewReason": "New MCP series: awaiting review and the series approvals.",
+      "durationSeconds": 77,
+      "version": 6,
+      "updated": "2026-10-02",
+      "related": {
+        "doc": "/guides/mcp",
+        "docId": "guides/mcp/_RemoteMCPContent",
+        "docLabel": "Remote MCP Server"
+      },
+      "media": {
+        "src": "https://ib39uabuf4khdnj5.public.blob.vercel-storage.com/mcp-connect.0bb12a4b4c.mp4",
+        "poster": "https://ib39uabuf4khdnj5.public.blob.vercel-storage.com/mcp-connect.e05f9dc160.webp",
+        "width": 1920,
+        "height": 1080
+      },
+      "transcript": [
+        "[upbeat] Your company's context, in the AI tool you already use. Connecting a host takes about a minute.",
+        "Start in Glean. Open Third party apps and MCP in your settings. Pick a server, then your host. Here, it's Codex. Glean gives you the exact command to run.",
+        "Paste it into your terminal. Codex adds the server, and sees that it supports OAuth. So it starts the OAuth flow right away.",
+        "Your browser opens, and you sign in with your company's single sign-on. That tells Glean who you are. The first time, Glean also asks you to grant Codex access. [confident] That OAuth grant is what lets Codex use Glean for you, with only your access.",
+        "Now ask something explicit. Search Glean for our Help Center page on agents as MCP tools. Codex calls Glean's search, and answers with the page. [warmly] And it only sees what you can already see in Glean.",
+        "Not using Codex? The same server URL works in any MCP host. ChatGPT. Claude Code. Cursor. And many more.",
+        "[upbeat] Connect your first host at developers.glean.com."
+      ]
+    },
+    {
+      "id": "mcp-plugin",
+      "title": "The Glean plugin for coding agents",
+      "summary": "Why the plugin exists: on hosts that can't ask before a write, its local MCP server does. Then install and set it up in Claude Code.",
+      "track": "mcp",
+      "series": { "id": "mcp", "label": "MCP", "position": 3 },
+      "type": "walkthrough",
+      "visibility": "preview",
+      "previewReason": "New MCP series: awaiting review and the series approvals.",
+      "durationSeconds": 69,
+      "version": 6,
+      "updated": "2026-10-07",
+      "related": {
+        "doc": "/guides/mcp/claude-code",
+        "docId": "guides/mcp/claude-code",
+        "docLabel": "Glean plugin for Claude Code"
+      },
+      "media": {
+        "src": "https://ib39uabuf4khdnj5.public.blob.vercel-storage.com/mcp-plugin.55964f7df9.mp4",
+        "poster": "https://ib39uabuf4khdnj5.public.blob.vercel-storage.com/mcp-plugin.efe5bdd3eb.webp",
+        "width": 1920,
+        "height": 1080
+      },
+      "transcript": [
+        "[upbeat] The Glean plugin brings Glean into Claude Code, Cursor, and Codex. And its main job is making sure you approve writes, in all of them.",
+        "To approve a write, the server has to ask you. Hosts on MCP specs before July 2026 can only ask through a stateful server. Glean's MCP server is stateless. So on those hosts, it has no way to ask you first.",
+        "[confident] The plugin fills that gap. It runs a small local MCP server inside your coding agent. So it can ask you itself, before a write runs.",
+        "From your terminal, add the Glean marketplace. Then install the plugin.",
+        "Now say, set up Glean for me, with your work email. Your browser opens, so you can sign in and grant the plugin access. Then it reports back. Setup complete, and authenticated.",
+        "[warmly] And every request still goes through Glean. So permissions and admin controls apply, and writes need your confirmation, in every host.",
+        "[upbeat] It brings Glean's skills, too. Install it at developers.glean.com."
+      ]
+    },
+    {
+      "id": "mcp-gateway",
+      "title": "MCP Gateway",
+      "summary": "Put every MCP tool, from custom tools to third-party servers, behind one governed Glean endpoint.",
+      "track": "mcp",
+      "series": { "id": "mcp", "label": "MCP", "position": 4 },
+      "type": "explainer",
+      "visibility": "preview",
+      "previewReason": "New MCP series: awaiting review, series approvals, and an attach page (admin docs are on the Help Center).",
+      "durationSeconds": 63,
+      "version": 5,
+      "updated": "2026-10-02",
+      "related": {
+        "doc": "https://docs.glean.com/administration/platform/mcp/mcp-gateway",
+        "docLabel": "Glean MCP Gateway (Help Center)"
+      },
+      "media": {
+        "src": "https://ib39uabuf4khdnj5.public.blob.vercel-storage.com/mcp-gateway.098e327621.mp4",
+        "poster": "https://ib39uabuf4khdnj5.public.blob.vercel-storage.com/mcp-gateway.f071effe02.webp",
+        "width": 1920,
+        "height": 1080
+      },
+      "transcript": [
+        "[upbeat] MCP servers are showing up inside companies faster than IT can track them.",
+        "And that brings four problems. Unvetted sources. Leaked credentials. Gaps in governance. And no audit trail.",
+        "[confident] The Glean MCP Gateway routes every MCP call through Glean. One endpoint, with permissions, policy, and audit on every call.",
+        "It brings in three kinds of tools. Custom tools your team builds. Connector tools, from apps like Jira and Salesforce. And other MCP servers, proxied through Glean.",
+        "Here's a real server. Glean's own search, plus thirty Atlassian tools, through the gateway. Your teams connect to one Glean URL, in whatever host they use.",
+        "Admins register a server once, and roll it out to every host. Turn any server or tool on or off, for everyone. Or decide who gets which tools.",
+        "[upbeat] One endpoint. Every tool. All governed. Learn more at docs.glean.com."
+      ]
+    },
+    {
+      "id": "mcp-agents",
+      "title": "Agents as MCP tools",
+      "summary": "Add a Glean agent to an MCP server, call it from your host, and write descriptions hosts can use.",
+      "track": "mcp",
+      "series": { "id": "mcp", "label": "MCP", "position": 5 },
+      "type": "explainer",
+      "visibility": "preview",
+      "previewReason": "New MCP series: awaiting review, series approvals, an attach page, and an MCP-team check on the HITL limits.",
+      "durationSeconds": 50,
+      "version": 5,
+      "updated": "2026-10-02",
+      "related": {
+        "doc": "https://docs.glean.com/administration/platform/mcp/agents-as-tools",
+        "docLabel": "Use agents as MCP tools (Help Center)"
+      },
+      "media": {
+        "src": "https://ib39uabuf4khdnj5.public.blob.vercel-storage.com/mcp-agents.cc3e9a6049.mp4",
+        "poster": "https://ib39uabuf4khdnj5.public.blob.vercel-storage.com/mcp-agents.e0eb9dbcca.webp",
+        "width": 1920,
+        "height": 1080
+      },
+      "transcript": [
+        "[upbeat] You built a great agent in Glean. Now call it from Claude, Cursor, or VS Code. As a tool.",
+        "[confident] Add the agent to any Glean MCP server. It sits right next to the built-in tools.",
+        "In the admin console, open the server, and edit its agents. Pick yours from the list, and save.",
+        "Now your host can call it. Here, Codex hands the question to a Glean agent, and answers from its result.",
+        "Notice we had to name the agent. Hosts pick tools by their description. So start with a verb, name the sources, and say what it returns.",
+        "And keep these agents read only. Agents with write tools, or a step that waits for input, can't be added. Even inside a sub agent.",
+        "[upbeat] Learn more at docs.glean.com."
+      ]
+    }
+  ]
+}

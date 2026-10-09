@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
+import type { ReactElement } from 'react';
+import { FeatureFlagsContext } from '../../theme/Root';
 import userEvent from '@testing-library/user-event';
 import BrowserFrame from '../BrowserFrame';
 import ComponentDemo from './ComponentDemo';
@@ -22,6 +24,27 @@ import {
   SidebarPreview,
 } from './previews';
 import WebSdkOverview from './WebSdkOverview';
+
+// The overview's video button reads the preview flag, which reads the URL.
+vi.mock('@docusaurus/router', () => ({
+  useLocation: () => ({ pathname: '/libraries/web-sdk/overview', search: '' }),
+}));
+
+function withPreviews(on: boolean, ui: ReactElement) {
+  return (
+    <FeatureFlagsContext.Provider
+      value={{
+        flagConfigs: {},
+        flags: { 'preview-content': on },
+        isEnabled: (flag) => flag === 'preview-content' && on,
+        refresh: () => {},
+        debug: false,
+      }}
+    >
+      {ui}
+    </FeatureFlagsContext.Provider>
+  );
+}
 
 function mockMatchMedia(matches: boolean) {
   Object.defineProperty(window, 'matchMedia', {
@@ -128,6 +151,22 @@ describe('WebSdkOverview', () => {
     expect(screen.getByText('Deprecated')).toBeInTheDocument();
     expect(
       screen.getByText('npm install @gleanwork/web-sdk'),
+    ).toBeInTheDocument();
+  });
+
+  // The Web SDK video is a preview: it shows only with the preview flag.
+  it('offers the Web SDK video only when previews are on', async () => {
+    mockMatchMedia(true);
+    const { unmount } = render(withPreviews(false, <WebSdkOverview />));
+    await waitFor(() =>
+      expect(screen.getByText('Embed Glean anywhere')).toBeInTheDocument(),
+    );
+    expect(screen.queryByText(/Watch the overview/)).toBeNull();
+    unmount();
+
+    render(withPreviews(true, <WebSdkOverview />));
+    expect(
+      await screen.findByRole('button', { name: /Watch the overview · 0:52/ }),
     ).toBeInTheDocument();
   });
 });

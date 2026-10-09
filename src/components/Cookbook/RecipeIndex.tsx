@@ -14,7 +14,13 @@ import {
 import RecipeShowcaseCarousel from './RecipeShowcaseCarousel';
 import RecipeCard from './RecipeCard';
 import { isRecipeAvailable } from './recipePreview';
+import { usePreviewContent } from '../../lib/usePreviewContent';
 import styles from './RecipeIndex.module.css';
+import Link from '@docusaurus/Link';
+import { getIcon } from '@gleanwork/docusaurus-theme-glean/Icons';
+import { galleryVideos } from '../Videos/videoData';
+
+const hasPublicVideos = galleryVideos(false).length > 0;
 
 interface RecipeIndexProps {
   recipes: RecipeRecord[];
@@ -73,10 +79,11 @@ export default function RecipeIndex({
   const location = useLocation();
   const brokenLinks = useBrokenLinks();
 
+  const previewsEnabled = usePreviewContent();
   const availableRecipes = useMemo(
     () =>
-      recipes.filter((recipe) => isRecipeAvailable(recipe, location.search)),
-    [recipes, location.search],
+      recipes.filter((recipe) => isRecipeAvailable(recipe, previewsEnabled)),
+    [recipes, previewsEnabled],
   );
   const capabilities = useMemo(
     () =>
@@ -188,6 +195,21 @@ export default function RecipeIndex({
         starter code — with the architecture, auth, and permissions laid out for
         each.
       </p>
+      {hasPublicVideos ? (
+        <Link className={styles.videoLink} to="/videos">
+          {getIcon('PlayCircle', 'feather', {
+            width: 15,
+            height: 15,
+            color: 'currentColor',
+          })}
+          Prefer to watch? Short video walkthroughs
+          {getIcon('ArrowRight', 'feather', {
+            width: 14,
+            height: 14,
+            color: 'currentColor',
+          })}
+        </Link>
+      ) : null}
 
       {availableRecipes.length === 0 ? (
         <div className={styles.empty}>

@@ -2,9 +2,9 @@ import type React from 'react';
 import Link from '@docusaurus/Link';
 import { getIcon } from '@gleanwork/docusaurus-theme-glean/Icons';
 import { RECIPE_SURFACE_LABELS, type RecipeRecord } from '../../types/recipe';
+import { formatDuration, videoForRecipe } from '../Videos/videoData';
 import { CategoryTile } from './categories';
 import { renderInlineMarkup } from './inlineMarkup';
-import { recipeHref } from './recipePreview';
 import styles from './RecipeCard.module.css';
 
 interface RecipeCardProps {
@@ -22,8 +22,10 @@ export default function RecipeCard({
   recipe,
   position,
 }: RecipeCardProps): React.ReactElement {
+  const video = videoForRecipe(recipe.id);
+  const hasVideo = video?.visibility === 'public';
   return (
-    <Link className={styles.card} to={recipeHref(recipe)}>
+    <Link className={styles.card} to={recipe.permalink}>
       <div className={styles.tileRow}>
         <CategoryTile category={recipe.category} iconOverride={recipe.icon} />
         {position ? (
@@ -45,6 +47,23 @@ export default function RecipeCard({
         </span>
         <span className={styles.dot}>·</span>
         <span>{recipe.level}</span>
+        {hasVideo && video ? (
+          <>
+            <span className={styles.dot}>·</span>
+            <span
+              className={styles.metaItem}
+              title={`Includes a ${formatDuration(video.durationSeconds)} walkthrough video`}
+            >
+              {getIcon('PlayCircle', 'feather', {
+                width: 14,
+                height: 14,
+                color: 'currentColor',
+              })}
+              <span className={styles.srOnly}>Video, </span>
+              {formatDuration(video.durationSeconds)}
+            </span>
+          </>
+        ) : null}
         <span className={styles.chips}>
           {recipe.surfaces.slice(0, 2).map((surface) => (
             <span className={styles.chip} key={surface}>
