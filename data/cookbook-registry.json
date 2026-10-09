@@ -43,14 +43,11 @@
       ],
       "verification": {
         "kind": "automated",
-        "command": "cd a2a-client && uv run main.py",
+        "command": "uv run main.py",
         "expectedDuration": "about 1 minute after sign-in",
         "startsOwnServer": false
       },
-      "run": {
-        "command": "cd a2a-client && uv run main.py",
-        "userBrowser": false
-      }
+      "run": { "command": "uv run main.py", "userBrowser": false }
     },
     "languages": ["python"],
     "prerequisites": [
@@ -86,7 +83,7 @@
       },
       {
         "title": "Run it",
-        "command": "cd a2a-client && uv run main.py",
+        "command": "uv run main.py",
         "description": "Dependencies are declared inline (PEP 723) and locked, so uv installs them into an isolated environment on first run — no requirements.txt, venv, or activate step.",
         "kind": "run"
       },
@@ -298,7 +295,7 @@
             {
               "kind": "browser-cookie",
               "scopes": [],
-              "setupCommand": "cd company-answers && npm run configure -- --email \"<work-email>\"",
+              "setupCommand": "npm run configure -- --email \"<work-email>\"",
               "configFile": ".env.local",
               "backendVariable": "VITE_GLEAN_BACKEND"
             }
@@ -309,7 +306,7 @@
             "startsOwnServer": false
           },
           "run": {
-            "command": "cd company-answers && npm run dev",
+            "command": "npm run dev",
             "url": "the Local URL printed by Vite",
             "userBrowser": true
           }
@@ -329,7 +326,7 @@
           },
           {
             "title": "Find your Glean tenant",
-            "command": "cd company-answers && npm run configure -- --email \"<work-email>\"",
+            "command": "npm run configure -- --email \"<work-email>\"",
             "description": "Your email is used once to find which Glean tenant you belong to. The command creates .env.local and fills in VITE_GLEAN_BACKEND. It does not set the first question.",
             "kind": "configure"
           },
@@ -340,7 +337,7 @@
           },
           {
             "title": "Open the page",
-            "command": "cd company-answers && npm run dev",
+            "command": "npm run dev",
             "kind": "run",
             "description": "Starts Vite and prints a Local URL. Open that URL yourself in your normal browser where you are already signed in to Glean."
           },
@@ -371,7 +368,7 @@
             {
               "kind": "oauth-with-token-fallback",
               "scopes": ["CHAT"],
-              "setupCommand": "cd company-answers && npm run login -- --email \"<work-email>\"",
+              "setupCommand": "npm run login -- --email \"<work-email>\"",
               "configFile": ".env",
               "backendVariable": "GLEAN_SERVER_URL",
               "credentialVariable": "GLEAN_API_TOKEN"
@@ -379,12 +376,12 @@
           ],
           "verification": {
             "kind": "automated",
-            "command": "cd company-answers && npm run verify",
+            "command": "npm run verify",
             "expectedDuration": "1–3 minutes",
             "startsOwnServer": true
           },
           "run": {
-            "command": "cd company-answers && npm start",
+            "command": "npm start",
             "url": "the Local URL printed by the server",
             "userBrowser": true
           }
@@ -404,13 +401,13 @@
           },
           {
             "title": "See it work before you connect anything",
-            "command": "cd company-answers && npm run verify:fixture",
+            "command": "npm run verify:fixture",
             "description": "Runs the page against recorded answers for a fictional company named Acme, so you can see cited PTO answers before you connect anything. This needs no Glean credentials.",
             "kind": "verify-fixture"
           },
           {
             "title": "Sign in to Glean",
-            "command": "cd company-answers && npm run login -- --email \"<work-email>\"",
+            "command": "npm run login -- --email \"<work-email>\"",
             "description": "Your email is used once to find which Glean tenant you belong to, then a browser window opens for you to approve access. The command creates the .env file for you and fills in GLEAN_SERVER_URL and GLEAN_API_TOKEN. If your tenant has not enabled OAuth, skip this command and do it by hand instead: copy .env.example to .env, then fill in your Glean instance URL and a Glean API token that has the CHAT scope.",
             "kind": "authenticate"
           },
@@ -421,13 +418,13 @@
           },
           {
             "title": "Check it against your own content",
-            "command": "cd company-answers && npm run verify",
+            "command": "npm run verify",
             "description": "Takes 1 to 3 minutes. It starts its own server, asks your Glean instance the question you set, and fails if the answer comes back without citing a real document.",
             "kind": "verify-live"
           },
           {
             "title": "Open the page",
-            "command": "cd company-answers && npm start",
+            "command": "npm start",
             "kind": "run",
             "description": "Starts the server and prints a Local URL. Open that URL in your browser."
           }
@@ -645,7 +642,7 @@
             {
               "kind": "oauth-with-token-fallback",
               "scopes": ["SEARCH", "CHAT"],
-              "setupCommand": "cd customer-360 && npm run login -- --email \"<work-email>\"",
+              "setupCommand": "npm run login -- --email \"<work-email>\"",
               "configFile": ".env",
               "backendVariable": "GLEAN_SERVER_URL",
               "credentialVariable": "GLEAN_API_TOKEN"
@@ -653,12 +650,12 @@
           ],
           "verification": {
             "kind": "automated",
-            "command": "cd customer-360 && npm run verify",
+            "command": "npm run verify",
             "expectedDuration": "1–3 minutes",
             "startsOwnServer": true
           },
           "run": {
-            "command": "cd customer-360 && npm start",
+            "command": "npm start",
             "url": "the Local URL printed by the server",
             "userBrowser": true
           }
@@ -678,13 +675,13 @@
           },
           {
             "title": "See it work before you connect anything",
-            "command": "cd customer-360 && npm run verify:fixture",
+            "command": "npm run verify:fixture",
             "description": "Runs the whole page against recorded answers for a fictional account named Globex, so you can see what it produces before you connect anything. This needs no Glean credentials.",
             "kind": "verify-fixture"
           },
           {
             "title": "Sign in to Glean",
-            "command": "cd customer-360 && npm run login -- --email \"<work-email>\"",
+            "command": "npm run login -- --email \"<work-email>\"",
             "description": "Your email is used once to find which Glean tenant you belong to, then a browser window opens for you to approve access. The command creates the .env file for you and fills in GLEAN_SERVER_URL and GLEAN_API_TOKEN. If your tenant has not enabled OAuth, skip this command and do it by hand instead: copy .env.example to .env, then fill in your Glean instance URL and a Glean API token that has the SEARCH and CHAT scopes.",
             "kind": "authenticate"
           },
@@ -695,13 +692,13 @@
           },
           {
             "title": "Check it against your own content",
-            "command": "cd customer-360 && npm run verify",
+            "command": "npm run verify",
             "description": "Takes 1 to 3 minutes. It starts its own server, asks your Glean instance the three demo questions about the account you chose, and fails if any answer comes back without citing a real document.",
             "kind": "verify-live"
           },
           {
             "title": "Open the page",
-            "command": "cd customer-360 && npm start",
+            "command": "npm start",
             "kind": "run",
             "description": "Starts the server and prints a Local URL. Open that URL in your browser."
           }
@@ -731,7 +728,7 @@
             {
               "kind": "oauth-with-token-fallback",
               "scopes": ["SEARCH", "AGENTS"],
-              "setupCommand": "cd customer-360 && npm run login -- --email \"<work-email>\"",
+              "setupCommand": "npm run login -- --email \"<work-email>\"",
               "configFile": ".env",
               "backendVariable": "GLEAN_SERVER_URL",
               "credentialVariable": "GLEAN_API_TOKEN"
@@ -739,12 +736,12 @@
           ],
           "verification": {
             "kind": "automated",
-            "command": "cd customer-360 && npm run verify",
+            "command": "npm run verify",
             "expectedDuration": "1–3 minutes",
             "startsOwnServer": true
           },
           "run": {
-            "command": "cd customer-360 && npm start",
+            "command": "npm start",
             "url": "the Local URL printed by the server",
             "userBrowser": true
           }
@@ -769,7 +766,7 @@
           },
           {
             "title": "Sign in to Glean",
-            "command": "cd customer-360 && npm run login -- --email \"<work-email>\"",
+            "command": "npm run login -- --email \"<work-email>\"",
             "description": "Your email is used once to find which Glean tenant you belong to, then a browser window opens for you to approve access. The command creates the .env file for you and fills in GLEAN_SERVER_URL and GLEAN_API_TOKEN. If your tenant has not enabled OAuth, skip this command and do it by hand instead: copy .env.example to .env, then fill in your Glean instance URL and a Glean API token that has the SEARCH and AGENTS scopes.",
             "kind": "authenticate"
           },
@@ -780,13 +777,13 @@
           },
           {
             "title": "Check it against your own content",
-            "command": "cd customer-360 && npm run verify",
+            "command": "npm run verify",
             "description": "Takes 1 to 3 minutes. It starts its own server, confirms your agent answers for the account you chose, and fails if the brief comes back without citing a real document.",
             "kind": "verify-live"
           },
           {
             "title": "Open the page",
-            "command": "cd customer-360 && npm start",
+            "command": "npm start",
             "kind": "run",
             "description": "Starts the server and prints a Local URL. Open that URL in your browser."
           }
@@ -1085,7 +1082,7 @@
         {
           "kind": "oauth-with-token-fallback",
           "scopes": ["TRIGGERS"],
-          "setupCommand": "cd customer-meeting-prep-trigger && npm run login -- --email \"<work-email>\"",
+          "setupCommand": "npm run login -- --email \"<work-email>\"",
           "configFile": ".env",
           "backendVariable": "GLEAN_SERVER_URL",
           "credentialVariable": "GLEAN_API_TOKEN"
@@ -1093,12 +1090,12 @@
       ],
       "verification": {
         "kind": "automated",
-        "command": "cd customer-meeting-prep-trigger && npm run verify:fixture",
+        "command": "npm run verify:fixture",
         "expectedDuration": "under 1 minute without credentials",
         "startsOwnServer": false
       },
       "run": {
-        "command": "cd customer-meeting-prep-trigger && npm start",
+        "command": "npm start",
         "userBrowser": false,
         "url": "http://127.0.0.1:8787/health"
       }
@@ -1141,13 +1138,13 @@
       },
       {
         "title": "Run the fixture verification",
-        "command": "cd customer-meeting-prep-trigger && npm run verify:fixture",
+        "command": "npm run verify:fixture",
         "description": "Verify preset selection, experimental Platform API headers, input resolution, and Standard Webhooks signing before connecting a tenant.",
         "kind": "verify-fixture"
       },
       {
         "title": "Sign in to Glean",
-        "command": "cd customer-meeting-prep-trigger && npm run login -- --email \"<work-email>\"",
+        "command": "npm run login -- --email \"<work-email>\"",
         "description": "Use @gleanwork/auth for tenant discovery and refreshable OAuth credentials stored outside the project. If OAuth is unavailable, provide a user-scoped token with the Triggers permission as a CI fallback.",
         "kind": "authenticate"
       },
@@ -1158,25 +1155,26 @@
       },
       {
         "title": "Start and expose the receiver",
-        "command": "cd customer-meeting-prep-trigger && npm start",
+        "command": "npm start",
         "description": "The receiver listens on loopback, verifies bearer delivery auth and the Standard Webhooks signature, and prints a prep request for matching meeting titles. Expose /webhook through a public HTTPS tunnel before registering the trigger.",
         "kind": "run"
       },
       {
         "title": "Register the Platform Trigger",
         "command": "cd customer-meeting-prep-trigger && npm run setup",
-        "description": "Setup reads GET /api/trigger-presets and the selected preset detail, then creates one trigger through POST /api/triggers. It saves the returned trigger ID and signing secret locally.",
+        "newTerminal": true,
+        "description": "Leave the receiver running and open a new terminal in the folder where you started. Setup reads GET /api/trigger-presets and the selected preset detail, then creates one trigger through POST /api/triggers. It saves the returned trigger ID and signing secret locally.",
         "kind": "configure"
       },
       {
         "title": "Test one signed delivery",
-        "command": "cd customer-meeting-prep-trigger && npm run test:webhook",
+        "command": "npm run test:webhook",
         "description": "Send one fixture delivery through the same signed webhook contract without waiting for a calendar event. Then schedule one real matching meeting to verify forward delivery from the Platform Trigger.",
         "kind": "verify-live"
       },
       {
         "title": "Delete the trigger",
-        "command": "cd customer-meeting-prep-trigger && npm run delete",
+        "command": "npm run delete",
         "description": "Delete only the trigger ID created by this recipe and clear the local signing secret.",
         "kind": "manual"
       }
@@ -1313,7 +1311,7 @@
             {
               "kind": "browser-cookie",
               "scopes": [],
-              "setupCommand": "cd embed-search-chat && npm run configure -- --email \"<work-email>\"",
+              "setupCommand": "npm run configure -- --email \"<work-email>\"",
               "configFile": ".env.local",
               "backendVariable": "VITE_GLEAN_BACKEND"
             }
@@ -1324,7 +1322,7 @@
             "startsOwnServer": false
           },
           "run": {
-            "command": "cd embed-search-chat && npm run dev",
+            "command": "npm run dev",
             "url": "the Local URL printed by Vite",
             "userBrowser": true
           }
@@ -1344,18 +1342,18 @@
           },
           {
             "title": "Find your Glean backend",
-            "command": "cd embed-search-chat && npm run configure -- --email \"<work-email>\"",
+            "command": "npm run configure -- --email \"<work-email>\"",
             "kind": "configure",
             "description": "Uses your email once to find the tenant backend and writes VITE_GLEAN_BACKEND to .env.local. If the backend is already known, set that variable manually instead. This is setup-time configuration, not a runtime tenant picker, and it does not request or store an API key."
           },
           {
             "title": "Configure the Web app URL and questions",
-            "description": "Open .env.local. Set VITE_GLEAN_WEB_APP_URL to the exact value shown in Glean Admin > About Glean > Web app URL; keep backend and Web app URL as setup/deployment configuration rather than runtime user inputs. Set VITE_GLEAN_INITIAL_QUERY and VITE_GLEAN_INITIAL_MESSAGE to topics you know exist in your Glean content.",
+            "description": "Open `.env.local`. Set `VITE_GLEAN_WEB_APP_URL` to the **Web app URL** row in Glean Admin > About Glean, such as `https://app.glean.com`. It is a different value from the backend the previous step wrote, which ends in `-be.glean.com`. Set `VITE_GLEAN_INITIAL_QUERY` and `VITE_GLEAN_INITIAL_MESSAGE` to topics you know your Glean content covers. Both URLs are deployment configuration, not values users enter at runtime.",
             "kind": "configure"
           },
           {
             "title": "Open the page",
-            "command": "cd embed-search-chat && npm run dev",
+            "command": "npm run dev",
             "kind": "run",
             "description": "Starts Vite and prints a Local URL. Open that URL in a browser where the user is signed in to Glean."
           },
@@ -1440,7 +1438,7 @@
         {
           "kind": "oauth-with-token-fallback",
           "scopes": ["TRIGGERS"],
-          "setupCommand": "cd github-pr-review-monitor && npm run login -- --email \"<work-email>\"",
+          "setupCommand": "npm run login -- --email \"<work-email>\"",
           "configFile": ".env",
           "backendVariable": "GLEAN_SERVER_URL",
           "credentialVariable": "GLEAN_API_TOKEN"
@@ -1453,7 +1451,7 @@
         "startsOwnServer": false
       },
       "run": {
-        "command": "cd github-pr-review-monitor && npm start",
+        "command": "npm start",
         "userBrowser": false,
         "url": "the Local URL printed by the receiver"
       }
@@ -1499,13 +1497,13 @@
       },
       {
         "title": "Sign in to Glean",
-        "command": "cd github-pr-review-monitor && npm run login -- --email \"<work-email>\"",
+        "command": "npm run login -- --email \"<work-email>\"",
         "description": "Sign in to discover your tenant and request TRIGGERS before setup. A token with only SEARCH and CHAT receives 403 insufficient_permissions from the preset and trigger APIs. For a token-first tenant, skip login and put GLEAN_SERVER_URL plus a user-scoped GLEAN_API_TOKEN with TRIGGERS in the ignored .env file. An exported token takes precedence over .env.",
         "kind": "authenticate"
       },
       {
         "title": "Run the receiver",
-        "command": "cd github-pr-review-monitor && npm start",
+        "command": "npm start",
         "description": "Keep the receiver running. It listens on loopback, verifies signatures, and queues each webhook ID once.",
         "kind": "run"
       },
@@ -1516,19 +1514,21 @@
       },
       {
         "title": "Expose the receiver over HTTPS",
-        "command": "cd github-pr-review-monitor && cloudflared tunnel --url http://127.0.0.1:8787",
-        "description": "Append /webhook to the printed origin and set GLEAN_WEBHOOK_URL before registering. Keep the tunnel running: triggers outlive the tunnel, so closing it sends future deliveries to a dead address.",
+        "command": "cloudflared tunnel --url http://127.0.0.1:8787",
+        "newTerminal": true,
+        "description": "Leave the receiver running and open a new terminal. Append /webhook to the printed origin and set GLEAN_WEBHOOK_URL before registering. Keep the tunnel running: triggers outlive the tunnel, so closing it sends future deliveries to a dead address.",
         "kind": "manual"
       },
       {
         "title": "Register the review triggers",
         "command": "cd github-pr-review-monitor && npm run setup",
-        "description": "Set GLEAN_TRIGGER_DATASOURCE and the preset IDs to register. If you leave the IDs empty, setup lists the presets available in your deployment and stops instead of guessing. Provide required preset inputs through GLEAN_TRIGGER_INPUT_<FIELD>.",
+        "newTerminal": true,
+        "description": "Leave the tunnel running and open another terminal in the folder where you started. Set GLEAN_TRIGGER_DATASOURCE and the preset IDs to register. If you leave the IDs empty, setup lists the presets available in your deployment and stops instead of guessing. Provide required preset inputs through GLEAN_TRIGGER_INPUT_<FIELD>.",
         "kind": "configure"
       },
       {
         "title": "Attach Claude Code Monitor",
-        "command": "cd github-pr-review-monitor && claude plugin validate . --strict",
+        "command": "claude plugin validate . --strict",
         "description": "Validate the plugin, then restart Claude Code from the repository under review so Monitor starts with the session. If Monitor is unavailable, run npm run stream to receive the same events in the terminal.",
         "kind": "handoff"
       },
@@ -1632,7 +1632,7 @@
       ],
       "verification": {
         "kind": "third-party",
-        "command": "cd gong-call-follow-up-n8n && npm run verify:fixture",
+        "command": "npm run verify:fixture",
         "expectedDuration": "5–15 minutes after a test Gong call is indexed",
         "startsOwnServer": false
       },
@@ -1700,7 +1700,7 @@
       },
       {
         "title": "Verify the workflow with no credentials",
-        "command": "cd gong-call-follow-up-n8n && npm run verify:fixture",
+        "command": "npm run verify:fixture",
         "description": "Run the fixture verifier against recorded data. If you edited the local workflow.json, run `npm run verify:config` too. That command cannot see values entered in the n8n UI or stored in n8n Variables, so verify those configurations inside n8n before publishing.",
         "kind": "verify-fixture"
       },
@@ -2198,13 +2198,13 @@
       {
         "title": "Run the fixture tests",
         "description": "Run Vitest with recorded preview payloads and MSW, without GitHub or Glean credentials, covering JSON preview, optional SSE preview, import, sync, and captured-ID cleanup.",
-        "command": "cd import-skill-from-github && npm test",
+        "command": "npm test",
         "kind": "manual"
       },
       {
         "title": "Sign in with OAuth",
         "description": "Discover your Glean backend from work email and request skills:read and skills:write. Only a recognized scope-grant failure triggers one retry with legacy SKILLS. If OAuth is not available, skip this command: copy .env.example to .env and fill GLEAN_API_TOKEN and GLEAN_SERVER_URL.",
-        "command": "cd import-skill-from-github && npm run login -- --email \"<work-email>\"",
+        "command": "npm run login -- --email \"<work-email>\"",
         "kind": "authenticate"
       },
       {
@@ -2215,13 +2215,13 @@
       {
         "title": "Verify against your instance",
         "description": "Preview the public GitHub skill-creator directory on main, import the selected URL, sync that captured skill, confirm get and list, then permanently delete only IDs this run created. HTTP 400 means an unsupported GitHub URL or ref, including commit permalinks. HTTP 503 means GitHub import is disabled or unavailable. HTTP 403 means this credential cannot import. HTTP 429 means rate-limiting. Success prints an Imported line that ends with cleanup completed.",
-        "command": "cd import-skill-from-github && npm run verify -- --email \"<work-email>\"",
+        "command": "npm run verify -- --email \"<work-email>\"",
         "kind": "verify-live"
       },
       {
         "title": "Watch repository scan progress",
         "description": "Run the same preview, import, and sync path with --stream. Scan events print as the tenant walks the GitHub directory. This command still deletes the captured skill when it finishes; there is no keep path. Pass --yes when the terminal is not interactive.",
-        "command": "cd import-skill-from-github && npm start -- --email \"<work-email>\" --yes --stream",
+        "command": "npm start -- --email \"<work-email>\" --yes --stream",
         "kind": "run"
       }
     ],
@@ -2234,18 +2234,18 @@
         {
           "kind": "oauth-with-token-fallback",
           "scopes": ["skills:read", "skills:write"],
-          "setupCommand": "cd import-skill-from-github && npm run login -- --email \"<work-email>\"",
+          "setupCommand": "npm run login -- --email \"<work-email>\"",
           "credentialVariable": "GLEAN_API_TOKEN"
         }
       ],
       "verification": {
         "kind": "automated",
-        "command": "cd import-skill-from-github && npm run verify -- --email \"<work-email>\"",
+        "command": "npm run verify -- --email \"<work-email>\"",
         "expectedDuration": "about 2 minutes after sign-in",
         "startsOwnServer": false
       },
       "run": {
-        "command": "cd import-skill-from-github && npm start -- --email \"<work-email>\" --yes --stream",
+        "command": "npm start -- --email \"<work-email>\" --yes --stream",
         "userBrowser": false
       }
     },
@@ -2342,7 +2342,7 @@
         {
           "kind": "oauth-with-token-fallback",
           "scopes": ["AGENTS"],
-          "setupCommand": "cd multi-step-agent/invoke-agent && node scripts/glean-auth.mjs login --scopes agents --email \"<work-email>\"",
+          "setupCommand": "(cd multi-step-agent/invoke-agent && node scripts/glean-auth.mjs login --scopes agents --email \"<work-email>\")",
           "configFile": ".env",
           "backendVariable": "GLEAN_SERVER_URL",
           "credentialVariable": "GLEAN_API_TOKEN"
@@ -2401,6 +2401,7 @@
       {
         "title": "Expose the demo tool over HTTPS",
         "command": "cloudflared tunnel --url http://localhost:8080",
+        "newTerminal": true,
         "description": "Keep this running in a second terminal. Copy the printed https://<random>.trycloudflare.com origin into tool-server/openapi.yaml as servers[0].url, with no path. Confirm that <origin>/file_incident_ticket returns the expected 403 for a denied email. This public demo route accepts a spoofable identity header and only creates fake in-memory tickets; authenticate requests from Glean before connecting a real write action.",
         "kind": "manual"
       },
@@ -2417,7 +2418,8 @@
       {
         "title": "Set credentials",
         "command": "(cd multi-step-agent/invoke-agent && node scripts/glean-auth.mjs login --scopes agents --email \"<work-email>\")",
-        "description": "Use the shipped login flow, then set GLEAN_AGENT_ID from the agent created above. Never implement authentication.",
+        "newTerminal": true,
+        "description": "Leave the server and tunnel running and open a third terminal in the folder where you started. Use the shipped login flow, then set GLEAN_AGENT_ID from the agent created above. Never implement authentication.",
         "kind": "authenticate"
       },
       {
@@ -2783,7 +2785,7 @@
             {
               "kind": "browser-cookie",
               "scopes": [],
-              "setupCommand": "cd onboarding-hub && npm run configure -- --email \"<work-email>\"",
+              "setupCommand": "npm run configure -- --email \"<work-email>\"",
               "configFile": ".env.local",
               "backendVariable": "VITE_GLEAN_BACKEND"
             }
@@ -2794,7 +2796,7 @@
             "startsOwnServer": false
           },
           "run": {
-            "command": "cd onboarding-hub && npm run dev",
+            "command": "npm run dev",
             "url": "the Local URL printed by Vite",
             "userBrowser": true
           }
@@ -2814,7 +2816,7 @@
           },
           {
             "title": "Find your Glean tenant",
-            "command": "cd onboarding-hub && npm run configure -- --email \"<work-email>\"",
+            "command": "npm run configure -- --email \"<work-email>\"",
             "description": "Your email is used once to find which Glean tenant you belong to. The command creates `.env.local` and fills in `VITE_GLEAN_BACKEND`.",
             "kind": "configure"
           },
@@ -2825,7 +2827,7 @@
           },
           {
             "title": "Open the page",
-            "command": "cd onboarding-hub && npm run dev",
+            "command": "npm run dev",
             "kind": "run",
             "description": "Starts Vite and prints a Local URL. Open that URL yourself in your normal browser where you are already signed in to Glean."
           },
@@ -2856,7 +2858,7 @@
             {
               "kind": "oauth-with-token-fallback",
               "scopes": ["CHAT"],
-              "setupCommand": "cd onboarding-hub && npm run login -- --email \"<work-email>\"",
+              "setupCommand": "npm run login -- --email \"<work-email>\"",
               "configFile": ".env",
               "backendVariable": "GLEAN_SERVER_URL",
               "credentialVariable": "GLEAN_API_TOKEN"
@@ -2864,12 +2866,12 @@
           ],
           "verification": {
             "kind": "automated",
-            "command": "cd onboarding-hub && npm run verify",
+            "command": "npm run verify",
             "expectedDuration": "1–3 minutes",
             "startsOwnServer": true
           },
           "run": {
-            "command": "cd onboarding-hub && npm start",
+            "command": "npm start",
             "url": "the Local URL printed by the server",
             "userBrowser": true
           }
@@ -2889,13 +2891,13 @@
           },
           {
             "title": "See it work before you connect anything",
-            "command": "cd onboarding-hub && npm run verify:fixture",
+            "command": "npm run verify:fixture",
             "description": "Runs the checklist and chat against recorded Sample Corp answers, so you can see cited first-day, VPN, and PTO replies plus unsupported-question escalation before you connect anything. This needs no Glean credentials.",
             "kind": "verify-fixture"
           },
           {
             "title": "Sign in to Glean",
-            "command": "cd onboarding-hub && npm run login -- --email \"<work-email>\"",
+            "command": "npm run login -- --email \"<work-email>\"",
             "description": "Your email is used once to find which Glean tenant you belong to, then a browser window opens for you to approve access. The command creates the `.env` file for you and fills in `GLEAN_SERVER_URL` and `GLEAN_API_TOKEN`. If your tenant has not enabled OAuth, skip this command and do it by hand instead: copy `.env.example` to `.env`, then fill in your Glean instance URL and a Glean API token that has the `CHAT` scope.",
             "kind": "authenticate"
           },
@@ -2906,13 +2908,13 @@
           },
           {
             "title": "Check it against your own content",
-            "command": "cd onboarding-hub && npm run verify",
+            "command": "npm run verify",
             "description": "Takes 1 to 3 minutes. It starts its own server, checks your onboarding topics for cited answers, and fails if an unsupported question does not escalate.",
             "kind": "verify-live"
           },
           {
             "title": "Open the page",
-            "command": "cd onboarding-hub && npm start",
+            "command": "npm start",
             "kind": "run",
             "description": "Starts the server and prints a Local URL. Open that URL in your browser."
           }
@@ -2959,7 +2961,7 @@
         "startsOwnServer": false
       },
       "run": {
-        "command": "cd oncall-copilot && npm start",
+        "command": "npm start",
         "url": "the Local URL printed by the server",
         "userBrowser": true
       }
@@ -3008,13 +3010,13 @@
       },
       {
         "title": "See what it refuses before connecting anything",
-        "command": "cd oncall-copilot && npm run verify:fixture",
+        "command": "npm run verify:fixture",
         "description": "Runs the unit tests, then replays the recorded incidents through the whole flow and checks the refusals: the gate turns away an actor who is neither on call nor the service owner, an unapproved proposal escalates without executing, an action the planner invented is refused, and a code-changing action with no supported cause drops to filing a ticket. The audit log records each of those decisions. The command reads no credentials and makes no network calls.",
         "kind": "manual"
       },
       {
         "title": "Open the dashboard",
-        "command": "cd oncall-copilot && npm start",
+        "command": "npm start",
         "description": "Starts the local server and prints a Local URL. Open that URL in a browser. The dashboard replays the same recorded Glean responses, so there is nothing to sign in to.",
         "kind": "run"
       },
@@ -3189,7 +3191,7 @@
             "startsOwnServer": false
           },
           "run": {
-            "command": "cd permissions-aware-retrieval && uv run main.py \"<allowed-topic>\"",
+            "command": "uv run main.py \"<allowed-topic>\"",
             "userBrowser": false
           }
         },
@@ -3207,7 +3209,7 @@
           },
           {
             "title": "Run it",
-            "command": "cd permissions-aware-retrieval && uv run main.py \"<allowed-topic>\"",
+            "command": "uv run main.py \"<allowed-topic>\"",
             "description": "Dependencies are declared inline in main.py (PEP 723), so uv resolves and installs them into an isolated environment on first run — there's no requirements.txt, venv, or activate step.",
             "kind": "run"
           },
@@ -3242,7 +3244,7 @@
             {
               "kind": "oauth-with-token-fallback",
               "scopes": ["SEARCH"],
-              "setupCommand": "cd permissions-aware-retrieval && npm run login -- --email \"<work-email>\"",
+              "setupCommand": "npm run login -- --email \"<work-email>\"",
               "configFile": ".env",
               "backendVariable": "GLEAN_SERVER_URL",
               "credentialVariable": "GLEAN_API_TOKEN"
@@ -3260,7 +3262,7 @@
             "startsOwnServer": false
           },
           "run": {
-            "command": "cd permissions-aware-retrieval && npm start -- \"<allowed-topic>\"",
+            "command": "npm start -- \"<allowed-topic>\"",
             "userBrowser": false
           }
         },
@@ -3277,13 +3279,13 @@
           },
           {
             "title": "Set credentials",
-            "command": "cd permissions-aware-retrieval && npm run login -- --email \"<work-email>\"",
+            "command": "npm run login -- --email \"<work-email>\"",
             "description": "Use the shipped login flow. Then have the user enter ANTHROPIC_API_KEY in ignored .env without exposing it in chat or command output.",
             "kind": "authenticate"
           },
           {
             "title": "Run it",
-            "command": "cd permissions-aware-retrieval && npm start -- \"<allowed-topic>\"",
+            "command": "npm start -- \"<allowed-topic>\"",
             "description": "Interactive terminals render the model's Markdown with marked-terminal after removing model-supplied terminal controls. Pipes and redirects receive raw Markdown unchanged, and numbered source URLs print separately.",
             "kind": "run"
           },
@@ -3375,7 +3377,7 @@
         {
           "kind": "oauth-with-token-fallback",
           "scopes": ["TRIGGERS"],
-          "setupCommand": "cd pre-meeting-brief && npm run login -- --email \"<work-email>\"",
+          "setupCommand": "npm run login -- --email \"<work-email>\"",
           "configFile": ".env",
           "backendVariable": "GLEAN_SERVER_URL",
           "credentialVariable": "GLEAN_API_TOKEN"
@@ -3440,13 +3442,13 @@
       },
       {
         "title": "Sign in to Glean",
-        "command": "cd pre-meeting-brief && npm run login -- --email \"<work-email>\"",
+        "command": "npm run login -- --email \"<work-email>\"",
         "description": "Use the shipped OAuth flow to discover your tenant and request TRIGGERS before setup. A token with only SEARCH and CHAT receives 403 insufficient_permissions. For a token-first tenant, skip login and put GLEAN_SERVER_URL plus a user-scoped GLEAN_API_TOKEN with TRIGGERS in the ignored .env file.",
         "kind": "authenticate"
       },
       {
         "title": "Preview your calendar events",
-        "command": "cd pre-meeting-brief && npm run preview",
+        "command": "npm run preview",
         "description": "See which presets your deployment offers and review recent indexed events. Use real meeting titles to test your pattern before registering anything. This step is read-only.",
         "kind": "manual"
       },
@@ -3459,11 +3461,11 @@
         "title": "Test it before going live",
         "kind": "manual",
         "description": "Webhook triggers do not have a test button, so send one delivery yourself. The default command uses a non-matching title and writes nothing. After it succeeds, ask for explicit approval before running `npm run test:webhook -- --write`; that path creates one tracker update and each repeat is a new occurrence.",
-        "command": "cd pre-meeting-brief && npm run test:webhook"
+        "command": "npm run test:webhook"
       },
       {
         "title": "Register the calendar trigger",
-        "command": "cd pre-meeting-brief && npm run setup",
+        "command": "npm run setup",
         "description": "Setup reads the preset catalog, checks the selected preset's inputs, and rejects unsupported values. Set `GLEAN_TRIGGER_INPUT_TITLE` to the reviewed pattern so Glean filters by title at the source. Choose a calendar preset that supports delivery 1,800 seconds before the event.",
         "kind": "configure"
       },
@@ -3562,7 +3564,7 @@
         "startsOwnServer": false
       },
       "run": {
-        "command": "cd rfp-responder && npm start",
+        "command": "npm start",
         "url": "the Local URL printed by the server",
         "userBrowser": true
       }
@@ -3607,13 +3609,13 @@
       },
       {
         "title": "See what it refuses before connecting anything",
-        "command": "cd rfp-responder && npm run verify:fixture",
+        "command": "npm run verify:fixture",
         "description": "Replays the recorded responses through the full questionnaire and checks that every draft has a citation, unsupported rows stay blank, weak evidence is flagged, and export stays behind approval. The command needs no credentials and makes no network calls.",
         "kind": "manual"
       },
       {
         "title": "Open the review app",
-        "command": "cd rfp-responder && npm start",
+        "command": "npm start",
         "description": "Starts the local server and prints a Local URL. Open that URL in a browser. The app uses the same recorded responses, so there is nothing to sign in to.",
         "kind": "run"
       },
@@ -3779,25 +3781,25 @@
       {
         "title": "Run the fixture tests",
         "description": "Runs the Vitest fixture suite without credentials or network access, covering catalog discovery, query-backed suggestions, retries, typed errors, and field-filter propagation.",
-        "command": "cd search-with-discovered-filters && npm test",
+        "command": "npm test",
         "kind": "manual"
       },
       {
         "title": "Sign in with OAuth",
         "description": "Discovers your Glean backend from work email, completes Authorization Code with PKCE for search and offline_access, and stores refreshable credentials outside the project. Use --server-url for an explicit backend, GLEAN_OAUTH_CLIENT_ID for an administrator-provisioned public client, or GLEAN_API_TOKEN as a user-scoped fallback.",
-        "command": "cd search-with-discovered-filters && npm run login -- --email \"<work-email>\"",
+        "command": "npm run login -- --email \"<work-email>\"",
         "kind": "authenticate"
       },
       {
         "title": "Verify against your instance",
         "description": "Searches your topic across all datasources and validates the Search response shape and pagination state. Add --pages 2 to fetch a second page, --datasources to narrow the query, or --auto-select to exercise the discovered datasource and suggested-filter path.",
-        "command": "cd search-with-discovered-filters && npm run verify -- --email \"<work-email>\" --query \"<search-query>\"",
+        "command": "npm run verify -- --email \"<work-email>\" --query \"<search-query>\"",
         "kind": "verify-live"
       },
       {
         "title": "Discover filters and search",
         "description": "Runs the non-interactive CLI path, selecting the first returned datasource and suggested field value, then prints results, warnings, pagination state, and request IDs. Add --pages 2 to fetch the next result page. Omit --auto-select when running interactively to choose them yourself.",
-        "command": "cd search-with-discovered-filters && npm start -- --email \"<work-email>\" --query \"<search-query>\" --auto-select --pages 2",
+        "command": "npm start -- --email \"<work-email>\" --query \"<search-query>\" --auto-select --pages 2",
         "kind": "run"
       }
     ],
@@ -3814,18 +3816,18 @@
         {
           "kind": "oauth-with-token-fallback",
           "scopes": ["search"],
-          "setupCommand": "cd search-with-discovered-filters && npm run login -- --email \"<work-email>\"",
+          "setupCommand": "npm run login -- --email \"<work-email>\"",
           "credentialVariable": "GLEAN_API_TOKEN"
         }
       ],
       "verification": {
         "kind": "automated",
-        "command": "cd search-with-discovered-filters && npm run verify -- --email \"<work-email>\" --query \"<search-query>\"",
+        "command": "npm run verify -- --email \"<work-email>\" --query \"<search-query>\"",
         "expectedDuration": "about 1 minute after sign-in",
         "startsOwnServer": false
       },
       "run": {
-        "command": "cd search-with-discovered-filters && npm start -- --email \"<work-email>\" --query \"<search-query>\" --auto-select --pages 2",
+        "command": "npm start -- --email \"<work-email>\" --query \"<search-query>\" --auto-select --pages 2",
         "userBrowser": false
       }
     },
@@ -3956,13 +3958,13 @@
       {
         "title": "Run the fixture tests",
         "description": "Run name-based supersession, version retrieval, scope fallback classification, and adversarial archive tests without credentials or network access.",
-        "command": "cd skill-publishing-pipeline && npm test",
+        "command": "npm test",
         "kind": "manual"
       },
       {
         "title": "Sign in with OAuth",
         "description": "Discover your Glean backend from work email and request skills:read and skills:write. Only a recognized scope-grant failure triggers one retry with legacy SKILLS. If OAuth is not available, skip this command: copy .env.example to .env and fill GLEAN_API_TOKEN and GLEAN_SERVER_URL.",
-        "command": "cd skill-publishing-pipeline && npm run login -- --email \"<work-email>\"",
+        "command": "npm run login -- --email \"<work-email>\"",
         "kind": "authenticate"
       },
       {
@@ -3973,13 +3975,13 @@
       {
         "title": "Verify versioning on your instance",
         "description": "Create a cryptographically unique sample, publish a second version under the same name, retrieve and stage that version's content in a bounded sandbox, then permanently delete only the ID returned by this run. Success prints a Verified line that ends with cleanup completed.",
-        "command": "cd skill-publishing-pipeline && npm run verify -- --email \"<work-email>\"",
+        "command": "npm run verify -- --email \"<work-email>\"",
         "kind": "verify-live"
       },
       {
         "title": "Publish a new version of your bundle",
         "description": "Validate fixtures/sample-skill/SKILL.md by default, confirm before name-based supersession if that display name already exists, and stage the returned zip under staged/ID/vVERSION.MINOR so a second publish does not overwrite the first. Pass --bundle with your own SKILL.md, .zip, or .skill, and --stage-dir to choose a different parent folder. The command prints the exact ID before staging, which you need for optional cleanup.",
-        "command": "cd skill-publishing-pipeline && npm start -- publish --email \"<work-email>\"",
+        "command": "npm start -- publish --email \"<work-email>\"",
         "kind": "run"
       },
       {
@@ -3990,7 +3992,7 @@
       {
         "title": "Delete the published skill only when you intend to",
         "description": "Deletion permanently removes every version. Pass only the exact ID printed by your publish run and read the confirmation prompt.",
-        "command": "cd skill-publishing-pipeline && npm start -- cleanup --id \"PASTE_THE_ID_PRINTED_BY_PUBLISH\" --email \"<work-email>\"",
+        "command": "npm start -- cleanup --id \"PASTE_THE_ID_PRINTED_BY_PUBLISH\" --email \"<work-email>\"",
         "kind": "manual"
       }
     ],
@@ -4003,18 +4005,18 @@
         {
           "kind": "oauth-with-token-fallback",
           "scopes": ["skills:read", "skills:write"],
-          "setupCommand": "cd skill-publishing-pipeline && npm run login -- --email \"<work-email>\"",
+          "setupCommand": "npm run login -- --email \"<work-email>\"",
           "credentialVariable": "GLEAN_API_TOKEN"
         }
       ],
       "verification": {
         "kind": "automated",
-        "command": "cd skill-publishing-pipeline && npm run verify -- --email \"<work-email>\"",
+        "command": "npm run verify -- --email \"<work-email>\"",
         "expectedDuration": "about 2 minutes after sign-in",
         "startsOwnServer": false
       },
       "run": {
-        "command": "cd skill-publishing-pipeline && npm start -- publish --email \"<work-email>\"",
+        "command": "npm start -- publish --email \"<work-email>\"",
         "userBrowser": false
       }
     },
@@ -4168,25 +4170,25 @@
       {
         "title": "Run the fixture tests",
         "description": "Runs Vitest with MSW-backed fixtures, without credentials or live network access, covering typed `createStream` events, exact-once delta composition, `conversation_id` propagation, citation separation, and typed SDK error formatting.",
-        "command": "cd streaming-chat-with-citations && npm test",
+        "command": "npm test",
         "kind": "manual"
       },
       {
         "title": "Sign in with OAuth",
         "description": "Discovers your Glean backend from work email and completes Authorization Code with PKCE for Chat and `offline_access`. Use `--server-url` for an explicit backend. If DCR is restricted, set `GLEAN_OAUTH_CLIENT_ID` for an administrator-provisioned public client. If OAuth is not available, set `GLEAN_API_TOKEN` later as a user-scoped fallback.",
-        "command": "cd streaming-chat-with-citations && npm run login -- --email \"<work-email>\"",
+        "command": "npm run login -- --email \"<work-email>\"",
         "kind": "authenticate"
       },
       {
         "title": "Run one streamed Chat turn",
         "description": "Sends a question through `createStream` and prints grounded citation data against your own instance. Pipes receive each raw Markdown delta as it arrives. Interactive terminals buffer one complete answer and render it once.",
-        "command": "cd streaming-chat-with-citations && npm run verify -- --email \"<work-email>\" --prompt \"<chat-question>\"",
+        "command": "npm run verify -- --email \"<work-email>\" --prompt \"<chat-question>\"",
         "kind": "verify-live"
       },
       {
         "title": "Stream a follow-up",
         "description": "Starts a stored conversation, consumes `createStream` events for each answer, and sends a follow-up using the returned `conversation_id`. Raw output streams incrementally; terminal-rendered output is buffered per turn.",
-        "command": "cd streaming-chat-with-citations && npm start -- --email \"<work-email>\" --prompt \"<chat-question>\" --follow-up \"<follow-up-question>\"",
+        "command": "npm start -- --email \"<work-email>\" --prompt \"<chat-question>\" --follow-up \"<follow-up-question>\"",
         "kind": "run"
       }
     ],
@@ -4207,18 +4209,18 @@
         {
           "kind": "oauth-with-token-fallback",
           "scopes": ["chat"],
-          "setupCommand": "cd streaming-chat-with-citations && npm run login -- --email \"<work-email>\"",
+          "setupCommand": "npm run login -- --email \"<work-email>\"",
           "credentialVariable": "GLEAN_API_TOKEN"
         }
       ],
       "verification": {
         "kind": "automated",
-        "command": "cd streaming-chat-with-citations && npm run verify -- --email \"<work-email>\" --prompt \"<chat-question>\"",
+        "command": "npm run verify -- --email \"<work-email>\" --prompt \"<chat-question>\"",
         "expectedDuration": "about 1 minute after sign-in",
         "startsOwnServer": false
       },
       "run": {
-        "command": "cd streaming-chat-with-citations && npm start -- --email \"<work-email>\" --prompt \"<chat-question>\" --follow-up \"<follow-up-question>\"",
+        "command": "npm start -- --email \"<work-email>\" --prompt \"<chat-question>\" --follow-up \"<follow-up-question>\"",
         "userBrowser": false
       }
     },
@@ -4330,7 +4332,7 @@
         {
           "kind": "oauth-with-token-fallback",
           "scopes": ["AGENTS"],
-          "setupCommand": "cd triage-support-issue && npm run login -- --email \"<work-email>\"",
+          "setupCommand": "npm run login -- --email \"<work-email>\"",
           "configFile": ".env",
           "backendVariable": "GLEAN_SERVER_URL",
           "credentialVariable": "GLEAN_API_TOKEN"
@@ -4338,12 +4340,12 @@
       ],
       "verification": {
         "kind": "automated",
-        "command": "cd triage-support-issue && npm run verify:fixture",
+        "command": "npm run verify:fixture",
         "expectedDuration": "under 1 minute without credentials",
         "startsOwnServer": false
       },
       "run": {
-        "command": "cd triage-support-issue && npm run triage -- \"<support-issue>\"",
+        "command": "npm run triage -- \"<support-issue>\"",
         "userBrowser": false
       }
     },
@@ -4380,7 +4382,7 @@
       },
       {
         "title": "Sign in to Glean",
-        "command": "cd triage-support-issue && npm run login -- --email \"<work-email>\"",
+        "command": "npm run login -- --email \"<work-email>\"",
         "description": "Use @gleanwork/auth for tenant discovery and refreshable OAuth credentials stored outside the project. If OAuth is unavailable, provide a user-scoped token that can run the selected Agent.",
         "kind": "authenticate"
       },
@@ -4391,13 +4393,13 @@
       },
       {
         "title": "Run the triage",
-        "command": "cd triage-support-issue && npm run triage -- \"<support-issue>\"",
+        "command": "npm run triage -- \"<support-issue>\"",
         "description": "The command makes one Platform Agent run and prints the structured triage. It does not make any external write or customer-facing update.",
         "kind": "run"
       },
       {
         "title": "Verify the response",
-        "command": "cd triage-support-issue && npm run verify:fixture",
+        "command": "npm run verify:fixture",
         "description": "Run the no-credential fixture check first. For a live check, set GLEAN_SUPPORT_ISSUE and run npm run verify; confirm the Agent separates evidence from hypotheses.",
         "kind": "verify-live"
       }
