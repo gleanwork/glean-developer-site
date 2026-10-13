@@ -109,3 +109,5 @@ workflow regenerates all of them here every 15 minutes and opens an auto-merging
 request, so a companion PR on this repo is not part of shipping a recipe. Capabilities and
 surfaces are synced from the cookbook taxonomy too, so adding either does not require site
 code. See AGENTS.md for the narrower case where a new value carries presentation behavior.
+
+Agent permissions, review rules and commit conventions: @AGENTS.md
