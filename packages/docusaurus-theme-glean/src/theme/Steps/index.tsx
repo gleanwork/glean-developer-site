@@ -21,6 +21,36 @@ interface StepProps {
     | 'brands';
   stepNumber?: number;
   titleSize?: 'p' | 'h2' | 'h3';
+  /**
+   * Makes this a step of an agent guide (docusaurus-plugin-mcp-server's
+   * `AgentGuide`). Stable ID, unique in the guide; symptoms refer to it.
+   */
+  id?: string;
+  /** `"user"` when only a person can do the step, such as signing in. */
+  needs?: 'user';
+  /** The step changes or deletes something; the agent asks first. */
+  confirm?: boolean;
+  /** Space-separated symptom IDs to offer when this step's check fails. */
+  symptoms?: string;
+}
+
+// The plugin reads these attributes from the built page to compile agent
+// guides. See docusaurus-plugin-mcp-server's agent guide format.
+function guideStepAttributes({
+  id,
+  title,
+  needs,
+  confirm,
+  symptoms,
+}: Pick<StepProps, 'id' | 'title' | 'needs' | 'confirm' | 'symptoms'>) {
+  if (!id) return {};
+  return {
+    'data-mcp-step': id,
+    ...(title && { 'data-mcp-step-title': title }),
+    ...(needs && { 'data-mcp-step-needs': needs }),
+    ...(confirm && { 'data-mcp-step-confirm': '' }),
+    ...(symptoms && { 'data-mcp-step-symptoms': symptoms }),
+  };
 }
 
 const iconMap: { [key: string]: React.ReactNode } = {
@@ -58,7 +88,15 @@ export function Step({
   iconType = 'regular',
   stepNumber = 1,
   titleSize = 'p',
+  id,
+  needs,
+  confirm,
+  symptoms,
 }: StepProps) {
+  // In a guide, the number and title are for readers. The compiled guide
+  // numbers and titles steps itself, so it leaves labels out.
+  const label = id ? { 'data-mcp-guide-label': '' } : {};
+
   const renderIcon = () => {
     if (!icon) return null;
 
@@ -84,17 +122,32 @@ export function Step({
 
     switch (titleSize) {
       case 'h2':
-        return <h2 className={styles.step__title}>{titleContent}</h2>;
+        return (
+          <h2 className={styles.step__title} {...label}>
+            {titleContent}
+          </h2>
+        );
       case 'h3':
-        return <h3 className={styles.step__title}>{titleContent}</h3>;
+        return (
+          <h3 className={styles.step__title} {...label}>
+            {titleContent}
+          </h3>
+        );
       default:
-        return <p className={styles.step__title}>{titleContent}</p>;
+        return (
+          <p className={styles.step__title} {...label}>
+            {titleContent}
+          </p>
+        );
     }
   };
 
   return (
-    <div className={styles.step}>
-      <div className={styles.step__indicator}>
+    <div
+      className={styles.step}
+      {...guideStepAttributes({ id, title, needs, confirm, symptoms })}
+    >
+      <div className={styles.step__indicator} {...label}>
         <div className={styles.step__number}>{stepNumber}</div>
         <div className={styles.step__line}></div>
       </div>
