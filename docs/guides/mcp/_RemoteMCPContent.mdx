@@ -8,37 +8,98 @@ This is different from the public [Docs MCP Server](/docs-mcp), which gives a co
 
 <VideoCallout id="mcp-overview" />
 
-## Check that you can connect
+## Connect a host
 
-Glean enables the OAuth Authorization Server and Remote MCP Server by default for eligible tenants. Administrators can disable MCP or hide the end-user Configurator. Open the Configurator first. If it is unavailable, ask an administrator to confirm that at least one MCP server is enabled and that the Configurator is visible.
+Glean enables the OAuth Authorization Server and Remote MCP Server by default for eligible tenants. Administrators can disable MCP or hide the end-user Configurator. If the Configurator is unavailable, ask an administrator to confirm that at least one MCP server is enabled and that the Configurator is visible.
+
+<AgentGuide
+  name="connect-glean-remote-mcp"
+  kind="setup"
+  title="Connect an MCP host to Glean's Remote MCP Server"
+  description="Connect an MCP host, such as Claude Code, Cursor, Codex, or VS Code, to the user's company Glean Remote MCP server, sign in, and confirm Glean tools work. Use when the user wants to set up, install, or connect Glean MCP or Glean search in an AI assistant. Not for the public Glean developer docs MCP server.">
+
+<DoneWhen>
+
+In a new conversation, an explicit request such as "Search Glean for our engineering onboarding guide" calls a Glean tool and returns content you can access in Glean.
+
+</DoneWhen>
+
+<Prerequisites>
+
+<ForHumans>You need:</ForHumans>
+
+- A Glean account at your company. Check: you can sign in to Glean.
+- An MCP host: the AI assistant or agent you want to connect.
+
+</Prerequisites>
 
 <Steps>
-  <Step title="Open the MCP Configurator">
+  <Step id="open-configurator" title="Open the MCP Configurator" needs="user" symptoms="configurator-missing">
+
     Open the [MCP Configurator](https://app.glean.com/settings/install?mcpConfigure=true), choose the server you want to connect, and copy its URL. Selecting a host is optional; do it when you want setup instructions tailored to that application. See the [MCP Configurator user guide](https://docs.glean.com/user-guide/mcp/usage) if the navigation in Glean differs.
+
+    <ForAgents>
+
+    The user opens the Configurator in their browser, signed in to Glean. The server URL is not a secret, so the user can share it with you.
+
+    </ForAgents>
+
+    <Check>
+
+    You have the URL of the server you want, copied from the Configurator.
+
+    </Check>
+
   </Step>
 
-  <Step title="If the Configurator is missing">
-    If the Configurator is unavailable, ask a Glean administrator to confirm that at least one MCP server is enabled and that the end-user Configurator is visible. That check lives in [Set up Glean MCP server](https://docs.glean.com/administration/platform/mcp/enable-mcp-servers).
+  <Step id="add-to-host" title="Add the server to the host" symptoms="configurator-missing wrong-server">
+
+    Check [Supported MCP Hosts](/guides/mcp/supported-hosts) to see whether your host is user-configurable or organization-managed. For a host the Configurator lists, follow its tailored setup instructions there. One server URL connects any MCP host, including hosts the Configurator does not list. For an unlisted host, use that URL with the host's own MCP setup instructions.
+
+    <Check>
+
+    The host's MCP settings list the Glean server with the URL from the Configurator.
+
+    </Check>
+
   </Step>
 
-  <Step title="Match the host to its setup path">
-    Check [Supported MCP Hosts](/guides/mcp/supported-hosts) to see whether your host is user-configurable or organization-managed. One server URL connects any MCP host, including hosts the Configurator does not list. For an unlisted host, use that URL with the host's own MCP setup instructions.
+  <Step id="sign-in" title="Sign in with OAuth" needs="user" symptoms="dcr-rejected sign-in-fails">
+
+    Complete the host's OAuth sign-in flow with your organization's SSO when prompted. Use a Glean-issued API token only when the host cannot complete OAuth. See [How sign-in works](#how-sign-in-works).
+
+    <Check>
+
+    The host shows the Glean server as connected.
+
+    </Check>
+
+  </Step>
+
+  <Step id="verify" title="Verify the connection" symptoms="tools-missing verification-fails">
+
+    After the host reports that it is connected, start a new conversation and ask something explicit, such as "Search Glean for our engineering onboarding guide." Confirm that the host shows the Glean server and tools, asks for authorization when required, and returns only content you can access in Glean. Hosts choose which tools to call, so name the data or action you want when you test.
+
+    <Check>
+
+    The host calls a Glean tool and returns content you can access in Glean.
+
+    </Check>
+
   </Step>
 </Steps>
 
-## Connect with OAuth
+</AgentGuide>
+
+If the server is connected but tools do not load, or a verification request fails, follow [Remote MCP troubleshooting](/guides/mcp/troubleshooting).
+
+## How sign-in works
 
 When the host opens Glean's OAuth flow, sign in with your organization's SSO, then grant the host access to Glean. SSO establishes who you are; the OAuth grant is what lets the host act for you, with only your Glean access. Glean asks for this consent the first time a host connects.
 
 Dynamic Client Registration (DCR) is the usual path for MCP hosts. A tenant can allow any DCR-capable application, restrict registration to approved applications, or turn DCR off. Glean provisions new and previously unconfigured default-on MCP tenants with the Glean-managed list of approved applications; tenants with existing MCP or OAuth configuration keep their settings. If DCR is disabled, your tenant does not allow the host to register, or the host needs scopes DCR does not grant, an administrator can register a [static OAuth client](https://docs.glean.com/administration/oauth/static-client-registration). See [OAuth authentication](/api-info/client/authentication/oauth) for the DCR versus static model.
 
 Use a Glean-issued API token only when the host cannot complete OAuth. Do not assign API Token Creator in bulk as an MCP rollout.
-
-## Verify the connection
-
-After the host reports that it is connected, start a new conversation and ask something explicit, such as "Search Glean for our engineering onboarding guide." Confirm that the host shows the Glean server and tools, asks for authorization when required, and returns only content you can access in Glean.
-
-If the server is connected but tools do not load, or a verification request fails, follow [Remote MCP troubleshooting](/guides/mcp/troubleshooting). Hosts choose which tools to call, so name the data or action you want when you test.
 
 ## Install individually or manage centrally
 

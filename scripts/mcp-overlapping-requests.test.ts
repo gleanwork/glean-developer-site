@@ -1,17 +1,18 @@
 // @vitest-environment node
 //
 // MCP clients send tool calls in parallel, and a warm Vercel instance handles
-// them concurrently through one McpDocsServer. Every overlapping request must
-// get its own transport and server; reusing one fails with "Already connected
-// to a transport". This runs locally with a slow stub search provider so the
-// requests are guaranteed to overlap; a burst against production cannot
-// guarantee that.
-import fs from 'node:fs';
+// them concurrently through one handler and McpDocsServer. Every overlapping
+// request must get its own transport and server; reusing one fails with
+// "Already connected to a transport". This runs locally with a slow stub
+// search ranker so the requests are guaranteed to overlap; a burst against
+// production cannot guarantee that.
 import http from 'node:http';
 import type { AddressInfo } from 'node:net';
-import os from 'node:os';
-import path from 'node:path';
-import { McpDocsServer } from 'docusaurus-plugin-mcp-server';
+import type {
+  ArtifactBundle,
+  SearchRanker,
+} from 'docusaurus-plugin-mcp-server';
+import { createNodeHandler } from 'docusaurus-plugin-mcp-server/adapters/node';
 import { afterAll, beforeAll, expect, test } from 'vitest';
 
 const OVERLAPPING_REQUESTS = 16;
@@ -19,55 +20,37 @@ const SEARCH_DELAY_MS = 50;
 
 let httpServer: http.Server;
 let url: string;
-let dir: string;
 
 beforeAll(async () => {
-  dir = fs.mkdtempSync(path.join(os.tmpdir(), 'mcp-overlap-'));
-  fs.writeFileSync(path.join(dir, 'docs.json'), '{}');
-  fs.writeFileSync(path.join(dir, 'search-index.json'), '{}');
-  const provider = path.join(dir, 'slow-provider.mjs');
-  fs.writeFileSync(
-    provider,
-    `export default class SlowProvider {
-      name = 'slow-stub';
-      async initialize() {}
-      isReady() { return true; }
-      async search() {
-        await new Promise((resolve) => setTimeout(resolve, ${SEARCH_DELAY_MS}));
-        return [];
-      }
-    }`,
-  );
+  // The smallest bundle the server accepts: no pages, no search index.
+  const artifacts: ArtifactBundle = {
+    formatVersion: 1,
+    manifest: {
+      serverName: 'overlap-test',
+      version: '0.0.0',
+      buildTime: new Date(0).toISOString(),
+      docCount: 0,
+    },
+    docs: {},
+  };
+  const slowSearch: SearchRanker = {
+    name: 'slow-stub',
+    async search() {
+      await new Promise((resolve) => setTimeout(resolve, SEARCH_DELAY_MS));
+      return [];
+    },
+  };
 
-  // Same shape as api/mcp.ts, with a slow stub in place of local search.
-  const server = new McpDocsServer({
-    docsPath: path.join(dir, 'docs.json'),
-    indexPath: path.join(dir, 'search-index.json'),
-    name: 'overlap-test',
-    version: '0.0.0',
-    search: provider,
-  });
-  await server.initialize();
+  // Same handler as api/mcp.ts, with a slow stub in place of local search.
+  const handler = createNodeHandler({ artifacts, search: slowSearch });
 
-  httpServer = http.createServer((req, res) => {
-    let body = '';
-    req.on('data', (chunk) => (body += chunk));
-    req.on('end', async () => {
-      try {
-        await server.handleHttpRequest(req, res, JSON.parse(body));
-      } catch (error) {
-        res.writeHead(500, { 'content-type': 'application/json' });
-        res.end(JSON.stringify({ error: String(error) }));
-      }
-    });
-  });
+  httpServer = http.createServer((req, res) => void handler(req, res));
   await new Promise<void>((resolve) => httpServer.listen(0, resolve));
   url = `http://127.0.0.1:${(httpServer.address() as AddressInfo).port}/`;
 });
 
 afterAll(async () => {
   await new Promise((resolve) => httpServer.close(resolve));
-  fs.rmSync(dir, { recursive: true, force: true });
 });
 
 test('every overlapping tool call succeeds', async () => {

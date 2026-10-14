@@ -267,6 +267,12 @@ export const recipeStepSchema = z.strictObject({
   title: z.string().min(1),
   description: z.string().min(1).optional(),
   command: z.string().min(1).optional(),
+  /**
+   * The reader runs this step in a new terminal opened in the starting
+   * directory, because an earlier step keeps its terminal busy. Without it,
+   * commands run in order in one shell.
+   */
+  newTerminal: z.literal(true).optional(),
 });
 
 export const recipeCodeAssetSchema = z.strictObject({
