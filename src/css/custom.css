@@ -680,88 +680,226 @@ li.tabs__item.openapi-tabs__code-item.openapi-tabs__code-item--javascript
   background-color: rgba(59, 130, 246, 0.1) !important;
 }
 
-/* Search button overrides - scoped to navbar for better specificity */
-.navbar .DocSearch-Button {
-  border-radius: 10px;
-  padding: 0 12px 0 0;
-  width: 110px;
+/* ============================================================
+ * Navbar, right side: More from Glean, search, Docs MCP, then the
+ * color mode toggle (see the item order in docusaurus.config.ts).
+ * Every control is 36px tall with the same pill shape. Docs MCP uses
+ * the home hero's .heroSecondary look (HomeRedesign.module.css);
+ * search is a wider input-style field. Search and Docs MCP come from
+ * plugins (docusaurus-plugin-search-glean, docusaurus-plugin-mcp-server),
+ * so they are styled by their class names here.
+ * ============================================================ */
+.navbar__items--right {
+  /* Hover fill shared by the outlined and text controls */
+  --navbar-control-hover-bg: #f4f4fb;
+  /* The only spacing between controls. With More from Glean's 8px inset
+     and the toggle icon's 8px inset, the visible gaps are 20 / 12 / 20px:
+     the two bordered pills read as a pair. */
+  gap: 12px;
 }
 
-.navbar .DocSearch-Button-Input {
-  padding: 0 16px 0 48px;
-}
-
-.navbar .DocSearch-Button-Input::placeholder {
-  font-size: 1rem;
-  font-weight: 400;
+/* Docusaurus pads each item and the search container horizontally; the
+   gap above replaces that padding. */
+.navbar__items--right > .navbar__item,
+.navbar__items--right > [class*='navbarSearchContainer'] {
   padding: 0;
 }
 
-.navbar .DocSearch-Search-Icon {
-  display: none;
+html[data-theme='dark'] .navbar__items--right {
+  --navbar-control-hover-bg: var(--ifm-color-emphasis-200);
+}
+
+/* More from Glean: a text control with the same chevron as Docs MCP */
+.navbar__items--right .dropdown > .navbar__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 8px;
+  border-radius: 9999px;
+  color: var(--gdt-text-primary);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* Filled while hovered or open, like Docs MCP. The menu opens on click
+   (src/theme/NavbarItem/DropdownNavbarItem/Desktop), which adds
+   .dropdown--show. */
+.navbar__items--right .dropdown > .navbar__link:hover,
+.navbar__items--right .dropdown--show > .navbar__link {
+  background: var(--navbar-control-hover-bg);
+}
+
+.navbar__items--right .dropdown > .navbar__link::after {
+  position: static;
+  width: 12px;
+  height: 12px;
+  margin: 0;
+  border: 0;
+  background: currentColor;
+  transform: none;
+  transition: transform var(--ifm-transition-fast);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 4.5L6 8L9.5 4.5' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E")
+    center / 12px no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 4.5L6 8L9.5 4.5' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E")
+    center / 12px no-repeat;
+}
+
+/* The chevron flips when the menu opens, matching Docs MCP's */
+.navbar__items--right .dropdown--show > .navbar__link::after {
+  transform: rotate(180deg);
+}
+
+/* Search: an input-style field with the shortcut hint inside it
+   (src/theme/SearchBar). Flex containers, not the plugin's inline-block,
+   so the field isn't set on a text baseline and centers with the rest. */
+.navbar .navbar-search,
+.navbar .searchContainer {
+  display: flex;
+  position: relative;
+}
+
+.navbar .DocSearch-Button {
+  width: 300px;
+  height: 36px;
+  margin: 0;
+  border-radius: 9999px;
+  /* Same outline and hover fill as Docs MCP */
+  background: var(--gdt-card-bg);
+  border: 1px solid var(--gdt-border-dark);
+  transition: background 0.15s ease;
+}
+
+.navbar .DocSearch-Button:hover {
+  background: var(--navbar-control-hover-bg);
+  box-shadow: none;
+}
+
+.navbar .DocSearch-Button:focus-within {
+  box-shadow: 0 0 0 2px var(--gdt-primary);
+}
+
+.navbar .DocSearch-Button-Input {
+  padding: 0 56px 0 40px;
+  color: var(--gdt-text-primary);
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.navbar .DocSearch-Button-Input::placeholder {
+  color: var(--gdt-text-secondary);
+  opacity: 1;
 }
 
 .navbar .DocSearch-Button-Icon {
-  left: 2px;
+  left: 16px;
 }
 
-.navbar .DocSearch-Button-Icon::before {
-  content: '';
-  width: 32px;
-  height: 32px;
-  margin-right: 12px;
-  background-color: var(--ifm-color-primary);
-  border-radius: 8px;
-  background-image: url('/img/glean-logo-white.svg');
-  background-size: 18px 18px;
-  background-repeat: no-repeat;
-  background-position: center;
-  flex-shrink: 0;
+.navbar .DocSearch-Search-Icon {
+  width: 16px;
+  height: 16px;
+  color: var(--gdt-text-secondary);
 }
 
-/* Dark mode */
-[data-theme='dark'] .navbar .DocSearch-Button-Icon::before {
-  background-color: #5c62f1;
+.navbar-search__shortcut {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%);
+  padding: 4px 6px;
+  border: 1px solid var(--gdt-border-light);
+  border-radius: 6px;
+  background: var(--gdt-card-bg);
+  box-shadow: none;
+  color: var(--gdt-text-secondary);
+  font-family: var(--ifm-font-family-base);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1;
+  pointer-events: none;
 }
 
-/* Mobile responsive adjustments */
-@media (max-width: 750px) {
-  .navbar .DocSearch-Button {
-    background: transparent;
-    border: none;
-    padding: 0;
-    margin: 0;
-    width: 36px;
-    height: 36px;
-    border-radius: 10px;
+/* Docs MCP: the hero's secondary pill. `.button` in the selector outranks
+   Infima's .button--primary rules, including the dark-mode one. */
+.navbar .button.mcp-install-dropdown__button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 16px;
+  border: 1px solid var(--gdt-border-dark);
+  border-radius: 9999px;
+  background: var(--gdt-card-bg);
+  color: var(--gdt-text-primary);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1;
+  transition: background 0.15s ease;
+}
+
+.navbar .button.mcp-install-dropdown__button:hover,
+.navbar .button.mcp-install-dropdown__button[aria-expanded='true'] {
+  border-color: var(--gdt-border-dark);
+  background: var(--navbar-control-hover-bg);
+  color: var(--gdt-text-primary);
+}
+
+/* Color mode toggle: a 36px round icon button. Desktop only, so Docusaurus
+   can still hide it below 997px, where the mobile sidebar has its own. */
+@media (min-width: 997px) {
+  /* Docusaurus sizes this wrapper to 28px, which would shrink the button */
+  .navbar__items--right [class*='colorModeToggle'] {
     display: flex;
     align-items: center;
-    justify-content: center;
+    width: 36px;
+    height: 36px;
+  }
+}
+
+.navbar__items--right [class*='colorModeToggle'] .clean-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 9999px;
+  color: var(--gdt-text-primary);
+}
+
+.navbar__items--right [class*='colorModeToggle'] .clean-btn:hover {
+  background: var(--navbar-control-hover-bg);
+}
+
+.navbar__items--right [class*='colorModeToggle'] svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* Phones: the search field shrinks to a round icon button */
+@media (max-width: 750px) {
+  .navbar .DocSearch-Button {
+    width: 36px;
   }
 
-  .navbar .DocSearch-Button:hover,
-  .navbar .DocSearch-Button:focus,
-  .navbar .DocSearch-Button:active {
-    background: transparent;
-    box-shadow: none;
+  .navbar .DocSearch-Search-Icon {
+    color: var(--gdt-text-primary);
   }
 
   .navbar .DocSearch-Button-Input {
-    padding: 0 8px 0 32px;
+    padding: 0;
+  }
+
+  .navbar .DocSearch-Button-Input::placeholder {
+    opacity: 0;
   }
 
   .navbar .DocSearch-Button-Icon {
-    margin: 0;
-    padding: 0;
-    left: 2px;
+    left: 50%;
+    transform: translateX(-50%);
   }
 
-  .navbar .DocSearch-Button-Icon::before {
-    width: 36px;
-    height: 36px;
-    margin: 0;
-    border-radius: 10px;
-    background-size: 16px 16px;
+  .navbar-search__shortcut {
+    display: none;
   }
 }
 
