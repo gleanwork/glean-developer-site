@@ -89,6 +89,7 @@ describe('videos registry', () => {
       const docId = video.related.docId ?? '';
       if (docId.startsWith('cookbook/')) continue; // recipe banner, by registry
       if (docId === 'libraries/indexing-sdk/index') continue; // VideoCta in the hero
+      if (docId === 'libraries/web-sdk/overview') continue; // VideoCta in the hero
       const source = readFileSync(docFile(docId) ?? '', 'utf8');
       expect(source, video.id).toContain(`<VideoCallout id="${video.id}"`);
     }

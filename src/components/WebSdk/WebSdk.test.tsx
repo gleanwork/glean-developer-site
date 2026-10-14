@@ -154,21 +154,19 @@ describe('WebSdkOverview', () => {
     ).toBeInTheDocument();
   });
 
-  // The Web SDK video is a preview: it shows only with the preview flag.
-  it('offers the Web SDK video only when previews are on', async () => {
-    mockMatchMedia(true);
-    const { unmount } = render(withPreviews(false, <WebSdkOverview />));
-    await waitFor(() =>
-      expect(screen.getByText('Embed Glean anywhere')).toBeInTheDocument(),
-    );
-    expect(screen.queryByText(/Watch the overview/)).toBeNull();
-    unmount();
-
-    render(withPreviews(true, <WebSdkOverview />));
-    expect(
-      await screen.findByRole('button', { name: /Watch the overview · 0:52/ }),
-    ).toBeInTheDocument();
-  });
+  // The Web SDK video is public: it shows with or without the preview flag.
+  it.each([false, true])(
+    'offers the Web SDK video (previews %s)',
+    async (previews) => {
+      mockMatchMedia(true);
+      render(withPreviews(previews, <WebSdkOverview />));
+      expect(
+        await screen.findByRole('button', {
+          name: /Watch the overview · 0:52/,
+        }),
+      ).toBeInTheDocument();
+    },
+  );
 });
 
 const sdkMocks = vi.hoisted(() => ({
