@@ -73,6 +73,15 @@ const baseSidebars: SidebarsConfig = {
         },
         {
           type: 'doc',
+          id: 'videos',
+          label: 'Videos',
+          customProps: {
+            icon: 'PlayCircle',
+            iconSet: 'feather',
+          },
+        },
+        {
+          type: 'doc',
           id: 'changelog/index',
           label: 'Changelog',
           customProps: {
