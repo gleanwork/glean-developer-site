@@ -1,0 +1,822 @@
+/*
+ * Developer videos. Values are lifted from existing components so videos read
+ * as part of the same site:
+ *   cards   → Cookbook/RecipeCard.module.css
+ *   dialog  → Cookbook/RecipeLayout.module.css (.previewDialog*)
+ *   feature → Cookbook/RecipeShowcaseCarousel.module.css
+ *   badge   → theme/DocSidebarItem/Link (.experimentalBadge)
+ * Index header, filter bar, and sections reuse RecipeIndex.module.css directly.
+ */
+
+/* ---------- Experimental badge (sidebar beaker colors) ---------- */
+
+.experimentalBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px 2px 6px;
+  border-radius: 9999px;
+  background-color: rgba(22, 163, 74, 0.15);
+  color: #15803d;
+  font-family: var(--gdt-font-text);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: 1.5;
+  text-transform: none;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+[data-theme='dark'] .experimentalBadge {
+  background-color: rgba(74, 222, 128, 0.16);
+  color: #4ade80;
+}
+
+.experimentalIcon {
+  width: 12px;
+  height: 12px;
+}
+
+/* ---------- Poster ---------- */
+
+.poster {
+  position: relative;
+  display: block;
+  width: 100%;
+  overflow: hidden;
+  padding: 0;
+  border: 1px solid var(--gdt-border-light);
+  border-radius: 12px;
+  aspect-ratio: 16 / 9;
+  background: var(--gdt-bg-light);
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.poster img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.25s ease;
+}
+
+.poster:focus-visible {
+  outline: 3px solid var(--gdt-primary);
+  outline-offset: 3px;
+}
+
+.playButton {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  display: inline-flex;
+  width: 40px;
+  height: 40px;
+  align-items: center;
+  justify-content: center;
+  padding-left: 3px;
+  border-radius: 9999px;
+  background: var(--gdt-primary);
+  box-shadow: 0 10px 24px -8px rgba(52, 60, 237, 0.65);
+  color: #fff;
+  opacity: 0;
+  transform: scale(0.92);
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease;
+}
+
+.durationChip {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  padding: 4px 9px;
+  border-radius: 9999px;
+  background: rgba(20, 22, 29, 0.82);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.4;
+}
+
+.poster:hover .playButton,
+.poster:focus-visible .playButton,
+.card:hover .playButton,
+.card:focus-within .playButton,
+.callout:hover .playButton,
+.callout:focus-visible .playButton {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.card:hover .poster img,
+.poster_banner:hover img,
+.poster_feature:hover img {
+  transform: scale(1.015);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .poster img,
+  .playButton {
+    transition: none;
+  }
+
+  .card:hover .poster img,
+  .poster_banner:hover img,
+  .poster_feature:hover img {
+    transform: none;
+  }
+}
+
+/* Banner: the recipe preview slot (matches .previewThumbnail). */
+.poster_banner {
+  max-width: 340px;
+  justify-self: end;
+  border-radius: 14px;
+  box-shadow: 0 12px 30px -18px rgba(0, 0, 0, 0.45);
+  transition:
+    transform 0.12s ease,
+    border-color 0.12s ease,
+    box-shadow 0.12s ease;
+}
+
+.poster_banner:hover {
+  transform: translateY(-2px);
+  border-color: var(--gdt-primary);
+  box-shadow: 0 18px 38px -20px rgba(0, 0, 0, 0.55);
+}
+
+.poster_banner .playButton {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.poster_feature {
+  align-self: center;
+  border-radius: 17px;
+  border-color: color-mix(in srgb, var(--gdt-primary) 12%, transparent);
+  box-shadow: 0 18px 40px -22px rgba(31, 32, 36, 0.45);
+}
+
+.poster_feature .playButton {
+  bottom: 16px;
+  left: 16px;
+  width: 52px;
+  height: 52px;
+  opacity: 1;
+  transform: scale(1);
+}
+
+.poster_compact {
+  width: 168px;
+  flex-shrink: 0;
+  border-radius: 10px;
+}
+
+.poster_compact .playButton {
+  bottom: 8px;
+  left: 8px;
+  width: 28px;
+  height: 28px;
+}
+
+.poster_compact .durationChip {
+  display: none;
+}
+
+/* ---------- Card (RecipeCard tokens) ---------- */
+
+/* Posters want a denser grid than text cards: 3 across on a desktop
+   content column, 2 on tablets, 1 on phones. */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: 18px;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 14px 14px 22px;
+  border: 1px solid var(--gdt-border-light);
+  border-radius: 18px;
+  background: var(--gdt-card-bg);
+  color: var(--gdt-text-primary);
+  transition:
+    box-shadow 0.12s ease,
+    border-color 0.12s ease;
+}
+
+.card:hover,
+.card:focus-within {
+  border-color: var(--gdt-border-dark);
+  box-shadow: 0 14px 30px -12px rgba(0, 0, 0, 0.18);
+}
+
+.cardBody {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  padding: 16px 10px 0;
+}
+
+.cardTags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.cardTags .position {
+  margin-bottom: 0;
+}
+
+.position {
+  align-self: flex-start;
+  margin-bottom: 10px;
+  padding: 3px 9px;
+  border: 1px solid var(--gdt-border-light);
+  border-radius: 999px;
+  color: var(--gdt-text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.card h3.cardTitle {
+  margin: 0 0 8px;
+  font-family: var(--gdt-font-text);
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.4px;
+  line-height: 1.3;
+}
+
+.cardTitleButton {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  letter-spacing: inherit;
+  text-align: left;
+}
+
+.cardTitleButton:hover {
+  color: var(--gdt-primary);
+}
+
+.cardTitleButton:focus-visible {
+  border-radius: 4px;
+  outline: 2px solid var(--gdt-primary);
+  outline-offset: 3px;
+}
+
+/* No flex-grow here: a stretched line-clamp box shows a sliver of line 3.
+   The footer's margin-top: auto keeps footers aligned instead. */
+.cardSummary {
+  display: -webkit-box;
+  margin: 0 0 18px;
+  overflow: hidden;
+  color: var(--gdt-text-secondary);
+  font-size: 13.5px;
+  line-height: 1.55;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.cardFooter {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: auto;
+  padding-top: 14px;
+  border-top: 1px solid var(--gdt-bg-mid);
+  color: var(--gdt-text-secondary);
+  font-size: 12.5px;
+}
+
+.metaItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.dot {
+  margin: 0 -6px;
+}
+
+.chips {
+  display: flex;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.chip {
+  padding: 3px 9px;
+  border: 1px solid var(--gdt-border-light);
+  border-radius: 7px;
+  background: var(--gdt-bg-light);
+  color: var(--gdt-text-secondary);
+  font-size: 11.5px;
+  white-space: nowrap;
+}
+
+.relatedLink {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: 6px;
+  margin-top: 14px;
+  color: var(--gdt-primary);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.relatedLink:hover {
+  color: var(--gdt-primary-hover);
+  text-decoration: none;
+}
+
+.relatedLink:hover svg {
+  transform: translateX(2px);
+}
+
+.relatedLink svg {
+  transition: transform 0.12s ease;
+}
+
+/* ---------- Featured ("Start here", showcase panel) ---------- */
+
+.feature {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 36px;
+  align-items: center;
+  margin-bottom: 32px;
+  padding: 38px;
+  border: 1px solid var(--gdt-border-light);
+  border-radius: 22px;
+  background: linear-gradient(145deg, #eef0ff 0%, #fafaff 52%, #fff 100%);
+  box-shadow: 0 18px 50px rgba(31, 32, 36, 0.08);
+}
+
+html[data-theme='dark'] .feature {
+  background: linear-gradient(
+    145deg,
+    rgba(52, 60, 237, 0.18) 0%,
+    var(--ifm-background-surface-color) 60%
+  );
+}
+
+.featurePill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 28px;
+  margin-bottom: 20px;
+  padding: 0 12px;
+  border-radius: 9999px;
+  background: color-mix(in srgb, var(--gdt-card-bg) 76%, transparent);
+  color: var(--gdt-text-secondary);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.featurePillDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 9999px;
+  background: var(--gdt-primary);
+}
+
+.feature h2.featureTitle {
+  margin: 0 0 14px;
+  font-family: var(--gdt-font-display);
+  font-size: 38px;
+  font-weight: 750;
+  letter-spacing: -0.8px;
+  line-height: 1.08;
+}
+
+.featureDescription {
+  max-width: 520px;
+  margin: 0 0 22px;
+  color: var(--gdt-text-secondary);
+  font-size: 15px;
+  line-height: 1.65;
+}
+
+.featureMeta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 25px;
+}
+
+.featureMeta > span:not(.experimentalBadge) {
+  padding: 6px 10px;
+  border: 1px solid color-mix(in srgb, var(--gdt-primary) 14%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--gdt-card-bg) 70%, transparent);
+  color: var(--gdt-text-secondary);
+  font-size: 11.5px;
+}
+
+.featureActions,
+.dialogActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+@media (max-width: 900px) {
+  .feature {
+    grid-template-columns: 1fr;
+    padding: 26px;
+  }
+
+  .feature h2.featureTitle {
+    font-size: 30px;
+  }
+}
+
+/* ---------- Buttons (showcase CTA + overview secondaryCta) ---------- */
+
+.primaryAction,
+.secondaryAction {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 19px;
+  border-radius: 9999px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.primaryAction {
+  border: none;
+  background: var(--gdt-primary);
+  color: #fff;
+}
+
+.primaryAction:hover {
+  background: var(--gdt-primary-hover);
+  color: #fff;
+  text-decoration: none;
+}
+
+.secondaryAction {
+  border: 1px solid var(--gdt-border-dark);
+  background: var(--gdt-card-bg);
+  color: var(--gdt-text-primary);
+}
+
+.secondaryAction:hover {
+  background: #f4f4fb;
+  color: var(--gdt-text-primary);
+  text-decoration: none;
+}
+
+html[data-theme='dark'] .secondaryAction:hover {
+  background: var(--ifm-color-emphasis-200);
+}
+
+.primaryAction:focus-visible,
+.secondaryAction:focus-visible,
+.navButton:focus-visible {
+  outline: 3px solid var(--gdt-primary);
+  outline-offset: 2px;
+}
+
+/* ---------- Dialog (recipe preview dialog) ---------- */
+
+.dialog {
+  width: min(1120px, calc(100vw - 32px));
+  max-width: none;
+  max-height: calc(100vh - 32px);
+  padding: 0;
+  overflow: visible;
+  border: 0;
+  background: transparent;
+  color: var(--gdt-text-primary);
+}
+
+.dialog::backdrop {
+  background: rgba(9, 10, 14, 0.78);
+  backdrop-filter: blur(6px);
+}
+
+.dialogSurface {
+  position: relative;
+  max-height: calc(100vh - 32px);
+  overflow: auto;
+  padding: 20px;
+  border: 1px solid var(--gdt-border-light);
+  border-radius: 20px;
+  background: var(--gdt-bg-light);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
+}
+
+.dialogClose {
+  position: absolute;
+  z-index: 2;
+  top: 8px;
+  right: 8px;
+  display: inline-flex;
+  width: 36px;
+  height: 36px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--gdt-border-light);
+  border-radius: 9999px;
+  background: var(--gdt-card-bg);
+  color: var(--gdt-text-primary);
+  cursor: pointer;
+}
+
+.dialogClose:hover {
+  background: var(--gdt-bg-mid);
+}
+
+.player {
+  overflow: hidden;
+  border-radius: 12px;
+  background: #0b0b14;
+  aspect-ratio: 16 / 9;
+}
+
+.player video {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.previewNotice,
+.reviewNotice {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 14px 4px 0;
+  padding: 10px 12px;
+  border: 1px dashed var(--gdt-border-dark);
+  border-radius: 10px;
+  color: var(--gdt-text-secondary);
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+.previewNotice svg,
+.reviewNotice svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.reviewNotice {
+  align-items: center;
+  margin: -14px 0 26px;
+}
+
+.dialogDetails {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px 28px;
+  padding: 20px 4px 4px;
+}
+
+.dialogCopy {
+  display: flex;
+  flex: 1 1 420px;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.dialogSurface h2.dialogTitle {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 6px;
+  font-family: var(--gdt-font-display);
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.4px;
+  line-height: 1.15;
+}
+
+.dialogSummary {
+  max-width: 640px;
+  margin: 0 0 10px;
+  color: var(--gdt-text-secondary);
+  font-size: 14.5px;
+  line-height: 1.55;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+  color: var(--gdt-text-secondary);
+  font-size: 12.5px;
+}
+
+.transcript {
+  margin: 18px 4px 0;
+  padding: 12px 16px;
+  border: 1px solid var(--gdt-border-light);
+  border-radius: 12px;
+  background: var(--gdt-card-bg);
+}
+
+.transcript summary {
+  color: var(--gdt-text-primary);
+  cursor: pointer;
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.transcript p {
+  max-width: 760px;
+  margin: 10px 0 0;
+  color: var(--gdt-text-secondary);
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.dialogFooter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 14px 4px 0;
+}
+
+.footerStart {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 16px;
+}
+
+.disclosure {
+  color: var(--gdt-text-secondary);
+  font-size: 12px;
+}
+
+.allVideosLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--gdt-info-fg);
+  font-size: 12.5px;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.allVideosLink:hover {
+  color: var(--gdt-info-fg);
+  text-decoration: underline;
+}
+
+.episodeNav {
+  display: flex;
+  gap: 8px;
+}
+
+.navButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 34px;
+  padding: 0 12px;
+  border: 1px solid var(--gdt-border-light);
+  border-radius: 9999px;
+  background: var(--gdt-card-bg);
+  color: var(--gdt-text-primary);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12.5px;
+}
+
+.navButton:hover:not(:disabled) {
+  border-color: var(--gdt-primary);
+  color: var(--gdt-primary);
+}
+
+.navButton:disabled {
+  cursor: default;
+  opacity: 0.45;
+}
+
+@media (max-width: 700px) {
+  .dialogSurface {
+    padding: 12px;
+    border-radius: 14px;
+  }
+
+  .playButton {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ---------- MDX callout ---------- */
+
+.callout {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  width: 100%;
+  margin: 8px 0 28px;
+  padding: 12px 18px 12px 12px;
+  border: 1px solid var(--gdt-border-light);
+  border-radius: 16px;
+  background: var(--gdt-card-bg);
+  color: var(--gdt-text-primary);
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  transition:
+    box-shadow 0.12s ease,
+    border-color 0.12s ease;
+}
+
+.callout:hover {
+  border-color: var(--gdt-border-dark);
+  box-shadow: 0 14px 30px -12px rgba(0, 0, 0, 0.18);
+}
+
+.callout:focus-visible {
+  outline: 3px solid var(--gdt-primary);
+  outline-offset: 2px;
+}
+
+.calloutBody {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.calloutEyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--gdt-primary);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+}
+
+.calloutTitle {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.2px;
+}
+
+.calloutSummary {
+  color: var(--gdt-text-secondary);
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+
+.calloutMeta {
+  color: var(--gdt-text-secondary);
+  font-size: 12px;
+}
+
+@media (max-width: 600px) {
+  .poster_compact {
+    width: 120px;
+  }
+
+  .calloutSummary {
+    display: none;
+  }
+}

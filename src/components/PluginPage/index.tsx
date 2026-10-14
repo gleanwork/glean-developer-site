@@ -28,6 +28,10 @@ type PluginPageProps = {
   mono?: boolean;
   /** Optional "What's included" blurb rendered between the banner and Installation. */
   whatsIncluded?: React.ReactNode;
+  /** Render the shared "Why the plugin" section (write approvals on older MCP hosts). */
+  writeApprovals?: boolean;
+  /** Optional video callout rendered above Installation. */
+  video?: React.ReactNode;
   /** Optional content rendered below the numbered steps, under its own section label. */
   afterSteps?: React.ReactNode;
   /** Section label shown above afterSteps content. Defaults to "Configuration". */
@@ -89,6 +93,8 @@ export default function PluginPage({
   clientId,
   mono = false,
   whatsIncluded,
+  writeApprovals = false,
+  video,
   afterSteps,
   afterStepsLabel,
   title,
@@ -127,6 +133,22 @@ export default function PluginPage({
           <p className={styles.whatsIncluded}>{whatsIncluded}</p>
         </>
       ) : null}
+
+      {writeApprovals ? (
+        <>
+          <div className={styles.sectionLabel}>Why the plugin</div>
+          <p className={styles.whatsIncluded}>
+            Approving a write means Glean has to ask you first. MCP hosts on
+            specs before 2026-07-28 can only ask through a stateful server, and
+            Glean&rsquo;s MCP server is stateless, so on those hosts it has no
+            way to ask. The plugin runs a small local MCP server inside {name},
+            so it asks you itself before a write runs. Write-action confirmation
+            requirements stay in effect whichever host you use.
+          </p>
+        </>
+      ) : null}
+
+      {video}
 
       <div className={styles.sectionLabel}>Installation</div>
       <div className={styles.stepsWrap}>

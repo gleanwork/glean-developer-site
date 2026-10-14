@@ -9,6 +9,12 @@ import experimentalData from '@site/src/data/experimental.json';
 import BeakerIcon from '@site/src/components/BeakerIcon';
 import TerminalPanel from './TerminalPanel';
 import {
+  findVideo,
+  formatDuration,
+  isVideoAvailable,
+} from '../Videos/videoData';
+import { useVideoDialog } from '../Videos/VideoPlayer';
+import {
   getPlatformStatuses,
   platformBadge,
   type PlatformCapabilityStatus,
@@ -130,18 +136,33 @@ const HERO_RECIPE_LINKS = HERO_SLIDES.map((slide) =>
   heroRecipeLink(recipesData.recipes as RecipeRecord[], slide.recipeCapability),
 );
 
+// Public videos only, like the recipe links: the home page ignores preview flags.
+const HERO_VIDEOS = HERO_SLIDES.map((slide) => {
+  const video = slide.videoId ? findVideo(slide.videoId) : undefined;
+  return video && isVideoAvailable(video, false) ? video : undefined;
+});
+
 /** Rotating hero: API surfaces, paired copy + terminal panels. */
 export function HeroCarousel(): React.ReactElement {
   const [active, setActive] = useState(0);
   const paused = useRef(false);
   const reduced = useRef(false);
+  // One dialog for the whole carousel, so rotating slides never unmounts an
+  // open player; rotation also pauses while it is open.
+  const watching = useRef(false);
+  const onVideoChange = useCallback((video: unknown) => {
+    watching.current = video !== null;
+  }, []);
+  const { open: openVideo, dialog: videoDialog } =
+    useVideoDialog(onVideoChange);
+  const heroVideo = HERO_VIDEOS[active];
 
   useEffect(() => {
     reduced.current = window.matchMedia(
       '(prefers-reduced-motion: reduce)',
     ).matches;
     const timer = setInterval(() => {
-      if (!paused.current && !reduced.current) {
+      if (!paused.current && !reduced.current && !watching.current) {
         setActive((a) => (a + 1) % HERO_SLIDES.length);
       }
     }, 4500);
@@ -209,7 +230,20 @@ export function HeroCarousel(): React.ReactElement {
               {feather('ArrowRight', 14)}
             </Link>
           )}
+          {heroVideo && (
+            <button
+              aria-haspopup="dialog"
+              aria-label={`Watch the ${heroVideo.title} video, ${formatDuration(heroVideo.durationSeconds)}`}
+              className={`${styles.heroRecipesLink} ${styles.heroWatch}`}
+              onClick={() => openVideo(heroVideo)}
+              type="button"
+            >
+              {feather('PlayCircle', 15)}
+              Watch · {formatDuration(heroVideo.durationSeconds)}
+            </button>
+          )}
         </div>
+        {videoDialog}
       </div>
 
       <div>

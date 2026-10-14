@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
+import type { ReactElement } from 'react';
+import { FeatureFlagsContext } from '../../theme/Root';
 import userEvent from '@testing-library/user-event';
 import BrowserFrame from '../BrowserFrame';
 import ComponentDemo from './ComponentDemo';
@@ -22,6 +24,27 @@ import {
   SidebarPreview,
 } from './previews';
 import WebSdkOverview from './WebSdkOverview';
+
+// The overview's video button reads the preview flag, which reads the URL.
+vi.mock('@docusaurus/router', () => ({
+  useLocation: () => ({ pathname: '/libraries/web-sdk/overview', search: '' }),
+}));
+
+function withPreviews(on: boolean, ui: ReactElement) {
+  return (
+    <FeatureFlagsContext.Provider
+      value={{
+        flagConfigs: {},
+        flags: { 'preview-content': on },
+        isEnabled: (flag) => flag === 'preview-content' && on,
+        refresh: () => {},
+        debug: false,
+      }}
+    >
+      {ui}
+    </FeatureFlagsContext.Provider>
+  );
+}
 
 function mockMatchMedia(matches: boolean) {
   Object.defineProperty(window, 'matchMedia', {
@@ -130,6 +153,20 @@ describe('WebSdkOverview', () => {
       screen.getByText('npm install @gleanwork/web-sdk'),
     ).toBeInTheDocument();
   });
+
+  // The Web SDK video is public: it shows with or without the preview flag.
+  it.each([false, true])(
+    'offers the Web SDK video (previews %s)',
+    async (previews) => {
+      mockMatchMedia(true);
+      render(withPreviews(previews, <WebSdkOverview />));
+      expect(
+        await screen.findByRole('button', {
+          name: /Watch the overview · 0:52/,
+        }),
+      ).toBeInTheDocument();
+    },
+  );
 });
 
 const sdkMocks = vi.hoisted(() => ({

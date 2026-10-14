@@ -2,18 +2,18 @@ import type React from 'react';
 import { useEffect, useState } from 'react';
 import Head from '@docusaurus/Head';
 import Link from '@docusaurus/Link';
-import { useLocation } from '@docusaurus/router';
 import recipesData from '@site/src/data/recipes.json';
+import { usePreviewContent } from '../../lib/usePreviewContent';
 import type { RecipesData } from '../../types/recipe';
 import RecipeLayout, { type RecipeCollectionContext } from './RecipeLayout';
 import { stripInlineMarkup } from './inlineMarkup';
-import { isRecipeAvailable, recipeHref } from './recipePreview';
+import { isRecipeAvailable } from './recipePreview';
 
 /** The recipe's collection, with its path limited to recipes a reader can open. */
 function collectionContext(
   data: RecipesData,
   recipeId: string,
-  search: string,
+  previewsEnabled: boolean,
 ): RecipeCollectionContext | undefined {
   const collection = data.collections.find((c) => c.recipes.includes(recipeId));
   if (!collection) return undefined;
@@ -21,12 +21,13 @@ function collectionContext(
     .map((id) => data.recipes.find((r) => r.id === id))
     .filter(
       (r): r is RecipesData['recipes'][number] =>
-        r !== undefined && (r.id === recipeId || isRecipeAvailable(r, search)),
+        r !== undefined &&
+        (r.id === recipeId || isRecipeAvailable(r, previewsEnabled)),
     )
     .map((r) => ({
       id: r.id,
       label: r.title,
-      href: recipeHref(r),
+      href: r.permalink,
       level: r.level,
     }));
   return {
@@ -60,12 +61,13 @@ export default function RecipePage({
 }: RecipePageProps): React.ReactElement {
   const data = recipesData as RecipesData;
   const recipe = data.recipes.find((r) => r.id === recipeId);
-  const location = useLocation();
+  // `usePreviewContent` is false until after hydration, so a preview recipe's
+  // static HTML is always the not-found page.
+  const previewsEnabled = usePreviewContent();
   const [hydrated, setHydrated] = useState(false);
   const isPreview = recipe?.visibility === 'preview';
   const isAvailable = Boolean(
-    recipe &&
-    (!isPreview || (hydrated && isRecipeAvailable(recipe, location.search))),
+    recipe && isRecipeAvailable(recipe, previewsEnabled),
   );
 
   useEffect(() => setHydrated(true), []);
@@ -126,7 +128,7 @@ export default function RecipePage({
         {isPreview ? <meta name="robots" content="noindex,nofollow" /> : null}
       </Head>
       <RecipeLayout
-        collection={collectionContext(data, recipe.id, location.search)}
+        collection={collectionContext(data, recipe.id, previewsEnabled)}
         plugin={data.plugin}
         recipe={recipe}
       >

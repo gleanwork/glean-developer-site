@@ -9,7 +9,6 @@ import {
   type RecipeCollection,
   type RecipeRecord,
 } from '../../types/recipe';
-import { recipeHref } from './recipePreview';
 import { renderInlineMarkup } from './inlineMarkup';
 import styles from './RecipeShowcaseCarousel.module.css';
 
@@ -170,7 +169,7 @@ export default function RecipeShowcaseCarousel({
             <span>{capabilitySummary}</span>
             <span>{surfaceSummary}</span>
           </div>
-          <Link className={styles.cta} to={recipeHref(recipe)}>
+          <Link className={styles.cta} to={recipe.permalink}>
             Open recipe
             {getIcon('ArrowRight', 'feather', {
               width: 17,

@@ -105,9 +105,23 @@ changes with `pnpm recipes:compile`, `pnpm test`, and `pnpm build`.
 Visibility is set upstream. A recipe with `"hidden": true` stays in the registry snapshot
 and the plugin, but sync generates no MDX page for it. A recipe with
 `"visibility": "preview"` gets an unlisted, no-index page but is omitted from public
-discovery and cookbook plugin actions; use `?ff_recipe=<recipe-id>` to reveal its card and
-detail page. The Cookbook nav and the homepage hero's per-slide recipe links are public by
-default; the links count only publicly listed recipes.
+discovery and cookbook plugin actions. Videos (`src/data/videos.json`) follow the same rule.
+One flag reveals every preview item: `?ff_preview-content=true` (remembered for the browser
+session; `=false` clears it), or the `preview-content` flag in Edge Config. Preview items still
+ship in every build, so they're hidden, not secret. See `FEATURE_FLAGS.md`. The Cookbook nav and the
+homepage hero's per-slide recipe links are public by default; the links count only publicly
+listed recipes.
+
+Videos work the same way as recipes. They're made, approved, and pinned in
+`gleanwork/glean-developer-videos` (private), whose `registry.json` holds each video's metadata,
+transcript, and approved MP4 and poster (content-hashed names, SHA-256). `pnpm videos:sync`
+pulls it into `data/videos-registry.json` and `src/data/videos.json`, and
+`.github/workflows/sync-developer-videos.yml` opens the PR. Never hand-edit either file, and
+never commit MP4s or posters here: media is hosted at the registry's `mediaBaseUrl`. Until
+hosting exists, preview from a local checkout with
+`GLEAN_DEVELOPER_VIDEOS_DIR=<path> pnpm videos:sync`. That copies the approved files into
+git-ignored `static/videos/` and `static/img/videos/`, and CI rejects committing the result. Only
+the presentation lives here (`src/components/Videos/`, `<VideoCallout>` on attach pages).
 
 Only document verified APIs. Source samples from the published guides (e.g.
 `docs/libraries/web-sdk/`), never from memory: scope names, endpoints and function

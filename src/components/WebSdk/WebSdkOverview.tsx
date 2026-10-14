@@ -3,6 +3,7 @@ import Link from '@docusaurus/Link';
 import { getIcon } from '@gleanwork/docusaurus-theme-glean/Icons';
 import TerminalPanel from '../home/TerminalPanel';
 import BrowserFrame from '../BrowserFrame';
+import { VideoCta } from '../Videos/VideoEmbeds';
 import styles from './webSdk.module.css';
 import {
   MockAutocomplete,
@@ -315,6 +316,7 @@ export default function WebSdkOverview(): React.ReactElement {
             {feather('BookOpen')}
             SDK reference
           </Link>
+          <VideoCta className={styles.secondaryCta} id="web-sdk" />
           <InstallPill command="npm install @gleanwork/web-sdk" />
         </div>
       </header>

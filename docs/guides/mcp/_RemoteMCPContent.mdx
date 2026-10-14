@@ -6,6 +6,8 @@ Connect an MCP host to your organization's Glean knowledge graph and the tools y
 This is different from the public [Docs MCP Server](/docs-mcp), which gives a coding assistant access to Glean developer documentation. Use the Remote MCP Server for your organization's indexed knowledge and configured tools.
 :::
 
+<VideoCallout id="mcp-overview" />
+
 ## Connect a host
 
 Glean enables the OAuth Authorization Server and Remote MCP Server by default for eligible tenants. Administrators can disable MCP or hide the end-user Configurator. If the Configurator is unavailable, ask an administrator to confirm that at least one MCP server is enabled and that the Configurator is visible.
@@ -64,7 +66,7 @@ In a new conversation, an explicit request such as "Search Glean for our enginee
 
   <Step id="sign-in" title="Sign in with OAuth" needs="user" symptoms="dcr-rejected sign-in-fails">
 
-    Complete the host's OAuth sign-in flow with your organization's SSO when prompted. Use a Glean-issued API token only when the host cannot complete OAuth. See [How sign-in works](#how-sign-in-works).
+    Complete the host's OAuth flow in your browser: sign in with your organization's SSO if prompted, then grant the host access. Use a Glean-issued API token only when the host cannot complete OAuth. See [How sign-in works](#how-sign-in-works).
 
     <Check>
 
@@ -93,11 +95,15 @@ If the server is connected but tools do not load, or a verification request fail
 
 ## How sign-in works
 
+The host opens Glean's OAuth flow in your browser. If you're already signed in to Glean there, Glean knows who you are and there's nothing to enter; otherwise, sign in with your organization's SSO. The first time a host connects, Glean then asks you to grant it access. SSO establishes who you are; the OAuth grant is what lets the host act for you, with only your Glean access.
+
 Dynamic Client Registration (DCR) is the usual path for MCP hosts. A tenant can allow any DCR-capable application, restrict registration to approved applications, or turn DCR off. Glean provisions new and previously unconfigured default-on MCP tenants with the Glean-managed list of approved applications; tenants with existing MCP or OAuth configuration keep their settings. If DCR is disabled, your tenant does not allow the host to register, or the host needs scopes DCR does not grant, an administrator can register a [static OAuth client](https://docs.glean.com/administration/oauth/static-client-registration). See [OAuth authentication](/api-info/client/authentication/oauth) for the DCR versus static model.
 
 Use a Glean-issued API token only when the host cannot complete OAuth. Do not assign API Token Creator in bulk as an MCP rollout.
 
 ## Install individually or manage centrally
+
+<VideoCallout id="mcp-connect" />
 
 <CardGroup cols={2}>
   <Card title="Individual installation" icon="User" href="https://docs.glean.com/user-guide/mcp/end-user-configuration">

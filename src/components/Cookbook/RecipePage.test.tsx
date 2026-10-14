@@ -102,8 +102,9 @@ beforeEach(() => {
 });
 
 describe('RecipePage preview gate', () => {
-  it('renders a generic unavailable state without an exact recipe flag', async () => {
-    routerState.location.search = '?ff_recipe=preview-searc';
+  it('renders a generic unavailable state without the preview flag', async () => {
+    // The old per-recipe parameter no longer unlocks anything.
+    routerState.location.search = '?ff_recipe=preview-search';
 
     render(
       <RecipePage recipeId="preview-search">
@@ -133,9 +134,8 @@ describe('RecipePage preview gate', () => {
     ).toHaveAttribute('content', 'The page you requested could not be found.');
   });
 
-  it('unlocks an exact repeated flag and ends hydration with the recipe title', async () => {
-    routerState.location.search =
-      '?ff_recipe=another-recipe&ff_recipe=preview-search';
+  it('unlocks with the preview-content flag and ends hydration with the recipe title', async () => {
+    routerState.location.search = '?ff_preview-content=true';
 
     render(
       <RecipePage recipeId="preview-search">
@@ -156,7 +156,7 @@ describe('RecipePage preview gate', () => {
   // <meta> content is plain text, so a backtick or ** there reaches search
   // results and link previews as literal characters instead of formatting.
   it('strips code and bold marks from the description meta tags', async () => {
-    routerState.location.search = '?ff_recipe=preview-search';
+    routerState.location.search = '?ff_preview-content=true';
 
     render(
       <RecipePage recipeId="preview-search">
@@ -176,7 +176,7 @@ describe('RecipePage preview gate', () => {
     }
   });
   it('places the recipe in its collection path, including an unlocked preview', async () => {
-    routerState.location.search = '?ff_recipe=preview-search';
+    routerState.location.search = '?ff_preview-content=true';
 
     render(
       <RecipePage recipeId="preview-search">

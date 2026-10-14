@@ -6,6 +6,7 @@ import Frame from '@theme/Frame';
 import { Icon } from '@theme/Icons';
 import FeatureFlag from '@site/src/components/FeatureFlag';
 import BeakerIcon from '@site/src/components/BeakerIcon';
+import { VideoCallout } from '@site/src/components/Videos/VideoEmbeds';
 
 export default {
   ...MDXComponents,
@@ -17,4 +18,5 @@ export default {
   Icon,
   FeatureFlag,
   BeakerIcon,
+  VideoCallout,
 };
