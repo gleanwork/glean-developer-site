@@ -90,33 +90,6 @@ const baseSidebars: SidebarsConfig = {
       items: [
         {
           type: 'category',
-          label: 'Cookbook',
-          customProps: {
-            icon: 'BookOpen',
-            iconSet: 'feather',
-          },
-          link: {
-            type: 'doc',
-            id: 'cookbook/index',
-          },
-          // Generated from the compiled recipe registry so this list can
-          // never drift from the real set of recipe pages. Collapsed by
-          // default like its sibling categories below; auto-expands to show
-          // siblings when you're on a recipe page, same as Chat/Search/
-          // Agents/etc. Recipe .mdx files carry no frontmatter (metadata
-          // lives in the registry), so the short sidebar label is set
-          // explicitly here rather than relying on Docusaurus's own
-          // `sidebar_label` frontmatter fallback.
-          items: recipesData.recipes
-            .filter((recipe) => recipe.visibility !== 'preview')
-            .map((recipe) => ({
-              type: 'doc' as const,
-              id: `cookbook/${recipe.id}`,
-              label: recipe.sidebarLabel ?? recipe.title,
-            })),
-        },
-        {
-          type: 'category',
           label: 'Search',
           customProps: {
             icon: 'Search',
