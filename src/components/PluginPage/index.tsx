@@ -30,6 +30,8 @@ type PluginPageProps = {
   whatsIncluded?: React.ReactNode;
   /** Render the shared "Why the plugin" section (write approvals on older MCP hosts). */
   writeApprovals?: boolean;
+  /** Optional video callout rendered above Installation. */
+  video?: React.ReactNode;
   /** Optional content rendered below the numbered steps, under its own section label. */
   afterSteps?: React.ReactNode;
   /** Section label shown above afterSteps content. Defaults to "Configuration". */
@@ -92,6 +94,7 @@ export default function PluginPage({
   mono = false,
   whatsIncluded,
   writeApprovals = false,
+  video,
   afterSteps,
   afterStepsLabel,
   title,
@@ -144,6 +147,8 @@ export default function PluginPage({
           </p>
         </>
       ) : null}
+
+      {video}
 
       <div className={styles.sectionLabel}>Installation</div>
       <div className={styles.stepsWrap}>

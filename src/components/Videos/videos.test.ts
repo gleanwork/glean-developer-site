@@ -17,6 +17,10 @@ import {
 
 const root = path.resolve(__dirname, '../../..');
 
+// Admin features (MCP Gateway, agents as MCP tools) are documented on the
+// Help Center, not here. Their videos link out and live in the gallery.
+const HELP_CENTER = /^https:\/\/docs\.glean\.com\//;
+
 function docFile(docId: string): string | undefined {
   return ['.mdx', '.md']
     .map((ext) => path.join(root, 'docs', `${docId}${ext}`))
@@ -61,6 +65,7 @@ describe('videos registry', () => {
 
   it('attaches public videos to a page on this site', () => {
     for (const video of ALL_VIDEOS.filter((v) => v.visibility === 'public')) {
+      if (HELP_CENTER.test(video.related.doc)) continue; // next test
       expect(
         video.related.docId,
         `${video.id} needs an attach page`,
@@ -69,8 +74,18 @@ describe('videos registry', () => {
     }
   });
 
+  it('lists public Help Center videos in the gallery', () => {
+    for (const video of ALL_VIDEOS.filter(
+      (v) => v.visibility === 'public' && HELP_CENTER.test(v.related.doc),
+    )) {
+      expect(video.related.docId, video.id).toBeUndefined();
+      expect(galleryVideos(false), video.id).toContain(video);
+    }
+  });
+
   it('embeds each public video on the page it attaches to', () => {
     for (const video of ALL_VIDEOS.filter((v) => v.visibility === 'public')) {
+      if (HELP_CENTER.test(video.related.doc)) continue; // gallery only
       const docId = video.related.docId ?? '';
       if (docId.startsWith('cookbook/')) continue; // recipe banner, by registry
       if (docId === 'libraries/indexing-sdk/index') continue; // VideoCta in the hero
