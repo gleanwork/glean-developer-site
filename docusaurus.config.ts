@@ -130,10 +130,8 @@ const config: Config = {
         const bools = flagsSnapshotToBooleans(raw, {});
         return getNavbarItems(items, bools);
       })([
-        {
-          type: 'custom-mcpInstallButton',
-          position: 'right',
-        },
+        // Right-side order: outbound links, search, the Docs MCP action.
+        // Docusaurus adds the color mode toggle after these items.
         {
           label: 'More from Glean',
           position: 'right',
@@ -174,6 +172,14 @@ const config: Config = {
                 'navbar-dropdown-with-icon navbar-dropdown-icon-status',
             },
           ],
+        },
+        {
+          type: 'search',
+          position: 'right',
+        },
+        {
+          type: 'custom-mcpInstallButton',
+          position: 'right',
         },
       ]),
     },
