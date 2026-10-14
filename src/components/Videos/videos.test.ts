@@ -8,7 +8,9 @@ import {
   VIDEO_TRACKS,
   findVideo,
   formatDuration,
+  gallerySections,
   galleryVideos,
+  MORE_VIDEOS_ID,
   isVideoAvailable,
   seriesLength,
   spokenDuration,
@@ -162,5 +164,90 @@ describe('video helpers', () => {
   it('counts unlisted episodes in the series length', () => {
     const episode = ALL_VIDEOS.find((v) => v.series?.id === 'platform-apis');
     expect(episode && seriesLength(episode)).toBe(7);
+  });
+});
+
+describe('gallery sections', () => {
+  const base = ALL_VIDEOS[0];
+  const video = (
+    id: string,
+    track: string,
+    type: (typeof base)['type'] = 'walkthrough',
+  ) => ({
+    ...base,
+    id,
+    track,
+    type,
+    series: undefined,
+  });
+  const tracks = ['big', 'one', 'two', 'three'].map((id) => ({
+    id,
+    label: `Track ${id}`,
+    description: `About ${id}.`,
+  }));
+  const big = [video('b1', 'big'), video('b2', 'big', 'explainer')];
+  const ids = (sections: ReturnType<typeof gallerySections>) =>
+    sections.map((s) => [s.id, s.shown.map((v) => v.id)]);
+
+  it('puts one-video tracks in a shared section at the end', () => {
+    const videos = [...big, video('o1', 'one'), video('t1', 'two')];
+    const sections = gallerySections(tracks, videos, videos, true);
+    expect(ids(sections)).toEqual([
+      ['big', ['b1', 'b2']],
+      [MORE_VIDEOS_ID, ['o1', 't1']],
+    ]);
+    const more = sections[1];
+    expect(more.anchors).toEqual(['one', 'two']);
+    expect(more.mixed).toBe(true);
+    expect(more.description).toBe('About one. About two.');
+    expect(sections[0].mixed).toBe(false);
+  });
+
+  it('leaves a lone one-video track in its own section', () => {
+    const videos = [...big, video('o1', 'one')];
+    expect(ids(gallerySections(tracks, videos, videos, true))).toEqual([
+      ['big', ['b1', 'b2']],
+      ['one', ['o1']],
+    ]);
+  });
+
+  it('gives a track its own section once it lists a second video', () => {
+    const videos = [
+      ...big,
+      video('o1', 'one'),
+      video('o2', 'one'),
+      video('t1', 'two'),
+      video('h1', 'three'),
+    ];
+    expect(ids(gallerySections(tracks, videos, videos, true))).toEqual([
+      ['big', ['b1', 'b2']],
+      ['one', ['o1', 'o2']],
+      [MORE_VIDEOS_ID, ['t1', 'h1']],
+    ]);
+  });
+
+  it('does not regroup when a filter leaves one video in a big track', () => {
+    const videos = [...big, video('o1', 'one'), video('t1', 'two')];
+    const visible = videos.filter((v) => v.type === 'explainer');
+    expect(ids(gallerySections(tracks, videos, visible, true))).toEqual([
+      ['big', ['b2']],
+    ]);
+  });
+
+  it('keeps every track separate when grouping is off', () => {
+    const videos = [...big, video('o1', 'one'), video('t1', 'two')];
+    const sections = gallerySections(tracks, videos, videos, false);
+    expect(sections.map((s) => s.id)).toEqual(['big', 'one', 'two']);
+  });
+
+  it('groups Embed Glean and Connect your data in the current gallery', () => {
+    const videos = galleryVideos(false);
+    const sections = gallerySections(VIDEO_TRACKS, videos, videos, true);
+    expect(sections.map((s) => s.id)).toEqual([
+      'platform-apis',
+      'mcp',
+      MORE_VIDEOS_ID,
+    ]);
+    expect(sections.at(-1)?.anchors).toEqual(['embed', 'connect-data']);
   });
 });

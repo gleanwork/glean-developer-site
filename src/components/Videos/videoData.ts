@@ -115,6 +115,78 @@ export function totalRuntime(videos: readonly VideoRecord[]): string {
   return `${Math.max(1, Math.round(total / 60))} min`;
 }
 
+export const MORE_VIDEOS_ID = 'more-videos';
+
+/** One section of the /videos gallery. */
+export interface GallerySection {
+  id: string;
+  label: string;
+  description: string;
+  /** Every listed video in the section, for its count and runtime. */
+  all: VideoRecord[];
+  /** The videos left after the type filter, in series order. */
+  shown: VideoRecord[];
+  /** Track ids whose `#anchor` lands on this section. */
+  anchors: string[];
+  /** Videos from several tracks share this section, so cards name their track. */
+  mixed: boolean;
+}
+
+function bySeriesPosition(a: VideoRecord, b: VideoRecord): number {
+  if (a.series && b.series && a.series.id === b.series.id) {
+    return a.series.position - b.series.position;
+  }
+  return 0;
+}
+
+/**
+ * The gallery's sections, one per track. When `groupSmall` is set and two or
+ * more tracks list a single video, those videos share one "More videos"
+ * section at the end instead of a heading each. A track gets its own section
+ * back as soon as it lists a second video. Whether a track is small depends on
+ * `videos` (everything listed), not `visible`, so filtering doesn't regroup.
+ */
+export function gallerySections(
+  tracks: readonly VideoTrack[],
+  videos: readonly VideoRecord[],
+  visible: readonly VideoRecord[],
+  groupSmall: boolean,
+): GallerySection[] {
+  const perTrack = tracks
+    .map((track) => ({
+      track,
+      all: videos.filter((v) => v.track === track.id),
+      shown: visible.filter((v) => v.track === track.id).sort(bySeriesPosition),
+    }))
+    .filter(({ all }) => all.length > 0);
+  const small = perTrack.filter(({ all }) => all.length === 1);
+  const grouped = groupSmall && small.length >= 2 ? small : [];
+
+  const sections: GallerySection[] = perTrack
+    .filter((entry) => !grouped.includes(entry))
+    .map(({ track, all, shown }) => ({
+      id: track.id,
+      label: track.label,
+      description: track.description,
+      all,
+      shown,
+      anchors: [track.id],
+      mixed: false,
+    }));
+  if (grouped.length > 0) {
+    sections.push({
+      id: MORE_VIDEOS_ID,
+      label: 'More videos',
+      description: grouped.map(({ track }) => track.description).join(' '),
+      all: grouped.flatMap(({ all }) => all),
+      shown: grouped.flatMap(({ shown }) => shown),
+      anchors: grouped.map(({ track }) => track.id),
+      mixed: true,
+    });
+  }
+  return sections.filter(({ shown }) => shown.length > 0);
+}
+
 export function formatUpdated(iso: string): string {
   const [year, month] = iso.split('-').map(Number);
   return new Date(Date.UTC(year, month - 1, 15)).toLocaleDateString('en-US', {

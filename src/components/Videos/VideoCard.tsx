@@ -9,6 +9,8 @@ import styles from './Videos.module.css';
 interface VideoCardProps {
   video: VideoRecord;
   onPlay: (video: VideoRecord) => void;
+  /** Shown as a tag when the card sits in a section that mixes tracks. */
+  trackLabel?: string;
 }
 
 /**
@@ -21,14 +23,18 @@ interface VideoCardProps {
 export default function VideoCard({
   video,
   onPlay,
+  trackLabel,
 }: VideoCardProps): React.ReactElement {
   const series = seriesLabel(video);
   return (
     <article className={styles.card}>
       <VideoPoster decorative onPlay={() => onPlay(video)} video={video} />
       <div className={styles.cardBody}>
-        {series || videoStage(video) === 'experimental' ? (
+        {trackLabel || series || videoStage(video) === 'experimental' ? (
           <div className={styles.cardTags}>
+            {trackLabel ? (
+              <span className={styles.position}>{trackLabel}</span>
+            ) : null}
             {series ? <span className={styles.position}>{series}</span> : null}
             {videoStage(video) === 'experimental' ? (
               <ExperimentalBadge />

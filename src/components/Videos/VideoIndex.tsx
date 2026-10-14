@@ -21,6 +21,7 @@ import {
 } from './VideoPlayer';
 import {
   formatDuration,
+  gallerySections,
   galleryVideos,
   totalRuntime,
   VIDEO_TRACKS,
@@ -35,13 +36,6 @@ function validFilter(
   available: readonly string[],
 ): Filter {
   return value && available.includes(value) ? value : 'all';
-}
-
-function sortVideos(a: VideoRecord, b: VideoRecord): number {
-  if (a.series && b.series && a.series.id === b.series.id) {
-    return a.series.position - b.series.position;
-  }
-  return 0;
 }
 
 /**
@@ -149,14 +143,19 @@ export default function VideoIndex(): React.ReactElement {
       (activeTrack === 'all' || v.track === activeTrack) &&
       (activeType === 'all' || v.type === activeType),
   );
-  const sections = tracks
-    .map((track) => ({
-      track,
-      all: videos.filter((v) => v.track === track.id),
-      shown: visible.filter((v) => v.track === track.id).sort(sortVideos),
-    }))
-    .filter(({ shown }) => shown.length > 0);
-  for (const { track } of sections) brokenLinks.collectAnchor(track.id);
+  // One-video tracks share a "More videos" section, except when the reader
+  // picked a track.
+  const sections = gallerySections(
+    tracks,
+    videos,
+    visible,
+    activeTrack === 'all',
+  );
+  for (const section of sections) {
+    brokenLinks.collectAnchor(section.id);
+    for (const anchor of section.anchors) brokenLinks.collectAnchor(anchor);
+  }
+  const trackLabels = new Map(tracks.map((t) => [t.id, t.label]));
 
   const featured = [...videos]
     .filter((v) => v.featured !== undefined)
@@ -260,27 +259,43 @@ export default function VideoIndex(): React.ReactElement {
 
           {count > 0 ? (
             <div className={indexStyles.sections}>
-              {sections.map(({ track, all, shown }) => (
+              {sections.map((section) => (
                 <section
-                  aria-labelledby={`track-${track.id}`}
+                  aria-labelledby={`track-${section.id}`}
                   className={indexStyles.recipeSection}
-                  id={track.id}
-                  key={track.id}
+                  id={section.id}
+                  key={section.id}
                 >
+                  {/* Keep #<track> links working while a track is grouped. */}
+                  {section.anchors
+                    .filter((anchor) => anchor !== section.id)
+                    .map((anchor) => (
+                      <span id={anchor} key={anchor} />
+                    ))}
                   <div className={indexStyles.sectionHeading}>
-                    <h2 id={`track-${track.id}`}>{track.label}</h2>
+                    <h2 id={`track-${section.id}`}>{section.label}</h2>
                     <span className={indexStyles.sectionRule} />
                     <span className={indexStyles.sectionMeta}>
-                      {all.length} video{all.length === 1 ? '' : 's'} ·{' '}
-                      {totalRuntime(all)}
+                      {section.all.length} video
+                      {section.all.length === 1 ? '' : 's'} ·{' '}
+                      {totalRuntime(section.all)}
                     </span>
                   </div>
                   <p className={indexStyles.sectionDescription}>
-                    {track.description}
+                    {section.description}
                   </p>
                   <div className={styles.grid}>
-                    {shown.map((video) => (
-                      <VideoCard key={video.id} onPlay={open} video={video} />
+                    {section.shown.map((video) => (
+                      <VideoCard
+                        key={video.id}
+                        onPlay={open}
+                        trackLabel={
+                          section.mixed
+                            ? trackLabels.get(video.track)
+                            : undefined
+                        }
+                        video={video}
+                      />
                     ))}
                   </div>
                 </section>
