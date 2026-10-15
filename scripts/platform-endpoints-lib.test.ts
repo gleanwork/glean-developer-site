@@ -150,7 +150,8 @@ describe('src/data/platform-endpoints.json', () => {
       const source = fs.readFileSync(page, 'utf8');
       expect(
         source.includes('<ApiOverview') &&
-          source.includes(`apiFamily="${key}"`),
+          source.includes(`apiFamily="${key}"`) &&
+          source.includes('apiType="platform-api"'),
         `${file} must render <ApiOverview apiFamily="${key}" apiType="platform-api" />. ${howTo}`,
       ).toBe(true);
     }
