@@ -24,6 +24,11 @@ describe('getPlatformStatuses', () => {
       { label: 'Agents', stage: 'ga' },
       { label: 'Skills', stage: 'experimental' },
       { label: 'Triggers', stage: 'experimental' },
+      { label: 'Usage', stage: 'ga' },
+      { label: 'Users', stage: 'ga' },
+      { label: 'Departments', stage: 'ga' },
+      { label: 'IdP Groups', stage: 'ga' },
+      { label: 'Admin', stage: 'ga' },
     ]);
   });
 

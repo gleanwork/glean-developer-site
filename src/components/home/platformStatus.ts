@@ -29,6 +29,14 @@ export const PLATFORM_CAPABILITIES: PlatformCapability[] = [
     label: 'Triggers',
     docPrefixes: ['platform-triggers', 'platform-trigger-presets'],
   },
+  {
+    label: 'Usage',
+    docPrefixes: ['platform-usage', 'platform-admin-usage'],
+  },
+  { label: 'Users', docPrefixes: ['platform-users'] },
+  { label: 'Departments', docPrefixes: ['platform-departments'] },
+  { label: 'IdP Groups', docPrefixes: ['platform-admin-idp-groups'] },
+  { label: 'Admin', docPrefixes: ['platform-admin-agents'] },
 ];
 
 export function belongsToCapability(
