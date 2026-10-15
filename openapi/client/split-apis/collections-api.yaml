@@ -2,11 +2,11 @@ openapi: 3.0.0
 info:
   version: 0.9.0
   title: Glean API - Collections
-  x-source-commit-sha: beed58d4df1a2fdf3f13a0c721f9478e75ccde7c
+  x-source-commit-sha: 564a081fbf328cb3d28389aedb282957e8ad024e
   description: API endpoints for Collections
   x-logo:
     url: https://app.glean.com/images/glean-text2.svg
-  x-open-api-commit-sha: 4fb4b1c1b26732bca168a8e8338a19d217b2901c
+  x-open-api-commit-sha: b6e6add1c3464d7e49231576986d440310e39131
   x-speakeasy-name: Glean API
 servers:
   - url: '{serverUrl}'
@@ -4377,19 +4377,6 @@ components:
         documentId:
           type: string
           description: The (optional) Glean Document ID of the CollectionItem to remove from this Collection if this is an indexed document.
-    ListCollectionsRequest:
-      properties:
-        includeAudience:
-          type: boolean
-          description: Whether to include the audience filters with the listed Collections.
-        includeRoles:
-          type: boolean
-          description: Whether to include the editor roles with the listed Collections.
-        allowedDatasource:
-          type: string
-          description: |-
-            The datasource type this Collection can hold.
-            ANSWERS - for Collections representing answer boards
     GetCollectionRequest:
       required:
         - id
@@ -4406,6 +4393,22 @@ components:
         allowedDatasource:
           type: string
           description: The datasource allowed in the Collection returned.
+    ListCollectionsRequest:
+      properties:
+        query:
+          type: string
+          description: Case-insensitive substring search on collection names. Leading and trailing whitespace is ignored. An empty query does not filter collections.
+        includeAudience:
+          type: boolean
+          description: Whether to include the audience filters with the listed Collections.
+        includeRoles:
+          type: boolean
+          description: Whether to include the editor roles with the listed Collections.
+        allowedDatasource:
+          type: string
+          description: |-
+            The datasource type this Collection can hold.
+            ANSWERS - for Collections representing answer boards
     UgcType:
       enum:
         - AGENT_TYPE
@@ -4557,8 +4560,8 @@ components:
               introduced: '2026-02-05'
               kind: property
               message: Use permissions instead
-              removal: '2026-10-15'
-          x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2026-10-15: Use permissions instead'
+              removal: '2027-01-15'
+          x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2027-01-15: Use permissions instead'
         lastViewedTime:
           type: string
           format: date-time
@@ -4607,8 +4610,8 @@ components:
             id: 75a48c79-b36a-4171-a0a0-4af7189da66e
             introduced: '2026-02-05'
             message: Use relationType instead
-            removal: '2026-10-15'
-          x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2026-10-15: Use relationType instead'
+            removal: '2027-01-15'
+          x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2027-01-15: Use relationType instead'
     PersonDistance:
       required:
         - name
@@ -4640,21 +4643,6 @@ components:
         name: Google
         logo: https://app.glean.com/images/feather/globe.svg
         searchLinkUrlTemplate: https://www.google.com/search?q={query}&hl=en
-    SocialNetwork:
-      required:
-        - name
-        - profileUrl
-      properties:
-        name:
-          type: string
-          description: Possible values are "twitter", "linkedin".
-        profileName:
-          type: string
-          description: Human-readable profile name.
-        profileUrl:
-          type: string
-          format: url
-          description: Link to profile.
     TeamEmail:
       properties:
         email:
@@ -4672,6 +4660,25 @@ components:
         isUserGenerated:
           type: boolean
           description: true iff the email was manually added by a user from within Glean (aka not from the original data source)
+    SocialNetwork:
+      required:
+        - name
+        - profileUrl
+      properties:
+        name:
+          type: string
+          description: Possible values are "twitter", "linkedin".
+        profileName:
+          type: string
+          description: Human-readable profile name.
+        profileUrl:
+          type: string
+          format: url
+          description: Link to profile.
+        iconUrl:
+          type: string
+          format: url
+          description: URL of the icon to display for this social network, when available.
     DatasourceProfile:
       required:
         - datasource
@@ -5910,9 +5917,9 @@ components:
             id: e55ddf30-7c47-43a5-b775-d78f8b29411a
             introduced: '2026-02-05'
             message: Use 'text' field instead
-            removal: '2026-10-15'
+            removal: '2027-01-15'
           x-includeEmpty: true
-          x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2026-10-15: Use ''text'' field instead'
+          x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2027-01-15: Use ''text'' field instead'
         snippetTextOrdering:
           description: Used for sorting based off the snippet's location within all_snippetable_text
           type: integer
@@ -6343,8 +6350,8 @@ components:
             id: cd754845-6eec-480f-b395-c93478aff563
             introduced: '2026-02-05'
             message: Use reacts instead
-            removal: '2026-10-15'
-          x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2026-10-15: Use reacts instead'
+            removal: '2027-01-15'
+          x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2027-01-15: Use reacts instead'
           items:
             type: string
         reacts:
@@ -6650,8 +6657,8 @@ components:
             id: 3729bc64-8859-4159-b93c-ce2d5f0e7304
             introduced: '2026-02-05'
             message: Answer Boards no longer supported
-            removal: '2026-10-15'
-          x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2026-10-15: Answer Boards no longer supported'
+            removal: '2027-01-15'
+          x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2027-01-15: Answer Boards no longer supported'
         bodyText:
           description: The plain text answer to the question.
           example: From https://en.wikipedia.org/wiki/Diffuse_sky_radiation, the sky is blue because blue light is more strongly scattered than longer-wavelength light.
@@ -7505,8 +7512,8 @@ components:
                       id: 68de0429-b0cc-4b40-8061-f848788079a2
                       introduced: '2026-02-05'
                       message: Field is deprecated
-                      removal: '2026-10-15'
-                    x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2026-10-15: Field is deprecated'
+                      removal: '2027-01-15'
+                    x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2027-01-15: Field is deprecated'
                     items: &ref_87
                       type: object
                       properties:
@@ -7677,8 +7684,8 @@ components:
             id: 2dc3f572-cded-483d-af07-fc9fc7fd0ae4
             introduced: '2026-02-05'
             message: Use ChannelInviteInfo instead
-            removal: '2026-10-15'
-          x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2026-10-15: Use ChannelInviteInfo instead'
+            removal: '2027-01-15'
+          x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2027-01-15: Use ChannelInviteInfo instead'
         inviter: *ref_63
         invites:
           description: Latest invites received by the user for each channel
@@ -7709,8 +7716,8 @@ components:
             id: d02d58cf-eb90-45d0-ab90-f7a9d707ae3c
             introduced: '2026-02-05'
             message: Use ChannelInviteInfo instead
-            removal: '2026-10-15'
-          x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2026-10-15: Use ChannelInviteInfo instead'
+            removal: '2027-01-15'
+          x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2027-01-15: Use ChannelInviteInfo instead'
         signUpTime:
           description: The time this person signed up in ISO format (ISO 8601).
           format: date-time
@@ -7916,7 +7923,7 @@ components:
                   format: date-time
                   type: string
                   x-glean-deprecated: *ref_75
-                  x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2026-10-15: Use ChannelInviteInfo instead'
+                  x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2027-01-15: Use ChannelInviteInfo instead'
                 inviter: *ref_11
                 invites:
                   description: Latest invites received by the user for each channel
@@ -7933,7 +7940,7 @@ components:
                   format: date-time
                   type: string
                   x-glean-deprecated: *ref_76
-                  x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2026-10-15: Use ChannelInviteInfo instead'
+                  x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2027-01-15: Use ChannelInviteInfo instead'
                 signUpTime:
                   description: The time this person signed up in ISO format (ISO 8601).
                   format: date-time
@@ -8066,7 +8073,7 @@ components:
                 description: A truncated list of documents with this relation. TO BE DEPRECATED.
                 type: array
                 x-glean-deprecated: *ref_78
-                x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2026-10-15: Field is deprecated'
+                x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2027-01-15: Field is deprecated'
                 items:
                   type: object
                   properties:
@@ -8156,7 +8163,7 @@ components:
           description: A truncated list of documents with this relation. TO BE DEPRECATED.
           type: array
           x-glean-deprecated: *ref_78
-          x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2026-10-15: Field is deprecated'
+          x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2027-01-15: Field is deprecated'
           items: &ref_172
             properties:
               connectorType: *ref_25
@@ -9335,7 +9342,7 @@ components:
                   description: To be deprecated in favor of reacts. A (potentially non-exhaustive) list of reactions for the document.
                   type: array
                   x-glean-deprecated: *ref_124
-                  x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2026-10-15: Use reacts instead'
+                  x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2027-01-15: Use reacts instead'
                   items:
                     type: string
                 reacts:
@@ -9863,7 +9870,7 @@ components:
                     type: string
                     x-glean-deprecated: *ref_143
                     x-includeEmpty: true
-                    x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2026-10-15: Use ''text'' field instead'
+                    x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2027-01-15: Use ''text'' field instead'
                   snippetTextOrdering:
                     description: Used for sorting based off the snippet's location within all_snippetable_text
                     type: integer
@@ -10048,7 +10055,7 @@ components:
               format: date-time
               type: string
               x-glean-deprecated: *ref_75
-              x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2026-10-15: Use ChannelInviteInfo instead'
+              x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2027-01-15: Use ChannelInviteInfo instead'
             inviter: *ref_28
             invites:
               description: Latest invites received by the user for each channel
@@ -10076,7 +10083,7 @@ components:
               format: date-time
               type: string
               x-glean-deprecated: *ref_76
-              x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2026-10-15: Use ChannelInviteInfo instead'
+              x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2027-01-15: Use ChannelInviteInfo instead'
             signUpTime:
               description: The time this person signed up in ISO format (ISO 8601).
               format: date-time
@@ -10225,7 +10232,7 @@ components:
           description: The parent board ID of this Answer, or 0 if it's a floating Answer. Adding Answers to Answer Boards is no longer permitted.
           type: integer
           x-glean-deprecated: *ref_147
-          x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2026-10-15: Answer Boards no longer supported'
+          x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2027-01-15: Answer Boards no longer supported'
         bodyText:
           description: The plain text answer to the question.
           example: From https://en.wikipedia.org/wiki/Diffuse_sky_radiation, the sky is blue because blue light is more strongly scattered than longer-wavelength light.
@@ -10606,7 +10613,7 @@ components:
                 description: A truncated list of documents with this relation. TO BE DEPRECATED.
                 type: array
                 x-glean-deprecated: *ref_78
-                x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2026-10-15: Field is deprecated'
+                x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2027-01-15: Field is deprecated'
                 items: *ref_163
               querySuggestion: *ref_164
               relation:
@@ -10640,7 +10647,7 @@ components:
                 type: string
                 x-glean-deprecated: *ref_143
                 x-includeEmpty: true
-                x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2026-10-15: Use ''text'' field instead'
+                x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2027-01-15: Use ''text'' field instead'
               snippetTextOrdering:
                 description: Used for sorting based off the snippet's location within all_snippetable_text
                 type: integer
@@ -10674,7 +10681,7 @@ components:
               description: The parent board ID of this Answer, or 0 if it's a floating Answer. Adding Answers to Answer Boards is no longer permitted.
               type: integer
               x-glean-deprecated: *ref_147
-              x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2026-10-15: Answer Boards no longer supported'
+              x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2027-01-15: Answer Boards no longer supported'
             bodyText:
               description: The plain text answer to the question.
               example: From https://en.wikipedia.org/wiki/Diffuse_sky_radiation, the sky is blue because blue light is more strongly scattered than longer-wavelength light.
@@ -11247,7 +11254,7 @@ components:
                 type: string
                 x-glean-deprecated: *ref_143
                 x-includeEmpty: true
-                x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2026-10-15: Use ''text'' field instead'
+                x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2027-01-15: Use ''text'' field instead'
               snippetTextOrdering:
                 description: Used for sorting based off the snippet's location within all_snippetable_text
                 type: integer
@@ -11458,7 +11465,7 @@ components:
               description: To be deprecated in favor of reacts. A (potentially non-exhaustive) list of reactions for the document.
               type: array
               x-glean-deprecated: *ref_124
-              x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2026-10-15: Use reacts instead'
+              x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2027-01-15: Use reacts instead'
               items:
                 type: string
             reacts:
