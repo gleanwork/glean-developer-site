@@ -2,20 +2,36 @@
 title: Chat API Overview
 ---
 
+import ApiOverview from '@site/src/components/ApiOverview';
+
 # Platform Chat API
 
-The Platform Chat API creates chat responses for applications that want to use Glean's knowledge and AI capabilities through the modern Platform API surface.
+<ApiOverview
+  title="Chat API"
+  description="The Platform Chat API creates chat responses for applications that want to use Glean's knowledge and AI capabilities through the modern Platform API surface."
+  apiFamily="chat"
+  apiType="platform-api"
+  useCases={[
+    {
+      title: 'Grounded Answers',
+      description:
+        'Send a user request and receive a response grounded in your Glean instance.',
+      icon: 'chat',
+      iconSet: 'glean',
+    },
+    {
+      title: 'Streaming Responses',
+      description:
+        'Receive the response as server-sent events so your application can render it as it arrives.',
+      icon: 'Zap',
+    },
+  ]}
+/>
 
 <VideoCallout id="platform-chat" />
 
-<CardGroup cols={2}>
-  <Card title="Create a chat response" icon="chat" iconSet="glean" href="/api/platform-api/platform-chat-create">
-    Send a user request and receive a response grounded in your Glean instance.
-  </Card>
+The default response is JSON. To stream, set `stream` to `true` in the JSON body. An `Accept: text/event-stream` header does not replace `stream`.
 
-  <Card title="Platform API authentication" icon="Shield" href="/api/platform-api/authentication">
-    Configure the bearer credential used by Platform API requests.
-  </Card>
-</CardGroup>
+Configure the bearer credential with the [Platform API authentication guide](/api/platform-api/authentication).
 
-See the [Create a chat response reference](/api/platform-api/platform-chat-create) for the request and response schema.
+For error responses, see [Platform API Errors](/errors) for the shared ProblemDetail code reference and remediation guidance.
