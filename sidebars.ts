@@ -784,6 +784,46 @@ const baseSidebars: SidebarsConfig = {
           items: [
             {
               type: 'category',
+              label: 'Admin',
+              description:
+                'List workspace agents and identity provider groups as an administrator.',
+              customProps: {
+                icon: 'Settings',
+                iconSet: 'feather',
+              },
+              items: [
+                {
+                  type: 'category',
+                  label: 'Agents',
+                  items: [
+                    {
+                      type: 'doc',
+                      id: 'api/platform-api/platform-admin-agents-list',
+                      label: 'List',
+                      className: 'api-method get',
+                    },
+                  ],
+                },
+                {
+                  type: 'category',
+                  label: 'IdP Groups',
+                  link: {
+                    type: 'doc',
+                    id: 'api/platform-api/idp-groups-overview',
+                  },
+                  items: [
+                    {
+                      type: 'doc',
+                      id: 'api/platform-api/platform-admin-idp-groups-list',
+                      label: 'List',
+                      className: 'api-method get',
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              type: 'category',
               label: 'Agents',
               description:
                 'Discover available agents, inspect their schemas, and create agent runs.',
@@ -838,12 +878,6 @@ const baseSidebars: SidebarsConfig = {
                   label: 'Respond to agent run approvals',
                   className: 'api-method post',
                 },
-                {
-                  type: 'doc',
-                  id: 'api/platform-api/platform-admin-agents-list',
-                  label: 'List all agents',
-                  className: 'api-method get',
-                },
               ],
             },
             {
@@ -893,28 +927,6 @@ const baseSidebars: SidebarsConfig = {
                   type: 'doc',
                   id: 'api/platform-api/platform-departments-list',
                   label: 'List departments',
-                  className: 'api-method get',
-                },
-              ],
-            },
-            {
-              type: 'category',
-              label: 'IdP Groups',
-              description:
-                'List the identity provider groups that Glean loads from the directory.',
-              customProps: {
-                icon: 'Users',
-                iconSet: 'feather',
-              },
-              link: {
-                type: 'doc',
-                id: 'api/platform-api/idp-groups-overview',
-              },
-              items: [
-                {
-                  type: 'doc',
-                  id: 'api/platform-api/platform-admin-idp-groups-list',
-                  label: 'List IdP groups',
                   className: 'api-method get',
                 },
               ],

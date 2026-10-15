@@ -27,7 +27,6 @@ describe('getPlatformStatuses', () => {
       { label: 'Usage', stage: 'ga' },
       { label: 'Users', stage: 'ga' },
       { label: 'Departments', stage: 'ga' },
-      { label: 'IdP Groups', stage: 'ga' },
       { label: 'Admin', stage: 'ga' },
     ]);
   });
