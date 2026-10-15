@@ -1,0 +1,20 @@
+---
+title: Usage API Overview
+---
+
+# Usage API
+
+The Platform Usage API lets billing administrators configure and inspect usage limits, and lets users and agent editors check their headroom and request more.
+
+- **Usage settings** read the workspace-wide usage policy that Billing uses.
+- **Usage limits** list, create or replace, reset, and batch-apply limits for the organization, users, IdP groups, departments, and agents.
+- **Limit evaluation** returns the current decision (`AVAILABLE`, `WARNING`, or `BLOCKED`) for a target, based on accrued usage. Administrators use `POST /api/admin/usage/limits/evaluate`. Users evaluate themselves, or an agent they can edit, with `POST /api/usage/limits/evaluate`.
+- **Limit-increase requests** let users and agent editors ask for more headroom, and let billing administrators approve or deny those requests.
+
+Administrative operations require permission to read or edit workspace billing in addition to their OAuth scope. A global administrator role is not required.
+
+Every Usage endpoint except `POST /api/admin/usage/limits` is [experimental](/experimental/overview). Send `X-Glean-Include-Experimental: true` on each request, or they are not exposed.
+
+Use the [Users](/api/platform-api/users-overview), [Departments](/api/platform-api/departments-overview), [IdP Groups](/api/platform-api/idp-groups-overview), and [Agents](/api/platform-api/agents-overview) APIs to find the identifiers that usage limit targets use.
+
+For error responses, see [Platform API Errors](/errors) for the shared ProblemDetail code reference and remediation guidance.

@@ -871,6 +871,36 @@ const baseSidebars: SidebarsConfig = {
             },
             {
               type: 'category',
+              label: 'Departments',
+              description:
+                'List the departments in the Glean directory to use as usage limit targets.',
+              customProps: {
+                icon: 'Briefcase',
+                iconSet: 'feather',
+              },
+              link: {
+                type: 'doc',
+                id: 'api/platform-api/departments-overview',
+              },
+              items: [],
+            },
+            {
+              type: 'category',
+              label: 'IdP Groups',
+              description:
+                'List the identity provider groups that Glean loads from the directory.',
+              customProps: {
+                icon: 'Users',
+                iconSet: 'feather',
+              },
+              link: {
+                type: 'doc',
+                id: 'api/platform-api/idp-groups-overview',
+              },
+              items: [],
+            },
+            {
+              type: 'category',
               label: 'Search',
               description:
                 'Build permission-aware search experiences with relevant results, filters, and time ranges.',
@@ -1078,6 +1108,36 @@ const baseSidebars: SidebarsConfig = {
                   className: 'api-method post',
                 },
               ],
+            },
+            {
+              type: 'category',
+              label: 'Usage',
+              description:
+                'Configure and evaluate usage limits, and manage limit-increase requests.',
+              customProps: {
+                icon: 'BarChart2',
+                iconSet: 'feather',
+              },
+              link: {
+                type: 'doc',
+                id: 'api/platform-api/usage-overview',
+              },
+              items: [],
+            },
+            {
+              type: 'category',
+              label: 'Users',
+              description:
+                'List the people in the Glean directory to use with other Platform APIs.',
+              customProps: {
+                icon: 'User',
+                iconSet: 'feather',
+              },
+              link: {
+                type: 'doc',
+                id: 'api/platform-api/users-overview',
+              },
+              items: [],
             },
             {
               type: 'link',
