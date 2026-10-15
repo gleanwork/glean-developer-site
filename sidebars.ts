@@ -838,6 +838,12 @@ const baseSidebars: SidebarsConfig = {
                   label: 'Respond to agent run approvals',
                   className: 'api-method post',
                 },
+                {
+                  type: 'doc',
+                  id: 'api/platform-api/platform-admin-agents-list',
+                  label: 'List all agents',
+                  className: 'api-method get',
+                },
               ],
             },
             {
@@ -882,7 +888,14 @@ const baseSidebars: SidebarsConfig = {
                 type: 'doc',
                 id: 'api/platform-api/departments-overview',
               },
-              items: [],
+              items: [
+                {
+                  type: 'doc',
+                  id: 'api/platform-api/platform-departments-list',
+                  label: 'List departments',
+                  className: 'api-method get',
+                },
+              ],
             },
             {
               type: 'category',
@@ -897,7 +910,14 @@ const baseSidebars: SidebarsConfig = {
                 type: 'doc',
                 id: 'api/platform-api/idp-groups-overview',
               },
-              items: [],
+              items: [
+                {
+                  type: 'doc',
+                  id: 'api/platform-api/platform-admin-idp-groups-list',
+                  label: 'List IdP groups',
+                  className: 'api-method get',
+                },
+              ],
             },
             {
               type: 'category',
@@ -1122,7 +1142,98 @@ const baseSidebars: SidebarsConfig = {
                 type: 'doc',
                 id: 'api/platform-api/usage-overview',
               },
-              items: [],
+              items: [
+                {
+                  type: 'doc',
+                  id: 'api/platform-api/platform-admin-usage-limits-batch',
+                  label: 'Apply usage limit policies',
+                  className: 'api-method post',
+                },
+                {
+                  type: 'doc',
+                  id: 'api/platform-api/platform-admin-usage-limits-evaluate',
+                  label: 'Evaluate administrative usage limit headroom',
+                  className: 'api-method post',
+                },
+                {
+                  type: 'doc',
+                  id: 'api/platform-api/platform-admin-usage-limits-list',
+                  label: 'List usage limits',
+                  className: 'api-method get',
+                },
+                {
+                  type: 'doc',
+                  id: 'api/platform-api/platform-admin-usage-limits-reset',
+                  label: 'Reset a usage limit',
+                  className: 'api-method post',
+                },
+                {
+                  type: 'doc',
+                  id: 'api/platform-api/platform-admin-usage-limits-upsert',
+                  label: 'Upsert a usage limit',
+                  className: 'api-method post',
+                },
+                {
+                  type: 'doc',
+                  id: 'api/platform-api/platform-admin-usage-requests-create',
+                  label: 'Submit an editable-agent limit-increase request',
+                  className: 'api-method post',
+                },
+                {
+                  type: 'doc',
+                  id: 'api/platform-api/platform-admin-usage-requests-get',
+                  label: 'Get a billing limit-increase request',
+                  className: 'api-method get',
+                },
+                {
+                  type: 'doc',
+                  id: 'api/platform-api/platform-admin-usage-requests-list',
+                  label: 'List the billing limit-increase request queue',
+                  className: 'api-method get',
+                },
+                {
+                  type: 'doc',
+                  id: 'api/platform-api/platform-admin-usage-requests-update',
+                  label: 'Resolve a billing limit-increase request',
+                  className: 'api-method patch',
+                },
+                {
+                  type: 'doc',
+                  id: 'api/platform-api/platform-admin-usage-settings-get',
+                  label: 'Get usage settings',
+                  className: 'api-method get',
+                },
+                {
+                  type: 'doc',
+                  id: 'api/platform-api/platform-admin-usage-settings-update',
+                  label: 'Update usage settings',
+                  className: 'api-method patch',
+                },
+                {
+                  type: 'doc',
+                  id: 'api/platform-api/platform-usage-limits-evaluate',
+                  label: 'Evaluate usage limit headroom',
+                  className: 'api-method post',
+                },
+                {
+                  type: 'doc',
+                  id: 'api/platform-api/platform-usage-requests-create',
+                  label: 'Submit a personal limit-increase request',
+                  className: 'api-method post',
+                },
+                {
+                  type: 'doc',
+                  id: 'api/platform-api/platform-usage-requests-get',
+                  label: 'Get a personal limit-increase request',
+                  className: 'api-method get',
+                },
+                {
+                  type: 'doc',
+                  id: 'api/platform-api/platform-usage-requests-list',
+                  label: 'List personal limit-increase requests',
+                  className: 'api-method get',
+                },
+              ],
             },
             {
               type: 'category',
@@ -1137,7 +1248,14 @@ const baseSidebars: SidebarsConfig = {
                 type: 'doc',
                 id: 'api/platform-api/users-overview',
               },
-              items: [],
+              items: [
+                {
+                  type: 'doc',
+                  id: 'api/platform-api/platform-users-list',
+                  label: 'List users',
+                  className: 'api-method get',
+                },
+              ],
             },
             {
               type: 'link',

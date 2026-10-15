@@ -28,6 +28,11 @@ export const VIDEO_PLATFORM_CAPABILITIES = [
   'Agents',
   'Skills',
   'Triggers',
+  'Usage',
+  'Users',
+  'Departments',
+  'IdP Groups',
+  'Admin',
 ] as const;
 
 const stage = z.enum(['ga', 'experimental']);
