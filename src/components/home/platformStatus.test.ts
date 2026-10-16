@@ -20,6 +20,7 @@ describe('getPlatformStatuses', () => {
 
     expect(statuses).toEqual([
       { label: 'Search', stage: 'ga' },
+      { label: 'Documents', stage: 'ga' },
       { label: 'Chat', stage: 'ga' },
       { label: 'Agents', stage: 'ga' },
       { label: 'Skills', stage: 'experimental' },

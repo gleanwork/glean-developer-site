@@ -994,6 +994,40 @@ const baseSidebars: SidebarsConfig = {
             },
             {
               type: 'category',
+              label: 'Documents',
+              description:
+                'Retrieve indexed documents that the caller can see, by URL or Glean document ID.',
+              customProps: {
+                icon: 'file-text',
+                iconSet: 'glean',
+              },
+              link: {
+                type: 'doc',
+                id: 'api/platform-api/documents-overview',
+              },
+              items: [
+                {
+                  type: 'doc',
+                  id: 'api/platform-api/platform-documents-batch',
+                  label: 'Batch get documents',
+                  className: 'api-method post',
+                },
+                {
+                  type: 'doc',
+                  id: 'api/platform-api/platform-documents-get-by-url',
+                  label: 'Get document by URL',
+                  className: 'api-method get',
+                },
+                {
+                  type: 'doc',
+                  id: 'api/platform-api/platform-documents-get',
+                  label: 'Get document by ID',
+                  className: 'api-method get',
+                },
+              ],
+            },
+            {
+              type: 'category',
               label: 'Search',
               description:
                 'Build permission-aware search experiences with relevant results, filters, and time ranges.',
@@ -1132,6 +1166,12 @@ const baseSidebars: SidebarsConfig = {
                   label: 'List departments',
                   className: 'api-method get',
                 },
+                {
+                  type: 'doc',
+                  id: 'api/platform-api/platform-departments-get',
+                  label: 'Get a department',
+                  className: 'api-method get',
+                },
               ],
             },
             {
@@ -1152,6 +1192,12 @@ const baseSidebars: SidebarsConfig = {
                   type: 'doc',
                   id: 'api/platform-api/platform-users-list',
                   label: 'List users',
+                  className: 'api-method get',
+                },
+                {
+                  type: 'doc',
+                  id: 'api/platform-api/platform-users-get',
+                  label: 'Get user',
                   className: 'api-method get',
                 },
               ],
@@ -1249,6 +1295,34 @@ const baseSidebars: SidebarsConfig = {
                   type: 'doc',
                   id: 'api/platform-api/platform-admin-idp-groups-list',
                   label: 'List IdP groups',
+                  className: 'api-method get',
+                },
+                {
+                  type: 'doc',
+                  id: 'api/platform-api/platform-admin-idp-groups-get',
+                  label: 'Get an IdP group',
+                  className: 'api-method get',
+                },
+              ],
+            },
+            {
+              type: 'category',
+              label: 'OAuth clients',
+              description:
+                'List the static OAuth clients that admins created for the workspace.',
+              customProps: {
+                icon: 'share-2',
+                iconSet: 'glean',
+              },
+              link: {
+                type: 'doc',
+                id: 'api/platform-api/oauth-clients-overview',
+              },
+              items: [
+                {
+                  type: 'doc',
+                  id: 'api/platform-api/platform-admin-oauth-clients-list',
+                  label: 'List OAuth clients',
                   className: 'api-method get',
                 },
               ],
@@ -1680,8 +1754,8 @@ const baseSidebars: SidebarsConfig = {
               description:
                 'Retrieve document metadata and inspect document permissions.',
               customProps: {
-                icon: 'FileText',
-                iconSet: 'feather',
+                icon: 'file-text',
+                iconSet: 'glean',
               },
               link: {
                 type: 'doc',
@@ -2496,8 +2570,8 @@ const baseSidebars: SidebarsConfig = {
               description:
                 'Index documents individually or in bulk, then update permissions and remove stale content.',
               customProps: {
-                icon: 'FileText',
-                iconSet: 'feather',
+                icon: 'file-text',
+                iconSet: 'glean',
               },
               link: {
                 type: 'doc',

@@ -150,8 +150,10 @@ describe('sidebar icons', () => {
       Answers: 'answer', // Insights: Answers
       Chat: 'message-with-sparkles', // admin nav: Assistant
       Departments: 'building', // Insights: Departments
+      Documents: 'file-text', // document glyph across the app
       'IdP Groups': 'users', // groups of people
       Insights: 'insights', // user menu and Insights: Overview
+      'OAuth clients': 'share-2', // admin nav: Third-party access
       People: 'users', // main nav: People
       Search: 'search', // main nav: Search
       Skills: 'skill', // admin nav and user menu: Skills

@@ -2,8 +2,8 @@ openapi: 3.1.0
 info:
   version: '2026-04-01'
   title: Glean Platform API
-  x-source-commit-sha: 564a081fbf328cb3d28389aedb282957e8ad024e
-  x-open-api-commit-sha: b6e6add1c3464d7e49231576986d440310e39131
+  x-source-commit-sha: fb2440ca2fc45c9b9c68e478605b9293d0c189f2
+  x-open-api-commit-sha: d4676aecad717d81a69720a0f882ea6c4832d13f
 servers:
   - url: '{serverUrl}'
     description: Replace {serverUrl} with your complete Glean API server URL. Find it at https://developers.glean.com/get-started/authentication#finding-your-server-url.
@@ -13,30 +13,6 @@ servers:
         description: Your complete Glean API HTTPS origin. Glean-hosted, vanity, custom, and non-Glean-hosted domains are supported.
 security:
   - APIToken: []
-x-tagGroups:
-  - name: Agents & AI
-    tags:
-      - Agents
-      - Chat
-      - Skills
-  - name: Search & Data
-    tags:
-      - Search
-  - name: Automation
-    tags:
-      - Triggers
-  - name: People
-    tags:
-      - Departments
-      - Users
-  - name: Account
-    tags:
-      - Usage
-  - name: Administration
-    tags:
-      - Admin Agents
-      - IdP Groups
-      - Admin Usage
 paths:
   /api/agents/search:
     post:
@@ -4399,6 +4375,159 @@ paths:
             default: true
           example: true
           value: 'true'
+  /api/admin/oauth/clients:
+    get:
+      tags:
+        - OAuth clients
+      summary: List OAuth clients
+      description: |
+        List the static OAuth clients that admins created for this workspace, ordered by display_name and then by client_id. Dynamically registered clients and Glean's own clients, such as Glean Desktop, are not listed. A client is active when it is enabled. Inactive clients are left out unless an is_active filter includes the value "false". To set a usage limit for a client, send its ai_gateway.usage_client_id, not its client_id, to the usage APIs. The caller needs admin read or billing read permission.
+      operationId: platform-admin-oauth-clients-list
+      x-glean-scopes:
+        legacy:
+          - ADMIN
+          - ADMIN_USAGE
+        platform:
+          - admin.oauth.clients:read
+      x-visibility: Public
+      x-glean-experimental:
+        id: 0be15d1f-0e4f-49f8-9dd1-1746b019abd7
+        introduced: '2026-10-09'
+      parameters:
+        - in: header
+          name: X-Glean-Include-Experimental
+          description: This endpoint is experimental, so requests must include this header set to `true`. See [How experimental APIs work](https://developers.glean.com/experimental/overview) for details.
+          required: true
+          schema:
+            type: boolean
+            default: true
+          example: true
+          value: 'true'
+        - in: query
+          name: page_size
+          description: Maximum number of clients to return. Defaults to 50. Maximum is 100.
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - in: query
+          name: cursor
+          description: |
+            Opaque pagination cursor from a previous response. Send the same filters that the previous request used.
+          required: false
+          schema:
+            type: string
+            minLength: 1
+        - in: query
+          name: filters
+          description: |
+            JSON-encoded filters that choose which clients are returned. The only supported field is is_active, with the values "true" and "false" and the operator EQUALS. Multiple values OR within a filter. Multiple filters AND together. Without an is_active filter, only active clients are returned. To return active and inactive clients, send [{"field":"is_active","values":["true","false"]}].
+          required: false
+          content:
+            application/json:
+              schema:
+                type: array
+                minItems: 1
+                maxItems: 10
+                description: Filters on client fields, combined with AND.
+                items:
+                  $ref: '#/components/schemas/PlatformOAuthClientFilter'
+                  description: One filter on a client field.
+      responses:
+        '200':
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlatformListOAuthClientsResponse'
+        '400':
+          $ref: '#/components/responses/PlatformBadRequest'
+        '401':
+          $ref: '#/components/responses/PlatformUnauthorized'
+        '403':
+          $ref: '#/components/responses/PlatformForbidden'
+        '404':
+          $ref: '#/components/responses/PlatformNotFound'
+        '408':
+          $ref: '#/components/responses/PlatformRequestTimeout'
+        '429':
+          $ref: '#/components/responses/PlatformTooManyRequests'
+        '500':
+          $ref: '#/components/responses/PlatformInternalServerError'
+        '503':
+          $ref: '#/components/responses/PlatformServiceUnavailable'
+      x-speakeasy-group: admin.oauth.clients
+      x-speakeasy-name-override: list
+      x-codeSamples:
+        - lang: Python
+          label: Python (API Client)
+          source: |-
+            from glean.api_client import Glean
+            import os
+
+
+            with Glean(
+                api_token=os.getenv("GLEAN_API_TOKEN", ""),
+                server_url="https://mycompany-be.glean.com",
+                include_experimental=True,
+            ) as glean:
+
+                res = glean.admin.oauth.clients.list(page_size=50)
+
+                # Handle response
+                print(res)
+        - lang: JavaScript
+          label: Typescript (API Client)
+          source: |-
+            import { Glean } from "@gleanwork/api-client";
+
+            const glean = new Glean({
+              apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
+              serverURL: "https://mycompany-be.glean.com",
+              includeExperimental: true,
+            });
+
+            async function run() {
+              const result = await glean.admin.oauth.clients.list();
+
+              console.log(result);
+            }
+
+            run();
+        - lang: Go
+          label: Go (API Client)
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Admin.Oauth.Clients.List(ctx, apiclientgo.Pointer[int64](50), nil, nil)\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformListOAuthClientsResponse != nil {\n        // handle response\n    }\n}"
+        - lang: Java
+          label: Java (API Client)
+          source: |-
+            package hello.world;
+
+            import com.glean.api_client.glean_api_client.Glean;
+            import com.glean.api_client.glean_api_client.hooks.GleanBuilder;
+            import com.glean.api_client.glean_api_client.models.errors.PlatformProblemDetailException;
+            import com.glean.api_client.glean_api_client.models.operations.PlatformAdminOauthClientsListResponse;
+            import java.lang.Exception;
+
+            public class Application {
+
+                public static void main(String[] args) throws PlatformProblemDetailException, Exception {
+
+                    Glean sdk = GleanBuilder.create()
+                            .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
+                            .includeExperimental(true)
+                        .build();
+
+                    PlatformAdminOauthClientsListResponse res = sdk.admin().oauth().clients().list()
+                            .pageSize(50L)
+                            .call();
+
+                    if (res.platformListOAuthClientsResponse().isPresent()) {
+                        System.out.println(res.platformListOAuthClientsResponse().get());
+                    }
+                }
+            }
   /api/departments:
     get:
       tags:
@@ -4548,6 +4677,135 @@ paths:
 
                     if (res.platformListDepartmentsResponse().isPresent()) {
                         System.out.println(res.platformListDepartmentsResponse().get());
+                    }
+                }
+            }
+  /api/departments/{department_id}:
+    get:
+      tags:
+        - Departments
+      summary: Get a department
+      description: |
+        Get one department by its department_id. Inactive departments are returned, so a caller can show the name of a department that a usage limit still names. A department is active when at least one active user belongs to it. A department is inactive when only inactive users, such as former employees, belong to it, or when only a usage limit names it. A department_id that is not valid, or that no user and no usage limit uses, returns 404 resource_not_found. A department_id comes from the exact department name, so a renamed department gets a new ID, and a name that is used again gets its old ID back.
+      operationId: platform-departments-get
+      x-glean-scopes:
+        legacy:
+          - PEOPLE
+        platform:
+          - departments:read
+      x-visibility: Public
+      x-glean-experimental:
+        id: c1a67d89-cc04-4f37-b314-ff9f08694ea9
+        introduced: '2026-10-15'
+      parameters:
+        - in: header
+          name: X-Glean-Include-Experimental
+          description: This endpoint is experimental, so requests must include this header set to `true`. See [How experimental APIs work](https://developers.glean.com/experimental/overview) for details.
+          required: true
+          schema:
+            type: boolean
+            default: true
+          example: true
+          value: 'true'
+        - in: path
+          name: department_id
+          description: |
+            The department_id from a list departments response or from a user's department. IDs are opaque. Do not parse or build them.
+          required: true
+          example: '{department_id}'
+          schema:
+            type: string
+            minLength: 1
+      responses:
+        '200':
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlatformGetDepartmentResponse'
+        '400':
+          $ref: '#/components/responses/PlatformBadRequest'
+        '401':
+          $ref: '#/components/responses/PlatformUnauthorized'
+        '403':
+          $ref: '#/components/responses/PlatformForbidden'
+        '404':
+          $ref: '#/components/responses/PlatformNotFound'
+        '408':
+          $ref: '#/components/responses/PlatformRequestTimeout'
+        '429':
+          $ref: '#/components/responses/PlatformTooManyRequests'
+        '500':
+          $ref: '#/components/responses/PlatformInternalServerError'
+        '503':
+          $ref: '#/components/responses/PlatformServiceUnavailable'
+      x-speakeasy-group: departments
+      x-speakeasy-name-override: get
+      x-codeSamples:
+        - lang: Python
+          label: Python (API Client)
+          source: |-
+            from glean.api_client import Glean
+            import os
+
+
+            with Glean(
+                api_token=os.getenv("GLEAN_API_TOKEN", ""),
+                server_url="https://mycompany-be.glean.com",
+                include_experimental=True,
+            ) as glean:
+
+                res = glean.departments.get(department_id="{department_id}")
+
+                # Handle response
+                print(res)
+        - lang: JavaScript
+          label: Typescript (API Client)
+          source: |-
+            import { Glean } from "@gleanwork/api-client";
+
+            const glean = new Glean({
+              apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
+              serverURL: "https://mycompany-be.glean.com",
+              includeExperimental: true,
+            });
+
+            async function run() {
+              const result = await glean.departments.get("{department_id}");
+
+              console.log(result);
+            }
+
+            run();
+        - lang: Go
+          label: Go (API Client)
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Departments.Get(ctx, \"{department_id}\")\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformGetDepartmentResponse != nil {\n        // handle response\n    }\n}"
+        - lang: Java
+          label: Java (API Client)
+          source: |-
+            package hello.world;
+
+            import com.glean.api_client.glean_api_client.Glean;
+            import com.glean.api_client.glean_api_client.hooks.GleanBuilder;
+            import com.glean.api_client.glean_api_client.models.errors.PlatformProblemDetailException;
+            import com.glean.api_client.glean_api_client.models.operations.PlatformDepartmentsGetResponse;
+            import java.lang.Exception;
+
+            public class Application {
+
+                public static void main(String[] args) throws PlatformProblemDetailException, Exception {
+
+                    Glean sdk = GleanBuilder.create()
+                            .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
+                            .includeExperimental(true)
+                        .build();
+
+                    PlatformDepartmentsGetResponse res = sdk.departments().get()
+                            .departmentId("{department_id}")
+                            .call();
+
+                    if (res.platformGetDepartmentResponse().isPresent()) {
+                        System.out.println(res.platformGetDepartmentResponse().get());
                     }
                 }
             }
@@ -4701,6 +4959,136 @@ paths:
 
                     if (res.platformListIdpGroupsResponse().isPresent()) {
                         System.out.println(res.platformListIdpGroupsResponse().get());
+                    }
+                }
+            }
+  /api/admin/idp-groups/{idp_group_id}:
+    get:
+      tags:
+        - IdP Groups
+      summary: Get an IdP group
+      description: |
+        Get one identity provider (IdP) group by its idp_group_id. Inactive IdP groups are returned, so a caller can still show a group after it was removed from the identity provider. An IdP group is active when Glean loaded it from the directory. An IdP group is inactive when only a usage limit names it, for example after the group was removed from the identity provider. An idp_group_id that is not valid, or that names no group that the list returns, returns 404 resource_not_found. The caller must be able to read the workspace configuration or the workspace billing.
+      operationId: platform-admin-idp-groups-get
+      x-glean-scopes:
+        legacy:
+          - ADMIN
+          - ADMIN_USAGE
+        platform:
+          - admin.idp_groups:read
+      x-visibility: Public
+      x-glean-experimental:
+        id: a725ef7b-baf5-48a4-b19f-d460398e30bb
+        introduced: '2026-10-15'
+      parameters:
+        - in: header
+          name: X-Glean-Include-Experimental
+          description: This endpoint is experimental, so requests must include this header set to `true`. See [How experimental APIs work](https://developers.glean.com/experimental/overview) for details.
+          required: true
+          schema:
+            type: boolean
+            default: true
+          example: true
+          value: 'true'
+        - in: path
+          name: idp_group_id
+          description: |
+            The idp_group_id from a list IdP groups response. IDs are opaque. Do not parse or build them. The group_id in usage limit responses is not an idp_group_id and returns 404.
+          required: true
+          example: '{idp_group_id}'
+          schema:
+            type: string
+            minLength: 1
+      responses:
+        '200':
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlatformGetIdpGroupResponse'
+        '400':
+          $ref: '#/components/responses/PlatformBadRequest'
+        '401':
+          $ref: '#/components/responses/PlatformUnauthorized'
+        '403':
+          $ref: '#/components/responses/PlatformForbidden'
+        '404':
+          $ref: '#/components/responses/PlatformNotFound'
+        '408':
+          $ref: '#/components/responses/PlatformRequestTimeout'
+        '429':
+          $ref: '#/components/responses/PlatformTooManyRequests'
+        '500':
+          $ref: '#/components/responses/PlatformInternalServerError'
+        '503':
+          $ref: '#/components/responses/PlatformServiceUnavailable'
+      x-speakeasy-group: admin.idpgroups
+      x-speakeasy-name-override: get
+      x-codeSamples:
+        - lang: Python
+          label: Python (API Client)
+          source: |-
+            from glean.api_client import Glean
+            import os
+
+
+            with Glean(
+                api_token=os.getenv("GLEAN_API_TOKEN", ""),
+                server_url="https://mycompany-be.glean.com",
+                include_experimental=True,
+            ) as glean:
+
+                res = glean.admin.idpgroups.get(idp_group_id="{idp_group_id}")
+
+                # Handle response
+                print(res)
+        - lang: JavaScript
+          label: Typescript (API Client)
+          source: |-
+            import { Glean } from "@gleanwork/api-client";
+
+            const glean = new Glean({
+              apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
+              serverURL: "https://mycompany-be.glean.com",
+              includeExperimental: true,
+            });
+
+            async function run() {
+              const result = await glean.admin.idpgroups.get("{idp_group_id}");
+
+              console.log(result);
+            }
+
+            run();
+        - lang: Go
+          label: Go (API Client)
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Admin.Idpgroups.Get(ctx, \"{idp_group_id}\")\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformGetIdpGroupResponse != nil {\n        // handle response\n    }\n}"
+        - lang: Java
+          label: Java (API Client)
+          source: |-
+            package hello.world;
+
+            import com.glean.api_client.glean_api_client.Glean;
+            import com.glean.api_client.glean_api_client.hooks.GleanBuilder;
+            import com.glean.api_client.glean_api_client.models.errors.PlatformProblemDetailException;
+            import com.glean.api_client.glean_api_client.models.operations.PlatformAdminIdpGroupsGetResponse;
+            import java.lang.Exception;
+
+            public class Application {
+
+                public static void main(String[] args) throws PlatformProblemDetailException, Exception {
+
+                    Glean sdk = GleanBuilder.create()
+                            .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
+                            .includeExperimental(true)
+                        .build();
+
+                    PlatformAdminIdpGroupsGetResponse res = sdk.admin().idpgroups().get()
+                            .idpGroupId("{idp_group_id}")
+                            .call();
+
+                    if (res.platformGetIdpGroupResponse().isPresent()) {
+                        System.out.println(res.platformGetIdpGroupResponse().get());
                     }
                 }
             }
@@ -4867,6 +5255,145 @@ paths:
                     }
                 }
             }
+  /api/users/{user_id}:
+    get:
+      tags:
+        - Users
+      summary: Get user
+      description: |
+        Get one user in the Glean directory by user_id. The user can be any person that the list returns, including an inactive user such as a former employee, which is returned with is_active set to false. A user_id that is not in the directory returns 404 resource_not_found. This includes a deleted user and a person that the People directory does not show. An alias ID of a merged person returns the person's canonical user_id.
+      operationId: platform-users-get
+      x-glean-scopes:
+        legacy:
+          - PEOPLE
+        platform:
+          - users:read
+      x-visibility: Public
+      x-glean-experimental:
+        id: b5ed1294-d3cb-47dd-8dc0-0272549f00f9
+        introduced: '2026-10-15'
+      parameters:
+        - in: header
+          name: X-Glean-Include-Experimental
+          description: This endpoint is experimental, so requests must include this header set to `true`. See [How experimental APIs work](https://developers.glean.com/experimental/overview) for details.
+          required: true
+          schema:
+            type: boolean
+            default: true
+          example: true
+          value: 'true'
+        - in: path
+          name: user_id
+          description: Canonical Glean user ID, as the list returns it.
+          required: true
+          example: '{user_id}'
+          schema:
+            type: string
+            minLength: 1
+        - in: query
+          name: include
+          description: |
+            Optional fields to add to the user. Each value only adds fields.
+          required: false
+          style: form
+          explode: true
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/PlatformUserInclude'
+      responses:
+        '200':
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlatformGetUserResponse'
+        '400':
+          $ref: '#/components/responses/PlatformBadRequest'
+        '401':
+          $ref: '#/components/responses/PlatformUnauthorized'
+        '403':
+          $ref: '#/components/responses/PlatformForbidden'
+        '404':
+          $ref: '#/components/responses/PlatformNotFound'
+        '408':
+          $ref: '#/components/responses/PlatformRequestTimeout'
+        '429':
+          $ref: '#/components/responses/PlatformTooManyRequests'
+        '500':
+          $ref: '#/components/responses/PlatformInternalServerError'
+        '503':
+          $ref: '#/components/responses/PlatformServiceUnavailable'
+      x-speakeasy-group: users
+      x-speakeasy-name-override: get
+      x-codeSamples:
+        - lang: Python
+          label: Python (API Client)
+          source: |-
+            from glean.api_client import Glean
+            import os
+
+
+            with Glean(
+                api_token=os.getenv("GLEAN_API_TOKEN", ""),
+                server_url="https://mycompany-be.glean.com",
+                include_experimental=True,
+            ) as glean:
+
+                res = glean.users.get(user_id="{user_id}")
+
+                # Handle response
+                print(res)
+        - lang: JavaScript
+          label: Typescript (API Client)
+          source: |-
+            import { Glean } from "@gleanwork/api-client";
+
+            const glean = new Glean({
+              apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
+              serverURL: "https://mycompany-be.glean.com",
+              includeExperimental: true,
+            });
+
+            async function run() {
+              const result = await glean.users.get("{user_id}");
+
+              console.log(result);
+            }
+
+            run();
+        - lang: Go
+          label: Go (API Client)
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Users.Get(ctx, \"{user_id}\", nil)\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformGetUserResponse != nil {\n        // handle response\n    }\n}"
+        - lang: Java
+          label: Java (API Client)
+          source: |-
+            package hello.world;
+
+            import com.glean.api_client.glean_api_client.Glean;
+            import com.glean.api_client.glean_api_client.hooks.GleanBuilder;
+            import com.glean.api_client.glean_api_client.models.errors.PlatformProblemDetailException;
+            import com.glean.api_client.glean_api_client.models.operations.PlatformUsersGetResponse;
+            import java.lang.Exception;
+
+            public class Application {
+
+                public static void main(String[] args) throws PlatformProblemDetailException, Exception {
+
+                    Glean sdk = GleanBuilder.create()
+                            .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
+                            .includeExperimental(true)
+                        .build();
+
+                    PlatformUsersGetResponse res = sdk.users().get()
+                            .userId("{user_id}")
+                            .call();
+
+                    if (res.platformGetUserResponse().isPresent()) {
+                        System.out.println(res.platformGetUserResponse().get());
+                    }
+                }
+            }
   /api/admin/agents:
     get:
       tags:
@@ -5020,6 +5547,423 @@ paths:
                     }
                 }
             }
+  /api/documents:
+    get:
+      tags:
+        - Documents
+      summary: Get document by URL
+      description: |
+        Retrieve one permission-visible indexed document by URL. The url is the lookup key that Platform search returns. Many URLs can resolve to one document. The response is a single document, not a list. The returned url is the permalink and may differ from the submitted URL. Gmail and Outlook search results and chat citations carry caller-specific IDs that get document by ID cannot resolve, so retrieve them by URL here. A Gmail or Outlook URL that Platform search returned can still return 404, as it can with legacy getdocuments. Retrieving search results is best-effort parity with legacy getdocuments. Federated results and go-link shortcut documents are not retrievable in this release.
+      operationId: platform-documents-get-by-url
+      x-glean-scopes:
+        legacy:
+          - DOCUMENTS
+        platform:
+          - documents:read
+      x-visibility: Public
+      parameters:
+        - in: header
+          name: X-Glean-Include-Experimental
+          description: This endpoint is experimental, so requests must include this header set to `true`. See [How experimental APIs work](https://developers.glean.com/experimental/overview) for details.
+          required: true
+          schema:
+            type: boolean
+            default: true
+          example: true
+          value: 'true'
+        - in: query
+          name: url
+          description: URL of the document to retrieve.
+          required: true
+          example: '{url}'
+          schema:
+            type: string
+            minLength: 1
+            format: uri
+        - $ref: '#/components/parameters/Include'
+      responses:
+        '200':
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlatformDocumentGetResponse'
+        '400':
+          $ref: '#/components/responses/PlatformBadRequest'
+        '401':
+          $ref: '#/components/responses/PlatformUnauthorized'
+        '403':
+          $ref: '#/components/responses/PlatformForbidden'
+        '404':
+          $ref: '#/components/responses/PlatformNotFound'
+        '408':
+          $ref: '#/components/responses/PlatformRequestTimeout'
+        '429':
+          $ref: '#/components/responses/PlatformTooManyRequests'
+        '500':
+          $ref: '#/components/responses/PlatformInternalServerError'
+        '503':
+          $ref: '#/components/responses/PlatformServiceUnavailable'
+      x-glean-experimental:
+        id: 418eeb85-8a15-4fcb-95e2-eea016eb365d
+        introduced: '2026-09-10'
+      x-speakeasy-group: documents
+      x-speakeasy-name-override: getByUrl
+      x-codeSamples:
+        - lang: Python
+          label: Python (API Client)
+          source: |-
+            from glean.api_client import Glean
+            import os
+
+
+            with Glean(
+                api_token=os.getenv("GLEAN_API_TOKEN", ""),
+                server_url="https://mycompany-be.glean.com",
+                include_experimental=True,
+            ) as glean:
+
+                res = glean.documents.get_by_url(url="{url}")
+
+                # Handle response
+                print(res)
+        - lang: JavaScript
+          label: Typescript (API Client)
+          source: |-
+            import { Glean } from "@gleanwork/api-client";
+
+            const glean = new Glean({
+              apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
+              serverURL: "https://mycompany-be.glean.com",
+              includeExperimental: true,
+            });
+
+            async function run() {
+              const result = await glean.documents.getByUrl("{url}");
+
+              console.log(result);
+            }
+
+            run();
+        - lang: Go
+          label: Go (API Client)
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Documents.GetByURL(ctx, \"{url}\", nil)\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformDocumentGetResponse != nil {\n        // handle response\n    }\n}"
+        - lang: Java
+          label: Java (API Client)
+          source: |-
+            package hello.world;
+
+            import com.glean.api_client.glean_api_client.Glean;
+            import com.glean.api_client.glean_api_client.hooks.GleanBuilder;
+            import com.glean.api_client.glean_api_client.models.errors.PlatformProblemDetailException;
+            import com.glean.api_client.glean_api_client.models.operations.PlatformDocumentsGetByUrlResponse;
+            import java.lang.Exception;
+
+            public class Application {
+
+                public static void main(String[] args) throws PlatformProblemDetailException, Exception {
+
+                    Glean sdk = GleanBuilder.create()
+                            .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
+                            .includeExperimental(true)
+                        .build();
+
+                    PlatformDocumentsGetByUrlResponse res = sdk.documents().getByUrl()
+                            .url("{url}")
+                            .call();
+
+                    if (res.platformDocumentGetResponse().isPresent()) {
+                        System.out.println(res.platformDocumentGetResponse().get());
+                    }
+                }
+            }
+  /api/documents/{document_id}:
+    get:
+      tags:
+        - Documents
+      summary: Get document by ID
+      description: |
+        Retrieve one permission-visible indexed document by its Glean store ID. Gmail and Outlook search results and chat citations can carry caller-specific IDs that this operation cannot resolve. Try get document by URL for those documents. URL lookup does not resolve every Gmail or Outlook result.
+      operationId: platform-documents-get
+      x-glean-scopes:
+        legacy:
+          - DOCUMENTS
+        platform:
+          - documents:read
+      x-visibility: Public
+      parameters:
+        - in: header
+          name: X-Glean-Include-Experimental
+          description: This endpoint is experimental, so requests must include this header set to `true`. See [How experimental APIs work](https://developers.glean.com/experimental/overview) for details.
+          required: true
+          schema:
+            type: boolean
+            default: true
+          example: true
+          value: 'true'
+        - in: path
+          name: document_id
+          description: |
+            Indexed Glean store ID. For a Gmail or Outlook citation with a caller-specific ID, try get document by URL instead.
+          required: true
+          example: '{document_id}'
+          schema:
+            type: string
+            minLength: 1
+        - $ref: '#/components/parameters/Include'
+      responses:
+        '200':
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlatformDocumentGetResponse'
+        '400':
+          $ref: '#/components/responses/PlatformBadRequest'
+        '401':
+          $ref: '#/components/responses/PlatformUnauthorized'
+        '403':
+          $ref: '#/components/responses/PlatformForbidden'
+        '404':
+          $ref: '#/components/responses/PlatformNotFound'
+        '408':
+          $ref: '#/components/responses/PlatformRequestTimeout'
+        '429':
+          $ref: '#/components/responses/PlatformTooManyRequests'
+        '500':
+          $ref: '#/components/responses/PlatformInternalServerError'
+        '503':
+          $ref: '#/components/responses/PlatformServiceUnavailable'
+      x-glean-experimental:
+        id: ee55a9f0-39b5-46fc-9863-d4bace465a8b
+        introduced: '2026-09-10'
+      x-speakeasy-group: documents
+      x-speakeasy-name-override: getById
+      x-codeSamples:
+        - lang: Python
+          label: Python (API Client)
+          source: |-
+            from glean.api_client import Glean
+            import os
+
+
+            with Glean(
+                api_token=os.getenv("GLEAN_API_TOKEN", ""),
+                server_url="https://mycompany-be.glean.com",
+                include_experimental=True,
+            ) as glean:
+
+                res = glean.documents.get_by_id(document_id="{document_id}")
+
+                # Handle response
+                print(res)
+        - lang: JavaScript
+          label: Typescript (API Client)
+          source: |-
+            import { Glean } from "@gleanwork/api-client";
+
+            const glean = new Glean({
+              apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
+              serverURL: "https://mycompany-be.glean.com",
+              includeExperimental: true,
+            });
+
+            async function run() {
+              const result = await glean.documents.getById("{document_id}");
+
+              console.log(result);
+            }
+
+            run();
+        - lang: Go
+          label: Go (API Client)
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Documents.GetByID(ctx, \"{document_id}\", nil)\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformDocumentGetResponse != nil {\n        // handle response\n    }\n}"
+        - lang: Java
+          label: Java (API Client)
+          source: |-
+            package hello.world;
+
+            import com.glean.api_client.glean_api_client.Glean;
+            import com.glean.api_client.glean_api_client.hooks.GleanBuilder;
+            import com.glean.api_client.glean_api_client.models.errors.PlatformProblemDetailException;
+            import com.glean.api_client.glean_api_client.models.operations.PlatformDocumentsGetResponse;
+            import java.lang.Exception;
+
+            public class Application {
+
+                public static void main(String[] args) throws PlatformProblemDetailException, Exception {
+
+                    Glean sdk = GleanBuilder.create()
+                            .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
+                            .includeExperimental(true)
+                        .build();
+
+                    PlatformDocumentsGetResponse res = sdk.documents().getById()
+                            .documentId("{document_id}")
+                            .call();
+
+                    if (res.platformDocumentGetResponse().isPresent()) {
+                        System.out.println(res.platformDocumentGetResponse().get());
+                    }
+                }
+            }
+  /api/documents/batch:
+    post:
+      tags:
+        - Documents
+      summary: Batch get documents
+      description: |
+        Retrieve up to 100 permission-visible indexed documents by URL or document_id. Found items are in results. Complete misses are warnings correlated by index. Incomplete store work fails the whole request. Retrieving search results is best-effort parity with legacy getdocuments. Gmail and Outlook caller-specific citation IDs are not accepted as document_id selectors. Use URL selectors for them. A Gmail or Outlook URL can still return a resource_not_found warning. Federated results and go-link shortcut documents are not retrievable in this release.
+      operationId: platform-documents-batch
+      x-glean-scopes:
+        legacy:
+          - DOCUMENTS
+        platform:
+          - documents:read
+      x-visibility: Public
+      x-codegen-request-body-name: payload
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlatformDocumentsBatchRequest'
+      responses:
+        '200':
+          description: Successful batch retrieval.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlatformDocumentsBatchResponse'
+        '400':
+          $ref: '#/components/responses/PlatformBadRequest'
+        '401':
+          $ref: '#/components/responses/PlatformUnauthorized'
+        '403':
+          $ref: '#/components/responses/PlatformForbidden'
+        '404':
+          $ref: '#/components/responses/PlatformNotFound'
+        '408':
+          $ref: '#/components/responses/PlatformRequestTimeout'
+        '413':
+          $ref: '#/components/responses/PlatformRequestTooLarge'
+        '429':
+          $ref: '#/components/responses/PlatformTooManyRequests'
+        '500':
+          $ref: '#/components/responses/PlatformInternalServerError'
+        '503':
+          $ref: '#/components/responses/PlatformServiceUnavailable'
+      x-glean-experimental:
+        id: fb55e732-e3ce-41fa-ba3d-7e5e5f708e43
+        introduced: '2026-09-10'
+      x-speakeasy-group: documents
+      x-speakeasy-name-override: batch
+      x-codeSamples:
+        - lang: Python
+          label: Python (API Client)
+          source: |-
+            from glean.api_client import Glean
+            import os
+
+
+            with Glean(
+                api_token=os.getenv("GLEAN_API_TOKEN", ""),
+                server_url="https://mycompany-be.glean.com",
+                include_experimental=True,
+            ) as glean:
+
+                res = glean.documents.batch(document_specs=[
+                    {
+                        "document_id": "{document_id}",
+                    },
+                    {
+                        "url": "https://company.atlassian.net/wiki/spaces/ENG/pages/12345",
+                    },
+                ])
+
+                # Handle response
+                print(res)
+        - lang: JavaScript
+          label: Typescript (API Client)
+          source: |-
+            import { Glean } from "@gleanwork/api-client";
+
+            const glean = new Glean({
+              apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
+              serverURL: "https://mycompany-be.glean.com",
+              includeExperimental: true,
+            });
+
+            async function run() {
+              const result = await glean.documents.batch({
+                document_specs: [
+                  {
+                    document_id: "{document_id}",
+                  },
+                  {
+                    url: "https://company.atlassian.net/wiki/spaces/ENG/pages/12345",
+                  },
+                ],
+              });
+
+              console.log(result);
+            }
+
+            run();
+        - lang: Go
+          label: Go (API Client)
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Documents.Batch(ctx, components.PlatformDocumentsBatchRequest{\n        DocumentSpecs: []components.PlatformDocumentsBatchRequestDocumentSpec{\n            components.CreatePlatformDocumentsBatchRequestDocumentSpecPlatformDocumentsBatchSpecByID(\n                components.PlatformDocumentsBatchSpecByID{\n                    DocumentID: \"{document_id}\",\n                },\n            ),\n            components.CreatePlatformDocumentsBatchRequestDocumentSpecPlatformDocumentsBatchSpecByURL(\n                components.PlatformDocumentsBatchSpecByURL{\n                    URL: \"https://company.atlassian.net/wiki/spaces/ENG/pages/12345\",\n                },\n            ),\n        },\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformDocumentsBatchResponse != nil {\n        // handle response\n    }\n}"
+        - lang: Java
+          label: Java (API Client)
+          source: |-
+            package hello.world;
+
+            import com.glean.api_client.glean_api_client.Glean;
+            import com.glean.api_client.glean_api_client.hooks.GleanBuilder;
+            import com.glean.api_client.glean_api_client.models.components.*;
+            import com.glean.api_client.glean_api_client.models.errors.PlatformProblemDetailException;
+            import com.glean.api_client.glean_api_client.models.operations.PlatformDocumentsBatchResponse;
+            import java.lang.Exception;
+            import java.util.List;
+
+            public class Application {
+
+                public static void main(String[] args) throws PlatformProblemDetailException, Exception {
+
+                    Glean sdk = GleanBuilder.create()
+                            .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
+                            .includeExperimental(true)
+                        .build();
+
+                    PlatformDocumentsBatchRequest req = PlatformDocumentsBatchRequest.builder()
+                            .documentSpecs(List.of(
+                                PlatformDocumentsBatchRequestDocumentSpec.of(PlatformDocumentsBatchSpecById.builder()
+                                    .documentId("{document_id}")
+                                    .build()),
+                                PlatformDocumentsBatchRequestDocumentSpec.of(PlatformDocumentsBatchSpecByUrl.builder()
+                                    .url("https://company.atlassian.net/wiki/spaces/ENG/pages/12345")
+                                    .build())))
+                            .build();
+
+                    PlatformDocumentsBatchResponse res = sdk.documents().batch()
+                            .request(req)
+                            .call();
+
+                    if (res.platformDocumentsBatchResponse().isPresent()) {
+                        System.out.println(res.platformDocumentsBatchResponse().get());
+                    }
+                }
+            }
+      parameters:
+        - in: header
+          name: X-Glean-Include-Experimental
+          description: This endpoint is experimental, so requests must include this header set to `true`. See [How experimental APIs work](https://developers.glean.com/experimental/overview) for details.
+          required: true
+          schema:
+            type: boolean
+            default: true
+          example: true
+          value: 'true'
   /api/triggers:
     post:
       tags:
@@ -10185,6 +11129,189 @@ components:
                   - required:
                       - resolution_target_id
                     description: Detect an approval target identifier.
+    PlatformOAuthClientFilter:
+      type: object
+      additionalProperties: false
+      required:
+        - field
+        - values
+      description: A filter on one OAuth client field.
+      properties:
+        field:
+          type: string
+          pattern: ^is_active$
+          description: The client field to filter on. The only supported field is is_active.
+        values:
+          type: array
+          minItems: 1
+          description: The values to match. A client matches when any value matches.
+          items:
+            type: string
+            pattern: ^(true|false)$
+            description: '"true" matches active clients. "false" matches inactive clients.'
+        operator:
+          allOf:
+            - $ref: '#/components/schemas/PlatformFilterOperator'
+              description: Canonical Platform filter operator.
+          enum:
+            - EQUALS
+          default: EQUALS
+          description: The only supported operator is EQUALS. Defaults to EQUALS.
+    PlatformOAuthClientRegistrationType:
+      type: string
+      description: How an OAuth client was registered.
+      enum:
+        - STATIC
+      x-enumDescriptions:
+        STATIC: An admin created the client.
+      x-speakeasy-enum-descriptions:
+        STATIC: An admin created the client.
+    PlatformOAuthClientType:
+      type: string
+      description: Whether an OAuth client can keep a secret.
+      enum:
+        - CONFIDENTIAL
+        - PUBLIC
+      x-enumDescriptions:
+        CONFIDENTIAL: The client can keep a secret, for example a server-side application.
+        PUBLIC: The client cannot keep a secret, for example a desktop or command-line application.
+      x-speakeasy-enum-descriptions:
+        CONFIDENTIAL: The client can keep a secret, for example a server-side application.
+        PUBLIC: The client cannot keep a secret, for example a desktop or command-line application.
+    PlatformOAuthGrantType:
+      type: string
+      description: An OAuth grant type.
+      enum:
+        - AUTHORIZATION_CODE
+        - CLIENT_CREDENTIALS
+        - REFRESH_TOKEN
+        - DEVICE_CODE
+        - TOKEN_EXCHANGE
+        - JWT_BEARER
+      x-enumDescriptions:
+        AUTHORIZATION_CODE: The authorization code grant.
+        CLIENT_CREDENTIALS: The client credentials grant.
+        REFRESH_TOKEN: The refresh token grant.
+        DEVICE_CODE: The device authorization grant.
+        TOKEN_EXCHANGE: The token exchange grant.
+        JWT_BEARER: The JWT bearer assertion grant.
+      x-speakeasy-enum-descriptions:
+        AUTHORIZATION_CODE: The authorization code grant.
+        CLIENT_CREDENTIALS: The client credentials grant.
+        REFRESH_TOKEN: The refresh token grant.
+        DEVICE_CODE: The device authorization grant.
+        TOKEN_EXCHANGE: The token exchange grant.
+        JWT_BEARER: The JWT bearer assertion grant.
+    PlatformOAuthTokenEndpointAuthMethod:
+      type: string
+      description: How an OAuth client authenticates to the token endpoint.
+      enum:
+        - CLIENT_SECRET_BASIC
+        - CLIENT_SECRET_POST
+        - NO_AUTHENTICATION
+        - PRIVATE_KEY_JWT
+        - TLS_CLIENT_AUTH
+      x-enumDescriptions:
+        CLIENT_SECRET_BASIC: The client sends its secret in an HTTP Basic Authorization header.
+        CLIENT_SECRET_POST: The client sends its secret in the request body.
+        NO_AUTHENTICATION: The client does not authenticate. Public clients use this method.
+        PRIVATE_KEY_JWT: The client signs a JWT with its private key.
+        TLS_CLIENT_AUTH: The client authenticates with a mutual TLS certificate.
+      x-speakeasy-enum-descriptions:
+        CLIENT_SECRET_BASIC: The client sends its secret in an HTTP Basic Authorization header.
+        CLIENT_SECRET_POST: The client sends its secret in the request body.
+        NO_AUTHENTICATION: The client does not authenticate. Public clients use this method.
+        PRIVATE_KEY_JWT: The client signs a JWT with its private key.
+        TLS_CLIENT_AUTH: The client authenticates with a mutual TLS certificate.
+    PlatformOAuthClientAiGateway:
+      type: object
+      description: LLM Gateway details of an OAuth client.
+      additionalProperties: false
+      required:
+        - usage_client_id
+      properties:
+        usage_client_id:
+          type: string
+          description: |
+            The spend-client ID that usage records and usage limits use for this client. Send it as the client_id of a usage limit. It is an opaque, case-sensitive string; do not build it from client_id.
+    PlatformOAuthClient:
+      type: object
+      description: An OAuth client that an admin created for the workspace.
+      additionalProperties: false
+      required:
+        - client_id
+        - display_name
+        - registration_type
+        - grant_types
+        - redirect_uris
+        - is_active
+      properties:
+        client_id:
+          type: string
+          description: |
+            The OAuth client_id that the client sends to the authorization server. This is not the ID that usage records and usage limits use; see ai_gateway.usage_client_id.
+        display_name:
+          type: string
+          description: The client name that admins gave the client, or client_id when it has no name.
+        registration_type:
+          $ref: '#/components/schemas/PlatformOAuthClientRegistrationType'
+          description: How the client was registered.
+        client_type:
+          $ref: '#/components/schemas/PlatformOAuthClientType'
+          description: Whether the client can keep a secret. Absent when it is not set.
+        grant_types:
+          type: array
+          description: The OAuth grant types that the client can use.
+          items:
+            $ref: '#/components/schemas/PlatformOAuthGrantType'
+            description: An OAuth grant type.
+        token_endpoint_auth_method:
+          $ref: '#/components/schemas/PlatformOAuthTokenEndpointAuthMethod'
+          description: |
+            How the client authenticates to the token endpoint. Absent when it is not set.
+        redirect_uris:
+          type: array
+          description: The redirect URIs that the client can use.
+          items:
+            type: string
+            description: A redirect URI.
+        is_active:
+          type: boolean
+          description: |
+            Whether the client is active. A client that an admin disabled is inactive and cannot authenticate.
+        created_at:
+          type: string
+          format: date-time
+          description: When the client was created. Absent when it is not known.
+        ai_gateway:
+          $ref: '#/components/schemas/PlatformOAuthClientAiGateway'
+          description: |
+            LLM Gateway details. Present only when the client can call the Glean LLM Gateway.
+    PlatformListOAuthClientsResponse:
+      type: object
+      description: One page of OAuth clients.
+      additionalProperties: false
+      required:
+        - results
+        - has_more
+        - request_id
+      properties:
+        results:
+          type: array
+          description: The clients on this page, ordered by display_name and then by client_id.
+          items:
+            $ref: '#/components/schemas/PlatformOAuthClient'
+        has_more:
+          type: boolean
+          description: Whether more clients are available after this page.
+        next_cursor:
+          type:
+            - string
+            - 'null'
+          description: Opaque cursor for the next page; null or absent when has_more is false.
+        request_id:
+          type: string
+          description: Request identifier for correlating this response.
     PlatformDepartmentFilter:
       type: object
       additionalProperties: false
@@ -10262,6 +11389,19 @@ components:
             - string
             - 'null'
           description: Opaque cursor for the next page; null or absent when has_more is false.
+        request_id:
+          type: string
+          description: Request identifier for correlating this response.
+    PlatformGetDepartmentResponse:
+      type: object
+      description: One department.
+      additionalProperties: false
+      required:
+        - department
+        - request_id
+      properties:
+        department:
+          $ref: '#/components/schemas/PlatformDepartment'
         request_id:
           type: string
           description: Request identifier for correlating this response.
@@ -10355,6 +11495,20 @@ components:
             - string
             - 'null'
           description: Opaque cursor for the next page; null or absent when has_more is false.
+        request_id:
+          type: string
+          description: Request identifier for correlating this response.
+    PlatformGetIdpGroupResponse:
+      type: object
+      description: One IdP group.
+      additionalProperties: false
+      required:
+        - idp_group
+        - request_id
+      properties:
+        idp_group:
+          $ref: '#/components/schemas/PlatformIdpGroup'
+          description: The IdP group identified by the requested idp_group_id.
         request_id:
           type: string
           description: Request identifier for correlating this response.
@@ -10516,6 +11670,20 @@ components:
         request_id:
           type: string
           description: Request identifier for correlating this response.
+    PlatformGetUserResponse:
+      type: object
+      description: One user.
+      additionalProperties: false
+      required:
+        - user
+        - request_id
+      properties:
+        user:
+          $ref: '#/components/schemas/PlatformUser'
+          description: The requested user.
+        request_id:
+          type: string
+          description: Request identifier for correlating this response.
     PlatformAdminAgentFilter:
       type: object
       additionalProperties: false
@@ -10588,6 +11756,220 @@ components:
         request_id:
           type: string
           description: Request identifier for correlating this response.
+    PlatformDocumentInclude:
+      type: string
+      description: Optional document projection.
+      enum:
+        - CONTENT
+      x-enumDescriptions:
+        CONTENT: Add content, the document's extracted text.
+      x-speakeasy-enum-descriptions:
+        CONTENT: Add content, the document's extracted text.
+    PlatformDocumentContent:
+      type: object
+      additionalProperties: false
+      required:
+        - full_text_list
+      properties:
+        full_text_list:
+          type: array
+          description: |
+            Extracted plain-text segments. Empty when Glean has no extracted text for the document after a complete content read.
+          items:
+            type: string
+    PlatformDocument:
+      type: object
+      additionalProperties: false
+      required:
+        - document_id
+        - url
+        - title
+        - datasource
+        - document_type
+        - updated_at
+        - created_at
+      properties:
+        document_id:
+          type: string
+          minLength: 1
+          description: Indexed Glean store ID. Get document by ID accepts it.
+        url:
+          type: string
+          format: uri
+          minLength: 1
+          description: |
+            Permalink of the document. Pass it to get document by URL to retrieve the document again. May differ from a submitted lookup URL.
+        title:
+          type: string
+          minLength: 1
+          description: Document title. The server returns the placeholder title, Untitled, when the source item has no title.
+        datasource:
+          type: string
+          minLength: 1
+          description: Origin datasource.
+        document_type:
+          type:
+            - string
+            - 'null'
+          minLength: 1
+          x-omitempty: false
+          description: Datasource-specific document type.
+        mime_type:
+          type: string
+          minLength: 1
+          description: Source MIME type. Omitted when absent.
+        creator:
+          $ref: '#/components/schemas/PlatformPersonReference'
+        owner:
+          $ref: '#/components/schemas/PlatformPersonReference'
+        updated_at:
+          type:
+            - string
+            - 'null'
+          format: date-time
+          x-omitempty: false
+          description: When the document was last modified.
+        created_at:
+          type:
+            - string
+            - 'null'
+          format: date-time
+          x-omitempty: false
+          description: When the document was created.
+        content:
+          $ref: '#/components/schemas/PlatformDocumentContent'
+          description: |
+            Extracted text. Present on every found document when include contains CONTENT; omitted otherwise. A failure to retrieve requested content fails the request rather than returning a document without it.
+    PlatformDocumentGetResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - document
+        - request_id
+      properties:
+        document:
+          $ref: '#/components/schemas/PlatformDocument'
+        request_id:
+          type: string
+          minLength: 1
+          description: Platform-generated request ID for support correlation.
+    PlatformDocumentsBatchSpecById:
+      type: object
+      additionalProperties: false
+      required:
+        - document_id
+      properties:
+        document_id:
+          type: string
+          minLength: 1
+          description: |
+            Indexed Glean store ID. For Gmail or Outlook caller-specific citation IDs, try a URL selector instead.
+    PlatformDocumentsBatchSpecByUrl:
+      type: object
+      additionalProperties: false
+      required:
+        - url
+      properties:
+        url:
+          type: string
+          description: |
+            Document URL to resolve. An empty or malformed URL is not a schema 400. The batch response reports it as a warning after a complete read.
+    PlatformDocumentsBatchRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - document_specs
+      example:
+        document_specs:
+          - document_id: '{document_id}'
+          - url: https://company.atlassian.net/wiki/spaces/ENG/pages/12345
+      properties:
+        document_specs:
+          type: array
+          minItems: 1
+          maxItems: 100
+          description: Selectors to retrieve. Each item is exactly one of document_id or url.
+          items:
+            oneOf:
+              - $ref: '#/components/schemas/PlatformDocumentsBatchSpecById'
+              - $ref: '#/components/schemas/PlatformDocumentsBatchSpecByUrl'
+        include:
+          type: array
+          description: |
+            Optional field groups applied to every document in results. CONTENT adds content to every found document. Each value only adds fields; it does not change which documents are returned.
+          items:
+            $ref: '#/components/schemas/PlatformDocumentInclude'
+    PlatformDocumentsBatchResult:
+      type: object
+      additionalProperties: false
+      required:
+        - index
+        - document
+      properties:
+        index:
+          type: integer
+          minimum: 0
+          description: Zero-based index into document_specs.
+        document:
+          $ref: '#/components/schemas/PlatformDocument'
+    PlatformDocumentsBatchWarningContext:
+      type: object
+      additionalProperties: false
+      required:
+        - index
+      properties:
+        index:
+          type: integer
+          minimum: 0
+          description: Zero-based index into document_specs.
+        document_id:
+          type: string
+          minLength: 1
+          description: Submitted document_id when the spec was an ID.
+        url:
+          type: string
+          description: |
+            Submitted URL when the spec was a URL. Empty when the caller sent an empty url.
+    PlatformDocumentsBatchWarning:
+      type: object
+      additionalProperties: false
+      required:
+        - code
+        - message
+        - context
+      properties:
+        code:
+          type: string
+          minLength: 1
+          description: Warning code such as resource_not_found or invalid_parameter.
+        message:
+          type: string
+          minLength: 1
+          description: Human-readable warning.
+        context:
+          $ref: '#/components/schemas/PlatformDocumentsBatchWarningContext'
+    PlatformDocumentsBatchResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - results
+        - warnings
+        - request_id
+      properties:
+        results:
+          type: array
+          description: Found documents, correlated by index into document_specs.
+          items:
+            $ref: '#/components/schemas/PlatformDocumentsBatchResult'
+        warnings:
+          type: array
+          description: Complete per-item failures. Empty when every spec was found.
+          items:
+            $ref: '#/components/schemas/PlatformDocumentsBatchWarning'
+        request_id:
+          type: string
+          minLength: 1
+          description: Platform-generated request ID for support correlation.
     PlatformTriggerStatus:
       type: string
       description: Current trigger lifecycle state.
@@ -11483,6 +12865,18 @@ components:
         description: Nonempty identifier of the stored request resource.
         minLength: 1
         maxLength: 256
+    Include:
+      in: query
+      name: include
+      description: |
+        Optional field groups to add to each found document. Each value only adds fields; it does not change which documents are returned.
+      required: false
+      style: form
+      explode: true
+      schema:
+        type: array
+        items:
+          $ref: '#/components/schemas/PlatformDocumentInclude'
     TriggerWebhookId:
       name: webhook-id
       in: header
@@ -11523,3 +12917,29 @@ components:
         type: string
         pattern: ^v1,[A-Za-z0-9+/=]+$
       example: v1,xxx
+x-tagGroups:
+  - name: Agents & AI
+    tags:
+      - Agents
+      - Chat
+      - Skills
+  - name: Search & Data
+    tags:
+      - Search
+      - Documents
+  - name: Automation
+    tags:
+      - Triggers
+  - name: People
+    tags:
+      - Departments
+      - Users
+  - name: Account
+    tags:
+      - Usage
+  - name: Administration
+    tags:
+      - Admin Agents
+      - IdP Groups
+      - OAuth clients
+      - Admin Usage

@@ -24,6 +24,7 @@ export const VIDEO_VISIBILITIES = ['public', 'preview'] as const;
 /** Labels match `PLATFORM_CAPABILITIES` in `src/components/home/platformStatus.ts`. */
 export const VIDEO_PLATFORM_CAPABILITIES = [
   'Search',
+  'Documents',
   'Chat',
   'Agents',
   'Skills',
