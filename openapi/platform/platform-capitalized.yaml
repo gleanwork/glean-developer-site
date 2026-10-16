@@ -13,6 +13,30 @@ servers:
         description: Your complete Glean API HTTPS origin. Glean-hosted, vanity, custom, and non-Glean-hosted domains are supported.
 security:
   - APIToken: []
+x-tagGroups:
+  - name: Agents & AI
+    tags:
+      - Agents
+      - Chat
+      - Skills
+  - name: Search & Data
+    tags:
+      - Search
+  - name: Automation
+    tags:
+      - Triggers
+  - name: People
+    tags:
+      - Departments
+      - Users
+  - name: Usage
+    tags:
+      - Usage
+  - name: Administration
+    tags:
+      - Admin Agents
+      - IdP Groups
+      - Admin Usage
 paths:
   /api/agents/search:
     post:
@@ -3162,7 +3186,7 @@ paths:
   /api/admin/usage/settings:
     get:
       tags:
-        - Usage
+        - Admin Usage
       summary: Get usage settings
       description: |
         Retrieve workspace-wide policy from the same configuration used by Billing. Group resolution uses the configured policy and its backend defaults; business justification is currently optional. No per-user settings are read, and updated_at is omitted because no policy-update timestamp is available. Requires admin.usage.settings:read and permission to read workspace billing; a global administrator role is not required.
@@ -3280,7 +3304,7 @@ paths:
           value: 'true'
     patch:
       tags:
-        - Usage
+        - Admin Usage
       summary: Update usage settings
       description: |
         Assign workspace-wide usage policy. Assignment is currently unavailable until a writer to authoritative Billing configuration is integrated. The backend config platform.usageSettingsWritesEnabled is disabled by default; enabling it alone does not implement assignment, and an authorized request still returns 503 without changing configuration or persisting a second copy of policy. Requires admin.usage.settings:write and permission to edit workspace billing; a global administrator role is not required.
@@ -3444,7 +3468,7 @@ paths:
   /api/admin/usage/limits:
     get:
       tags:
-        - Usage
+        - Admin Usage
       summary: List usage limits
       description: |
         List configured limits across Glean and external spend clients, plus aggregate agent limits. Organization and user limits identify their spend client; aggregate agent limits omit client_id. USER targets return the canonical user_id and, when available, the user's directory email. Requires admin.usage.limits:read and permission to read workspace billing. Optional filters match configured limits. Pages contain up to page_size matching results; the service continues scanning until the page is full or the collection is exhausted. Continue with next_cursor while has_more is true, keeping the same filters on every continuation request. The undeclared client_id and target_type query parameters are rejected; use the canonical filters parameter instead.
@@ -3550,7 +3574,7 @@ paths:
       x-speakeasy-name-override: listLimits
     post:
       tags:
-        - Usage
+        - Admin Usage
       summary: Upsert a usage limit
       description: |
         Create or replace a single usage limit by its natural key. Always returns 200 with the normalized limit. A USER target may be identified by user_id or email; an unknown user returns 404. Requires admin.usage.limits:write and permission to edit workspace billing. Personal usage grants do not allow limit changes.
@@ -3610,7 +3634,7 @@ paths:
   /api/admin/usage/limits/reset:
     post:
       tags:
-        - Usage
+        - Admin Usage
       summary: Reset a usage limit
       description: |
         Remove a configured usage limit matching the selector without clearing measured usage. A USER target may be identified by user_id or email, including a user no longer in the directory. Requires admin.usage.limits:write and permission to edit workspace billing.
@@ -3678,7 +3702,7 @@ paths:
   /api/admin/usage/limits/batch:
     post:
       tags:
-        - Usage
+        - Admin Usage
       summary: Apply usage limit policies
       description: |
         Apply one or more usage limit policy changes atomically. This action sets policy by natural key; it does not create addressable resources or return resource locations. Every change succeeds or none are applied. USER targets may be identified by user_id or email; each resolves to the canonical user_id before duplicate natural keys are checked. Requires admin.usage.limits:write and permission to edit workspace billing.
@@ -3768,7 +3792,7 @@ paths:
   /api/admin/usage/limits/evaluate:
     post:
       tags:
-        - Usage
+        - Admin Usage
       summary: Evaluate administrative usage limit headroom
       description: |
         Evaluate the effective usage limits for a selector and return the current decision (AVAILABLE, WARNING, or BLOCKED) based on accrued usage. Requires admin.usage:evaluate and permission to read workspace billing, not a global administrator role. An explicit usage_selector.client_id selects the Glean or external spend client; it is never inferred from the caller. Returns all applicable limit values and counters, with effective headroom separated by unit. Agent counters retain aggregate scope. Billing readers receive exact IdP-group source identities. A USER target may be identified by user_id or email. Evaluation reports configured-budget status even when runtime enforcement switches are off; it does not perform request admission, model eligibility, or agent-run preflight checks.
@@ -4102,7 +4126,7 @@ paths:
   /api/admin/usage/limit-increase-requests:
     post:
       tags:
-        - Usage
+        - Admin Usage
       summary: Submit an editable-agent limit-increase request
       operationId: platform-admin-usage-requests-create
       x-glean-scopes:
@@ -4175,7 +4199,7 @@ paths:
           value: 'true'
     get:
       tags:
-        - Usage
+        - Admin Usage
       summary: List the billing limit-increase request queue
       operationId: platform-admin-usage-requests-list
       x-glean-scopes:
@@ -4246,7 +4270,7 @@ paths:
         description: Opaque request identifier; not an authorization grant.
     get:
       tags:
-        - Usage
+        - Admin Usage
       summary: Get a billing limit-increase request
       operationId: platform-admin-usage-requests-get
       x-glean-scopes:
@@ -4303,7 +4327,7 @@ paths:
           value: 'true'
     patch:
       tags:
-        - Usage
+        - Admin Usage
       summary: Resolve a billing limit-increase request
       operationId: platform-admin-usage-requests-update
       x-glean-scopes:
@@ -4846,7 +4870,7 @@ paths:
   /api/admin/agents:
     get:
       tags:
-        - Agents
+        - Admin Agents
       summary: List all agents
       description: |
         List every agent in the workspace, ordered by display_name and then by agent_id. Unlike agent search, the list does not depend on who an agent is shared with, so it includes private and disabled agents. Deleted agents are inactive and are left out unless an is_active filter includes the value "false". Use the agent_id of an active agent with other Platform APIs, for example as a usage limit target. A deleted agent is not a valid usage limit target. The caller must be able to read all agents, administer agents, or read workspace billing.

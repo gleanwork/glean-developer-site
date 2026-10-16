@@ -783,44 +783,12 @@ const baseSidebars: SidebarsConfig = {
           collapsed: false,
           items: [
             {
-              type: 'category',
-              label: 'Admin',
-              description:
-                'List workspace agents and identity provider groups as an administrator.',
+              type: 'html',
+              value: 'Agents &amp; AI',
+              className: 'sidebar-api-group',
               customProps: {
-                icon: 'Settings',
-                iconSet: 'feather',
+                tagGroup: 'Agents & AI',
               },
-              items: [
-                {
-                  type: 'category',
-                  label: 'Agents',
-                  items: [
-                    {
-                      type: 'doc',
-                      id: 'api/platform-api/platform-admin-agents-list',
-                      label: 'List',
-                      className: 'api-method get',
-                    },
-                  ],
-                },
-                {
-                  type: 'category',
-                  label: 'IdP Groups',
-                  link: {
-                    type: 'doc',
-                    id: 'api/platform-api/idp-groups-overview',
-                  },
-                  items: [
-                    {
-                      type: 'doc',
-                      id: 'api/platform-api/platform-admin-idp-groups-list',
-                      label: 'List',
-                      className: 'api-method get',
-                    },
-                  ],
-                },
-              ],
             },
             {
               type: 'category',
@@ -911,62 +879,12 @@ const baseSidebars: SidebarsConfig = {
             },
             {
               type: 'category',
-              label: 'Departments',
-              description:
-                'List the departments in the Glean directory to use as usage limit targets.',
-              customProps: {
-                icon: 'Briefcase',
-                iconSet: 'feather',
-              },
-              link: {
-                type: 'doc',
-                id: 'api/platform-api/departments-overview',
-              },
-              items: [
-                {
-                  type: 'doc',
-                  id: 'api/platform-api/platform-departments-list',
-                  label: 'List departments',
-                  className: 'api-method get',
-                },
-              ],
-            },
-            {
-              type: 'category',
-              label: 'Search',
-              description:
-                'Build permission-aware search experiences with relevant results, filters, and time ranges.',
-              customProps: {
-                icon: 'Search',
-                iconSet: 'feather',
-              },
-              link: {
-                type: 'doc',
-                id: 'api/platform-api/search-overview',
-              },
-              items: [
-                {
-                  type: 'doc',
-                  id: 'api/platform-api/platform-search',
-                  label: 'Search',
-                  className: 'api-method post',
-                },
-                {
-                  type: 'doc',
-                  id: 'api/platform-api/platform-search-filters',
-                  label: 'List search filters',
-                  className: 'api-method get',
-                },
-              ],
-            },
-            {
-              type: 'category',
               label: 'Skills',
               description:
                 'Discover, validate, import, synchronize, and manage skills through the Platform API.',
               customProps: {
-                icon: 'Settings',
-                iconSet: 'feather',
+                icon: 'skill',
+                iconSet: 'glean',
               },
               link: {
                 type: 'doc',
@@ -1066,6 +984,50 @@ const baseSidebars: SidebarsConfig = {
               ],
             },
             {
+              type: 'html',
+              value: 'Search &amp; Data',
+              className: 'sidebar-api-group',
+              customProps: {
+                tagGroup: 'Search & Data',
+              },
+            },
+            {
+              type: 'category',
+              label: 'Search',
+              description:
+                'Build permission-aware search experiences with relevant results, filters, and time ranges.',
+              customProps: {
+                icon: 'Search',
+                iconSet: 'feather',
+              },
+              link: {
+                type: 'doc',
+                id: 'api/platform-api/search-overview',
+              },
+              items: [
+                {
+                  type: 'doc',
+                  id: 'api/platform-api/platform-search',
+                  label: 'Search',
+                  className: 'api-method post',
+                },
+                {
+                  type: 'doc',
+                  id: 'api/platform-api/platform-search-filters',
+                  label: 'List search filters',
+                  className: 'api-method get',
+                },
+              ],
+            },
+            {
+              type: 'html',
+              value: 'Automation',
+              className: 'sidebar-api-group',
+              customProps: {
+                tagGroup: 'Automation',
+              },
+            },
+            {
               type: 'category',
               label: 'Triggers',
               description:
@@ -1142,10 +1104,70 @@ const baseSidebars: SidebarsConfig = {
               ],
             },
             {
+              type: 'html',
+              value: 'People',
+              className: 'sidebar-api-group',
+              customProps: {
+                tagGroup: 'People',
+              },
+            },
+            {
+              type: 'category',
+              label: 'Departments',
+              description:
+                'List the departments in the Glean directory to use as usage limit targets.',
+              customProps: {
+                icon: 'Briefcase',
+                iconSet: 'feather',
+              },
+              link: {
+                type: 'doc',
+                id: 'api/platform-api/departments-overview',
+              },
+              items: [
+                {
+                  type: 'doc',
+                  id: 'api/platform-api/platform-departments-list',
+                  label: 'List departments',
+                  className: 'api-method get',
+                },
+              ],
+            },
+            {
+              type: 'category',
+              label: 'Users',
+              description:
+                'List the people in the Glean directory to use with other Platform APIs.',
+              customProps: {
+                icon: 'User',
+                iconSet: 'feather',
+              },
+              link: {
+                type: 'doc',
+                id: 'api/platform-api/users-overview',
+              },
+              items: [
+                {
+                  type: 'doc',
+                  id: 'api/platform-api/platform-users-list',
+                  label: 'List users',
+                  className: 'api-method get',
+                },
+              ],
+            },
+            {
+              type: 'html',
+              value: 'Usage',
+              className: 'sidebar-api-group',
+              customProps: {
+                tagGroup: 'Usage',
+              },
+            },
+            {
               type: 'category',
               label: 'Usage',
               description:
-                'Configure and evaluate usage limits, and manage limit-increase requests.',
+                'Check your own usage limit headroom, and request more when you need it.',
               customProps: {
                 icon: 'BarChart2',
                 iconSet: 'feather',
@@ -1153,6 +1175,92 @@ const baseSidebars: SidebarsConfig = {
               link: {
                 type: 'doc',
                 id: 'api/platform-api/usage-overview',
+              },
+              items: [
+                {
+                  type: 'doc',
+                  id: 'api/platform-api/platform-usage-limits-evaluate',
+                  label: 'Evaluate usage limit headroom',
+                  className: 'api-method post',
+                },
+                {
+                  type: 'doc',
+                  id: 'api/platform-api/platform-usage-requests-create',
+                  label: 'Submit a personal limit-increase request',
+                  className: 'api-method post',
+                },
+                {
+                  type: 'doc',
+                  id: 'api/platform-api/platform-usage-requests-get',
+                  label: 'Get a personal limit-increase request',
+                  className: 'api-method get',
+                },
+                {
+                  type: 'doc',
+                  id: 'api/platform-api/platform-usage-requests-list',
+                  label: 'List personal limit-increase requests',
+                  className: 'api-method get',
+                },
+              ],
+            },
+            {
+              type: 'html',
+              value: 'Administration',
+              className: 'sidebar-api-group',
+              customProps: {
+                tagGroup: 'Administration',
+              },
+            },
+            {
+              type: 'category',
+              label: 'Agents',
+              description:
+                'List every agent in the workspace, including private and disabled agents.',
+              customProps: {
+                tag: 'Admin Agents',
+                icon: 'agent',
+                iconSet: 'glean',
+              },
+              items: [
+                {
+                  type: 'doc',
+                  id: 'api/platform-api/platform-admin-agents-list',
+                  label: 'List all agents',
+                  className: 'api-method get',
+                },
+              ],
+            },
+            {
+              type: 'category',
+              label: 'IdP Groups',
+              description:
+                'List the identity provider groups that Glean loads from the directory.',
+              customProps: {
+                icon: 'Users',
+                iconSet: 'feather',
+              },
+              link: {
+                type: 'doc',
+                id: 'api/platform-api/idp-groups-overview',
+              },
+              items: [
+                {
+                  type: 'doc',
+                  id: 'api/platform-api/platform-admin-idp-groups-list',
+                  label: 'List IdP groups',
+                  className: 'api-method get',
+                },
+              ],
+            },
+            {
+              type: 'category',
+              label: 'Usage',
+              description:
+                'Set workspace usage limits and settings, and resolve limit-increase requests.',
+              customProps: {
+                tag: 'Admin Usage',
+                icon: 'BarChart2',
+                iconSet: 'feather',
               },
               items: [
                 {
@@ -1220,52 +1328,6 @@ const baseSidebars: SidebarsConfig = {
                   id: 'api/platform-api/platform-admin-usage-settings-update',
                   label: 'Update usage settings',
                   className: 'api-method patch',
-                },
-                {
-                  type: 'doc',
-                  id: 'api/platform-api/platform-usage-limits-evaluate',
-                  label: 'Evaluate usage limit headroom',
-                  className: 'api-method post',
-                },
-                {
-                  type: 'doc',
-                  id: 'api/platform-api/platform-usage-requests-create',
-                  label: 'Submit a personal limit-increase request',
-                  className: 'api-method post',
-                },
-                {
-                  type: 'doc',
-                  id: 'api/platform-api/platform-usage-requests-get',
-                  label: 'Get a personal limit-increase request',
-                  className: 'api-method get',
-                },
-                {
-                  type: 'doc',
-                  id: 'api/platform-api/platform-usage-requests-list',
-                  label: 'List personal limit-increase requests',
-                  className: 'api-method get',
-                },
-              ],
-            },
-            {
-              type: 'category',
-              label: 'Users',
-              description:
-                'List the people in the Glean directory to use with other Platform APIs.',
-              customProps: {
-                icon: 'User',
-                iconSet: 'feather',
-              },
-              link: {
-                type: 'doc',
-                id: 'api/platform-api/users-overview',
-              },
-              items: [
-                {
-                  type: 'doc',
-                  id: 'api/platform-api/platform-users-list',
-                  label: 'List users',
-                  className: 'api-method get',
                 },
               ],
             },

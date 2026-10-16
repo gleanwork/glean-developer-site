@@ -44,10 +44,24 @@ function countEndpoints(items: PropSidebarItem[]): number {
   }, 0);
 }
 
-export default function getApiReferenceItems(
+export type ApiReferenceGroup = {
+  /** The tag group name, or null for families before the first heading. */
+  label: string | null;
+  families: ApiReferenceItem[];
+};
+
+function getTagGroupHeading(item: PropSidebarItem): string | null {
+  if (item.type !== 'html') {
+    return null;
+  }
+  const tagGroup = item.customProps?.tagGroup;
+  return typeof tagGroup === 'string' ? tagGroup : null;
+}
+
+function findReferenceCategory(
   currentCategory: PropSidebarItemCategory,
   referenceCategoryLabel: string,
-): ApiReferenceItem[] {
+): PropSidebarItemCategory {
   const referenceCategory = findCategory(
     currentCategory.items,
     referenceCategoryLabel,
@@ -59,10 +73,44 @@ export default function getApiReferenceItems(
     );
   }
 
-  return referenceCategory.items
-    .filter((item): item is PropSidebarItemCategory => item.type === 'category')
-    .map((item) => ({
-      ...item,
-      endpointCount: countEndpoints(item.items),
-    }));
+  return referenceCategory;
+}
+
+/**
+ * Group the reference's families by the tag group headings (html sidebar
+ * items with `customProps.tagGroup`) that precede them. A reference without
+ * headings returns one group with a null label.
+ */
+export function getApiReferenceGroups(
+  currentCategory: PropSidebarItemCategory,
+  referenceCategoryLabel: string,
+): ApiReferenceGroup[] {
+  const referenceCategory = findReferenceCategory(
+    currentCategory,
+    referenceCategoryLabel,
+  );
+  const groups: ApiReferenceGroup[] = [{ label: null, families: [] }];
+
+  for (const item of referenceCategory.items) {
+    const heading = getTagGroupHeading(item);
+    if (heading !== null) {
+      groups.push({ label: heading, families: [] });
+    } else if (item.type === 'category') {
+      groups[groups.length - 1].families.push({
+        ...item,
+        endpointCount: countEndpoints(item.items),
+      });
+    }
+  }
+
+  return groups.filter((group) => group.families.length > 0);
+}
+
+export default function getApiReferenceItems(
+  currentCategory: PropSidebarItemCategory,
+  referenceCategoryLabel: string,
+): ApiReferenceItem[] {
+  return getApiReferenceGroups(currentCategory, referenceCategoryLabel).flatMap(
+    (group) => group.families,
+  );
 }
