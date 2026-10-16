@@ -4,13 +4,14 @@ import recipesData from './src/data/recipes.json';
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
 
 // Icons for cookbook collections. Collections that share a name with a
-// Guides section reuse its icon so the two sections read as a pair.
+// Guides section reuse its icon so the two sections read as a pair. Product
+// functions use the Glean app's glyph (see scripts/icon-usage.test.ts).
 const COLLECTION_ICONS: Record<string, { icon: string; iconSet: string }> = {
-  chat: { icon: 'chat', iconSet: 'glean' },
-  search: { icon: 'Search', iconSet: 'feather' },
+  chat: { icon: 'message-with-sparkles', iconSet: 'glean' },
+  search: { icon: 'search', iconSet: 'glean' },
   agents: { icon: 'agent', iconSet: 'glean' },
-  skills: { icon: 'Package', iconSet: 'feather' },
-  triggers: { icon: 'Zap', iconSet: 'feather' },
+  skills: { icon: 'skill', iconSet: 'glean' },
+  triggers: { icon: 'zap', iconSet: 'glean' },
   'complete-apps': { icon: 'Layers', iconSet: 'feather' },
 };
 
@@ -101,8 +102,8 @@ const baseSidebars: SidebarsConfig = {
           type: 'category',
           label: 'Search',
           customProps: {
-            icon: 'Search',
-            iconSet: 'feather',
+            icon: 'search',
+            iconSet: 'glean',
           },
           items: [
             {
@@ -207,8 +208,8 @@ const baseSidebars: SidebarsConfig = {
           type: 'category',
           label: 'Triggers',
           customProps: {
-            icon: 'Zap',
-            iconSet: 'feather',
+            icon: 'zap',
+            iconSet: 'glean',
           },
           items: [
             {
@@ -854,7 +855,7 @@ const baseSidebars: SidebarsConfig = {
               description:
                 'Create chat responses grounded in your Glean instance.',
               customProps: {
-                icon: 'chat',
+                icon: 'message-with-sparkles',
                 iconSet: 'glean',
               },
               link: {
@@ -997,8 +998,8 @@ const baseSidebars: SidebarsConfig = {
               description:
                 'Build permission-aware search experiences with relevant results, filters, and time ranges.',
               customProps: {
-                icon: 'Search',
-                iconSet: 'feather',
+                icon: 'search',
+                iconSet: 'glean',
               },
               link: {
                 type: 'doc',
@@ -1033,8 +1034,8 @@ const baseSidebars: SidebarsConfig = {
               description:
                 'Subscribe to Glean content events and receive signed webhooks using curated trigger presets.',
               customProps: {
-                icon: 'Zap',
-                iconSet: 'feather',
+                icon: 'zap',
+                iconSet: 'glean',
               },
               link: {
                 type: 'doc',
@@ -1117,8 +1118,8 @@ const baseSidebars: SidebarsConfig = {
               description:
                 'List the departments in the Glean directory to use as usage limit targets.',
               customProps: {
-                icon: 'Briefcase',
-                iconSet: 'feather',
+                icon: 'building',
+                iconSet: 'glean',
               },
               link: {
                 type: 'doc',
@@ -1139,8 +1140,8 @@ const baseSidebars: SidebarsConfig = {
               description:
                 'List the people in the Glean directory to use with other Platform APIs.',
               customProps: {
-                icon: 'User',
-                iconSet: 'feather',
+                icon: 'user',
+                iconSet: 'glean',
               },
               link: {
                 type: 'doc',
@@ -1169,8 +1170,8 @@ const baseSidebars: SidebarsConfig = {
               description:
                 'Check your own usage limit headroom, and request more when you need it.',
               customProps: {
-                icon: 'BarChart2',
-                iconSet: 'feather',
+                icon: 'dollar-sign',
+                iconSet: 'glean',
               },
               link: {
                 type: 'doc',
@@ -1236,8 +1237,8 @@ const baseSidebars: SidebarsConfig = {
               description:
                 'List the identity provider groups that Glean loads from the directory.',
               customProps: {
-                icon: 'Users',
-                iconSet: 'feather',
+                icon: 'users',
+                iconSet: 'glean',
               },
               link: {
                 type: 'doc',
@@ -1259,8 +1260,8 @@ const baseSidebars: SidebarsConfig = {
                 'Set workspace usage limits and settings, and resolve limit-increase requests.',
               customProps: {
                 tag: 'Admin Usage',
-                icon: 'BarChart2',
-                iconSet: 'feather',
+                icon: 'dollar-sign',
+                iconSet: 'glean',
               },
               items: [
                 {
@@ -1489,8 +1490,8 @@ const baseSidebars: SidebarsConfig = {
               description:
                 'Create and manage targeted organizational announcements.',
               customProps: {
-                icon: 'Volume2',
-                iconSet: 'feather',
+                icon: 'megaphone',
+                iconSet: 'glean',
               },
               link: {
                 type: 'doc',
@@ -1523,8 +1524,8 @@ const baseSidebars: SidebarsConfig = {
               description:
                 'Create and manage curated answers to frequently asked questions.',
               customProps: {
-                icon: 'HelpCircle',
-                iconSet: 'feather',
+                icon: 'answer',
+                iconSet: 'glean',
               },
               link: {
                 type: 'doc',
@@ -1597,7 +1598,7 @@ const baseSidebars: SidebarsConfig = {
               description:
                 'Build conversational experiences, manage chat history, and work with chat files.',
               customProps: {
-                icon: 'chat',
+                icon: 'message-with-sparkles',
                 iconSet: 'glean',
               },
               link: {
@@ -1911,8 +1912,8 @@ const baseSidebars: SidebarsConfig = {
               description:
                 'Retrieve aggregated usage insights about users, queries, and content.',
               customProps: {
-                icon: 'TrendingUp',
-                iconSet: 'feather',
+                icon: 'insights',
+                iconSet: 'glean',
               },
               link: {
                 type: 'doc',
@@ -2001,8 +2002,8 @@ const baseSidebars: SidebarsConfig = {
               description:
                 'Search connected content, autocomplete queries, and retrieve personalized feeds.',
               customProps: {
-                icon: 'Search',
-                iconSet: 'feather',
+                icon: 'search',
+                iconSet: 'glean',
               },
               link: {
                 type: 'doc',
@@ -2547,8 +2548,8 @@ const baseSidebars: SidebarsConfig = {
               description:
                 "Index employees and teams used by Glean's people directory and retrieval experiences.",
               customProps: {
-                icon: 'Users',
-                iconSet: 'feather',
+                icon: 'users',
+                iconSet: 'glean',
               },
               link: {
                 type: 'doc',

@@ -5,6 +5,26 @@ import { describe, expect, it } from 'vitest';
 import { GLEAN_ICON_MAP } from '../packages/docusaurus-theme-glean/src/theme/Icons/glean-icon-manifest';
 import { BRAND_ICON_SRC } from '../src/components/Cookbook/brandIcons';
 import registry from '../data/cookbook-registry.json';
+import sidebars from '../sidebars';
+
+type SidebarNode = {
+  type?: string;
+  label?: string;
+  items?: SidebarNode[];
+  customProps?: { icon?: unknown; iconSet?: unknown };
+};
+
+function collectSidebarCategories(items: SidebarNode[]): SidebarNode[] {
+  return items.flatMap((item) =>
+    item.type === 'category'
+      ? [item, ...collectSidebarCategories(item.items ?? [])]
+      : [],
+  );
+}
+
+const sidebarCategories = Object.values(sidebars).flatMap((items) =>
+  collectSidebarCategories(items as SidebarNode[]),
+);
 
 function collectMdxFiles(directory: string): string[] {
   return fs.readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
@@ -100,5 +120,62 @@ describe('Cookbook recipe icons', () => {
     );
 
     expect(invalid).toEqual([]);
+  });
+});
+
+describe('sidebar icons', () => {
+  it('only uses icons that exist in the selected icon set', () => {
+    const invalid = sidebarCategories
+      .filter(({ customProps }) => customProps?.icon)
+      .filter(({ customProps }) => {
+        const icon = String(customProps?.icon);
+        return (customProps?.iconSet ?? 'feather') === 'glean'
+          ? !(icon in GLEAN_ICON_MAP)
+          : !(icon in FeatherIcons);
+      })
+      .map(
+        ({ label, customProps }) =>
+          `${label}: ${customProps?.iconSet}/${customProps?.icon}`,
+      );
+
+    expect(invalid).toEqual([]);
+  });
+
+  it('uses the Glean app icon for each product function', () => {
+    // Glyph the Glean app shows for the same function, from
+    // askscio/scio typescript/web/common/AppNav/config and the feature UI.
+    const canonical: Record<string, string> = {
+      Agents: 'agent', // main nav and admin nav: Agents
+      Announcements: 'megaphone', // Insights: Announcements
+      Answers: 'answer', // Insights: Answers
+      Chat: 'message-with-sparkles', // admin nav: Assistant
+      Departments: 'building', // Insights: Departments
+      'IdP Groups': 'users', // groups of people
+      Insights: 'insights', // user menu and Insights: Overview
+      People: 'users', // main nav: People
+      Search: 'search', // main nav: Search
+      Skills: 'skill', // admin nav and user menu: Skills
+      Triggers: 'zap', // chat: Triggers in this chat
+      Usage: 'dollar-sign', // admin nav: Usage
+      Users: 'user', // admin nav: User roles
+    };
+    const usages = new Set<string>();
+    const mismatches: string[] = [];
+
+    for (const { label, customProps } of sidebarCategories) {
+      if (!label || !(label in canonical) || !customProps?.icon) continue;
+      usages.add(label);
+      if (
+        customProps.iconSet !== 'glean' ||
+        customProps.icon !== canonical[label]
+      ) {
+        mismatches.push(
+          `${label} uses ${customProps.iconSet}/${customProps.icon}, expected glean/${canonical[label]}`,
+        );
+      }
+    }
+
+    expect(mismatches).toEqual([]);
+    expect([...usages].sort()).toEqual(Object.keys(canonical).sort());
   });
 });
