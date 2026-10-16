@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import * as FeatherIcons from 'react-feather';
@@ -36,6 +37,28 @@ function collectMdxFiles(directory: string): string[] {
         : [];
   });
 }
+
+describe('Glean icon manifest', () => {
+  // GleanIcon inlines whatever the icon URL returns, so a file that is not
+  // deployed renders the 404 page inside the sidebar. A file can exist locally
+  // and still be missing from git: a global ignore such as `Icon?` matches the
+  // `icons` directory on a case-insensitive file system.
+  it('points every entry at an SVG that git tracks', () => {
+    const tracked = new Set(
+      execFileSync('git', ['ls-files', '--', 'static/img/glean'], {
+        encoding: 'utf8',
+      })
+        .split('\n')
+        .filter(Boolean),
+    );
+    const untracked = Object.entries(GLEAN_ICON_MAP)
+      .map(([name, entry]) => [name, `static${entry.path}${entry.file}`])
+      .filter(([, file]) => !tracked.has(file))
+      .map(([name, file]) => `${name}: ${file}`);
+
+    expect(untracked).toEqual([]);
+  });
+});
 
 describe('MDX card icons', () => {
   it('only uses icons that exist in the selected icon set', () => {
