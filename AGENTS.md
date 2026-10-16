@@ -55,6 +55,9 @@ these pages uses the `ApiOverview` component:
   the endpoint table from `src/data/platform-endpoints.json`, which
   `pnpm generate:platform-endpoints` builds from the spec's tags during
   `pnpm openapi:regenerate:platform`.
+- An admin tag (`Admin Usage`) has no page of its own. Its endpoints render
+  on the self-service family's page: add
+  `additionalApiFamilies={['admin-usage']}` to `usage-overview.mdx`.
 - Put page-specific notes (experimental status, permissions, related APIs)
   below the component. `search-overview.mdx` and `usage-overview.mdx` are the
   reference examples.
