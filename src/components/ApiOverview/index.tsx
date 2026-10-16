@@ -4,6 +4,8 @@ import CardGroup from '@theme/CardGroup';
 import Card from '@theme/Card';
 import styles from './styles.module.css';
 import { getEndpointsForApi } from '../../utils/apiData';
+import platformEndpointsData from '@site/src/data/platform-endpoints.json';
+import type { PlatformEndpointsData } from '@site/src/types/platformEndpoints';
 
 interface Endpoint {
   method: string;
@@ -11,6 +13,8 @@ interface Endpoint {
   summary: string;
   description?: string;
   operationId: string;
+  /** Link to the endpoint page. Overrides the link derived from operationId. */
+  href?: string;
 }
 
 interface UseCase {
@@ -49,62 +53,29 @@ function getDocLinkForEndpoint(
     return `/api/indexing-api/${kebabCaseId}`;
   }
 
-  if (apiType === 'platform-api') {
-    const kebabCaseId = camelToKebab(operationId);
-    return `/api/platform-api/${kebabCaseId}`;
-  }
-
   const kebabCaseId = camelToKebab(operationId);
   return `/api/client-api/${apiFamily.toLowerCase()}/${kebabCaseId}`;
 }
 
 function getPlatformApiEndpoints(apiFamily: string): Endpoint[] {
-  // Platform API is generated from a single flat spec (indexing pattern), so
-  // endpoints are enumerated here per tag rather than read from split-info.json.
-  const platformEndpoints: { [key: string]: Endpoint[] } = {
-    agents: [
-      {
-        method: 'POST',
-        path: '/api/agents/search',
-        summary: 'Search agents',
-        operationId: 'platform-agents-search',
-      },
-      {
-        method: 'GET',
-        path: '/api/agents/{agent_id}',
-        summary: 'Get agent',
-        operationId: 'platform-agents-get',
-      },
-      {
-        method: 'GET',
-        path: '/api/agents/{agent_id}/schemas',
-        summary: 'Get agent schemas',
-        operationId: 'platform-agents-get-schemas',
-      },
-      {
-        method: 'POST',
-        path: '/api/agents/{agent_id}/runs',
-        summary: 'Create agent run',
-        operationId: 'platform-agents-create-run',
-      },
-    ],
-    search: [
-      {
-        method: 'POST',
-        path: '/api/search',
-        summary: 'Search',
-        operationId: 'platform-search',
-      },
-      {
-        method: 'GET',
-        path: '/api/search/filters',
-        summary: 'List search filters',
-        operationId: 'platform-search-filters',
-      },
-    ],
-  };
+  // Generated from the Platform spec's tags by `pnpm generate:platform-endpoints`,
+  // which runs as part of `pnpm openapi:regenerate:platform`.
+  const family = (platformEndpointsData as PlatformEndpointsData).families[
+    apiFamily.toLowerCase()
+  ];
 
-  return platformEndpoints[apiFamily] || [];
+  if (!family) {
+    console.warn(`No Platform API endpoint data for API family: ${apiFamily}`);
+    return [];
+  }
+
+  return family.endpoints.map((endpoint) => ({
+    method: endpoint.method,
+    path: endpoint.path,
+    summary: endpoint.summary,
+    operationId: endpoint.docId.split('/').pop() ?? endpoint.docId,
+    href: `/${endpoint.docId}`,
+  }));
 }
 
 function getIndexingApiEndpoints(apiFamily: string): Endpoint[] {
@@ -359,7 +330,7 @@ export default function ApiOverview({
   apiFamily,
   apiType = 'client-api',
 }: ApiOverviewProps) {
-  const endpoints =
+  const endpoints: Endpoint[] =
     apiType === 'indexing-api'
       ? getIndexingApiEndpoints(apiFamily)
       : apiType === 'platform-api'
@@ -400,11 +371,13 @@ export default function ApiOverview({
               </thead>
               <tbody>
                 {endpoints.map((endpoint, index) => {
-                  const docLink = getDocLinkForEndpoint(
-                    apiType,
-                    apiFamily,
-                    endpoint.operationId,
-                  );
+                  const docLink =
+                    endpoint.href ??
+                    getDocLinkForEndpoint(
+                      apiType,
+                      apiFamily,
+                      endpoint.operationId,
+                    );
                   return (
                     <tr key={index}>
                       <td className="text--center">

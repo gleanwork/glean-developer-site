@@ -2,34 +2,48 @@
 title: Triggers API Overview
 ---
 
+import ApiOverview from '@site/src/components/ApiOverview';
+
 # Triggers API
 
-The Platform Triggers API lets an application subscribe to content events in Glean and receive them at its own endpoint as signed webhooks. A trigger is created from a **preset** — a curated event definition such as "a review is requested from me" or "30 minutes before an event starts" — so you describe what you care about rather than assembling a query.
+<ApiOverview
+  title="Triggers API"
+  description="The Platform Triggers API lets an application subscribe to content events in Glean and receive them at its own endpoint as signed webhooks."
+  apiFamily="triggers"
+  apiType="platform-api"
+  useCases={[
+    {
+      title: 'Browse Presets',
+      description:
+        'List the event definitions your deployment serves, and the inputs each one accepts.',
+      icon: 'Search',
+    },
+    {
+      title: 'Create a Trigger',
+      description:
+        'Instantiate a preset against your webhook URL and receive its signing secret.',
+      icon: 'Plus',
+    },
+    {
+      title: 'Preview Matching Events',
+      description:
+        'See which recent events a preset would have matched, before you create anything.',
+      icon: 'Eye',
+    },
+    {
+      title: 'Manage Triggers',
+      description: 'List, update, and delete the triggers you own.',
+      icon: 'Settings',
+    },
+  ]}
+/>
+
+<VideoCallout id="platform-triggers" />
+
+A trigger is created from a **preset** — a curated event definition such as "a review is requested from me" or "30 minutes before an event starts" — so you describe what you care about rather than assembling a query.
 
 Events are delivered as [Standard Webhooks](https://www.standardwebhooks.com), signed with HMAC-SHA256, and are scoped to what the subscribing user is permitted to see.
 
 These endpoints are [experimental](/experimental/overview) — send `X-Glean-Include-Experimental: true` on each request, or they are not exposed.
 
-<VideoCallout id="platform-triggers" />
-
-## Explore Triggers
-
-<CardGroup cols={2}>
-  <Card title="Browse presets" icon="Search" href="/api/platform-api/platform-trigger-presets-list">
-    List the event definitions your deployment serves, and the inputs each one accepts.
-  </Card>
-
-  <Card title="Create a trigger" icon="Plus" href="/api/platform-api/platform-triggers-create">
-    Instantiate a preset against your webhook URL and receive its signing secret.
-  </Card>
-
-  <Card title="Preview matching events" icon="Eye" href="/api/platform-api/platform-trigger-presets-events-search">
-    See which recent events a preset would have matched, before you create anything.
-  </Card>
-
-  <Card title="Manage triggers" icon="Settings" href="/api/platform-api/platform-triggers-list">
-    List, update, and delete the triggers you own.
-  </Card>
-</CardGroup>
-
-Browse the complete [Triggers API reference](/api/platform-api/platform-trigger-presets-list).
+For error responses, see [Platform API Errors](/errors) for the shared ProblemDetail code reference and remediation guidance.
