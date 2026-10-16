@@ -33,6 +33,36 @@ When the `@gleanwork/web-sdk` dependency is bumped, run
 same PR (mirrors the OpenAPI pattern). Config lives in `typedoc.json`;
 post-processing in `scripts/websdk-reference-generate.mjs`.
 
+## Platform API family overview pages
+
+Each Platform API tag (Agents, Search, Usage, and so on) has a landing page at
+`docs/api/platform-api/<family>-overview.mdx`, where `<family>` is the tag
+lowercased with spaces as hyphens (`IdP Groups` → `idp-groups`). Every one of
+these pages uses the `ApiOverview` component:
+
+```mdx
+<ApiOverview
+  title="Usage API"
+  description="One or two plain sentences on what the API is for."
+  apiFamily="usage"
+  apiType="platform-api"
+  useCases={[{ title: '...', description: '...', icon: '...' }]}
+/>
+```
+
+- Write the use-case cards. Base them on the spec's operation descriptions.
+- Do not list endpoints by hand, as cards or as a table. `ApiOverview` renders
+  the endpoint table from `src/data/platform-endpoints.json`, which
+  `pnpm generate:platform-endpoints` builds from the spec's tags during
+  `pnpm openapi:regenerate:platform`.
+- Put page-specific notes (experimental status, permissions, related APIs)
+  below the component. `search-overview.mdx` and `usage-overview.mdx` are the
+  reference examples.
+
+`scripts/platform-endpoints-lib.test.ts` fails when a tag has no overview page,
+when a page does not use `ApiOverview` for its family, or when
+`platform-endpoints.json` is out of date with the spec.
+
 ## Code samples (markdown-code)
 
 Code fences in `docs/**/*.mdx` that carry a `snippet=<path>` annotation are

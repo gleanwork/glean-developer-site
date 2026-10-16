@@ -2,9 +2,44 @@
 title: Skills API Overview
 ---
 
+import ApiOverview from '@site/src/components/ApiOverview';
+
 # Skills API
 
-The Platform Skills API lets applications discover, validate, import, synchronize, version, and manage skills that can be used with Glean. These endpoints are generally available. A request does not need the `X-Glean-Include-Experimental` header.
+<ApiOverview
+  title="Skills API"
+  description="The Platform Skills API lets applications discover, validate, import, synchronize, version, and manage skills that can be used with Glean."
+  apiFamily="skills"
+  apiType="platform-api"
+  useCases={[
+    {
+      title: 'Discover Skills',
+      description: 'List the skills available to your application.',
+      icon: 'Search',
+    },
+    {
+      title: 'Manage Skills',
+      description:
+        'Create, update, import, synchronize, and delete skills.',
+      icon: 'Settings',
+    },
+    {
+      title: 'Validate Skill Bundles',
+      description:
+        "Check a skill bundle's structure and metadata without persisting it.",
+      icon: 'CheckCircle',
+    },
+    {
+      title: 'Manage Versions',
+      description: 'Create and inspect skill versions and their content.',
+      icon: 'GitBranch',
+    },
+  ]}
+/>
+
+<VideoCallout id="platform-skills" />
+
+These endpoints are generally available. A request does not need the `X-Glean-Include-Experimental` header.
 
 ## Workspace access
 
@@ -31,29 +66,5 @@ GitHub import and sync use one denial for a workspace where GitHub skill import 
 Source preview checks the two conditions separately. When GitHub skill import is off, `POST /api/skills/sources/preview` returns `detail` `GitHub skill import is not enabled for this workspace.` When GitHub skill import is on and the caller does not have access to Skills, the `detail` is `You do not have permission to preview skill sources.`
 
 Import and preview also return `You do not have permission to create skills.` when the caller can reach the operation but cannot create skills.
-
-<VideoCallout id="platform-skills" />
-
-## Explore Skills
-
-<CardGroup cols={2}>
-  <Card title="Discover skills" icon="Search" href="/api/platform-api/platform-skills-list">
-    List the skills available to your application.
-  </Card>
-
-  <Card title="Manage skills" icon="Settings" href="/api/platform-api/platform-skills-create">
-    Create, update, import, synchronize, and delete skills.
-  </Card>
-
-  <Card title="Validate skill bundles" icon="CheckCircle" href="/api/platform-api/platform-skills-validate">
-    Check a skill bundle's structure and metadata without persisting it.
-  </Card>
-
-  <Card title="Manage versions" icon="GitBranch" href="/api/platform-api/platform-skills-list-versions">
-    Create and inspect skill versions and their content.
-  </Card>
-</CardGroup>
-
-Browse the complete [Skills API reference](/api/platform-api/platform-skills-list).
 
 For error responses, see [Platform API Errors](/errors) for the shared ProblemDetail code reference and remediation guidance.

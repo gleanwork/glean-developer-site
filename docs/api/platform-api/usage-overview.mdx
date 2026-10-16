@@ -2,14 +2,44 @@
 title: Usage API Overview
 ---
 
+import ApiOverview from '@site/src/components/ApiOverview';
+
 # Usage API
 
-The Platform Usage API lets billing administrators configure and inspect usage limits, and lets users and agent editors check their headroom and request more.
+<ApiOverview
+  title="Usage API"
+  description="The Platform Usage API lets billing administrators configure and inspect usage limits, and lets users and agent editors check their headroom and request more."
+  apiFamily="usage"
+  apiType="platform-api"
+  useCases={[
+    {
+      title: 'Usage Settings',
+      description:
+        'Read the workspace-wide usage policy that Billing uses.',
+      icon: 'Sliders',
+    },
+    {
+      title: 'Usage Limits',
+      description:
+        'List, create or replace, reset, and batch-apply limits for the organization, users, IdP groups, departments, and agents.',
+      icon: 'BarChart2',
+    },
+    {
+      title: 'Limit Evaluation',
+      description:
+        'Return the current decision (AVAILABLE, WARNING, or BLOCKED) for a target, based on accrued usage.',
+      icon: 'Activity',
+    },
+    {
+      title: 'Limit-Increase Requests',
+      description:
+        'Let users and agent editors ask for more headroom, and let billing administrators approve or deny those requests.',
+      icon: 'ArrowUpCircle',
+    },
+  ]}
+/>
 
-- **Usage settings** read the workspace-wide usage policy that Billing uses.
-- **Usage limits** list, create or replace, reset, and batch-apply limits for the organization, users, IdP groups, departments, and agents.
-- **Limit evaluation** returns the current decision (`AVAILABLE`, `WARNING`, or `BLOCKED`) for a target, based on accrued usage. Administrators use `POST /api/admin/usage/limits/evaluate`. Users evaluate themselves, or an agent they can edit, with `POST /api/usage/limits/evaluate`.
-- **Limit-increase requests** let users and agent editors ask for more headroom, and let billing administrators approve or deny those requests.
+Administrators evaluate any target with `POST /api/admin/usage/limits/evaluate`. Users evaluate themselves, or an agent they can edit, with `POST /api/usage/limits/evaluate`.
 
 Administrative operations require permission to read or edit workspace billing in addition to their OAuth scope. A global administrator role is not required.
 
