@@ -1158,10 +1158,10 @@ const baseSidebars: SidebarsConfig = {
             },
             {
               type: 'html',
-              value: 'Usage',
+              value: 'Account',
               className: 'sidebar-api-group',
               customProps: {
-                tagGroup: 'Usage',
+                tagGroup: 'Account',
               },
             },
             {
