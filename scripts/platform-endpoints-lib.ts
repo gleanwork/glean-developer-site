@@ -30,11 +30,26 @@ export function familyKey(tag: string): string {
 }
 
 /**
+ * The HTTP path a client calls for a spec path key.
+ *
+ * The Platform spec models SDK method variants, such as streaming, as extra
+ * path keys with a URL fragment (`/api/chat#stream`). The fragment exists only
+ * so Speakeasy generates a separate SDK method. HTTP clients call the base path
+ * and select the variant in the request body, so the docs show the base path.
+ */
+export function httpPath(specPath: string): string {
+  const fragment = specPath.indexOf('#');
+  return fragment === -1 ? specPath : specPath.slice(0, fragment);
+}
+
+/**
  * Group every operation in a parsed Platform spec by its first tag. Pure — no
  * IO. Families and their endpoints keep spec order, so the output is stable
  * across runs and a regenerated file only changes when the spec does.
  *
  * Operations without a tag are skipped: they have no family overview page.
+ * SDK-only variant operations (`/api/chat#stream`) keep their own row, summary
+ * and doc link, but show the HTTP path they are sent to.
  */
 export function extractPlatformEndpoints(
   spec: OpenApiDocLike,
@@ -60,7 +75,7 @@ export function extractPlatformEndpoints(
       const family = (families[key] ??= { tag, endpoints: [] });
       const endpoint: PlatformEndpoint = {
         method: method.toUpperCase() as HttpMethod,
-        path: apiPath,
+        path: httpPath(apiPath),
         summary: op.summary ?? op.operationId ?? apiPath,
         docId: `${prefix}/${computeBaseId(op)}`,
       };

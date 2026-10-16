@@ -5,6 +5,7 @@ import * as yaml from 'js-yaml';
 import {
   extractPlatformEndpoints,
   familyKey,
+  httpPath,
   serializePlatformEndpoints,
 } from './platform-endpoints-lib';
 
@@ -25,7 +26,52 @@ describe('familyKey', () => {
   });
 });
 
+describe('httpPath', () => {
+  it.each([
+    ['/api/chat', '/api/chat'],
+    ['/api/chat#stream', '/api/chat'],
+    ['/api/skills/sources/preview#stream', '/api/skills/sources/preview'],
+  ])('maps %s to %s', (specPath, expected) => {
+    expect(httpPath(specPath)).toBe(expected);
+  });
+});
+
 describe('extractPlatformEndpoints', () => {
+  it('shows SDK-only fragment variants at their HTTP path, as separate rows', () => {
+    const spec = loadSpec(`
+openapi: "3.0.0"
+info: { title: Test, version: "1" }
+paths:
+  /api/chat:
+    post:
+      operationId: platform-chat-create
+      summary: Create a chat response
+      tags: [Chat]
+  /api/chat#stream:
+    post:
+      operationId: platform-chat-create-stream
+      summary: Create a streaming chat response
+      tags: [Chat]
+`);
+
+    expect(
+      extractPlatformEndpoints(spec, PREFIX).families.chat.endpoints,
+    ).toEqual([
+      {
+        method: 'POST',
+        path: '/api/chat',
+        summary: 'Create a chat response',
+        docId: 'api/platform-api/platform-chat-create',
+      },
+      {
+        method: 'POST',
+        path: '/api/chat',
+        summary: 'Create a streaming chat response',
+        docId: 'api/platform-api/platform-chat-create-stream',
+      },
+    ]);
+  });
+
   it('groups operations by their first tag, in spec order', () => {
     const spec = loadSpec(`
 openapi: "3.0.0"
