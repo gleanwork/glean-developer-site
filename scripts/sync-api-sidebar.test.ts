@@ -790,6 +790,32 @@ describe('Platform API tag groups', () => {
     );
   });
 
+  it('--fix inserts a new family in alphabetical order within its tag group', () => {
+    const root = createGroupedFixture({
+      tagGroups: [
+        ['Agents & AI', ['Agents', 'Chat', 'Skills']],
+        ['Administration', ['Admin Agents']],
+      ],
+      items: [
+        heading('Agents & AI'),
+        family('Agents', ['platform-agents-search']),
+        family('Skills', []),
+        heading('Administration'),
+        family('Agents', ['platform-admin-agents-list'], 'Admin Agents'),
+      ],
+    });
+
+    const result = run(root, '--fix');
+    const sidebar = fs.readFileSync(path.join(root, 'sidebars.ts'), 'utf8');
+
+    expect(result.status).toBe(0);
+    const chat = sidebar.indexOf("label: 'Chat'");
+    expect(chat).toBeGreaterThan(
+      sidebar.indexOf("id: 'api/platform-api/platform-agents-search'"),
+    );
+    expect(chat).toBeLessThan(sidebar.indexOf("label: 'Skills'"));
+  });
+
   it('--fix inserts a new family at the end of its tag group', () => {
     const root = createGroupedFixture({
       items: [

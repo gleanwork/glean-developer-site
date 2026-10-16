@@ -584,8 +584,9 @@ function findOverviewTarget(root, overviewId) {
   return found;
 }
 
-// Plan a new family category for `tag` at the end of its tag group's section:
-// before the next heading, or before the OpenAPI Spec link.
+// Plan a new family category for `tag` in its tag group's section, in
+// alphabetical order by label. The section ends at the next heading or the
+// OpenAPI Spec link.
 function planGroupedPlatformCategory(platformItems, tag, tagGroups) {
   const group = tagGroups.find((candidate) => candidate.tags.includes(tag));
   if (!group) {
@@ -602,12 +603,16 @@ function planGroupedPlatformCategory(platformItems, tag, tagGroups) {
       error: `Platform API Reference has no heading for tag group '${group.name}'; add an html item with customProps.tagGroup '${group.name}'`,
     };
   }
-  const before = elements
-    .slice(headingIndex + 1)
-    .find(
-      (element) =>
-        getTagGroupHeading(element) !== null || isOpenApiSpecLink(element),
-    );
+  const before = elements.slice(headingIndex + 1).find((element) => {
+    if (getTagGroupHeading(element) !== null || isOpenApiSpecLink(element)) {
+      return true;
+    }
+    const label =
+      element?.type === 'ObjectExpression'
+        ? getStringProperty(element, 'label')
+        : null;
+    return label !== null && label.localeCompare(tag) > 0;
+  });
   return { category: makeCategoryNode(tag), before: before ?? null };
 }
 
