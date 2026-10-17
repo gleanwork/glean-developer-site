@@ -994,40 +994,6 @@ const baseSidebars: SidebarsConfig = {
             },
             {
               type: 'category',
-              label: 'Documents',
-              description:
-                'Retrieve indexed documents that the caller can see, by URL or Glean document ID.',
-              customProps: {
-                icon: 'file-text',
-                iconSet: 'glean',
-              },
-              link: {
-                type: 'doc',
-                id: 'api/platform-api/documents-overview',
-              },
-              items: [
-                {
-                  type: 'doc',
-                  id: 'api/platform-api/platform-documents-batch',
-                  label: 'Batch get documents',
-                  className: 'api-method post',
-                },
-                {
-                  type: 'doc',
-                  id: 'api/platform-api/platform-documents-get-by-url',
-                  label: 'Get document by URL',
-                  className: 'api-method get',
-                },
-                {
-                  type: 'doc',
-                  id: 'api/platform-api/platform-documents-get',
-                  label: 'Get document by ID',
-                  className: 'api-method get',
-                },
-              ],
-            },
-            {
-              type: 'category',
               label: 'Search',
               description:
                 'Build permission-aware search experiences with relevant results, filters, and time ranges.',

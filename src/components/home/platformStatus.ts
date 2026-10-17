@@ -22,7 +22,6 @@ const PLATFORM_DOC_ROOT = 'api/platform-api/';
 /** Platform API capabilities shown on the homepage announcement, in display order. */
 export const PLATFORM_CAPABILITIES: PlatformCapability[] = [
   { label: 'Search', docPrefixes: ['platform-search'] },
-  { label: 'Documents', docPrefixes: ['platform-documents'] },
   { label: 'Chat', docPrefixes: ['platform-chat'] },
   { label: 'Agents', docPrefixes: ['platform-agents'] },
   { label: 'Skills', docPrefixes: ['platform-skills'] },
