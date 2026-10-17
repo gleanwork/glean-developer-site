@@ -4,13 +4,14 @@ import recipesData from './src/data/recipes.json';
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
 
 // Icons for cookbook collections. Collections that share a name with a
-// Guides section reuse its icon so the two sections read as a pair.
+// Guides section reuse its icon so the two sections read as a pair. Product
+// functions use the Glean app's glyph (see scripts/icon-usage.test.ts).
 const COLLECTION_ICONS: Record<string, { icon: string; iconSet: string }> = {
-  chat: { icon: 'chat', iconSet: 'glean' },
-  search: { icon: 'Search', iconSet: 'feather' },
+  chat: { icon: 'message-with-sparkles', iconSet: 'glean' },
+  search: { icon: 'search', iconSet: 'glean' },
   agents: { icon: 'agent', iconSet: 'glean' },
-  skills: { icon: 'Package', iconSet: 'feather' },
-  triggers: { icon: 'Zap', iconSet: 'feather' },
+  skills: { icon: 'skill', iconSet: 'glean' },
+  triggers: { icon: 'zap', iconSet: 'glean' },
   'complete-apps': { icon: 'Layers', iconSet: 'feather' },
 };
 
@@ -101,8 +102,8 @@ const baseSidebars: SidebarsConfig = {
           type: 'category',
           label: 'Search',
           customProps: {
-            icon: 'Search',
-            iconSet: 'feather',
+            icon: 'search',
+            iconSet: 'glean',
           },
           items: [
             {
@@ -207,8 +208,8 @@ const baseSidebars: SidebarsConfig = {
           type: 'category',
           label: 'Triggers',
           customProps: {
-            icon: 'Zap',
-            iconSet: 'feather',
+            icon: 'zap',
+            iconSet: 'glean',
           },
           items: [
             {
@@ -783,44 +784,12 @@ const baseSidebars: SidebarsConfig = {
           collapsed: false,
           items: [
             {
-              type: 'category',
-              label: 'Admin',
-              description:
-                'List workspace agents and identity provider groups as an administrator.',
+              type: 'html',
+              value: 'Agents &amp; AI',
+              className: 'sidebar-api-group',
               customProps: {
-                icon: 'Settings',
-                iconSet: 'feather',
+                tagGroup: 'Agents & AI',
               },
-              items: [
-                {
-                  type: 'category',
-                  label: 'Agents',
-                  items: [
-                    {
-                      type: 'doc',
-                      id: 'api/platform-api/platform-admin-agents-list',
-                      label: 'List',
-                      className: 'api-method get',
-                    },
-                  ],
-                },
-                {
-                  type: 'category',
-                  label: 'IdP Groups',
-                  link: {
-                    type: 'doc',
-                    id: 'api/platform-api/idp-groups-overview',
-                  },
-                  items: [
-                    {
-                      type: 'doc',
-                      id: 'api/platform-api/platform-admin-idp-groups-list',
-                      label: 'List',
-                      className: 'api-method get',
-                    },
-                  ],
-                },
-              ],
             },
             {
               type: 'category',
@@ -886,7 +855,7 @@ const baseSidebars: SidebarsConfig = {
               description:
                 'Create chat responses grounded in your Glean instance.',
               customProps: {
-                icon: 'chat',
+                icon: 'message-with-sparkles',
                 iconSet: 'glean',
               },
               link: {
@@ -911,62 +880,12 @@ const baseSidebars: SidebarsConfig = {
             },
             {
               type: 'category',
-              label: 'Departments',
-              description:
-                'List the departments in the Glean directory to use as usage limit targets.',
-              customProps: {
-                icon: 'Briefcase',
-                iconSet: 'feather',
-              },
-              link: {
-                type: 'doc',
-                id: 'api/platform-api/departments-overview',
-              },
-              items: [
-                {
-                  type: 'doc',
-                  id: 'api/platform-api/platform-departments-list',
-                  label: 'List departments',
-                  className: 'api-method get',
-                },
-              ],
-            },
-            {
-              type: 'category',
-              label: 'Search',
-              description:
-                'Build permission-aware search experiences with relevant results, filters, and time ranges.',
-              customProps: {
-                icon: 'Search',
-                iconSet: 'feather',
-              },
-              link: {
-                type: 'doc',
-                id: 'api/platform-api/search-overview',
-              },
-              items: [
-                {
-                  type: 'doc',
-                  id: 'api/platform-api/platform-search',
-                  label: 'Search',
-                  className: 'api-method post',
-                },
-                {
-                  type: 'doc',
-                  id: 'api/platform-api/platform-search-filters',
-                  label: 'List search filters',
-                  className: 'api-method get',
-                },
-              ],
-            },
-            {
-              type: 'category',
               label: 'Skills',
               description:
                 'Discover, validate, import, synchronize, and manage skills through the Platform API.',
               customProps: {
-                icon: 'Settings',
-                iconSet: 'feather',
+                icon: 'skill',
+                iconSet: 'glean',
               },
               link: {
                 type: 'doc',
@@ -1066,13 +985,57 @@ const baseSidebars: SidebarsConfig = {
               ],
             },
             {
+              type: 'html',
+              value: 'Search &amp; Data',
+              className: 'sidebar-api-group',
+              customProps: {
+                tagGroup: 'Search & Data',
+              },
+            },
+            {
+              type: 'category',
+              label: 'Search',
+              description:
+                'Build permission-aware search experiences with relevant results, filters, and time ranges.',
+              customProps: {
+                icon: 'search',
+                iconSet: 'glean',
+              },
+              link: {
+                type: 'doc',
+                id: 'api/platform-api/search-overview',
+              },
+              items: [
+                {
+                  type: 'doc',
+                  id: 'api/platform-api/platform-search',
+                  label: 'Search',
+                  className: 'api-method post',
+                },
+                {
+                  type: 'doc',
+                  id: 'api/platform-api/platform-search-filters',
+                  label: 'List search filters',
+                  className: 'api-method get',
+                },
+              ],
+            },
+            {
+              type: 'html',
+              value: 'Automation',
+              className: 'sidebar-api-group',
+              customProps: {
+                tagGroup: 'Automation',
+              },
+            },
+            {
               type: 'category',
               label: 'Triggers',
               description:
                 'Subscribe to Glean content events and receive signed webhooks using curated trigger presets.',
               customProps: {
-                icon: 'Zap',
-                iconSet: 'feather',
+                icon: 'zap',
+                iconSet: 'glean',
               },
               link: {
                 type: 'doc',
@@ -1142,17 +1105,203 @@ const baseSidebars: SidebarsConfig = {
               ],
             },
             {
+              type: 'html',
+              value: 'People',
+              className: 'sidebar-api-group',
+              customProps: {
+                tagGroup: 'People',
+              },
+            },
+            {
+              type: 'category',
+              label: 'Departments',
+              description:
+                'List the departments in the Glean directory to use as usage limit targets.',
+              customProps: {
+                icon: 'building',
+                iconSet: 'glean',
+              },
+              link: {
+                type: 'doc',
+                id: 'api/platform-api/departments-overview',
+              },
+              items: [
+                {
+                  type: 'doc',
+                  id: 'api/platform-api/platform-departments-list',
+                  label: 'List departments',
+                  className: 'api-method get',
+                },
+                {
+                  type: 'doc',
+                  id: 'api/platform-api/platform-departments-get',
+                  label: 'Get a department',
+                  className: 'api-method get',
+                },
+              ],
+            },
+            {
+              type: 'category',
+              label: 'Users',
+              description:
+                'List the people in the Glean directory to use with other Platform APIs.',
+              customProps: {
+                icon: 'user',
+                iconSet: 'glean',
+              },
+              link: {
+                type: 'doc',
+                id: 'api/platform-api/users-overview',
+              },
+              items: [
+                {
+                  type: 'doc',
+                  id: 'api/platform-api/platform-users-list',
+                  label: 'List users',
+                  className: 'api-method get',
+                },
+                {
+                  type: 'doc',
+                  id: 'api/platform-api/platform-users-get',
+                  label: 'Get user',
+                  className: 'api-method get',
+                },
+              ],
+            },
+            {
+              type: 'html',
+              value: 'Account',
+              className: 'sidebar-api-group',
+              customProps: {
+                tagGroup: 'Account',
+              },
+            },
+            {
               type: 'category',
               label: 'Usage',
               description:
-                'Configure and evaluate usage limits, and manage limit-increase requests.',
+                'Check your own usage limit headroom, and request more when you need it.',
               customProps: {
-                icon: 'BarChart2',
-                iconSet: 'feather',
+                icon: 'dollar-sign',
+                iconSet: 'glean',
               },
               link: {
                 type: 'doc',
                 id: 'api/platform-api/usage-overview',
+              },
+              items: [
+                {
+                  type: 'doc',
+                  id: 'api/platform-api/platform-usage-limits-evaluate',
+                  label: 'Evaluate usage limit headroom',
+                  className: 'api-method post',
+                },
+                {
+                  type: 'doc',
+                  id: 'api/platform-api/platform-usage-requests-create',
+                  label: 'Submit a personal limit-increase request',
+                  className: 'api-method post',
+                },
+                {
+                  type: 'doc',
+                  id: 'api/platform-api/platform-usage-requests-get',
+                  label: 'Get a personal limit-increase request',
+                  className: 'api-method get',
+                },
+                {
+                  type: 'doc',
+                  id: 'api/platform-api/platform-usage-requests-list',
+                  label: 'List personal limit-increase requests',
+                  className: 'api-method get',
+                },
+              ],
+            },
+            {
+              type: 'html',
+              value: 'Administration',
+              className: 'sidebar-api-group',
+              customProps: {
+                tagGroup: 'Administration',
+              },
+            },
+            {
+              type: 'category',
+              label: 'Agents',
+              description:
+                'List every agent in the workspace, including private and disabled agents.',
+              customProps: {
+                tag: 'Admin Agents',
+                icon: 'agent',
+                iconSet: 'glean',
+              },
+              items: [
+                {
+                  type: 'doc',
+                  id: 'api/platform-api/platform-admin-agents-list',
+                  label: 'List all agents',
+                  className: 'api-method get',
+                },
+              ],
+            },
+            {
+              type: 'category',
+              label: 'IdP Groups',
+              description:
+                'List the identity provider groups that Glean loads from the directory.',
+              customProps: {
+                icon: 'users',
+                iconSet: 'glean',
+              },
+              link: {
+                type: 'doc',
+                id: 'api/platform-api/idp-groups-overview',
+              },
+              items: [
+                {
+                  type: 'doc',
+                  id: 'api/platform-api/platform-admin-idp-groups-list',
+                  label: 'List IdP groups',
+                  className: 'api-method get',
+                },
+                {
+                  type: 'doc',
+                  id: 'api/platform-api/platform-admin-idp-groups-get',
+                  label: 'Get an IdP group',
+                  className: 'api-method get',
+                },
+              ],
+            },
+            {
+              type: 'category',
+              label: 'OAuth clients',
+              description:
+                'List the static OAuth clients that admins created for the workspace.',
+              customProps: {
+                icon: 'share-2',
+                iconSet: 'glean',
+              },
+              link: {
+                type: 'doc',
+                id: 'api/platform-api/oauth-clients-overview',
+              },
+              items: [
+                {
+                  type: 'doc',
+                  id: 'api/platform-api/platform-admin-oauth-clients-list',
+                  label: 'List OAuth clients',
+                  className: 'api-method get',
+                },
+              ],
+            },
+            {
+              type: 'category',
+              label: 'Usage',
+              description:
+                'Set workspace usage limits and settings, and resolve limit-increase requests.',
+              customProps: {
+                tag: 'Admin Usage',
+                icon: 'dollar-sign',
+                iconSet: 'glean',
               },
               items: [
                 {
@@ -1220,52 +1369,6 @@ const baseSidebars: SidebarsConfig = {
                   id: 'api/platform-api/platform-admin-usage-settings-update',
                   label: 'Update usage settings',
                   className: 'api-method patch',
-                },
-                {
-                  type: 'doc',
-                  id: 'api/platform-api/platform-usage-limits-evaluate',
-                  label: 'Evaluate usage limit headroom',
-                  className: 'api-method post',
-                },
-                {
-                  type: 'doc',
-                  id: 'api/platform-api/platform-usage-requests-create',
-                  label: 'Submit a personal limit-increase request',
-                  className: 'api-method post',
-                },
-                {
-                  type: 'doc',
-                  id: 'api/platform-api/platform-usage-requests-get',
-                  label: 'Get a personal limit-increase request',
-                  className: 'api-method get',
-                },
-                {
-                  type: 'doc',
-                  id: 'api/platform-api/platform-usage-requests-list',
-                  label: 'List personal limit-increase requests',
-                  className: 'api-method get',
-                },
-              ],
-            },
-            {
-              type: 'category',
-              label: 'Users',
-              description:
-                'List the people in the Glean directory to use with other Platform APIs.',
-              customProps: {
-                icon: 'User',
-                iconSet: 'feather',
-              },
-              link: {
-                type: 'doc',
-                id: 'api/platform-api/users-overview',
-              },
-              items: [
-                {
-                  type: 'doc',
-                  id: 'api/platform-api/platform-users-list',
-                  label: 'List users',
-                  className: 'api-method get',
                 },
               ],
             },
@@ -1427,8 +1530,8 @@ const baseSidebars: SidebarsConfig = {
               description:
                 'Create and manage targeted organizational announcements.',
               customProps: {
-                icon: 'Volume2',
-                iconSet: 'feather',
+                icon: 'megaphone',
+                iconSet: 'glean',
               },
               link: {
                 type: 'doc',
@@ -1461,8 +1564,8 @@ const baseSidebars: SidebarsConfig = {
               description:
                 'Create and manage curated answers to frequently asked questions.',
               customProps: {
-                icon: 'HelpCircle',
-                iconSet: 'feather',
+                icon: 'answer',
+                iconSet: 'glean',
               },
               link: {
                 type: 'doc',
@@ -1535,7 +1638,7 @@ const baseSidebars: SidebarsConfig = {
               description:
                 'Build conversational experiences, manage chat history, and work with chat files.',
               customProps: {
-                icon: 'chat',
+                icon: 'message-with-sparkles',
                 iconSet: 'glean',
               },
               link: {
@@ -1617,8 +1720,8 @@ const baseSidebars: SidebarsConfig = {
               description:
                 'Retrieve document metadata and inspect document permissions.',
               customProps: {
-                icon: 'FileText',
-                iconSet: 'feather',
+                icon: 'file-text',
+                iconSet: 'glean',
               },
               link: {
                 type: 'doc',
@@ -1849,8 +1952,8 @@ const baseSidebars: SidebarsConfig = {
               description:
                 'Retrieve aggregated usage insights about users, queries, and content.',
               customProps: {
-                icon: 'TrendingUp',
-                iconSet: 'feather',
+                icon: 'insights',
+                iconSet: 'glean',
               },
               link: {
                 type: 'doc',
@@ -1939,8 +2042,8 @@ const baseSidebars: SidebarsConfig = {
               description:
                 'Search connected content, autocomplete queries, and retrieve personalized feeds.',
               customProps: {
-                icon: 'Search',
-                iconSet: 'feather',
+                icon: 'search',
+                iconSet: 'glean',
               },
               link: {
                 type: 'doc',
@@ -2433,8 +2536,8 @@ const baseSidebars: SidebarsConfig = {
               description:
                 'Index documents individually or in bulk, then update permissions and remove stale content.',
               customProps: {
-                icon: 'FileText',
-                iconSet: 'feather',
+                icon: 'file-text',
+                iconSet: 'glean',
               },
               link: {
                 type: 'doc',
@@ -2485,8 +2588,8 @@ const baseSidebars: SidebarsConfig = {
               description:
                 "Index employees and teams used by Glean's people directory and retrieval experiences.",
               customProps: {
-                icon: 'Users',
-                iconSet: 'feather',
+                icon: 'users',
+                iconSet: 'glean',
               },
               link: {
                 type: 'doc',

@@ -287,6 +287,134 @@ paths:
   return root;
 }
 
+type GroupedOperation = {
+  apiPath: string;
+  tag: string;
+  operationId: string;
+  title: string;
+};
+
+const groupedOperations: GroupedOperation[] = [
+  {
+    apiPath: '/api/agents/search',
+    tag: 'Agents',
+    operationId: 'platform-agents-search',
+    title: 'Search agents',
+  },
+  {
+    apiPath: '/api/chat',
+    tag: 'Chat',
+    operationId: 'platform-chat-create',
+    title: 'Create a chat response',
+  },
+  {
+    apiPath: '/api/admin/agents',
+    tag: 'Admin Agents',
+    operationId: 'platform-admin-agents-list',
+    title: 'List all agents',
+  },
+];
+
+function heading(name: string) {
+  return `{
+        type: 'html',
+        value: '${name.replace(/&/g, '&amp;')}',
+        className: 'sidebar-api-group',
+        customProps: { tagGroup: '${name}' },
+      },`;
+}
+
+function family(label: string, operationIds: string[], tag?: string) {
+  return `{
+        type: 'category',
+        label: '${label}',${tag ? `\n        customProps: { tag: '${tag}' },` : ''}
+        items: [${operationIds
+          .map(
+            (id) => `
+          {
+            type: 'doc',
+            id: 'api/platform-api/${id}',
+            label: '${id}',
+            className: 'api-method get',
+          },`,
+          )
+          .join('')}
+        ],
+      },`;
+}
+
+function createGroupedFixture(options: {
+  items: string[];
+  tagGroups?: Array<[string, string[]]>;
+}) {
+  const root = createFixture();
+  const tagGroups = options.tagGroups ?? [
+    ['Agents & AI', ['Agents', 'Chat']],
+    ['Administration', ['Admin Agents']],
+  ];
+  for (const file of fs.readdirSync(path.join(root, 'docs/api/platform-api'))) {
+    if (file.endsWith('.api.mdx')) {
+      fs.rmSync(path.join(root, 'docs/api/platform-api', file));
+    }
+  }
+  for (const { operationId, title } of groupedOperations) {
+    fs.writeFileSync(
+      path.join(root, `docs/api/platform-api/${operationId}.api.mdx`),
+      `---
+id: ${operationId}
+title: "${title}"
+sidebar_label: "${title}"
+sidebar_class_name: "get api-method"
+---
+`,
+    );
+  }
+  fs.writeFileSync(
+    path.join(root, 'openapi/platform/platform-capitalized.yaml'),
+    `openapi: 3.1.0
+x-tagGroups:
+${tagGroups
+  .map(
+    ([name, tags]) =>
+      `  - name: ${name}\n    tags:\n${tags.map((tag) => `      - ${tag}`).join('\n')}`,
+  )
+  .join('\n')}
+paths:
+${groupedOperations
+  .map(
+    ({ apiPath, tag, operationId, title }) => `  ${apiPath}:
+    get:
+      tags:
+        - ${tag}
+      summary: ${title}
+      operationId: ${operationId}`,
+  )
+  .join('\n')}
+`,
+  );
+  fs.writeFileSync(
+    path.join(root, 'sidebars.ts'),
+    `const sidebars = [
+  {
+    type: 'category',
+    label: 'Platform API Reference',
+    items: [
+      ${options.items.join('\n      ')}
+      {
+        type: 'link',
+        href: 'https://developers.glean.com/oas/platform',
+        label: 'OpenAPI Spec',
+      },
+    ],
+  },
+];
+
+export default sidebars;
+`,
+  );
+  return root;
+}
+
 function run(root: string, mode: '--check' | '--fix') {
   return spawnSync(
     process.execPath,
@@ -568,8 +696,175 @@ paths:
   });
 });
 
+describe('Platform API tag groups', () => {
+  const groupedItems = [
+    heading('Agents & AI'),
+    family('Agents', ['platform-agents-search']),
+    family('Chat', ['platform-chat-create']),
+    heading('Administration'),
+    family('Agents', ['platform-admin-agents-list'], 'Admin Agents'),
+  ];
+
+  it('passes --check when families follow x-tagGroups', () => {
+    const root = createGroupedFixture({ items: groupedItems });
+
+    const result = run(root, '--check');
+
+    expect(result.stderr).toBe('');
+    expect(result.status).toBe(0);
+  });
+
+  it('fails --check when a family sits under the wrong heading', () => {
+    const root = createGroupedFixture({
+      items: [
+        heading('Agents & AI'),
+        family('Agents', ['platform-agents-search']),
+        heading('Administration'),
+        family('Chat', ['platform-chat-create']),
+        family('Agents', ['platform-admin-agents-list'], 'Admin Agents'),
+      ],
+    });
+
+    const result = run(root, '--check');
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain(
+      "Platform family 'Chat' (tag 'Chat') belongs under 'Agents & AI', but sits under 'Administration'",
+    );
+  });
+
+  it('fails --check when an operation sits in another tag family', () => {
+    const root = createGroupedFixture({
+      items: [
+        heading('Agents & AI'),
+        family('Agents', [
+          'platform-agents-search',
+          'platform-admin-agents-list',
+        ]),
+        family('Chat', ['platform-chat-create']),
+        heading('Administration'),
+      ],
+    });
+
+    const result = run(root, '--check');
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain(
+      "'api/platform-api/platform-admin-agents-list' has tag 'Admin Agents', but sits in Platform family 'Agents' (tag 'Agents')",
+    );
+  });
+
+  it('fails --check when an operation tag is not in x-tagGroups', () => {
+    const root = createGroupedFixture({
+      items: groupedItems,
+      tagGroups: [
+        ['Agents & AI', ['Agents']],
+        ['Administration', ['Admin Agents']],
+      ],
+    });
+
+    const result = run(root, '--check');
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain(
+      "Platform tag 'Chat' is used by an operation but is not in any x-tagGroups entry",
+    );
+  });
+
+  it('fails --check when headings are out of x-tagGroups order', () => {
+    const root = createGroupedFixture({
+      items: [
+        heading('Administration'),
+        family('Agents', ['platform-admin-agents-list'], 'Admin Agents'),
+        heading('Agents & AI'),
+        family('Agents', ['platform-agents-search']),
+        family('Chat', ['platform-chat-create']),
+      ],
+    });
+
+    const result = run(root, '--check');
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain(
+      "Platform heading 'Agents & AI' is out of order",
+    );
+  });
+
+  it('--fix inserts a new family in alphabetical order within its tag group', () => {
+    const root = createGroupedFixture({
+      tagGroups: [
+        ['Agents & AI', ['Agents', 'Chat', 'Skills']],
+        ['Administration', ['Admin Agents']],
+      ],
+      items: [
+        heading('Agents & AI'),
+        family('Agents', ['platform-agents-search']),
+        family('Skills', []),
+        heading('Administration'),
+        family('Agents', ['platform-admin-agents-list'], 'Admin Agents'),
+      ],
+    });
+
+    const result = run(root, '--fix');
+    const sidebar = fs.readFileSync(path.join(root, 'sidebars.ts'), 'utf8');
+
+    expect(result.status).toBe(0);
+    const chat = sidebar.indexOf("label: 'Chat'");
+    expect(chat).toBeGreaterThan(
+      sidebar.indexOf("id: 'api/platform-api/platform-agents-search'"),
+    );
+    expect(chat).toBeLessThan(sidebar.indexOf("label: 'Skills'"));
+  });
+
+  it('--fix inserts a new family at the end of its tag group', () => {
+    const root = createGroupedFixture({
+      items: [
+        heading('Agents & AI'),
+        family('Agents', ['platform-agents-search']),
+        heading('Administration'),
+        family('Agents', ['platform-admin-agents-list'], 'Admin Agents'),
+      ],
+    });
+
+    const result = run(root, '--fix');
+    const sidebar = fs.readFileSync(path.join(root, 'sidebars.ts'), 'utf8');
+
+    expect(result.status).toBe(0);
+    const userAgents = sidebar.indexOf(
+      "id: 'api/platform-api/platform-agents-search'",
+    );
+    const chat = sidebar.indexOf("label: 'Chat'");
+    const administration = sidebar.indexOf("tagGroup: 'Administration'");
+    expect(chat).toBeGreaterThan(userAgents);
+    expect(chat).toBeLessThan(administration);
+    expect(sidebar).toContain("id: 'api/platform-api/platform-chat-create'");
+    expect(run(root, '--check').status).toBe(0);
+  });
+
+  it('--fix routes an operation to the family with its customProps.tag', () => {
+    const root = createGroupedFixture({
+      items: [
+        heading('Agents & AI'),
+        family('Agents', ['platform-agents-search']),
+        family('Chat', ['platform-chat-create']),
+        heading('Administration'),
+        family('Agents', [], 'Admin Agents'),
+      ],
+    });
+
+    const result = run(root, '--fix');
+    const sidebar = fs.readFileSync(path.join(root, 'sidebars.ts'), 'utf8');
+
+    expect(result.status).toBe(0);
+    expect(
+      sidebar.indexOf("id: 'api/platform-api/platform-admin-agents-list'"),
+    ).toBeGreaterThan(sidebar.indexOf("tag: 'Admin Agents'"));
+    expect(run(root, '--check').status).toBe(0);
+  });
+});
+
 describe('production API reference ordering', () => {
-  it('keeps Platform API reference families alphabetized', () => {
+  it('keeps Platform API reference families alphabetized within each tag group', () => {
     const sidebar = fs.readFileSync(
       path.join(process.cwd(), 'sidebars.ts'),
       'utf8',
@@ -577,10 +872,20 @@ describe('production API reference ordering', () => {
     const referenceStart = sidebar.indexOf("label: 'Platform API Reference'");
     const referenceEnd = sidebar.indexOf("label: 'Client API'", referenceStart);
     const reference = sidebar.slice(referenceStart, referenceEnd);
-    const labels = [...reference.matchAll(/^\s{14}label: '([^']+)'/gm)]
-      .map((match) => match[1])
-      .filter((label) => label !== 'OpenAPI Spec');
+    const groups: string[][] = [[]];
+    for (const [, isHeading, label] of reference.matchAll(
+      /^(?:\s{14}label|\s{16}(tagGroup)): '([^']+)'/gm,
+    )) {
+      if (isHeading) {
+        groups.push([]);
+      } else if (label !== 'OpenAPI Spec') {
+        groups[groups.length - 1].push(label);
+      }
+    }
 
-    expect(labels).toEqual([...labels].sort((a, b) => a.localeCompare(b)));
+    expect(groups.length).toBeGreaterThan(1);
+    for (const labels of groups) {
+      expect(labels).toEqual([...labels].sort((a, b) => a.localeCompare(b)));
+    }
   });
 });

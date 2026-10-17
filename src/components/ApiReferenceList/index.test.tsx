@@ -3,7 +3,9 @@ import type {
   PropSidebarItemCategory,
 } from '@docusaurus/plugin-content-docs';
 import { describe, expect, it } from 'vitest';
-import getApiReferenceItems from './getApiReferenceItems';
+import getApiReferenceItems, {
+  getApiReferenceGroups,
+} from './getApiReferenceItems';
 
 function category(
   label: string,
@@ -109,6 +111,53 @@ describe('getApiReferenceItems', () => {
         endpointCount: 2,
       }),
     );
+  });
+
+  it('groups families by the tag group headings that precede them', () => {
+    const heading = (tagGroup: string): PropSidebarItem => ({
+      type: 'html',
+      value: tagGroup,
+      className: 'sidebar-api-group',
+      customProps: { tagGroup },
+    });
+    const currentCategory = apiCategory('Platform API Reference', [
+      heading('Agents & AI'),
+      category('Agents', [endpoint('Search agents', '/agents/search')]),
+      category('Chat', [endpoint('Create chat', '/chat')]),
+      heading('Administration'),
+      category('Agents', [endpoint('List all agents', '/admin/agents')]),
+      link('OpenAPI Spec', 'https://developers.glean.com/oas/platform'),
+    ]);
+
+    expect(
+      getApiReferenceGroups(currentCategory, 'Platform API Reference').map(
+        ({ label, families }) => ({
+          label,
+          families: families.map((family) => family.label),
+        }),
+      ),
+    ).toEqual([
+      { label: 'Agents & AI', families: ['Agents', 'Chat'] },
+      { label: 'Administration', families: ['Agents'] },
+    ]);
+    expect(
+      getApiReferenceItems(currentCategory, 'Platform API Reference'),
+    ).toHaveLength(3);
+  });
+
+  it('returns one unlabelled group when the reference has no headings', () => {
+    const currentCategory = apiCategory('Client API Reference', [
+      category('Search', [endpoint('Search', '/search')]),
+    ]);
+
+    expect(
+      getApiReferenceGroups(currentCategory, 'Client API Reference'),
+    ).toEqual([
+      {
+        label: null,
+        families: [expect.objectContaining({ label: 'Search' })],
+      },
+    ]);
   });
 
   it('throws when the reference category is missing', () => {

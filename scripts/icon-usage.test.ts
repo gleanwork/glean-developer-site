@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import * as FeatherIcons from 'react-feather';
@@ -5,6 +6,26 @@ import { describe, expect, it } from 'vitest';
 import { GLEAN_ICON_MAP } from '../packages/docusaurus-theme-glean/src/theme/Icons/glean-icon-manifest';
 import { BRAND_ICON_SRC } from '../src/components/Cookbook/brandIcons';
 import registry from '../data/cookbook-registry.json';
+import sidebars from '../sidebars';
+
+type SidebarNode = {
+  type?: string;
+  label?: string;
+  items?: SidebarNode[];
+  customProps?: { icon?: unknown; iconSet?: unknown };
+};
+
+function collectSidebarCategories(items: SidebarNode[]): SidebarNode[] {
+  return items.flatMap((item) =>
+    item.type === 'category'
+      ? [item, ...collectSidebarCategories(item.items ?? [])]
+      : [],
+  );
+}
+
+const sidebarCategories = Object.values(sidebars).flatMap((items) =>
+  collectSidebarCategories(items as SidebarNode[]),
+);
 
 function collectMdxFiles(directory: string): string[] {
   return fs.readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
@@ -16,6 +37,28 @@ function collectMdxFiles(directory: string): string[] {
         : [];
   });
 }
+
+describe('Glean icon manifest', () => {
+  // GleanIcon inlines whatever the icon URL returns, so a file that is not
+  // deployed renders the 404 page inside the sidebar. A file can exist locally
+  // and still be missing from git: a global ignore such as `Icon?` matches the
+  // `icons` directory on a case-insensitive file system.
+  it('points every entry at an SVG that git tracks', () => {
+    const tracked = new Set(
+      execFileSync('git', ['ls-files', '--', 'static/img/glean'], {
+        encoding: 'utf8',
+      })
+        .split('\n')
+        .filter(Boolean),
+    );
+    const untracked = Object.entries(GLEAN_ICON_MAP)
+      .map(([name, entry]) => [name, `static${entry.path}${entry.file}`])
+      .filter(([, file]) => !tracked.has(file))
+      .map(([name, file]) => `${name}: ${file}`);
+
+    expect(untracked).toEqual([]);
+  });
+});
 
 describe('MDX card icons', () => {
   it('only uses icons that exist in the selected icon set', () => {
@@ -100,5 +143,64 @@ describe('Cookbook recipe icons', () => {
     );
 
     expect(invalid).toEqual([]);
+  });
+});
+
+describe('sidebar icons', () => {
+  it('only uses icons that exist in the selected icon set', () => {
+    const invalid = sidebarCategories
+      .filter(({ customProps }) => customProps?.icon)
+      .filter(({ customProps }) => {
+        const icon = String(customProps?.icon);
+        return (customProps?.iconSet ?? 'feather') === 'glean'
+          ? !(icon in GLEAN_ICON_MAP)
+          : !(icon in FeatherIcons);
+      })
+      .map(
+        ({ label, customProps }) =>
+          `${label}: ${customProps?.iconSet}/${customProps?.icon}`,
+      );
+
+    expect(invalid).toEqual([]);
+  });
+
+  it('uses the Glean app icon for each product function', () => {
+    // Glyph the Glean app shows for the same function, from its navigation
+    // and feature UI.
+    const canonical: Record<string, string> = {
+      Agents: 'agent', // main nav and admin nav: Agents
+      Announcements: 'megaphone', // Insights: Announcements
+      Answers: 'answer', // Insights: Answers
+      Chat: 'message-with-sparkles', // admin nav: Assistant
+      Departments: 'building', // Insights: Departments
+      Documents: 'file-text', // document glyph across the app
+      'IdP Groups': 'users', // groups of people
+      Insights: 'insights', // user menu and Insights: Overview
+      'OAuth clients': 'share-2', // admin nav: Third-party access
+      People: 'users', // main nav: People
+      Search: 'search', // main nav: Search
+      Skills: 'skill', // admin nav and user menu: Skills
+      Triggers: 'zap', // chat: Triggers in this chat
+      Usage: 'dollar-sign', // admin nav: Usage
+      Users: 'user', // admin nav: User roles
+    };
+    const usages = new Set<string>();
+    const mismatches: string[] = [];
+
+    for (const { label, customProps } of sidebarCategories) {
+      if (!label || !(label in canonical) || !customProps?.icon) continue;
+      usages.add(label);
+      if (
+        customProps.iconSet !== 'glean' ||
+        customProps.icon !== canonical[label]
+      ) {
+        mismatches.push(
+          `${label} uses ${customProps.iconSet}/${customProps.icon}, expected glean/${canonical[label]}`,
+        );
+      }
+    }
+
+    expect(mismatches).toEqual([]);
+    expect([...usages].sort()).toEqual(Object.keys(canonical).sort());
   });
 });

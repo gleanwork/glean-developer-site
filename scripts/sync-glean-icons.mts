@@ -103,8 +103,10 @@ function toSemanticName(key: string): string {
 /**
  * Returns the monorepo-synced entries already published in the manifest.
  * Docs and recipes reference these names, and the monorepo renames and
- * retires glyphs over time, so the sync is additive: an existing name keeps
- * its file, and only names that are new to the site are added.
+ * retires glyphs over time, so the sync never removes a name. A name the
+ * monorepo still defines follows its current file, so the site shows the same
+ * art as the Glean app (for example `agent` moved from agent-3 to agent-4). A
+ * name the monorepo retired keeps the file it had.
  */
 function readPublishedEntries(): Map<string, string> {
   const published = new Map<string, string>();
@@ -205,24 +207,38 @@ function main() {
     deduped.set(entry.semanticName, entry);
   }
 
-  // Published names keep their existing file; only new names are copied.
+  // Every current monorepo name gets its current file. Published names the
+  // monorepo no longer defines keep their existing file.
   const published = readPublishedEntries();
-  let copied = 0;
+  const remapped: string[] = [];
+  let added = 0;
   for (const entry of deduped.values()) {
-    if (published.has(entry.semanticName)) continue;
     const svgFile = `${entry.filename}.svg`;
     fs.copyFileSync(
       path.join(IMAGES_DIR, svgFile),
       path.join(ICONS_OUTPUT_DIR, svgFile),
     );
-    copied++;
+    const previous = published.get(entry.semanticName);
+    if (previous === undefined) {
+      added++;
+    } else if (previous !== entry.filename) {
+      remapped.push(`${entry.semanticName} (${previous} -> ${entry.filename})`);
+    }
   }
+  let retired = 0;
   for (const [semanticName, filename] of published) {
+    if (deduped.has(semanticName)) continue;
     deduped.set(semanticName, { semanticName, filename, key: semanticName });
+    retired++;
   }
   console.log(
-    `Kept ${published.size} published icons; copied ${copied} new SVGs to ${ICONS_OUTPUT_DIR}`,
+    `Synced ${deduped.size - retired} monorepo icons (${added} new), kept ${retired} retired names`,
   );
+  if (remapped.length > 0) {
+    console.log(
+      `Updated ${remapped.length} names to the monorepo's current file: ${remapped.join(', ')}`,
+    );
+  }
 
   // Build set for overlap detection
   const monoSemanticNames = new Set(deduped.keys());

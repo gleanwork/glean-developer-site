@@ -32,7 +32,13 @@ function GleanIcon({
   useEffect(() => {
     if (!entry) return;
     fetch(iconUrl)
-      .then((response) => response.text())
+      .then((response) => {
+        // A missing file returns the HTML 404 page, which must not be inlined.
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+        return response.text();
+      })
       .then((text) => setSvgContent(recolorSvg(text)))
       .catch((error) => {
         console.error(`Failed to load SVG icon: ${name}`, error);

@@ -185,8 +185,14 @@ describe('src/data/platform-endpoints.json', () => {
       'search-overview.mdx is the reference example.';
 
     for (const [key, family] of Object.entries<{ tag: string }>(families)) {
-      const file = `docs/api/platform-api/${key}-overview.mdx`;
-      const page = path.join(docsDir, `${key}-overview.mdx`);
+      // An admin family (`Admin Usage`) renders on its self-service family's
+      // page (`usage-overview.mdx`) through additionalApiFamilies.
+      const adminOf = family.tag.startsWith('Admin ')
+        ? key.replace(/^admin-/, '')
+        : undefined;
+      const pageKey = adminOf ?? key;
+      const file = `docs/api/platform-api/${pageKey}-overview.mdx`;
+      const page = path.join(docsDir, `${pageKey}-overview.mdx`);
 
       expect(
         fs.existsSync(page),
@@ -196,10 +202,17 @@ describe('src/data/platform-endpoints.json', () => {
       const source = fs.readFileSync(page, 'utf8');
       expect(
         source.includes('<ApiOverview') &&
-          source.includes(`apiFamily="${key}"`) &&
+          source.includes(`apiFamily="${pageKey}"`) &&
           source.includes('apiType="platform-api"'),
-        `${file} must render <ApiOverview apiFamily="${key}" apiType="platform-api" />. ${howTo}`,
+        `${file} must render <ApiOverview apiFamily="${pageKey}" apiType="platform-api" />. ${howTo}`,
       ).toBe(true);
+
+      if (adminOf) {
+        expect(
+          source.includes(`additionalApiFamilies={['${key}']}`),
+          `${file} must pass additionalApiFamilies={['${key}']} so the "${family.tag}" endpoints appear. ${howTo}`,
+        ).toBe(true);
+      }
     }
   });
 });

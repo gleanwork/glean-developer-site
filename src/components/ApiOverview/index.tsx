@@ -29,6 +29,11 @@ interface ApiOverviewProps {
   description: string;
   useCases: UseCase[];
   apiFamily: string;
+  /**
+   * Platform only. More families whose endpoints join the table, such as the
+   * `admin-usage` family that covers the admin side of the Usage API.
+   */
+  additionalApiFamilies?: string[];
   apiType?: 'client-api' | 'indexing-api' | 'platform-api';
 }
 
@@ -57,7 +62,7 @@ function getDocLinkForEndpoint(
   return `/api/client-api/${apiFamily.toLowerCase()}/${kebabCaseId}`;
 }
 
-function getPlatformApiEndpoints(apiFamily: string): Endpoint[] {
+export function getPlatformApiEndpoints(apiFamily: string): Endpoint[] {
   // Generated from the Platform spec's tags by `pnpm generate:platform-endpoints`,
   // which runs as part of `pnpm openapi:regenerate:platform`.
   const family = (platformEndpointsData as PlatformEndpointsData).families[
@@ -328,13 +333,14 @@ export default function ApiOverview({
   description,
   useCases,
   apiFamily,
+  additionalApiFamilies = [],
   apiType = 'client-api',
 }: ApiOverviewProps) {
   const endpoints: Endpoint[] =
     apiType === 'indexing-api'
       ? getIndexingApiEndpoints(apiFamily)
       : apiType === 'platform-api'
-        ? getPlatformApiEndpoints(apiFamily)
+        ? [apiFamily, ...additionalApiFamilies].flatMap(getPlatformApiEndpoints)
         : getEndpointsForApi(apiFamily);
 
   return (
