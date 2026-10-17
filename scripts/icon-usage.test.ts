@@ -165,8 +165,8 @@ describe('sidebar icons', () => {
   });
 
   it('uses the Glean app icon for each product function', () => {
-    // Glyph the Glean app shows for the same function, from
-    // askscio/scio typescript/web/common/AppNav/config and the feature UI.
+    // Glyph the Glean app shows for the same function, from its navigation
+    // and feature UI.
     const canonical: Record<string, string> = {
       Agents: 'agent', // main nav and admin nav: Agents
       Announcements: 'megaphone', // Insights: Announcements
