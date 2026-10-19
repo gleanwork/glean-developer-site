@@ -176,13 +176,14 @@ describe('sidebar icons', () => {
       Documents: 'file-text', // document glyph across the app
       'IdP Groups': 'users', // groups of people
       Insights: 'insights', // user menu and Insights: Overview
-      'OAuth clients': 'share-2', // admin nav: Third-party access
       People: 'users', // main nav: People
       Search: 'search', // main nav: Search
       Skills: 'skill', // admin nav and user menu: Skills
       Triggers: 'zap', // chat: Triggers in this chat
       Usage: 'dollar-sign', // admin nav: Usage
       Users: 'user', // admin nav: User roles
+      // OAuth clients is hidden until its API ships. Add it back as
+      // 'share-2' (admin nav: Third-party access) with its sidebar family.
     };
     const usages = new Set<string>();
     const mismatches: string[] = [];
