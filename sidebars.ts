@@ -1291,6 +1291,12 @@ const baseSidebars: SidebarsConfig = {
                   label: 'List OAuth clients',
                   className: 'api-method get',
                 },
+                {
+                  type: 'doc',
+                  id: 'api/platform-api/platform-admin-oauth-clients-get',
+                  label: 'Get an OAuth client',
+                  className: 'api-method get',
+                },
               ],
             },
             {

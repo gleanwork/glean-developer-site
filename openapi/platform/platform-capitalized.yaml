@@ -2,8 +2,8 @@ openapi: 3.1.0
 info:
   version: '2026-04-01'
   title: Glean Platform API
-  x-source-commit-sha: 65c245976fd485759a232b1b76d30f861783753e
-  x-open-api-commit-sha: 02619bae50e4f52b02487b496f1d075e140fc355
+  x-source-commit-sha: 12a81f74c465037bbcb4c9993147c2a57ded58b3
+  x-open-api-commit-sha: 72e883ed782932006a500ba56ab9ec5bd7692fa3
 servers:
   - url: '{serverUrl}'
     description: Replace {serverUrl} with your complete Glean API server URL. Find it at https://developers.glean.com/get-started/authentication#finding-your-server-url.
@@ -3561,6 +3561,9 @@ paths:
           - ADMIN_USAGE
         platform:
           - admin.usage.limits:write
+      x-glean-experimental:
+        id: 557d0028-3cd2-475b-bd9d-ed44e9a19c82
+        introduced: '2026-10-15'
       requestBody:
         required: true
         content:
@@ -3607,6 +3610,16 @@ paths:
           $ref: '#/components/responses/PlatformServiceUnavailable'
       x-speakeasy-group: admin.usage
       x-speakeasy-name-override: upsertLimit
+      parameters:
+        - in: header
+          name: X-Glean-Include-Experimental
+          description: This endpoint is experimental, so requests must include this header set to `true`. See [How experimental APIs work](https://developers.glean.com/experimental/overview) for details.
+          required: true
+          schema:
+            type: boolean
+            default: true
+          example: true
+          value: 'true'
   /api/admin/usage/limits/reset:
     post:
       tags:
@@ -4525,6 +4538,129 @@ paths:
 
                     if (res.platformListOAuthClientsResponse().isPresent()) {
                         System.out.println(res.platformListOAuthClientsResponse().get());
+                    }
+                }
+            }
+  /api/admin/oauth/clients/{client_id}:
+    get:
+      tags:
+        - OAuth clients
+      summary: Get an OAuth client
+      description: |
+        Get one static OAuth client that an admin created for this workspace. A client that an admin disabled is returned with is_active false. A deleted client, a dynamically registered client, one of Glean's own clients, such as Glean Desktop, and an unknown client_id all return 404. The path takes the OAuth client_id, not ai_gateway.usage_client_id. The caller needs admin read or billing read permission.
+      operationId: platform-admin-oauth-clients-get
+      x-glean-scopes:
+        legacy:
+          - ADMIN
+          - ADMIN_USAGE
+        platform:
+          - admin.oauth.clients:read
+      x-visibility: Public
+      x-glean-experimental:
+        id: d1f2871d-dbd9-4b2e-ad5e-dd78f83f5ab5
+        introduced: '2026-10-15'
+      parameters:
+        - in: header
+          name: X-Glean-Include-Experimental
+          description: This endpoint is experimental, so requests must include this header set to `true`. See [How experimental APIs work](https://developers.glean.com/experimental/overview) for details.
+          required: true
+          schema:
+            type: boolean
+            default: true
+          example: true
+          value: 'true'
+        - $ref: '#/components/parameters/ClientId'
+          description: The OAuth client_id of the client.
+      responses:
+        '200':
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlatformGetOAuthClientResponse'
+        '400':
+          $ref: '#/components/responses/PlatformBadRequest'
+        '401':
+          $ref: '#/components/responses/PlatformUnauthorized'
+        '403':
+          $ref: '#/components/responses/PlatformForbidden'
+        '404':
+          $ref: '#/components/responses/PlatformNotFound'
+        '408':
+          $ref: '#/components/responses/PlatformRequestTimeout'
+        '429':
+          $ref: '#/components/responses/PlatformTooManyRequests'
+        '500':
+          $ref: '#/components/responses/PlatformInternalServerError'
+        '503':
+          $ref: '#/components/responses/PlatformServiceUnavailable'
+      x-speakeasy-group: admin.oauth.clients
+      x-speakeasy-name-override: get
+      x-codeSamples:
+        - lang: Python
+          label: Python (API Client)
+          source: |-
+            from glean.api_client import Glean
+            import os
+
+
+            with Glean(
+                api_token=os.getenv("GLEAN_API_TOKEN", ""),
+                server_url="https://mycompany-be.glean.com",
+                include_experimental=True,
+            ) as glean:
+
+                res = glean.admin.oauth.clients.get(client_id="{client_id}")
+
+                # Handle response
+                print(res)
+        - lang: JavaScript
+          label: Typescript (API Client)
+          source: |-
+            import { Glean } from "@gleanwork/api-client";
+
+            const glean = new Glean({
+              apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
+              serverURL: "https://mycompany-be.glean.com",
+              includeExperimental: true,
+            });
+
+            async function run() {
+              const result = await glean.admin.oauth.clients.get("{client_id}");
+
+              console.log(result);
+            }
+
+            run();
+        - lang: Go
+          label: Go (API Client)
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Admin.Oauth.Clients.Get(ctx, \"{client_id}\")\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformGetOAuthClientResponse != nil {\n        // handle response\n    }\n}"
+        - lang: Java
+          label: Java (API Client)
+          source: |-
+            package hello.world;
+
+            import com.glean.api_client.glean_api_client.Glean;
+            import com.glean.api_client.glean_api_client.hooks.GleanBuilder;
+            import com.glean.api_client.glean_api_client.models.errors.PlatformProblemDetailException;
+            import com.glean.api_client.glean_api_client.models.operations.PlatformAdminOauthClientsGetResponse;
+            import java.lang.Exception;
+
+            public class Application {
+
+                public static void main(String[] args) throws PlatformProblemDetailException, Exception {
+
+                    Glean sdk = GleanBuilder.create()
+                            .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
+                            .includeExperimental(true)
+                        .build();
+
+                    PlatformAdminOauthClientsGetResponse res = sdk.admin().oauth().clients().get()
+                            .clientId("{client_id}")
+                            .call();
+
+                    if (res.platformGetOAuthClientResponse().isPresent()) {
+                        System.out.println(res.platformGetOAuthClientResponse().get());
                     }
                 }
             }
@@ -10895,6 +11031,20 @@ components:
         request_id:
           type: string
           description: Request identifier for correlating this response.
+    PlatformGetOAuthClientResponse:
+      type: object
+      description: One OAuth client.
+      additionalProperties: false
+      required:
+        - client
+        - request_id
+      properties:
+        client:
+          $ref: '#/components/schemas/PlatformOAuthClient'
+          description: The OAuth client.
+        request_id:
+          type: string
+          description: Request identifier for correlating this response.
     PlatformDepartmentFilter:
       type: object
       additionalProperties: false
@@ -12232,6 +12382,17 @@ components:
       schema:
         type: string
         description: Nonempty identifier of the stored request resource.
+        minLength: 1
+        maxLength: 256
+    ClientId:
+      name: client_id
+      in: path
+      required: true
+      description: The OAuth client_id of the client.
+      example: '{client_id}'
+      schema:
+        type: string
+        description: Nonempty OAuth client_id.
         minLength: 1
         maxLength: 256
     TriggerWebhookId:
