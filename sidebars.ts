@@ -1132,12 +1132,6 @@ const baseSidebars: SidebarsConfig = {
                   label: 'List departments',
                   className: 'api-method get',
                 },
-                {
-                  type: 'doc',
-                  id: 'api/platform-api/platform-departments-get',
-                  label: 'Get a department',
-                  className: 'api-method get',
-                },
               ],
             },
             {
@@ -1158,12 +1152,6 @@ const baseSidebars: SidebarsConfig = {
                   type: 'doc',
                   id: 'api/platform-api/platform-users-list',
                   label: 'List users',
-                  className: 'api-method get',
-                },
-                {
-                  type: 'doc',
-                  id: 'api/platform-api/platform-users-get',
-                  label: 'Get user',
                   className: 'api-method get',
                 },
               ],
@@ -1263,12 +1251,6 @@ const baseSidebars: SidebarsConfig = {
                   label: 'List IdP groups',
                   className: 'api-method get',
                 },
-                {
-                  type: 'doc',
-                  id: 'api/platform-api/platform-admin-idp-groups-get',
-                  label: 'Get an IdP group',
-                  className: 'api-method get',
-                },
               ],
             },
             {
@@ -1284,20 +1266,7 @@ const baseSidebars: SidebarsConfig = {
                 type: 'doc',
                 id: 'api/platform-api/oauth-clients-overview',
               },
-              items: [
-                {
-                  type: 'doc',
-                  id: 'api/platform-api/platform-admin-oauth-clients-list',
-                  label: 'List OAuth clients',
-                  className: 'api-method get',
-                },
-                {
-                  type: 'doc',
-                  id: 'api/platform-api/platform-admin-oauth-clients-get',
-                  label: 'Get an OAuth client',
-                  className: 'api-method get',
-                },
-              ],
+              items: [],
             },
             {
               type: 'category',
