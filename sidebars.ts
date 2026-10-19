@@ -1255,21 +1255,6 @@ const baseSidebars: SidebarsConfig = {
             },
             {
               type: 'category',
-              label: 'OAuth clients',
-              description:
-                'List the static OAuth clients that admins created for the workspace.',
-              customProps: {
-                icon: 'share-2',
-                iconSet: 'glean',
-              },
-              link: {
-                type: 'doc',
-                id: 'api/platform-api/oauth-clients-overview',
-              },
-              items: [],
-            },
-            {
-              type: 'category',
               label: 'Usage',
               description:
                 'Set workspace usage limits and settings, and resolve limit-increase requests.',
