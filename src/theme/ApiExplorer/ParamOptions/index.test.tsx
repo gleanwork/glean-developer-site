@@ -11,7 +11,10 @@ const explorerState = {
   },
 };
 
+const dispatchSpy = vi.hoisted(() => vi.fn());
+
 vi.mock('@theme/ApiItem/hooks', () => ({
+  useTypedDispatch: () => dispatchSpy,
   useTypedSelector: (selector: (state: typeof explorerState) => unknown) =>
     selector(explorerState),
 }));
@@ -81,6 +84,7 @@ vi.mock(
 describe('ParamOptions explorer visibility', () => {
   beforeEach(() => {
     booleanSpy.mockClear();
+    dispatchSpy.mockClear();
     explorerState.params = {
       path: [],
       query: [],
@@ -144,5 +148,39 @@ describe('ParamOptions explorer visibility', () => {
       screen.queryByTestId('ctrl-X-Glean-Include-Experimental'),
     ).not.toBeInTheDocument();
     expect(booleanSpy).not.toHaveBeenCalled();
+  });
+
+  it('stores number and boolean defaults as strings', async () => {
+    const pageSize = {
+      in: 'query',
+      name: 'page_size',
+      required: false,
+      schema: { type: 'integer', default: 50 },
+      value: 50,
+    };
+    const experimental = {
+      in: 'header',
+      name: 'X-Glean-Include-Experimental',
+      required: true,
+      schema: { type: 'boolean', default: true },
+      value: true,
+    };
+    const cursor = {
+      in: 'query',
+      name: 'cursor',
+      required: false,
+      schema: { type: 'string' },
+    };
+    explorerState.params.query = [pageSize, cursor];
+    explorerState.params.header = [experimental];
+
+    const { default: ParamOptions } = await import('./index');
+    render(<ParamOptions />);
+
+    const payloads = dispatchSpy.mock.calls.map(([action]) => action.payload);
+    expect(payloads).toEqual([
+      { ...pageSize, value: '50' },
+      { ...experimental, value: 'true' },
+    ]);
   });
 });

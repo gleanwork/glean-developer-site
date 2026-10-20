@@ -10,8 +10,11 @@
  * Filters X-Glean-Include-Experimental out of the visible form before any
  * React Hook Form controller mounts. Redux still holds the full parameter
  * so generated cURL and Send keep the header.
+ *
+ * Also converts number and boolean values seeded from `schema.default` to
+ * strings, so cURL and Send serialize them (see normalizeParamValue).
  */
-import React, { useState, useId } from 'react';
+import React, { useEffect, useState, useId } from 'react';
 
 import { translate } from '@docusaurus/Translate';
 import FormItem from '@theme/ApiExplorer/FormItem';
@@ -20,8 +23,10 @@ import ParamBooleanFormItem from '@theme/ApiExplorer/ParamOptions/ParamFormItems
 import ParamMultiSelectFormItem from '@theme/ApiExplorer/ParamOptions/ParamFormItems/ParamMultiSelectFormItem';
 import ParamSelectFormItem from '@theme/ApiExplorer/ParamOptions/ParamFormItems/ParamSelectFormItem';
 import ParamTextFormItem from '@theme/ApiExplorer/ParamOptions/ParamFormItems/ParamTextFormItem';
-import { useTypedSelector } from '@theme/ApiItem/hooks';
+import { setParam } from '@theme/ApiExplorer/ParamOptions/slice';
+import { useTypedDispatch, useTypedSelector } from '@theme/ApiItem/hooks';
 import { isVisibleInExplorer } from './isVisibleInExplorer';
+import { normalizeParamValue } from './normalizeParamValue';
 
 type Param = {
   in: 'cookie' | 'header' | 'path' | 'query';
@@ -140,11 +145,26 @@ function ParamOptions() {
   const [showOptional, setShowOptional] = useState(false);
 
   const optionalId = useId();
+  const dispatch = useTypedDispatch();
 
   const pathParams = useTypedSelector((state: any) => state.params.path);
   const queryParams = useTypedSelector((state: any) => state.params.query);
   const cookieParams = useTypedSelector((state: any) => state.params.cookie);
   const headerParams = useTypedSelector((state: any) => state.params.header);
+
+  useEffect(() => {
+    for (const param of [
+      ...pathParams,
+      ...queryParams,
+      ...cookieParams,
+      ...headerParams,
+    ]) {
+      const normalized = normalizeParamValue(param);
+      if (normalized) {
+        dispatch(setParam(normalized));
+      }
+    }
+  }, [cookieParams, dispatch, headerParams, pathParams, queryParams]);
 
   const allParams = [
     ...pathParams,
