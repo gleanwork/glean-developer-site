@@ -6,12 +6,27 @@
  *
  * Endpoints are discovered from {serverUrl}/.well-known/oauth-authorization-server
  * (verified live: issuer, authorization/token/registration endpoints, PKCE
- * S256, token_endpoint_auth_method "none").
+ * S256, token_endpoint_auth_method "none", refresh_token grant).
+ *
+ * Sign-in also keeps a refresh token so the explorer can renew the access
+ * token when it expires instead of asking the reader to sign in again. The
+ * refresh token is stored in localStorage next to the access token the
+ * explorer already persists there. Glean rotates refresh tokens on every use
+ * and rejects a reused one, so refreshes are serialized across tabs with a
+ * Web Lock. Every write also checks that the stored session has not changed
+ * since the refresh started, so a late response never overwrites a newer
+ * sign-in.
  */
 
 const CLIENT_ID_STORE = 'api-explorer-oauth-clients';
-const SIGNED_IN_STORE = 'api-explorer-oauth-signed-in';
+const SESSION_STORE = 'api-explorer-oauth-signed-in';
+const REFRESH_LOCK = 'api-explorer-oauth-refresh';
 const CLIENT_NAME = 'Glean Developer Docs API Explorer';
+const GRANT_TYPES = ['authorization_code', 'refresh_token'];
+
+/** Refresh this long before the access token expires, so a request sent
+ * just before expiry still carries a valid token. */
+export const REFRESH_LEAD_MS = 2 * 60 * 1000;
 
 interface ServerMetadata {
   issuer: string;
@@ -24,7 +39,45 @@ interface ServerMetadata {
 interface CachedClient {
   clientId: string;
   scope: string;
+  grantTypes?: string[];
 }
+
+interface TokenResponse {
+  access_token?: string;
+  refresh_token?: string;
+  expires_in?: number | string;
+}
+
+interface Tokens {
+  accessToken: string;
+  refreshToken?: string;
+  /** Epoch milliseconds; absent when the server sent no expires_in. */
+  expiresAt?: number;
+}
+
+/** What a completed sign-in returns: the tokens plus what a later refresh
+ * needs to call the token endpoint again. */
+export interface SignInResult extends Tokens {
+  clientId: string;
+  tokenEndpoint: string;
+}
+
+export interface SignInSession extends SignInResult {
+  serverUrl: string;
+  /** Random per sign-in and kept across refreshes, so a tab can tell its
+   * own sign-in, refreshed by another tab, from a newer sign-in. */
+  id: string;
+  /** Counts successful refreshes within this sign-in. */
+  generation: number;
+  /** The access token the last refresh replaced. A page that closed while
+   * the refresh was in flight still holds it, and picks up the new one. */
+  previousAccessToken?: string;
+}
+
+/** `signed-in`: the token came from signing in and has not expired.
+ * `expired`: it came from signing in but has expired.
+ * `signed-out`: no sign-in issued it, for example a pasted token. */
+export type SignInState = 'signed-in' | 'expired' | 'signed-out';
 
 /** Format every scope advertised by the authorization server for an OAuth
  * authorization request. The API Explorer intentionally requests the complete
@@ -53,81 +106,184 @@ export function isPlaceholderServerUrl(serverUrl: string): boolean {
   );
 }
 
-/** The token a sign-in issued, and when it expires (epoch ms) if the
- * server said. */
-export interface SignInResult {
-  accessToken: string;
-  expiresAt?: number;
-}
-
-/** `expired` means the explorer still holds the token sign-in issued, but
- * the token has expired. */
-export type SignInState = 'signed-in' | 'expired' | 'signed-out';
-
-interface SignedInRecord {
-  serverUrl: string;
-  tokenFingerprint: string;
-  expiresAt?: number;
-}
-
-/** FNV-1a hash. Identifies the token sign-in issued without storing a
- * second copy of it; the explorer already persists the token itself. */
-function fingerprint(token: string): string {
-  let hash = 0x811c9dc5;
-  for (let i = 0; i < token.length; i++) {
-    hash ^= token.charCodeAt(i);
-    hash = Math.imul(hash, 0x01000193);
-  }
-  return (hash >>> 0).toString(16);
-}
-
 function normalizeServerUrl(serverUrl: string): string {
   return serverUrl.replace(/\/+$/, '');
 }
 
-/** Record that the token in `result` came from signing in to `serverUrl`,
- * so the signed-in state survives a page reload. */
+function readSession(): SignInSession | null {
+  try {
+    const record = JSON.parse(localStorage.getItem(SESSION_STORE) ?? 'null');
+    // Records written before refresh support hold only a fingerprint.
+    if (
+      typeof record?.serverUrl !== 'string' ||
+      typeof record.id !== 'string' ||
+      typeof record.generation !== 'number' ||
+      typeof record.accessToken !== 'string' ||
+      typeof record.clientId !== 'string' ||
+      typeof record.tokenEndpoint !== 'string'
+    ) {
+      return null;
+    }
+    return record as SignInSession;
+  } catch {
+    return null;
+  }
+}
+
+function writeSession(session: SignInSession): void {
+  try {
+    localStorage.setItem(SESSION_STORE, JSON.stringify(session));
+  } catch {
+    // Storage unavailable; the session just won't survive a reload.
+  }
+}
+
+/** Record the sign-in for `serverUrl`, so the signed-in state survives a
+ * reload and the access token can be refreshed later. */
 export function rememberSignedIn(
   serverUrl: string,
   result: SignInResult,
 ): void {
-  const record: SignedInRecord = {
+  writeSession({
+    ...result,
     serverUrl: normalizeServerUrl(serverUrl),
-    tokenFingerprint: fingerprint(result.accessToken),
-    expiresAt: result.expiresAt,
-  };
-  try {
-    localStorage.setItem(SIGNED_IN_STORE, JSON.stringify(record));
-  } catch {
-    // Storage unavailable; the signed-in state just won't survive a reload.
-  }
+    id: base64Url(crypto.getRandomValues(new Uint8Array(16))),
+    generation: 0,
+  });
 }
 
-/** Whether `token` is the one sign-in issued for `serverUrl`, and whether
- * it has expired. A pasted token or a changed Base URL is `signed-out`. */
+/** The stored sign-in for `serverUrl`, whichever token it currently holds. */
+export function getSignInSession(
+  serverUrl: string | null,
+): SignInSession | null {
+  if (!serverUrl) {
+    return null;
+  }
+  const session = readSession();
+  return session?.serverUrl === normalizeServerUrl(serverUrl) ? session : null;
+}
+
+function isExpired(session: SignInSession, now: number): boolean {
+  return session.expiresAt !== undefined && now >= session.expiresAt;
+}
+
+function holdsSessionToken(
+  session: SignInSession | null,
+  token: string | undefined,
+): session is SignInSession {
+  return (
+    Boolean(token) &&
+    session !== null &&
+    (token === session.accessToken || token === session.previousAccessToken)
+  );
+}
+
+/** Whether `token` came from signing in to `serverUrl`, and whether that
+ * sign-in has expired. A pasted token or a changed Base URL counts as
+ * signed out. */
 export function signInState(
   serverUrl: string | null,
   token: string | undefined,
   now: number = Date.now(),
 ): SignInState {
-  if (!serverUrl || !token) {
+  const session = getSignInSession(serverUrl);
+  if (!holdsSessionToken(session, token)) {
     return 'signed-out';
   }
-  let record: SignedInRecord | null = null;
-  try {
-    record = JSON.parse(localStorage.getItem(SIGNED_IN_STORE) ?? 'null');
-  } catch {
-    return 'signed-out';
+  return isExpired(session, now) ? 'expired' : 'signed-in';
+}
+
+function parseTokenResponse(body: TokenResponse, now: number): Tokens {
+  if (!body.access_token) {
+    throw new Error('Token response contained no access token.');
   }
-  if (
-    record?.serverUrl !== normalizeServerUrl(serverUrl) ||
-    record.tokenFingerprint !== fingerprint(token)
-  ) {
-    return 'signed-out';
-  }
-  return record.expiresAt !== undefined && now >= record.expiresAt
-    ? 'expired'
-    : 'signed-in';
+  const expiresIn = Number(body.expires_in);
+  return {
+    accessToken: body.access_token,
+    refreshToken: body.refresh_token || undefined,
+    expiresAt:
+      Number.isFinite(expiresIn) && expiresIn > 0
+        ? now + expiresIn * 1000
+        : undefined,
+  };
+}
+
+/** Run `fn` while holding a lock shared by every tab on this origin. */
+async function withRefreshLock<T>(fn: () => Promise<T>): Promise<T> {
+  const locks = typeof navigator === 'undefined' ? undefined : navigator.locks;
+  return locks ? locks.request(REFRESH_LOCK, fn) : fn();
+}
+
+/**
+ * Exchange the stored refresh token for a new access token. `token` is the
+ * access token this page holds, from the sign-in with id `sessionId`.
+ * Resolves to the token the page should use now, or to null when there is
+ * nothing to refresh with or a newer sign-in replaced that one. Throws on a
+ * network error, which leaves the refresh token in place for a later try.
+ *
+ * Glean rotates the refresh token on every use, so only one tab may refresh
+ * at a time. A tab that waited for the lock picks up the token the other tab
+ * stored instead of refreshing again with a refresh token already spent.
+ */
+export async function refreshSignIn(
+  serverUrl: string,
+  token: string,
+  sessionId: string,
+): Promise<string | null> {
+  return withRefreshLock(async () => {
+    const session = getSignInSession(serverUrl);
+    if (session?.id !== sessionId) {
+      return null;
+    }
+    if (token !== session.accessToken && !isExpired(session, Date.now())) {
+      // Another tab, or this page before a reload, already refreshed.
+      return session.accessToken;
+    }
+    if (!session.refreshToken) {
+      return null;
+    }
+    const res = await fetch(session.tokenEndpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        grant_type: 'refresh_token',
+        client_id: session.clientId,
+        refresh_token: session.refreshToken,
+      }),
+    });
+    const tokens = res.ok
+      ? parseTokenResponse(await res.json(), Date.now())
+      : null;
+
+    // The reader may have signed in again while the request was in flight,
+    // or, without Web Locks, another tab may have refreshed. Write only if
+    // the stored session is still this sign-in at this generation.
+    const latest = getSignInSession(serverUrl);
+    if (latest?.id !== session.id || latest.generation !== session.generation) {
+      return latest?.id === session.id && !isExpired(latest, Date.now())
+        ? latest.accessToken
+        : null;
+    }
+
+    if (!tokens) {
+      if (res.status === 400 || res.status === 401) {
+        // Expired, revoked or already used: signing in again is the only fix.
+        writeSession({ ...latest, refreshToken: undefined });
+      }
+      return null;
+    }
+    // Written over `session`, not `latest`: a duplicate request rejected
+    // first may have cleared the refresh token this response replaces.
+    writeSession({
+      ...session,
+      ...tokens,
+      // With rotation off the server keeps the old refresh token valid.
+      refreshToken: tokens.refreshToken ?? session.refreshToken,
+      previousAccessToken: session.accessToken,
+      generation: session.generation + 1,
+    });
+    return tokens.accessToken;
+  });
 }
 
 function base64Url(bytes: Uint8Array): string {
@@ -169,7 +325,12 @@ async function getClientId(
     // Corrupt cache; re-register.
   }
   const cachedClient = cache[metadata.issuer];
-  if (cachedClient?.scope === scope) {
+  // Clients registered before refresh support lack the refresh_token grant,
+  // and the server issues refresh tokens only to clients that have it.
+  if (
+    cachedClient?.scope === scope &&
+    GRANT_TYPES.every((grant) => cachedClient.grantTypes?.includes(grant))
+  ) {
     return cachedClient.clientId;
   }
   if (!metadata.registration_endpoint) {
@@ -183,7 +344,7 @@ async function getClientId(
     body: JSON.stringify({
       client_name: CLIENT_NAME,
       redirect_uris: [`${window.location.origin}/oauth/callback`],
-      grant_types: ['authorization_code'],
+      grant_types: GRANT_TYPES,
       response_types: ['code'],
       token_endpoint_auth_method: 'none',
       scope,
@@ -193,7 +354,7 @@ async function getClientId(
     throw new Error(`Client registration failed (HTTP ${res.status}).`);
   }
   const { client_id: clientId } = await res.json();
-  cache[metadata.issuer] = { clientId, scope };
+  cache[metadata.issuer] = { clientId, scope, grantTypes: GRANT_TYPES };
   localStorage.setItem(CLIENT_ID_STORE, JSON.stringify(cache));
   return clientId;
 }
@@ -266,8 +427,7 @@ async function exchangeCode(
   clientId: string,
   code: string,
   verifier: string,
-): Promise<SignInResult> {
-  const requestedAt = Date.now();
+): Promise<Tokens> {
   const res = await fetch(metadata.token_endpoint, {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -282,20 +442,10 @@ async function exchangeCode(
   if (!res.ok) {
     throw new Error(`Token exchange failed (HTTP ${res.status}).`);
   }
-  const { access_token: accessToken, expires_in: expiresIn } = await res.json();
-  if (!accessToken) {
-    throw new Error('Token exchange returned no access token.');
-  }
-  // Count from when the request was sent, so the recorded expiry is never
-  // later than the real one.
-  const expiresAt =
-    typeof expiresIn === 'number' && expiresIn > 0
-      ? requestedAt + expiresIn * 1000
-      : undefined;
-  return { accessToken, expiresAt };
+  return parseTokenResponse(await res.json(), Date.now());
 }
 
-/** Full flow: discovery → DCR → PKCE popup → token. */
+/** Full flow: discovery → DCR → PKCE popup → tokens. */
 export async function signInWithGlean(
   serverUrl: string,
 ): Promise<SignInResult> {
@@ -304,5 +454,6 @@ export async function signInWithGlean(
   const clientId = await getClientId(metadata, scope);
   const { verifier, challenge } = await pkcePair();
   const code = await authorizeInPopup(metadata, clientId, challenge, scope);
-  return exchangeCode(metadata, clientId, code, verifier);
+  const tokens = await exchangeCode(metadata, clientId, code, verifier);
+  return { ...tokens, clientId, tokenEndpoint: metadata.token_endpoint };
 }
