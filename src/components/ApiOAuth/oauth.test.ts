@@ -3,6 +3,8 @@ import {
   allSupportedScopes,
   isOAuthEligiblePath,
   isPlaceholderServerUrl,
+  isSignedInToken,
+  rememberSignedIn,
   signInWithGlean,
 } from './oauth';
 
@@ -95,6 +97,32 @@ describe('API Explorer OAuth helpers', () => {
     );
 
     await expect(tokenPromise).resolves.toBe('access-token');
+  });
+
+  it('recognizes the signed-in token after a reload', () => {
+    rememberSignedIn('https://acme-be.glean.com/', 'oauth-token');
+
+    expect(isSignedInToken('https://acme-be.glean.com', 'oauth-token')).toBe(
+      true,
+    );
+  });
+
+  it('does not store the token itself', () => {
+    rememberSignedIn('https://acme-be.glean.com', 'oauth-token');
+
+    expect(JSON.stringify({ ...localStorage })).not.toContain('oauth-token');
+  });
+
+  it('drops the signed-in state for a pasted token or a different server', () => {
+    rememberSignedIn('https://acme-be.glean.com', 'oauth-token');
+
+    expect(isSignedInToken('https://acme-be.glean.com', 'pasted-token')).toBe(
+      false,
+    );
+    expect(isSignedInToken('https://other-be.glean.com', 'oauth-token')).toBe(
+      false,
+    );
+    expect(isSignedInToken('https://acme-be.glean.com', undefined)).toBe(false);
   });
 
   it('treats the explorer default host as a placeholder, including braces', () => {

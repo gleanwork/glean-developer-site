@@ -10,6 +10,7 @@
  */
 
 const CLIENT_ID_STORE = 'api-explorer-oauth-clients';
+const SIGNED_IN_STORE = 'api-explorer-oauth-signed-in';
 const CLIENT_NAME = 'Glean Developer Docs API Explorer';
 
 interface ServerMetadata {
@@ -50,6 +51,62 @@ export function isPlaceholderServerUrl(serverUrl: string): boolean {
     value.includes('{instance-name}') ||
     value.includes('instance-name-be.glean.com')
   );
+}
+
+interface SignedInRecord {
+  serverUrl: string;
+  tokenFingerprint: string;
+}
+
+/** FNV-1a hash. Identifies the token sign-in issued without storing a
+ * second copy of it; the explorer already persists the token itself. */
+function fingerprint(token: string): string {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < token.length; i++) {
+    hash ^= token.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return (hash >>> 0).toString(16);
+}
+
+function normalizeServerUrl(serverUrl: string): string {
+  return serverUrl.replace(/\/+$/, '');
+}
+
+/** Record that `token` came from signing in to `serverUrl`, so the
+ * signed-in state survives a page reload. */
+export function rememberSignedIn(serverUrl: string, token: string): void {
+  const record: SignedInRecord = {
+    serverUrl: normalizeServerUrl(serverUrl),
+    tokenFingerprint: fingerprint(token),
+  };
+  try {
+    localStorage.setItem(SIGNED_IN_STORE, JSON.stringify(record));
+  } catch {
+    // Storage unavailable; the signed-in state just won't survive a reload.
+  }
+}
+
+/** True when `token` is the one sign-in issued for `serverUrl`. A pasted
+ * token or a changed Base URL no longer counts as signed in. */
+export function isSignedInToken(
+  serverUrl: string | null,
+  token: string | undefined,
+): boolean {
+  if (!serverUrl || !token) {
+    return false;
+  }
+  try {
+    const record = JSON.parse(
+      localStorage.getItem(SIGNED_IN_STORE) ?? 'null',
+    ) as SignedInRecord | null;
+    return (
+      record?.serverUrl === normalizeServerUrl(serverUrl) &&
+      record.tokenFingerprint === fingerprint(token)
+    );
+  } catch {
+    return false;
+  }
 }
 
 function base64Url(bytes: Uint8Array): string {

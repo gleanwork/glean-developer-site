@@ -3,7 +3,8 @@
  * button: OAuth discovery + Dynamic Client Registration + PKCE against
  * the server URL configured in the explorer's Base URL field. On success
  * the access token is injected into the explorer's bearer-token state
- * (persisted like a pasted token). Client and Platform APIs — the
+ * (persisted like a pasted token). The signed-in label is derived from
+ * that persisted token, so it survives a reload. Client and Platform APIs — the
  * Indexing API requires a Glean-issued token instead.
  */
 import React, { useEffect, useRef, useState } from 'react';
@@ -14,6 +15,8 @@ import { setAuthData } from '@theme/ApiExplorer/Authorization/slice';
 import {
   isOAuthEligiblePath,
   isPlaceholderServerUrl,
+  isSignedInToken,
+  rememberSignedIn,
   signInWithGlean,
 } from '@site/src/components/ApiOAuth/oauth';
 import { useTenantApiPersonalizationEnabled } from '@site/src/lib/tenantPersonalizationFlag';
@@ -52,7 +55,7 @@ function GleanSignIn(): React.ReactElement | null {
   );
   const auth = useTypedSelector((state: any) => state.auth);
   const [status, setStatus] = useState<
-    { kind: 'idle' | 'busy' | 'done' } | { kind: 'error'; message: string }
+    { kind: 'idle' | 'busy' } | { kind: 'error'; message: string }
   >({ kind: 'idle' });
 
   if (!isOAuthEligiblePath(pathname)) {
@@ -71,10 +74,17 @@ function GleanSignIn(): React.ReactElement | null {
     return null;
   }
 
+  const serverUrl = personalizationEnabled
+    ? resolveOpenApiServerUrl(server)
+    : resolveServerUrl(server);
+
+  // Derived from the persisted token rather than component state, so the
+  // signed-in label survives a reload.
+  const signedIn = bearerSchemes.some((scheme) =>
+    isSignedInToken(serverUrl, auth?.data?.[scheme]?.token),
+  );
+
   const signIn = async () => {
-    const serverUrl = personalizationEnabled
-      ? resolveOpenApiServerUrl(server)
-      : resolveServerUrl(server);
     const hasPlaceholder =
       serverUrl &&
       (isPlaceholderServerUrl(serverUrl) ||
@@ -105,10 +115,11 @@ function GleanSignIn(): React.ReactElement | null {
           'Your Glean API URL changed during sign-in. Sign in again for the current URL.',
         );
       }
+      rememberSignedIn(serverUrl, token);
       for (const scheme of bearerSchemes) {
         dispatch(setAuthData({ scheme, key: 'token', value: token }));
       }
-      setStatus({ kind: 'done' });
+      setStatus({ kind: 'idle' });
     } catch (error) {
       setStatus({
         kind: 'error',
@@ -127,14 +138,14 @@ function GleanSignIn(): React.ReactElement | null {
       >
         {status.kind === 'busy'
           ? 'Signing in…'
-          : status.kind === 'done'
+          : signedIn
             ? 'Signed in ✓ — sign in again'
             : 'Sign in with Glean'}
       </button>
       <span className={styles.oauthHint}>
         {status.kind === 'error'
           ? status.message
-          : status.kind === 'done'
+          : signedIn
             ? 'OAuth token filled in below.'
             : 'OAuth sign-in against your instance — or paste a token below.'}
       </span>
