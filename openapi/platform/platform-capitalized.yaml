@@ -2,8 +2,8 @@ openapi: 3.1.0
 info:
   version: '2026-04-01'
   title: Glean Platform API
-  x-source-commit-sha: 80fb08ebff36bca85c28d6ba8e488915e381b45f
-  x-open-api-commit-sha: 3622bc12d7514a60badc4466a8a98c4a995dfe2f
+  x-source-commit-sha: a9566c102ae0259b9ff9251fa7a10bdb11653b36
+  x-open-api-commit-sha: 8eacd9c0e1b2df47ac11de76833328617a52dc51
 servers:
   - url: '{serverUrl}'
     description: Replace {serverUrl} with your complete Glean API server URL. Find it at https://developers.glean.com/get-started/authentication#finding-your-server-url.
@@ -4699,7 +4699,7 @@ paths:
         - Users
       summary: List users
       description: |
-        List the users in the Glean directory, ordered by display_name and then by user_id. The list includes the same people as the Glean People directory. Inactive users, such as former employees, are left out unless an is_active filter includes the value "false". Use the returned user_id values with other Platform APIs, for example as usage limit targets.
+        List the users in the Glean directory, ordered by display_name and then by user_id. The list includes the same people as the Glean People directory. Inactive users, such as former employees, are left out unless an is_active filter includes the value "false". Filter by name, email, manager_id, or department_id to find specific users. Use the returned user_id values with other Platform APIs, for example as usage limit targets.
       operationId: platform-users-list
       x-glean-scopes:
         legacy:
@@ -4740,7 +4740,7 @@ paths:
         - in: query
           name: filters
           description: |
-            JSON-encoded filters that choose which users are returned. The only supported field is is_active, with the values "true" and "false" and the operator EQUALS. Multiple values OR within a filter. Multiple filters AND together. Without an is_active filter, only active users are returned. To return active and inactive users, send [{"field":"is_active","values":["true","false"]}].
+            JSON-encoded filters that choose which users are returned. The supported fields are is_active, name, email, manager_id, and department_id, each with the operator EQUALS. Multiple values OR within a filter. Multiple filters AND together. Only is_active may appear in more than one filter. Without an is_active filter, only active users are returned, so a filter on another field matches only active users unless an is_active filter includes "false". To return active and inactive users, send [{"field":"is_active","values":["true","false"]}]. A value that matches no user, such as an unknown email or department_id, returns no users rather than an error.
           required: false
           content:
             application/json:
@@ -4752,6 +4752,42 @@ paths:
                 items:
                   $ref: '#/components/schemas/PlatformUserFilter'
                   description: One filter on a user field.
+              examples:
+                allUsers:
+                  summary: Active and inactive users
+                  value:
+                    - field: is_active
+                      values:
+                        - 'true'
+                        - 'false'
+                name:
+                  summary: Users whose display name contains "hoover"
+                  value:
+                    - field: name
+                      values:
+                        - hoover
+                email:
+                  summary: The user with a primary or alias email
+                  value:
+                    - field: email
+                      values:
+                        - jane.doe@example.com
+                managerId:
+                  summary: The direct reports of a manager
+                  value:
+                    - field: manager_id
+                      values:
+                        - '{user_id}'
+                departmentId:
+                  summary: Active and inactive users in a department
+                  value:
+                    - field: department_id
+                      values:
+                        - '{department_id}'
+                    - field: is_active
+                      values:
+                        - 'true'
+                        - 'false'
         - in: query
           name: include
           description: |
@@ -10401,16 +10437,32 @@ components:
       properties:
         field:
           type: string
-          pattern: ^is_active$
-          description: The user field to filter on. The only supported field is is_active.
+          pattern: ^(is_active|name|email|manager_id|department_id)$
+          description: |
+            The user field to filter on.
+            - is_active: "true" matches active users and "false" matches inactive
+              users.
+
+            - name: matches users whose display_name contains the value, ignoring
+              case and surrounding whitespace. Each value is at most 256 characters.
+
+            - email: matches the user with the email, ignoring case. An alias email
+              matches only when the list would return it in alias_emails.
+
+            - manager_id: matches the direct reports of the user with this user_id. An
+              alias ID of a merged person matches the same reports.
+
+            - department_id: matches users in the department, as returned in
+              department.department_id.
         values:
           type: array
           minItems: 1
+          maxItems: 100
           description: The values to match. A user matches when any value matches.
           items:
             type: string
-            pattern: ^(true|false)$
-            description: '"true" matches active users. "false" matches inactive users.'
+            minLength: 1
+            description: A value to match. Blank values are rejected.
         operator:
           allOf:
             - $ref: '#/components/schemas/PlatformFilterOperator'
