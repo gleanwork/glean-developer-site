@@ -14,6 +14,7 @@ import {
 import AuthorizationWrapper from './index';
 
 const SERVER = 'https://acme-be.glean.com';
+const SESSION_STORE = 'api-explorer-oauth-signed-in';
 
 const explorerState = {
   server: { value: { url: SERVER, variables: {} } },
@@ -243,6 +244,78 @@ describe('Sign in with Glean', () => {
       ),
     );
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('forgets the stored sign-in when the reader clears the token', () => {
+    rememberSignedIn(SERVER, signIn());
+    setToken('access-1');
+    const { rerender } = render(<AuthorizationWrapper />);
+
+    setToken(undefined);
+    rerender(<AuthorizationWrapper />);
+
+    expect(localStorage.getItem(SESSION_STORE)).toBeNull();
+    expect(button().textContent).toBe('Sign in with Glean');
+  });
+
+  it('forgets the stored sign-in when the reader pastes another token', () => {
+    rememberSignedIn(SERVER, signIn());
+    setToken('access-1');
+    const { rerender } = render(<AuthorizationWrapper />);
+
+    setToken('pasted-token');
+    rerender(<AuthorizationWrapper />);
+
+    expect(localStorage.getItem(SESSION_STORE)).toBeNull();
+  });
+
+  it('forgets the stored sign-in when the token is cleared after a Base URL change', () => {
+    rememberSignedIn(SERVER, signIn());
+    setToken('access-1');
+    const { rerender } = render(<AuthorizationWrapper />);
+
+    explorerState.server.value.url = 'https://other-be.glean.com';
+    rerender(<AuthorizationWrapper />);
+    expect(localStorage.getItem(SESSION_STORE)).not.toBeNull();
+
+    setToken(undefined);
+    rerender(<AuthorizationWrapper />);
+
+    expect(localStorage.getItem(SESSION_STORE)).toBeNull();
+  });
+
+  it('keeps the stored sign-in when the explorer fills in a refreshed token', () => {
+    rememberSignedIn(SERVER, signIn());
+    setToken('access-1');
+    const { rerender } = render(<AuthorizationWrapper />);
+
+    const stored = JSON.parse(localStorage.getItem(SESSION_STORE)!);
+    localStorage.setItem(
+      SESSION_STORE,
+      JSON.stringify({
+        ...stored,
+        accessToken: 'access-2',
+        refreshToken: 'refresh-2',
+        previousAccessToken: 'access-1',
+        generation: 1,
+      }),
+    );
+    setToken('access-2');
+    rerender(<AuthorizationWrapper />);
+
+    expect(localStorage.getItem(SESSION_STORE)).not.toBeNull();
+    expect(button().textContent).toBe('Signed in ✓ — sign in again');
+  });
+
+  it('keeps the stored sign-in while the explorer restores its token on load', () => {
+    rememberSignedIn(SERVER, signIn());
+    const { rerender } = render(<AuthorizationWrapper />);
+
+    setToken('access-1');
+    rerender(<AuthorizationWrapper />);
+
+    expect(localStorage.getItem(SESSION_STORE)).not.toBeNull();
+    expect(button().textContent).toBe('Signed in ✓ — sign in again');
   });
 
   it('does not refresh a pasted token', async () => {

@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   allSupportedScopes,
+  forgetSignIn,
   isOAuthEligiblePath,
   isPlaceholderServerUrl,
   refreshSignIn as refreshSignInWithId,
@@ -295,6 +296,25 @@ describe('signInState', () => {
     );
 
     expect(signInState(SERVER, 'access-1')).toBe('signed-out');
+  });
+});
+
+describe('forgetSignIn', () => {
+  it('deletes the stored sign-in and its refresh token', () => {
+    rememberSignedIn(SERVER, signIn());
+
+    forgetSignIn('access-1');
+
+    expect(localStorage.getItem(SESSION_STORE)).toBeNull();
+  });
+
+  it('keeps a newer sign-in made in another tab', () => {
+    rememberSignedIn(SERVER, signIn());
+    rememberSignedIn(SERVER, signIn({ accessToken: 'access-9' }));
+
+    forgetSignIn('access-1');
+
+    expect(signInState(SERVER, 'access-9')).toBe('signed-in');
   });
 });
 

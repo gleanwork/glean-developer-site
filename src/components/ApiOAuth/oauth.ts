@@ -184,6 +184,21 @@ function holdsSessionToken(
   );
 }
 
+/** Delete the stored sign-in, including its refresh token, when it still
+ * holds `token`. Call it when the reader clears or replaces the signed-in
+ * token. The check skips a newer sign-in from another tab. It ignores the
+ * Base URL, so it also works after the reader changed that first. */
+export function forgetSignIn(token: string): void {
+  if (!holdsSessionToken(readSession(), token)) {
+    return;
+  }
+  try {
+    localStorage.removeItem(SESSION_STORE);
+  } catch {
+    // Storage unavailable; nothing was stored.
+  }
+}
+
 /** Whether `token` came from signing in to `serverUrl`, and whether that
  * sign-in has expired. A pasted token or a changed Base URL counts as
  * signed out. */

@@ -14,6 +14,7 @@ import Authorization from '@theme-original/ApiExplorer/Authorization';
 import { useTypedDispatch, useTypedSelector } from '@theme/ApiItem/hooks';
 import { setAuthData } from '@theme/ApiExplorer/Authorization/slice';
 import {
+  forgetSignIn,
   isOAuthEligiblePath,
   isPlaceholderServerUrl,
   rememberSignedIn,
@@ -83,6 +84,24 @@ function GleanSignIn(): React.ReactElement | null {
     tokens.find((value) => signInState(serverUrl, value) !== 'signed-out') ??
     tokens[0];
   const state = signInState(serverUrl, token);
+
+  // When the reader clears or replaces the signed-in token, delete the
+  // stored sign-in too, so its refresh token does not outlive the token the
+  // reader can see. A refreshed token still counts as signed in, so a
+  // refresh does not trigger this.
+  const previousTokenRef = useRef(token);
+  useEffect(() => {
+    const previous = previousTokenRef.current;
+    previousTokenRef.current = token;
+    if (
+      eligible &&
+      previous &&
+      previous !== token &&
+      signInState(serverUrl, token) === 'signed-out'
+    ) {
+      forgetSignIn(previous);
+    }
+  }, [eligible, serverUrl, token]);
 
   const refreshing = useSignInRefresh(
     eligible ? serverUrl : null,
