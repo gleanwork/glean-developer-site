@@ -56,7 +56,9 @@ Authorization: Bearer <indexing_api_token>
 
 <Steps>
   <Step title="Admin Access Required">
-    **Setup Admins**, **Admins**, and **Super Admins** can create Indexing API tokens (only Super Admins can grant `global` scope). **API Token Creators** can create tokens scoped to themselves only.
+    **Setup Admins**, **Admins**, and **Super Admins** can create Indexing API tokens, including tokens with global permissions. **API Token Creators** can create tokens limited to specific datasources only.
+
+    Global permissions on an Indexing API token cover every datasource. They are separate from Client API [global tokens](/api-info/client/authentication/glean-issued#token-types), which can act as any user and which only Super Admins can create.
   </Step>
   
   <Step title="Navigate to Token Management">
@@ -78,7 +80,7 @@ Authorization: Bearer <indexing_api_token>
 
 ### Prerequisites
 
-- **Super Admin** or **API Token Creator** access to Glean's admin console
+- **Setup Admin**, **Admin**, **Super Admin**, or **API Token Creator** role in Glean's admin console (API Token Creators cannot create tokens with global permissions)
 - **Datasource configured** in Glean (for document indexing)
 - **IP ranges identified** (if using IP restrictions)
 
@@ -101,9 +103,9 @@ Authorization: Bearer <indexing_api_token>
       }}
     />
     
-    - **Token Name**: Descriptive name for tracking
-    - **Global Permissions**: Full indexing API access
-    - **App Permissions**: Limit to specific datasources (optional)
+    - **Description**: Descriptive name for tracking
+    - **Has global permissions**: Allows the token to be used with any datasource. Available to Setup Admins, Admins, and Super Admins
+    - **Scopes**: Comma-separated list of datasources the token can access (**required** when global permissions are off)
     - **Expires On**: Expiration date (**required**) — the Admin Console validates this field before creating the token
     - **IP Restrictions**: Optional IP range limitations
     - **Rotation Settings**: Optional automated rotation
