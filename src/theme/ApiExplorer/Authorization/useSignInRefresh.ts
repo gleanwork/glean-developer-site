@@ -116,6 +116,9 @@ export function useSignInRefresh(
         // does not block it.
         if (session.expiresAt === undefined || Date.now() < session.expiresAt) {
           onRefreshedRef.current(session.accessToken);
+        } else if (!session.refreshToken) {
+          // Expired and nothing to refresh with: show it, and stop.
+          rerender();
         } else if (Date.now() < retryAt) {
           scheduleAt(retryAt);
         } else {

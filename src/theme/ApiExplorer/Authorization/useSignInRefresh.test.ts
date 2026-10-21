@@ -174,6 +174,34 @@ it('retries at once when the browser comes back online', async () => {
   expect(result.current).toBe('access-2');
 });
 
+it('stops when another tab’s token expired and no refresh token is left', async () => {
+  vi.useFakeTimers({ toFake: ['Date', 'setTimeout', 'clearTimeout'] });
+  signIn(Date.now() + WEEK_S * 1000);
+  const session = getSignInSession(SERVER)!;
+  // Another tab refreshed to access-2; that token then expired and its
+  // refresh was rejected, which cleared the refresh token.
+  localStorage.setItem(
+    SESSION_STORE,
+    JSON.stringify({
+      ...session,
+      accessToken: 'access-2',
+      refreshToken: undefined,
+      expiresAt: Date.now() - 1000,
+      generation: 1,
+      previousAccessToken: 'access-1',
+    }),
+  );
+  const fetchMock = vi.fn();
+  vi.stubGlobal('fetch', fetchMock);
+
+  const { result } = renderHook(useTab);
+  await act(() => vi.advanceTimersByTimeAsync(0));
+
+  expect(result.current).toBe('access-1');
+  expect(fetchMock).not.toHaveBeenCalled();
+  expect(vi.getTimerCount()).toBe(0);
+});
+
 it('schedules the next refresh after a successful one', async () => {
   vi.useFakeTimers({ toFake: ['Date', 'setTimeout', 'clearTimeout'] });
   const lifetimeMs = 10 * 60 * 1000;
