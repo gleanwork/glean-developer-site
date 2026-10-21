@@ -54,6 +54,10 @@ export default defineConfig({
         __dirname,
         './node_modules/docusaurus-theme-openapi-docs/lib/theme/ApiExplorer',
       ),
+      '@theme-original/ApiExplorer/Authorization': path.resolve(
+        __dirname,
+        './node_modules/docusaurus-theme-openapi-docs/lib/theme/ApiExplorer/Authorization',
+      ),
       '@theme-original/ApiExplorer/Body': path.resolve(
         __dirname,
         './node_modules/docusaurus-theme-openapi-docs/lib/theme/ApiExplorer/Body',

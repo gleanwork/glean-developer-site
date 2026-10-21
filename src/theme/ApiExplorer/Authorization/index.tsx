@@ -4,7 +4,8 @@
  * the server URL configured in the explorer's Base URL field. On success
  * the access token is injected into the explorer's bearer-token state
  * (persisted like a pasted token). The signed-in label is derived from
- * that persisted token, so it survives a reload. Client and Platform APIs — the
+ * that persisted token, so it survives a reload, and it changes to "Sign in
+ * again" once the token expires. Client and Platform APIs — the
  * Indexing API requires a Glean-issued token instead.
  */
 import React, { useEffect, useRef, useState } from 'react';
@@ -15,8 +16,8 @@ import { setAuthData } from '@theme/ApiExplorer/Authorization/slice';
 import {
   isOAuthEligiblePath,
   isPlaceholderServerUrl,
-  isSignedInToken,
   rememberSignedIn,
+  signInState,
   signInWithGlean,
 } from '@site/src/components/ApiOAuth/oauth';
 import { useTenantApiPersonalizationEnabled } from '@site/src/lib/tenantPersonalizationFlag';
@@ -79,10 +80,16 @@ function GleanSignIn(): React.ReactElement | null {
     : resolveServerUrl(server);
 
   // Derived from the persisted token rather than component state, so the
-  // signed-in label survives a reload.
-  const signedIn = bearerSchemes.some((scheme) =>
-    isSignedInToken(serverUrl, auth?.data?.[scheme]?.token),
+  // signed-in label survives a reload. Evaluated on each render, so an
+  // expired token shows as expired on the next render or reload.
+  const states = bearerSchemes.map((scheme) =>
+    signInState(serverUrl, auth?.data?.[scheme]?.token),
   );
+  const state = states.includes('signed-in')
+    ? 'signed-in'
+    : states.includes('expired')
+      ? 'expired'
+      : 'signed-out';
 
   const signIn = async () => {
     const hasPlaceholder =
@@ -100,7 +107,7 @@ function GleanSignIn(): React.ReactElement | null {
     }
     setStatus({ kind: 'busy' });
     try {
-      const token = await signInWithGlean(serverUrl);
+      const result = await signInWithGlean(serverUrl);
       const liveServerUrl = resolveOpenApiServerUrl(serverRef.current);
       if (!mountedRef.current || liveServerUrl !== serverUrl) {
         throw new Error(
@@ -115,9 +122,11 @@ function GleanSignIn(): React.ReactElement | null {
           'Your Glean API URL changed during sign-in. Sign in again for the current URL.',
         );
       }
-      rememberSignedIn(serverUrl, token);
+      rememberSignedIn(serverUrl, result);
       for (const scheme of bearerSchemes) {
-        dispatch(setAuthData({ scheme, key: 'token', value: token }));
+        dispatch(
+          setAuthData({ scheme, key: 'token', value: result.accessToken }),
+        );
       }
       setStatus({ kind: 'idle' });
     } catch (error) {
@@ -138,16 +147,20 @@ function GleanSignIn(): React.ReactElement | null {
       >
         {status.kind === 'busy'
           ? 'Signing in…'
-          : signedIn
+          : state === 'signed-in'
             ? 'Signed in ✓ — sign in again'
-            : 'Sign in with Glean'}
+            : state === 'expired'
+              ? 'Sign in again'
+              : 'Sign in with Glean'}
       </button>
       <span className={styles.oauthHint}>
         {status.kind === 'error'
           ? status.message
-          : signedIn
+          : state === 'signed-in'
             ? 'OAuth token filled in below.'
-            : 'OAuth sign-in against your instance — or paste a token below.'}
+            : state === 'expired'
+              ? 'Your sign-in expired. Sign in again for a new token.'
+              : 'OAuth sign-in against your instance — or paste a token below.'}
       </span>
     </div>
   );
