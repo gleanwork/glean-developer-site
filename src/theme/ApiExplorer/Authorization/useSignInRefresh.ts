@@ -1,6 +1,7 @@
 import { useEffect, useReducer, useRef, useState } from 'react';
 import {
   getSignInSession,
+  isSignInStorageEvent,
   REFRESH_LEAD_MS,
   refreshSignIn,
   signInState,
@@ -8,12 +9,18 @@ import {
 
 // setTimeout overflows above 2^31 - 1 ms (about 24.8 days).
 const MAX_TIMEOUT_MS = 2 ** 31 - 1;
+// After a failed refresh that kept the refresh token (a network error or a
+// server error), retry after this delay, doubling up to the maximum.
+export const RETRY_MIN_MS = 30 * 1000;
+const RETRY_MAX_MS = 5 * 60 * 1000;
 
 /**
  * Keep a signed-in token fresh. When `token` came from signing in to
  * `serverUrl`, refresh it shortly before it expires, and again whenever the
  * tab becomes visible after it was due, since timers do not run while a
- * laptop sleeps. Each new token goes to `onRefreshed`.
+ * laptop sleeps. A refresh that fails but keeps the refresh token is
+ * retried with backoff, and at once when the browser comes back online.
+ * Each new token goes to `onRefreshed`.
  *
  * Returns true while a refresh is in flight. The component also re-renders
  * when the token expires without a refresh, so its signed-in state stays
@@ -45,9 +52,9 @@ export function useSignInRefresh(
     }
     let cancelled = false;
     let inFlight = false;
-    // After a failed refresh, wait for the tab to be shown again rather than
-    // retrying on a timer.
-    let refreshFailed = false;
+    // No refresh request before this time, after a failed one.
+    let retryAt = 0;
+    let retryDelay = RETRY_MIN_MS;
     let timer: ReturnType<typeof setTimeout> | undefined;
 
     const scheduleAt = (time: number) => {
@@ -80,9 +87,17 @@ export function useSignInRefresh(
         onRefreshedRef.current(fresh);
         return;
       }
-      refreshFailed = true;
+      // A rejected refresh clears the refresh token, so this backoff only
+      // delays retries of a refresh token that is still stored.
+      retryAt = Date.now() + retryDelay;
+      retryDelay = Math.min(retryDelay * 2, RETRY_MAX_MS);
       rerender();
       check();
+    };
+
+    const resetRetry = () => {
+      retryAt = 0;
+      retryDelay = RETRY_MIN_MS;
     };
 
     function check() {
@@ -101,7 +116,9 @@ export function useSignInRefresh(
         // does not block it.
         if (session.expiresAt === undefined || Date.now() < session.expiresAt) {
           onRefreshedRef.current(session.accessToken);
-        } else if (!refreshFailed) {
+        } else if (Date.now() < retryAt) {
+          scheduleAt(retryAt);
+        } else {
           void refresh();
         }
         return;
@@ -109,12 +126,20 @@ export function useSignInRefresh(
       if (session.expiresAt === undefined) {
         return;
       }
-      const canRefresh = Boolean(session.refreshToken) && !refreshFailed;
+      const now = Date.now();
+      const canRefresh = Boolean(session.refreshToken);
       const dueAt = canRefresh
-        ? session.expiresAt - REFRESH_LEAD_MS
+        ? Math.max(session.expiresAt - REFRESH_LEAD_MS, retryAt)
         : session.expiresAt;
-      if (Date.now() < dueAt) {
-        scheduleAt(dueAt);
+      if (now < dueAt) {
+        if (now >= session.expiresAt) {
+          // Expired while a retry waits: show it now.
+          rerender();
+        }
+        // Wake at expiry too, so the label changes on time.
+        scheduleAt(
+          now < session.expiresAt ? Math.min(dueAt, session.expiresAt) : dueAt,
+        );
       } else if (canRefresh) {
         void refresh();
       } else {
@@ -124,17 +149,31 @@ export function useSignInRefresh(
 
     const onVisible = () => {
       if (document.visibilityState === 'visible') {
-        refreshFailed = false;
+        resetRetry();
+        check();
+      }
+    };
+    const onOnline = () => {
+      resetRetry();
+      check();
+    };
+    // Another tab refreshed, signed in again, or cleared the sign-in.
+    const onStorage = (event: StorageEvent) => {
+      if (isSignInStorageEvent(event)) {
         check();
       }
     };
 
     check();
     document.addEventListener('visibilitychange', onVisible);
+    window.addEventListener('online', onOnline);
+    window.addEventListener('storage', onStorage);
     return () => {
       cancelled = true;
       clearTimeout(timer);
       document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('online', onOnline);
+      window.removeEventListener('storage', onStorage);
       if (inFlight) {
         setRefreshing(false);
       }

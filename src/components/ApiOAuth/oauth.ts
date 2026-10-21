@@ -28,6 +28,12 @@ const GRANT_TYPES = ['authorization_code', 'refresh_token'];
  * just before expiry still carries a valid token. */
 export const REFRESH_LEAD_MS = 2 * 60 * 1000;
 
+/** True when another tab changed the stored sign-in. A `null` key means
+ * that tab cleared all of localStorage. */
+export function isSignInStorageEvent(event: StorageEvent): boolean {
+  return event.key === SESSION_STORE || event.key === null;
+}
+
 interface ServerMetadata {
   issuer: string;
   authorization_endpoint: string;

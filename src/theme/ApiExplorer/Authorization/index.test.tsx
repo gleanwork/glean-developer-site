@@ -1,4 +1,10 @@
-import { act, render, screen, waitFor } from '@testing-library/react';
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   REFRESH_LEAD_MS,
@@ -21,6 +27,14 @@ const explorerState = {
 };
 
 const dispatchSpy = vi.hoisted(() => vi.fn());
+const signInMock = vi.hoisted(() => vi.fn());
+
+vi.mock('@site/src/components/ApiOAuth/oauth', async (importOriginal) => ({
+  ...(await importOriginal<
+    typeof import('@site/src/components/ApiOAuth/oauth')
+  >()),
+  signInWithGlean: signInMock,
+}));
 
 vi.mock('@theme/ApiItem/hooks', () => ({
   useTypedDispatch: () => dispatchSpy,
@@ -71,6 +85,7 @@ const button = () => screen.getByRole('button');
 
 beforeEach(() => {
   dispatchSpy.mockClear();
+  signInMock.mockReset();
   explorerState.server.value.url = SERVER;
   setToken(undefined);
 });
@@ -82,6 +97,27 @@ afterEach(() => {
 });
 
 describe('Sign in with Glean', () => {
+  it('remembers a new sign-in, so it survives a reload', async () => {
+    signInMock.mockResolvedValue(signIn());
+    const { unmount } = render(<AuthorizationWrapper />);
+
+    fireEvent.click(button());
+    await waitFor(() =>
+      expect(dispatchSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          payload: { scheme: 'BearerAuth', key: 'token', value: 'access-1' },
+        }),
+      ),
+    );
+    unmount();
+
+    // After a reload the explorer restores its own persisted token.
+    setToken('access-1');
+    render(<AuthorizationWrapper />);
+
+    expect(button().textContent).toBe('Signed in ✓ — sign in again');
+  });
+
   it('stays signed in after a reload', () => {
     rememberSignedIn(SERVER, signIn());
     setToken('access-1');
