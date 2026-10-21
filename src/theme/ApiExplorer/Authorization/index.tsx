@@ -4,8 +4,8 @@
  * the server URL configured in the explorer's Base URL field. On success
  * the access token is injected into the explorer's bearer-token state
  * (persisted like a pasted token). The signed-in label is derived from
- * that persisted token, so it survives a reload, and it changes to "Sign in
- * again" once the token expires. Client and Platform APIs — the
+ * that persisted token, so it survives a reload, and the token is refreshed
+ * before it expires. Client and Platform APIs — the
  * Indexing API requires a Glean-issued token instead.
  */
 import React, { useEffect, useRef, useState } from 'react';
@@ -14,6 +14,7 @@ import Authorization from '@theme-original/ApiExplorer/Authorization';
 import { useTypedDispatch, useTypedSelector } from '@theme/ApiItem/hooks';
 import { setAuthData } from '@theme/ApiExplorer/Authorization/slice';
 import {
+  forgetSignIn,
   isOAuthEligiblePath,
   isPlaceholderServerUrl,
   rememberSignedIn,
@@ -28,6 +29,7 @@ import {
   tenantProfileStore,
 } from '@site/src/lib/tenantProfile';
 import styles from './styles.module.css';
+import { useSignInRefresh } from './useSignInRefresh';
 
 function resolveServerUrl(server: any): string {
   if (!server?.url) return '';
@@ -59,9 +61,7 @@ function GleanSignIn(): React.ReactElement | null {
     { kind: 'idle' | 'busy' } | { kind: 'error'; message: string }
   >({ kind: 'idle' });
 
-  if (!isOAuthEligiblePath(pathname)) {
-    return null;
-  }
+  const eligible = isOAuthEligiblePath(pathname);
 
   // Bearer-type schemes on this operation — the flow fills their token.
   const bearerSchemes: string[] = (auth?.options?.[auth?.selected] ?? [])
@@ -71,25 +71,51 @@ function GleanSignIn(): React.ReactElement | null {
     )
     .map((s: any) => s.key);
 
-  if (bearerSchemes.length === 0) {
-    return null;
-  }
-
   const serverUrl = personalizationEnabled
     ? resolveOpenApiServerUrl(server)
     : resolveServerUrl(server);
 
   // Derived from the persisted token rather than component state, so the
-  // signed-in label survives a reload. Evaluated on each render, so an
-  // expired token shows as expired on the next render or reload.
-  const states = bearerSchemes.map((scheme) =>
-    signInState(serverUrl, auth?.data?.[scheme]?.token),
+  // signed-in label survives a reload.
+  const tokens: string[] = bearerSchemes
+    .map((scheme) => auth?.data?.[scheme]?.token)
+    .filter(Boolean);
+  const token =
+    tokens.find((value) => signInState(serverUrl, value) !== 'signed-out') ??
+    tokens[0];
+  const state = signInState(serverUrl, token);
+
+  // When the reader clears or replaces the signed-in token, delete the
+  // stored sign-in too, so its refresh token does not outlive the token the
+  // reader can see. A refreshed token still counts as signed in, so a
+  // refresh does not trigger this.
+  const previousTokenRef = useRef(token);
+  useEffect(() => {
+    const previous = previousTokenRef.current;
+    previousTokenRef.current = token;
+    if (
+      eligible &&
+      previous &&
+      previous !== token &&
+      signInState(serverUrl, token) === 'signed-out'
+    ) {
+      forgetSignIn(previous);
+    }
+  }, [eligible, serverUrl, token]);
+
+  const refreshing = useSignInRefresh(
+    eligible ? serverUrl : null,
+    token,
+    (fresh) => {
+      for (const scheme of bearerSchemes) {
+        dispatch(setAuthData({ scheme, key: 'token', value: fresh }));
+      }
+    },
   );
-  const state = states.includes('signed-in')
-    ? 'signed-in'
-    : states.includes('expired')
-      ? 'expired'
-      : 'signed-out';
+
+  if (!eligible || bearerSchemes.length === 0) {
+    return null;
+  }
 
   const signIn = async () => {
     const hasPlaceholder =
@@ -156,11 +182,13 @@ function GleanSignIn(): React.ReactElement | null {
       <span className={styles.oauthHint}>
         {status.kind === 'error'
           ? status.message
-          : state === 'signed-in'
-            ? 'OAuth token filled in below.'
-            : state === 'expired'
-              ? 'Your sign-in expired. Sign in again for a new token.'
-              : 'OAuth sign-in against your instance — or paste a token below.'}
+          : refreshing
+            ? 'Refreshing your sign-in…'
+            : state === 'signed-in'
+              ? 'OAuth token filled in below.'
+              : state === 'expired'
+                ? 'Your sign-in expired. Sign in again for a new token.'
+                : 'OAuth sign-in against your instance — or paste a token below.'}
       </span>
     </div>
   );
