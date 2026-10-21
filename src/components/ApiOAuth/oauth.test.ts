@@ -3,6 +3,8 @@ import {
   allSupportedScopes,
   isOAuthEligiblePath,
   isPlaceholderServerUrl,
+  rememberSignedIn,
+  signInState,
   signInWithGlean,
 } from './oauth';
 
@@ -57,7 +59,10 @@ describe('API Explorer OAuth helpers', () => {
         }),
       )
       .mockResolvedValueOnce(response({ client_id: 'explorer-client' }))
-      .mockResolvedValueOnce(response({ access_token: 'access-token' }));
+      .mockResolvedValueOnce(
+        response({ access_token: 'access-token', expires_in: 3600 }),
+      );
+    vi.spyOn(Date, 'now').mockReturnValue(1_000_000);
     vi.stubGlobal('fetch', fetchMock);
     vi.stubGlobal('crypto', {
       getRandomValues: (bytes: Uint8Array) => bytes.fill(1),
@@ -94,7 +99,73 @@ describe('API Explorer OAuth helpers', () => {
       }),
     );
 
-    await expect(tokenPromise).resolves.toBe('access-token');
+    await expect(tokenPromise).resolves.toEqual({
+      accessToken: 'access-token',
+      expiresAt: 1_000_000 + 3_600_000,
+    });
+  });
+
+  it('recognizes the signed-in token after a reload', async () => {
+    rememberSignedIn('https://acme-be.glean.com/', {
+      accessToken: 'oauth-token',
+    });
+    expect(localStorage.length).toBe(1);
+
+    // A reload starts with fresh module state and only localStorage.
+    vi.resetModules();
+    const reloaded = await import('./oauth');
+
+    expect(
+      reloaded.signInState('https://acme-be.glean.com', 'oauth-token'),
+    ).toBe('signed-in');
+  });
+
+  it('does not store the token itself', () => {
+    rememberSignedIn('https://acme-be.glean.com', {
+      accessToken: 'oauth-token',
+    });
+
+    expect(JSON.stringify({ ...localStorage })).not.toContain('oauth-token');
+  });
+
+  it('drops the signed-in state for a pasted token or a different server', () => {
+    rememberSignedIn('https://acme-be.glean.com', {
+      accessToken: 'oauth-token',
+    });
+
+    expect(signInState('https://acme-be.glean.com', 'pasted-token')).toBe(
+      'signed-out',
+    );
+    expect(signInState('https://other-be.glean.com', 'oauth-token')).toBe(
+      'signed-out',
+    );
+    expect(signInState('https://acme-be.glean.com', undefined)).toBe(
+      'signed-out',
+    );
+  });
+
+  it('reports an expired sign-in once the token expires', () => {
+    rememberSignedIn('https://acme-be.glean.com', {
+      accessToken: 'oauth-token',
+      expiresAt: 5_000,
+    });
+
+    expect(signInState('https://acme-be.glean.com', 'oauth-token', 4_999)).toBe(
+      'signed-in',
+    );
+    expect(signInState('https://acme-be.glean.com', 'oauth-token', 5_000)).toBe(
+      'expired',
+    );
+  });
+
+  it('treats a token without a reported expiry as signed in', () => {
+    rememberSignedIn('https://acme-be.glean.com', {
+      accessToken: 'oauth-token',
+    });
+
+    expect(
+      signInState('https://acme-be.glean.com', 'oauth-token', Infinity),
+    ).toBe('signed-in');
   });
 
   it('treats the explorer default host as a placeholder, including braces', () => {

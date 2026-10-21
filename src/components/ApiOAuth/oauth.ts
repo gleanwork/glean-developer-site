@@ -10,6 +10,7 @@
  */
 
 const CLIENT_ID_STORE = 'api-explorer-oauth-clients';
+const SIGNED_IN_STORE = 'api-explorer-oauth-signed-in';
 const CLIENT_NAME = 'Glean Developer Docs API Explorer';
 
 interface ServerMetadata {
@@ -50,6 +51,83 @@ export function isPlaceholderServerUrl(serverUrl: string): boolean {
     value.includes('{instance-name}') ||
     value.includes('instance-name-be.glean.com')
   );
+}
+
+/** The token a sign-in issued, and when it expires (epoch ms) if the
+ * server said. */
+export interface SignInResult {
+  accessToken: string;
+  expiresAt?: number;
+}
+
+/** `expired` means the explorer still holds the token sign-in issued, but
+ * the token has expired. */
+export type SignInState = 'signed-in' | 'expired' | 'signed-out';
+
+interface SignedInRecord {
+  serverUrl: string;
+  tokenFingerprint: string;
+  expiresAt?: number;
+}
+
+/** FNV-1a hash. Identifies the token sign-in issued without storing a
+ * second copy of it; the explorer already persists the token itself. */
+function fingerprint(token: string): string {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < token.length; i++) {
+    hash ^= token.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return (hash >>> 0).toString(16);
+}
+
+function normalizeServerUrl(serverUrl: string): string {
+  return serverUrl.replace(/\/+$/, '');
+}
+
+/** Record that the token in `result` came from signing in to `serverUrl`,
+ * so the signed-in state survives a page reload. */
+export function rememberSignedIn(
+  serverUrl: string,
+  result: SignInResult,
+): void {
+  const record: SignedInRecord = {
+    serverUrl: normalizeServerUrl(serverUrl),
+    tokenFingerprint: fingerprint(result.accessToken),
+    expiresAt: result.expiresAt,
+  };
+  try {
+    localStorage.setItem(SIGNED_IN_STORE, JSON.stringify(record));
+  } catch {
+    // Storage unavailable; the signed-in state just won't survive a reload.
+  }
+}
+
+/** Whether `token` is the one sign-in issued for `serverUrl`, and whether
+ * it has expired. A pasted token or a changed Base URL is `signed-out`. */
+export function signInState(
+  serverUrl: string | null,
+  token: string | undefined,
+  now: number = Date.now(),
+): SignInState {
+  if (!serverUrl || !token) {
+    return 'signed-out';
+  }
+  let record: SignedInRecord | null = null;
+  try {
+    record = JSON.parse(localStorage.getItem(SIGNED_IN_STORE) ?? 'null');
+  } catch {
+    return 'signed-out';
+  }
+  if (
+    record?.serverUrl !== normalizeServerUrl(serverUrl) ||
+    record.tokenFingerprint !== fingerprint(token)
+  ) {
+    return 'signed-out';
+  }
+  return record.expiresAt !== undefined && now >= record.expiresAt
+    ? 'expired'
+    : 'signed-in';
 }
 
 function base64Url(bytes: Uint8Array): string {
@@ -188,7 +266,8 @@ async function exchangeCode(
   clientId: string,
   code: string,
   verifier: string,
-): Promise<string> {
+): Promise<SignInResult> {
+  const requestedAt = Date.now();
   const res = await fetch(metadata.token_endpoint, {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -203,15 +282,23 @@ async function exchangeCode(
   if (!res.ok) {
     throw new Error(`Token exchange failed (HTTP ${res.status}).`);
   }
-  const { access_token: accessToken } = await res.json();
+  const { access_token: accessToken, expires_in: expiresIn } = await res.json();
   if (!accessToken) {
     throw new Error('Token exchange returned no access token.');
   }
-  return accessToken;
+  // Count from when the request was sent, so the recorded expiry is never
+  // later than the real one.
+  const expiresAt =
+    typeof expiresIn === 'number' && expiresIn > 0
+      ? requestedAt + expiresIn * 1000
+      : undefined;
+  return { accessToken, expiresAt };
 }
 
 /** Full flow: discovery → DCR → PKCE popup → token. */
-export async function signInWithGlean(serverUrl: string): Promise<string> {
+export async function signInWithGlean(
+  serverUrl: string,
+): Promise<SignInResult> {
   const metadata = await discover(serverUrl);
   const scope = allSupportedScopes(metadata.scopes_supported);
   const clientId = await getClientId(metadata, scope);
