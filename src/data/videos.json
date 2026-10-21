@@ -24,6 +24,11 @@
       "id": "mcp",
       "label": "MCP",
       "description": "Glean in every AI tool your teams use, through the Model Context Protocol."
+    },
+    {
+      "id": "identity",
+      "label": "Identity and access",
+      "description": "How your AI apps and agents connect to Glean through the customer's identity provider."
     }
   ],
   "videos": [
@@ -549,6 +554,41 @@
         "Now your host can call it. Here, Codex hands the question to a Glean agent, and answers from its result.",
         "Notice we had to name the agent. Hosts pick tools by their description. So start with a verb, name the sources, and say what it returns.",
         "And keep these agents read only. Agents with write tools, or a step that waits for input, can't be added. Even inside a sub agent.",
+        "[upbeat] Learn more at docs.glean.com."
+      ]
+    },
+    {
+      "id": "ema",
+      "title": "Enterprise Managed Auth",
+      "summary": "Connect your AI app or agent to Glean through the customer's identity provider, with no per-user consent screen.",
+      "track": "identity",
+      "type": "explainer",
+      "visibility": "preview",
+      "previewReason": "Beta, and no attach page yet. Publish once Enterprise Managed Auth is generally available and documented.",
+      "durationSeconds": 98,
+      "version": 3,
+      "updated": "2026-10-02",
+      "related": {
+        "doc": "https://docs.glean.com/administration/oauth/authorization-server",
+        "docLabel": "Glean OAuth Authorization Server (Help Center)"
+      },
+      "media": {
+        "src": "https://ib39uabuf4khdnj5.public.blob.vercel-storage.com/ema.fb43c77e90.mp4",
+        "poster": "https://ib39uabuf4khdnj5.public.blob.vercel-storage.com/ema.c87dae35db.webp",
+        "width": 1920,
+        "height": 1080
+      },
+      "transcript": [
+        "[upbeat] You're building an AI app, or an agent. Your customers want Glean inside it. But today, every user has to connect Glean, and approve a consent screen.",
+        "[confident] Enterprise Managed Auth removes that step. It's built on Cross App Access, or XAA. An open standard, where the company's identity provider vouches for the user.",
+        "Here's the flow. Your user is signed in to your app, through Okta. Your app asks Okta for an identity assertion, called an ID-JAG, made out to Glean. It trades that at Glean's token endpoint, with the JWT bearer grant, and gets back a Glean access token. Then it calls Glean's MCP server, as that user.",
+        "Glean's OAuth metadata advertises both. The JWT bearer grant, and the ID-JAG profile.",
+        "On the Glean side, the customer's admin turns on Enterprise Managed Auth. They set the trusted issuer, the claim that holds the user's email, and the allowed scopes.",
+        "Then they create a static client for your app, with the JWT bearer grant. Your app authenticates with it, on every exchange.",
+        "In Okta, the admin registers your app as the requesting app, and adds a resource connection to Glean. From then on, users don't see a consent screen.",
+        "[warmly] And access doesn't change. Glean knows exactly who the user is, and every result respects their permissions.",
+        "Claude already connects to Glean this way, in claude.ai, and Claude Code.",
+        "Enterprise Managed Auth is in beta. Today, it needs Okta as the identity provider, and Enterprise Managed Auth turned on for the Glean deployment.",
         "[upbeat] Learn more at docs.glean.com."
       ]
     }
