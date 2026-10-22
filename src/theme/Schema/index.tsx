@@ -971,7 +971,7 @@ const SchemaEdge: React.FC<SchemaEdgeProps> = ({
     );
   }
 
-  if (schema.items?.anyOf || schema.items?.oneOf) {
+  if (schema.items?.anyOf || schema.items?.oneOf || schema.items?.allOf) {
     return (
       <SchemaNodeDetails
         name={name}
@@ -1059,19 +1059,21 @@ const SchemaEdge: React.FC<SchemaEdgeProps> = ({
     }
 
     if (mergedSchemas.items?.properties) {
-      <SchemaNodeDetails
-        name={name}
-        schemaName={mergedSchemaName}
-        required={
-          Array.isArray(mergedSchemas.required)
-            ? mergedSchemas.required.includes(name)
-            : mergedSchemas.required
-        }
-        nullable={mergedSchemas.nullable}
-        schema={mergedSchemas}
-        schemaType={schemaType}
-        parentPath={parentPath}
-      />;
+      return (
+        <SchemaNodeDetails
+          name={name}
+          schemaName={mergedSchemaName}
+          required={
+            Array.isArray(mergedSchemas.required)
+              ? mergedSchemas.required.includes(name)
+              : mergedSchemas.required
+          }
+          nullable={mergedSchemas.nullable}
+          schema={mergedSchemas}
+          schemaType={schemaType}
+          parentPath={parentPath}
+        />
+      );
     }
 
     const parameterId = generateParameterId(name, schemaType, parentPath);
