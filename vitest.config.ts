@@ -29,6 +29,10 @@ export default defineConfig({
         __dirname,
         './node_modules/@docusaurus/plugin-content-docs/lib/client/index.js',
       ),
+      '@docusaurus/theme-common/internal': path.resolve(
+        __dirname,
+        './node_modules/@docusaurus/theme-common/lib/internal.js',
+      ),
       '@docusaurus/theme-common': path.resolve(
         __dirname,
         './node_modules/@docusaurus/theme-common/lib/index.js',
@@ -69,6 +73,18 @@ export default defineConfig({
       '@theme-original/ApiExplorer/Request': path.resolve(
         __dirname,
         './node_modules/docusaurus-theme-openapi-docs/lib/theme/ApiExplorer/Request',
+      ),
+      '@theme-original/ApiExplorer/ApiCodeBlock/CopyButton': path.resolve(
+        __dirname,
+        './node_modules/docusaurus-theme-openapi-docs/lib/theme/ApiExplorer/ApiCodeBlock/CopyButton',
+      ),
+      '@theme-original/CodeBlock/Buttons/CopyButton': path.resolve(
+        __dirname,
+        './node_modules/@docusaurus/theme-classic/lib/theme/CodeBlock/Buttons/CopyButton',
+      ),
+      '@theme-original/NotFound/Content': path.resolve(
+        __dirname,
+        './node_modules/@docusaurus/theme-classic/lib/theme/NotFound/Content',
       ),
       '@theme/ApiItem': path.resolve(
         __dirname,

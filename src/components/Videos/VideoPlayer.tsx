@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from '@docusaurus/Link';
 import { useLocation } from '@docusaurus/router';
 import { usePreviewContent } from '../../lib/usePreviewContent';
+import { trackEvent, type VideoMilestone } from '../../lib/analytics';
 import useBaseUrl from '@docusaurus/useBaseUrl';
 import { getIcon } from '@gleanwork/docusaurus-theme-glean/Icons';
 import BeakerIcon from '@site/src/components/BeakerIcon';
@@ -152,8 +153,25 @@ export function VideoDialog({
     });
   }, [video?.id]);
 
+  // Each milestone is reported once per opened video, however often the
+  // reader pauses, seeks, or replays.
+  const reported = useRef({ id: '', milestones: new Set<VideoMilestone>() });
+  const report = useCallback(
+    (milestone: VideoMilestone) => {
+      if (!video) return;
+      if (reported.current.id !== video.id) {
+        reported.current = { id: video.id, milestones: new Set() };
+      }
+      if (reported.current.milestones.has(milestone)) return;
+      reported.current.milestones.add(milestone);
+      trackEvent('video_play', { video: video.id, milestone });
+    },
+    [video],
+  );
+
   const close = useCallback(() => {
     videoRef.current?.pause();
+    reported.current = { id: '', milestones: new Set() };
     onClose();
   }, [onClose]);
 
@@ -200,6 +218,14 @@ export function VideoDialog({
               controls
               height={video.media.height}
               key={video.id}
+              onEnded={() => report('complete')}
+              onPlay={() => report('start')}
+              onTimeUpdate={(event) => {
+                const { currentTime, duration } = event.currentTarget;
+                if (duration > 0 && currentTime / duration >= 0.5) {
+                  report('half');
+                }
+              }}
               playsInline
               poster={poster}
               preload="metadata"
