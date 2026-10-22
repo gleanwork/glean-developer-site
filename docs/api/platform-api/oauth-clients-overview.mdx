@@ -1,0 +1,36 @@
+---
+title: OAuth Clients API Overview
+---
+
+import ApiOverview from '@site/src/components/ApiOverview';
+
+# OAuth Clients API
+
+<ApiOverview
+  title="OAuth Clients API"
+  description="The Platform OAuth Clients API lists the static OAuth clients that admins created for the workspace."
+  apiFamily="oauth-clients"
+  apiType="platform-api"
+  useCases={[
+    {
+      title: 'Client Inventory',
+      description:
+        'List the static OAuth clients in the workspace, ordered by display name, or get one by its client_id. Inactive clients are left out of the list unless you filter for them.',
+      icon: 'List',
+    },
+    {
+      title: 'Usage Limit Targets',
+      description:
+        "Find the ID to use when you set a usage limit for a client. Send the client's ai_gateway.usage_client_id to the usage APIs, not its client_id.",
+      icon: 'Target',
+    },
+  ]}
+/>
+
+These endpoints leave out dynamically registered clients and Glean's own clients, such as Glean Desktop. To set a [usage limit](/api/platform-api/usage-overview) for a client, use its `ai_gateway.usage_client_id`.
+
+Requests need the `admin.oauth.clients:read` scope, and the caller needs admin read or billing read permission.
+
+These endpoints are [experimental](/experimental/overview). Send `X-Glean-Include-Experimental: true` on each request, or they are not exposed.
+
+For error responses, see [Platform API Errors](/errors) for the shared ProblemDetail code reference and remediation guidance.
