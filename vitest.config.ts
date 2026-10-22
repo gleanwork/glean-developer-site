@@ -74,6 +74,22 @@ export default defineConfig({
         __dirname,
         './node_modules/docusaurus-theme-openapi-docs/lib/theme/ApiItem',
       ),
+      // Openapi theme components imported by src/theme/Schema.
+      ...Object.fromEntries(
+        [
+          'ArrayBrackets',
+          'DiscriminatorTabs',
+          'Markdown',
+          'SchemaItem',
+          'SchemaTabs',
+        ].map((name) => [
+          `@theme/${name}`,
+          path.resolve(
+            __dirname,
+            `./node_modules/docusaurus-theme-openapi-docs/lib/theme/${name}`,
+          ),
+        ]),
+      ),
       '@theme/translationIds': path.resolve(
         __dirname,
         './node_modules/docusaurus-theme-openapi-docs/lib/theme/translationIds.js',
