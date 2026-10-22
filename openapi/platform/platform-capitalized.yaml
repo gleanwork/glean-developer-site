@@ -2,8 +2,8 @@ openapi: 3.1.0
 info:
   version: '2026-04-01'
   title: Glean Platform API
-  x-source-commit-sha: 007d6405df65def64cff892e0c808ce2108de4b3
-  x-open-api-commit-sha: 8620ad8686d4f6a0734bf771f65066dccc2cd344
+  x-source-commit-sha: fa0d87f72d5bd407fb187869201e81490febe0e6
+  x-open-api-commit-sha: 8348bd876143d4b63cbf76436d8c68ac45a7bc34
 servers:
   - url: '{serverUrl}'
     description: Replace {serverUrl} with your complete Glean API server URL. Find it at https://developers.glean.com/get-started/authentication#finding-your-server-url.
@@ -1141,6 +1141,131 @@ paths:
 
                     if (res.platformChatCompletedResponse().isPresent()) {
                         System.out.println(res.platformChatCompletedResponse().get());
+                    }
+                }
+            }
+  /api/chats/{chat_id}:
+    patch:
+      tags:
+        - Chat
+      summary: Update a chat
+      description: Update the name of a chat. Only the chat owner can update it.
+      operationId: platform-chat-update
+      x-visibility: Public
+      x-glean-scopes:
+        legacy:
+          - CHAT
+        platform:
+          - chat:write
+      parameters:
+        - name: chat_id
+          in: path
+          required: true
+          description: The ID of the chat to update.
+          example: '{chat_id}'
+          schema:
+            type: string
+            minLength: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlatformChatUpdateRequest'
+            example:
+              name: Quarterly planning notes
+      responses:
+        '200':
+          description: The updated chat.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlatformChatUpdateResponse'
+        '400':
+          $ref: '#/components/responses/PlatformBadRequest'
+        '401':
+          $ref: '#/components/responses/PlatformUnauthorized'
+        '403':
+          $ref: '#/components/responses/PlatformForbidden'
+        '404':
+          $ref: '#/components/responses/PlatformNotFound'
+        '405':
+          $ref: '#/components/responses/PlatformMethodNotAllowed'
+        '413':
+          $ref: '#/components/responses/PlatformRequestTooLarge'
+        '429':
+          $ref: '#/components/responses/PlatformTooManyRequests'
+        '500':
+          $ref: '#/components/responses/PlatformInternalServerError'
+      x-speakeasy-group: chat
+      x-speakeasy-name-override: update
+      x-codeSamples:
+        - lang: Python
+          label: Python (API Client)
+          source: |-
+            from glean.api_client import Glean
+            import os
+
+
+            with Glean(
+                api_token=os.getenv("GLEAN_API_TOKEN", ""),
+                server_url="https://mycompany-be.glean.com",
+            ) as glean:
+
+                res = glean.chat.update(chat_id="{chat_id}", name="Quarterly planning notes")
+
+                # Handle response
+                print(res)
+        - lang: JavaScript
+          label: Typescript (API Client)
+          source: |-
+            import { Glean } from "@gleanwork/api-client";
+
+            const glean = new Glean({
+              apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
+              serverURL: "https://mycompany-be.glean.com",
+            });
+
+            async function run() {
+              const result = await glean.chat.update({
+                name: "Quarterly planning notes",
+              }, "{chat_id}");
+
+              console.log(result);
+            }
+
+            run();
+        - lang: Go
+          label: Go (API Client)
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Chat.Update(ctx, \"{chat_id}\", components.PlatformChatUpdateRequest{\n        Name: \"Quarterly planning notes\",\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformChatUpdateResponse != nil {\n        // handle response\n    }\n}"
+        - lang: Java
+          label: Java (API Client)
+          source: |-
+            package hello.world;
+
+            import com.glean.api_client.glean_api_client.Glean;
+            import com.glean.api_client.glean_api_client.models.components.PlatformChatUpdateRequest;
+            import com.glean.api_client.glean_api_client.models.errors.PlatformProblemDetailException;
+            import com.glean.api_client.glean_api_client.models.operations.PlatformChatUpdateResponse;
+            import java.lang.Exception;
+
+            public class Application {
+
+                public static void main(String[] args) throws PlatformProblemDetailException, Exception {
+
+                    Glean sdk = Glean.builder()
+                            .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
+                        .build();
+
+                    PlatformChatUpdateResponse res = sdk.chat().update()
+                            .chatId("{chat_id}")
+                            .platformChatUpdateRequest(PlatformChatUpdateRequest.builder()
+                                .name("Quarterly planning notes")
+                                .build())
+                            .call();
+
+                    if (res.platformChatUpdateResponse().isPresent()) {
+                        System.out.println(res.platformChatUpdateResponse().get());
                     }
                 }
             }
@@ -7833,6 +7958,50 @@ components:
           RESPONSE_OUTPUT_TEXT_DONE: '#/components/schemas/PlatformChatStreamOutputTextDone'
           RESPONSE_COMPLETED: '#/components/schemas/PlatformChatStreamResponseCompleted'
           RESPONSE_FAILED: '#/components/schemas/PlatformChatStreamResponseFailed'
+    PlatformChatUpdateRequest:
+      type: object
+      additionalProperties: false
+      description: The fields to update on a chat.
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          description: |
+            The new name for the chat. Names longer than 80 Unicode code points are truncated to 80 before storage.
+    PlatformChat:
+      type: object
+      additionalProperties: false
+      description: A chat resource.
+      required:
+        - chat_id
+        - name
+      properties:
+        chat_id:
+          type: string
+          minLength: 1
+          description: The ID of the chat.
+        name:
+          type: string
+          maxLength: 80
+          description: |
+            The stored name of the chat. Names longer than 80 Unicode code points are truncated to 80 before storage.
+    PlatformChatUpdateResponse:
+      type: object
+      additionalProperties: false
+      description: The updated chat and request metadata.
+      required:
+        - chat
+        - request_id
+      properties:
+        chat:
+          description: The updated chat.
+          $ref: '#/components/schemas/PlatformChat'
+        request_id:
+          type: string
+          minLength: 1
+          description: An identifier for this request.
     PlatformSkillStatus:
       type: string
       enum:
@@ -11329,6 +11498,12 @@ components:
             $ref: '#/components/schemas/PlatformProblemDetail'
     PlatformUnprocessableEntity:
       description: Syntactically valid but semantically incorrect request.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/PlatformProblemDetail'
+    PlatformMethodNotAllowed:
+      description: The operation is not available in the current state.
       content:
         application/problem+json:
           schema:
