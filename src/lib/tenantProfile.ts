@@ -68,7 +68,12 @@ export interface TenantProfileStore {
   getSnapshot(): TenantProfileState;
   getServerSnapshot(): TenantProfileState;
   subscribe(listener: () => void): () => void;
-  discover(email: string): Promise<TenantProfileState>;
+  /**
+   * Looks up the API URL for the email's domain. Resolves to `null` when a
+   * newer lookup, a manual URL, or a reset supersedes this one: the store's
+   * state then belongs to that newer action, not to this lookup.
+   */
+  discover(email: string): Promise<TenantProfileState | null>;
   setManualApiUrl(apiUrl: string): TenantProfileState;
   clear(): TenantProfileState;
 }
@@ -442,7 +447,7 @@ export function createTenantProfileStore(
           body: JSON.stringify({ emailDomain: domain, isGleanApp: true }),
           signal: controller.signal,
         });
-        if (requestGeneration !== generation) return state;
+        if (requestGeneration !== generation) return null;
         if (!response.ok) {
           state = { kind: 'error', reason: 'network', previous };
           notify();
@@ -453,11 +458,13 @@ export function createTenantProfileStore(
         try {
           data = (await response.json()) as ConfigSearchResponse;
         } catch {
+          // Aborting a superseded lookup can reject the body read too.
+          if (requestGeneration !== generation) return null;
           state = { kind: 'error', reason: 'response', previous };
           notify();
           return state;
         }
-        if (requestGeneration !== generation) return state;
+        if (requestGeneration !== generation) return null;
 
         const config = data?.search_config;
         const queryUrl = config?.queryURL;
@@ -478,7 +485,7 @@ export function createTenantProfileStore(
         }
         return commit({ apiUrl, source: 'discovered', updatedAt: now() });
       } catch {
-        if (requestGeneration !== generation) return state;
+        if (requestGeneration !== generation) return null;
         state = { kind: 'error', reason: 'network', previous };
         notify();
         return state;

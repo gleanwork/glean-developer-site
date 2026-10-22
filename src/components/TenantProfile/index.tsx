@@ -21,12 +21,14 @@ interface TenantProfileControlProps {
 /**
  * Reports how a lookup or manual entry ended. Only the outcome is sent: never
  * the email, its domain, or the API URL, which name the reader's company.
- * A lookup superseded by a newer one ends in another state and is skipped.
+ * A lookup superseded by a newer action resolves to `null` and is skipped;
+ * the newer action reports its own outcome.
  */
 function trackOutcome(
   source: 'discovered' | 'manual',
-  state: TenantProfileState,
+  state: TenantProfileState | null,
 ): void {
+  if (!state) return;
   if (state.kind === 'configured') {
     trackEvent('tenant_profile_set', { source, result: 'ok' });
   } else if (state.kind === 'error') {

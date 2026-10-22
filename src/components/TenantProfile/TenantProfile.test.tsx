@@ -197,6 +197,47 @@ describe('TenantProfileControl analytics', () => {
     });
   });
 
+  it('reports only the manual entry when it interrupts a lookup', async () => {
+    let resolveFetch!: (response: unknown) => void;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        () =>
+          new Promise((resolve) => {
+            resolveFetch = resolve;
+          }),
+      ),
+    );
+    const user = userEvent.setup();
+    renderTenantProfile();
+
+    await user.click(screen.getByText('Find my API URL'));
+    await user.type(screen.getByRole('textbox'), 'person@acme.com{Enter}');
+    await vi.waitFor(() => expect(resolveFetch).toBeDefined());
+
+    await user.click(screen.getByText('Enter the URL manually instead'));
+    await user.type(
+      screen.getByLabelText('Glean API URL'),
+      'https://knowledge.example.org',
+    );
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+
+    // The abandoned lookup answers after the manual save.
+    resolveFetch({
+      ok: true,
+      json: async () => ({
+        search_config: { queryURL: 'https://acme-be.glean.com' },
+      }),
+    });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(trackSpy).toHaveBeenCalledExactlyOnceWith('tenant_profile_set', {
+      source: 'manual',
+      result: 'ok',
+    });
+    vi.unstubAllGlobals();
+  });
+
   it('reports why an email lookup failed without the email', async () => {
     const user = userEvent.setup();
     renderTenantProfile();
