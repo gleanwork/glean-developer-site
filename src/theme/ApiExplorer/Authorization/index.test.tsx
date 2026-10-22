@@ -29,6 +29,9 @@ const explorerState = {
 
 const dispatchSpy = vi.hoisted(() => vi.fn());
 const signInMock = vi.hoisted(() => vi.fn());
+const trackSpy = vi.hoisted(() => vi.fn());
+
+vi.mock('@site/src/lib/analytics', () => ({ trackEvent: trackSpy }));
 
 vi.mock('@site/src/components/ApiOAuth/oauth', async (importOriginal) => ({
   ...(await importOriginal<
@@ -87,6 +90,7 @@ const button = () => screen.getByRole('button');
 beforeEach(() => {
   dispatchSpy.mockClear();
   signInMock.mockReset();
+  trackSpy.mockClear();
   explorerState.server.value.url = SERVER;
   setToken(undefined);
 });
@@ -328,5 +332,42 @@ describe('Sign in with Glean', () => {
     await act(async () => {});
 
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+});
+
+describe('Sign in with Glean analytics', () => {
+  it('reports a successful sign-in', async () => {
+    signInMock.mockResolvedValue(signIn());
+    render(<AuthorizationWrapper />);
+
+    fireEvent.click(button());
+    await waitFor(() =>
+      expect(trackSpy).toHaveBeenCalledWith('api_sign_in', {
+        result: 'success',
+      }),
+    );
+  });
+
+  it('reports a failed sign-in without its message', async () => {
+    signInMock.mockRejectedValue(new Error('invalid_client for acme'));
+    render(<AuthorizationWrapper />);
+
+    fireEvent.click(button());
+    await waitFor(() =>
+      expect(trackSpy).toHaveBeenCalledWith('api_sign_in', {
+        result: 'error',
+      }),
+    );
+  });
+
+  it('reports a sign-in attempted before the Base URL is set', () => {
+    explorerState.server.value.url = '';
+    render(<AuthorizationWrapper />);
+
+    fireEvent.click(button());
+    expect(trackSpy).toHaveBeenCalledWith('api_sign_in', {
+      result: 'missing_url',
+    });
+    expect(signInMock).not.toHaveBeenCalled();
   });
 });

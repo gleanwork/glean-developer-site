@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { getClientIcon } from '@gleanwork/mcp-config-schema/browser';
+import { trackEvent } from '@site/src/lib/analytics';
 import TerminalPanel from '../home/TerminalPanel';
 import { icon } from './diagrams';
 import { tintSession } from './tintSession';
@@ -110,6 +111,12 @@ export default function AgentInstall(): React.ReactElement {
           copy
           filename="terminal"
           label={host.label}
+          onCopy={() =>
+            trackEvent('install_copied', {
+              product: 'connector-builder',
+              client: host.id,
+            })
+          }
           tinter={tintSession}
         />
       ) : (
