@@ -25,27 +25,13 @@ Triggers are created from **presets**: curated event definitions, one per dataso
 
 Reading presets and triggers requires the `triggers:read` scope; creating, updating and deleting a trigger requires `triggers:write`. The legacy `TRIGGERS` scope grants both. A token without them is rejected with `403`, regardless of the experimental header.
 
-## Supported datasources
+## Custom datasources
 
-Presets come from the same catalog as [content triggers](https://docs.glean.com/agents/concepts/content-trigger#supported-sources) in Agent Builder, so a preset covers the same datasource, event, and filters as the matching content trigger. That page groups datasources as recommended, with stable behavior and low latency, or experimental, where latency and reliability may vary. `GET /api/trigger-presets` returns the presets your deployment serves for the calling user.
+Presets for built-in datasources are a fixed, curated set. Datasources you index through the [Indexing API](/api-info/indexing/getting-started/overview) get presets generated from their [datasource schema](/api-info/indexing/datasource/custom-properties) instead. These presets aren't turned on by default. To turn them on for a datasource, contact your Glean account team.
 
-### Custom datasources
-
-Datasources you index through the [Indexing API](/api-info/indexing/getting-started/overview) can also drive triggers. Triggers on custom datasources are experimental and are turned on per datasource. To turn them on for a datasource, contact your Glean account team.
-
-Presets for a custom datasource are built from its [datasource schema](/api-info/indexing/datasource/custom-properties), with no trigger-specific setup:
-
-- **Two presets per object type.** For each object type in `objectDefinitions` that has indexed documents, the catalog has a `New <object>` preset that matches created documents and a `New or Updated <object>` preset that matches created and updated documents. `display_name` uses the object's `displayLabel`, or its `name` when no label is set. Read `preset_id` from the catalog as for any other preset.
-- **Inputs come from properties.** A preset accepts the built-in `tag`, `author`, and `owner` inputs, plus each `TEXT`, `TEXTLIST`, `PICKLIST`, and `USERID` property in `propertyDefinitions`. Other property types, such as `INT` and `DATE`, are not available as inputs.
-
-How you push documents determines when, and whether, a trigger fires:
-
-- **Delivery follows your push cadence.** A trigger fires only after Glean processes the pushed document, so a datasource pushed once a day produces events once a day. Documents sent with `/indexdocument` or `/indexdocuments` are processed as they arrive. Documents uploaded with `/bulkindexdocuments` can wait for a later processing pass, so prefer `/indexdocuments` for changes that should fire triggers promptly.
-- **Stale changes are dropped.** Glean drops a change event when the later of the document's `updatedAt` and `createdAt` is more than 24 hours old at processing time. Send accurate, current timestamps. A backfill with historical timestamps does not fire triggers.
-- **Created means recently created.** The first time Glean processes a document, the event is a creation only if `createdAt` is within the last 72 hours; otherwise it is an update. To test a `New` preset, push a new document with a current `createdAt`.
-- **Inputs match the current state.** A `New or Updated` preset with an input such as `status: Approved` fires on every update while the document matches, not only when `status` changes to `Approved`. Deduplicate on your side if you need to act once.
-- **Only creates and updates.** Delete events are not supported for custom datasources.
-- **Permissions apply.** Events are scoped to what the subscribing user can see, so push accurate document permissions, and the identity data that group permissions depend on.
+- **Presets.** Each object type in `objectDefinitions` that has indexed documents gets two presets: `New <object>`, which matches created documents, and `New or Updated <object>`, which matches created and updated documents. The preset's `display_name` uses the object's `displayLabel`.
+- **Inputs.** Presets accept the built-in tag, author, and owner inputs, plus the schema's `TEXT`, `TEXTLIST`, `PICKLIST`, and `USERID` properties.
+- **Timing.** A trigger fires only after Glean indexes the pushed document, so delivery follows your push cadence.
 
 ## Preset inputs
 
