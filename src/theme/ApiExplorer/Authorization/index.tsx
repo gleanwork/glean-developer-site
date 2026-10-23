@@ -21,6 +21,7 @@ import {
   signInState,
   signInWithGlean,
 } from '@site/src/components/ApiOAuth/oauth';
+import { trackEvent } from '@site/src/lib/analytics';
 import { useTenantApiPersonalizationEnabled } from '@site/src/lib/tenantPersonalizationFlag';
 import {
   API_URL_PLACEHOLDERS,
@@ -123,6 +124,7 @@ function GleanSignIn(): React.ReactElement | null {
       (isPlaceholderServerUrl(serverUrl) ||
         API_URL_PLACEHOLDERS.some((url) => url === serverUrl));
     if (!serverUrl || hasPlaceholder) {
+      trackEvent('api_sign_in', { result: 'missing_url' });
       setStatus({
         kind: 'error',
         message: personalizationEnabled
@@ -154,8 +156,10 @@ function GleanSignIn(): React.ReactElement | null {
           setAuthData({ scheme, key: 'token', value: result.accessToken }),
         );
       }
+      trackEvent('api_sign_in', { result: 'success' });
       setStatus({ kind: 'idle' });
     } catch (error) {
+      trackEvent('api_sign_in', { result: 'error' });
       setStatus({
         kind: 'error',
         message: error instanceof Error ? error.message : 'Sign-in failed.',

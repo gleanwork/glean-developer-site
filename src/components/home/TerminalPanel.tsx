@@ -44,6 +44,8 @@ interface TerminalPanelProps {
   className?: string;
   /** Show a copy-to-clipboard button in the header. */
   copy?: boolean;
+  /** Called after the copy button puts the code on the clipboard. */
+  onCopy?: () => void;
   /**
    * Override the syntax tinting. The default `tint` is a source-code tinter —
    * pass your own for content that isn't code, where colouring language
@@ -59,6 +61,7 @@ export default function TerminalPanel({
   code,
   className,
   copy = false,
+  onCopy,
   tinter = tint,
 }: TerminalPanelProps): React.ReactElement {
   const [copied, setCopied] = useState(false);
@@ -68,6 +71,7 @@ export default function TerminalPanel({
       await navigator.clipboard.writeText(code);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
+      onCopy?.();
     } catch {
       // Clipboard unavailable; the code stays selectable.
     }

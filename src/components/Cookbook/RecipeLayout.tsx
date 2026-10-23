@@ -15,6 +15,7 @@ import {
 import BrowserFrame from '../BrowserFrame';
 import { RecipeVideo } from '../Videos/VideoEmbeds';
 import { isVideoAvailable, videoForRecipe } from '../Videos/videoData';
+import { trackEvent } from '../../lib/analytics';
 import { usePreviewContent } from '../../lib/usePreviewContent';
 import ApiFlow from './ApiFlow';
 import PluginRunButton from './PluginRunButton';
@@ -86,6 +87,7 @@ function ActionCard({
       await navigator.clipboard.writeText(pasteText);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
+      trackEvent('recipe_action', { recipe: recipe.id, action: 'copy_prompt' });
     } catch {
       // Clipboard unavailable; prompt remains accessible via the recipe page.
     }
@@ -127,6 +129,12 @@ function ActionCard({
         <a
           className={styles.secondaryAction}
           href={`${COOKBOOK_REPO_URL}/recipes/${recipe.id}`}
+          onClick={() =>
+            trackEvent('recipe_action', {
+              recipe: recipe.id,
+              action: 'view_source',
+            })
+          }
           rel="noopener noreferrer"
           target="_blank"
         >
@@ -580,12 +588,14 @@ function CollectionCard({
 }
 
 interface RecipePreviewProps {
+  recipeId: string;
   url: string;
   alt: string;
   caption: string;
 }
 
 function RecipePreview({
+  recipeId,
   url,
   alt,
   caption,
@@ -595,6 +605,7 @@ function RecipePreview({
   const openPreview = (): void => {
     const dialog = dialogRef.current;
     if (!dialog) return;
+    trackEvent('recipe_action', { recipe: recipeId, action: 'preview_open' });
     if (typeof dialog.showModal === 'function') dialog.showModal();
     else dialog.setAttribute('open', '');
   };
@@ -781,6 +792,7 @@ export default function RecipeLayout({
               <RecipeVideo id={video.id} />
             ) : recipe.preview && previewUrl ? (
               <RecipePreview
+                recipeId={recipe.id}
                 url={previewUrl}
                 alt={recipe.preview.alt}
                 caption={recipe.preview.caption}

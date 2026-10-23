@@ -241,8 +241,37 @@ describe('tenant profile discovery', () => {
     const lookup = store.discover('person@acme.com');
     store.setManualApiUrl('https://manual.example.com');
     resolveFetch(jsonResponse(knownTenant()));
-    await lookup;
 
+    // The superseded lookup reports no outcome of its own.
+    expect(await lookup).toBeNull();
+    expect(store.getSnapshot()).toMatchObject({
+      kind: 'configured',
+      profile: { apiUrl: 'https://manual.example.com', source: 'manual' },
+    });
+  });
+
+  it('keeps a newer manual configuration when the old lookup body read fails', async () => {
+    let rejectBody!: (error: Error) => void;
+    const response = {
+      ok: true,
+      json: () =>
+        new Promise((_, reject) => {
+          rejectBody = reject;
+        }),
+    } as unknown as Response;
+    const store = createTenantProfileStore({
+      fetch: vi.fn().mockResolvedValue(response),
+      storage: new MemoryStorage(),
+      origin: 'https://developers.glean.com',
+      now: () => 10,
+    });
+
+    const lookup = store.discover('person@acme.com');
+    await vi.waitFor(() => expect(rejectBody).toBeDefined());
+    store.setManualApiUrl('https://manual.example.com');
+    rejectBody(new DOMException('aborted', 'AbortError'));
+
+    expect(await lookup).toBeNull();
     expect(store.getSnapshot()).toMatchObject({
       kind: 'configured',
       profile: { apiUrl: 'https://manual.example.com', source: 'manual' },

@@ -57,9 +57,13 @@ vi.mock('@docusaurus/router', () => ({
   useLocation: () => routerState.location,
 }));
 
+const trackSpy = vi.hoisted(() => vi.fn());
+vi.mock('@site/src/lib/analytics', () => ({ trackEvent: trackSpy }));
+
 beforeEach(() => {
   routerState.location = { pathname: '/cookbook', search: '' };
   routerState.push.mockClear();
+  trackSpy.mockClear();
 });
 
 function renderWithTenantFlag(ui: React.ReactElement, enabled = true) {
@@ -1403,5 +1407,91 @@ describe('RecipeLayout', () => {
       screen.getByText(/existing Glean browser session/),
     ).toBeInTheDocument();
     expect(screen.queryByText('Token Management')).not.toBeInTheDocument();
+  });
+});
+
+describe('Recipe analytics', () => {
+  const action = (name: string) => [
+    'recipe_action',
+    {
+      recipe: 'embed-search-chat',
+      action: name,
+    },
+  ];
+
+  it('reports a copied prompt and a source view', async () => {
+    const user = userEvent.setup();
+    render(
+      <RecipeLayout
+        plugin={plugin}
+        recipe={makeRecipe({
+          codeAssets: [
+            {
+              repoPath: 'recipes/embed-search-chat/minimal',
+              language: 'TypeScript',
+              description: 'Starter repo',
+            },
+          ],
+        })}
+      >
+        <p>Body</p>
+      </RecipeLayout>,
+    );
+
+    await user.click(
+      screen.getByRole('button', { name: /Copy assistant prompt/ }),
+    );
+    expect(trackSpy).toHaveBeenLastCalledWith(...action('copy_prompt'));
+
+    await user.click(screen.getByText('View source'));
+    expect(trackSpy).toHaveBeenLastCalledWith(...action('view_source'));
+  });
+
+  it('reports an opened preview', async () => {
+    const user = userEvent.setup();
+    render(
+      <RecipeLayout
+        plugin={plugin}
+        recipe={makeRecipe({
+          preview: {
+            path: 'recipes/embed-search-chat/assets/preview.webp',
+            alt: 'Embedded search and chat preview',
+            caption: 'A permission-aware embedded experience.',
+          },
+        })}
+      >
+        <p>Body</p>
+      </RecipeLayout>,
+    );
+
+    await user.click(
+      screen.getByRole('button', { name: /Open full-size preview/ }),
+    );
+    expect(trackSpy).toHaveBeenCalledExactlyOnceWith(...action('preview_open'));
+  });
+
+  it('reports opening the run menu, not closing it, and each copied command', async () => {
+    const user = userEvent.setup();
+    render(
+      <RecipeLayout
+        plugin={plugin}
+        recipe={makeRecipe({ buildMethod: 'scaffold' })}
+      >
+        <p>Body</p>
+      </RecipeLayout>,
+    );
+
+    const run = screen.getByRole('button', { name: /Run this recipe/ });
+    await user.click(run);
+    await user.click(run);
+    expect(trackSpy).toHaveBeenCalledExactlyOnceWith(...action('run_open'));
+
+    await user.click(run);
+    const copies = screen.getAllByRole('button', { name: /Copy to clipboard/ });
+    await user.click(copies[0]);
+    await user.click(copies[2]);
+    expect(
+      trackSpy.mock.calls.filter(([, props]) => props.action === 'run_copy'),
+    ).toHaveLength(2);
   });
 });

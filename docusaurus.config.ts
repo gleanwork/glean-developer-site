@@ -239,6 +239,11 @@ const config: Config = {
     ],
   } satisfies Preset.ThemeConfig,
 
+  // Vercel Web Analytics. A client module rather than
+  // @docusaurus/plugin-vercel-analytics, because the plugin cannot pass the
+  // beforeSend hook that removes query strings and OAuth callback URLs.
+  clientModules: [require.resolve('./src/clientModules/vercelAnalytics.ts')],
+
   plugins: [
     function (context, options) {
       return {
@@ -331,13 +336,6 @@ const config: Config = {
         },
         chatOptions: false,
         enableAnonymousAuth: true,
-      },
-    ],
-    [
-      'vercel-analytics',
-      {
-        debug: true,
-        mode: 'auto',
       },
     ],
     ['docusaurus-plugin-openapi-docs', openApiPluginOptions],

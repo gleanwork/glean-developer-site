@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { getIcon } from '@gleanwork/docusaurus-theme-glean/Icons';
 import { getClientIcon } from '@gleanwork/mcp-config-schema/browser';
+import { trackEvent } from '../../lib/analytics';
 import type { CookbookPlugin } from '../../types/recipe';
 import {
   PLUGIN_HOSTS,
@@ -23,10 +24,12 @@ import styles from './RecipeLayout.module.css';
 function CopyRow({
   code,
   index,
+  onCopy,
 }: {
   code: string;
   /** 1-based position when a path has several commands; omitted for one. */
   index?: number;
+  onCopy: () => void;
 }): React.ReactElement {
   const [copied, setCopied] = useState(false);
 
@@ -35,6 +38,7 @@ function CopyRow({
       await navigator.clipboard.writeText(code);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
+      onCopy();
     } catch {
       // Clipboard unavailable (insecure origin, denied permission) — the
       // command is still selectable in the block itself.
@@ -64,7 +68,13 @@ function CopyRow({
 }
 
 /** Numbers commands only when there's a sequence, so two steps don't read as two options. */
-function StepBody({ step }: { step: PluginHostStep }): React.ReactElement {
+function StepBody({
+  step,
+  onCopy,
+}: {
+  step: PluginHostStep;
+  onCopy: () => void;
+}): React.ReactElement {
   const numbered = (step.commands?.length ?? 0) > 1;
   return (
     <>
@@ -73,6 +83,7 @@ function StepBody({ step }: { step: PluginHostStep }): React.ReactElement {
           code={command}
           index={numbered ? i + 1 : undefined}
           key={command}
+          onCopy={onCopy}
         />
       ))}
       {step.instructions?.map((line) => (
@@ -92,9 +103,11 @@ function StepBody({ step }: { step: PluginHostStep }): React.ReactElement {
 function Install({
   host,
   plugin,
+  onCopy,
 }: {
   host: PluginHost;
   plugin: CookbookPlugin;
+  onCopy: () => void;
 }): React.ReactElement {
   const paths = host.install(plugin);
   const [pathId, setPathId] = useState(paths[0].id);
@@ -122,7 +135,7 @@ function Install({
           </span>
         ) : null}
       </div>
-      <StepBody step={path} />
+      <StepBody onCopy={onCopy} step={path} />
     </div>
   );
 }
@@ -168,6 +181,8 @@ export default function PluginRunButton({
   }, [open]);
 
   const host = PLUGIN_HOSTS.find((h) => h.id === hostId) ?? PLUGIN_HOSTS[0];
+  const trackCopy = () =>
+    trackEvent('recipe_action', { recipe: recipeId, action: 'run_copy' });
 
   return (
     <div
@@ -178,7 +193,15 @@ export default function PluginRunButton({
         aria-expanded={open}
         aria-haspopup="true"
         className={styles.primaryAction}
-        onClick={() => setOpen(!open)}
+        onClick={() => {
+          if (!open) {
+            trackEvent('recipe_action', {
+              recipe: recipeId,
+              action: 'run_open',
+            });
+          }
+          setOpen(!open);
+        }}
         type="button"
       >
         {getIcon('Play', 'feather', {
@@ -217,11 +240,11 @@ export default function PluginRunButton({
             ))}
           </div>
 
-          <Install host={host} plugin={plugin} />
+          <Install host={host} onCopy={trackCopy} plugin={plugin} />
 
           <div className={styles.hostStep}>
             <div className={styles.hostStepLabel}>Run the recipe</div>
-            <StepBody step={host.invoke(plugin, recipeId)} />
+            <StepBody onCopy={trackCopy} step={host.invoke(plugin, recipeId)} />
           </div>
 
           <p className={styles.hostStepNote}>{POST_INSTALL_NOTE[host.id]}</p>

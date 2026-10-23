@@ -1,9 +1,11 @@
 import React, { useEffect, useId, useState } from 'react';
 import { getIcon } from '@gleanwork/docusaurus-theme-glean/Icons';
+import { trackEvent } from '@site/src/lib/analytics';
 import {
   tenantApiUrlFromState,
   tenantProfileStore,
   type TenantProfileErrorReason,
+  type TenantProfileState,
   useTenantProfile,
 } from '@site/src/lib/tenantProfile';
 import { useTenantApiPersonalizationEnabled } from '@site/src/lib/tenantPersonalizationFlag';
@@ -14,6 +16,24 @@ interface TenantProfileControlProps {
   onConfigured?: () => void;
   heading?: string;
   description?: string;
+}
+
+/**
+ * Reports how a lookup or manual entry ended. Only the outcome is sent: never
+ * the email, its domain, or the API URL, which name the reader's company.
+ * A lookup superseded by a newer action resolves to `null` and is skipped;
+ * the newer action reports its own outcome.
+ */
+function trackOutcome(
+  source: 'discovered' | 'manual',
+  state: TenantProfileState | null,
+): void {
+  if (!state) return;
+  if (state.kind === 'configured') {
+    trackEvent('tenant_profile_set', { source, result: 'ok' });
+  } else if (state.kind === 'error') {
+    trackEvent('tenant_profile_set', { source, result: state.reason });
+  }
 }
 
 const ERROR_MESSAGES: Record<TenantProfileErrorReason, string> = {
@@ -56,11 +76,11 @@ function TenantProfileControlContent({
   }, [onConfigured, state]);
 
   const discover = async () => {
-    await tenantProfileStore.discover(email);
+    trackOutcome('discovered', await tenantProfileStore.discover(email));
   };
 
   const saveManual = () => {
-    tenantProfileStore.setManualApiUrl(manualUrl);
+    trackOutcome('manual', tenantProfileStore.setManualApiUrl(manualUrl));
   };
 
   const submitOnEnter = (

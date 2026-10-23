@@ -24,6 +24,16 @@ AVOID RUNNING `pnpm start` - this causes very slow build times, and will interup
 - Prefer default styles rather than creating new ones. Leverage existing CSS classes first, either from infima or via custom defined classes
 - Avoid inline CSS styles
 
+## Analytics
+
+The site uses Vercel Web Analytics through `src/clientModules/vercelAnalytics.ts`,
+which removes query strings and the OAuth callback page from every event.
+Custom events go through `trackEvent` in `src/lib/analytics.ts`, and the
+`AnalyticsEvents` type there lists every event the site sends. To add one, add
+it to that type and follow the rules in that file's header: at most two
+properties, and values from a fixed set. Never send emails, tenant or instance
+URLs, tokens, search queries, or other free text.
+
 ## Web SDK reference (generated)
 
 `docs/libraries/web-sdk/reference/` is generated from the installed

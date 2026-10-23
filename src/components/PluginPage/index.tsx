@@ -6,6 +6,7 @@ import {
   getClientIcon,
   type ClientId,
 } from '@gleanwork/mcp-config-schema/browser';
+import { trackEvent } from '@site/src/lib/analytics';
 import TerminalPanel from '../home/TerminalPanel';
 import styles from './styles.module.css';
 
@@ -41,7 +42,13 @@ type PluginPageProps = {
   steps: PluginStep[];
 };
 
-function StepBody({ step }: { step: PluginStep }): React.ReactElement {
+function StepBody({
+  step,
+  clientId,
+}: {
+  step: PluginStep;
+  clientId: ClientId;
+}): React.ReactElement {
   const imageUrl = useBaseUrl(step.image ?? '');
   return (
     <>
@@ -72,6 +79,12 @@ function StepBody({ step }: { step: PluginStep }): React.ReactElement {
                 code={cmd.code}
                 copy
                 filename={cmd.title}
+                onCopy={() =>
+                  trackEvent('install_copied', {
+                    product: 'glean-plugin',
+                    client: clientId,
+                  })
+                }
               />
             </div>
           ))
@@ -157,7 +170,7 @@ export default function PluginPage({
           <div className={styles.stepRow} key={step.label}>
             <span className={styles.stepNum}>{i + 1}</span>
             <div className={styles.stepBody}>
-              <StepBody step={step} />
+              <StepBody clientId={clientId} step={step} />
             </div>
           </div>
         ))}
