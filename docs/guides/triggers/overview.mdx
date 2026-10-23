@@ -27,11 +27,18 @@ Reading presets and triggers requires the `triggers:read` scope; creating, updat
 
 ## Custom datasources
 
-Presets for built-in datasources are a fixed, curated set. Datasources you index through the [Indexing API](/api-info/indexing/getting-started/overview) get presets generated from their [datasource schema](/api-info/indexing/datasource/custom-properties) instead. These presets aren't turned on by default. To turn them on for a datasource, contact your Glean account team.
+Built-in datasources have a fixed set of presets. Datasources you index through the [Indexing API](/api-info/indexing/getting-started/overview) get their presets from their [datasource schema](/api-info/indexing/datasource/custom-properties). This isn't turned on by default. To turn it on for a datasource, contact your Glean account team.
 
-- **Presets.** Each object type in `objectDefinitions` that has indexed documents gets two presets: `New <object>`, which matches created documents, and `New or Updated <object>`, which matches created and updated documents. The preset's `display_name` uses the object's `displayLabel`.
-- **Inputs.** Presets accept the built-in tag, author, and owner inputs, plus the schema's `TEXT`, `TEXTLIST`, `PICKLIST`, and `USERID` properties.
-- **Timing.** A trigger fires only after Glean indexes the pushed document, so delivery follows your push cadence.
+Each object type in `objectDefinitions` that has indexed documents gets two presets:
+
+- `New <object>` matches documents that are created.
+- `New or Updated <object>` matches documents that are created or updated.
+
+The preset's `display_name` uses the object's `displayLabel`.
+
+Preset inputs include tag, author, and owner, plus the schema's `TEXT`, `TEXTLIST`, `PICKLIST`, and `USERID` properties.
+
+A trigger fires only after Glean indexes the document you pushed, so delivery time depends on how often you push.
 
 ## Preset inputs
 
