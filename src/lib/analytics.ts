@@ -131,11 +131,27 @@ export function linkTarget(href: string, origin: string): string {
 }
 
 /**
- * The path of the first page the reader loaded. The client module imports
- * this file at startup, before any client-side navigation.
+ * A path decoded the way the router decodes it. history 4.10 runs
+ * `decodeURI` on every location, so `useLocation().pathname` is decoded and
+ * `window.location.pathname` is not. Malformed escapes are left as they are.
+ */
+export function routerPath(pathname: string): string {
+  try {
+    return decodeURI(pathname);
+  } catch {
+    return pathname;
+  }
+}
+
+/**
+ * The path of the first page the reader loaded, in the router's form so it
+ * compares with `useLocation().pathname`. The client module imports this
+ * file at startup, before any client-side navigation.
  */
 const landingPath =
-  typeof window === 'undefined' ? undefined : window.location.pathname;
+  typeof window === 'undefined'
+    ? undefined
+    : routerPath(window.location.pathname);
 
 /**
  * Where the reader came from to reach `pathname`. `document.referrer` keeps
