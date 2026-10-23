@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { getIcon } from '@gleanwork/docusaurus-theme-glean/Icons';
+import { trackCodeCopy } from '@site/src/lib/analytics';
 import styles from './HomeRedesign.module.css';
 
 /** Minimal syntax tinting per the handoff token colors. */
@@ -37,6 +38,14 @@ export function tint(code: string): React.ReactNode[] {
   return out;
 }
 
+/** `tools.py` -> `py`; a name without an extension is a terminal. */
+export function panelLanguage(filename: string): string {
+  const dot = filename.lastIndexOf('.');
+  return dot >= 0 && dot < filename.length - 1
+    ? filename.slice(dot + 1).toLowerCase()
+    : 'shell';
+}
+
 interface TerminalPanelProps {
   filename: string;
   label?: string;
@@ -71,6 +80,7 @@ export default function TerminalPanel({
       await navigator.clipboard.writeText(code);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
+      trackCodeCopy(panelLanguage(filename));
       onCopy?.();
     } catch {
       // Clipboard unavailable; the code stays selectable.

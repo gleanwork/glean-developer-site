@@ -1,9 +1,18 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const trackSpy = vi.hoisted(() => vi.fn());
 vi.mock('@vercel/analytics', () => ({ track: trackSpy }));
 
-import { redactEvent, statusClass, trackEvent } from './analytics';
+import {
+  linkTarget,
+  pageSection,
+  redactEvent,
+  referrerSource,
+  routerPath,
+  statusClass,
+  trackCodeCopy,
+  trackEvent,
+} from './analytics';
 
 describe('redactEvent', () => {
   it('drops the OAuth callback, whose URL carries an authorization code', () => {
@@ -52,6 +61,122 @@ describe('statusClass', () => {
     ['200', 'network'],
   ])('%s -> %s', (code, expected) => {
     expect(statusClass(code)).toBe(expected);
+  });
+});
+
+describe('pageSection', () => {
+  it.each([
+    ['/', 'home'],
+    ['/api/client-api/search/query', 'api'],
+    ['/guides/mcp/cursor/', 'guides'],
+  ])('%s -> %s', (pathname, expected) => {
+    expect(pageSection(pathname)).toBe(expected);
+  });
+});
+
+describe('linkTarget', () => {
+  const origin = 'https://developers.glean.com';
+
+  it('is the path for links on this site, without the query', () => {
+    expect(linkTarget('/guides/mcp/cursor?ref=hero#setup', origin)).toBe(
+      '/guides/mcp/cursor',
+    );
+    expect(linkTarget(`${origin}/api/platform-api`, origin)).toBe(
+      '/api/platform-api',
+    );
+  });
+
+  it('is the host for links to other sites', () => {
+    expect(
+      linkTarget('https://github.com/gleanwork/glean-cookbook?x=1', origin),
+    ).toBe('github.com');
+  });
+});
+
+describe('referrerSource', () => {
+  it.each([
+    ['', 'direct'],
+    ['https://developers.glean.com/guides/', 'internal'],
+    ['https://www.google.com/search?q=glean+api', 'www.google.com'],
+    ['not a url', 'unknown'],
+  ])('%s -> %s', (referrer, expected) => {
+    expect(referrerSource(referrer, 'developers.glean.com')).toBe(expected);
+  });
+});
+
+describe('pageReferrer', () => {
+  const original = window.location;
+  afterEach(() => {
+    (window as { location: unknown }).location = original;
+    vi.restoreAllMocks();
+  });
+
+  it('uses document.referrer only on the landing page', async () => {
+    // The landing path is read when the module loads, so load a fresh copy
+    // after setting the location.
+    (window as { location: unknown }).location = {
+      hostname: 'developers.glean.com',
+      pathname: '/old-guide',
+    };
+    vi.resetModules();
+    const fresh = await import('./analytics');
+    vi.spyOn(document, 'referrer', 'get').mockReturnValue(
+      'https://github.com/gleanwork/glean-cookbook',
+    );
+
+    expect(fresh.pageReferrer('/old-guide')).toBe('github.com');
+    expect(fresh.pageReferrer('/missing-page')).toBe('internal');
+  });
+
+  it('matches an encoded landing path against the decoded router path', async () => {
+    // The browser keeps `%20`; the router hands the component a space.
+    (window as { location: unknown }).location = {
+      hostname: 'developers.glean.com',
+      pathname: '/guides/my%20page',
+    };
+    vi.resetModules();
+    const fresh = await import('./analytics');
+    vi.spyOn(document, 'referrer', 'get').mockReturnValue(
+      'https://github.com/gleanwork/glean-cookbook',
+    );
+
+    expect(fresh.pageReferrer('/guides/my page')).toBe('github.com');
+  });
+});
+
+describe('routerPath', () => {
+  it('decodes a path the way the router does', () => {
+    expect(routerPath('/guides/my%20page')).toBe('/guides/my page');
+    expect(routerPath('/guides/caf%C3%A9')).toBe('/guides/café');
+  });
+
+  it('keeps reserved escapes, as decodeURI does', () => {
+    expect(routerPath('/guides/a%2Fb')).toBe('/guides/a%2Fb');
+  });
+
+  it('leaves a malformed escape as it is instead of throwing', () => {
+    expect(routerPath('/guides/100%')).toBe('/guides/100%');
+  });
+});
+
+describe('trackCodeCopy', () => {
+  beforeEach(() => {
+    trackSpy.mockReset();
+  });
+
+  it('reports the section of the current page and the language', () => {
+    const original = window.location;
+    (window as { location: unknown }).location = {
+      pathname: '/guides/mcp/cursor',
+    };
+    trackCodeCopy('json');
+    trackCodeCopy(undefined);
+    (window as { location: unknown }).location = original;
+
+    expect(trackSpy.mock.calls).toEqual([
+      ['code_copied', { section: 'guides', language: 'json' }],
+      ['code_copied', { section: 'guides', language: 'text' }],
+    ]);
   });
 });
 

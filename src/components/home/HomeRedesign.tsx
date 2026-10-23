@@ -27,6 +27,12 @@ import {
 } from './snippets';
 import recipesData from '@site/src/data/recipes.json';
 import type { RecipeRecord } from '@site/src/types/recipe';
+import {
+  type HomeSlot,
+  linkTarget,
+  trackCodeCopy,
+  trackEvent,
+} from '@site/src/lib/analytics';
 import { heroRecipeLink } from './heroRecipes';
 import styles from './HomeRedesign.module.css';
 
@@ -59,7 +65,7 @@ export function AnnouncementBand({
   const ga = statuses.filter((s) => s.stage === 'ga');
   const preview = statuses.filter((s) => s.stage === 'experimental');
   return (
-    <div className={styles.bandWrap}>
+    <div className={styles.bandWrap} data-home-slot="announcement">
       <Link className={styles.band} to={href}>
         <div className={styles.bandAccent} aria-hidden="true" />
         <div className={styles.bandContent}>
@@ -176,6 +182,7 @@ export function HeroCarousel(): React.ReactElement {
   return (
     <div
       className={styles.hero}
+      data-home-slot="hero"
       onMouseEnter={() => {
         paused.current = true;
       }}
@@ -331,7 +338,7 @@ const PATHS: Array<{
 
 export function PathCards(): React.ReactElement {
   return (
-    <section className={styles.section}>
+    <section className={styles.section} data-home-slot="paths">
       <h2 className={styles.sectionTitle}>Choose your path</h2>
       <p className={styles.sectionSub}>Four ways to get started.</p>
       <div className={styles.pathGrid}>
@@ -366,7 +373,7 @@ export function QuickstartTabs(): React.ReactElement {
   const snippet = QUICKSTART_SNIPPETS[lang];
 
   return (
-    <section className={styles.section}>
+    <section className={styles.section} data-home-slot="quickstart">
       <div className={styles.quickstart}>
         <div>
           <div className={styles.quickstartEyebrow}>Quickstart</div>
@@ -431,7 +438,13 @@ export function QuickstartTabs(): React.ReactElement {
 }
 
 /** Install command that copies on click without triggering the card link. */
-function SdkInstall({ command }: { command: string }): React.ReactElement {
+function SdkInstall({
+  command,
+  sdk,
+}: {
+  command: string;
+  sdk: string;
+}): React.ReactElement {
   const [copied, setCopied] = useState(false);
 
   const copy = async (e: React.MouseEvent) => {
@@ -441,6 +454,8 @@ function SdkInstall({ command }: { command: string }): React.ReactElement {
       await navigator.clipboard.writeText(command);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
+      trackCodeCopy('shell');
+      trackEvent('install_copied', { product: 'api-client', client: sdk });
     } catch {
       // Clipboard unavailable; the command stays readable on the card.
     }
@@ -464,7 +479,7 @@ function SdkInstall({ command }: { command: string }): React.ReactElement {
 
 export function SdkGrid(): React.ReactElement {
   return (
-    <section className={styles.section}>
+    <section className={styles.section} data-home-slot="sdks">
       <h2 className={styles.sectionTitle}>API client libraries</h2>
       <div className={styles.sdkGrid}>
         {SDK_CARDS.map((sdk) => (
@@ -483,7 +498,7 @@ export function SdkGrid(): React.ReactElement {
               </span>
               {sdk.name}
             </span>
-            <SdkInstall command={sdk.install} />
+            <SdkInstall command={sdk.install} sdk={sdk.icon} />
           </Link>
         ))}
       </div>
@@ -523,7 +538,7 @@ const MCP_CARDS: Array<{
 
 export function McpCards(): React.ReactElement {
   return (
-    <section className={styles.section}>
+    <section className={styles.section} data-home-slot="mcp">
       <h2 className={styles.sectionTitle}>Bring Glean into your IDE</h2>
       <div className={styles.mcpGrid}>
         {MCP_CARDS.map((card) => (
@@ -554,7 +569,7 @@ export function McpCards(): React.ReactElement {
 
 export function AgentsBand(): React.ReactElement {
   return (
-    <section className={styles.section}>
+    <section className={styles.section} data-home-slot="agents">
       <div className={styles.agentsBand}>
         <div>
           <span className={styles.agentsPill}>Agents</span>
@@ -589,10 +604,32 @@ export function AgentsBand(): React.ReactElement {
   );
 }
 
+/**
+ * Reports a link click on the homepage with its section. Buttons inside a
+ * link, like the SDK install copy, and links in the video dialog are not
+ * homepage navigation, so they are skipped.
+ */
+export function trackHomeClick(target: EventTarget | null): void {
+  if (!(target instanceof Element)) return;
+  if (target.closest('button, dialog')) return;
+  const link = target.closest('a[href]');
+  const slot = link
+    ?.closest('[data-home-slot]')
+    ?.getAttribute('data-home-slot') as HomeSlot | undefined;
+  if (!link || !slot) return;
+  trackEvent('home_cta', {
+    slot,
+    target: linkTarget(link.getAttribute('href') ?? '', window.location.origin),
+  });
+}
+
 /** The full redesigned homepage (handoff direction 1a). */
 export default function HomeRedesign(): React.ReactElement {
   return (
-    <div className={`${styles.page} home-redesign-root`}>
+    <div
+      className={`${styles.page} home-redesign-root`}
+      onClickCapture={(event) => trackHomeClick(event.target)}
+    >
       <AnnouncementBand />
       <HeroCarousel />
       <PathCards />
