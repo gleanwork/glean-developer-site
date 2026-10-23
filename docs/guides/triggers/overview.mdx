@@ -25,6 +25,19 @@ Triggers are created from **presets**: curated event definitions, one per dataso
 
 Reading presets and triggers requires the `triggers:read` scope; creating, updating and deleting a trigger requires `triggers:write`. The legacy `TRIGGERS` scope grants both. A token without them is rejected with `403`, regardless of the experimental header.
 
+## Custom datasources
+
+Built-in datasources have a fixed set of presets. Datasources you index through the [Indexing API](/api-info/indexing/getting-started/overview) get their presets from their [datasource schema](/api-info/indexing/datasource/custom-properties). Custom datasource presets are experimental and are turned on per datasource. To turn them on, contact your Glean account team.
+
+Each object type in `objectDefinitions` that has indexed documents gets two presets, and each preset's `display_name` uses the object's `displayLabel`:
+
+- `New <object>` matches documents that are created.
+- `New or Updated <object>` matches documents that are created or updated.
+
+Preset inputs include tag, author, and owner, plus the schema's `TEXT`, `TEXTLIST`, `PICKLIST`, and `USERID` properties.
+
+A trigger fires only after Glean indexes the document you pushed, so delivery time depends on how often you push. Send accurate `updatedAt` and `createdAt` values when you push documents. Re-pushing an identical document, or changing only its permissions, doesn't fire a trigger.
+
 ## Preset inputs
 
 Each entry in a preset's `inputs` array carries a `field` — the key you set in the trigger's `inputs` object — plus a `type` of `PICKLIST`, `TEXT`, or `USER`, and an `is_required` flag.
