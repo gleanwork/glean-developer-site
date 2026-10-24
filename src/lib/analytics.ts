@@ -1,8 +1,10 @@
 /**
  * Custom events for Vercel Web Analytics.
  *
- * Every event the site sends is declared in `AnalyticsEvents`, so that type is
- * the full list of what we collect. Rules for adding one:
+ * Every event the browser sends is declared in `AnalyticsEvents`. The docs MCP
+ * endpoint sends its own, declared in `McpAnalyticsEvents`
+ * (api/_lib/mcp-analytics.ts). Together they are the full list of what we
+ * collect. Rules for adding one, in either place:
  *
  * - Each event answers a question someone will act on. Name the question in
  *   the comment above the event.

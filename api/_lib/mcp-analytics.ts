@@ -1,0 +1,95 @@
+/**
+ * Usage events from the docs MCP endpoint (api/mcp.ts), sent to Vercel Web
+ * Analytics. The plugin reports every docs_search and docs_fetch call through
+ * `onEvent`. This module keeps only fields that follow the rules in
+ * src/lib/analytics.ts: two properties at most, and values from a fixed set.
+ * The agent's search query and the URI it fetched are never sent.
+ *
+ * Vercel doesn't serve files under api/_lib as functions.
+ */
+import { track } from '@vercel/analytics/server';
+import type {
+  McpDocsEvent,
+  McpDocsFetchEvent,
+} from 'docusaurus-plugin-mcp-server';
+
+/** Vercel rejects names, keys, and values longer than this. */
+const MAX_LENGTH = 255;
+
+export type SearchResults = 'some' | 'none' | 'error';
+
+export interface McpAnalyticsEvents {
+  /** Do agents find what they search the docs for, and which agents search? */
+  mcp_search: { results: SearchResults; client: string };
+  /** Which pages do agents read, and which agents read them? */
+  mcp_fetch: { page: string; client: string };
+}
+
+export type McpAnalyticsEvent = {
+  [N in keyof McpAnalyticsEvents]: {
+    name: N;
+    properties: McpAnalyticsEvents[N];
+  };
+}[keyof McpAnalyticsEvents];
+
+/** The analytics event for one tool call. */
+export function analyticsEventFor(event: McpDocsEvent): McpAnalyticsEvent {
+  const client = clientId(event.client?.name);
+  if (event.tool === 'docs_search') {
+    const results: SearchResults = !event.ok
+      ? 'error'
+      : event.resultCount
+        ? 'some'
+        : 'none';
+    return { name: 'mcp_search', properties: { results, client } };
+  }
+  return {
+    name: 'mcp_fetch',
+    properties: { page: fetchedPage(event), client },
+  };
+}
+
+/**
+ * What a docs_fetch call read: the page's path, `skill` for a skill file,
+ * `not-found`, or `error`. A page is named by the ID the server resolved,
+ * never by the URI the agent sent, which can be anything.
+ */
+export function fetchedPage(event: McpDocsFetchEvent): string {
+  if (!event.ok) return 'error';
+  if (event.resolved === 'skill-file') return 'skill';
+  if (event.resolved !== 'document' || !event.documentId) return 'not-found';
+  try {
+    // The ID is the page's absolute URL. The base only matters for an ID
+    // that is a bare path. `pathname` drops any query string and fragment.
+    const { pathname } = new URL(event.documentId, 'https://localhost');
+    return pathname.slice(0, MAX_LENGTH);
+  } catch {
+    return 'unknown';
+  }
+}
+
+/**
+ * The name the client reported, as an ID such as `claude-code`, or
+ * `unknown`. Only clients on protocol 2026-07-28 name themselves on every
+ * call. 2025-era clients do it only in `initialize`, so their calls are
+ * `unknown`.
+ */
+export function clientId(name: string | undefined): string {
+  const id = (name ?? '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 64);
+  return id || 'unknown';
+}
+
+/**
+ * Sends one tool call to Vercel Web Analytics. On Vercel, `track` reads the
+ * request's headers from the request context and passes its send to the
+ * context's `waitUntil`, so the response doesn't wait for it. `track` logs
+ * its own errors and never rejects.
+ */
+export function trackMcpEvent(event: McpDocsEvent): Promise<void> {
+  const { name, properties } = analyticsEventFor(event);
+  return track(name, properties);
+}
