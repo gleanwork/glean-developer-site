@@ -124,6 +124,25 @@ pnpm build
 
 If the variable is not set, the tag is omitted.
 
+## Analytics
+
+The site uses [Vercel Web Analytics](https://vercel.com/docs/analytics). `src/clientModules/vercelAnalytics.ts` loads it in production builds, and removes query strings and the OAuth callback page from every event before it's sent.
+
+Custom events go through `trackEvent` in [`src/lib/analytics.ts`](src/lib/analytics.ts). The `AnalyticsEvents` type in that file lists every event the site sends, so it's the full record of what we collect.
+
+### Add an event
+
+1. Add the event to `AnalyticsEvents`, with a comment that names the question it answers.
+2. Follow the rules in the header of `src/lib/analytics.ts`: at most two properties, because Vercel keeps only two per event, and values from a fixed set. Never send emails, tenant or instance URLs, tokens, search queries, or other free text.
+3. Call `trackEvent('your_event', { ... })` where the interaction happens. TypeScript rejects an event name or property that isn't in the type.
+4. Add a test that mocks `@site/src/lib/analytics` and checks the call, like `src/components/home/homeAnalytics.test.tsx`.
+
+### Check an event
+
+- **Locally:** with `pnpm start`, `trackEvent` logs each event to the browser console as `[analytics] <name> <properties>` and sends nothing. The log uses `console.debug`, so turn on the console's Verbose level to see it.
+- **On a preview deployment:** preview builds are production builds, so they send events. In the browser's Network panel, the event is a request to `/_vercel/insights/event`.
+- **In Vercel:** events appear in the Events panel of the project's Analytics tab.
+
 ## 🧪 Testing
 
 Run the build command to test for any issues:
