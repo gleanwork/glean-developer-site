@@ -7,7 +7,6 @@
  *
  * Vercel doesn't serve files under api/_lib as functions.
  */
-import { track } from '@vercel/analytics/server';
 import type {
   McpDocsEvent,
   McpDocsFetchEvent,
@@ -15,6 +14,18 @@ import type {
 
 /** Vercel rejects names, keys, and values longer than this. */
 const MAX_LENGTH = 255;
+
+/**
+ * `track`, loaded with a dynamic import. This file compiles to CommonJS (see
+ * api/tsconfig.json), where a static import becomes `require()`, and
+ * @vercel/analytics/server resolves to an ES module under Node. The function
+ * failed to load with ERR_REQUIRE_ESM on Vercel. The import starts when this
+ * module loads, so the first event doesn't wait for it.
+ */
+const trackModule = import('@vercel/analytics/server');
+// Keep a failed import from being an unhandled rejection before any event
+// awaits it. Each trackMcpEvent call still sees the failure.
+trackModule.catch(() => {});
 
 export type SearchResults = 'some' | 'none' | 'error';
 
@@ -87,9 +98,10 @@ export function clientId(name: string | undefined): string {
  * Sends one tool call to Vercel Web Analytics. On Vercel, `track` reads the
  * request's headers from the request context and passes its send to the
  * context's `waitUntil`, so the response doesn't wait for it. `track` logs
- * its own errors and never rejects.
+ * its own errors and never rejects. The plugin logs a failed import.
  */
-export function trackMcpEvent(event: McpDocsEvent): Promise<void> {
+export async function trackMcpEvent(event: McpDocsEvent): Promise<void> {
   const { name, properties } = analyticsEventFor(event);
-  return track(name, properties);
+  const { track } = await trackModule;
+  await track(name, properties);
 }
