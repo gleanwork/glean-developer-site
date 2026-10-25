@@ -17,10 +17,14 @@
  * status check (name, version, document and skill counts), OPTIONS for CORS
  * preflight, and 405 for the rest. It allows every origin, which is fine for a
  * public, read-only, credential-free server.
+ *
+ * Each docs_search and docs_fetch call is sent to Vercel Web Analytics as an
+ * `mcp_search` or `mcp_fetch` event (see _lib/mcp-analytics.ts).
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import path from 'path';
+import { trackMcpEvent } from './_lib/mcp-analytics';
 
 type NodeHandler = (req: VercelRequest, res: VercelResponse) => Promise<void>;
 
@@ -42,6 +46,7 @@ function getHandler(): Promise<NodeHandler> {
           // because turbo can reuse a cached build from an earlier commit.
           // `||`, not `??`, so an empty value also falls back to 'dev'.
           version: process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) || 'dev',
+          onEvent: trackMcpEvent,
         }),
     );
   }
