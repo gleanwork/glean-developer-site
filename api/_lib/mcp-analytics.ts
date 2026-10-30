@@ -2,14 +2,16 @@
  * Usage events from the docs MCP endpoint (api/mcp.ts), sent to Vercel Web
  * Analytics. The plugin reports every docs_search and docs_fetch call through
  * `onEvent`. This module keeps only fields that follow the rules in
- * src/lib/analytics.ts: two properties at most, and values from a fixed set.
- * The agent's search query and the URI it fetched are never sent.
+ * src/lib/analytics.ts: two properties at most, and values from a fixed set
+ * or site paths. The agent's search query and the URI it fetched are never
+ * sent.
  *
  * Vercel doesn't serve files under api/_lib as functions.
  */
 import type {
   McpDocsEvent,
   McpDocsFetchEvent,
+  McpDocsSearchEvent,
 } from 'docusaurus-plugin-mcp-server';
 
 /** Vercel rejects names, keys, and values longer than this. */
@@ -27,11 +29,12 @@ const trackModule = import('@vercel/analytics/server');
 // awaits it. Each trackMcpEvent call still sees the failure.
 trackModule.catch(() => {});
 
-export type SearchResults = 'some' | 'none' | 'error';
-
 export interface McpAnalyticsEvents {
-  /** Do agents find what they search the docs for, and which agents search? */
-  mcp_search: { results: SearchResults; client: string };
+  /**
+   * What are agents trying to find, do they find it, and which agents search?
+   * `top` is the path of the search's first result, `none`, or `error`.
+   */
+  mcp_search: { top: string; client: string };
   /** Which pages do agents read, and which agents read them? */
   mcp_fetch: { page: string; client: string };
 }
@@ -47,12 +50,10 @@ export type McpAnalyticsEvent = {
 export function analyticsEventFor(event: McpDocsEvent): McpAnalyticsEvent {
   const client = clientId(event.client?.name);
   if (event.tool === 'docs_search') {
-    const results: SearchResults = !event.ok
-      ? 'error'
-      : event.resultCount
-        ? 'some'
-        : 'none';
-    return { name: 'mcp_search', properties: { results, client } };
+    return {
+      name: 'mcp_search',
+      properties: { top: topResult(event), client },
+    };
   }
   return {
     name: 'mcp_fetch',
@@ -69,11 +70,27 @@ export function fetchedPage(event: McpDocsFetchEvent): string {
   if (!event.ok) return 'error';
   if (event.resolved === 'skill-file') return 'skill';
   if (event.resolved !== 'document' || !event.documentId) return 'not-found';
+  return pagePath(event.documentId);
+}
+
+/**
+ * What a docs_search call surfaced: the path of its first result, `none`, or
+ * `error`. The result comes from the search index, so this says what the
+ * agent was looking for without the query it sent.
+ */
+export function topResult(event: McpDocsSearchEvent): string {
+  if (!event.ok) return 'error';
+  const first = event.results?.[0];
+  return first ? pagePath(first.url) : 'none';
+}
+
+/**
+ * A page's path, from its absolute URL. The base only matters for a bare
+ * path. `pathname` drops any query string and fragment.
+ */
+function pagePath(url: string): string {
   try {
-    // The ID is the page's absolute URL. The base only matters for an ID
-    // that is a bare path. `pathname` drops any query string and fragment.
-    const { pathname } = new URL(event.documentId, 'https://localhost');
-    return pathname.slice(0, MAX_LENGTH);
+    return new URL(url, 'https://localhost').pathname.slice(0, MAX_LENGTH);
   } catch {
     return 'unknown';
   }

@@ -25,6 +25,7 @@ import {
   analyticsEventFor,
   clientId,
   fetchedPage,
+  topResult,
   trackMcpEvent,
 } from './mcp-analytics';
 
@@ -41,6 +42,16 @@ function search(
     query: QUERY,
     limit: 5,
     resultCount: 2,
+    results: [
+      {
+        url: 'https://developers.glean.com/api/client-api/chat/chat',
+        route: '/api/client-api/chat/chat',
+      },
+      {
+        url: 'https://developers.glean.com/guides/chat',
+        route: '/guides/chat',
+      },
+    ],
     ...overrides,
   };
 }
@@ -61,19 +72,19 @@ function fetchEvent(
 }
 
 describe('analyticsEventFor', () => {
-  it('reports whether a search found results, and never the query', () => {
+  it('reports the page a search surfaced first, and never the query', () => {
     expect(analyticsEventFor(search())).toEqual({
       name: 'mcp_search',
-      properties: { results: 'some', client: 'unknown' },
-    });
-    expect(analyticsEventFor(search({ resultCount: 0 })).properties).toEqual({
-      results: 'none',
-      client: 'unknown',
+      properties: { top: '/api/client-api/chat/chat', client: 'unknown' },
     });
     expect(
-      analyticsEventFor(search({ ok: false, resultCount: undefined }))
-        .properties,
-    ).toEqual({ results: 'error', client: 'unknown' });
+      analyticsEventFor(search({ resultCount: 0, results: [] })).properties,
+    ).toEqual({ top: 'none', client: 'unknown' });
+    expect(
+      analyticsEventFor(
+        search({ ok: false, resultCount: undefined, results: undefined }),
+      ).properties,
+    ).toEqual({ top: 'error', client: 'unknown' });
     expect(JSON.stringify(analyticsEventFor(search()))).not.toContain('token');
   });
 
@@ -125,6 +136,27 @@ describe('fetchedPage', () => {
   });
 });
 
+describe('topResult', () => {
+  it('drops a query string and fragment from the result URL', () => {
+    expect(
+      topResult(
+        search({
+          results: [
+            {
+              url: 'https://developers.glean.com/docs/x?a=1#b',
+              route: '/docs/x',
+            },
+          ],
+        }),
+      ),
+    ).toBe('/docs/x');
+  });
+
+  it('is none when the event has no result list', () => {
+    expect(topResult(search({ results: undefined }))).toBe('none');
+  });
+});
+
 describe('clientId', () => {
   it('turns a reported name into an ID', () => {
     expect(clientId('Cursor')).toBe('cursor');
@@ -167,10 +199,21 @@ describe('trackMcpEvent as the handler onEvent', () => {
         },
       },
     };
+    // Finds the one page for "intro", and nothing for anything else.
     const search: SearchRanker = {
       name: 'stub',
-      async search() {
-        return [];
+      async search(query) {
+        return query.includes('intro')
+          ? [
+              {
+                url: 'https://developers.glean.com/docs/intro',
+                route: '/docs/intro',
+                title: 'Intro',
+                score: 1,
+                snippet: 'Hello.',
+              },
+            ]
+          : [];
       },
     };
     const handler = createNodeHandler({
@@ -211,10 +254,18 @@ describe('trackMcpEvent as the handler onEvent', () => {
     await vi.waitFor(() => expect(trackSpy).toHaveBeenCalled());
   }
 
-  it('sends a search as mcp_search', async () => {
+  it('sends a search as mcp_search with the first result path', async () => {
+    await callTool('docs_search', { query: `${QUERY} intro` });
+    expect(trackSpy).toHaveBeenCalledExactlyOnceWith('mcp_search', {
+      top: '/docs/intro',
+      client: 'unknown',
+    });
+  });
+
+  it('sends a search that finds nothing as none', async () => {
     await callTool('docs_search', { query: QUERY });
     expect(trackSpy).toHaveBeenCalledExactlyOnceWith('mcp_search', {
-      results: 'none',
+      top: 'none',
       client: 'unknown',
     });
   });
