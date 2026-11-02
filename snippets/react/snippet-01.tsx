@@ -94,7 +94,7 @@ const GleanWebSDKGallery = () => {
     })();
     injectScript({
       id: 'embedded_search',
-      src: getWebAppUrl('/embedded-search-latest.min.js'),
+      src: getWebAppUrl('/glean-web-sdk-latest.min.js'),
     }).then(() => setIsLoading(false));
   }, [fetchAuthTokenThunk]);
 
