@@ -141,7 +141,7 @@ renderSearchBox(document.getElementById('search'), {
   script: {
     label: 'Script tag',
     filename: 'index.html',
-    code: `<script defer src="https://app.glean.com/embedded-search-latest.min.js"></script>
+    code: `<script defer src="https://app.glean.com/glean-web-sdk-latest.min.js"></script>
 
 <script>
   window.addEventListener('glean:ready', () => {
