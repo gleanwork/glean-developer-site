@@ -1,0 +1,126 @@
+---
+title: API Client Versioning Policy
+description: How Glean API client library versions describe compatibility, API changes, and release support
+---
+
+# API Client Versioning Policy
+
+This page explains what the version number of a Glean API client library promises, how the libraries relate to the stability of the underlying REST APIs, and what to expect when an API changes.
+
+This policy applies to the official client libraries:
+
+- Python: `glean-api-client` on PyPI
+- TypeScript: `@gleanwork/api-client` on npm
+- Go: `github.com/gleanwork/api-client-go`
+- Java: `com.glean.api-client:glean-api-client` on Maven Central
+
+## Summary
+
+- The client libraries follow [Semantic Versioning](https://semver.org/) for their stable public interface. From `1.0.0` onward, breaking changes to that interface require a new major version.
+- The library version describes the library, not the API. API stability is governed separately by the [API evolution and deprecation policy](/deprecations/overview).
+- Stable API endpoints are covered by the library's compatibility promise. Experimental endpoints are opt-in and explicitly outside that promise.
+- Supported runtime versions (Python, Node.js, Go, Java) are part of the compatibility promise. Support for a runtime ends only after that runtime reaches end of life. See [Runtime support](#runtime-support).
+- Major library versions are released on the same fixed dates that deprecated API features are removed: January 15, April 15, July 15, and October 15. A release candidate is published at least two weeks before the removal date.
+
+## What the version number covers
+
+The version number covers the library's stable public interface:
+
+- Method names, parameters, and return types for stable operations
+- Request and response models, including field names and types
+- Error classes and the fields they expose
+- Client construction and configuration options
+- Documented behavior such as retries, timeouts, and streaming
+
+The version number does not cover:
+
+- Whether an endpoint is enabled for your Glean deployment. A method can exist in the library before the feature is available to your tenant. The API returns an error in that case. Contact your Glean account team if you need a feature enabled.
+- Endpoints marked experimental. See [Experimental endpoints](#experimental-endpoints).
+- Undocumented behavior, internal modules, and generated helper code that is not part of the documented interface.
+- API behavior such as ranking or results. That behavior is governed by the [API evolution and deprecation policy](/deprecations/overview), not the library version.
+
+## Runtime support
+
+Each library supports the runtime versions that are listed in its README. The version number treats that list as part of the public interface:
+
+- When a runtime version reaches its official end of life, the library continues to support it for a 3-month grace period. After the grace period, a minor release can remove support for that version.
+- Removing support for a runtime version before it reaches end of life is a breaking change and requires a major version.
+- A minor release can add support for new runtime versions.
+
+## Semantic Versioning
+
+Glean uses `MAJOR.MINOR.PATCH` as defined by [Semantic Versioning](https://semver.org/) for the stable public interface:
+
+| Version | Glean use |
+| --- | --- |
+| Major (`2.0.0`) | A breaking change, such as removing a deprecated member or dropping support for a runtime before it reaches end of life |
+| Minor (`1.1.0`) | Backwards-compatible capability, such as a new stable endpoint, field, or optional parameter; a deprecation marker; or dropping a runtime after its [grace period](#runtime-support) |
+| Patch (`1.0.1`) | A library bug fix, type or documentation correction that does not change the contract, or a dependency update |
+
+The [API change mapping](#how-api-changes-map-to-library-releases) below describes how these rules apply to Glean's generated clients. Experimental interfaces are the explicit exception; they are not covered by the compatibility promise.
+
+## How API changes map to library releases
+
+The libraries are generated from Glean's OpenAPI specification, so API changes reach the libraries quickly and predictably.
+
+| API event | Library release |
+| --- | --- |
+| New stable endpoint or field | Minor |
+| Field or endpoint marked deprecated | Minor. The member is marked deprecated in the library but still works. |
+| Deprecated field or endpoint removed on a removal date | Major, released on the removal date |
+| Experimental endpoint added, changed, or removed | Any release; outside the SemVer compatibility promise |
+| Experimental endpoint promoted to stable | Minor; this policy applies from that release forward |
+| API bug fix with no interface change | No library release needed |
+| Library bug fix, type correction, or dependency update | Patch |
+
+Removal dates and the six-month minimum notice are defined by the [API evolution and deprecation policy](/deprecations/overview). See the [deprecation schedule](/deprecations) for upcoming removal dates.
+
+## Experimental endpoints
+
+Some endpoints are marked experimental in the API reference. They are included in the libraries so you can try them, but they are explicitly outside the Semantic Versioning compatibility promise:
+
+- They can be added, changed, or removed in any release, including a minor or patch release.
+- The API serves them only when you opt in by sending the `X-Glean-Include-Experimental: true` header. Each library exposes a configuration option for this, such as `include_experimental=True` in Python or `WithIncludeExperimental(true)` in Go.
+- Do not depend on experimental endpoints in production.
+
+When an experimental endpoint becomes stable, this policy covers it from that release forward.
+
+## Deprecated endpoints and fields
+
+When Glean deprecates an API field or endpoint:
+
+1. The next minor release marks the corresponding member as deprecated. Its documentation includes the removal date and a pointer to the replacement. The member keeps working.
+2. You can test your code against the future state before the removal date by setting the `X-Glean-Exclude-Deprecated-After` header to a date. Each library exposes this as a configuration option, such as `exclude_deprecated_after="2027-01-15"` in Python.
+3. On the removal date, a new major version of the library removes the member.
+
+See [API Evolution & Deprecations](/deprecations/overview) for the API deprecation process and [the deprecation list](/deprecations) for current entries.
+
+## Release schedule around removal dates
+
+Deprecated API features are removed only on January 15, April 15, July 15, and October 15. Major library versions follow the same calendar:
+
+- At least 14 days before a removal date, a release candidate such as `2.0.0-rc.1` is published with the removals applied. It is tagged as a pre-release and is not the default version in package registries.
+- On the removal date, the stable major version is published and becomes the default.
+
+If no deprecations are due on a given date, no major version is released.
+
+Minor and patch versions are released as needed, usually within a few days of the corresponding API change.
+
+## Support for older major versions
+
+When a new major version is released, the previous major version continues to receive security fixes and critical bug fixes for six months. It does not receive new endpoints or fields.
+
+Older major versions keep working against the API for as long as the API features they call exist. A library version that references a removed API feature receives an error from the API for that call only. Other calls continue to work.
+
+Older versions also continue to work when the API adds values to a response. The libraries accept enum values that they do not recognize and ignore response fields that they do not recognize.
+
+## Recommendations
+
+- Pin to a major version range, such as `^1` or `~=1.0`, rather than an exact version. This lets you receive fixes and new endpoints without accepting breaking changes.
+- Watch the [changelog](/changelog), [deprecation list](/deprecations), and [API evolution and deprecation policy](/deprecations/overview). Each library release also has release notes on GitHub.
+- Handle unknown enum values in your code, for example with a default branch in a `switch` statement. The libraries pass unknown values through instead of failing, so your code can receive a value that did not exist when you wrote it.
+- Before a removal date, test against the release candidate or set the `exclude-deprecated-after` option to confirm that your integration is ready.
+
+## Pre-1.0 history
+
+Versions before `1.0.0` did not follow this policy. Breaking changes could ship in any release, and the libraries recommended pinning an exact version. From `1.0.0` onward, the rules on this page apply.
