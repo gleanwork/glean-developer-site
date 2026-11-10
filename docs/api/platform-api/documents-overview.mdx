@@ -1,0 +1,47 @@
+---
+title: Documents API Overview
+---
+
+import ApiOverview from '@site/src/components/ApiOverview';
+
+# Documents API
+
+<ApiOverview
+  title="Documents API"
+  description="The Platform Documents API retrieves permission-visible indexed documents by URL or Glean store ID. Fetch one document, or up to 100 in one batch."
+  apiFamily="documents"
+  apiType="platform-api"
+  useCases={[
+    {
+      title: 'Retrieve by URL',
+      description:
+        'Look up one indexed document from a URL. Many URLs can resolve to the same document. The returned url is the permalink and can differ from the URL you sent.',
+      icon: 'Link',
+    },
+    {
+      title: 'Retrieve by ID',
+      description: 'Look up one indexed document by its Glean store ID.',
+      icon: 'FileText',
+    },
+    {
+      title: 'Batch Retrieval',
+      description:
+        'Retrieve up to 100 documents by URL or document ID. Found documents are returned in results. A complete miss is a warning correlated by index.',
+      icon: 'Layers',
+    },
+  ]}
+/>
+
+These endpoints require the `documents:read` scope. They return documents the caller is allowed to see.
+
+The URL for get document by URL is the lookup key that [Platform search](/api/platform-api/search-overview) returns. Gmail and Outlook search results and chat citations can carry caller-specific IDs that get document by ID cannot resolve. Retrieve those documents by URL. A Gmail or Outlook URL can still return 404. Retrieving search results is best-effort parity with legacy getdocuments.
+
+Batch get takes up to 100 selectors. Each selector is a `document_id` or a `url`. Found documents are in `results`. Complete misses are `warnings`, correlated by index into `document_specs`. Incomplete store work fails the whole request. Gmail and Outlook caller-specific citation IDs are not accepted as `document_id` selectors. An empty or malformed URL is reported as a warning after a complete read, not as a schema 400.
+
+On the single-document operations, `include` is a query parameter. On batch get, `include` is a field on the request body. `CONTENT` adds extracted text to each found document. If requested content cannot be retrieved, the request fails instead of returning the document without it.
+
+Get document by URL and batch get do not retrieve federated results or go-link shortcut documents in this release.
+
+These endpoints are [experimental](/experimental/overview). Send `X-Glean-Include-Experimental: true` on each request, or they are not exposed.
+
+For error responses, see [Platform API Errors](/errors) for the shared ProblemDetail code reference and remediation guidance.
