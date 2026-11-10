@@ -1002,6 +1002,11 @@ const baseSidebars: SidebarsConfig = {
               type: 'category',
               label: 'Documents',
 
+              link: {
+                type: 'doc',
+                id: 'api/platform-api/documents-overview',
+              },
+
               items: [
                 {
                   type: 'doc',
