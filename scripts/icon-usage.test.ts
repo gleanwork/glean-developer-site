@@ -147,6 +147,24 @@ describe('Cookbook recipe icons', () => {
 });
 
 describe('sidebar icons', () => {
+  // Every API and cookbook collection shows an icon beside its label. A new
+  // one without `customProps.icon` renders as the only bare entry in the list.
+  it.each(['Cookbook', 'Platform API Reference'])(
+    'gives every category under %s an icon',
+    (sectionLabel) => {
+      const section = sidebarCategories.find(
+        ({ label }) => label === sectionLabel,
+      );
+      expect(section).toBeDefined();
+
+      const missing = (section?.items ?? [])
+        .filter((item) => item.type === 'category' && !item.customProps?.icon)
+        .map(({ label }) => label);
+
+      expect(missing).toEqual([]);
+    },
+  );
+
   it('only uses icons that exist in the selected icon set', () => {
     const invalid = sidebarCategories
       .filter(({ customProps }) => customProps?.icon)
