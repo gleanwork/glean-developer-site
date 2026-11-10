@@ -2,11 +2,11 @@ openapi: 3.0.0
 info:
   version: 0.9.0
   title: Glean API - Agents
-  x-source-commit-sha: a867a686a6645ed82261417da199dab121c93738
+  x-source-commit-sha: 97fbe10915397b754d4188eca1d52eac13041ca7
   description: API endpoints for Agents
   x-logo:
     url: https://app.glean.com/images/glean-text2.svg
-  x-open-api-commit-sha: fe88ab139b3676484d0c44cc0b1c5043e8340915
+  x-open-api-commit-sha: 616457cfa89ca50ad2d22c872f818cdf9b69849d
   x-speakeasy-name: Glean API
 servers:
   - url: '{serverUrl}'
@@ -62,8 +62,7 @@ paths:
 
 
             with Glean(
-                api_token=os.getenv("GLEAN_API_TOKEN", ""),
-                server_url="https://mycompany-be.glean.com",
+                api_token=os.getenv("GLEAN_API_TOKEN"),
             ) as glean:
 
                 res = glean.client.agents.create()
@@ -222,8 +221,7 @@ paths:
 
 
             with Glean(
-                api_token=os.getenv("GLEAN_API_TOKEN", ""),
-                server_url="https://mycompany-be.glean.com",
+                api_token=os.getenv("GLEAN_API_TOKEN"),
             ) as glean:
 
                 glean.client.agents.update(agent_id="<id>")
@@ -392,8 +390,7 @@ paths:
 
 
             with Glean(
-                api_token=os.getenv("GLEAN_API_TOKEN", ""),
-                server_url="https://mycompany-be.glean.com",
+                api_token=os.getenv("GLEAN_API_TOKEN"),
             ) as glean:
 
                 res = glean.client.agents.import_(agent_id="<id>", bundle={
@@ -2579,6 +2576,14 @@ components:
               - text
               - type
             title: MessageTextBlock
+        messageTrackingToken:
+          type: string
+          readOnly: true
+          description: 'An opaque token that represents this particular agent message. Populated only on `GLEAN_AI` messages in responses. To record feedback, pass the token of the message being rated (typically the final `GLEAN_AI` message of the run) as the single entry in `trackingTokens` to `/feedback`, with `category: CHAT`.'
+        traceId:
+          type: string
+          readOnly: true
+          description: The agent trace ID for the run that produced this message. Populated only on `GLEAN_AI` messages in responses, when the run was traced. To attach the trace to manual feedback, pass it as `manualFeedbackInfo.traceId` to `/feedback`, together with this message's `messageTrackingToken` in `trackingTokens`. The feedback must be sent by the same user who ran the agent.
     CollectionPinnedMetadata:
       properties:
         existingPins:

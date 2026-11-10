@@ -2,11 +2,11 @@ openapi: 3.0.0
 info:
   version: 0.9.0
   title: Glean API - Chat
-  x-source-commit-sha: a867a686a6645ed82261417da199dab121c93738
+  x-source-commit-sha: 97fbe10915397b754d4188eca1d52eac13041ca7
   description: API endpoints for Chat
   x-logo:
     url: https://app.glean.com/images/glean-text2.svg
-  x-open-api-commit-sha: fe88ab139b3676484d0c44cc0b1c5043e8340915
+  x-open-api-commit-sha: 616457cfa89ca50ad2d22c872f818cdf9b69849d
   x-speakeasy-name: Glean API
 servers:
   - url: '{serverUrl}'
@@ -184,8 +184,7 @@ paths:
 
 
             with Glean(
-                api_token=os.getenv("GLEAN_API_TOKEN", ""),
-                server_url="https://mycompany-be.glean.com",
+                api_token=os.getenv("GLEAN_API_TOKEN"),
             ) as glean:
 
                 res = glean.client.chat.create(messages=[
@@ -300,8 +299,7 @@ paths:
 
 
             with Glean(
-                api_token=os.getenv("GLEAN_API_TOKEN", ""),
-                server_url="https://mycompany-be.glean.com",
+                api_token=os.getenv("GLEAN_API_TOKEN"),
             ) as glean:
 
                 glean.client.chat.delete_all()
@@ -393,8 +391,7 @@ paths:
 
 
             with Glean(
-                api_token=os.getenv("GLEAN_API_TOKEN", ""),
-                server_url="https://mycompany-be.glean.com",
+                api_token=os.getenv("GLEAN_API_TOKEN"),
             ) as glean:
 
                 glean.client.chat.delete(ids=[])
@@ -455,7 +452,7 @@ paths:
       tags:
         - Chat
       summary: Retrieves a Chat
-      description: Retrieves the chat history between Glean Assistant and the user for a given Chat.
+      description: Retrieves the chat history between Glean Assistant and the user for a given Chat. Omit pagination fields to return the full message history (existing behavior). Use last alone for the latest page, last with before for older messages, or first with after for newer messages. Each page is chronological and includes pagination cursors and page flags.
       operationId: getchat
       x-visibility: Public
       x-codegen-request-body-name: payload
@@ -477,7 +474,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/GetChatResponse'
         '400':
-          description: Invalid request
+          description: Invalid request, page size, or cursor
         '401':
           description: Not Authorized
         '403':
@@ -501,8 +498,7 @@ paths:
 
 
             with Glean(
-                api_token=os.getenv("GLEAN_API_TOKEN", ""),
-                server_url="https://mycompany-be.glean.com",
+                api_token=os.getenv("GLEAN_API_TOKEN"),
             ) as glean:
 
                 res = glean.client.chat.retrieve(id="<id>")
@@ -599,8 +595,7 @@ paths:
 
 
             with Glean(
-                api_token=os.getenv("GLEAN_API_TOKEN", ""),
-                server_url="https://mycompany-be.glean.com",
+                api_token=os.getenv("GLEAN_API_TOKEN"),
             ) as glean:
 
                 res = glean.client.chat.list()
@@ -697,8 +692,7 @@ paths:
 
 
             with Glean(
-                api_token=os.getenv("GLEAN_API_TOKEN", ""),
-                server_url="https://mycompany-be.glean.com",
+                api_token=os.getenv("GLEAN_API_TOKEN"),
             ) as glean:
 
                 res = glean.client.chat.retrieve_application(id="<id>")
@@ -802,8 +796,7 @@ paths:
 
 
             with Glean(
-                api_token=os.getenv("GLEAN_API_TOKEN", ""),
-                server_url="https://mycompany-be.glean.com",
+                api_token=os.getenv("GLEAN_API_TOKEN"),
             ) as glean:
 
                 res = glean.client.chat.upload_files(files=[])
@@ -915,8 +908,7 @@ paths:
 
 
             with Glean(
-                api_token=os.getenv("GLEAN_API_TOKEN", ""),
-                server_url="https://mycompany-be.glean.com",
+                api_token=os.getenv("GLEAN_API_TOKEN"),
             ) as glean:
 
                 res = glean.client.chat.retrieve_files(file_ids=[
@@ -1021,8 +1013,7 @@ paths:
 
 
             with Glean(
-                api_token=os.getenv("GLEAN_API_TOKEN", ""),
-                server_url="https://mycompany-be.glean.com",
+                api_token=os.getenv("GLEAN_API_TOKEN"),
             ) as glean:
 
                 glean.client.chat.delete_files(file_ids=[
@@ -1143,8 +1134,7 @@ paths:
 
 
             with Glean(
-                api_token=os.getenv("GLEAN_API_TOKEN", ""),
-                server_url="https://mycompany-be.glean.com",
+                api_token=os.getenv("GLEAN_API_TOKEN"),
             ) as glean:
 
                 res = glean.client.chat.retrieve_file(file_id="<id>")
@@ -1346,8 +1336,7 @@ paths:
 
 
             with Glean(
-                api_token=os.getenv("GLEAN_API_TOKEN", ""),
-                server_url="https://mycompany-be.glean.com",
+                api_token=os.getenv("GLEAN_API_TOKEN"),
             ) as glean:
 
                 res = glean.client.chat.create_stream(messages=[
@@ -1610,18 +1599,33 @@ components:
         id:
           type: string
           description: The id of the Chat application to be retrieved.
-    GetChatRequest:
-      required:
-        - id
-      properties:
-        id:
-          type: string
-          description: The id of the Chat to be retrieved.
     UserGeneratedContentId:
       properties:
         id:
           type: integer
           description: The opaque id of the user generated content.
+    GetChatRequest:
+      required:
+        - id
+      description: 'Retrieves a Chat. Omit pagination fields to return the full message history. When paginating, messages are returned in chronological order. Allowed combinations: last alone (latest page), last with before (older messages), first alone (earliest page), or first with after (newer messages). first and last are mutually exclusive; before and after are mutually exclusive; first cannot be combined with before; last cannot be combined with after.'
+      properties:
+        id:
+          type: string
+          description: The id of the Chat to be retrieved.
+        first:
+          type: integer
+          format: int32
+          description: Maximum number of messages to return from the start of the chat, or after the cursor when after is set. Pair with after for newer messages; alone returns the earliest messages. Mutually exclusive with last and before.
+        after:
+          type: string
+          description: An opaque message cursor from this chat. Returns messages strictly newer than this cursor. Pair with first. Mutually exclusive with before; cannot be combined with last.
+        last:
+          type: integer
+          format: int32
+          description: Maximum number of messages to return from the end of the chat, or before the cursor when before is set. Alone returns the latest messages; pair with before for older messages. Mutually exclusive with first and after.
+        before:
+          type: string
+          description: An opaque message cursor from this chat. Returns messages strictly older than this cursor. Pair with last. Mutually exclusive with after; cannot be combined with first.
     ChatApplicationDetails: {}
     UgcType:
       enum:
@@ -1977,6 +1981,24 @@ components:
         isUserGenerated:
           type: boolean
           description: true iff the email was manually added by a user from within Glean (aka not from the original data source)
+    GetChatPagination:
+      description: Pagination cursors and page flags for a getchat message page.
+      required:
+        - hasNextPage
+        - hasPreviousPage
+      properties:
+        startCursor:
+          type: string
+          description: Cursor of the first (oldest) returned message. Omitted for an empty page.
+        endCursor:
+          type: string
+          description: Cursor of the last (newest) returned message. Omitted for an empty page.
+        hasNextPage:
+          type: boolean
+          description: Whether visible messages exist after endCursor in chronological order.
+        hasPreviousPage:
+          type: boolean
+          description: Whether visible messages exist before startCursor in chronological order.
     SessionInfo:
       properties:
         sessionTrackingToken:
@@ -2512,10 +2534,6 @@ components:
           type: object
           additionalProperties:
             $ref: '#/components/schemas/ChatFile'
-    GetChatResponse:
-      properties:
-        chatResult:
-          $ref: '#/components/schemas/ChatResult'
     GrantPermission:
       description: Describes the grant permission level that a user has for a specific feature
       properties:
@@ -2909,6 +2927,13 @@ components:
           items:
             $ref: '#/components/schemas/ChatFile'
           description: Files uploaded for chat.
+    GetChatResponse:
+      properties:
+        chatResult:
+          $ref: '#/components/schemas/ChatResult'
+        pagination:
+          $ref: '#/components/schemas/GetChatPagination'
+          description: Always present. When the request omits pagination fields and the full message history is returned, hasNextPage and hasPreviousPage are both false and cursors may be omitted for an empty page.
     ListChatsResponse:
       properties:
         chatResults:
