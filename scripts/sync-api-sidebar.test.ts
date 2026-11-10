@@ -861,6 +861,123 @@ describe('Platform API tag groups', () => {
     ).toBeGreaterThan(sidebar.indexOf("tag: 'Admin Agents'"));
     expect(run(root, '--check').status).toBe(0);
   });
+
+  function addDocumentsOperation(root: string) {
+    fs.writeFileSync(
+      path.join(root, 'docs/api/platform-api/documents-overview.mdx'),
+      `---
+title: Documents API Overview
+---
+`,
+    );
+    fs.writeFileSync(
+      path.join(
+        root,
+        'docs/api/platform-api/platform-documents-get-by-url.api.mdx',
+      ),
+      `---
+id: platform-documents-get-by-url
+title: "Get document by URL"
+sidebar_label: "Get document by URL"
+sidebar_class_name: "get api-method"
+---
+`,
+    );
+    fs.appendFileSync(
+      path.join(root, 'openapi/platform/platform-capitalized.yaml'),
+      `  /api/documents:
+    get:
+      tags:
+        - Documents
+      summary: Get document by URL
+      operationId: platform-documents-get-by-url
+`,
+    );
+  }
+
+  const documentsTagGroups: Array<[string, string[]]> = [
+    ['Agents & AI', ['Agents', 'Chat']],
+    ['Search & Data', ['Documents']],
+    ['Administration', ['Admin Agents']],
+  ];
+
+  it('--fix links a new Platform family to its overview page', () => {
+    const root = createGroupedFixture({
+      tagGroups: documentsTagGroups,
+      items: [
+        heading('Agents & AI'),
+        family('Agents', ['platform-agents-search']),
+        family('Chat', ['platform-chat-create']),
+        heading('Search & Data'),
+        heading('Administration'),
+        family('Agents', ['platform-admin-agents-list'], 'Admin Agents'),
+      ],
+    });
+    addDocumentsOperation(root);
+
+    const result = run(root, '--fix');
+    const sidebar = fs.readFileSync(path.join(root, 'sidebars.ts'), 'utf8');
+
+    expect(result.status).toBe(0);
+    const link = sidebar.indexOf("id: 'api/platform-api/documents-overview'");
+    const endpoint = sidebar.indexOf(
+      "id: 'api/platform-api/platform-documents-get-by-url'",
+    );
+    expect(link).toBeGreaterThan(sidebar.indexOf("label: 'Documents'"));
+    expect(endpoint).toBeGreaterThan(link);
+    expect(sidebar).not.toContain('admin-agents-overview');
+    expect(run(root, '--check').status).toBe(0);
+
+    const again = run(root, '--fix');
+    expect(again.status).toBe(0);
+    expect(again.stdout).toContain('already complete');
+    expect(fs.readFileSync(path.join(root, 'sidebars.ts'), 'utf8')).toBe(
+      sidebar,
+    );
+  });
+
+  it('fails --check when a Platform family overview is not linked', () => {
+    const root = createGroupedFixture({
+      tagGroups: documentsTagGroups,
+      items: [
+        heading('Agents & AI'),
+        family('Agents', ['platform-agents-search']),
+        family('Chat', ['platform-chat-create']),
+        heading('Search & Data'),
+        family('Documents', ['platform-documents-get-by-url']),
+        heading('Administration'),
+        family('Agents', ['platform-admin-agents-list'], 'Admin Agents'),
+      ],
+    });
+    addDocumentsOperation(root);
+
+    const check = run(root, '--check');
+    expect(check.status).toBe(1);
+    expect(check.stderr).toContain(
+      "'Documents' has docs/api/platform-api/documents-overview.mdx but its category does not link to 'api/platform-api/documents-overview'",
+    );
+
+    expect(run(root, '--fix').status).toBe(0);
+    const sidebar = fs.readFileSync(path.join(root, 'sidebars.ts'), 'utf8');
+    expect(sidebar).toContain("id: 'api/platform-api/documents-overview'");
+    expect(
+      sidebar.match(/id: 'api\/platform-api\/platform-documents-get-by-url'/g),
+    ).toHaveLength(1);
+    expect(sidebar).not.toContain('admin-agents-overview');
+    expect(run(root, '--check').status).toBe(0);
+
+    const dropped = sidebar.replace(
+      /\n\s*link: \{\n\s*type: 'doc',\n\s*id: 'api\/platform-api\/documents-overview',\n\s*\},/,
+      '',
+    );
+    expect(dropped).not.toBe(sidebar);
+    fs.writeFileSync(path.join(root, 'sidebars.ts'), dropped);
+    expect(run(root, '--check').status).toBe(1);
+    expect(run(root, '--fix').status).toBe(0);
+    expect(fs.readFileSync(path.join(root, 'sidebars.ts'), 'utf8')).toBe(
+      sidebar,
+    );
+  });
 });
 
 describe('production API reference ordering', () => {
