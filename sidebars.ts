@@ -9,6 +9,7 @@ import recipesData from './src/data/recipes.json';
 const COLLECTION_ICONS: Record<string, { icon: string; iconSet: string }> = {
   chat: { icon: 'message-with-sparkles', iconSet: 'glean' },
   search: { icon: 'search', iconSet: 'glean' },
+  documents: { icon: 'file-text', iconSet: 'glean' },
   agents: { icon: 'agent', iconSet: 'glean' },
   skills: { icon: 'skill', iconSet: 'glean' },
   triggers: { icon: 'zap', iconSet: 'glean' },
@@ -1001,7 +1002,12 @@ const baseSidebars: SidebarsConfig = {
             {
               type: 'category',
               label: 'Documents',
-
+              description:
+                'Retrieve permission-visible indexed documents by URL or Glean ID.',
+              customProps: {
+                icon: 'file-text',
+                iconSet: 'glean',
+              },
               link: {
                 type: 'doc',
                 id: 'api/platform-api/documents-overview',
