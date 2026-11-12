@@ -2568,7 +2568,7 @@
       {
         "repoPath": "recipes/multi-step-agent/invoke-agent",
         "language": "python",
-        "description": "Invoke the agent via agents.run, demo both the permitted and denied branches"
+        "description": "Invoke the agent via agents.create_run, demo both the permitted and denied branches"
       }
     ],
     "steps": [
@@ -2644,8 +2644,8 @@
         "category": "workflow"
       }
     ],
-    "aiPrompt": "Build the multi-step-agent demo from https://developers.glean.com/cookbook/multi-step-agent. Start its inert tool server, expose port 8080 through a public HTTPS cloudflared tunnel, and replace the OpenAPI servers[0].url placeholder with the tunnel origin so the operation resolves to <origin>/file_incident_ticket. Have me upload that specification in Admin > Platform > Tools > Add, then create an Agent Builder agent with retrieval and the tool attached. Invoke it with glean.client.agents.run using Message and MessageTextBlock. Demonstrate allow and deny by changing AUTHORIZED_EMAILS. State clearly that Glean-User-Email is spoofable on the public demo endpoint: authenticate requests as coming from Glean before connecting a real write action.",
-    "llmContext": "Run agents with glean.client.agents.run(agent_id, messages) using Message and MessageTextBlock. Expose a local demo tool through public HTTPS and set the OpenAPI server URL to that origin with route paths aligned. Register tools manually in the admin console. Glean-User-Email supports an authorization allow-list only after the request is authenticated as coming from Glean; the sample server is demo-only and must not front a real write action.",
+    "aiPrompt": "Build the multi-step-agent demo from https://developers.glean.com/cookbook/multi-step-agent. Start its inert tool server, expose port 8080 through a public HTTPS cloudflared tunnel, and replace the OpenAPI servers[0].url placeholder with the tunnel origin so the operation resolves to <origin>/file_incident_ticket. Have me upload that specification in Admin > Platform > Tools > Add, then create an Agent Builder agent with retrieval and the tool attached. Invoke it with glean.agents.create_run(stream=false) using PlatformMessageInput and PlatformMessageTextBlockInput. Demonstrate allow and deny by changing AUTHORIZED_EMAILS. State clearly that Glean-User-Email is spoofable on the public demo endpoint: authenticate requests as coming from Glean before connecting a real write action.",
+    "llmContext": "Run agents with glean.agents.create_run(agent_id, messages, stream=false) using PlatformMessageInput and PlatformMessageTextBlockInput. Expose a local demo tool through public HTTPS and set the OpenAPI server URL to that origin with route paths aligned. Register tools manually in the admin console. Glean-User-Email supports an authorization allow-list only after the request is authenticated as coming from Glean; the sample server is demo-only and must not front a real write action.",
     "goDependency": false,
     "hidden": true,
     "tags": ["agents", "governance"],
@@ -2653,7 +2653,7 @@
       "problem": "A chatbot that only answers questions is half an agent. Attach a governed\nTool and it can act — file a ticket, update a record — but only for people\nwho are actually allowed to, with a graceful fallback for everyone else\ninstead of a hard failure.",
       "takeItFurther": [
         "Add a second governed tool (e.g., escalate to PagerDuty) and let the agent choose between them based on severity.",
-        "Switch to `run_stream()` and parse the SSE text yourself for a live-updating UI.",
+        "Pass `stream=True` to `glean.agents.create_run()` and parse the SSE text yourself for a live-updating UI.",
         "Combine with [permissions-aware-retrieval](/cookbook/permissions-aware-retrieval)'s retrieval pattern if you want the agent's grounding to come from your own index instead of Glean's default retrieval."
       ]
     }
