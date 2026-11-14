@@ -7,6 +7,7 @@ import type {
   EndpointScopes,
 } from '../../src/types/endpointMetadata';
 import { LEGACY_SCOPES_FALLBACK } from './legacyScopesFallback';
+import { getOperationRelease, requiresOptIn } from '../release-lib.mjs';
 
 interface SecurityScheme {
   type?: string;
@@ -22,8 +23,18 @@ export interface ApiOperation {
   'x-visibility'?: string;
   'x-beta'?: boolean;
   'x-glean-experimental'?: { id?: string; introduced?: string } | boolean;
+  'x-glean-deprecated'?: unknown;
   'x-glean-scopes'?: EndpointScopes;
-  'x-glean-release'?: { stage?: string; version?: string };
+  'x-glean-release'?: {
+    stage?: string;
+    docs?: string;
+    deprecation?: {
+      message?: string;
+      introduced?: string;
+      removal?: string;
+      docs?: string;
+    };
+  };
   security?: Array<Record<string, string[]>>;
   securitySchemes?: Record<string, SecurityScheme>;
 }
@@ -52,25 +63,6 @@ export function detectApiFamily(
   return 'platform';
 }
 
-function experimentalIntroduced(
-  value: ApiOperation['x-glean-experimental'],
-): string | undefined {
-  return value && typeof value === 'object' ? value.introduced : undefined;
-}
-
-function normalizeStage(stage: string | undefined) {
-  switch (stage?.toLowerCase()) {
-    case 'experimental':
-      return 'experimental' as const;
-    case 'beta':
-      return 'beta' as const;
-    case 'ga':
-      return 'ga' as const;
-    default:
-      return undefined;
-  }
-}
-
 /**
  * The deprecation's message, unless it only restates the badge
  * ("Endpoint is deprecated"). Replacement guidance such as
@@ -88,52 +80,51 @@ export function deprecationMessage(
 }
 
 /**
- * Derive the lifecycle stage. Precedence: an endpoint-level deprecation wins
- * (it is the most actionable), then `x-glean-release.stage` when present,
- * then the legacy experimental/beta markers, then GA.
+ * Derive the lifecycle stage from `x-glean-release` (see release-lib.mjs).
+ *
+ * Without `x-glean-release`, fall back to the older markers: an endpoint-level
+ * deprecation (or `deprecated: true`) wins, as it is the most actionable, then
+ * `x-glean-experimental`, `x-beta`, or `x-visibility: Preview` mean beta.
+ * Otherwise the stage is GA.
  */
 export function deriveRelease(
   api: ApiOperation,
   deprecations: DeprecationItem[],
 ): EndpointRelease {
   const endpointDeprecation = deprecations.find((d) => d.type === 'endpoint');
-  const version = api['x-glean-release']?.version;
-  const releaseVersion =
-    version && version !== 'unreleased' ? version : undefined;
+  const declared = api['x-glean-release'] !== undefined;
+  const own = getOperationRelease(api);
 
-  if (endpointDeprecation || api.deprecated) {
+  if (
+    own?.stage === 'deprecated' ||
+    (!declared && (endpointDeprecation || api.deprecated))
+  ) {
+    // deprecations.json covers only some specs, so fall back to the spec.
+    const deprecation = endpointDeprecation ?? own?.deprecation;
     return {
       stage: 'deprecated',
-      since: endpointDeprecation?.introduced,
-      removal: endpointDeprecation?.removal,
-      message: deprecationMessage(endpointDeprecation?.message),
-      docs: endpointDeprecation?.docs,
-      version: releaseVersion,
-    };
-  }
-
-  const declared = normalizeStage(api['x-glean-release']?.stage);
-  const isExperimental =
-    declared === 'experimental' ||
-    (!declared && Boolean(api['x-glean-experimental']));
-
-  if (isExperimental) {
-    return {
-      stage: 'experimental',
-      since: experimentalIntroduced(api['x-glean-experimental']),
-      version: releaseVersion,
+      since: deprecation?.introduced,
+      removal: deprecation?.removal,
+      message: deprecationMessage(deprecation?.message),
+      docs: deprecation?.docs ?? own?.docs,
     };
   }
 
   const isBeta =
-    declared === 'beta' ||
+    own?.stage === 'beta' ||
     (!declared &&
       (api['x-beta'] === true || api['x-visibility'] === 'Preview'));
   if (isBeta) {
-    return { stage: 'beta', version: releaseVersion };
+    return {
+      stage: 'beta',
+      ...(own?.introduced ? { since: own.introduced } : {}),
+      ...(own?.docs ? { docs: own.docs } : {}),
+      // x-beta and Preview endpoints are open; the others need the header.
+      ...(requiresOptIn(api) ? { optIn: true } : {}),
+    };
   }
 
-  return { stage: 'ga', version: releaseVersion };
+  return { stage: 'ga' };
 }
 
 export function deriveAuthorization(

@@ -1,10 +1,10 @@
 # Overview
 
-The deprecation system displays warnings on API documentation pages when fields, parameters, or enum values are deprecated. Deprecations are extracted from `x-glean-deprecated` extensions in OpenAPI specs and stored in `src/data/deprecations.json`.
+The deprecation system displays warnings on API documentation pages when fields, parameters, or enum values are deprecated. Deprecations are extracted from `x-glean-release` extensions with `stage: deprecated` in OpenAPI specs, with a fallback to the older `x-glean-deprecated`, and stored in `src/data/deprecations.json`.
 
 ## How It Works
 
-1. **OpenAPI specs** contain `x-glean-deprecated` extensions on deprecated fields
+1. **OpenAPI specs** mark deprecated nodes with `x-glean-release` (or the older `x-glean-deprecated`). A node with `x-glean-release` ignores `x-glean-deprecated`. `scripts/release-lib.mjs` reads both.
 2. **`generate-deprecations.ts`** extracts these deprecations and outputs `deprecations.json`
 3. **`customMdGenerators.ts`** injects the `<EndpointMetadata>` component into generated API docs, passing the endpoint's active deprecations
 4. **`EndpointMetadata`** renders them: an endpoint-level deprecation sets the release stage to Deprecated (with its replacement message, removal date, and migration link; generic messages such as "Endpoint is deprecated" are omitted); field, parameter, and enum deprecations appear in a Deprecations row
@@ -102,9 +102,42 @@ For example:
 - OpenAPI path: `/rest/api/v1/chat`
 - Matched path in deprecations.json: `/api/v1/chat`
 
-## x-glean-deprecated in OpenAPI Specs
+## x-glean-release in OpenAPI Specs
 
-When adding real deprecations to the OpenAPI spec, use the `x-glean-deprecated` extension:
+Specs mark a deprecated operation, parameter, or field with `stage: deprecated`. The `introduced` date is the date the page and the RSS feed list it under. `x-glean-release` has no id, so `deprecations.json` builds one from the endpoint, type, name, and enum value.
+
+```yaml
+saveChat:
+  type: boolean
+  x-glean-release:
+    stage: deprecated
+    docs: "https://developers.glean.com/docs/migrations/chat-persistence"
+    deprecation:
+      message: "The saveChat field is deprecated. Use chatPersistence instead."
+      introduced: "2025-03-01"
+      removal: "2026-01-15"
+```
+
+Enum values use the list form, which only deprecates values. `enum-value` can sit on the item or inside `deprecation`:
+
+```yaml
+FeedCategory:
+  type: string
+  enum: [ALL, MIXED, RECENT]
+  x-glean-release:
+    - stage: deprecated
+      enum-value: ALL
+      deprecation:
+        message: "The ALL category is deprecated. Use MIXED instead."
+        introduced: "2025-03-20"
+        removal: "2026-01-15"
+```
+
+`stage: beta` operations get the Beta label and the opt-in header in the cURL sample, as `x-glean-experimental` operations do. See `scripts/release-stages.test.tsx` and its fixture for every stage.
+
+## x-glean-deprecated in OpenAPI Specs (older)
+
+Specs that predate `x-glean-release` use the `x-glean-deprecated` extension:
 
 ### Field Deprecation
 
@@ -204,7 +237,8 @@ pnpm test scripts/deprecations-lib.test.ts
 | File | Description |
 |------|-------------|
 | `scripts/generate-deprecations.ts` | Main script to generate deprecations.json |
-| `scripts/deprecations-lib.ts` | Library for parsing x-glean-deprecated from OpenAPI |
+| `scripts/deprecations-lib.ts` | Library for parsing x-glean-release and x-glean-deprecated from OpenAPI |
+| `scripts/release-lib.mjs` | Shared readers for x-glean-release, with the fallback to the older annotations |
 | `scripts/generator/customMdGenerators.ts` | Injects EndpointMetadata into generated docs |
 | `scripts/generator/endpointMetadata.ts` | Derives release stage, authorization, and scopes for EndpointMetadata |
 | `src/data/deprecations.json` | Generated deprecations data |
