@@ -1,7 +1,8 @@
 #!/usr/bin/env tsx
 
 /**
- * Generate deprecations.json from OpenAPI specs by extracting x-glean-deprecated properties
+ * Generate deprecations.json from OpenAPI specs by extracting x-glean-release
+ * deprecations, with a fallback to x-glean-deprecated.
  *
  * Usage: pnpm generate:deprecations
  */

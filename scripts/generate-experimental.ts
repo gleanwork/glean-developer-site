@@ -1,14 +1,14 @@
 #!/usr/bin/env tsx
 
 /**
- * Generate experimental.json from OpenAPI specs by extracting operation-level
- * x-glean-experimental properties.
+ * Generate experimental.json from OpenAPI specs by extracting beta operations
+ * (x-glean-release with stage: beta, or the older x-glean-experimental).
  *
  * The output is consumed by:
- *   - src/theme/DocSidebarItem/Link (renders an "Experimental" sidebar tag)
+ *   - src/theme/DocSidebarItem/Link (renders a "Beta" sidebar tag)
  *
- * The on-page banner is generated separately at gen-api-docs time from the
- * x-glean-experimental extension on the operation (see
+ * The on-page stage badge is generated separately at gen-api-docs time from
+ * the operation's lifecycle extensions (see
  * scripts/generator/customMdGenerators.ts).
  *
  * Sources are derived from openapi.config.ts so each endpoint's full doc id

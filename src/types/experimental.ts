@@ -1,5 +1,7 @@
 /**
- * Shared contract for the generated `src/data/experimental.json`.
+ * Shared contract for the generated `src/data/experimental.json`, which lists
+ * the operations that need the opt-in header: `x-glean-release` with
+ * `stage: beta`, or the older `x-glean-experimental`.
  *
  * This is the single source of truth for both the writer
  * (`scripts/experimental-lib.ts`) and the reader
@@ -28,9 +30,9 @@ export interface ExperimentalEndpoint {
    * a kebab collision in a different API can't produce a false pill.
    */
   docId: string;
-  /** Stable id from the `x-glean-experimental.id` field, when present. */
+  /** Stable id from the older `x-glean-experimental.id` field, when present. */
   id?: string;
-  /** ISO date the endpoint was introduced, when present. */
+  /** ISO date from the older `x-glean-experimental.introduced`, when present. */
   introduced?: string;
 }
 
