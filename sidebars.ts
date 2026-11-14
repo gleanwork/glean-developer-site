@@ -1060,6 +1060,12 @@ const baseSidebars: SidebarsConfig = {
                   label: 'List search filters',
                   className: 'api-method get',
                 },
+                {
+                  type: 'doc',
+                  id: 'api/platform-api/platform-search-enumeration',
+                  label: 'Enumerate matching documents',
+                  className: 'api-method post',
+                },
               ],
             },
             {
