@@ -15,7 +15,8 @@ import BeakerIcon from '@site/src/components/BeakerIcon';
 import styles from './styles.module.css';
 
 // Set of full doc ids (e.g. "api/platform-api/platform-agents-search") that are
-// marked experimental via `x-glean-experimental` in the OpenAPI specs. Matching
+// beta in the OpenAPI specs (`x-glean-release` with `stage: beta`, or the older
+// `x-glean-experimental`), as listed in the generated experimental.json. Matching
 // on the full doc id — not just the last segment — keeps the pill scoped to the
 // exact endpoint, so a kebab collision in another API family can't mis-tag it.
 const experimentalDocIds = new Set(
@@ -89,8 +90,8 @@ export default function DocSidebarItemLink({
             {isExperimental && (
               <span
                 className={clsx(styles.statusBadge, styles.experimentalBadge)}
-                title="Experimental"
-                aria-label="Experimental"
+                title="Beta"
+                aria-label="Beta"
                 role="img"
               >
                 <BeakerIcon className={styles.statusIcon} />

@@ -1,5 +1,11 @@
 import fs from 'node:fs';
 import { find, type ISearchResult } from 'openapi-field-finder';
+import {
+  DEPRECATED_EXTENSION,
+  RELEASE_EXTENSION,
+  getReleaseDeprecation,
+  getReleaseEnumValueDeprecations,
+} from './release-lib.mjs';
 
 interface XGleanDeprecatedBase {
   id: string;
@@ -23,6 +29,41 @@ export type XGleanDeprecatedArrayElement =
 
 export type XGleanDeprecated =
   XGleanDeprecatedObject | XGleanDeprecatedArrayElement[];
+
+interface XGleanReleaseDeprecation {
+  message?: string;
+  introduced?: string;
+  removal?: string;
+  docs?: string;
+  'enum-value'?: string;
+}
+
+interface XGleanReleaseObject {
+  stage: string;
+  docs?: string;
+  deprecation?: XGleanReleaseDeprecation;
+}
+
+interface XGleanReleaseEnumValue {
+  stage: string;
+  'enum-value'?: string;
+  docs?: string;
+  deprecation?: XGleanReleaseDeprecation;
+}
+
+/**
+ * `x-glean-release`, which replaces `x-glean-deprecated`. The object form sets
+ * the node's stage. The list form only deprecates enum values.
+ */
+export type XGleanRelease = XGleanReleaseObject | XGleanReleaseEnumValue[];
+
+/**
+ * Search results keyed by dot path. Keys end in `.x-glean-deprecated` or
+ * `.x-glean-release`.
+ */
+export type LifecycleSearchResult = ISearchResult<
+  XGleanDeprecated | XGleanRelease
+>;
 
 export type DeprecationType = 'endpoint' | 'parameter' | 'field' | 'enum-value';
 
@@ -54,10 +95,10 @@ export async function generateDeprecations(
   outputLocation: string,
   extraEndpoints?: EndpointGroup[],
 ) {
-  const deprecations = await find<XGleanDeprecated>(
-    'x-glean-deprecated',
-    inputSpecs,
-  );
+  const deprecations: LifecycleSearchResult = {
+    ...(await find<XGleanDeprecated>(DEPRECATED_EXTENSION, inputSpecs)),
+    ...(await find<XGleanRelease>(RELEASE_EXTENSION, inputSpecs)),
+  };
 
   const output = convertToDeprecationsOutput(deprecations, extraEndpoints);
   fs.writeFileSync(outputLocation, JSON.stringify(output, null, 2) + '\n');
@@ -71,13 +112,20 @@ interface ParsedPath {
   context: string[];
 }
 
+const ANNOTATION_SUFFIX = /\.(x-glean-deprecated|x-glean-release)$/;
+
+/** The dot path of the node that carries the annotation. */
+function nodePath(dotPath: string): string {
+  return dotPath.replace(ANNOTATION_SUFFIX, '');
+}
+
 /**
  * Parse a dot-notation path to extract endpoint info
  * @example "paths./users.get.x-glean-deprecated" → { apiPath: "/users", method: "GET", context: [] }
- * @example "paths./users.get.parameters.0.x-glean-deprecated" → { apiPath: "/users", method: "GET", context: ["parameters", "0"] }
+ * @example "paths./users.get.parameters.0.x-glean-release" → { apiPath: "/users", method: "GET", context: ["parameters", "0"] }
  */
 function parseDotPath(dotPath: string): ParsedPath | null {
-  const withoutProperty = dotPath.replace(/\.x-glean-deprecated$/, '');
+  const withoutProperty = nodePath(dotPath);
   if (!withoutProperty.startsWith('paths.')) return null;
 
   const parts = withoutProperty.slice(6).split('.');
@@ -134,6 +182,63 @@ function extractName(context: string[], endpointKey: string): string {
 }
 
 /**
+ * A stable id for an `x-glean-release` deprecation, which has no id of its
+ * own. The page and the RSS feed use it to tell entries apart.
+ */
+function releaseDeprecationId(
+  endpointKey: string,
+  type: DeprecationType,
+  name: string,
+  enumValue?: string,
+): string {
+  return [endpointKey, type, name, enumValue].filter(Boolean).join(' ');
+}
+
+/**
+ * The deprecation items that one `x-glean-release` annotation produces: one
+ * for a deprecated node, or one per deprecated enum value.
+ */
+function releaseDeprecationItems(
+  value: XGleanRelease,
+  endpointKey: string,
+  type: DeprecationType,
+  name: string,
+): DeprecationItem[] {
+  const node = { [RELEASE_EXTENSION]: value };
+  const own = getReleaseDeprecation(node);
+  const items: DeprecationItem[] = own
+    ? [
+        createDeprecationItem(
+          {
+            ...own,
+            id: releaseDeprecationId(endpointKey, type, name),
+          } as XGleanDeprecatedBase,
+          type,
+          name,
+        ),
+      ]
+    : [];
+
+  for (const { enumValue, deprecation } of getReleaseEnumValueDeprecations(
+    node,
+  )) {
+    items.push(
+      createDeprecationItem(
+        {
+          ...deprecation,
+          id: releaseDeprecationId(endpointKey, 'enum-value', name, enumValue),
+        } as XGleanDeprecatedBase,
+        'enum-value',
+        name,
+        enumValue,
+      ),
+    );
+  }
+
+  return items;
+}
+
+/**
  * Create a DeprecationItem from x-glean-deprecated data
  */
 function createDeprecationItem(
@@ -156,10 +261,17 @@ function createDeprecationItem(
 }
 
 export function convertToDeprecationsOutput(
-  results: ISearchResult<XGleanDeprecated>,
+  results: LifecycleSearchResult,
   extraEndpoints?: EndpointGroup[],
 ): DeprecationsOutput {
   const endpoints = new Map<string, EndpointGroup>();
+
+  // A node with x-glean-release ignores its x-glean-deprecated.
+  const releaseNodes = new Set(
+    Object.keys(results)
+      .filter((dotPath) => dotPath.endsWith(`.${RELEASE_EXTENSION}`))
+      .map(nodePath),
+  );
 
   // Merge extra endpoints first (for local testing)
   if (extraEndpoints) {
@@ -178,6 +290,9 @@ export function convertToDeprecationsOutput(
   }
 
   for (const [dotPath, value] of Object.entries(results)) {
+    const isRelease = dotPath.endsWith(`.${RELEASE_EXTENSION}`);
+    if (!isRelease && releaseNodes.has(nodePath(dotPath))) continue;
+
     const parsed = parseDotPath(dotPath);
     if (!parsed) continue;
 
@@ -199,9 +314,17 @@ export function convertToDeprecationsOutput(
       const type = getDeprecationType(context);
       const name = extractName(context, key);
 
-      if (Array.isArray(value)) {
+      if (isRelease) {
+        endpoint.deprecations.push(
+          ...releaseDeprecationItems(value as XGleanRelease, key, type, name),
+        );
+        continue;
+      }
+
+      const legacy = value as XGleanDeprecated;
+      if (Array.isArray(legacy)) {
         // Enum value deprecations (array format)
-        for (const item of value) {
+        for (const item of legacy) {
           if ('kind' in item && item.kind === 'enum-value') {
             endpoint.deprecations.push(
               createDeprecationItem(
@@ -216,7 +339,7 @@ export function convertToDeprecationsOutput(
           }
         }
       } else {
-        endpoint.deprecations.push(createDeprecationItem(value, type, name));
+        endpoint.deprecations.push(createDeprecationItem(legacy, type, name));
       }
     }
   }
@@ -231,10 +354,13 @@ export function convertToDeprecationsOutput(
     });
   }
 
-  const allEndpoints = Array.from(endpoints.values()).sort((a, b) => {
-    const pathCmp = a.path.localeCompare(b.path);
-    return pathCmp !== 0 ? pathCmp : a.method.localeCompare(b.method);
-  });
+  // x-glean-release is also on beta and GA nodes, which deprecate nothing.
+  const allEndpoints = Array.from(endpoints.values())
+    .filter((ep) => ep.deprecations.length > 0)
+    .sort((a, b) => {
+      const pathCmp = a.path.localeCompare(b.path);
+      return pathCmp !== 0 ? pathCmp : a.method.localeCompare(b.method);
+    });
 
   const totalCount = allEndpoints.reduce(
     (sum, ep) => sum + ep.deprecations.length,

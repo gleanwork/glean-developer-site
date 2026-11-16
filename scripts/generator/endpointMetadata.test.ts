@@ -52,7 +52,6 @@ describe('deriveRelease', () => {
       removal: '2027-04-15',
       message: 'Use POST /api/agents/search instead.',
       docs: 'https://developers.glean.com/api/platform-api/agents-overview',
-      version: undefined,
     });
   });
 
@@ -64,45 +63,110 @@ describe('deriveRelease', () => {
     expect(deriveRelease(base, [generic]).message).toBeUndefined();
   });
 
-  it('reads x-glean-experimental and its introduced date', () => {
+  it('maps x-glean-experimental to beta with its introduced date', () => {
     const release = deriveRelease(
       { ...base, 'x-glean-experimental': { introduced: '2026-06-23' } },
       [],
     );
     expect(release).toEqual({
-      stage: 'experimental',
+      stage: 'beta',
       since: '2026-06-23',
-      version: undefined,
+      optIn: true,
     });
   });
 
-  it('maps x-beta and Preview visibility to beta', () => {
-    expect(deriveRelease({ ...base, 'x-beta': true }, []).stage).toBe('beta');
-    expect(
-      deriveRelease({ ...base, 'x-visibility': 'Preview' }, []).stage,
-    ).toBe('beta');
+  it('maps x-beta and Preview visibility to beta without the opt-in header', () => {
+    expect(deriveRelease({ ...base, 'x-beta': true }, [])).toEqual({
+      stage: 'beta',
+    });
+    expect(deriveRelease({ ...base, 'x-visibility': 'Preview' }, [])).toEqual({
+      stage: 'beta',
+    });
   });
 
-  it('prefers x-glean-release when present and hides unreleased versions', () => {
+  it('reads each x-glean-release stage', () => {
+    expect(
+      deriveRelease(
+        {
+          ...base,
+          'x-glean-release': { stage: 'beta', docs: '/guides/beta' },
+        },
+        [],
+      ),
+    ).toEqual({ stage: 'beta', docs: '/guides/beta', optIn: true });
+    expect(
+      deriveRelease({ ...base, 'x-glean-release': { stage: 'ga' } }, []),
+    ).toEqual({ stage: 'ga' });
+    expect(
+      deriveRelease(
+        {
+          ...base,
+          'x-glean-release': {
+            stage: 'deprecated',
+            docs: '/guides/migrate',
+            deprecation: {
+              message: 'Use POST /api/agents/search instead.',
+              introduced: '2026-10-01',
+              removal: '2027-04-15',
+            },
+          },
+        },
+        [],
+      ),
+    ).toEqual({
+      stage: 'deprecated',
+      since: '2026-10-01',
+      removal: '2027-04-15',
+      message: 'Use POST /api/agents/search instead.',
+      docs: '/guides/migrate',
+    });
+  });
+
+  it('ignores the older markers when x-glean-release is present', () => {
+    expect(
+      deriveRelease(
+        {
+          ...base,
+          deprecated: true,
+          'x-beta': true,
+          'x-glean-experimental': { introduced: '2026-06-23' },
+          'x-glean-release': { stage: 'ga' },
+        },
+        [],
+      ),
+    ).toEqual({ stage: 'ga' });
+  });
+
+  it('prefers the deprecations.json entry for a deprecated stage', () => {
+    expect(
+      deriveRelease(
+        {
+          ...base,
+          'x-glean-release': {
+            stage: 'deprecated',
+            deprecation: { message: 'From the spec', removal: '2027-01-01' },
+          },
+        },
+        [endpointDeprecation],
+      ).message,
+    ).toBe('Use POST /api/agents/search instead.');
+  });
+
+  it('keeps deprecated ahead of beta for the older markers', () => {
     expect(
       deriveRelease(
         {
           ...base,
           'x-glean-experimental': { introduced: '2026-06-23' },
-          'x-glean-release': { stage: 'GA', version: 'release-2026-09-24' },
+          'x-glean-deprecated': {
+            message: 'Use POST /api/agents/search instead.',
+            introduced: '2026-08-25',
+            removal: '2027-04-15',
+          },
         },
         [],
-      ),
-    ).toEqual({ stage: 'ga', version: 'release-2026-09-24' });
-    expect(
-      deriveRelease(
-        {
-          ...base,
-          'x-glean-release': { stage: 'Beta', version: 'unreleased' },
-        },
-        [],
-      ),
-    ).toEqual({ stage: 'beta', version: undefined });
+      ).stage,
+    ).toBe('deprecated');
   });
 });
 

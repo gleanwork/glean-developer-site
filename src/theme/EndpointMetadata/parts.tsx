@@ -13,14 +13,12 @@ import type {
 import styles from './styles.module.css';
 
 const STAGE_LABELS: Record<ReleaseStage, string> = {
-  experimental: 'Experimental',
   beta: 'Beta',
   ga: 'Generally available',
   deprecated: 'Deprecated',
 };
 
 const STAGE_CLASS: Record<ReleaseStage, string> = {
-  experimental: styles.stageExperimental,
   beta: styles.stageBeta,
   ga: styles.stageGa,
   deprecated: styles.stageDeprecated,
@@ -28,6 +26,17 @@ const STAGE_CLASS: Record<ReleaseStage, string> = {
 
 function stageClass(stage: ReleaseStage): string {
   return STAGE_CLASS[stage];
+}
+
+/**
+ * Pages generated before the x-glean-release readers say `experimental` for
+ * what is now `beta`. The next `openapi:regenerate` run replaces them, and
+ * this can then go.
+ */
+export function normalizeRelease(release: EndpointRelease): EndpointRelease {
+  return (release.stage as string) === 'experimental'
+    ? { ...release, stage: 'beta', optIn: true }
+    : release;
 }
 
 /** "2026-06-23" → "June 23, 2026", parsed in UTC so the day doesn't drift. */
@@ -45,10 +54,8 @@ function formatDate(iso?: string): string | undefined {
 
 function StageIcon({ stage }: { stage: ReleaseStage }): ReactNode {
   switch (stage) {
-    case 'experimental':
-      return <BeakerIcon className={styles.icon} />;
     case 'beta':
-      return <Icon name="Zap" className={styles.icon} />;
+      return <BeakerIcon className={styles.icon} />;
     case 'deprecated':
       return <Icon name="AlertTriangle" className={styles.icon} />;
     default:
@@ -69,10 +76,13 @@ export function StageBadge({ stage }: { stage: ReleaseStage }): ReactNode {
 function stageDetailItems(release: EndpointRelease): ReactNode[] {
   const since = formatDate(release.since);
   switch (release.stage) {
-    case 'experimental':
+    case 'beta':
       return [
         since && `Introduced ${since}`,
-        <Link to="/experimental/overview">How experimental APIs work</Link>,
+        release.docs ? <Link to={release.docs}>Guide</Link> : null,
+        release.optIn ? (
+          <Link to="/experimental/overview">How to opt in</Link>
+        ) : null,
       ];
     case 'deprecated': {
       const removal = formatDate(release.removal);
@@ -94,7 +104,7 @@ function stageDetailItems(release: EndpointRelease): ReactNode[] {
 
 /**
  * Muted one-liner beside the badge, in the same style as the Authorization
- * row, e.g. "Introduced June 23, 2026 · How experimental APIs work" or
+ * row, e.g. "Introduced June 23, 2026 · How to opt in" or
  * "Use POST /api/agents/search instead. · Removal on April 15, 2027 ·
  * Migration guide".
  */

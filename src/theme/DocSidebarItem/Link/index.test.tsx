@@ -112,24 +112,20 @@ describe('sidebar endpoint status icons', () => {
     },
   );
 
-  it('preserves the experimental badge without a deprecation warning', () => {
+  it('preserves the beta badge without a deprecation warning', () => {
     renderItem({ docId: 'api/platform-api/experimental-endpoint' });
-    expect(
-      screen.getByRole('img', { name: 'Experimental' }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'Beta' })).toBeInTheDocument();
     expect(
       screen.queryByRole('img', { name: 'Deprecated' }),
     ).not.toBeInTheDocument();
   });
 
-  it('shows both badges when an endpoint is experimental and deprecated', () => {
+  it('shows both badges when an endpoint is beta and deprecated', () => {
     renderItem({
       docId: 'api/platform-api/experimental-endpoint',
       className: 'post api-method menu__list-item--deprecated',
     });
-    expect(
-      screen.getByRole('img', { name: 'Experimental' }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'Beta' })).toBeInTheDocument();
     expect(screen.getByRole('img', { name: 'Deprecated' })).toBeInTheDocument();
   });
 });

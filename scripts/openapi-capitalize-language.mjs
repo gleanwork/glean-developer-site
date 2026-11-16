@@ -10,6 +10,7 @@ import https from 'https';
 import http from 'http';
 import * as yaml from 'js-yaml';
 import { dirname } from 'path';
+import { requiresOptIn } from './release-lib.mjs';
 
 // Capitalization helper
 export function capitalizeLanguageName(lang) {
@@ -83,7 +84,8 @@ const SKILLS_MULTIPART_OPERATION_IDS = new Set([
 
 /**
  * Inject the `X-Glean-Include-Experimental` header parameter into every
- * operation marked with the `x-glean-experimental` vendor extension.
+ * operation that needs it: `x-glean-release` with `stage: beta`, or the older
+ * `x-glean-experimental` vendor extension (see release-lib.mjs).
  *
  * The SDK code samples (x-codeSamples) already opt in to experimental
  * features via `includeExperimental: true`, but the cURL snippet is
@@ -109,11 +111,7 @@ export function injectExperimentalHeaders(apiSpec) {
 
     for (const method of HTTP_METHODS) {
       const operation = pathItem[method];
-      if (
-        !operation ||
-        typeof operation !== 'object' ||
-        !operation['x-glean-experimental']
-      ) {
+      if (!requiresOptIn(operation)) {
         continue;
       }
 
@@ -171,8 +169,8 @@ function responseContentType(operation) {
  * Content-Type without a boundary. An explicit sample lets cURL construct the
  * multipart body and boundary from the selected file.
  *
- * Include `X-Glean-Include-Experimental` only while the operation still has
- * `x-glean-experimental`, matching `injectExperimentalHeaders`.
+ * Include `X-Glean-Include-Experimental` only while the operation needs the
+ * opt-in header, matching `injectExperimentalHeaders`.
  */
 export function injectSkillsMultipartCurlSamples(apiSpec) {
   const paths = apiSpec?.paths;
@@ -208,7 +206,7 @@ export function injectSkillsMultipartCurlSamples(apiSpec) {
         `curl -L -X ${method.toUpperCase()} '${serverUrl}${requestPath}' \\`,
         `  -H 'Accept: ${responseContentType(operation)}' \\`,
       ];
-      if (operation['x-glean-experimental']) {
+      if (requiresOptIn(operation)) {
         lines.push(`  -H '${EXPERIMENTAL_HEADER_NAME}: true' \\`);
       }
       lines.push(

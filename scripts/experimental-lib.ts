@@ -6,6 +6,7 @@ import type {
   ExperimentalData,
   HttpMethod,
 } from '../src/types/experimental';
+import { requiresOptIn } from './release-lib.mjs';
 
 // Re-export the shared contract so callers/tests can import from one place.
 export type { ExperimentalEndpoint, ExperimentalData, HttpMethod };
@@ -40,6 +41,7 @@ interface OperationLike {
   operationId?: string;
   summary?: string;
   'x-glean-experimental'?: XGleanExperimental;
+  'x-glean-release'?: unknown;
 }
 
 interface OpenApiDocLike {
@@ -56,8 +58,9 @@ export function computeBaseId(operation: OperationLike): string {
 }
 
 /**
- * Extract every operation-level `x-glean-experimental` endpoint from a single
- * parsed OpenAPI document. Pure — no IO.
+ * Extract every operation that needs the opt-in header from a single parsed
+ * OpenAPI document: `x-glean-release` with `stage: beta`, or the older
+ * `x-glean-experimental` (see release-lib.mjs). Pure — no IO.
  *
  * @param docIdPrefix The generated doc-id prefix for this spec (the plugin's
  *   `outputDir` without the leading `docs/`), used to build each endpoint's
@@ -81,9 +84,14 @@ export function extractExperimentalEndpoints(
       if (!operation || typeof operation !== 'object') continue;
 
       const op = operation as OperationLike;
-      const experimental = op['x-glean-experimental'];
-      if (!experimental) continue;
+      if (!requiresOptIn(op)) continue;
 
+      // Only the older annotation has an id and an introduced date.
+      const experimental: XGleanExperimental =
+        op['x-glean-release'] === undefined &&
+        typeof op['x-glean-experimental'] === 'object'
+          ? op['x-glean-experimental']
+          : {};
       const baseId = computeBaseId(op);
 
       endpoints.push({

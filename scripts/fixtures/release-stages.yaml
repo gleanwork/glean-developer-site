@@ -1,0 +1,145 @@
+# A published spec with one operation per x-glean-release stage, plus the
+# older x-glean-experimental and x-glean-deprecated annotations. Used by
+# scripts/release-stages.test.tsx.
+openapi: 3.0.0
+info:
+  version: 0.9.0
+  title: Release stages fixture
+paths:
+  /stage/beta:
+    post:
+      operationId: stage-beta
+      x-glean-release:
+        stage: beta
+        docs: /guides/beta
+      responses:
+        '200':
+          description: OK
+  /stage/ga:
+    post:
+      operationId: stage-ga
+      x-glean-release:
+        stage: ga
+      responses:
+        '200':
+          description: OK
+  /stage/deprecated:
+    post:
+      operationId: stage-deprecated
+      deprecated: true
+      x-glean-release:
+        stage: deprecated
+        docs: /guides/migrate
+        deprecation:
+          message: Use POST /stage/ga instead
+          introduced: '2026-10-01'
+          removal: '2027-04-15'
+      parameters:
+        - name: oldParam
+          in: query
+          deprecated: true
+          schema:
+            type: string
+          x-glean-release:
+            stage: deprecated
+            deprecation:
+              message: Use newParam instead
+              introduced: '2026-10-02'
+              removal: '2027-04-16'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                releaseField:
+                  type: string
+                  deprecated: true
+                  x-glean-release:
+                    stage: deprecated
+                    deprecation:
+                      message: Use newField instead
+                      introduced: '2026-10-03'
+                      removal: '2027-04-17'
+                betaField:
+                  type: string
+                  x-glean-release:
+                    stage: beta
+                releaseEnum:
+                  type: string
+                  enum:
+                    - STANDARD
+                    - LEGACY
+                    - OLD
+                  x-glean-release:
+                    - stage: deprecated
+                      enum-value: LEGACY
+                      deprecation:
+                        message: Use STANDARD instead
+                        introduced: '2026-10-04'
+                        removal: '2027-04-18'
+                    # enum-value can also sit inside deprecation.
+                    - stage: deprecated
+                      deprecation:
+                        enum-value: OLD
+                        message: Use STANDARD instead
+                        introduced: '2026-10-05'
+                        removal: '2027-04-19'
+      responses:
+        '200':
+          description: OK
+  /legacy/experimental:
+    post:
+      operationId: legacy-experimental
+      x-glean-experimental:
+        id: 4abc1e17-8e06-490b-99a7-e8f97592405a
+        introduced: '2026-05-12'
+      responses:
+        '200':
+          description: OK
+  /legacy/deprecated:
+    post:
+      operationId: legacy-deprecated
+      deprecated: true
+      x-glean-deprecated:
+        id: 0d9a8a3c-8c47-4c2f-9a39-3f0f6f4f3a10
+        message: Use POST /stage/ga instead
+        introduced: '2026-02-01'
+        removal: '2027-10-15'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                legacyEnum:
+                  type: string
+                  enum:
+                    - STANDARD
+                    - LEGACY
+                  x-glean-deprecated:
+                    - id: 3f4a5b6c-0000-4000-8000-000000000000
+                      kind: enum-value
+                      enum-value: LEGACY
+                      message: Use STANDARD instead
+                      introduced: '2026-02-04'
+                      removal: '2027-10-18'
+      responses:
+        '200':
+          description: OK
+  /precedence:
+    post:
+      operationId: precedence
+      # x-glean-release wins, so the older annotations below are ignored.
+      x-glean-release:
+        stage: ga
+      x-glean-experimental:
+        id: 9b7f0b8e-4b6d-4a63-9f43-1b8f5f3f2e11
+      x-glean-deprecated:
+        id: 1c2d3e4f-0000-4000-8000-000000000000
+        message: Ignored
+        introduced: '2026-01-01'
+        removal: '2027-07-01'
+      responses:
+        '200':
+          description: OK
