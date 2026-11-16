@@ -4,40 +4,46 @@ icon: 'git-branch'
 iconSet: 'feather'
 ---
 
+import AgentRetrievalRouting from '@site/docs/_partials/_agent-retrieval-routing.mdx';
+
 # Choose a retrieval interface
 
-Glean exposes enterprise knowledge through two main retrieval interfaces: **REST APIs** and the **Glean MCP server**. Choosing the right one depends on what you are building.
+<AgentRetrievalRouting />
 
-## Glean REST APIs
+Glean offers two ways to retrieve enterprise knowledge: the **Remote MCP server** and the **REST APIs**. The choice depends on whether an agent talks to Glean.
 
-The Glean REST APIs give you direct, programmatic access to Glean functionality. You control exactly what to query, when to query it, and how to handle the response. Use the REST APIs when you are building:
+- If an agent talks to Glean, use the Remote MCP server.
+- If your code talks to Glean without an agent, use the REST APIs.
 
-- A custom search experience
+## Agents use the Remote MCP server
+
+An agent is any application that sends Glean results to an LLM. That includes agents, chatbots, retrieval-augmented generation (RAG) applications, LLM evaluations, and MCP servers you build yourself.
+
+The Remote MCP server exposes Glean as tools that an LLM can call. Each tool has a description the model reads to decide when and how to call it. The server includes tools for search, chat, document retrieval, code search, people lookup, and more. These tools are built for agents, and your agent gets Glean's improvements to them without changes on your side.
+
+The Search API is not a substitute. It returns short snippets designed for a search results page and has no tool descriptions. An agent built on it, including one that wraps it in a custom MCP server, gets less context to work with and does not receive improvements to the MCP tools.
+
+To connect an agent, see [Remote MCP server](/guides/mcp).
+
+## Code without an agent uses the REST APIs
+
+The REST APIs give your code direct access to Glean. Your code decides what to query and when, and handles the structured response. Use the REST APIs when you are building:
+
+- A custom search UI
 - A backend pipeline that processes or aggregates Glean data
 - An integration that needs deterministic, structured results
 
-## Glean MCP server
+## Examples
 
-The Glean MCP server exposes Glean's capabilities as tools that an LLM can invoke. The model decides when to call a tool and what to send. The MCP server includes tools for search, chat, document retrieval, code search, people lookup, and more. Use MCP when you are building:
-
-- An LLM-based application or agent that needs to retrieve enterprise context
-- A chat experience backed by Glean's knowledge graph
-- Any integration where the LLM, not your code, drives retrieval
-
-## Example: retrieving context for an LLM
-
-A common mistake is calling the Search REST API from an LLM-based application. The Search API expects a deterministic query and returns structured results — it is not designed for the variable, rewritten queries an LLM produces.
-
-For LLM applications, use the MCP tools instead:
-
-| Goal | Use |
-| :--- | :--- |
-| Retrieve documents for an LLM to reason over | Glean MCP `search` tool — send the LLM-rewritten query |
-| Build an end-to-end chat experience | Glean MCP `chat` tool — send the original user query |
-| Build a custom search UI | Search REST API — send the user query directly |
+| Goal                                         | Use                                                            |
+| :------------------------------------------- | :------------------------------------------------------------- |
+| Retrieve documents for an LLM to reason over | Remote MCP server `search` tool. Send the LLM-rewritten query. |
+| Build an end-to-end chat experience          | Remote MCP server `chat` tool. Send the original user query.   |
+| Evaluate Glean with an LLM                   | Remote MCP server                                              |
+| Build a custom search UI                     | Search REST API. Send the user query directly.                 |
 
 :::info
 
-For a full list of available MCP tools, see the [MCP documentation](https://docs.glean.com/administration/platform/mcp/about).
+For setup and sign-in, see [Remote MCP server](/guides/mcp). For the full list of MCP tools, see the [MCP documentation](https://docs.glean.com/administration/platform/mcp/about).
 
 :::
