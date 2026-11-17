@@ -47,8 +47,9 @@ function feather(name: string, size = 18): React.ReactNode {
 const PLATFORM_STATUSES = getPlatformStatuses(experimentalData.endpoints);
 
 /**
- * Platform APIs announcement band. Per-capability GA/experimental status is
- * derived from the generated `experimental.json`, so it tracks the spec.
+ * Platform APIs announcement band. A capability is experimental only when
+ * every endpoint it publishes is experimental. One GA endpoint keeps the
+ * capability GA. Status comes from the generated spec data.
  */
 export function AnnouncementBand({
   statuses = PLATFORM_STATUSES,

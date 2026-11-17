@@ -2,10 +2,14 @@ import React from 'react';
 import Link from '@docusaurus/Link';
 import CardGroup from '@theme/CardGroup';
 import Card from '@theme/Card';
-import styles from './styles.module.css';
-import { getEndpointsForApi } from '../../utils/apiData';
+import { StageBadge } from '@site/src/theme/EndpointMetadata/parts';
+import experimentalData from '@site/src/data/experimental.json';
 import platformEndpointsData from '@site/src/data/platform-endpoints.json';
+import type { ExperimentalData } from '@site/src/types/experimental';
 import type { PlatformEndpointsData } from '@site/src/types/platformEndpoints';
+import { getEndpointsForApi } from '../../utils/apiData';
+import { isExperimentalEndpoint } from '../home/platformStatus';
+import styles from './styles.module.css';
 
 interface Endpoint {
   method: string;
@@ -15,6 +19,8 @@ interface Endpoint {
   operationId: string;
   /** Link to the endpoint page. Overrides the link derived from operationId. */
   href?: string;
+  /** Platform endpoints marked experimental in the generated spec. */
+  experimental?: boolean;
 }
 
 interface UseCase {
@@ -74,12 +80,15 @@ export function getPlatformApiEndpoints(apiFamily: string): Endpoint[] {
     return [];
   }
 
+  const experimental = (experimentalData as ExperimentalData).endpoints;
+
   return family.endpoints.map((endpoint) => ({
     method: endpoint.method,
     path: endpoint.path,
     summary: endpoint.summary,
     operationId: endpoint.docId.split('/').pop() ?? endpoint.docId,
     href: `/${endpoint.docId}`,
+    experimental: isExperimentalEndpoint(endpoint.docId, experimental),
   }));
 }
 
@@ -390,9 +399,14 @@ export default function ApiOverview({
                         <MethodBadge method={endpoint.method} />
                       </td>
                       <td>
-                        <Link to={docLink} className="text--no-decoration">
-                          <code>{endpoint.path}</code>
-                        </Link>
+                        <span className={styles.endpointCell}>
+                          <Link to={docLink} className="text--no-decoration">
+                            <code>{endpoint.path}</code>
+                          </Link>
+                          {endpoint.experimental ? (
+                            <StageBadge stage="beta" />
+                          ) : null}
+                        </span>
                       </td>
                       <td>
                         <Link

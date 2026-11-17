@@ -110,6 +110,16 @@ export default defineConfig({
         __dirname,
         './node_modules/docusaurus-theme-openapi-docs/lib/theme/translationIds.js',
       ),
+      // Longer prefix first: `@theme/Card` would also match `@theme/CardGroup`.
+      // Both precede the `@theme` prefix so they resolve to the Glean cards.
+      '@theme/CardGroup': path.resolve(
+        __dirname,
+        './packages/docusaurus-theme-glean/src/theme/CardGroup/index.tsx',
+      ),
+      '@theme/Card': path.resolve(
+        __dirname,
+        './packages/docusaurus-theme-glean/src/theme/Card/index.tsx',
+      ),
       '@theme': path.resolve(
         __dirname,
         './node_modules/@docusaurus/theme-classic/lib/theme',

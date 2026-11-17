@@ -2,41 +2,121 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import experimentalData from '@site/src/data/experimental.json';
+import platformEndpointsData from '@site/src/data/platform-endpoints.json';
+import type { PlatformEndpointsData } from '@site/src/types/platformEndpoints';
 import {
   PLATFORM_CAPABILITIES,
   belongsToCapability,
   getPlatformStatuses,
+  isExperimentalEndpoint,
   platformBadge,
 } from './platformStatus';
 
 const doc = (slug: string) => ({ docId: `api/platform-api/${slug}` });
 
-describe('getPlatformStatuses', () => {
-  it('marks a capability experimental when any endpoint is experimental', () => {
-    const statuses = getPlatformStatuses([
-      doc('platform-skills-create'),
-      doc('platform-trigger-presets-list'),
-      doc('platform-documents-get'),
-    ]);
+const publishedCatalog = Object.values(
+  (platformEndpointsData as PlatformEndpointsData).families,
+).flatMap((family) => family.endpoints);
 
-    expect(statuses).toEqual([
-      { label: 'Search', stage: 'ga' },
-      { label: 'Documents', stage: 'experimental' },
-      { label: 'Chat', stage: 'ga' },
-      { label: 'Agents', stage: 'ga' },
-      { label: 'Skills', stage: 'experimental' },
-      { label: 'Triggers', stage: 'experimental' },
-      { label: 'Usage', stage: 'ga' },
-      { label: 'Users', stage: 'ga' },
-      { label: 'Departments', stage: 'ga' },
-      { label: 'Admin', stage: 'ga' },
-    ]);
+describe('getPlatformStatuses', () => {
+  it('keeps a capability GA when it still has a GA endpoint', () => {
+    const experimental = [doc('platform-search-enumeration')];
+    const catalog = [
+      doc('platform-search'),
+      doc('platform-search-filters'),
+      doc('platform-search-enumeration'),
+    ];
+
+    const statuses = getPlatformStatuses(
+      experimental,
+      PLATFORM_CAPABILITIES,
+      catalog,
+    );
+
+    expect(statuses.find((status) => status.label === 'Search')).toEqual({
+      label: 'Search',
+      stage: 'ga',
+    });
+    expect(isExperimentalEndpoint(experimental[0].docId, experimental)).toBe(
+      true,
+    );
+    expect(
+      isExperimentalEndpoint(doc('platform-search').docId, experimental),
+    ).toBe(false);
+  });
+
+  it('marks a capability experimental when every endpoint is experimental', () => {
+    const endpoints = [
+      doc('platform-documents-get'),
+      doc('platform-documents-get-by-url'),
+      doc('platform-documents-batch'),
+    ];
+
+    const statuses = getPlatformStatuses(
+      endpoints,
+      PLATFORM_CAPABILITIES,
+      endpoints,
+    );
+
+    expect(statuses.find((status) => status.label === 'Documents')).toEqual({
+      label: 'Documents',
+      stage: 'experimental',
+    });
+    expect(
+      endpoints.every((endpoint) =>
+        isExperimentalEndpoint(endpoint.docId, endpoints),
+      ),
+    ).toBe(true);
+  });
+
+  it('marks an unpublished capability experimental when its only endpoints are experimental', () => {
+    const statuses = getPlatformStatuses(
+      [doc('platform-skills-create')],
+      [{ label: 'Skills', docPrefixes: ['platform-skills'] }],
+      [],
+    );
+
+    expect(statuses).toEqual([{ label: 'Skills', stage: 'experimental' }]);
+  });
+
+  it('treats a capability with no endpoints as GA', () => {
+    const statuses = getPlatformStatuses(
+      [],
+      [{ label: 'Search', docPrefixes: ['platform-search'] }],
+      [],
+    );
+
+    expect(statuses).toEqual([{ label: 'Search', stage: 'ga' }]);
+  });
+
+  // #923 adds POST /api/search/enumeration (platform-search-enumeration) as
+  // the only experimental Search endpoint. Search stays GA, so the platform
+  // search video (narrated GA) does not drift.
+  it('keeps Search GA when only the enumeration endpoint is experimental', () => {
+    const enumeration = doc('platform-search-enumeration');
+    const statuses = getPlatformStatuses(
+      [...experimentalData.endpoints, enumeration],
+      PLATFORM_CAPABILITIES,
+      [...publishedCatalog, enumeration],
+    );
+
+    expect(statuses.find((status) => status.label === 'Search')).toEqual({
+      label: 'Search',
+      stage: 'ga',
+    });
+    expect(statuses.find((status) => status.label === 'Triggers')).toEqual({
+      label: 'Triggers',
+      stage: 'experimental',
+    });
+    expect(isExperimentalEndpoint(enumeration.docId, [enumeration])).toBe(true);
   });
 
   it('ignores experimental endpoints outside the Platform API', () => {
-    const statuses = getPlatformStatuses([
-      { docId: 'api/client-api/search/platform-search' },
-    ]);
+    const statuses = getPlatformStatuses(
+      [{ docId: 'api/client-api/search/platform-search' }],
+      PLATFORM_CAPABILITIES,
+      [],
+    );
 
     expect(statuses.every((s) => s.stage === 'ga')).toBe(true);
   });
