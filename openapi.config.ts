@@ -1,5 +1,8 @@
 import type * as OpenApiPlugin from 'docusaurus-plugin-openapi-docs';
-import { customApiMdGenerator } from './scripts/generator/customMdGenerators';
+import {
+  createApiMdGenerator,
+  customApiMdGenerator,
+} from './scripts/generator/customMdGenerators';
 
 const sharedOptions = {
   showSchemas: false,
@@ -139,3 +142,36 @@ export const openApiPluginOptions = {
     },
   } satisfies Record<string, OpenApiPlugin.Options>,
 };
+
+const PREVIEW_NOTICE = `
+:::warning[Preview: not generally available]
+
+This endpoint is **experimental** and is shared as a preview ahead of general availability. It is subject to change or removal without notice, and it is not covered by the [deprecation policy](/deprecations/overview).
+
+It requires enablement: Glean must enable it for your deployment before you can call it, and every request must send \`X-Glean-Include-Experimental: true\` ([how to opt in](/experimental/overview#opting-in)). The Glean API client SDKs do not include it; call it over HTTP.
+
+:::
+`;
+
+/**
+ * Unlisted, preview-only API reference pages (see openapi/preview/README.md).
+ *
+ * Deliberately not part of `openApiPluginOptions.config`: scripts iterate that
+ * object (generate:experimental, generate:platform-endpoints) and the
+ * automated `openapi:regenerate:all` run must never see these entries.
+ * docusaurus.config.ts merges them into the same plugin instance, because a
+ * second instance would make every `docusaurus gen-api-docs <id>` call
+ * without `--plugin-id` fail.
+ */
+export const previewOpenApiConfig = {
+  'preview-search-enumeration': {
+    showSchemas: false,
+    externalJsonProps: true,
+    specPath: './openapi/preview/search-enumeration.yaml',
+    outputDir: 'docs/api/preview',
+    template: './scripts/generator/preview-api-page.mustache',
+    markdownGenerators: {
+      createApiPageMD: createApiMdGenerator(PREVIEW_NOTICE),
+    },
+  },
+} satisfies Record<string, OpenApiPlugin.Options>;

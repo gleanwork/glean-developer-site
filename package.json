@@ -95,6 +95,8 @@
     "openapi:clean:after:client": "find docs/api/client-api -type f -name 'sidebar.ts' -delete && find docs/api/client-api -type f -name '*.info.mdx' -delete && find docs/api/client-api -type f -name '*.tag.mdx' -delete",
     "openapi:clean:after:indexing": "rm -f docs/api/indexing-api/sidebar.ts docs/api/indexing-api/glean-api.info.mdx && find docs/api/indexing-api -type f -name '*.info.mdx' -delete && find docs/api/indexing-api -type f -name '*.tag.mdx' -delete",
     "openapi:clean:after:platform": "rm -f docs/api/platform-api/sidebar.ts docs/api/platform-api/glean-platform-api.info.mdx && find docs/api/platform-api -type f -name '*.info.mdx' -delete && find docs/api/platform-api -type f -name '*.tag.mdx' -delete",
+    "preview-api:refresh": "node scripts/openapi-preview-extract.mjs https://gleanwork.github.io/open-api/specs/source/platform.yaml post /search/enumeration openapi/preview/search-enumeration.yaml && node scripts/openapi-server-url.mjs openapi/preview/search-enumeration.yaml && pnpm run preview-api:generate",
+    "preview-api:generate": "rm -rf docs/api/preview && docusaurus gen-api-docs preview-search-enumeration && rm -f docs/api/preview/*.info.mdx",
     "icons:sync": "tsx scripts/sync-glean-icons.mts",
     "websdk:reference:generate": "node scripts/websdk-reference-generate.mjs",
     "openapi:serverurl:client": "node scripts/openapi-server-url.mjs openapi/client/client-capitalized.yaml"

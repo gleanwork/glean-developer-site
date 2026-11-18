@@ -2,7 +2,7 @@ import { themes as prismThemes } from 'prism-react-renderer';
 import path from 'path';
 import type { Config } from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
-import { openApiPluginOptions } from './openapi.config';
+import { openApiPluginOptions, previewOpenApiConfig } from './openapi.config';
 import docTimestampsPlugin from './plugins/doc-timestamps';
 const redirects = [
   ...require('./redirects.json'),
@@ -16,6 +16,10 @@ const previewRecipeRoutes = (
 )
   .filter((recipe) => recipe.visibility === 'preview')
   .map((recipe) => `/cookbook/${recipe.id}*`);
+// Unlisted preview API reference pages (openapi/preview/README.md). The MCP
+// exclusion also keeps them out of site search, which indexes build/mcp/docs.json.
+const previewApiRoutes = ['/api/preview/**'];
+const previewRoutes = [...previewRecipeRoutes, ...previewApiRoutes];
 import { getBuildTimeFlags } from './src/utils/buildTimeFlags';
 
 /**
@@ -98,7 +102,7 @@ const config: Config = {
           customCss: './src/css/custom.css',
         },
         sitemap: {
-          ignorePatterns: previewRecipeRoutes,
+          ignorePatterns: previewRoutes,
         },
       } satisfies Preset.Options,
     ],
@@ -301,7 +305,7 @@ const config: Config = {
         content: {
           includePages: true,
           enableLlmsFullTxt: true,
-          excludeRoutes: previewRecipeRoutes,
+          excludeRoutes: previewRoutes,
         },
       },
     ],
@@ -315,7 +319,7 @@ const config: Config = {
         server: {
           name: 'glean-developer-docs',
         },
-        excludeRoutes: previewRecipeRoutes,
+        excludeRoutes: previewRoutes,
         // Serve our own docs-research skill instead of the built-in one, so
         // its description says what these docs cover.
         skills: { builtin: false, dir: 'mcp-skills' },
@@ -338,7 +342,13 @@ const config: Config = {
         enableAnonymousAuth: true,
       },
     ],
-    ['docusaurus-plugin-openapi-docs', openApiPluginOptions],
+    [
+      'docusaurus-plugin-openapi-docs',
+      {
+        ...openApiPluginOptions,
+        config: { ...openApiPluginOptions.config, ...previewOpenApiConfig },
+      },
+    ],
     docTimestampsPlugin,
   ],
   themes: [
