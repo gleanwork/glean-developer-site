@@ -105,12 +105,20 @@ function createEndpointMetadata(
   return `<EndpointMetadata metadata={${JSON.stringify(metadata)}} />\n\n`;
 }
 
-export function customApiMdGenerator({
-  title,
-  api,
-  infoPath,
-  frontMatter,
-}: ApiPageMetadata) {
+/**
+ * `notice` is MDX rendered right after the endpoint metadata block, for
+ * page-level callouts the spec cannot express (e.g. preview-only pages).
+ */
+export function createApiMdGenerator(notice?: string) {
+  return (pageData: ApiPageMetadata) => renderApiPage(pageData, notice);
+}
+
+export const customApiMdGenerator = createApiMdGenerator();
+
+function renderApiPage(
+  { title, api, infoPath, frontMatter }: ApiPageMetadata,
+  notice: string | undefined,
+) {
   const {
     description,
     extensions,
@@ -133,6 +141,7 @@ export function customApiMdGenerator({
     `import EndpointMetadata from "@site/src/theme/EndpointMetadata";\n\n`,
     createHeading(title),
     createEndpointMetadata(api as ApiOperation, infoPath),
+    notice ? `${notice.trim()}\n\n` : undefined,
     frontMatter.show_extensions
       ? createVendorExtensions(extensions)
       : undefined,
