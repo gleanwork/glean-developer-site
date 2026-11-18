@@ -76,6 +76,16 @@ these pages uses the `ApiOverview` component:
 when a page does not use `ApiOverview` for its family, or when
 `platform-endpoints.json` is out of date with the spec.
 
+## Preview API reference pages
+
+`docs/api/preview/` holds unlisted pages for operations that `gleanwork/open-api`
+holds out of its final specs, shared by direct link before general availability.
+They are generated from `openapi/preview/*.yaml` by `pnpm preview-api:refresh`,
+which is manual only. Keep their config in `previewOpenApiConfig`, never in
+`openApiPluginOptions.config`, and never wire `preview-api:*` into another
+script or workflow: the automated OpenAPI regeneration and SDK generation must
+not see them. Refresh and removal steps are in `openapi/preview/README.md`.
+
 ## Code samples (markdown-code)
 
 Code fences in `docs/**/*.mdx` that carry a `snippet=<path>` annotation are

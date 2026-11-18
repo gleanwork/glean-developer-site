@@ -1,0 +1,532 @@
+openapi: 3.1.0
+info:
+  version: '2026-04-01'
+  title: Glean Platform API
+  x-source-commit-sha: 13a68262c8b8caad0c1f13bb8e4982cc0c1a3c79
+  x-preview-extract:
+    source: https://gleanwork.github.io/open-api/specs/source/platform.yaml
+    operation: POST /search/enumeration
+    refresh: pnpm preview-api:refresh
+servers:
+  - url: '{serverUrl}'
+    description: Replace {serverUrl} with your complete Glean API server URL. Find it at https://developers.glean.com/get-started/authentication#finding-your-server-url.
+    variables:
+      serverUrl:
+        default: '{serverUrl}'
+        description: Your complete Glean API HTTPS origin. Glean-hosted, vanity, custom, and non-Glean-hosted domains are supported.
+security:
+  - ApiToken: []
+paths:
+  /api/search/enumeration:
+    post:
+      tags:
+        - Search
+      summary: Enumerate matching documents
+      description: |
+        Walk every indexed document that matches a selection and that the caller is permitted to see. Returns document references with minimal metadata and never bodies; request `SNIPPETS` via `include` for query-relevant excerpts, and hydrate full documents with `POST /api/documents/batch`. Unlike `POST /api/search`, `query` is optional: omit it to enumerate by `datasources`, `filters`, and `time_range` alone. Results are ordered for completeness, not relevance.
+        Follow `next_cursor` until `has_more` is `false`, regardless of page size. This is a live scan, not a snapshot: concurrent index changes can cause duplicates or omissions. Deduplicate by `document_id`.
+        A page is either complete at its cursor position or an error. A shard or datasource failure returns HTTP 503 and the same cursor stays valid for retry; this endpoint never returns a partial page. A cursor reused with a different selection returns HTTP 400 `invalid_cursor`.
+      operationId: platform-search-enumeration
+      x-glean-scopes:
+        legacy:
+          - SEARCH
+        platform:
+          - search:query
+      x-visibility: Public
+      x-glean-experimental:
+        id: 9ce7bb73-1e30-460a-a917-cae09ac3a3ea
+        introduced: '2026-11-02'
+      x-codegen-request-body-name: payload
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchEnumerationRequest'
+      responses:
+        '200':
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchEnumerationResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '408':
+          $ref: '#/components/responses/RequestTimeout'
+        '413':
+          $ref: '#/components/responses/RequestTooLarge'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+      parameters:
+        - in: header
+          name: X-Glean-Include-Experimental
+          description: This endpoint is experimental, so requests must include this header set to `true`. See [How experimental APIs work](https://developers.glean.com/experimental/overview) for details.
+          required: true
+          schema:
+            type: boolean
+            default: true
+          example: true
+          value: 'true'
+components:
+  securitySchemes:
+    ApiToken:
+      type: http
+      scheme: bearer
+      description: |
+        Glean API token. Obtain via Admin Console -> Platform -> API Tokens, or via OAuth 2.0 client credentials flow.
+  schemas:
+    ProblemDetailCode:
+      type: string
+      description: Stable machine-readable error code.
+      enum:
+        - invalid_request
+        - missing_required_field
+        - invalid_parameter
+        - unsupported_action_target
+        - invalid_cursor
+        - expired_cursor
+        - invalid_filter
+        - invalid_datasource
+        - authentication_required
+        - token_expired
+        - insufficient_permissions
+        - spend_limit_exceeded
+        - resource_not_found
+        - method_not_allowed
+        - request_timeout
+        - request_too_large
+        - token_limit_exceeded
+        - conflict
+        - gone
+        - unprocessable_query
+        - tools_unauthorized
+        - rate_limit_exceeded
+        - internal_error
+        - service_unavailable
+      x-glean-problem-detail-codes:
+        invalid_request:
+          status: 400
+          title: Invalid Request
+        missing_required_field:
+          status: 400
+          title: Missing Required Field
+        invalid_parameter:
+          status: 400
+          title: Invalid Parameter
+        unsupported_action_target:
+          status: 400
+          title: Unsupported Action Target
+        invalid_cursor:
+          status: 400
+          title: Invalid Pagination Cursor
+        expired_cursor:
+          status: 400
+          title: Expired Pagination Cursor
+        invalid_filter:
+          status: 400
+          title: Invalid Filter
+        invalid_datasource:
+          status: 400
+          title: Invalid Datasource
+        authentication_required:
+          status: 401
+          title: Authentication Required
+        token_expired:
+          status: 401
+          title: Token Expired
+        insufficient_permissions:
+          status: 403
+          title: Insufficient Permissions
+        spend_limit_exceeded:
+          status: 403
+          title: Spend Limit Exceeded
+        resource_not_found:
+          status: 404
+          title: Resource Not Found
+        method_not_allowed:
+          status: 405
+          title: Method Not Allowed
+        request_timeout:
+          status: 408
+          title: Request Timeout
+        request_too_large:
+          status: 413
+          title: Request Too Large
+        token_limit_exceeded:
+          status: 413
+          title: Token Limit Exceeded
+        conflict:
+          status: 409
+          title: Conflict
+        gone:
+          status: 410
+          title: Gone
+        unprocessable_query:
+          status: 422
+          title: Unprocessable Query
+        tools_unauthorized:
+          status: 422
+          title: Tools Unauthorized
+        rate_limit_exceeded:
+          status: 429
+          title: Rate Limit Exceeded
+        internal_error:
+          status: 500
+          title: Internal Error
+        service_unavailable:
+          status: 503
+          title: Service Unavailable
+      example: invalid_cursor
+    ProblemDetailError:
+      type: object
+      required:
+        - pointer
+        - detail
+      description: Field-level validation problem for a single offending field.
+      properties:
+        pointer:
+          type: string
+          description: RFC 6901 JSON Pointer to the offending field.
+          example: /messages/0/role
+        detail:
+          type: string
+          description: Human-readable explanation for this field.
+          example: 'Must be one of: USER, GLEAN_AI.'
+        code:
+          $ref: '#/components/schemas/ProblemDetailCode'
+    ProblemDetail:
+      type: object
+      required:
+        - type
+        - title
+        - status
+        - detail
+        - code
+        - request_id
+      description: |
+        Error response following RFC 9457, extended with `code` and `documentation_url` for machine-readable classification and self-service remediation.
+      properties:
+        type:
+          type: string
+          format: uri
+          description: URI identifying the error type.
+          example: https://developers.glean.com/errors/invalid-cursor
+        title:
+          type: string
+          description: Short, human-readable summary of the error.
+          example: Invalid Pagination Cursor
+        status:
+          type: integer
+          description: HTTP status code mirrored from the response.
+          example: 400
+        detail:
+          type: string
+          description: Human-readable explanation specific to this occurrence.
+          example: |
+            The provided cursor has expired. Start a new search to get a fresh cursor.
+        code:
+          $ref: '#/components/schemas/ProblemDetailCode'
+        documentation_url:
+          type: string
+          format: uri
+          description: Direct URL to documentation for this error code.
+          example: https://developers.glean.com/errors/invalid-cursor
+        request_id:
+          type: string
+          description: Platform-generated request ID for support correlation.
+          example: req_7f8a9b0c1d2e
+        errors:
+          type: array
+          description: Field-level validation problems, one entry per offending field.
+          items:
+            $ref: '#/components/schemas/ProblemDetailError'
+    PersonReference:
+      type: object
+      description: A lightweight reference to a person, used where a payload merely points at someone.
+      required:
+        - name
+      properties:
+        id:
+          type: string
+          description: Opaque Glean person ID.
+        name:
+          type: string
+          description: Display name.
+    FilterOperator:
+      type: string
+      description: Supported filter operator.
+      enum:
+        - EQUALS
+        - NOT_EQUALS
+        - GT
+        - GTE
+        - LT
+        - LTE
+    Filter:
+      type: object
+      additionalProperties: false
+      required:
+        - field
+        - values
+      description: |
+        A single filter criterion. For `EQUALS`, multiple values within a filter are OR'd; for `NOT_EQUALS`, listed values are excluded. Separate filters are AND'd with each other and with inline operators in `query`. Repeated same-field `EQUALS` filters are rejected.
+      properties:
+        field:
+          type: string
+          minLength: 1
+          description: |
+            Filter field name. Built-in names (case-sensitive, lowercase only): `type`, `owner`, `from`, `author`, `channel`, `status`, `assignee`, `reporter`, `component`, `mentions`, and `collection`. Built-ins accept only `EQUALS` and `NOT_EQUALS`. Any other nonblank name is accepted as a custom filter without spelling, existence, or type checks; behavior depends on your connected sources.
+          example: type
+        values:
+          type: array
+          minItems: 1
+          items:
+            type: string
+            minLength: 1
+          description: |
+            One or more values to match. Prefer values returned by filter discovery unchanged. For people (`USER`) fields, values may be email addresses or display names.
+          example:
+            - spreadsheet
+            - presentation
+        operator:
+          allOf:
+            - $ref: '#/components/schemas/FilterOperator'
+          description: |
+            Comparison operator. Defaults to `EQUALS`. Built-in fields support only `EQUALS` and `NOT_EQUALS`. Range operators (`GT`, `GTE`, `LT`, `LTE`) require exactly one value; express ranges with multiple filters on the same field. Custom fields may support different operators depending on the data source.
+    TimeRange:
+      type: object
+      additionalProperties: false
+      description: Filter results to those last updated within this range.
+      properties:
+        start:
+          type: string
+          format: date-time
+          description: Inclusive lower bound in ISO 8601 format.
+        end:
+          type: string
+          format: date-time
+          description: Exclusive upper bound in ISO 8601 format.
+    SearchEnumerationInclude:
+      type: string
+      description: Optional document reference projection.
+      enum:
+        - SNIPPETS
+      x-enumDescriptions:
+        SNIPPETS: Add snippets, query-relevant plain-text excerpts from the document body. Only produced when `query` is present; a scope-only scan has nothing to excerpt.
+    SearchEnumerationRequest:
+      type: object
+      additionalProperties: false
+      description: |
+        Selection to enumerate. At least one of `datasources`, `query`, or `filters` must be set.
+      example:
+        query: amoxicillin
+        datasources:
+          - gdrive
+        page_size: 500
+      properties:
+        query:
+          type: string
+          minLength: 1
+          description: |
+            The search query string. Supports inline operators such as `from:jane type:document app:confluence`. Inline operators are AND'd with structured `filters`.
+        datasources:
+          type: array
+          minItems: 1
+          items:
+            type: string
+            minLength: 1
+          description: |
+            Restrict results to specific datasource identifiers returned by `GET /api/search/filters`. Scopes by datasource type and may include results from multiple instances of that type. Omit to enumerate across all visible datasources matching `query` or `filters`.
+        filters:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/Filter'
+          description: |
+            Structured filters applied to search results. Multiple values within a filter with `EQUALS` are OR'd; separate filters are AND'd. Conflicting constraints on the same field (for example, `type:document` in `query` and `type:spreadsheet` in a filter) return an empty result set. See `Filter.field` for built-in field names and operators. Other nonblank field names are accepted as custom filters without validation; behavior depends on your connected sources.
+        time_range:
+          $ref: '#/components/schemas/TimeRange'
+        page_size:
+          type: integer
+          minimum: 1
+          maximum: 1000
+          default: 100
+          description: Number of results to return per page.
+        cursor:
+          type:
+            - string
+            - 'null'
+          description: |
+            Opaque pagination token from a previous response's `next_cursor` field. Omit on the first request. Cursors do not expire and are valid only for the original selection.
+        include:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items:
+            $ref: '#/components/schemas/SearchEnumerationInclude'
+          description: |
+            Optional field groups to add to each document reference. Each value only adds fields; it does not change which documents are returned.
+    DocumentReference:
+      type: object
+      additionalProperties: false
+      required:
+        - document_id
+        - url
+        - title
+        - datasource
+      properties:
+        document_id:
+          type: string
+          minLength: 1
+          description: |
+            Indexed Glean store ID. Stable identity for deduplication and the selector accepted by `POST /api/documents/batch`.
+          example: doc_123
+        url:
+          type: string
+          format: uri
+          minLength: 1
+          description: Canonical URL of the result.
+          example: https://docs.google.com/spreadsheets/d/abc
+        title:
+          type: string
+          minLength: 1
+          description: Display title. For a conversation, this is a title built from the participants, such as "Alice and Bob", including when the indexed title is the message body. When the result has no title, the server returns Untitled.
+          example: Amoxicillin inventory
+        datasource:
+          type: string
+          minLength: 1
+          description: The datasource this result originates from.
+          example: gdrive
+        document_type:
+          type:
+            - string
+            - 'null'
+          minLength: 1
+          description: The document type within the datasource.
+          example: spreadsheet
+        creator:
+          $ref: '#/components/schemas/PersonReference'
+        owner:
+          $ref: '#/components/schemas/PersonReference'
+        updated_at:
+          type:
+            - string
+            - 'null'
+          format: date-time
+          description: When the result was last modified.
+        created_at:
+          type:
+            - string
+            - 'null'
+          format: date-time
+          description: When the result was created.
+        snippets:
+          type: array
+          items:
+            type: string
+            minLength: 1
+          description: |
+            Query-relevant plain-text excerpts from the document body. Present only when the request's `include` contains `SNIPPETS` and `query` is set.
+          example:
+            - Amoxicillin 500mg inventory was last counted on...
+    SearchEnumerationResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - results
+        - has_more
+        - next_cursor
+        - request_id
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/DocumentReference'
+          description: Document references at this cursor position.
+        has_more:
+          type: boolean
+          description: Indicates whether additional pages of results are available.
+        next_cursor:
+          type:
+            - string
+            - 'null'
+          description: |
+            Opaque token to pass as `cursor` in the next request. Null exactly when `has_more` is false.
+        request_id:
+          type: string
+          minLength: 1
+          description: Platform-generated request ID for support correlation.
+  responses:
+    BadRequest:
+      description: Invalid request (malformed JSON, invalid parameter values, unknown fields).
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+    Unauthorized:
+      description: Missing or invalid authentication token.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+    Forbidden:
+      description: Token valid but lacks permission for the requested operation.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+    NotFound:
+      description: Resource not found.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+    RequestTimeout:
+      description: Backend did not respond within the timeout window.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+    RequestTooLarge:
+      description: Request body exceeds the maximum allowed size.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+    TooManyRequests:
+      description: Rate limit exceeded. Includes Retry-After header.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+    InternalServerError:
+      description: Unexpected server-side failure.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+    ServiceUnavailable:
+      description: Backend temporarily unavailable.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+    UnprocessableEntity:
+      description: Syntactically valid but semantically incorrect request.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
