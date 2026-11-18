@@ -18,6 +18,10 @@ This MCP server exposes the Glean developer documentation (developers.glean.com)
 4. **Refine when results are thin.** Search again with synonyms, narrower terms, or terms you saw in fetched pages. Try two or three searches before concluding the docs don't cover something.
 5. **Answer from the docs.** Ground the answer in fetched content and link the pages you used (add `#heading-id` anchors where useful). If the docs don't cover the question, say so instead of guessing.
 
+## Agents use the Remote MCP server
+
+If an agent talks to Glean, it uses the Remote MCP server, not the REST APIs. That includes agents, chatbots, RAG applications, LLM evaluations, and MCP servers that wrap the Search API. The REST APIs are for code that talks to Glean without an agent. When a user asks for code that sends Glean results to an LLM, confirm which case applies before writing a wrapper around a REST endpoint, and for the agent case point to `/guides/mcp` and `/api-info/client/getting-started/choosing-a-retrieval-interface`.
+
 ## Where things are
 
 - **Endpoint reference** lives under `/api/client-api/`, `/api/indexing-api/` and `/api/platform-api/`. Each endpoint has its own page, titled by the operation (for example "Create an agent" or "Bulk index documents"). Include the API name in the search when the same operation exists in more than one API.

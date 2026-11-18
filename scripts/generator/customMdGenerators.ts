@@ -105,6 +105,26 @@ function createEndpointMetadata(
   return `<EndpointMetadata metadata={${JSON.stringify(metadata)}} />\n\n`;
 }
 
+const agentRoutedOperations = new Set([
+  'post /api/search',
+  'post /rest/api/v1/search',
+]);
+
+export function isAgentRoutedOperation(api: ApiOperation): boolean {
+  return agentRoutedOperations.has(
+    `${api.method.toLowerCase()} ${api.path.toLowerCase()}`,
+  );
+}
+
+function createAgentRouting(): string {
+  return [
+    `<AgentRetrievalRouting />\n\n`,
+    `:::info\n\n`,
+    `If an agent talks to Glean, use the [Remote MCP server](/guides/mcp). The Search API is for code that talks to Glean without an agent. See [Choose a retrieval interface](/api-info/client/getting-started/choosing-a-retrieval-interface).\n\n`,
+    `:::\n\n`,
+  ].join('');
+}
+
 export function customApiMdGenerator({
   title,
   api,
@@ -119,6 +139,7 @@ export function customApiMdGenerator({
     responses,
     callbacks,
   } = api as any; // Type assertion to access extension properties
+  const agentRouted = isAgentRoutedOperation(api as ApiOperation);
 
   return render([
     // Still needed: createCallbacks renders <MethodEndpoint> per callback.
@@ -130,13 +151,18 @@ export function customApiMdGenerator({
     `import TabItem from "@theme/TabItem";\n`,
     `import Heading from "@theme/Heading";\n`,
     `import Translate from "@docusaurus/Translate";\n`,
-    `import EndpointMetadata from "@site/src/theme/EndpointMetadata";\n\n`,
+    `import EndpointMetadata from "@site/src/theme/EndpointMetadata";\n`,
+    agentRouted
+      ? `import AgentRetrievalRouting from "@site/docs/_partials/_agent-retrieval-routing.mdx";\n`
+      : undefined,
+    `\n`,
     createHeading(title),
     createEndpointMetadata(api as ApiOperation, infoPath),
     frontMatter.show_extensions
       ? createVendorExtensions(extensions)
       : undefined,
     createDescription(description),
+    agentRouted ? createAgentRouting() : undefined,
     requestBody || parameters ? createRequestHeader('Request') : undefined,
     createParamsDetails({ parameters }),
     createRequestBodyDetails({
