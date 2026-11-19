@@ -2,8 +2,8 @@ openapi: 3.1.0
 info:
   version: '2026-04-01'
   title: Glean Platform API
-  x-source-commit-sha: 29216f521aff65d5a90dd20f588055ceedaf1a19
-  x-open-api-commit-sha: 9a6f5f0858e32b396f97aa70f948017a1a9f45ab
+  x-source-commit-sha: 88a6c970bc2595551d275a7c0f6c482f7dc74bf3
+  x-open-api-commit-sha: 552255087a44252dc86e22aa5b09093cdb4a9a29
 servers:
   - url: '{serverUrl}'
     description: Replace {serverUrl} with your complete Glean API server URL. Find it at https://developers.glean.com/get-started/authentication#finding-your-server-url.
@@ -3636,6 +3636,155 @@ paths:
           $ref: '#/components/responses/PlatformServiceUnavailable'
       x-speakeasy-group: admin.usage
       x-speakeasy-name-override: applyLimits
+      parameters:
+        - in: header
+          name: X-Glean-Include-Experimental
+          description: This endpoint is experimental, so requests must include this header set to `true`. See [How experimental APIs work](https://developers.glean.com/experimental/overview) for details.
+          required: true
+          schema:
+            type: boolean
+            default: true
+          example: true
+          value: 'true'
+  /api/usage/search:
+    post:
+      tags:
+        - Usage
+      summary: Search measured usage
+      description: |
+        Search delayed measured spend, not live enforcement counters or invoices. Principal filters select the scope; there is no target. With no user_id or agent_id filter, the scope is the authenticated user. A single-value EQUALS user_id filter must name the caller. A single-value EQUALS agent_id filter, with no user_id filter, must name a top-level agent the caller can currently edit, including disabled agents, and measures that agent. Any other principal filter needs an organization read, so like other-user, subagent, and principal-dimension requests it is accepted structurally but returns 403 insufficient_permissions. Unknown product and feature values remain in OTHER; absent attribution remains null. Results, totals, and cursor pages share one pinned read snapshot. Totals cover observed stored rows, not certified exports or verified absent usage. AGENT uses app-compatible best-effort recorded top-agent/root attribution and same-run AGENT/LLM_CALL events, not complete run lineage. Source freshness and earliest historical coverage are null when unsupported. Usage billed in GCU on full-consumption plans isn't reported yet and is excluded from results and totals. A month whose source rows exceed 200,000 at the day and user detail the query needs, or whose source read exceeds its size, billed-byte or 30-second limit, returns 422 unprocessable_query; use a coarser granularity, fewer dimensions, or a shorter range.
+      operationId: platform-usage-search
+      x-visibility: Public
+      x-glean-scopes:
+        legacy:
+          - USAGE
+        platform:
+          - usage:read
+      x-glean-experimental:
+        id: 99b8297a-ead7-4a58-bbeb-26fe0a3c51e6
+        introduced: '2026-10-09'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlatformSearchCallerUsageRequest'
+            example:
+              time_range:
+                start: '2026-09-01T00:00:00Z'
+                end: '2026-10-01T00:00:00Z'
+              group_by:
+                - CLIENT_ID
+              include:
+                - DISPLAY_NAMES
+      responses:
+        '200':
+          description: Measured usage buckets and complete-query totals.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlatformSearchUsageResponse'
+        '400':
+          $ref: '#/components/responses/PlatformBadRequest'
+        '401':
+          $ref: '#/components/responses/PlatformUnauthorized'
+        '403':
+          $ref: '#/components/responses/PlatformForbidden'
+        '404':
+          $ref: '#/components/responses/PlatformNotFound'
+        '408':
+          $ref: '#/components/responses/PlatformRequestTimeout'
+        '413':
+          $ref: '#/components/responses/PlatformRequestTooLarge'
+        '422':
+          $ref: '#/components/responses/PlatformUnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/PlatformTooManyRequests'
+        '500':
+          $ref: '#/components/responses/PlatformInternalServerError'
+        '503':
+          $ref: '#/components/responses/PlatformServiceUnavailable'
+      x-speakeasy-group: usage
+      x-speakeasy-name-override: search
+      parameters:
+        - in: header
+          name: X-Glean-Include-Experimental
+          description: This endpoint is experimental, so requests must include this header set to `true`. See [How experimental APIs work](https://developers.glean.com/experimental/overview) for details.
+          required: true
+          schema:
+            type: boolean
+            default: true
+          example: true
+          value: 'true'
+  /api/admin/usage/search:
+    post:
+      tags:
+        - Admin Usage
+      summary: Search workspace measured usage
+      description: |
+        Search delayed measured spend. Principal filters select the scope; there is no target. With no user_id or agent_id filter, the scope is the organization. A single-value EQUALS user_id filter reads that user's measured events. A single-value EQUALS agent_id filter, with no user_id filter, reads that top-level agent. Any other principal filter reads the organization, then narrows rows. Requires admin.usage:read and workspace billing read permission; an administrator role alone is not sufficient. USER_ID grouping is supported; DEPARTMENT_NAME and GROUP_ID are deferred and return invalid_parameter. The calculation and response are shared with personal search. Labels remain subject to current resource visibility, not billing access. Historical agent attribution is never reparented at query time. AGENT uses app-compatible best-effort recorded top-agent/root attribution and same-run AGENT/LLM_CALL events, not complete run lineage. Totals describe the observed stored snapshot, not certified billing history. Usage billed in GCU on full-consumption plans isn't reported yet and is excluded from results and totals. A month whose source rows exceed 200,000 at the day and user detail the query needs, or whose source read exceeds its size, billed-byte or 30-second limit, returns 422 unprocessable_query; use a coarser granularity, fewer dimensions, or a shorter range. Organization and agent reads return 503 while the directory loads. In workspaces with more than 100,000 directory identities, reads that group or filter by user return 503.
+      operationId: platform-admin-usage-search
+      x-visibility: Public
+      x-glean-scopes:
+        legacy:
+          - ADMIN_USAGE
+        platform:
+          - admin.usage:read
+      x-glean-experimental:
+        id: 8302f34b-a55b-4d29-aecb-3ee7d170309b
+        introduced: '2026-10-09'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlatformSearchAdminUsageRequest'
+            example:
+              time_range:
+                start: '2026-09-01T00:00:00Z'
+                end: '2026-10-01T00:00:00Z'
+              group_by:
+                - USER_ID
+              filters:
+                - field: client_id
+                  values:
+                    - glean
+              sort:
+                field: USED
+                direction: DESC
+                unit: CREDITS
+              include:
+                - TOTAL_COUNT
+              page_size: 100
+      responses:
+        '200':
+          description: Measured usage buckets and complete-query totals.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlatformSearchUsageResponse'
+        '400':
+          $ref: '#/components/responses/PlatformBadRequest'
+        '401':
+          $ref: '#/components/responses/PlatformUnauthorized'
+        '403':
+          $ref: '#/components/responses/PlatformForbidden'
+        '404':
+          $ref: '#/components/responses/PlatformNotFound'
+        '408':
+          $ref: '#/components/responses/PlatformRequestTimeout'
+        '413':
+          $ref: '#/components/responses/PlatformRequestTooLarge'
+        '422':
+          $ref: '#/components/responses/PlatformUnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/PlatformTooManyRequests'
+        '500':
+          $ref: '#/components/responses/PlatformInternalServerError'
+        '503':
+          $ref: '#/components/responses/PlatformServiceUnavailable'
+      x-speakeasy-group: admin.usage
+      x-speakeasy-name-override: search
       parameters:
         - in: header
           name: X-Glean-Include-Experimental
@@ -7722,6 +7871,190 @@ components:
           type: string
           description: Case-insensitive substring to match against agent names. If omitted or empty, no name filter is applied.
           example: HR Policy Agent
+    PlatformSkillSourcePreviewFile:
+      type: object
+      description: A supporting file bundled with a skill.
+      required:
+        - path
+        - content
+      properties:
+        path:
+          type: string
+          description: Relative path within the skill bundle.
+        content:
+          type: string
+          description: UTF-8 file content.
+    PlatformAgentSkill:
+      type: object
+      description: |
+        A skill defined inline in the agent. Reference a published skill through `dependencies` instead.
+      required:
+        - display_name
+        - main_content
+      properties:
+        display_name:
+          type: string
+          description: Human-readable skill name.
+        main_content:
+          type: string
+          description: Main skill content, inlined from `SKILL.md`.
+        files:
+          type: array
+          description: Additional files bundled in the skill folder.
+          items:
+            $ref: '#/components/schemas/PlatformSkillSourcePreviewFile'
+    PlatformAgentDependency:
+      type: object
+      description: A published artifact the agent references by platform ID.
+      required:
+        - id
+        - type
+      properties:
+        id:
+          type: string
+          description: |
+            ID of the referenced artifact: the `skill_id` of a published skill when `type` is SKILL, or the `agent_id` of a published agent when `type` is AGENT.
+        type:
+          type: string
+          description: Type of a published artifact referenced as a dependency.
+          enum:
+            - SKILL
+            - AGENT
+          x-enumDescriptions:
+            SKILL: A published skill.
+            AGENT: A published agent. Not valid for subagents.
+          x-speakeasy-enum-descriptions:
+            SKILL: A published skill.
+            AGENT: A published agent. Not valid for subagents.
+    PlatformAgentSelectedTool:
+      type: object
+      description: A tool selected from a tool provider.
+      required:
+        - display_name
+      properties:
+        display_name:
+          type: string
+          description: Name of the tool within its provider.
+    PlatformAgentToolset:
+      type: object
+      description: A tool provider and the subset of its tools available to the agent.
+      required:
+        - tool_provider_id
+      properties:
+        tool_provider_id:
+          type: string
+          description: ID of the tool provider, or `native` for built-in Glean tools.
+        selected_tools:
+          type: array
+          description: Tools from the provider that are exposed to the agent.
+          items:
+            $ref: '#/components/schemas/PlatformAgentSelectedTool'
+        customisation_data:
+          type: object
+          additionalProperties: false
+          description: Settings applied to every tool in this provider entry.
+          properties:
+            skip_confirmation:
+              type: boolean
+              description: |
+                Whether tools in this entry run without asking the user for confirmation. Defaults to false.
+    PlatformAgentGleanSearchConfig:
+      type: object
+      description: |
+        Glean Search configuration. When omitted, Glean Search is disabled for the agent. An empty object searches all company knowledge available to the invoking user. Populated lists restrict search to the union of the listed datasource instances and URLs.
+      properties:
+        knowledge_profile_id:
+          type: string
+          description: |
+            ID of a knowledge profile whose permissions Glean Search uses instead of the invoking user's permissions.
+        datasource_instances:
+          type: array
+          description: |
+            Datasource instance names that search is restricted to. Each name selects one instance, not every instance of a datasource type.
+          items:
+            type: string
+            description: |
+              Datasource instance name. The default instance of a datasource uses the datasource name, for example `confluence`.
+        urls:
+          type: array
+          description: |
+            Document or folder URLs that search is restricted to. Folder URLs include every document contained in the folder.
+          items:
+            type: string
+            description: Document or folder URL.
+    PlatformAgentLlmModel:
+      type: object
+      description: Agentic model the agent runs on and its reasoning effort.
+      properties:
+        model_set_id:
+          type: string
+          description: Agentic model set ID. When omitted, the tenant default is used.
+        mode:
+          type: string
+          description: Reasoning effort per turn. Defaults to ADVANCED.
+          enum:
+            - ADVANCED
+            - FAST
+          x-enumDescriptions:
+            ADVANCED: High reasoning effort.
+            FAST: Low reasoning effort for latency-sensitive, narrow tasks.
+          x-speakeasy-enum-descriptions:
+            ADVANCED: High reasoning effort.
+            FAST: Low reasoning effort for latency-sensitive, narrow tasks.
+        auto_upgrade:
+          type: boolean
+          description: |
+            Whether the agent follows model upgrades. When omitted, a model with a `model_set_id` is pinned, and a model without one follows the tenant default.
+    PlatformAgentServiceCredential:
+      type: object
+      description: A service credential the agent uses.
+      required:
+        - service_credential_id
+      properties:
+        service_credential_id:
+          type: string
+          description: ID of the service credential.
+    PlatformAgentBase:
+      type: object
+      description: Definition fields shared by agents and subagents.
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: Human-readable name.
+          example: HR Policy Agent
+        description:
+          type: string
+          description: Description of the agent's purpose and behavior.
+        instructions:
+          type: string
+          description: System prompt the agent follows.
+        skills:
+          type: array
+          description: Skills defined inline.
+          items:
+            $ref: '#/components/schemas/PlatformAgentSkill'
+        dependencies:
+          type: array
+          description: |
+            Published artifacts referenced by platform ID. Their content is not inlined in `skills` or `subagents`.
+          items:
+            $ref: '#/components/schemas/PlatformAgentDependency'
+        tools:
+          type: array
+          description: Tool providers and the subset of their tools available to the agent.
+          items:
+            $ref: '#/components/schemas/PlatformAgentToolset'
+        glean_search_config:
+          $ref: '#/components/schemas/PlatformAgentGleanSearchConfig'
+        model:
+          $ref: '#/components/schemas/PlatformAgentLlmModel'
+        service_credentials:
+          type: array
+          description: Service credentials the agent uses to call tools.
+          items:
+            $ref: '#/components/schemas/PlatformAgentServiceCredential'
     PlatformAgentCapabilities:
       type: object
       additionalProperties: true
@@ -7732,30 +8065,316 @@ components:
         ap.io.streaming:
           type: boolean
           description: Whether the agent supports streaming output.
-    PlatformAgent:
+    PlatformAgentSlackChannelMapping:
       type: object
+      description: A Slack channel the agent is mapped to.
       required:
-        - agent_id
-        - name
-        - capabilities
+        - channel_id
       properties:
-        agent_id:
+        channel_id:
           type: string
-          description: ID of the agent.
-          example: mho4lwzylcozgoc2
-        name:
+          description: ID of the Slack channel.
+        auto_engage:
+          type: boolean
+          description: Whether the agent engages with messages without being mentioned.
+    PlatformAgentSlackChannel:
+      type: object
+      description: Slack deployment of the agent.
+      properties:
+        service_credential_id:
           type: string
-          description: Name of the agent.
-          example: HR Policy Agent
+          description: ID of the service credential for the Slack app.
+        channel_mappings:
+          type: array
+          description: Slack channels the agent is mapped to.
+          items:
+            $ref: '#/components/schemas/PlatformAgentSlackChannelMapping'
+        engagement_filter_instructions:
+          type: string
+          description: Instructions that decide which messages the agent engages with.
+        allow_mentions_outside_channel_mappings:
+          type: boolean
+          description: Whether the agent responds to mentions in channels that are not mapped.
+    PlatformAgentChannels:
+      type: object
+      description: Messaging channels the agent is deployed to. Requires `use_agent_identity`.
+      properties:
+        slack:
+          $ref: '#/components/schemas/PlatformAgentSlackChannel'
+    PlatformSubagent:
+      description: |
+        An isolated execution unit that its parent agent dispatches work to. A subagent has no trigger, channels, or subagents of its own, and its dependencies may only reference published skills.
+      allOf:
+        - $ref: '#/components/schemas/PlatformAgentBase'
+        - type: object
+          properties:
+            subagent_id:
+              type: string
+              description: |
+                ID of the subagent, unique within its parent agent. It is not an agent ID and cannot be used with other Agents APIs.
+    PlatformAgentInputFieldOption:
+      type: object
+      description: A choice of a SELECT input field.
+      required:
+        - value
+      properties:
+        value:
+          type: string
+          description: Value substituted into the field's placeholder.
+    PlatformAgentInputField:
+      type: object
+      description: |
+        A typed input of the agent, referenced from the instructions as `[[display_name]]`.
+      required:
+        - display_name
+        - type
+      properties:
+        display_name:
+          type: string
+          description: Label of the field and its placeholder name in the instructions. Unique within the agent.
+        type:
+          type: string
+          description: Type of an agent input field.
+          enum:
+            - TEXT
+            - SELECT
+            - DATE
+            - DOCUMENT
+          x-enumDescriptions:
+            TEXT: Free-form text.
+            SELECT: One choice from the declared options.
+            DATE: Calendar date in `YYYY-MM-DD` format.
+            DOCUMENT: Glean file ID of an uploaded file.
+          x-speakeasy-enum-descriptions:
+            TEXT: Free-form text.
+            SELECT: One choice from the declared options.
+            DATE: Calendar date in `YYYY-MM-DD` format.
+            DOCUMENT: Glean file ID of an uploaded file.
         description:
           type: string
-          description: Description of the agent.
-        metadata:
+          description: Helper text describing the field.
+        default_value:
+          type: string
+          description: |
+            Pre-filled value. For SELECT fields, one of the option values. For DATE fields, a `YYYY-MM-DD` date.
+        is_optional:
+          type: boolean
+          description: Whether the field accepts empty input. Defaults to false.
+        options:
+          type: array
+          description: Choices of a SELECT field.
+          items:
+            $ref: '#/components/schemas/PlatformAgentInputFieldOption'
+    PlatformAgentSchedule:
+      type: object
+      description: Wall-clock schedule for INPUT_FORM and CHAT_MESSAGE agents.
+      required:
+        - frequency
+        - timezone
+      properties:
+        frequency:
+          type: string
+          description: Five-field Unix cron expression, for example `0 9 * * 1-5`.
+        timezone:
+          type: string
+          description: IANA time zone name, for example `America/Los_Angeles`.
+        start_at:
+          type: string
+          format: date-time
+          description: |
+            ISO 8601 timestamp with an explicit offset before which the schedule stays dormant.
+    PlatformAgentPrompt:
+      type: object
+      description: A conversation starter whose template is sent as the first chat message.
+      required:
+        - display_name
+        - template
+      properties:
+        display_name:
+          type: string
+          description: Short title of the conversation starter.
+        template:
+          type: string
+          description: |
+            Chat message that starts the conversation. May contain `[[variable_name]]` placeholders.
+    PlatformAgentContentTriggerFilterOperator:
+      type: string
+      description: Operator of a content trigger filter.
+      enum:
+        - IS_ONE_OF
+        - IS_NOT_ONE_OF
+        - CONTAINS
+        - FIELD_CHANGED
+      x-enum-varnames:
+        - AgentContentTriggerFilterOperatorISONEOF
+        - AgentContentTriggerFilterOperatorISNOTONEOF
+        - AgentContentTriggerFilterOperatorCONTAINS
+        - AgentContentTriggerFilterOperatorFIELDCHANGED
+      x-enumDescriptions:
+        IS_ONE_OF: The field equals one of the values.
+        IS_NOT_ONE_OF: The field equals none of the values. Not valid for TITLE or CONTENT.
+        CONTAINS: The field contains one of the values.
+        FIELD_CHANGED: The field changed in the event. Not valid for TITLE or CONTENT.
+      x-speakeasy-enum-descriptions:
+        IS_ONE_OF: The field equals one of the values.
+        IS_NOT_ONE_OF: The field equals none of the values. Not valid for TITLE or CONTENT.
+        CONTAINS: The field contains one of the values.
+        FIELD_CHANGED: The field changed in the event. Not valid for TITLE or CONTENT.
+    PlatformAgentContentTriggerFilter:
+      type: object
+      additionalProperties: false
+      description: A filter on the document that fired a content trigger. Values are ORed.
+      required:
+        - field
+        - operator
+      properties:
+        field:
+          type: string
+          description: '`TITLE` or `CONTENT` for the document''s title or body, or a facet key.'
+        operator:
+          $ref: '#/components/schemas/PlatformAgentContentTriggerFilterOperator'
+        values:
+          type: array
+          description: Match values. Required except for FIELD_CHANGED.
+          items:
+            type: string
+            description: A match value.
+    PlatformAgentContentTrigger:
+      type: object
+      description: A subscribed document event and the filters that narrow it.
+      required:
+        - datasource
+        - template_id
+      properties:
+        datasource:
+          type: string
+          description: Event source in enum form, for example `JIRA`.
+        template_id:
+          type: string
+          description: Subscribed event identifier, for example `JIRA_TICKET_CREATED`.
+        document_type:
+          type: string
+          description: Document type the entry watches.
+        time_offset_seconds:
+          type: integer
+          format: int32
+          description: |
+            Seconds before an event time carried in the document at which the agent runs. Pre-event triggers only.
+        filters:
+          type: array
+          description: |
+            Filters on the document that fired the event. Every filter must match for the entry to fire. Without filters, every event for this entry fires.
+          items:
+            $ref: '#/components/schemas/PlatformAgentContentTriggerFilter'
+    PlatformAgentTrigger:
+      type: object
+      description: How the agent is invoked. Applies to top-level agents only.
+      required:
+        - type
+      properties:
+        type:
+          type: string
+          description: Invocation mode of the agent.
+          enum:
+            - CHAT_MESSAGE
+            - INPUT_FORM
+            - CONTENT_TRIGGER
+          x-enum-varnames:
+            - AgentTriggerTypeCHATMESSAGE
+            - AgentTriggerTypeINPUTFORM
+            - AgentTriggerTypeCONTENTTRIGGER
+          x-enumDescriptions:
+            CHAT_MESSAGE: The user converses with the agent.
+            INPUT_FORM: The agent runs on typed input fields, or with no input when none are declared.
+            CONTENT_TRIGGER: The agent runs on a document event.
+          x-speakeasy-enum-descriptions:
+            CHAT_MESSAGE: The user converses with the agent.
+            INPUT_FORM: The agent runs on typed input fields, or with no input when none are declared.
+            CONTENT_TRIGGER: The agent runs on a document event.
+        input_fields:
+          type: array
+          description: |
+            Typed inputs collected when the agent is invoked. Valid for INPUT_FORM and CONTENT_TRIGGER. An INPUT_FORM trigger without input fields runs with no input.
+          items:
+            $ref: '#/components/schemas/PlatformAgentInputField'
+        schedule:
+          $ref: '#/components/schemas/PlatformAgentSchedule'
+        prompts:
+          type: array
+          description: Conversation starters. Valid only for CHAT_MESSAGE.
+          items:
+            $ref: '#/components/schemas/PlatformAgentPrompt'
+        content:
           type: object
-          description: Agent metadata.
-          additionalProperties: true
-        capabilities:
-          $ref: '#/components/schemas/PlatformAgentCapabilities'
+          description: Document events that run a CONTENT_TRIGGER agent.
+          required:
+            - triggers
+          properties:
+            triggers:
+              type: array
+              description: Event subscriptions. The agent runs when any entry matches.
+              items:
+                $ref: '#/components/schemas/PlatformAgentContentTrigger'
+    PlatformPersonReference:
+      type: object
+      description: A lightweight reference to a person, used where a payload merely points at someone.
+      required:
+        - name
+      properties:
+        id:
+          type: string
+          description: Opaque Glean person ID.
+        name:
+          type: string
+          description: Display name.
+    PlatformAgent:
+      description: An agent available to the authenticated user.
+      allOf:
+        - $ref: '#/components/schemas/PlatformAgentBase'
+        - type: object
+          required:
+            - agent_id
+            - capabilities
+          properties:
+            agent_id:
+              type: string
+              description: ID of the agent.
+              example: ef33aecf52c142a6873adf76037b642e
+            metadata:
+              type: object
+              description: Agent metadata.
+              additionalProperties: true
+            capabilities:
+              $ref: '#/components/schemas/PlatformAgentCapabilities'
+            use_agent_identity:
+              type: boolean
+              description: |
+                Whether the agent acts with its own identity instead of the invoking user's. Cannot be changed after the agent is created.
+            channels:
+              $ref: '#/components/schemas/PlatformAgentChannels'
+            subagents:
+              type: array
+              description: |
+                Subagents the agent dispatches work to. Subagents cannot contain subagents.
+              items:
+                $ref: '#/components/schemas/PlatformSubagent'
+            trigger:
+              $ref: '#/components/schemas/PlatformAgentTrigger'
+            created_by:
+              $ref: '#/components/schemas/PlatformPersonReference'
+              description: Person who created the agent. Omitted when the agent hides attribution.
+            updated_by:
+              $ref: '#/components/schemas/PlatformPersonReference'
+              description: |
+                Person who last updated the agent. Omitted when the agent hides attribution.
+            created_at:
+              type: string
+              format: date-time
+              description: Time the agent was created.
+            updated_at:
+              type: string
+              format: date-time
+              description: Time the agent was last updated.
     PlatformAgentsSearchResponse:
       type: object
       required:
@@ -8897,18 +9516,6 @@ components:
         sync_error:
           type: string
           description: Human-readable sync failure reason, present only when sync_status is SYNC_FAILED.
-    PlatformPersonReference:
-      type: object
-      description: A lightweight reference to a person, used where a payload merely points at someone.
-      required:
-        - name
-      properties:
-        id:
-          type: string
-          description: Opaque Glean person ID.
-        name:
-          type: string
-          description: Display name.
     PlatformSkill:
       type: object
       required:
@@ -9112,18 +9719,6 @@ components:
           type: boolean
           default: false
           description: Whether to stream repository scan progress using server-sent events.
-    PlatformSkillSourcePreviewFile:
-      type: object
-      required:
-        - path
-        - content
-      properties:
-        path:
-          type: string
-          description: Relative path within the skill bundle.
-        content:
-          type: string
-          description: UTF-8 file content.
     PlatformSkillSourcePreview:
       type: object
       required:
@@ -10469,6 +11064,431 @@ components:
         request_id:
           type: string
           description: Request identifier for correlating this response.
+    PlatformUsageSearchTimeRange:
+      type: object
+      additionalProperties: false
+      description: |
+        UTC midnight interval, end exclusive. A new search starts no earlier than the UTC day 90 days before the request; an earlier start is 400 invalid_parameter. Cursor pages keep the bound their first page passed. NONE and MONTH allow at most 12 calendar months; DAY and WEEK allow 180 days. USER_ID grouping with DAY allows 31 days.
+      required:
+        - start
+        - end
+      properties:
+        start:
+          type: string
+          format: date-time
+          description: |
+            Inclusive UTC midnight boundary, no earlier than midnight of the UTC day that contains the request time minus 90 days.
+        end:
+          type: string
+          format: date-time
+          description: Exclusive UTC midnight boundary, strictly after start.
+      allOf:
+        - $ref: '#/components/schemas/PlatformTimeRange'
+    PlatformUsageSearchGranularity:
+      type: string
+      description: NONE omits periods; DAY, Monday-based WEEK, and MONTH are clipped to the interval.
+      default: NONE
+      enum:
+        - NONE
+        - DAY
+        - WEEK
+        - MONTH
+    PlatformUsageDimension:
+      type: string
+      description: |
+        Grouping key, named for the response dimension it fills (MODEL_ID fills model_id). USER_ID is admin-only. DEPARTMENT_NAME and GROUP_ID are admin-only and deferred. Their well-formed personal requests return 403, not 400.
+      enum:
+        - PRODUCT
+        - FEATURE
+        - MODEL_ID
+        - CLIENT_ID
+        - AGENT_ID
+        - USER_ID
+        - DEPARTMENT_NAME
+        - GROUP_ID
+      x-enum-varnames:
+        - UsageDimensionProduct
+        - UsageDimensionFeature
+        - UsageDimensionModelId
+        - UsageDimensionClientId
+        - UsageDimensionAgentId
+        - UsageDimensionUserId
+        - UsageDimensionDepartmentName
+        - UsageDimensionGroupId
+    PlatformUsageSearchFilter:
+      type: object
+      additionalProperties: false
+      description: Exact, case-sensitive filter. Values OR together; filters AND together. Null cannot be selected.
+      required:
+        - field
+        - values
+      properties:
+        field:
+          type: string
+          minLength: 1
+          description: |
+            Allowlist is product, feature, model_id, client_id, agent_id, user_id, department_name, group_id. Unknown names return invalid_filter. user_id and agent_id also select the scope (see the operation); department_name and group_id are admin-only and deferred.
+        values:
+          type: array
+          minItems: 1
+          maxItems: 100
+          description: |
+            Nonblank exact values with no trimming. client_id follows Usage limit target client_id validation: empty, whitespace-only, control, and synthetic IDs are invalid; unknown IDs are valid. PRODUCT and FEATURE match normalized taxonomy.
+          items:
+            type: string
+            minLength: 1
+            maxLength: 512
+            description: Exact value to match.
+        operator:
+          allOf:
+            - $ref: '#/components/schemas/PlatformFilterOperator'
+          enum:
+            - EQUALS
+            - NOT_EQUALS
+          default: EQUALS
+          description: EQUALS (default) or NOT_EQUALS only; range operators are invalid.
+    PlatformUsageSearchSort:
+      type: object
+      additionalProperties: false
+      description: |
+        Sort without converting units. Missing spend in the selected unit sorts last in either direction. Without unit, compare USD then CREDITS. Ties use dimension values ASC (null first), then period.start ASC.
+      required:
+        - field
+        - direction
+      properties:
+        field:
+          type: string
+          enum:
+            - USED
+            - PERIOD_START
+          description: PERIOD_START requires time granularity.
+        direction:
+          type: string
+          enum:
+            - ASC
+            - DESC
+          description: Sort direction; required whenever sort is supplied.
+        unit:
+          $ref: '#/components/schemas/PlatformUsageUnit'
+          description: Valid only with USED; omission compares USD first, then CREDITS.
+    PlatformSearchCallerUsageRequest:
+      type: object
+      description: |
+        Measured-usage query. user_id and agent_id filters select the scope; there is no target field. Structural principal acceptance does not grant permission; forbidden personal requests return 403.
+      additionalProperties: false
+      required:
+        - time_range
+      properties:
+        time_range:
+          $ref: '#/components/schemas/PlatformUsageSearchTimeRange'
+          description: |
+            UTC midnight bounds, with an exclusive end. Search requires an explicit range because an implicit default would hide an expensive warehouse scan.
+        granularity:
+          $ref: '#/components/schemas/PlatformUsageSearchGranularity'
+          description: Period size; defaults to NONE.
+        group_by:
+          type: array
+          maxItems: 5
+          uniqueItems: true
+          description: Up to five unique dimensions, at most one principal dimension; principals require the admin route.
+          items:
+            $ref: '#/components/schemas/PlatformUsageDimension'
+        filters:
+          type: array
+          maxItems: 20
+          description: Filters AND together; values within each filter OR together.
+          items:
+            $ref: '#/components/schemas/PlatformUsageSearchFilter'
+        metrics:
+          type: array
+          uniqueItems: true
+          description: USED is always returned; EVENT_COUNT sums raw billing events in both units.
+          items:
+            type: string
+            description: Optional measured-usage metric.
+            enum:
+              - USED
+              - EVENT_COUNT
+        sort:
+          $ref: '#/components/schemas/PlatformUsageSearchSort'
+          description: |
+            When omitted, defaults to PERIOD_START ASC for time series, otherwise USED DESC. When supplied, field and direction are both required.
+        include:
+          type: array
+          uniqueItems: true
+          description: Add page-only visible labels or the complete-query bucket count.
+          items:
+            type: string
+            description: Opt-in enrichment.
+            enum:
+              - DISPLAY_NAMES
+              - TOTAL_COUNT
+        page_size:
+          type: integer
+          minimum: 1
+          maximum: 1000
+          default: 100
+          description: Maximum buckets per page; defaults to 100, maximum 1,000.
+        cursor:
+          type: string
+          minLength: 1
+          maxLength: 512
+          description: |
+            Opaque cursor from a prior page. Resend the same query and page size; it is bound to the route, caller, tenant, filter-derived scope, and snapshot. Missing retained state or a snapshot older than 24 hours is expired_cursor.
+          example: ''
+    PlatformUsageSearchDimensions:
+      type: object
+      additionalProperties: false
+      x-go-type: map[string]*string
+      description: |
+        A property is present only when its field is grouped. Absent attribution is an explicit null, not omitted. Raw AGENT scopes use best-effort recorded top-agent/root attribution across same-run AGENT/LLM_CALL events, and USER scopes use the same attribution. Current hierarchy is never used to reparent historical rows; missing complete run lineage is not reconstructed.
+      properties:
+        product:
+          type:
+            - string
+            - 'null'
+          description: |
+            Server-owned product taxonomy: ASSISTANT (including LLM_CALL), AGENT, DESKTOP_APP (from GLEAN_DESKTOP_APP), API, MCP, AI_GATEWAY (from LLM_GATEWAY), or OTHER for unknown nonempty event types. Values can be added.
+        feature:
+          type:
+            - string
+            - 'null'
+          description: |
+            Server-owned feature taxonomy: ARTIFACT_AUDIO, ASSISTANT, DEEP_RESEARCH, DICTATION, ENGRAM_MEMORY, GLEAN_CODE, GLEAN_IN_SLACK, GLEAN_IN_TEAMS, IMAGE_GENERATION, INDEPENDENT_AGENT_MEMORY, MEETING_NOTES (from AUDIO_TRANSCRIPTION), PRESENTATION_GENERATION, PRISM_PAID, REALTIME_VOICE (from VOICE_TRANSCRIPTION), SKILL_SCAN, API, SEARCH, or OTHER for unknown nonempty subtypes. API uses the recorded entity when subtype is absent. Values can be added.
+        model_id:
+          type:
+            - string
+            - 'null'
+          description: Recorded model enum ID.
+        client_id:
+          type:
+            - string
+            - 'null'
+          description: |
+            Recorded spend client ID. Usage with no client and Glean Desktop gateway usage are glean.
+        agent_id:
+          type:
+            - string
+            - 'null'
+          description: Recorded top-level agent ID.
+        user_id:
+          type:
+            - string
+            - 'null'
+          description: Canonical user ID; admin route only.
+        department_name:
+          type:
+            - string
+            - 'null'
+          description: Deferred; not returned yet.
+        group_id:
+          type:
+            - string
+            - 'null'
+          description: Deferred; not returned yet.
+    PlatformUsageUsedValue:
+      type: object
+      additionalProperties: false
+      description: Accrued usage in one unit, without combining or converting units.
+      required:
+        - used
+        - unit
+      properties:
+        used:
+          type: string
+          minLength: 1
+          maxLength: 24
+          pattern: ^(0|[1-9][0-9]*)(\.[0-9]{1,6})?$
+          description: Nonnegative decimal usage with at most six fractional digits.
+        unit:
+          $ref: '#/components/schemas/PlatformUsageUnit'
+          description: Unit of accrued usage.
+    PlatformUsageSearchBucket:
+      type: object
+      additionalProperties: false
+      description: One observed period and grouped-dimension combination; empty buckets are omitted.
+      required:
+        - dimensions
+        - used_by_unit
+      properties:
+        period:
+          $ref: '#/components/schemas/PlatformUsageSearchTimeRange'
+          description: Clipped bucket interval; omitted for NONE.
+        dimensions:
+          $ref: '#/components/schemas/PlatformUsageSearchDimensions'
+          description: Grouped values for this bucket.
+        used_by_unit:
+          type: array
+          description: Observed spend units only, ordered USD then CREDITS; never combined or converted.
+          items:
+            $ref: '#/components/schemas/PlatformUsageUsedValue'
+        event_count:
+          type: integer
+          format: int64
+          minimum: 0
+          description: Raw billing events across both units; present only when requested.
+    PlatformUsageTaxonomyLabel:
+      type: object
+      additionalProperties: false
+      description: Display name of a product or feature value.
+      required:
+        - display_name
+      properties:
+        display_name:
+          type: string
+          description: Display name.
+    PlatformUsageModelLabel:
+      type: object
+      additionalProperties: false
+      description: Current model metadata.
+      required:
+        - display_name
+      properties:
+        display_name:
+          type: string
+          description: Current display name.
+        creator:
+          type: string
+          description: Model creator, when known.
+    PlatformUsageClientLabel:
+      type: object
+      additionalProperties: false
+      description: Current spend client metadata.
+      required:
+        - display_name
+      properties:
+        display_name:
+          type: string
+          description: Current application name; Glean for glean.
+    PlatformUsageAgentLabel:
+      type: object
+      additionalProperties: false
+      description: Current metadata of an agent the caller can read.
+      required:
+        - display_name
+      properties:
+        display_name:
+          type: string
+          description: Current agent name.
+    PlatformUsageUserLabel:
+      type: object
+      additionalProperties: false
+      description: Current user metadata from the People directory.
+      required:
+        - display_name
+      properties:
+        display_name:
+          type: string
+          description: Current display name.
+        email:
+          type: string
+          description: User email, when permitted and known.
+    PlatformUsageSearchLabels:
+      type: object
+      additionalProperties: false
+      description: |
+        Current visible metadata for grouped IDs on this page, one lookup per field. Missing, deleted, disabled, or hidden resources omit labels, not usage.
+      properties:
+        product:
+          type: object
+          description: Product value to label.
+          additionalProperties:
+            $ref: '#/components/schemas/PlatformUsageTaxonomyLabel'
+        feature:
+          type: object
+          description: Feature value to label.
+          additionalProperties:
+            $ref: '#/components/schemas/PlatformUsageTaxonomyLabel'
+        model_id:
+          type: object
+          description: Model ID to label.
+          additionalProperties:
+            $ref: '#/components/schemas/PlatformUsageModelLabel'
+        client_id:
+          type: object
+          description: Spend client ID to label.
+          additionalProperties:
+            $ref: '#/components/schemas/PlatformUsageClientLabel'
+        agent_id:
+          type: object
+          description: Agent ID to label.
+          additionalProperties:
+            $ref: '#/components/schemas/PlatformUsageAgentLabel'
+        user_id:
+          type: object
+          description: User ID to label.
+          additionalProperties:
+            $ref: '#/components/schemas/PlatformUsageUserLabel'
+    PlatformSearchUsageResponse:
+      type: object
+      additionalProperties: false
+      description: |
+        Measured spend observed in one pinned stored snapshot, not live counters, certified export completeness, verified absent usage or a final invoice. Source freshness and historical coverage are unknown when unsupported. Legacy rows without a unit use the app's current-plan fallback frozen at read selection; this is denomination inference, not certified historical denomination.
+      required:
+        - target
+        - results
+        - totals
+        - time_range
+        - data_updated_at
+        - earliest_available_at
+        - has_more
+        - next_cursor
+        - request_id
+      properties:
+        target:
+          $ref: '#/components/schemas/PlatformUsageTarget'
+          description: |
+            Scope measured for this query, derived from its user_id and agent_id filters: ORGANIZATION, USER with canonical user_id and known email, or AGENT.
+        results:
+          type: array
+          description: Requested page of observed buckets, at most page_size.
+          items:
+            $ref: '#/components/schemas/PlatformUsageSearchBucket'
+        totals:
+          type: array
+          description: Totals over all observed stored rows matching this query across every page; USD then CREDITS, observed units only.
+          items:
+            $ref: '#/components/schemas/PlatformUsageUsedValue'
+        total_count:
+          type: integer
+          minimum: 0
+          maximum: 100000
+          description: Bucket count across every page; present only with TOTAL_COUNT.
+        time_range:
+          $ref: '#/components/schemas/PlatformUsageSearchTimeRange'
+          description: Resolved inclusive-start, exclusive-end UTC interval.
+        data_updated_at:
+          type:
+            - string
+            - 'null'
+          format: date-time
+          description: Last completed source refresh when supported, otherwise null; read selection time is not source freshness.
+        earliest_available_at:
+          type:
+            - string
+            - 'null'
+          format: date-time
+          description: Earliest historical coverage when supported for this scope, otherwise null; an empty result does not verify absent usage.
+        labels:
+          $ref: '#/components/schemas/PlatformUsageSearchLabels'
+          description: |
+            With DISPLAY_NAMES, labels for grouped IDs on this page only, hydrated outside the shared measured-data cache.
+        has_more:
+          type: boolean
+          description: Whether another page exists in the pinned snapshot.
+        next_cursor:
+          type:
+            - string
+            - 'null'
+          description: Opaque continuation cursor, or null when has_more is false.
+        request_id:
+          type: string
+          description: Request identifier for troubleshooting.
+    PlatformSearchAdminUsageRequest:
+      description: |
+        Administrative measured-usage query, the same shape as personal search. Without a principal filter it measures the organization. Requires billing read.
+      allOf:
+        - $ref: '#/components/schemas/PlatformSearchCallerUsageRequest'
     PlatformEvaluateUsageLimitRequest:
       type: object
       additionalProperties: false
@@ -10685,23 +11705,6 @@ components:
         source:
           $ref: '#/components/schemas/PlatformUsagePolicySourceTarget'
           description: Configured policy supplying this restriction.
-    PlatformUsageUsedValue:
-      type: object
-      additionalProperties: false
-      description: Accrued usage in one unit, without combining or converting units.
-      required:
-        - used
-        - unit
-      properties:
-        used:
-          type: string
-          minLength: 1
-          maxLength: 24
-          pattern: ^(0|[1-9][0-9]*)(\.[0-9]{1,6})?$
-          description: Nonnegative decimal usage with at most six fractional digits.
-        unit:
-          $ref: '#/components/schemas/PlatformUsageUnit'
-          description: Unit of accrued usage.
     PlatformUsageAggregateUsage:
       type: object
       additionalProperties: false
