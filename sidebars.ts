@@ -1256,6 +1256,12 @@ const baseSidebars: SidebarsConfig = {
                   label: 'List personal limit-increase requests',
                   className: 'api-method get',
                 },
+                {
+                  type: 'doc',
+                  id: 'api/platform-api/platform-usage-search',
+                  label: 'Search measured usage',
+                  className: 'api-method post',
+                },
               ],
             },
             {
@@ -1417,6 +1423,12 @@ const baseSidebars: SidebarsConfig = {
                   id: 'api/platform-api/platform-admin-usage-settings-update',
                   label: 'Update usage settings',
                   className: 'api-method patch',
+                },
+                {
+                  type: 'doc',
+                  id: 'api/platform-api/platform-admin-usage-search',
+                  label: 'Search workspace measured usage',
+                  className: 'api-method post',
                 },
               ],
             },
