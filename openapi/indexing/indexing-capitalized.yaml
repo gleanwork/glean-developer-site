@@ -2,7 +2,7 @@ openapi: 3.0.0
 info:
   version: 0.9.0
   title: Glean API
-  x-source-commit-sha: 88a6c970bc2595551d275a7c0f6c482f7dc74bf3
+  x-source-commit-sha: 3a789c362aa7d590ff675240cb08ba590ecfde90
   description: |
     # Introduction
     In addition to the data sources that Glean has built-in support for, Glean also provides a REST API that enables customers to put arbitrary content in the search index. This is useful, for example, for doing permissions-aware search over content in internal tools that reside on-prem as well as for searching over applications that Glean does not currently support first class. In addition these APIs allow the customer to push organization data (people info, organization structure etc) into Glean.
@@ -22,7 +22,7 @@ info:
     These API clients provide type-safe, idiomatic interfaces for working with Glean IndexingAPIs in your language of choice.
   x-logo:
     url: https://app.glean.com/images/glean-text2.svg
-  x-open-api-commit-sha: 552255087a44252dc86e22aa5b09093cdb4a9a29
+  x-open-api-commit-sha: e47a5ad84be2e3bb41efea5936357f2f1ca4aa64
   x-speakeasy-name: Glean API
 servers:
   - url: '{serverUrl}'
@@ -51,6 +51,8 @@ paths:
       description: Adds a document to the index or updates an existing document.
       tags:
         - Documents
+      x-glean-release:
+        stage: ga
       requestBody:
         content:
           application/json:
@@ -150,6 +152,8 @@ paths:
       description: Adds or updates multiple documents in the index. Please refer to the [bulk indexing](https://developers.glean.com/indexing/documents/bulk-indexing/choosing-indexdocuments-vs-bulkindexdocuments) documentation for an explanation of when to use this endpoint.
       tags:
         - Documents
+      x-glean-release:
+        stage: ga
       requestBody:
         content:
           application/json:
@@ -245,6 +249,8 @@ paths:
       description: Replaces the documents in a datasource using paginated batch API calls. Please refer to the [bulk indexing](https://developers.glean.com/indexing/documents/bulk-upload-model) documentation for an explanation of how to use bulk endpoints.
       tags:
         - Documents
+      x-glean-release:
+        stage: ga
       requestBody:
         content:
           application/json:
@@ -340,6 +346,8 @@ paths:
       description: Updates the permissions for a given document without modifying document content.
       tags:
         - Documents
+      x-glean-release:
+        stage: ga
       requestBody:
         content:
           application/json:
@@ -447,6 +455,8 @@ paths:
         For more frequent document processing, contact Glean support.
       tags:
         - Documents
+      x-glean-release:
+        stage: ga
       requestBody:
         content:
           application/json:
@@ -528,6 +538,8 @@ paths:
       description: Deletes the specified document from the index. Succeeds if document is not present.
       tags:
         - Documents
+      x-glean-release:
+        stage: ga
       requestBody:
         content:
           application/json:
@@ -622,6 +634,8 @@ paths:
       description: Adds a datasource user or updates an existing user.
       tags:
         - Permissions
+      x-glean-release:
+        stage: ga
       requestBody:
         content:
           application/json:
@@ -726,6 +740,8 @@ paths:
         Note: Any users deleted from the existing set will have their associated memberships deleted as well.
       tags:
         - Permissions
+      x-glean-release:
+        stage: ga
       requestBody:
         content:
           application/json:
@@ -852,6 +868,8 @@ paths:
       description: Add or update a group in the datasource.
       tags:
         - Permissions
+      x-glean-release:
+        stage: ga
       requestBody:
         content:
           application/json:
@@ -953,6 +971,8 @@ paths:
         Note: Any groups deleted from the existing set will have their associated memberships deleted as well.
       tags:
         - Permissions
+      x-glean-release:
+        stage: ga
       requestBody:
         content:
           application/json:
@@ -1066,6 +1086,8 @@ paths:
       description: Add the memberships of a group in the datasource.
       tags:
         - Permissions
+      x-glean-release:
+        stage: ga
       requestBody:
         content:
           application/json:
@@ -1165,6 +1187,8 @@ paths:
       description: Replaces the memberships for a group in a datasource using paginated batch API calls. Please refer to the [bulk indexing](https://developers.glean.com/indexing/documents/bulk-upload-model) documentation for an explanation of how to use bulk endpoints.
       tags:
         - Permissions
+      x-glean-release:
+        stage: ga
       requestBody:
         content:
           application/json:
@@ -1274,6 +1298,8 @@ paths:
         Schedules the immediate processing of all group memberships uploaded through the indexing API. By default the uploaded group memberships will be processed asynchronously but this API can be used to schedule processing of all memberships on demand.
       tags:
         - Permissions
+      x-glean-release:
+        stage: ga
       requestBody:
         content:
           application/json:
@@ -1355,6 +1381,8 @@ paths:
         Note: All memberships associated with the deleted user will also be deleted.
       tags:
         - Permissions
+      x-glean-release:
+        stage: ga
       requestBody:
         content:
           application/json:
@@ -1449,6 +1477,8 @@ paths:
         Note: All memberships associated with the deleted group will also be deleted.
       tags:
         - Permissions
+      x-glean-release:
+        stage: ga
       requestBody:
         content:
           application/json:
@@ -1541,6 +1571,8 @@ paths:
       description: Delete membership to a group in the specified datasource. Silently succeeds if membership is not present.
       tags:
         - Permissions
+      x-glean-release:
+        stage: ga
       requestBody:
         content:
           application/json:
@@ -1636,15 +1668,16 @@ paths:
           source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Indexing.Permissions.DeleteMembership(ctx, components.DeleteMembershipRequest{\n        Datasource: \"<value>\",\n        Membership: components.DatasourceMembershipDefinition{\n            GroupName: \"<value>\",\n        },\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res != nil {\n        // handle response\n    }\n}"
   /api/index/v1/debug/{datasource}/status:
     post:
-      x-beta: true
       summary: |
-        Beta: Get datasource status
+        Get datasource status
       description: |
-        Gather information about the datasource's overall status. Currently in beta, might undergo breaking changes without prior notice.
+        Gather information about the datasource's overall status.
 
         Tip: Refer to the [Troubleshooting tutorial](https://developers.glean.com/indexing/debugging/datasource-config) for more information.
       tags:
         - Troubleshooting
+      x-glean-release:
+        stage: ga
       parameters:
         - name: datasource
           in: path
@@ -1729,15 +1762,16 @@ paths:
           source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Indexing.Datasource.Status(ctx, \"<value>\")\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.DebugDatasourceStatusResponse != nil {\n        // handle response\n    }\n}"
   /api/index/v1/debug/{datasource}/document:
     post:
-      x-beta: true
       summary: |
-        Beta: Get document information
+        Get document information
       description: |
-        Gives various information that would help in debugging related to a particular document. Currently in beta, might undergo breaking changes without prior notice.
+        Gives various information that would help in debugging related to a particular document.
 
         Tip: Refer to the [Troubleshooting tutorial](https://developers.glean.com/indexing/debugging/datasource-config) for more information.
       tags:
         - Troubleshooting
+      x-glean-release:
+        stage: ga
       parameters:
         - name: datasource
           in: path
@@ -1837,15 +1871,16 @@ paths:
           source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Indexing.Documents.Debug(ctx, \"<value>\", components.DebugDocumentRequest{\n        ObjectType: \"Article\",\n        DocID: \"art123\",\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.DebugDocumentResponse != nil {\n        // handle response\n    }\n}"
   /api/index/v1/debug/{datasource}/documents:
     post:
-      x-beta: true
       summary: |
-        Beta: Get information of a batch of documents
+        Get information of a batch of documents
       description: |
-        Gives various information that would help in debugging related to a batch of documents. Currently in beta, might undergo breaking changes without prior notice.
+        Gives various information that would help in debugging related to a batch of documents.
 
         Tip: Refer to the [Troubleshooting tutorial](https://developers.glean.com/indexing/debugging/datasource-config) for more information.
       tags:
         - Troubleshooting
+      x-glean-release:
+        stage: ga
       parameters:
         - name: datasource
           in: path
@@ -1954,15 +1989,16 @@ paths:
           source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Indexing.Documents.DebugMany(ctx, \"<value>\", components.DebugDocumentsRequest{\n        DebugDocuments: []components.DebugDocumentRequest{\n            components.DebugDocumentRequest{\n                ObjectType: \"Article\",\n                DocID: \"art123\",\n            },\n        },\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.DebugDocumentsResponse != nil {\n        // handle response\n    }\n}"
   /api/index/v1/debug/{datasource}/user:
     post:
-      x-beta: true
       summary: |
-        Beta: Get user information
+        Get user information
       description: |
-        Gives various information that would help in debugging related to a particular user. Currently in beta, might undergo breaking changes without prior notice.
+        Gives various information that would help in debugging related to a particular user.
 
         Tip: Refer to the [Troubleshooting tutorial](https://developers.glean.com/indexing/debugging/datasource-config) for more information.
       tags:
         - Troubleshooting
+      x-glean-release:
+        stage: ga
       parameters:
         - name: datasource
           in: path
@@ -2067,6 +2103,8 @@ paths:
         Tip: Refer to the [Troubleshooting tutorial](https://developers.glean.com/indexing/debugging/datasource-config) for more information.
       tags:
         - Troubleshooting
+      x-glean-release:
+        stage: ga
       requestBody:
         content:
           application/json:
@@ -2194,11 +2232,12 @@ paths:
           description: Not Authorized
         '429':
           description: Too Many Requests
-      x-glean-deprecated:
-        id: 7eec0433-78fd-49f9-a34f-cca83640ec24
-        introduced: '2026-02-03'
-        message: Endpoint is deprecated
-        removal: '2027-01-15'
+      x-glean-release:
+        stage: deprecated
+        deprecation:
+          introduced: '2026-02-03'
+          message: Endpoint is deprecated
+          removal: '2027-01-15'
       x-speakeasy-deprecation-message: 'Deprecated on 2026-02-03, removal scheduled for 2027-01-15: Endpoint is deprecated'
       x-speakeasy-group: indexing.documents
       x-speakeasy-name-override: status
@@ -2232,11 +2271,12 @@ paths:
           description: Not Authorized
         '409':
           description: Conflict
-      x-glean-deprecated:
-        id: c164089c-9412-4724-acf6-caf3b0d2a527
-        introduced: '2026-02-03'
-        message: Endpoint is deprecated
-        removal: '2027-01-15'
+      x-glean-release:
+        stage: deprecated
+        deprecation:
+          introduced: '2026-02-03'
+          message: Endpoint is deprecated
+          removal: '2027-01-15'
       x-speakeasy-deprecation-message: 'Deprecated on 2026-02-03, removal scheduled for 2027-01-15: Endpoint is deprecated'
       x-speakeasy-group: indexing.documents
       x-speakeasy-name-override: count
@@ -2270,11 +2310,12 @@ paths:
           description: Not Authorized
         '409':
           description: Conflict
-      x-glean-deprecated:
-        id: 4f5df873-385e-4539-8183-cb764b0f06b9
-        introduced: '2026-02-03'
-        message: Endpoint is deprecated
-        removal: '2027-01-15'
+      x-glean-release:
+        stage: deprecated
+        deprecation:
+          introduced: '2026-02-03'
+          message: Endpoint is deprecated
+          removal: '2027-01-15'
       x-speakeasy-deprecation-message: 'Deprecated on 2026-02-03, removal scheduled for 2027-01-15: Endpoint is deprecated'
       x-speakeasy-name-override: count
       x-speakeasy-group: indexing.people
@@ -2284,6 +2325,8 @@ paths:
       description: Allow the datasource be visible to the specified beta users. The default behaviour is datasource being visible to all users if it is enabled and not visible to any user if it is not enabled.
       tags:
         - Permissions
+      x-glean-release:
+        stage: ga
       requestBody:
         content:
           application/json:
@@ -2388,6 +2431,8 @@ paths:
       description: Add or update a custom datasource and its schema.
       tags:
         - Datasources
+      x-glean-release:
+        stage: ga
       requestBody:
         content:
           application/json:
@@ -2507,6 +2552,8 @@ paths:
       description: Fetches the datasource config for the specified custom datasource.
       tags:
         - Datasources
+      x-glean-release:
+        stage: ga
       requestBody:
         content:
           application/json:
@@ -2604,6 +2651,8 @@ paths:
       description: Rotates the secret value inside the Indexing API token and returns the new raw secret. All other properties of the token are unchanged. In order to rotate the secret value, include the token as the bearer token in the `/rotatetoken` request. Please refer to [Token rotation](https://developers.glean.com/indexing/authentication/token-rotation) documentation for more information.
       tags:
         - Authentication
+      x-glean-release:
+        stage: ga
       responses:
         '200':
           description: OK
@@ -2684,6 +2733,8 @@ paths:
       description: Adds an employee or replaces the existing information about an employee.
       tags:
         - People
+      x-glean-release:
+        stage: ga
       requestBody:
         content:
           application/json; charset=UTF-8:
@@ -2797,6 +2848,7 @@ paths:
           source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Indexing.People.Index(ctx, components.IndexEmployeeRequest{\n        Employee: components.EmployeeInfoDefinition{\n            Email: \"Jerrold_Hermann@hotmail.com\",\n            Department: \"<value>\",\n            DatasourceProfiles: []components.DatasourceProfile{\n                components.DatasourceProfile{\n                    Datasource: \"github\",\n                    Handle: \"<value>\",\n                },\n            },\n        },\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res != nil {\n        // handle response\n    }\n}"
   /api/index/v1/bulkindexemployees:
     post:
+      deprecated: true
       summary: Bulk index employees
       description: Replaces all the currently indexed employees using paginated batch API calls. Please refer to the [bulk indexing](https://developers.glean.com/indexing/documents/bulk-upload-model) documentation for an explanation of how to use bulk endpoints.
       tags:
@@ -2817,12 +2869,12 @@ paths:
           description: Not Authorized
         '409':
           description: Conflict
-      x-glean-deprecated:
-        id: ce596f49-55c4-465e-bf3c-5a3a33906e1f
-        introduced: '2026-02-03'
-        message: Endpoint is deprecated
-        removal: '2027-04-15'
-      deprecated: true
+      x-glean-release:
+        stage: deprecated
+        deprecation:
+          introduced: '2026-02-03'
+          message: Endpoint is deprecated
+          removal: '2027-04-15'
       x-speakeasy-deprecation-message: 'Deprecated on 2026-02-03, removal scheduled for 2027-04-15: Endpoint is deprecated'
       x-speakeasy-name-override: bulkIndex
       x-speakeasy-group: indexing.people
@@ -2834,6 +2886,8 @@ paths:
         Schedules the immediate processing of employees and teams uploaded through the indexing API. By default all uploaded people data will be processed asynchronously but this API can be used to schedule its processing on demand.
       tags:
         - People
+      x-glean-release:
+        stage: ga
       responses:
         '200':
           description: OK
@@ -2909,6 +2963,8 @@ paths:
       description: Delete an employee. Silently succeeds if employee is not present.
       tags:
         - People
+      x-glean-release:
+        stage: ga
       requestBody:
         content:
           application/json; charset=UTF-8:
@@ -2999,6 +3055,8 @@ paths:
       description: Adds a team or updates information about a team
       tags:
         - People
+      x-glean-release:
+        stage: ga
       requestBody:
         content:
           application/json; charset=UTF-8:
@@ -3146,6 +3204,8 @@ paths:
       description: Delete a team based on provided id.
       tags:
         - People
+      x-glean-release:
+        stage: ga
       requestBody:
         content:
           application/json; charset=UTF-8:
@@ -3236,6 +3296,8 @@ paths:
       description: Replaces all the currently indexed teams using paginated batch API calls. Please refer to the [bulk indexing](https://developers.glean.com/indexing/documents/bulk-upload-model) documentation for an explanation of how to use bulk endpoints.
       tags:
         - People
+      x-glean-release:
+        stage: ga
       requestBody:
         content:
           application/json; charset=UTF-8:
@@ -3433,6 +3495,8 @@ paths:
       description: Replaces all the currently indexed shortcuts using paginated batch API calls. Note that this endpoint is used for indexing shortcuts not hosted by Glean. If you want to upload shortcuts that would be hosted by Glean, please use the `/uploadshortcuts` endpoint. For information on what you can do with Golinks, which are Glean-hosted shortcuts, please refer to [this](https://docs.glean.com/user-guide/knowledge/go-links/how-go-links-work) page.
       tags:
         - Shortcuts
+      x-glean-release:
+        stage: ga
       requestBody:
         content:
           application/json; charset=UTF-8:
@@ -3559,6 +3623,8 @@ paths:
       description: Creates glean shortcuts for uploaded shortcuts info. Glean would host the shortcuts, and they can be managed in the knowledge tab once uploaded.
       tags:
         - Shortcuts
+      x-glean-release:
+        stage: ga
       requestBody:
         content:
           application/json; charset=UTF-8:
@@ -3686,13 +3752,14 @@ paths:
           source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Indexing.Shortcuts.Upload(ctx, components.UploadShortcutsRequest{\n        UploadID: \"<id>\",\n        Shortcuts: []components.IndexingShortcut{\n            components.IndexingShortcut{\n                InputAlias: \"<value>\",\n                DestinationURL: \"https://majestic-pharmacopoeia.info/\",\n                CreatedBy: \"<value>\",\n            },\n            components.IndexingShortcut{\n                InputAlias: \"<value>\",\n                DestinationURL: \"https://majestic-pharmacopoeia.info/\",\n                CreatedBy: \"<value>\",\n            },\n            components.IndexingShortcut{\n                InputAlias: \"<value>\",\n                DestinationURL: \"https://majestic-pharmacopoeia.info/\",\n                CreatedBy: \"<value>\",\n            },\n        },\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res != nil {\n        // handle response\n    }\n}"
   /api/index/v1/debug/{datasource}/document/events:
     post:
-      x-beta: true
       summary: |
-        Beta: Get document lifecycle events
+        Get document lifecycle events
       description: |
-        Retrieves lifecycle events for a specific document including upload time, index times and deletions. Rate limited to 1 request per minute per datasource. Currently in beta, might undergo breaking changes without prior notice.
+        Retrieves lifecycle events for a specific document including upload time, index times and deletions. Rate limited to 1 request per minute per datasource.
       tags:
         - Troubleshooting
+      x-glean-release:
+        stage: ga
       parameters:
         - name: datasource
           in: path
@@ -3821,6 +3888,8 @@ paths:
       description: Validates and asynchronously processes a datasource-specific submission.
       tags:
         - Datasources
+      x-glean-release:
+        stage: ga
       requestBody:
         content:
           application/json:
@@ -3959,6 +4028,8 @@ paths:
       description: Associates custom metadata with a specific document. Custom metadata enables you to enrich documents with additional structured information that can be used for search, filtering, and faceting.
       tags:
         - Custom Metadata
+      x-glean-release:
+        stage: ga
       requestBody:
         content:
           application/json:
@@ -4057,6 +4128,8 @@ paths:
       description: Removes all custom metadata for the specified metadata group from a document.
       tags:
         - Custom Metadata
+      x-glean-release:
+        stage: ga
       responses:
         '200':
           $ref: '#/components/responses/SuccessResponse'
@@ -4155,6 +4228,8 @@ paths:
       description: Retrieves the current schema definition for a metadata group.
       tags:
         - Custom Metadata
+      x-glean-release:
+        stage: ga
       responses:
         '200':
           description: OK
@@ -4240,6 +4315,8 @@ paths:
       description: Defines or updates the schema for a metadata group. Schemas should be defined before indexing metadata.
       tags:
         - Custom Metadata
+      x-glean-release:
+        stage: ga
       requestBody:
         content:
           application/json:
@@ -4341,6 +4418,8 @@ paths:
       description: Deletes the schema definition for a metadata group. This does not delete existing metadata values on documents.
       tags:
         - Custom Metadata
+      x-glean-release:
+        stage: ga
       responses:
         '200':
           $ref: '#/components/responses/SuccessResponse'
@@ -5351,11 +5430,12 @@ components:
           type: string
           description: The employee's location (city/office name etc).
           deprecated: true
-          x-glean-deprecated:
-            id: a7f6fbaa-0eaf-4c0c-a4f5-ab90347f73fd
-            introduced: '2026-02-05'
-            message: Field is deprecated
-            removal: '2027-01-15'
+          x-glean-release:
+            stage: deprecated
+            deprecation:
+              introduced: '2026-02-05'
+              message: Field is deprecated
+              removal: '2027-01-15'
           x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2027-01-15: Field is deprecated'
         structuredLocation:
           description: Detailed location with information about country, state, city etc.
