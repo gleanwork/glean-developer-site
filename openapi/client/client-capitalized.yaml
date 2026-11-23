@@ -2,7 +2,7 @@ openapi: 3.0.0
 info:
   version: 0.9.0
   title: Glean API
-  x-source-commit-sha: 888ec9b79a1e41b4d6e9644d84aedc65e164a0da
+  x-source-commit-sha: 88a6c970bc2595551d275a7c0f6c482f7dc74bf3
   description: |
     # Introduction
     In addition to the data sources that Glean has built-in support for, Glean also provides a REST API that enables customers to put arbitrary content in the search index. This is useful, for example, for doing permissions-aware search over content in internal tools that reside on-prem as well as for searching over applications that Glean does not currently support first class. In addition these APIs allow the customer to push organization data (people info, organization structure etc) into Glean.
@@ -22,7 +22,7 @@ info:
     These API clients provide type-safe, idiomatic interfaces for working with Glean IndexingAPIs in your language of choice.
   x-logo:
     url: https://app.glean.com/images/glean-text2.svg
-  x-open-api-commit-sha: 702d00c6f8dc945468d024d6d0e4663c5636a0fd
+  x-open-api-commit-sha: 552255087a44252dc86e22aa5b09093cdb4a9a29
   x-speakeasy-name: Glean API
 servers:
   - url: '{serverUrl}'
@@ -40,8 +40,6 @@ paths:
       description: Report user activity that occurs on indexed documents such as viewing or editing. This signal improves search quality.
       operationId: activity
       x-visibility: Public
-      x-glean-release:
-        stage: ga
       x-codegen-request-body-name: payload
       requestBody:
         content:
@@ -208,8 +206,6 @@ paths:
       description: Report events that happen to results within a Glean client UI, such as search result views and clicks.  This signal improves search quality.
       operationId: feedback
       x-visibility: Public
-      x-glean-release:
-        stage: ga
       x-codegen-request-body-name: payload
       parameters:
         - name: feedback
@@ -320,8 +316,6 @@ paths:
       description: Create a textual announcement visible to some set of users based on department and location.
       operationId: createannouncement
       x-visibility: Public
-      x-glean-release:
-        stage: ga
       x-codegen-request-body-name: payload
       parameters:
         - $ref: '#/components/parameters/locale'
@@ -43692,8 +43686,6 @@ paths:
       description: Delete an existing user-generated announcement.
       operationId: deleteannouncement
       x-visibility: Public
-      x-glean-release:
-        stage: ga
       x-codegen-request-body-name: payload
       parameters:
         - $ref: '#/components/parameters/locale'
@@ -43790,8 +43782,6 @@ paths:
       description: Update a textual announcement visible to some set of users based on department and location.
       operationId: updateannouncement
       x-visibility: Public
-      x-glean-release:
-        stage: ga
       x-codegen-request-body-name: payload
       parameters:
         - $ref: '#/components/parameters/locale'
@@ -135127,8 +135117,6 @@ paths:
       description: Create a user-generated Answer that contains a question and answer.
       operationId: createanswer
       x-visibility: Public
-      x-glean-release:
-        stage: ga
       x-codegen-request-body-name: payload
       parameters:
         - $ref: '#/components/parameters/locale'
@@ -137858,8 +137846,6 @@ paths:
       description: Delete an existing user-generated Answer.
       operationId: deleteanswer
       x-visibility: Public
-      x-glean-release:
-        stage: ga
       x-codegen-request-body-name: payload
       parameters:
         - $ref: '#/components/parameters/locale'
@@ -137958,8 +137944,6 @@ paths:
       description: Update an existing user-generated Answer.
       operationId: editanswer
       x-visibility: Public
-      x-glean-release:
-        stage: ga
       x-codegen-request-body-name: payload
       parameters:
         - $ref: '#/components/parameters/locale'
@@ -139861,8 +139845,6 @@ paths:
       description: Read the details of a particular Answer given its ID.
       operationId: getanswer
       x-visibility: Public
-      x-glean-release:
-        stage: ga
       x-codegen-request-body-name: payload
       parameters:
         - $ref: '#/components/parameters/locale'
@@ -139993,12 +139975,11 @@ paths:
           description: Not Authorized
         '429':
           description: Too Many Requests
-      x-glean-release:
-        stage: deprecated
-        deprecation:
-          introduced: '2026-01-21'
-          message: Answer boards have been removed and this endpoint no longer serves a purpose
-          removal: '2027-01-15'
+      x-glean-deprecated:
+        id: 4c0923bd-64c7-45b9-99a5-b36f2705e618
+        introduced: '2026-01-21'
+        message: Answer boards have been removed and this endpoint no longer serves a purpose
+        removal: '2027-01-15'
       x-speakeasy-deprecation-message: 'Deprecated on 2026-01-21, removal scheduled for 2027-01-15: Answer boards have been removed and this endpoint no longer serves a purpose'
       security:
         - APIToken: []
@@ -140019,8 +140000,6 @@ paths:
         `<backend>/<authUrlRelativePath>?transient_auth_token=<token>`.
       operationId: checkdatasourceauth
       x-visibility: Public
-      x-glean-release:
-        stage: ga
       parameters: []
       responses:
         '200':
@@ -140111,8 +140090,6 @@ paths:
         for use with the Client API (e.g. `/rest/api/v1/*`).
       operationId: createauthtoken
       x-visibility: Public
-      x-glean-release:
-        stage: ga
       parameters: []
       responses:
         '200':
@@ -140200,8 +140177,6 @@ paths:
       description: Have a conversation with Glean AI.
       operationId: chat
       x-visibility: Public
-      x-glean-release:
-        stage: ga
       x-codegen-request-body-name: payload
       parameters:
         - $ref: '#/components/parameters/locale'
@@ -140450,8 +140425,6 @@ paths:
       description: Deletes all saved Chats a user has had and all their contained conversational content.
       operationId: deleteallchats
       x-visibility: Public
-      x-glean-release:
-        stage: ga
       x-codegen-request-body-name: payload
       parameters:
         - $ref: '#/components/parameters/locale'
@@ -140535,8 +140508,6 @@ paths:
       description: Deletes saved Chats and all their contained conversational content.
       operationId: deletechats
       x-visibility: Public
-      x-glean-release:
-        stage: ga
       x-codegen-request-body-name: payload
       parameters:
         - $ref: '#/components/parameters/locale'
@@ -140636,8 +140607,6 @@ paths:
       description: Retrieves the chat history between Glean Assistant and the user for a given Chat. Omit pagination fields to return the full message history (existing behavior). Use last alone for the latest page, last with before for older messages, or first with after for newer messages. Each page is chronological and includes pagination cursors and page flags.
       operationId: getchat
       x-visibility: Public
-      x-glean-release:
-        stage: ga
       x-codegen-request-body-name: payload
       parameters:
         - $ref: '#/components/parameters/locale'
@@ -140748,8 +140717,6 @@ paths:
       description: Retrieves all the saved Chats between Glean Assistant and the user. The returned Chats contain only metadata and no conversational content.
       operationId: listchats
       x-visibility: Public
-      x-glean-release:
-        stage: ga
       x-codegen-request-body-name: payload
       parameters:
         - $ref: '#/components/parameters/locale'
@@ -140840,8 +140807,6 @@ paths:
       description: Gets the Chat application details for the specified application ID.
       operationId: getchatapplication
       x-visibility: Public
-      x-glean-release:
-        stage: ga
       x-codegen-request-body-name: payload
       parameters:
         - $ref: '#/components/parameters/locale'
@@ -140945,8 +140910,6 @@ paths:
       description: Upload files for Chat.
       operationId: uploadchatfiles
       x-visibility: Public
-      x-glean-release:
-        stage: ga
       parameters:
         - $ref: '#/components/parameters/locale'
         - $ref: '#/components/parameters/timezoneOffset'
@@ -141059,8 +141022,6 @@ paths:
       description: Get files uploaded by a user for Chat.
       operationId: getchatfiles
       x-visibility: Public
-      x-glean-release:
-        stage: ga
       parameters:
         - $ref: '#/components/parameters/locale'
         - $ref: '#/components/parameters/timezoneOffset'
@@ -141171,8 +141132,6 @@ paths:
       description: Delete files uploaded by a user for Chat.
       operationId: deletechatfiles
       x-visibility: Public
-      x-glean-release:
-        stage: ga
       parameters:
         - $ref: '#/components/parameters/locale'
         - $ref: '#/components/parameters/timezoneOffset'
@@ -141282,8 +141241,6 @@ paths:
         Download the raw content of a file generated or uploaded during a chat session (for example, an image produced by the assistant). Returns the file bytes with a Content-Type header matching the file's MIME type.
       operationId: getChatFile
       x-visibility: Public
-      x-glean-release:
-        stage: ga
       parameters:
         - name: fileId
           in: path
@@ -141390,8 +141347,6 @@ paths:
       description: Create an agent.
       operationId: createAgent
       x-visibility: Public
-      x-glean-release:
-        stage: ga
       parameters:
         - $ref: '#/components/parameters/locale'
         - $ref: '#/components/parameters/timezoneOffset'
@@ -141522,13 +141477,12 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
         '500':
           description: Internal server error
-      x-glean-release:
-        stage: deprecated
-        deprecation:
-          docs: https://developers.glean.com/api/platform-api/agents-overview
-          introduced: '2026-08-25'
-          message: Use GET /api/agents/{agent_id} instead.
-          removal: '2027-04-15'
+      x-glean-deprecated:
+        docs: https://developers.glean.com/api/platform-api/agents-overview
+        id: e01a59ea-5de0-481f-97b6-d28dd65379e6
+        introduced: '2026-08-25'
+        message: Use GET /api/agents/{agent_id} instead.
+        removal: '2027-04-15'
       deprecated: true
       x-speakeasy-deprecation-message: 'Deprecated on 2026-08-25, removal scheduled for 2027-04-15: Use GET /api/agents/{agent_id} instead.'
       security:
@@ -141542,8 +141496,6 @@ paths:
       description: Creates a draft or publishes an [agent](https://developers.glean.com/agents/agents-api). Use `isDraft=true` to save a draft, or `isDraft=false` (or omit) to publish immediately. Only draft and publish modes are supported.
       operationId: editAgent
       x-visibility: Public
-      x-glean-release:
-        stage: ga
       parameters:
         - $ref: '#/components/parameters/locale'
         - $ref: '#/components/parameters/timezoneOffset'
@@ -141689,13 +141641,12 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
         '500':
           description: Internal server error
-      x-glean-release:
-        stage: deprecated
-        deprecation:
-          docs: https://developers.glean.com/api/platform-api/agents-overview
-          introduced: '2026-08-25'
-          message: Use GET /api/agents/{agent_id}/schemas instead.
-          removal: '2027-04-15'
+      x-glean-deprecated:
+        docs: https://developers.glean.com/api/platform-api/agents-overview
+        id: 9ca398ba-cf22-4523-9d9c-86e5f82d6ec7
+        introduced: '2026-08-25'
+        message: Use GET /api/agents/{agent_id}/schemas instead.
+        removal: '2027-04-15'
       deprecated: true
       x-speakeasy-deprecation-message: 'Deprecated on 2026-08-25, removal scheduled for 2027-04-15: Use GET /api/agents/{agent_id}/schemas instead.'
       security:
@@ -141710,8 +141661,6 @@ paths:
       description: 'Imports an [agent](https://developers.glean.com/agents/agents-api) from its on-disk folder representation (spec.yaml, instructions.md, skills/, subagents/) packaged as a zip, and creates or updates the agent. Inverse of the export flow: the folder-to-schema conversion runs server-side. The bundle must contain only regular files; symlinks are resolved by the caller at packaging time.'
       operationId: importAgent
       x-visibility: Public
-      x-glean-release:
-        stage: ga
       parameters:
         - $ref: '#/components/parameters/locale'
         - $ref: '#/components/parameters/timezoneOffset'
@@ -141869,13 +141818,12 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
         '500':
           description: Internal server error
-      x-glean-release:
-        stage: deprecated
-        deprecation:
-          docs: https://developers.glean.com/api/platform-api/agents-overview
-          introduced: '2026-08-25'
-          message: Use POST /api/agents/search instead.
-          removal: '2027-04-15'
+      x-glean-deprecated:
+        docs: https://developers.glean.com/api/platform-api/agents-overview
+        id: 3ab6f4c0-0b97-4a0b-b5da-e888e4bb7706
+        introduced: '2026-08-25'
+        message: Use POST /api/agents/search instead.
+        removal: '2027-04-15'
       deprecated: true
       x-speakeasy-deprecation-message: 'Deprecated on 2026-08-25, removal scheduled for 2027-04-15: Use POST /api/agents/search instead.'
       security:
@@ -141944,13 +141892,12 @@ paths:
                 $ref: '#/components/schemas/UnauthorizedAgentToolsError'
         '500':
           description: Internal server error
-      x-glean-release:
-        stage: deprecated
-        deprecation:
-          docs: https://developers.glean.com/api/platform-api/agents-overview
-          introduced: '2026-08-25'
-          message: Use POST /api/agents/{agent_id}/runs with stream=true instead.
-          removal: '2027-04-15'
+      x-glean-deprecated:
+        docs: https://developers.glean.com/api/platform-api/agents-overview
+        id: db3f42a5-8820-451e-b57a-14bf6ca3915c
+        introduced: '2026-08-25'
+        message: Use POST /api/agents/{agent_id}/runs with stream=true instead.
+        removal: '2027-04-15'
       deprecated: true
       x-speakeasy-deprecation-message: 'Deprecated on 2026-08-25, removal scheduled for 2027-04-15: Use POST /api/agents/{agent_id}/runs with stream=true instead.'
       security:
@@ -141994,13 +141941,12 @@ paths:
                 $ref: '#/components/schemas/UnauthorizedAgentToolsError'
         '500':
           description: Internal server error
-      x-glean-release:
-        stage: deprecated
-        deprecation:
-          docs: https://developers.glean.com/api/platform-api/agents-overview
-          introduced: '2026-08-25'
-          message: Use POST /api/agents/{agent_id}/runs instead.
-          removal: '2027-04-15'
+      x-glean-deprecated:
+        docs: https://developers.glean.com/api/platform-api/agents-overview
+        id: 683b90e1-48d3-4d7a-a32d-b48eb194fcf0
+        introduced: '2026-08-25'
+        message: Use POST /api/agents/{agent_id}/runs instead.
+        removal: '2027-04-15'
       deprecated: true
       x-speakeasy-deprecation-message: 'Deprecated on 2026-08-25, removal scheduled for 2027-04-15: Use POST /api/agents/{agent_id}/runs instead.'
       security:
@@ -142015,8 +141961,6 @@ paths:
       description: Add items to a Collection.
       operationId: addcollectionitems
       x-visibility: Public
-      x-glean-release:
-        stage: ga
       x-codegen-request-body-name: payload
       parameters:
         - $ref: '#/components/parameters/locale'
@@ -142120,8 +142064,6 @@ paths:
       description: Create a publicly visible (empty) Collection of documents.
       operationId: createcollection
       x-visibility: Public
-      x-glean-release:
-        stage: ga
       x-codegen-request-body-name: payload
       parameters:
         - $ref: '#/components/parameters/locale'
@@ -143522,8 +143464,6 @@ paths:
       description: Delete a Collection given the Collection's ID.
       operationId: deletecollection
       x-visibility: Public
-      x-glean-release:
-        stage: ga
       x-codegen-request-body-name: payload
       parameters:
         - $ref: '#/components/parameters/locale'
@@ -143639,8 +143579,6 @@ paths:
       description: Delete a single item from a Collection.
       operationId: deletecollectionitem
       x-visibility: Public
-      x-glean-release:
-        stage: ga
       x-codegen-request-body-name: payload
       parameters:
         - $ref: '#/components/parameters/locale'
@@ -143748,8 +143686,6 @@ paths:
       description: Update the properties of an existing Collection.
       operationId: editcollection
       x-visibility: Public
-      x-glean-release:
-        stage: ga
       x-codegen-request-body-name: payload
       parameters:
         - $ref: '#/components/parameters/locale'
@@ -145911,8 +145847,6 @@ paths:
       description: Update the URL, Glean Document ID, description of an item within a Collection given its ID.
       operationId: editcollectionitem
       x-visibility: Public
-      x-glean-release:
-        stage: ga
       x-codegen-request-body-name: payload
       parameters:
         - $ref: '#/components/parameters/locale'
@@ -146018,8 +145952,6 @@ paths:
       description: Read the details of a Collection given its ID. Does not fetch items in this Collection.
       operationId: getcollection
       x-visibility: Public
-      x-glean-release:
-        stage: ga
       x-codegen-request-body-name: payload
       parameters:
         - $ref: '#/components/parameters/locale'
@@ -146123,8 +146055,6 @@ paths:
       description: List all existing Collections.
       operationId: listcollections
       x-visibility: Public
-      x-glean-release:
-        stage: ga
       x-codegen-request-body-name: payload
       parameters:
         - $ref: '#/components/parameters/locale'
@@ -146225,8 +146155,6 @@ paths:
       description: Read the emails of all users who have access to the given document.
       operationId: getdocpermissions
       x-visibility: Public
-      x-glean-release:
-        stage: ga
       x-codegen-request-body-name: payload
       parameters:
         - $ref: '#/components/parameters/locale'
@@ -146329,8 +146257,6 @@ paths:
       description: Read the documents including metadata (does not include enhanced metadata via `/documentmetadata`) for the given list of Glean Document IDs or URLs specified in the request.
       operationId: getdocuments
       x-visibility: Public
-      x-glean-release:
-        stage: ga
       x-codegen-request-body-name: payload
       parameters:
         - $ref: '#/components/parameters/locale'
@@ -146428,8 +146354,6 @@ paths:
       description: Read the documents including metadata (does not include enhanced metadata via `/documentmetadata`) macthing the given facet conditions.
       operationId: getdocumentsbyfacets
       x-visibility: Public
-      x-glean-release:
-        stage: ga
       x-codegen-request-body-name: payload
       parameters:
         - $ref: '#/components/parameters/locale'
@@ -146622,8 +146546,6 @@ paths:
       description: Gets the aggregate usage insights data displayed in the Insights Dashboards.
       operationId: insights
       x-visibility: Public
-      x-glean-release:
-        stage: ga
       x-codegen-request-body-name: payload
       parameters:
         - $ref: '#/components/parameters/locale'
@@ -146724,8 +146646,6 @@ paths:
       description: Retrieves list of messages from messaging/chat datasources (e.g. Slack, Teams).
       operationId: messages
       x-visibility: Public
-      x-glean-release:
-        stage: ga
       x-codegen-request-body-name: payload
       parameters:
         - $ref: '#/components/parameters/locale'
@@ -146833,8 +146753,6 @@ paths:
       description: Update an existing user-generated pin.
       operationId: editpin
       x-visibility: Public
-      x-glean-release:
-        stage: ga
       x-codegen-request-body-name: payload
       parameters:
         - $ref: '#/components/parameters/locale'
@@ -146979,8 +146897,6 @@ paths:
       description: Read pin details given its ID.
       operationId: getpin
       x-visibility: Public
-      x-glean-release:
-        stage: ga
       x-codegen-request-body-name: payload
       parameters:
         - $ref: '#/components/parameters/locale'
@@ -147081,8 +146997,6 @@ paths:
       description: Lists all pins.
       operationId: listpins
       x-visibility: Public
-      x-glean-release:
-        stage: ga
       x-codegen-request-body-name: payload
       parameters:
         - $ref: '#/components/parameters/locale'
@@ -147183,8 +147097,6 @@ paths:
       description: Pin a document as a result for a given search query.Pin results that are known to be a good match.
       operationId: pin
       x-visibility: Public
-      x-glean-release:
-        stage: ga
       x-codegen-request-body-name: payload
       parameters:
         - $ref: '#/components/parameters/locale'
@@ -147329,8 +147241,6 @@ paths:
       description: Unpin a previously pinned result.
       operationId: unpin
       x-visibility: Public
-      x-glean-release:
-        stage: ga
       x-codegen-request-body-name: payload
       parameters:
         - $ref: '#/components/parameters/locale'
@@ -147426,8 +147336,6 @@ paths:
       description: Retrieves results for search query without respect for permissions. This is available only to privileged users.
       operationId: adminsearch
       x-visibility: Public
-      x-glean-release:
-        stage: ga
       x-codegen-request-body-name: payload
       parameters:
         - $ref: '#/components/parameters/locale'
@@ -147706,8 +147614,6 @@ paths:
       description: Retrieve query suggestions, operators and documents for the given partially typed query.
       operationId: autocomplete
       x-visibility: Public
-      x-glean-release:
-        stage: ga
       x-codegen-request-body-name: payload
       parameters:
         - $ref: '#/components/parameters/locale'
@@ -147825,8 +147731,6 @@ paths:
       description: The personalized feed/home includes different types of contents including suggestions, recents, calendar events and many more.
       operationId: feed
       x-visibility: Public
-      x-glean-release:
-        stage: ga
       x-codegen-request-body-name: payload
       parameters:
         - $ref: '#/components/parameters/locale'
@@ -147932,8 +147836,6 @@ paths:
       description: Retrieve recommended documents for the given URL or Glean Document ID.
       operationId: recommendations
       x-visibility: Public
-      x-glean-release:
-        stage: ga
       x-codegen-request-body-name: payload
       parameters:
         - $ref: '#/components/parameters/locale'
@@ -148629,8 +148531,6 @@ paths:
       description: Retrieve results from the index for the given query and filters.
       operationId: search
       x-visibility: Public
-      x-glean-release:
-        stage: ga
       x-codegen-request-body-name: payload
       parameters:
         - $ref: '#/components/parameters/locale'
@@ -148911,8 +148811,6 @@ paths:
       description: List some set of details for all entities that fit the given criteria and return in the requested order. Does not support negation in filters, assumes relation type EQUALS. There is a limit of 10000 entities that can be retrieved via this endpoint, except when using FULL_DIRECTORY request type for people entities.
       operationId: listentities
       x-visibility: Public
-      x-glean-release:
-        stage: ga
       x-codegen-request-body-name: payload
       parameters:
         - $ref: '#/components/parameters/locale'
@@ -149061,8 +148959,6 @@ paths:
       description: Read people details for the given IDs.
       operationId: people
       x-visibility: Public
-      x-glean-release:
-        stage: ga
       x-codegen-request-body-name: payload
       parameters:
         - $ref: '#/components/parameters/locale'
@@ -149176,8 +149072,6 @@ paths:
         Returns the profile photo bytes for a person whose photo is stored in Glean (crawled from an identity source or user-uploaded via admin console). Photos hosted externally (e.g. Slack CDN) are not served by this endpoint; callers should follow the photoUrl from /people or /listentities directly. Responses include a Cache-Control header (max-age=3600) to reduce redundant fetches.
       operationId: getPersonPhoto
       x-visibility: Public
-      x-glean-release:
-        stage: ga
       parameters:
         - name: person_id
           in: path
@@ -149293,8 +149187,6 @@ paths:
       description: Create a user-generated shortcut that contains an alias and destination URL.
       operationId: createshortcut
       x-visibility: Public
-      x-glean-release:
-        stage: ga
       x-codegen-request-body-name: payload
       parameters:
         - $ref: '#/components/parameters/locale'
@@ -152472,8 +152364,6 @@ paths:
       description: Delete an existing user-generated shortcut.
       operationId: deleteshortcut
       x-visibility: Public
-      x-glean-release:
-        stage: ga
       x-codegen-request-body-name: payload
       parameters:
         - $ref: '#/components/parameters/locale'
@@ -152570,8 +152460,6 @@ paths:
       description: Read a particular shortcut's details given its ID.
       operationId: getshortcut
       x-visibility: Public
-      x-glean-release:
-        stage: ga
       x-codegen-request-body-name: payload
       parameters:
         - $ref: '#/components/parameters/locale'
@@ -152678,8 +152566,6 @@ paths:
       description: List shortcuts editable/owned by the currently authenticated user.
       operationId: listshortcuts
       x-visibility: Public
-      x-glean-release:
-        stage: ga
       x-codegen-request-body-name: payload
       parameters:
         - $ref: '#/components/parameters/locale'
@@ -152828,8 +152714,6 @@ paths:
       description: Updates the shortcut with the given ID.
       operationId: updateshortcut
       x-visibility: Public
-      x-glean-release:
-        stage: ga
       x-codegen-request-body-name: payload
       parameters:
         - $ref: '#/components/parameters/locale'
@@ -158401,8 +158285,6 @@ paths:
       description: Generate an AI summary of the requested documents.
       operationId: summarize
       x-visibility: Public
-      x-glean-release:
-        stage: ga
       x-codegen-request-body-name: payload
       parameters:
         - $ref: '#/components/parameters/locale'
@@ -158535,8 +158417,6 @@ paths:
       description: Creates a verification reminder for the document. Users can create verification reminders from different product surfaces.
       operationId: addverificationreminder
       x-visibility: Public
-      x-glean-release:
-        stage: ga
       x-codegen-request-body-name: payload
       parameters:
         - $ref: '#/components/parameters/locale'
@@ -158642,8 +158522,6 @@ paths:
       description: Returns the information to be rendered in verification dashboard. Includes information for each document owned by user regarding their verifications.
       operationId: listverifications
       x-visibility: Public
-      x-glean-release:
-        stage: ga
       x-codegen-request-body-name: payload
       parameters:
         - in: query
@@ -158739,8 +158617,6 @@ paths:
       description: Verify documents to keep the knowledge up to date within customer corpus.
       operationId: verify
       x-visibility: Public
-      x-glean-release:
-        stage: ga
       x-codegen-request-body-name: payload
       parameters:
         - $ref: '#/components/parameters/locale'
@@ -158846,8 +158722,6 @@ paths:
       summary: List available tools
       description: Returns a filtered set of available tools based on optional tool name parameters. If no filters are provided, all available tools are returned.
       x-visibility: Public
-      x-glean-release:
-        stage: ga
       parameters:
         - in: query
           name: toolNames
@@ -158947,8 +158821,6 @@ paths:
       summary: Execute the specified tool
       description: Execute the specified tool with provided parameters
       x-visibility: Public
-      x-glean-release:
-        stage: ga
       requestBody:
         required: true
         content:
@@ -159076,8 +158948,6 @@ paths:
         that render an "Authorize" prompt when the user has not yet consented to the tool.
       operationId: getActionPackAuthStatus
       x-visibility: Public
-      x-glean-release:
-        stage: ga
       responses:
         '200':
           description: Successful operation
@@ -159173,8 +159043,6 @@ paths:
         request is rejected with 400.
       operationId: authorizeActionPack
       x-visibility: Public
-      x-glean-release:
-        stage: ga
       requestBody:
         required: true
         content:
@@ -159287,8 +159155,8 @@ paths:
         for the specified tool server.
       operationId: getToolServerAuthStatus
       x-visibility: Public
-      x-glean-release:
-        stage: beta
+      x-glean-experimental:
+        id: 52fde6ec-c18b-4de6-b761-f82008542ae7
         introduced: '2026-07-02'
       responses:
         '200':
@@ -159398,8 +159266,8 @@ paths:
         request is rejected with 400.
       operationId: authorizeToolServer
       x-visibility: Public
-      x-glean-release:
-        stage: beta
+      x-glean-experimental:
+        id: 1935476e-ecaf-4c1f-a9fd-1e768cf68f30
         introduced: '2026-07-02'
       requestBody:
         required: true
@@ -159534,8 +159402,8 @@ paths:
         Use `serverId=native` for Glean's built-in tools.
       operationId: getToolServerTools
       x-visibility: Public
-      x-glean-release:
-        stage: beta
+      x-glean-experimental:
+        id: 332eb38f-1b5d-4896-88e3-59db5e96e4e1
         introduced: '2026-07-30'
       parameters:
         - in: header
@@ -159691,8 +159559,6 @@ paths:
         '500':
           description: Internal error
       x-visibility: Public
-      x-glean-release:
-        stage: ga
       x-speakeasy-group: client.governance.data.policies
       x-speakeasy-name-override: retrieve
       x-codeSamples:
@@ -159790,8 +159656,6 @@ paths:
         '500':
           description: Internal error
       x-visibility: Public
-      x-glean-release:
-        stage: ga
       x-speakeasy-group: client.governance.data.policies
       x-speakeasy-name-override: update
       x-codeSamples:
@@ -159893,8 +159757,6 @@ paths:
         '500':
           description: Internal error
       x-visibility: Public
-      x-glean-release:
-        stage: ga
       x-speakeasy-group: client.governance.data.policies
       x-speakeasy-name-override: list
       x-codeSamples:
@@ -159984,8 +159846,6 @@ paths:
         '500':
           description: Internal error
       x-visibility: Public
-      x-glean-release:
-        stage: ga
       x-speakeasy-group: client.governance.data.policies
       x-speakeasy-name-override: create
       x-codeSamples:
@@ -160085,8 +159945,6 @@ paths:
         '500':
           description: Internal error
       x-visibility: Public
-      x-glean-release:
-        stage: ga
       x-speakeasy-group: client.governance.data.policies
       x-speakeasy-name-override: download
       x-codeSamples:
@@ -160178,8 +160036,6 @@ paths:
         '500':
           description: Internal error
       x-visibility: Public
-      x-glean-release:
-        stage: ga
       x-speakeasy-group: client.governance.data.reports
       x-speakeasy-name-override: create
       x-codeSamples:
@@ -160277,8 +160133,6 @@ paths:
         '500':
           description: Internal error
       x-visibility: Public
-      x-glean-release:
-        stage: ga
       x-speakeasy-group: client.governance.data.reports
       x-speakeasy-name-override: download
       x-codeSamples:
@@ -160371,8 +160225,6 @@ paths:
         '500':
           description: Internal error
       x-visibility: Public
-      x-glean-release:
-        stage: ga
       x-speakeasy-group: client.governance.data.reports
       x-speakeasy-name-override: status
       x-codeSamples:
@@ -160466,8 +160318,6 @@ paths:
         '500':
           description: Internal error
       x-visibility: Public
-      x-glean-release:
-        stage: ga
       x-speakeasy-group: client.governance.documents.visibilityoverrides
       x-speakeasy-name-override: list
       x-codeSamples:
@@ -160557,8 +160407,6 @@ paths:
         '500':
           description: Internal error
       x-visibility: Public
-      x-glean-release:
-        stage: ga
       x-speakeasy-group: client.governance.documents.visibilityoverrides
       x-speakeasy-name-override: create
       x-codeSamples:
@@ -160654,8 +160502,6 @@ paths:
         '500':
           description: Internal error
       x-visibility: Public
-      x-glean-release:
-        stage: ga
       x-speakeasy-group: client.governance.data.findings
       x-speakeasy-name-override: create
       x-codeSamples:
@@ -160744,8 +160590,6 @@ paths:
         '500':
           description: Internal error
       x-visibility: Public
-      x-glean-release:
-        stage: ga
       x-speakeasy-group: client.governance.data.findings
       x-speakeasy-name-override: list
       x-codeSamples:
@@ -160838,8 +160682,6 @@ paths:
         '500':
           description: Internal error
       x-visibility: Public
-      x-glean-release:
-        stage: ga
       x-speakeasy-group: client.governance.data.findings
       x-speakeasy-name-override: download
       x-codeSamples:
@@ -160928,8 +160770,6 @@ paths:
         '500':
           description: Internal error
       x-visibility: Public
-      x-glean-release:
-        stage: ga
       x-speakeasy-group: client.governance.data.findings
       x-speakeasy-name-override: delete
       x-codeSamples:
@@ -161032,8 +160872,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
       x-visibility: Public
-      x-glean-release:
-        stage: ga
       x-speakeasy-group: client.datasources
       x-speakeasy-name-override: retrieveConfiguration
       x-codeSamples:
@@ -161146,8 +160984,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
       x-visibility: Public
-      x-glean-release:
-        stage: ga
       x-speakeasy-group: client.datasources
       x-speakeasy-name-override: updateConfiguration
       x-codeSamples:
@@ -161273,8 +161109,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
       x-visibility: Public
-      x-glean-release:
-        stage: ga
       x-speakeasy-group: client.datasources
       x-speakeasy-name-override: retrieveCredentialStatus
       x-codeSamples:
@@ -161387,8 +161221,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
       x-visibility: Public
-      x-glean-release:
-        stage: ga
       x-speakeasy-group: client.datasources
       x-speakeasy-name-override: rotateCredentials
       x-codeSamples:
@@ -162361,12 +162193,11 @@ components:
           type: boolean
           deprecated: true
           description: DEPRECATED - please use relationType instead
-          x-glean-release:
-            stage: deprecated
-            deprecation:
-              introduced: '2026-02-05'
-              message: Use relationType instead
-              removal: '2027-01-15'
+          x-glean-deprecated:
+            id: 75a48c79-b36a-4171-a0a0-4af7189da66e
+            introduced: '2026-02-05'
+            message: Use relationType instead
+            removal: '2027-01-15'
           x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2027-01-15: Use relationType instead'
     FacetFilter:
       properties:
@@ -163174,12 +163005,11 @@ components:
           type: integer
           description: The parent board ID of this Answer, or 0 if it's a floating Answer. Adding Answers to Answer Boards is no longer permitted.
           deprecated: true
-          x-glean-release:
-            stage: deprecated
-            deprecation:
-              introduced: '2026-02-05'
-              message: Answer Boards no longer supported
-              removal: '2027-01-15'
+          x-glean-deprecated:
+            id: 3729bc64-8859-4159-b93c-ce2d5f0e7304
+            introduced: '2026-02-05'
+            message: Answer Boards no longer supported
+            removal: '2027-01-15'
           x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2027-01-15: Answer Boards no longer supported'
         audienceFilters:
           type: array
@@ -164081,25 +163911,6 @@ components:
         key: person_icon
         iconType: GLYPH
         name: user
-    ChatStatus:
-      type: string
-      description: The status of the Chat.
-      x-include-enum-class-prefix: true
-      x-enumDescriptions:
-        SUCCESS: The Chat has completed executing successfully.
-        ERROR: The Chat has completed executing unsuccessfully.
-        IN_PROGRESS: The Chat is still completing execution in the background.
-        CANCELLED: The user cancelled the Chat execution.
-      enum:
-        - SUCCESS
-        - ERROR
-        - IN_PROGRESS
-        - CANCELLED
-      x-speakeasy-enum-descriptions:
-        SUCCESS: The Chat has completed executing successfully.
-        ERROR: The Chat has completed executing unsuccessfully.
-        IN_PROGRESS: The Chat is still completing execution in the background.
-        CANCELLED: The user cancelled the Chat execution.
     ChatMetadata:
       description: Metadata of a Chat a user had with Glean Assistant. This contains no actual conversational content.
       properties:
@@ -164126,8 +163937,6 @@ components:
           description: The display name of the AI App that this Chat is associated to.
         icon:
           $ref: '#/components/schemas/IconConfig'
-        status:
-          $ref: '#/components/schemas/ChatStatus'
     RelatedDocuments:
       properties:
         relation:
@@ -164182,12 +163991,11 @@ components:
             $ref: '#/components/schemas/Document'
           description: A truncated list of documents with this relation. TO BE DEPRECATED.
           deprecated: true
-          x-glean-release:
-            stage: deprecated
-            deprecation:
-              introduced: '2026-02-05'
-              message: Field is deprecated
-              removal: '2027-01-15'
+          x-glean-deprecated:
+            id: 68de0429-b0cc-4b40-8061-f848788079a2
+            introduced: '2026-02-05'
+            message: Field is deprecated
+            removal: '2027-01-15'
           x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2027-01-15: Field is deprecated'
         results:
           type: array
@@ -164250,12 +164058,11 @@ components:
           type: string
           deprecated: true
           description: A matching snippet from the document. Query term matches are marked by the unicode characters uE006 and uE007. Use 'text' field instead.
-          x-glean-release:
-            stage: deprecated
-            deprecation:
-              introduced: '2026-02-05'
-              message: Use 'text' field instead
-              removal: '2027-01-15'
+          x-glean-deprecated:
+            id: e55ddf30-7c47-43a5-b775-d78f8b29411a
+            introduced: '2026-02-05'
+            message: Use 'text' field instead
+            removal: '2027-01-15'
           x-includeEmpty: true
           x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2027-01-15: Use ''text'' field instead'
       example:
@@ -164565,36 +164372,33 @@ components:
           deprecated: true
           description: The person that invited this person.
           $ref: '#/components/schemas/Person'
-          x-glean-release:
-            stage: deprecated
-            deprecation:
-              introduced: '2026-02-05'
-              message: Use ChannelInviteInfo instead
-              removal: '2027-01-15'
+          x-glean-deprecated:
+            id: 1d3cd23f-9085-4378-b466-9bdc2e344a71
+            introduced: '2026-02-05'
+            message: Use ChannelInviteInfo instead
+            removal: '2027-01-15'
           x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2027-01-15: Use ChannelInviteInfo instead'
         inviteTime:
           deprecated: true
           type: string
           format: date-time
           description: The time this person was invited in ISO format (ISO 8601).
-          x-glean-release:
-            stage: deprecated
-            deprecation:
-              introduced: '2026-02-05'
-              message: Use ChannelInviteInfo instead
-              removal: '2027-01-15'
+          x-glean-deprecated:
+            id: 2dc3f572-cded-483d-af07-fc9fc7fd0ae4
+            introduced: '2026-02-05'
+            message: Use ChannelInviteInfo instead
+            removal: '2027-01-15'
           x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2027-01-15: Use ChannelInviteInfo instead'
         reminderTime:
           deprecated: true
           type: string
           format: date-time
           description: The time this person was reminded in ISO format (ISO 8601) if a reminder was sent.
-          x-glean-release:
-            stage: deprecated
-            deprecation:
-              introduced: '2026-02-05'
-              message: Use ChannelInviteInfo instead
-              removal: '2027-01-15'
+          x-glean-deprecated:
+            id: d02d58cf-eb90-45d0-ab90-f7a9d707ae3c
+            introduced: '2026-02-05'
+            message: Use ChannelInviteInfo instead
+            removal: '2027-01-15'
           x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2027-01-15: Use ChannelInviteInfo instead'
     ReadPermission:
       description: Describes the read permission level that a user has for a specific feature
@@ -164952,12 +164756,11 @@ components:
           deprecated: true
           items:
             type: string
-          x-glean-release:
-            stage: deprecated
-            deprecation:
-              introduced: '2026-02-05'
-              message: Use reacts instead
-              removal: '2027-01-15'
+          x-glean-deprecated:
+            id: cd754845-6eec-480f-b395-c93478aff563
+            introduced: '2026-02-05'
+            message: Use reacts instead
+            removal: '2027-01-15'
           x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2027-01-15: Use reacts instead'
         reacts:
           type: array
@@ -164980,9 +164783,8 @@ components:
             - VIEWER
           description: DEPRECATED - use permissions instead. Viewer's role on the specific document.
           deprecated: true
-          x-glean-release:
-            stage: deprecated
-            deprecation:
+          x-glean-deprecated:
+            - id: fbc55efe-3e6c-485c-8b60-bab574c3813b
               introduced: '2026-02-05'
               kind: property
               message: Use permissions instead
@@ -165350,12 +165152,11 @@ components:
           type: string
           description: Use `answer.trackingToken` instead.
           deprecated: true
-          x-glean-release:
-            stage: deprecated
-            deprecation:
-              introduced: '2026-05-07'
-              message: Use `answer.trackingToken` instead.
-              removal: '2027-01-15'
+          x-glean-deprecated:
+            id: 62de643b-f182-4d4d-a2fc-5e2cbfee7320
+            introduced: '2026-05-07'
+            message: Use `answer.trackingToken` instead.
+            removal: '2027-01-15'
           x-speakeasy-deprecation-message: 'Deprecated on 2026-05-07, removal scheduled for 2027-01-15: Use `answer.trackingToken` instead.'
         favoriteInfo:
           $ref: '#/components/schemas/FavoriteInfo'
@@ -165877,8 +165678,8 @@ components:
             $ref: '#/components/schemas/WriteActionParameter'
     ServerToolBase:
       x-visibility: Public
-      x-glean-release:
-        stage: beta
+      x-glean-experimental:
+        id: 4e3ee791-45e0-4125-845f-4b7701aa983c
         introduced: '2026-07-02'
       type: object
       required:
@@ -165918,8 +165719,8 @@ components:
           description: Short summary of what this specific tool invocation will do.
     ServerToolRequest:
       x-visibility: Public
-      x-glean-release:
-        stage: beta
+      x-glean-experimental:
+        id: 8544e887-4569-4b14-bde0-d1be9e90dbc3
         introduced: '2026-07-02'
       allOf:
         - $ref: '#/components/schemas/ServerToolBase'
@@ -165943,8 +165744,8 @@ components:
               $ref: '#/components/schemas/ActionPreview'
     AuthContext:
       x-visibility: Public
-      x-glean-release:
-        stage: beta
+      x-glean-experimental:
+        id: a7c1d3e5-9f42-4b8a-b6e0-2d4f8a1c3e5b
         introduced: '2026-07-09'
       type: object
       description: |
@@ -165955,8 +165756,8 @@ components:
           description: ID of the MCP server (populated when toolType is MCP).
     ServerToolResponse:
       x-visibility: Public
-      x-glean-release:
-        stage: beta
+      x-glean-experimental:
+        id: 3eae3ee7-2c06-4027-be14-98260a3ce608
         introduced: '2026-07-02'
       description: |
         Response to a server tool request. The applicable fields depend on requestType:
@@ -166045,12 +165846,11 @@ components:
             $ref: '#/components/schemas/ChatMessageCitation'
           description: 'Deprecated: Use inline citations via ChatMessageFragment.citation instead. For detailed reference information, use ChatMessageCitation.referenceRanges. This field is still populated for backward compatibility.'
           deprecated: true
-          x-glean-release:
-            stage: deprecated
-            deprecation:
-              introduced: '2026-02-06'
-              message: Use inline citations via ChatMessageFragment.citation and ChatMessageCitation.referenceRanges instead. This field is still populated for backward compatibility.
-              removal: '2027-01-15'
+          x-glean-deprecated:
+            id: 6446f85e-c90e-4c00-9717-796f9db3dc61
+            introduced: '2026-02-06'
+            message: Use inline citations via ChatMessageFragment.citation and ChatMessageCitation.referenceRanges instead. This field is still populated for backward compatibility.
+            removal: '2027-01-15'
           x-speakeasy-deprecation-message: 'Deprecated on 2026-02-06, removal scheduled for 2027-01-15: Use inline citations via ChatMessageFragment.citation and ChatMessageCitation.referenceRanges instead. This field is still populated for backward compatibility.'
         uploadedFileIds:
           type: array
@@ -167106,12 +166906,11 @@ components:
           type: string
           description: Use `collection.trackingToken` instead.
           deprecated: true
-          x-glean-release:
-            stage: deprecated
-            deprecation:
-              introduced: '2026-05-07'
-              message: Use `collection.trackingToken` instead.
-              removal: '2027-01-15'
+          x-glean-deprecated:
+            id: 2d6ca3a7-4763-4137-9ebd-740568fe8300
+            introduced: '2026-05-07'
+            message: Use `collection.trackingToken` instead.
+            removal: '2027-01-15'
           x-speakeasy-deprecation-message: 'Deprecated on 2026-05-07, removal scheduled for 2027-01-15: Use `collection.trackingToken` instead.'
     ListCollectionsRequest:
       properties:
@@ -167533,12 +167332,11 @@ components:
               format: float
               description: Search session satisfaction rate, over the specified time period in the specified departments.
               deprecated: true
-              x-glean-release:
-                stage: deprecated
-                deprecation:
-                  introduced: '2026-05-13'
-                  message: This property is no longer supported. Please contact Support for alternatives.
-                  removal: '2027-01-15'
+              x-glean-deprecated:
+                id: 2652ea73-3e33-4409-ba8c-bda7b60a2c24
+                introduced: '2026-05-13'
+                message: This property is no longer supported. Please contact Support for alternatives.
+                removal: '2027-01-15'
               x-speakeasy-deprecation-message: 'Deprecated on 2026-05-13, removal scheduled for 2027-01-15: This property is no longer supported. Please contact Support for alternatives.'
             monthlyActiveUserTimeseries:
               $ref: '#/components/schemas/LabeledCountInfo'
@@ -167953,12 +167751,11 @@ components:
         gleanAssist:
           deprecated: true
           $ref: '#/components/schemas/GleanAssistInsightsResponse'
-          x-glean-release:
-            stage: deprecated
-            deprecation:
-              introduced: '2026-02-05'
-              message: Field is deprecated
-              removal: '2027-01-15'
+          x-glean-deprecated:
+            id: 15850758-4d95-4d98-8d57-39c50663a796
+            introduced: '2026-02-05'
+            message: Field is deprecated
+            removal: '2027-01-15'
           x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2027-01-15: Field is deprecated'
         overviewResponse:
           $ref: '#/components/schemas/InsightsOverviewResponse'
@@ -170163,9 +169960,8 @@ components:
             - UNLIKELY
             - VERY_UNLIKELY
           deprecated: true
-          x-glean-release:
-            stage: deprecated
-            deprecation:
+          x-glean-deprecated:
+            - id: d45039ec-d6f6-47ba-93b7-ab2307b07f84
               introduced: '2026-02-05'
               kind: property
               message: Field is deprecated
@@ -170196,12 +169992,11 @@ components:
             type: string
           description: list of url regex matching documents excluded from report
           deprecated: true
-          x-glean-release:
-            stage: deprecated
-            deprecation:
-              introduced: '2026-02-05'
-              message: Field is deprecated
-              removal: '2027-01-15'
+          x-glean-deprecated:
+            id: e022aaa5-56e6-4b57-bca3-b11943da76a0
+            introduced: '2026-02-05'
+            message: Field is deprecated
+            removal: '2027-01-15'
           x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2027-01-15: Field is deprecated'
         datasourcesType:
           type: string
@@ -170215,12 +170010,11 @@ components:
             type: string
           description: List of datasources to consider for report. DEPRECATED - use datasourceInstances instead.
           deprecated: true
-          x-glean-release:
-            stage: deprecated
-            deprecation:
-              introduced: '2026-02-05'
-              message: Use datasourceInstances instead
-              removal: '2027-01-15'
+          x-glean-deprecated:
+            id: 97e35970-e0ed-4248-be13-2af8c22e7894
+            introduced: '2026-02-05'
+            message: Use datasourceInstances instead
+            removal: '2027-01-15'
           x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2027-01-15: Use datasourceInstances instead'
         datasourceInstances:
           type: array
@@ -170249,12 +170043,11 @@ components:
         enabled:
           type: boolean
           deprecated: true
-          x-glean-release:
-            stage: deprecated
-            deprecation:
-              introduced: '2026-02-05'
-              message: Field is deprecated
-              removal: '2027-01-15'
+          x-glean-deprecated:
+            id: e9260be6-209b-4ce2-a4b3-f7f22879dd86
+            introduced: '2026-02-05'
+            message: Field is deprecated
+            removal: '2027-01-15'
           x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2027-01-15: Field is deprecated'
         threshold:
           type: integer
@@ -170265,12 +170058,11 @@ components:
         anyoneWithLinkEnabled:
           type: boolean
           deprecated: true
-          x-glean-release:
-            stage: deprecated
-            deprecation:
-              introduced: '2026-02-05'
-              message: Field is deprecated
-              removal: '2027-01-15'
+          x-glean-deprecated:
+            id: 30646ced-e0db-43ef-8412-64a67c5d0f53
+            introduced: '2026-02-05'
+            message: Field is deprecated
+            removal: '2027-01-15'
           x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2027-01-15: Field is deprecated'
         anyoneInternalEnabled:
           type: boolean
@@ -170296,12 +170088,11 @@ components:
             domainAccessEnabled:
               type: boolean
       deprecated: true
-      x-glean-release:
-        stage: deprecated
-        deprecation:
-          introduced: '2026-02-05'
-          message: Use broadSharingOptions instead
-          removal: '2027-01-15'
+      x-glean-deprecated:
+        id: 7c9e4a1d-3f8b-4e2c-9a5d-6b0f1c8e2d4a
+        introduced: '2026-02-05'
+        message: Use broadSharingOptions instead
+        removal: '2027-01-15'
       x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2027-01-15: Use broadSharingOptions instead'
     HotwordProximity:
       properties:
@@ -170370,12 +170161,11 @@ components:
             $ref: '#/components/schemas/SensitiveInfoType'
           description: DEPRECATED - use 'customSensitiveExpressions' instead.
           deprecated: true
-          x-glean-release:
-            stage: deprecated
-            deprecation:
-              introduced: '2026-02-05'
-              message: Use customSensitiveExpressions instead
-              removal: '2027-01-15'
+          x-glean-deprecated:
+            id: 3497cb1c-f7aa-42d8-81b8-309c3adeed84
+            introduced: '2026-02-05'
+            message: Use customSensitiveExpressions instead
+            removal: '2027-01-15'
           x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2027-01-15: Use customSensitiveExpressions instead'
         sensitiveTerms:
           type: array
@@ -170383,12 +170173,11 @@ components:
             $ref: '#/components/schemas/SensitiveExpression'
           description: DEPRECATED - use 'customSensitiveExpressions' instead.
           deprecated: true
-          x-glean-release:
-            stage: deprecated
-            deprecation:
-              introduced: '2026-02-05'
-              message: Use customSensitiveExpressions instead
-              removal: '2027-01-15'
+          x-glean-deprecated:
+            id: b0713b37-472e-4c29-80ba-6f5d6f2b449c
+            introduced: '2026-02-05'
+            message: Use customSensitiveExpressions instead
+            removal: '2027-01-15'
           x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2027-01-15: Use customSensitiveExpressions instead'
         sensitiveRegexes:
           type: array
@@ -170396,12 +170185,11 @@ components:
             $ref: '#/components/schemas/SensitiveExpression'
           description: DEPRECATED - use 'customSensitiveExpressions' instead.
           deprecated: true
-          x-glean-release:
-            stage: deprecated
-            deprecation:
-              introduced: '2026-02-05'
-              message: Use customSensitiveExpressions instead
-              removal: '2027-01-15'
+          x-glean-deprecated:
+            id: a26e1920-36b6-4c0f-981f-57b09a9ebce3
+            introduced: '2026-02-05'
+            message: Use customSensitiveExpressions instead
+            removal: '2027-01-15'
           x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2027-01-15: Use customSensitiveExpressions instead'
         customSensitiveExpressions:
           type: array
@@ -170456,12 +170244,11 @@ components:
             $ref: '#/components/schemas/SensitiveInfoType'
           description: DEPRECATED - use `sensitiveContentOptions` instead.
           deprecated: true
-          x-glean-release:
-            stage: deprecated
-            deprecation:
-              introduced: '2026-02-05'
-              message: Use sensitiveContentOptions instead
-              removal: '2027-01-15'
+          x-glean-deprecated:
+            id: 60d6d182-e9d0-448d-af75-137f68bbdcbf
+            introduced: '2026-02-05'
+            message: Use sensitiveContentOptions instead
+            removal: '2027-01-15'
           x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2027-01-15: Use sensitiveContentOptions instead'
         inputOptions:
           $ref: '#/components/schemas/InputOptions'
@@ -170470,12 +170257,11 @@ components:
           $ref: '#/components/schemas/ExternalSharingOptions'
           description: DEPRECATED - use `broadSharingOptions` instead.
           deprecated: true
-          x-glean-release:
-            stage: deprecated
-            deprecation:
-              introduced: '2026-02-05'
-              message: Use broadSharingOptions instead
-              removal: '2027-01-15'
+          x-glean-deprecated:
+            id: 6484ec17-a133-4176-b2ce-28e25b0e9065
+            introduced: '2026-02-05'
+            message: Use broadSharingOptions instead
+            removal: '2027-01-15'
           x-speakeasy-deprecation-message: 'Deprecated on 2026-02-05, removal scheduled for 2027-01-15: Use broadSharingOptions instead'
         broadSharingOptions:
           $ref: '#/components/schemas/SharingOptions'
