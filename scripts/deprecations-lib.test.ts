@@ -5,6 +5,7 @@ import { find } from 'openapi-field-finder';
 import {
   convertToDeprecationsOutput,
   type XGleanDeprecated,
+  type XGleanRelease,
 } from './deprecations-lib';
 
 function specPath(project: Project): string {
@@ -378,6 +379,74 @@ paths:
       path: '/z-path',
       method: 'GET',
     });
+  });
+
+  it('keeps x-glean-release deprecations of same-named fields under different parents', async () => {
+    project.files['spec.yaml'] = `
+openapi: "3.0.0"
+info:
+  title: Test API
+  version: "1.0.0"
+paths:
+  /api/v1/policies:
+    get:
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  config:
+                    type: object
+                    properties:
+                      sensitiveInfoTypes:
+                        type: array
+                        items: { type: string }
+                        x-glean-release:
+                          stage: deprecated
+                          deprecation:
+                            message: Use customSensitiveExpressions instead
+                            introduced: "2026-02-05"
+                            removal: "2027-01-15"
+                      options:
+                        type: object
+                        properties:
+                          sensitiveInfoTypes:
+                            type: array
+                            items: { type: string }
+                            x-glean-release:
+                              stage: deprecated
+                              deprecation:
+                                message: Use sensitiveContentOptions instead
+                                introduced: "2026-02-05"
+                                removal: "2027-01-15"
+`;
+    await project.write();
+
+    const result = convertToDeprecationsOutput(
+      await find<XGleanRelease>('x-glean-release', [specPath(project)]),
+    );
+
+    expect(
+      result.endpoints[0].deprecations.map(({ id, name, message }) => ({
+        id,
+        name,
+        message,
+      })),
+    ).toEqual([
+      {
+        id: 'GET /api/v1/policies field responses.200.content.application/json.schema.properties.config.properties.sensitiveInfoTypes',
+        name: 'sensitiveInfoTypes',
+        message: 'Use customSensitiveExpressions instead',
+      },
+      {
+        id: 'GET /api/v1/policies field responses.200.content.application/json.schema.properties.config.properties.options.properties.sensitiveInfoTypes',
+        name: 'sensitiveInfoTypes',
+        message: 'Use sensitiveContentOptions instead',
+      },
+    ]);
   });
 
   it('should deduplicate deprecations by id within endpoint', async () => {

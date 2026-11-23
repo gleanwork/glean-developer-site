@@ -32,7 +32,7 @@ export interface ExperimentalEndpoint {
   docId: string;
   /** Stable id from the older `x-glean-experimental.id` field, when present. */
   id?: string;
-  /** ISO date from the older `x-glean-experimental.introduced`, when present. */
+  /** ISO date from `x-glean-release.introduced`, when present. */
   introduced?: string;
 }
 

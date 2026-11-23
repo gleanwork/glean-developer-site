@@ -61,6 +61,19 @@ describe('release-stages fixture', () => {
     });
   });
 
+  it('dates beta operations by introduced', () => {
+    const since = Object.fromEntries(
+      operations(loadFixture())
+        .filter((op) => deriveRelease(op, []).stage === 'beta')
+        .map((op) => [op.path, deriveRelease(op, []).since]),
+    );
+
+    expect(since).toEqual({
+      '/stage/beta': '2026-09-30',
+      '/legacy/experimental': '2026-05-12',
+    });
+  });
+
   it('shows Beta on pages generated with the old experimental stage', () => {
     const old = { stage: 'experimental', since: '2026-05-12' };
     const release = normalizeRelease(old as unknown as EndpointRelease);
@@ -115,7 +128,9 @@ describe('release-stages fixture', () => {
       e.deprecations.map((d) => d.id),
     );
     expect(new Set(ids).size).toBe(ids.length);
-    expect(ids).toContain('POST /stage/deprecated enum-value releaseEnum OLD');
+    expect(ids).toContain(
+      'POST /stage/deprecated enum-value requestBody.content.application/json.schema.properties.releaseEnum OLD',
+    );
   });
 
   it('lists beta operations for the sidebar badge', () => {
@@ -128,6 +143,7 @@ describe('release-stages fixture', () => {
       'api/test-api/stage-beta',
       'api/test-api/legacy-experimental',
     ]);
+    expect(endpoints[0]).toMatchObject({ introduced: '2026-09-30' });
     expect(endpoints[1]).toMatchObject({
       id: '4abc1e17-8e06-490b-99a7-e8f97592405a',
       introduced: '2026-05-12',

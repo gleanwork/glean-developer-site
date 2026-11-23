@@ -6,7 +6,7 @@ import type {
   ExperimentalData,
   HttpMethod,
 } from '../src/types/experimental';
-import { requiresOptIn } from './release-lib.mjs';
+import { getOperationRelease, requiresOptIn } from './release-lib.mjs';
 
 // Re-export the shared contract so callers/tests can import from one place.
 export type { ExperimentalEndpoint, ExperimentalData, HttpMethod };
@@ -86,12 +86,13 @@ export function extractExperimentalEndpoints(
       const op = operation as OperationLike;
       if (!requiresOptIn(op)) continue;
 
-      // Only the older annotation has an id and an introduced date.
+      // Only the older annotation has an id.
       const experimental: XGleanExperimental =
         op['x-glean-release'] === undefined &&
         typeof op['x-glean-experimental'] === 'object'
           ? op['x-glean-experimental']
           : {};
+      const introduced = getOperationRelease(op)?.introduced;
       const baseId = computeBaseId(op);
 
       endpoints.push({
@@ -101,9 +102,7 @@ export function extractExperimentalEndpoints(
         baseId,
         docId: `${prefix}/${baseId}`,
         ...(experimental.id ? { id: experimental.id } : {}),
-        ...(experimental.introduced
-          ? { introduced: experimental.introduced }
-          : {}),
+        ...(introduced ? { introduced } : {}),
       });
     }
   }

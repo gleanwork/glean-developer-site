@@ -50,7 +50,7 @@ export const DEPRECATED_EXTENSION = 'x-glean-deprecated';
  * @typedef {object} OperationRelease
  * @property {ReleaseStage} stage
  * @property {string} [docs] Guide for the stage.
- * @property {string} [introduced] Old `x-glean-experimental.introduced` only.
+ * @property {string} [introduced] When `unreleased` or `beta` began.
  * @property {ReleaseDeprecation} [deprecation] Deprecated stage only.
  */
 
@@ -141,6 +141,9 @@ export function getOperationRelease(operation) {
     }
     /** @type {OperationRelease} */
     const result = { stage: release.stage };
+    if (typeof release.introduced === 'string') {
+      result.introduced = release.introduced;
+    }
     if (typeof release.docs === 'string') result.docs = release.docs;
     const deprecation = releaseDeprecation(release);
     if (deprecation) result.deprecation = deprecation;
