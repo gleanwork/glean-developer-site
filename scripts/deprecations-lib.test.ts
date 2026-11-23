@@ -437,15 +437,64 @@ paths:
       })),
     ).toEqual([
       {
-        id: 'GET /api/v1/policies field responses.200.content.application/json.schema.properties.config.properties.sensitiveInfoTypes',
+        id: 'GET /api/v1/policies field config.sensitiveInfoTypes',
         name: 'sensitiveInfoTypes',
         message: 'Use customSensitiveExpressions instead',
       },
       {
-        id: 'GET /api/v1/policies field responses.200.content.application/json.schema.properties.config.properties.options.properties.sensitiveInfoTypes',
+        id: 'GET /api/v1/policies field config.options.sensitiveInfoTypes',
         name: 'sensitiveInfoTypes',
         message: 'Use sensitiveContentOptions instead',
       },
+    ]);
+  });
+
+  it('lists an x-glean-release field once when the request and the response share its schema', async () => {
+    project.files['spec.yaml'] = `
+openapi: "3.0.0"
+info:
+  title: Test API
+  version: "1.0.0"
+paths:
+  /api/v1/policies:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Policy"
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Policy"
+components:
+  schemas:
+    Policy:
+      type: object
+      properties:
+        legacyName:
+          type: string
+          x-glean-release:
+            stage: deprecated
+            deprecation:
+              message: Use name instead
+              introduced: "2026-02-05"
+              removal: "2027-01-15"
+`;
+    await project.write();
+
+    const result = convertToDeprecationsOutput(
+      await find<XGleanRelease>('x-glean-release', [specPath(project)]),
+    );
+
+    expect(result.endpoints[0].deprecations).toEqual([
+      expect.objectContaining({
+        id: 'POST /api/v1/policies field legacyName',
+        name: 'legacyName',
+      }),
     ]);
   });
 

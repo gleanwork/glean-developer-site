@@ -62,6 +62,56 @@ paths:
     });
   });
 
+  it('keeps the introduced date of an x-glean-experimental endpoint that is also x-glean-deprecated', () => {
+    const spec = loadSpec(`
+openapi: "3.0.0"
+info:
+  title: Test API
+  version: "1.0.0"
+paths:
+  /api/agents/search:
+    post:
+      operationId: platform-agents-search
+      x-glean-experimental:
+        introduced: "2026-05-12"
+      x-glean-deprecated:
+        message: Use /api/agents instead
+        introduced: "2026-08-01"
+        removal: "2027-04-15"
+      responses:
+        200:
+          description: Success
+`);
+    expect(extractExperimentalEndpoints(spec, PREFIX)).toMatchObject([
+      { introduced: '2026-05-12' },
+    ]);
+  });
+
+  it('reads introduced from x-glean-release', () => {
+    const spec = loadSpec(`
+openapi: "3.0.0"
+info:
+  title: Test API
+  version: "1.0.0"
+paths:
+  /api/agents:
+    post:
+      operationId: platform-agents-create
+      x-glean-release:
+        stage: beta
+        introduced: "2026-11-18"
+      responses:
+        200:
+          description: Success
+`);
+    expect(extractExperimentalEndpoints(spec, PREFIX)).toEqual([
+      expect.objectContaining({ introduced: '2026-11-18' }),
+    ]);
+    expect(extractExperimentalEndpoints(spec, PREFIX)[0]).not.toHaveProperty(
+      'id',
+    );
+  });
+
   it('builds the docId from the given prefix (API family aware)', () => {
     const spec = loadSpec(`
 openapi: "3.0.0"

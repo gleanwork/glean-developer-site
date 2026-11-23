@@ -12,8 +12,9 @@
  *
  *     x-glean-release:
  *       stage: deprecated # unreleased | beta | ga | deprecated
+ *       introduced: 2026-09-14 # unreleased and beta only
  *       docs: https://...
- *       deprecation:
+ *       deprecation: # deprecated only
  *         message: Use newField instead
  *         introduced: 2026-10-01
  *         removal: 2027-04-15

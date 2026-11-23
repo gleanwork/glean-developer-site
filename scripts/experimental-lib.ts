@@ -92,7 +92,10 @@ export function extractExperimentalEndpoints(
         typeof op['x-glean-experimental'] === 'object'
           ? op['x-glean-experimental']
           : {};
-      const introduced = getOperationRelease(op)?.introduced;
+      // An old operation that is also x-glean-deprecated reads as deprecated,
+      // which has no introduced, but still needs the opt-in header.
+      const introduced =
+        experimental.introduced ?? getOperationRelease(op)?.introduced;
       const baseId = computeBaseId(op);
 
       endpoints.push({

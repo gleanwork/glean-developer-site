@@ -128,9 +128,7 @@ describe('release-stages fixture', () => {
       e.deprecations.map((d) => d.id),
     );
     expect(new Set(ids).size).toBe(ids.length);
-    expect(ids).toContain(
-      'POST /stage/deprecated enum-value requestBody.content.application/json.schema.properties.releaseEnum OLD',
-    );
+    expect(ids).toContain('POST /stage/deprecated enum-value releaseEnum OLD');
   });
 
   it('lists beta operations for the sidebar badge', () => {
