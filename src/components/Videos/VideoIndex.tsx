@@ -14,7 +14,7 @@ import {
 } from '../../types/video';
 import VideoCard from './VideoCard';
 import {
-  ExperimentalBadge,
+  BetaBadge,
   seriesLabel,
   useVideoDialog,
   VideoPoster,
@@ -336,7 +336,7 @@ function Featured({
           <span>{formatDuration(video.durationSeconds)}</span>
           <span>{VIDEO_TYPE_LABELS[video.type]}</span>
           {series ? <span>{series}</span> : null}
-          {videoStage(video) === 'experimental' ? <ExperimentalBadge /> : null}
+          {videoStage(video) === 'beta' ? <BetaBadge /> : null}
         </div>
         <div className={styles.featureActions}>
           <button

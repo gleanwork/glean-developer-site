@@ -23,7 +23,7 @@ const betaDocIds = new Set(
   (betaData as BetaData).endpoints.map((e) => e.docId),
 );
 
-function isExperimentalItem(docId: string | undefined): boolean {
+function isBetaItem(docId: string | undefined): boolean {
   return docId ? betaDocIds.has(docId) : false;
 }
 
@@ -37,7 +37,7 @@ export default function DocSidebarItemLink({
 }: Props): ReactNode {
   const { href, label, className, autoAddBaseUrl } = item;
   const isActive = isActiveSidebarItem(item, activePath);
-  const isExperimental = isExperimentalItem((item as any).docId);
+  const isBeta = isBetaItem((item as any).docId);
   // The OpenAPI plugin sets this class from the operation's own `deprecated`
   // flag, not from deprecated parameters, request fields, or response schemas.
   const sidebarClasses = className?.split(/\s+/) ?? [];
@@ -85,11 +85,11 @@ export default function DocSidebarItemLink({
           />
         )}
         {label}
-        {(isExperimental || isDeprecated) && (
+        {(isBeta || isDeprecated) && (
           <span className={styles.statusBadges}>
-            {isExperimental && (
+            {isBeta && (
               <span
-                className={clsx(styles.statusBadge, styles.experimentalBadge)}
+                className={clsx(styles.statusBadge, styles.betaBadge)}
                 title="Beta"
                 aria-label="Beta"
                 role="img"

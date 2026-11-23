@@ -20,30 +20,24 @@ const publishedCatalog = Object.values(
 
 describe('getPlatformStatuses', () => {
   it('keeps a capability GA when it still has a GA endpoint', () => {
-    const experimental = [doc('platform-search-enumeration')];
+    const beta = [doc('platform-search-enumeration')];
     const catalog = [
       doc('platform-search'),
       doc('platform-search-filters'),
       doc('platform-search-enumeration'),
     ];
 
-    const statuses = getPlatformStatuses(
-      experimental,
-      PLATFORM_CAPABILITIES,
-      catalog,
-    );
+    const statuses = getPlatformStatuses(beta, PLATFORM_CAPABILITIES, catalog);
 
     expect(statuses.find((status) => status.label === 'Search')).toEqual({
       label: 'Search',
       stage: 'ga',
     });
-    expect(isBetaEndpoint(experimental[0].docId, experimental)).toBe(true);
-    expect(isBetaEndpoint(doc('platform-search').docId, experimental)).toBe(
-      false,
-    );
+    expect(isBetaEndpoint(beta[0].docId, beta)).toBe(true);
+    expect(isBetaEndpoint(doc('platform-search').docId, beta)).toBe(false);
   });
 
-  it('marks a capability experimental when every endpoint is experimental', () => {
+  it('marks a capability beta when every endpoint is beta', () => {
     const endpoints = [
       doc('platform-documents-get'),
       doc('platform-documents-get-by-url'),
@@ -58,21 +52,21 @@ describe('getPlatformStatuses', () => {
 
     expect(statuses.find((status) => status.label === 'Documents')).toEqual({
       label: 'Documents',
-      stage: 'experimental',
+      stage: 'beta',
     });
     expect(
       endpoints.every((endpoint) => isBetaEndpoint(endpoint.docId, endpoints)),
     ).toBe(true);
   });
 
-  it('marks an unpublished capability experimental when its only endpoints are experimental', () => {
+  it('marks an unpublished capability beta when its only endpoints are beta', () => {
     const statuses = getPlatformStatuses(
       [doc('platform-skills-create')],
       [{ label: 'Skills', docPrefixes: ['platform-skills'] }],
       [],
     );
 
-    expect(statuses).toEqual([{ label: 'Skills', stage: 'experimental' }]);
+    expect(statuses).toEqual([{ label: 'Skills', stage: 'beta' }]);
   });
 
   it('treats a capability with no endpoints as GA', () => {
@@ -86,9 +80,9 @@ describe('getPlatformStatuses', () => {
   });
 
   // #923 adds POST /api/search/enumeration (platform-search-enumeration) as
-  // the only experimental Search endpoint. Search stays GA, so the platform
+  // the only beta Search endpoint. Search stays GA, so the platform
   // search video (narrated GA) does not drift.
-  it('keeps Search GA when only the enumeration endpoint is experimental', () => {
+  it('keeps Search GA when only the enumeration endpoint is beta', () => {
     const enumeration = doc('platform-search-enumeration');
     const statuses = getPlatformStatuses(
       [...betaData.endpoints, enumeration],
@@ -102,12 +96,12 @@ describe('getPlatformStatuses', () => {
     });
     expect(statuses.find((status) => status.label === 'Triggers')).toEqual({
       label: 'Triggers',
-      stage: 'experimental',
+      stage: 'beta',
     });
     expect(isBetaEndpoint(enumeration.docId, [enumeration])).toBe(true);
   });
 
-  it('ignores experimental endpoints outside the Platform API', () => {
+  it('ignores beta endpoints outside the Platform API', () => {
     const statuses = getPlatformStatuses(
       [{ docId: 'api/client-api/search/platform-search' }],
       PLATFORM_CAPABILITIES,
@@ -137,15 +131,16 @@ describe('platformBadge', () => {
     expect(
       platformBadge([
         { label: 'Search', stage: 'ga' },
-        { label: 'Skills', stage: 'experimental' },
+        { label: 'Skills', stage: 'beta' },
       ]),
     ).toEqual({ label: 'Generally available', ga: true });
   });
 
-  it('falls back to experimental when nothing is GA', () => {
-    expect(platformBadge([{ label: 'Skills', stage: 'experimental' }])).toEqual(
-      { label: 'Experimental', ga: false },
-    );
+  it('falls back to beta when nothing is GA', () => {
+    expect(platformBadge([{ label: 'Skills', stage: 'beta' }])).toEqual({
+      label: 'Beta',
+      ga: false,
+    });
   });
 });
 
@@ -178,7 +173,7 @@ describe('generated data contract', () => {
     },
   );
 
-  it('covers every experimental Platform API endpoint', () => {
+  it('covers every beta Platform API endpoint', () => {
     const uncovered = betaData.endpoints
       .filter((e) => e.docId.startsWith('api/platform-api/'))
       .filter(

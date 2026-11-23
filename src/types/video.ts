@@ -37,6 +37,7 @@ export const VIDEO_PLATFORM_CAPABILITIES = [
 ] as const;
 
 const stage = z.enum(['ga', 'experimental']);
+export type NarratedStage = z.infer<typeof stage>;
 
 export const videoTrackSchema = z.strictObject({
   id: z.string().regex(/^[a-z0-9]+(-[a-z0-9]+)*$/),

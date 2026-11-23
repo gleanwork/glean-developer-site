@@ -2,7 +2,7 @@ import platformEndpointsData from '@site/src/data/platform-endpoints.json';
 import type { BetaEndpoint } from '@site/src/types/beta';
 import type { PlatformEndpointsData } from '@site/src/types/platformEndpoints';
 
-export type PlatformStage = 'ga' | 'experimental';
+export type PlatformStage = 'ga' | 'beta';
 
 export interface PlatformCapability {
   label: string;
@@ -74,13 +74,13 @@ export function isBetaEndpoint(
 }
 
 /**
- * A capability's stage follows its GA surface. It is experimental only when
- * every endpoint it publishes is experimental. One GA endpoint keeps the
- * capability GA; the experimental endpoint stays flagged on its own.
+ * A capability's stage follows its GA surface. It is beta only when
+ * every endpoint it publishes is beta. One GA endpoint keeps the
+ * capability GA; the beta endpoint stays flagged on its own.
  *
  * `catalog` is the published endpoint list (`platform-endpoints.json`). A
- * capability with nothing published yet is experimental when every endpoint
- * we know about for it is experimental.
+ * capability with nothing published yet is beta when every endpoint
+ * we know about for it is beta.
  */
 export function getPlatformStatuses(
   endpoints: readonly Pick<BetaEndpoint, 'docId'>[],
@@ -90,7 +90,7 @@ export function getPlatformStatuses(
     'docId'
   >[] = PUBLISHED_PLATFORM_ENDPOINTS,
 ): PlatformCapabilityStatus[] {
-  const experimentalIds = new Set(endpoints.map((endpoint) => endpoint.docId));
+  const betaIds = new Set(endpoints.map((endpoint) => endpoint.docId));
 
   return capabilities.map((capability) => {
     const published = catalog.filter((endpoint) =>
@@ -102,12 +102,12 @@ export function getPlatformStatuses(
         : endpoints.filter((endpoint) =>
             belongsToCapability(endpoint.docId, capability),
           );
-    const experimental =
+    const beta =
       known.length > 0 &&
-      known.every((endpoint) => experimentalIds.has(endpoint.docId));
+      known.every((endpoint) => betaIds.has(endpoint.docId));
     return {
       label: capability.label,
-      stage: experimental ? 'experimental' : 'ga',
+      stage: beta ? 'beta' : 'ga',
     };
   });
 }
@@ -121,5 +121,5 @@ export function platformBadge(statuses: PlatformCapabilityStatus[]): {
   ga: boolean;
 } {
   const ga = statuses.some((s) => s.stage === 'ga');
-  return { label: ga ? 'Generally available' : 'Experimental', ga };
+  return { label: ga ? 'Generally available' : 'Beta', ga };
 }
