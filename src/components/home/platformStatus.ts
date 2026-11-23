@@ -65,8 +65,8 @@ export function belongsToCapability(
   );
 }
 
-/** True when this generated page is in the experimental endpoint list. */
-export function isExperimentalEndpoint(
+/** True when this generated page is in the beta endpoint list. */
+export function isBetaEndpoint(
   docId: string,
   endpoints: readonly Pick<BetaEndpoint, 'docId'>[],
 ): boolean {

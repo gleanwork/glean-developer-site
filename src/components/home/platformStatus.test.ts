@@ -8,7 +8,7 @@ import {
   PLATFORM_CAPABILITIES,
   belongsToCapability,
   getPlatformStatuses,
-  isExperimentalEndpoint,
+  isBetaEndpoint,
   platformBadge,
 } from './platformStatus';
 
@@ -37,12 +37,10 @@ describe('getPlatformStatuses', () => {
       label: 'Search',
       stage: 'ga',
     });
-    expect(isExperimentalEndpoint(experimental[0].docId, experimental)).toBe(
-      true,
+    expect(isBetaEndpoint(experimental[0].docId, experimental)).toBe(true);
+    expect(isBetaEndpoint(doc('platform-search').docId, experimental)).toBe(
+      false,
     );
-    expect(
-      isExperimentalEndpoint(doc('platform-search').docId, experimental),
-    ).toBe(false);
   });
 
   it('marks a capability experimental when every endpoint is experimental', () => {
@@ -63,9 +61,7 @@ describe('getPlatformStatuses', () => {
       stage: 'experimental',
     });
     expect(
-      endpoints.every((endpoint) =>
-        isExperimentalEndpoint(endpoint.docId, endpoints),
-      ),
+      endpoints.every((endpoint) => isBetaEndpoint(endpoint.docId, endpoints)),
     ).toBe(true);
   });
 
@@ -108,7 +104,7 @@ describe('getPlatformStatuses', () => {
       label: 'Triggers',
       stage: 'experimental',
     });
-    expect(isExperimentalEndpoint(enumeration.docId, [enumeration])).toBe(true);
+    expect(isBetaEndpoint(enumeration.docId, [enumeration])).toBe(true);
   });
 
   it('ignores experimental endpoints outside the Platform API', () => {

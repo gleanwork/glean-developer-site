@@ -8,7 +8,7 @@ import platformEndpointsData from '@site/src/data/platform-endpoints.json';
 import type { BetaData } from '@site/src/types/beta';
 import type { PlatformEndpointsData } from '@site/src/types/platformEndpoints';
 import { getEndpointsForApi } from '../../utils/apiData';
-import { isExperimentalEndpoint } from '../home/platformStatus';
+import { isBetaEndpoint } from '../home/platformStatus';
 import styles from './styles.module.css';
 
 interface Endpoint {
@@ -19,8 +19,8 @@ interface Endpoint {
   operationId: string;
   /** Link to the endpoint page. Overrides the link derived from operationId. */
   href?: string;
-  /** Platform endpoints marked experimental in the generated spec. */
-  experimental?: boolean;
+  /** Platform endpoints marked beta in the generated spec. */
+  beta?: boolean;
 }
 
 interface UseCase {
@@ -80,7 +80,7 @@ export function getPlatformApiEndpoints(apiFamily: string): Endpoint[] {
     return [];
   }
 
-  const experimental = (betaData as BetaData).endpoints;
+  const betaEndpoints = (betaData as BetaData).endpoints;
 
   return family.endpoints.map((endpoint) => ({
     method: endpoint.method,
@@ -88,7 +88,7 @@ export function getPlatformApiEndpoints(apiFamily: string): Endpoint[] {
     summary: endpoint.summary,
     operationId: endpoint.docId.split('/').pop() ?? endpoint.docId,
     href: `/${endpoint.docId}`,
-    experimental: isExperimentalEndpoint(endpoint.docId, experimental),
+    beta: isBetaEndpoint(endpoint.docId, betaEndpoints),
   }));
 }
 
@@ -403,9 +403,7 @@ export default function ApiOverview({
                           <Link to={docLink} className="text--no-decoration">
                             <code>{endpoint.path}</code>
                           </Link>
-                          {endpoint.experimental ? (
-                            <StageBadge stage="beta" />
-                          ) : null}
+                          {endpoint.beta ? <StageBadge stage="beta" /> : null}
                         </span>
                       </td>
                       <td>
