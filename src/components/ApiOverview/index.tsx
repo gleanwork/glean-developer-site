@@ -3,9 +3,9 @@ import Link from '@docusaurus/Link';
 import CardGroup from '@theme/CardGroup';
 import Card from '@theme/Card';
 import { StageBadge } from '@site/src/theme/EndpointMetadata/parts';
-import experimentalData from '@site/src/data/experimental.json';
+import betaData from '@site/src/data/beta.json';
 import platformEndpointsData from '@site/src/data/platform-endpoints.json';
-import type { ExperimentalData } from '@site/src/types/experimental';
+import type { BetaData } from '@site/src/types/beta';
 import type { PlatformEndpointsData } from '@site/src/types/platformEndpoints';
 import { getEndpointsForApi } from '../../utils/apiData';
 import { isExperimentalEndpoint } from '../home/platformStatus';
@@ -80,7 +80,7 @@ export function getPlatformApiEndpoints(apiFamily: string): Endpoint[] {
     return [];
   }
 
-  const experimental = (experimentalData as ExperimentalData).endpoints;
+  const experimental = (betaData as BetaData).endpoints;
 
   return family.endpoints.map((endpoint) => ({
     method: endpoint.method,

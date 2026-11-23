@@ -28,7 +28,7 @@ vi.mock('@theme/Icons', () => ({
   Icon: () => null,
 }));
 
-vi.mock('@site/src/data/experimental.json', () => ({
+vi.mock('@site/src/data/beta.json', () => ({
   default: {
     endpoints: [{ docId: 'api/platform-api/platform-search-filters' }],
   },

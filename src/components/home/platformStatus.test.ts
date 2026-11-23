@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import experimentalData from '@site/src/data/experimental.json';
+import betaData from '@site/src/data/beta.json';
 import platformEndpointsData from '@site/src/data/platform-endpoints.json';
 import type { PlatformEndpointsData } from '@site/src/types/platformEndpoints';
 import {
@@ -95,7 +95,7 @@ describe('getPlatformStatuses', () => {
   it('keeps Search GA when only the enumeration endpoint is experimental', () => {
     const enumeration = doc('platform-search-enumeration');
     const statuses = getPlatformStatuses(
-      [...experimentalData.endpoints, enumeration],
+      [...betaData.endpoints, enumeration],
       PLATFORM_CAPABILITIES,
       [...publishedCatalog, enumeration],
     );
@@ -183,7 +183,7 @@ describe('generated data contract', () => {
   );
 
   it('covers every experimental Platform API endpoint', () => {
-    const uncovered = experimentalData.endpoints
+    const uncovered = betaData.endpoints
       .filter((e) => e.docId.startsWith('api/platform-api/'))
       .filter(
         (e) =>

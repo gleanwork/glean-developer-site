@@ -9,7 +9,7 @@ import {
   type XGleanDeprecated,
   type XGleanRelease,
 } from './deprecations-lib';
-import { extractExperimentalEndpoints } from './experimental-lib';
+import { extractBetaEndpoints } from './beta-lib';
 import { deriveRelease, type ApiOperation } from './generator/endpointMetadata';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore - plain .mjs module without type declarations
@@ -132,20 +132,14 @@ describe('release-stages fixture', () => {
   });
 
   it('lists beta operations for the sidebar badge', () => {
-    const endpoints = extractExperimentalEndpoints(
-      loadFixture(),
-      'api/test-api',
-    );
+    const endpoints = extractBetaEndpoints(loadFixture(), 'api/test-api');
 
     expect(endpoints.map((e) => e.docId)).toEqual([
       'api/test-api/stage-beta',
       'api/test-api/legacy-experimental',
     ]);
     expect(endpoints[0]).toMatchObject({ introduced: '2026-09-30' });
-    expect(endpoints[1]).toMatchObject({
-      id: '4abc1e17-8e06-490b-99a7-e8f97592405a',
-      introduced: '2026-05-12',
-    });
+    expect(endpoints[1]).toMatchObject({ introduced: '2026-05-12' });
   });
 
   it('adds the opt-in header only to beta operations', () => {

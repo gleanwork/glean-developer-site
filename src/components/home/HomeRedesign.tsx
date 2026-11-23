@@ -5,7 +5,7 @@ import {
   getClientIcon,
   type ClientId,
 } from '@gleanwork/mcp-config-schema/browser';
-import experimentalData from '@site/src/data/experimental.json';
+import betaData from '@site/src/data/beta.json';
 import BeakerIcon from '@site/src/components/BeakerIcon';
 import TerminalPanel from './TerminalPanel';
 import {
@@ -44,7 +44,7 @@ function feather(name: string, size = 18): React.ReactNode {
   });
 }
 
-const PLATFORM_STATUSES = getPlatformStatuses(experimentalData.endpoints);
+const PLATFORM_STATUSES = getPlatformStatuses(betaData.endpoints);
 
 /**
  * Platform APIs announcement band. A capability is experimental only when

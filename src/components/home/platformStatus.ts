@@ -1,5 +1,5 @@
 import platformEndpointsData from '@site/src/data/platform-endpoints.json';
-import type { ExperimentalEndpoint } from '@site/src/types/experimental';
+import type { BetaEndpoint } from '@site/src/types/beta';
 import type { PlatformEndpointsData } from '@site/src/types/platformEndpoints';
 
 export type PlatformStage = 'ga' | 'experimental';
@@ -68,7 +68,7 @@ export function belongsToCapability(
 /** True when this generated page is in the experimental endpoint list. */
 export function isExperimentalEndpoint(
   docId: string,
-  endpoints: readonly Pick<ExperimentalEndpoint, 'docId'>[],
+  endpoints: readonly Pick<BetaEndpoint, 'docId'>[],
 ): boolean {
   return endpoints.some((endpoint) => endpoint.docId === docId);
 }
@@ -83,10 +83,10 @@ export function isExperimentalEndpoint(
  * we know about for it is experimental.
  */
 export function getPlatformStatuses(
-  endpoints: readonly Pick<ExperimentalEndpoint, 'docId'>[],
+  endpoints: readonly Pick<BetaEndpoint, 'docId'>[],
   capabilities: readonly PlatformCapability[] = PLATFORM_CAPABILITIES,
   catalog: readonly Pick<
-    ExperimentalEndpoint,
+    BetaEndpoint,
     'docId'
   >[] = PUBLISHED_PLATFORM_ENDPOINTS,
 ): PlatformCapabilityStatus[] {

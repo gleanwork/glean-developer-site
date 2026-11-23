@@ -7,7 +7,7 @@
  * so it can be bundled on the client.
  */
 
-import type { HttpMethod } from './experimental';
+import type { HttpMethod } from './beta';
 
 export interface PlatformEndpoint {
   /** Uppercase HTTP method, e.g. "POST". */

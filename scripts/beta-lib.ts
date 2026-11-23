@@ -1,36 +1,18 @@
 import fs from 'node:fs';
 import * as yaml from 'js-yaml';
 import kebabCase from 'lodash/kebabCase.js';
-import type {
-  ExperimentalEndpoint,
-  ExperimentalData,
-  HttpMethod,
-} from '../src/types/experimental';
+import type { BetaEndpoint, BetaData, HttpMethod } from '../src/types/beta';
 import { getOperationRelease, requiresOptIn } from './release-lib.mjs';
 
 // Re-export the shared contract so callers/tests can import from one place.
-export type { ExperimentalEndpoint, ExperimentalData, HttpMethod };
-
-/**
- * Shape of the `x-glean-experimental` vendor extension as authored in the
- * OpenAPI specs. Currently only used at the operation (endpoint) level.
- *
- * @example
- * x-glean-experimental:
- *   id: 4abc1e17-8e06-490b-99a7-e8f97592405a
- *   introduced: '2026-05-12'
- */
-export interface XGleanExperimental {
-  id?: string;
-  introduced?: string;
-}
+export type { BetaEndpoint, BetaData, HttpMethod };
 
 /**
  * A spec to scan together with the doc-id prefix its operations are generated
  * under (the plugin's `outputDir` minus the leading `docs/`), e.g.
  * `api/platform-api` or `api/client-api/activity`.
  */
-export interface ExperimentalSource {
+export interface BetaSource {
   specPath: string;
   docIdPrefix: string;
 }
@@ -40,8 +22,6 @@ const HTTP_METHODS = ['get', 'post', 'put', 'patch', 'delete'] as const;
 interface OperationLike {
   operationId?: string;
   summary?: string;
-  'x-glean-experimental'?: XGleanExperimental;
-  'x-glean-release'?: unknown;
 }
 
 interface OpenApiDocLike {
@@ -58,19 +38,19 @@ export function computeBaseId(operation: OperationLike): string {
 }
 
 /**
- * Extract every operation that needs the opt-in header from a single parsed
- * OpenAPI document: `x-glean-release` with `stage: beta`, or the older
- * `x-glean-experimental` (see release-lib.mjs). Pure — no IO.
+ * Extract every operation that needs the opt-in header, which is
+ * `x-glean-release` with `stage: beta`, from a single parsed OpenAPI document.
+ * Pure — no IO.
  *
  * @param docIdPrefix The generated doc-id prefix for this spec (the plugin's
  *   `outputDir` without the leading `docs/`), used to build each endpoint's
  *   full `docId`.
  */
-export function extractExperimentalEndpoints(
+export function extractBetaEndpoints(
   spec: OpenApiDocLike,
   docIdPrefix: string,
-): ExperimentalEndpoint[] {
-  const endpoints: ExperimentalEndpoint[] = [];
+): BetaEndpoint[] {
+  const endpoints: BetaEndpoint[] = [];
   const paths = spec?.paths ?? {};
   const prefix = docIdPrefix.replace(/\/+$/, '');
 
@@ -86,16 +66,7 @@ export function extractExperimentalEndpoints(
       const op = operation as OperationLike;
       if (!requiresOptIn(op)) continue;
 
-      // Only the older annotation has an id.
-      const experimental: XGleanExperimental =
-        op['x-glean-release'] === undefined &&
-        typeof op['x-glean-experimental'] === 'object'
-          ? op['x-glean-experimental']
-          : {};
-      // An old operation that is also x-glean-deprecated reads as deprecated,
-      // which has no introduced, but still needs the opt-in header.
-      const introduced =
-        experimental.introduced ?? getOperationRelease(op)?.introduced;
+      const introduced = getOperationRelease(op)?.introduced;
       const baseId = computeBaseId(op);
 
       endpoints.push({
@@ -104,7 +75,6 @@ export function extractExperimentalEndpoints(
         operationId: op.operationId,
         baseId,
         docId: `${prefix}/${baseId}`,
-        ...(experimental.id ? { id: experimental.id } : {}),
         ...(introduced ? { introduced } : {}),
       });
     }
@@ -114,14 +84,12 @@ export function extractExperimentalEndpoints(
 }
 
 /**
- * Build the final data object from a flat list of experimental endpoints:
+ * Build the final data object from a flat list of beta endpoints:
  * dedupe by `docId`, sort by path then method, and add metadata.
  */
-export function buildExperimentalData(
-  endpoints: ExperimentalEndpoint[],
-): ExperimentalData {
+export function buildBetaData(endpoints: BetaEndpoint[]): BetaData {
   const seen = new Set<string>();
-  const deduped: ExperimentalEndpoint[] = [];
+  const deduped: BetaEndpoint[] = [];
   for (const endpoint of endpoints) {
     if (seen.has(endpoint.docId)) continue;
     seen.add(endpoint.docId);
@@ -141,14 +109,14 @@ export function buildExperimentalData(
 }
 
 /**
- * Read the given specs, extract all experimental endpoints (with full doc ids),
+ * Read the given specs, extract all beta endpoints (with full doc ids),
  * and write the aggregated result to `outputLocation` as JSON.
  */
-export async function generateExperimental(
-  sources: ExperimentalSource[],
+export async function generateBeta(
+  sources: BetaSource[],
   outputLocation: string,
-): Promise<ExperimentalData> {
-  const all: ExperimentalEndpoint[] = [];
+): Promise<BetaData> {
+  const all: BetaEndpoint[] = [];
 
   for (const { specPath, docIdPrefix } of sources) {
     if (!fs.existsSync(specPath)) {
@@ -164,10 +132,10 @@ export async function generateExperimental(
       );
       continue;
     }
-    all.push(...extractExperimentalEndpoints(spec, docIdPrefix));
+    all.push(...extractBetaEndpoints(spec, docIdPrefix));
   }
 
-  const data = buildExperimentalData(all);
+  const data = buildBetaData(all);
   fs.writeFileSync(outputLocation, JSON.stringify(data, null, 2) + '\n');
   return data;
 }

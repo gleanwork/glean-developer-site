@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import * as yaml from 'js-yaml';
-import { computeBaseId } from './experimental-lib';
-import type { HttpMethod } from '../src/types/experimental';
+import { computeBaseId } from './beta-lib';
+import type { HttpMethod } from '../src/types/beta';
 import type {
   PlatformEndpoint,
   PlatformEndpointsData,

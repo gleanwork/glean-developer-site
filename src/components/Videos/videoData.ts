@@ -1,4 +1,4 @@
-import experimentalData from '@site/src/data/experimental.json';
+import betaData from '@site/src/data/beta.json';
 import videosJson from '@site/src/data/videos.json';
 import { isContentVisible } from '../../lib/previewContent';
 import {
@@ -19,10 +19,7 @@ export const ALL_VIDEOS: readonly VideoRecord[] = parsed.videos;
 
 /** Stage per Platform API capability, derived from the generated spec data. */
 const DOC_STAGES: Record<string, PlatformStage> = Object.fromEntries(
-  getPlatformStatuses(experimentalData.endpoints).map((s) => [
-    s.label,
-    s.stage,
-  ]),
+  getPlatformStatuses(betaData.endpoints).map((s) => [s.label, s.stage]),
 );
 
 /**

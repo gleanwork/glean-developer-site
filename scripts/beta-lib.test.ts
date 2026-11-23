@@ -1,11 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import * as yaml from 'js-yaml';
 import {
-  extractExperimentalEndpoints,
-  buildExperimentalData,
+  extractBetaEndpoints,
+  buildBetaData,
   computeBaseId,
-  type ExperimentalEndpoint,
-} from './experimental-lib';
+  type BetaEndpoint,
+} from './beta-lib';
 
 function loadSpec(spec: string) {
   return yaml.load(spec) as any;
@@ -13,8 +13,8 @@ function loadSpec(spec: string) {
 
 const PREFIX = 'api/platform-api';
 
-describe('extractExperimentalEndpoints', () => {
-  it('returns nothing for a spec without experimental endpoints', () => {
+describe('extractBetaEndpoints', () => {
+  it('returns nothing for a spec without beta endpoints', () => {
     const spec = loadSpec(`
 openapi: "3.0.0"
 info:
@@ -28,10 +28,10 @@ paths:
         200:
           description: Success
 `);
-    expect(extractExperimentalEndpoints(spec, PREFIX)).toEqual([]);
+    expect(extractBetaEndpoints(spec, PREFIX)).toEqual([]);
   });
 
-  it('extracts an operation-level x-glean-experimental endpoint with a full docId', () => {
+  it('extracts a beta operation with a full docId and its introduced date', () => {
     const spec = loadSpec(`
 openapi: "3.0.0"
 info:
@@ -42,14 +42,14 @@ paths:
     post:
       operationId: platform-agents-search
       summary: Search agents
-      x-glean-experimental:
-        id: 4abc1e17
+      x-glean-release:
+        stage: beta
         introduced: "2026-05-12"
       responses:
         200:
           description: Success
 `);
-    const result = extractExperimentalEndpoints(spec, PREFIX);
+    const result = extractBetaEndpoints(spec, PREFIX);
     expect(result).toHaveLength(1);
     expect(result[0]).toMatchObject({
       method: 'POST',
@@ -57,59 +57,9 @@ paths:
       operationId: 'platform-agents-search',
       baseId: 'platform-agents-search',
       docId: 'api/platform-api/platform-agents-search',
-      id: '4abc1e17',
       introduced: '2026-05-12',
     });
-  });
-
-  it('keeps the introduced date of an x-glean-experimental endpoint that is also x-glean-deprecated', () => {
-    const spec = loadSpec(`
-openapi: "3.0.0"
-info:
-  title: Test API
-  version: "1.0.0"
-paths:
-  /api/agents/search:
-    post:
-      operationId: platform-agents-search
-      x-glean-experimental:
-        introduced: "2026-05-12"
-      x-glean-deprecated:
-        message: Use /api/agents instead
-        introduced: "2026-08-01"
-        removal: "2027-04-15"
-      responses:
-        200:
-          description: Success
-`);
-    expect(extractExperimentalEndpoints(spec, PREFIX)).toMatchObject([
-      { introduced: '2026-05-12' },
-    ]);
-  });
-
-  it('reads introduced from x-glean-release', () => {
-    const spec = loadSpec(`
-openapi: "3.0.0"
-info:
-  title: Test API
-  version: "1.0.0"
-paths:
-  /api/agents:
-    post:
-      operationId: platform-agents-create
-      x-glean-release:
-        stage: beta
-        introduced: "2026-11-18"
-      responses:
-        200:
-          description: Success
-`);
-    expect(extractExperimentalEndpoints(spec, PREFIX)).toEqual([
-      expect.objectContaining({ introduced: '2026-11-18' }),
-    ]);
-    expect(extractExperimentalEndpoints(spec, PREFIX)[0]).not.toHaveProperty(
-      'id',
-    );
+    expect(result[0]).not.toHaveProperty('id');
   });
 
   it('builds the docId from the given prefix (API family aware)', () => {
@@ -122,16 +72,14 @@ paths:
   /activity:
     post:
       operationId: activity
-      x-glean-experimental:
-        id: a1
+      x-glean-release:
+        stage: beta
+        introduced: "2026-05-12"
       responses:
         200:
           description: Success
 `);
-    const result = extractExperimentalEndpoints(
-      spec,
-      'api/client-api/activity',
-    );
+    const result = extractBetaEndpoints(spec, 'api/client-api/activity');
     expect(result[0].docId).toBe('api/client-api/activity/activity');
   });
 
@@ -145,13 +93,14 @@ paths:
   /a:
     get:
       operationId: a-get
-      x-glean-experimental:
-        id: a1
+      x-glean-release:
+        stage: beta
+        introduced: "2026-05-12"
       responses:
         200:
           description: Success
 `);
-    const result = extractExperimentalEndpoints(spec, 'api/platform-api/');
+    const result = extractBetaEndpoints(spec, 'api/platform-api/');
     expect(result[0].docId).toBe('api/platform-api/a-get');
   });
 
@@ -165,13 +114,14 @@ paths:
   /api/agents/search:
     get:
       summary: Search Agents Now
-      x-glean-experimental:
-        id: abc
+      x-glean-release:
+        stage: beta
+        introduced: "2026-05-12"
       responses:
         200:
           description: Success
 `);
-    const result = extractExperimentalEndpoints(spec, PREFIX);
+    const result = extractBetaEndpoints(spec, PREFIX);
     expect(result[0].baseId).toBe('search-agents-now');
     expect(result[0].docId).toBe('api/platform-api/search-agents-now');
     expect(result[0].operationId).toBeUndefined();
@@ -187,8 +137,9 @@ paths:
   /api/a:
     get:
       operationId: a-get
-      x-glean-experimental:
-        id: a1
+      x-glean-release:
+        stage: beta
+        introduced: "2026-05-12"
       responses:
         200:
           description: Success
@@ -200,13 +151,14 @@ paths:
   /api/b:
     post:
       operationId: b-post
-      x-glean-experimental:
-        id: b1
+      x-glean-release:
+        stage: beta
+        introduced: "2026-05-12"
       responses:
         200:
           description: Success
 `);
-    const result = extractExperimentalEndpoints(spec, PREFIX);
+    const result = extractBetaEndpoints(spec, PREFIX);
     expect(result).toHaveLength(2);
     expect(result.map((e) => e.baseId).sort()).toEqual(['a-get', 'b-post']);
   });
@@ -226,13 +178,14 @@ paths:
           type: string
     get:
       operationId: a-get
-      x-glean-experimental:
-        id: a1
+      x-glean-release:
+        stage: beta
+        introduced: "2026-05-12"
       responses:
         200:
           description: Success
 `);
-    const result = extractExperimentalEndpoints(spec, PREFIX);
+    const result = extractBetaEndpoints(spec, PREFIX);
     expect(result).toHaveLength(1);
     expect(result[0].method).toBe('GET');
   });
@@ -257,10 +210,8 @@ describe('computeBaseId', () => {
   });
 });
 
-describe('buildExperimentalData', () => {
-  const make = (
-    overrides: Partial<ExperimentalEndpoint>,
-  ): ExperimentalEndpoint => ({
+describe('buildBetaData', () => {
+  const make = (overrides: Partial<BetaEndpoint>): BetaEndpoint => ({
     method: 'GET',
     path: '/api/a',
     baseId: 'a-get',
@@ -269,14 +220,14 @@ describe('buildExperimentalData', () => {
   });
 
   it('returns empty output for no endpoints', () => {
-    const data = buildExperimentalData([]);
+    const data = buildBetaData([]);
     expect(data.endpoints).toEqual([]);
     expect(data.totalCount).toBe(0);
     expect(data.generatedAt).toBeDefined();
   });
 
   it('sorts by path then method', () => {
-    const data = buildExperimentalData([
+    const data = buildBetaData([
       make({ path: '/z', method: 'GET', docId: 'api/platform-api/z-get' }),
       make({ path: '/a', method: 'POST', docId: 'api/platform-api/a-post' }),
       make({ path: '/a', method: 'GET', docId: 'api/platform-api/a-get' }),
@@ -289,7 +240,7 @@ describe('buildExperimentalData', () => {
   });
 
   it('dedupes by docId', () => {
-    const data = buildExperimentalData([
+    const data = buildBetaData([
       make({ docId: 'api/platform-api/a-get' }),
       make({ docId: 'api/platform-api/a-get' }),
     ]);
@@ -298,7 +249,7 @@ describe('buildExperimentalData', () => {
   });
 
   it('keeps same baseId in different API families as distinct endpoints', () => {
-    const data = buildExperimentalData([
+    const data = buildBetaData([
       make({ docId: 'api/platform-api/a-get' }),
       make({ docId: 'api/client-api/activity/a-get' }),
     ]);
