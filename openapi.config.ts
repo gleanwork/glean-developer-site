@@ -146,9 +146,9 @@ export const openApiPluginOptions = {
 const PREVIEW_NOTICE = `
 :::warning[Preview: not generally available]
 
-This endpoint is **experimental** and is shared as a preview ahead of general availability. It is subject to change or removal without notice, and it is not covered by the [deprecation policy](/deprecations/overview).
+This endpoint is in **beta** and is shared as a preview ahead of general availability. It is subject to change or removal without notice, and it is not covered by the [deprecation policy](/deprecations/overview).
 
-It requires enablement: Glean must enable it for your deployment before you can call it, and every request must send \`X-Glean-Include-Experimental: true\` ([how to opt in](/experimental/overview#opting-in)). The Glean API client SDKs do not include it; call it over HTTP.
+It requires enablement: Glean must enable it for your deployment before you can call it, and every request must send \`X-Glean-Include-Experimental: true\` ([how to opt in](/beta/overview#opting-in)). The Glean API client SDKs do not include it; call it over HTTP.
 
 :::
 `;

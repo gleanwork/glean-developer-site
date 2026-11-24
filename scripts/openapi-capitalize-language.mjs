@@ -52,7 +52,7 @@ const HTTP_METHODS = [
 
 const EXPERIMENTAL_HEADER_NAME = 'X-Glean-Include-Experimental';
 const EXPERIMENTAL_HEADER_DESCRIPTION =
-  'This endpoint is experimental, so requests must include this header set to `true`. See [How experimental APIs work](https://developers.glean.com/experimental/overview) for details.';
+  'This endpoint is in beta, so requests must include this header set to `true`. See [How beta APIs work](https://developers.glean.com/beta/overview) for details.';
 
 function isExperimentalHeaderParam(param) {
   return (
