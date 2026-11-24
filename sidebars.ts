@@ -848,6 +848,12 @@ const baseSidebars: SidebarsConfig = {
                   label: 'Respond to agent run approvals',
                   className: 'api-method post',
                 },
+                {
+                  type: 'doc',
+                  id: 'api/platform-api/platform-agents-create',
+                  label: 'Create agent',
+                  className: 'api-method post',
+                },
               ],
             },
             {
@@ -2827,30 +2833,6 @@ const baseSidebars: SidebarsConfig = {
               items: [
                 {
                   type: 'doc',
-                  id: 'api/indexing-api/beta-get-datasource-status',
-                  label: 'Beta: Get datasource status\n',
-                  className: 'api-method post',
-                },
-                {
-                  type: 'doc',
-                  id: 'api/indexing-api/beta-get-document-information',
-                  label: 'Beta: Get document information\n',
-                  className: 'api-method post',
-                },
-                {
-                  type: 'doc',
-                  id: 'api/indexing-api/beta-get-information-of-a-batch-of-documents',
-                  label: 'Beta: Get information of a batch of documents\n',
-                  className: 'api-method post',
-                },
-                {
-                  type: 'doc',
-                  id: 'api/indexing-api/beta-get-user-information',
-                  label: 'Beta: Get user information\n',
-                  className: 'api-method post',
-                },
-                {
-                  type: 'doc',
                   id: 'api/indexing-api/check-document-access',
                   label: 'Check document access',
                   className: 'api-method post',
@@ -2875,8 +2857,32 @@ const baseSidebars: SidebarsConfig = {
                 },
                 {
                   type: 'doc',
-                  id: 'api/indexing-api/beta-get-document-lifecycle-events',
-                  label: 'Beta: Get document lifecycle events',
+                  id: 'api/indexing-api/get-datasource-status',
+                  label: 'Get datasource status',
+                  className: 'api-method post',
+                },
+                {
+                  type: 'doc',
+                  id: 'api/indexing-api/get-document-information',
+                  label: 'Get document information',
+                  className: 'api-method post',
+                },
+                {
+                  type: 'doc',
+                  id: 'api/indexing-api/get-document-lifecycle-events',
+                  label: 'Get document lifecycle events',
+                  className: 'api-method post',
+                },
+                {
+                  type: 'doc',
+                  id: 'api/indexing-api/get-information-of-a-batch-of-documents',
+                  label: 'Get information of a batch of documents',
+                  className: 'api-method post',
+                },
+                {
+                  type: 'doc',
+                  id: 'api/indexing-api/get-user-information',
+                  label: 'Get user information',
                   className: 'api-method post',
                 },
               ],
