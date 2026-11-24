@@ -80,9 +80,7 @@ function stageDetailItems(release: EndpointRelease): ReactNode[] {
       return [
         since && `Introduced ${since}`,
         release.docs ? <Link to={release.docs}>Guide</Link> : null,
-        release.optIn ? (
-          <Link to="/experimental/overview">How to opt in</Link>
-        ) : null,
+        release.optIn ? <Link to="/beta/overview">How to opt in</Link> : null,
       ];
     case 'deprecated': {
       const removal = formatDate(release.removal);
