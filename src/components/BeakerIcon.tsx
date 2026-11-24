@@ -4,8 +4,8 @@ interface BeakerIconProps {
   className?: string;
 }
 
-// Science-beaker icon used to denote experimental APIs (sidebar pill, endpoint
-// admonition banner, and the "Experimental" card on the overview page).
+// Science-beaker icon used to denote beta APIs (sidebar pill, endpoint
+// admonition banner, and the "Beta" card on the Beta APIs page).
 // Renders with `currentColor` so callers control the color via CSS/inline style.
 export default function BeakerIcon({
   className,
