@@ -1,17 +1,17 @@
 /**
- * Shared contract for the generated `src/data/experimental.json`, which lists
- * the operations that need the opt-in header: `x-glean-release` with
- * `stage: beta`, or the older `x-glean-experimental`.
+ * Shared contract for the generated `src/data/beta.json`, which lists the
+ * operations that need the opt-in header: `x-glean-release` with
+ * `stage: beta`.
  *
  * This is the single source of truth for both the writer
- * (`scripts/experimental-lib.ts`) and the reader
+ * (`scripts/beta-lib.ts`) and the reader
  * (`src/theme/DocSidebarItem/Link`), so the producer and consumer stay in sync.
  * Keep this file free of Node-only imports so it can be bundled on the client.
  */
 
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
-export interface ExperimentalEndpoint {
+export interface BetaEndpoint {
   /** Uppercase HTTP method, e.g. "POST". */
   method: HttpMethod;
   /** API path as written in the spec, e.g. "/agents/search". */
@@ -30,14 +30,12 @@ export interface ExperimentalEndpoint {
    * a kebab collision in a different API can't produce a false pill.
    */
   docId: string;
-  /** Stable id from the older `x-glean-experimental.id` field, when present. */
-  id?: string;
-  /** ISO date from the older `x-glean-experimental.introduced`, when present. */
+  /** ISO date from `x-glean-release.introduced`, when present. */
   introduced?: string;
 }
 
-export interface ExperimentalData {
-  endpoints: ExperimentalEndpoint[];
+export interface BetaData {
+  endpoints: BetaEndpoint[];
   generatedAt: string;
   totalCount: number;
 }

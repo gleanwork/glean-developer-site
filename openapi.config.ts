@@ -157,7 +157,7 @@ It requires enablement: Glean must enable it for your deployment before you can 
  * Unlisted, preview-only API reference pages (see openapi/preview/README.md).
  *
  * Deliberately not part of `openApiPluginOptions.config`: scripts iterate that
- * object (generate:experimental, generate:platform-endpoints) and the
+ * object (generate:beta, generate:platform-endpoints) and the
  * automated `openapi:regenerate:all` run must never see these entries.
  * docusaurus.config.ts merges them into the same plugin instance, because a
  * second instance would make every `docusaurus gen-api-docs <id>` call

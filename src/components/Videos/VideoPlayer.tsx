@@ -25,11 +25,11 @@ const feather = (name: string, size = 16): React.ReactNode =>
     color: 'currentColor',
   });
 
-export function ExperimentalBadge(): React.ReactElement {
+export function BetaBadge(): React.ReactElement {
   return (
-    <span className={styles.experimentalBadge}>
-      <BeakerIcon className={styles.experimentalIcon} />
-      Experimental
+    <span className={styles.betaBadge}>
+      <BeakerIcon className={styles.betaIcon} />
+      Beta
     </span>
   );
 }
@@ -187,7 +187,7 @@ export function VideoDialog({
     ? `/cookbook/${video.related.recipe}`
     : null;
   const showRecipe = recipeHref && recipeHref !== video?.related.doc;
-  const experimental = video ? videoStage(video) === 'experimental' : false;
+  const beta = video ? videoStage(video) === 'beta' : false;
 
   return (
     <dialog
@@ -252,7 +252,7 @@ export function VideoDialog({
               ) : null}
               <h2 className={styles.dialogTitle}>
                 {video.title}
-                {experimental ? <ExperimentalBadge /> : null}
+                {beta ? <BetaBadge /> : null}
               </h2>
               <p className={styles.dialogSummary}>{video.summary}</p>
               <div className={styles.meta}>

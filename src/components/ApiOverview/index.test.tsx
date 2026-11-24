@@ -28,7 +28,7 @@ vi.mock('@theme/Icons', () => ({
   Icon: () => null,
 }));
 
-vi.mock('@site/src/data/experimental.json', () => ({
+vi.mock('@site/src/data/beta.json', () => ({
   default: {
     endpoints: [{ docId: 'api/platform-api/platform-search-filters' }],
   },
@@ -46,7 +46,7 @@ function row(path: string): HTMLElement {
 }
 
 describe('platform endpoint listing', () => {
-  it('badges the experimental endpoint and leaves the GA sibling unlabeled', () => {
+  it('badges the beta endpoint and leaves the GA sibling unlabeled', () => {
     render(
       <ApiOverview
         title="Search API"
@@ -61,7 +61,7 @@ describe('platform endpoint listing', () => {
     expect(row('/api/search')).not.toHaveTextContent('Beta');
   });
 
-  it('leaves a family unlabeled when none of its endpoints are experimental', () => {
+  it('leaves a family unlabeled when none of its endpoints are beta', () => {
     render(
       <ApiOverview
         title="Chat API"

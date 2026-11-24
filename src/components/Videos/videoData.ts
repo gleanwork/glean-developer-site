@@ -1,4 +1,4 @@
-import experimentalData from '@site/src/data/experimental.json';
+import betaData from '@site/src/data/beta.json';
 import videosJson from '@site/src/data/videos.json';
 import { isContentVisible } from '../../lib/previewContent';
 import {
@@ -7,6 +7,7 @@ import {
 } from '../home/platformStatus';
 import {
   videosFileSchema,
+  type NarratedStage,
   type VideoRecord,
   type VideoTrack,
 } from '../../types/video';
@@ -19,29 +20,36 @@ export const ALL_VIDEOS: readonly VideoRecord[] = parsed.videos;
 
 /** Stage per Platform API capability, derived from the generated spec data. */
 const DOC_STAGES: Record<string, PlatformStage> = Object.fromEntries(
-  getPlatformStatuses(experimentalData.endpoints).map((s) => [
-    s.label,
-    s.stage,
-  ]),
+  getPlatformStatuses(betaData.endpoints).map((s) => [s.label, s.stage]),
 );
 
 /**
- * The badge a card shows: "Experimental" when everything the video covers is
- * experimental *in the docs today*. A series overview that spans GA and
- * experimental APIs is not badged. Graduation removes the badge automatically.
+ * The badge a card shows: "Beta" when everything the video covers is beta
+ * *in the docs today*. A series overview that spans GA and beta APIs is not
+ * badged. Graduation removes the badge automatically.
  */
 export function videoStage(video: VideoRecord): PlatformStage | null {
   const capabilities = Object.keys(video.narratedStages ?? {});
   if (capabilities.length === 0) return null;
-  return capabilities.every((c) => DOC_STAGES[c] === 'experimental')
-    ? 'experimental'
-    : 'ga';
+  return capabilities.every((c) => DOC_STAGES[c] === 'beta') ? 'beta' : 'ga';
 }
+
+/**
+ * The docs stage a narrated stage matches. The video registry still names the
+ * beta stage "experimental", as the videos say it aloud.
+ */
+const DOC_STAGE_OF_NARRATED: Record<NarratedStage, PlatformStage> = {
+  ga: 'ga',
+  experimental: 'beta',
+};
 
 /** Capabilities whose stage in the video no longer matches the docs. */
 export function stageDrift(video: VideoRecord): string[] {
   return Object.entries(video.narratedStages ?? {})
-    .filter(([capability, narrated]) => DOC_STAGES[capability] !== narrated)
+    .filter(
+      ([capability, narrated]) =>
+        DOC_STAGES[capability] !== DOC_STAGE_OF_NARRATED[narrated],
+    )
     .map(([capability]) => capability);
 }
 

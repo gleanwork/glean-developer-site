@@ -8,7 +8,7 @@ import {
   videoStage,
 } from './videoData';
 import { usePreviewContent } from '../../lib/usePreviewContent';
-import { ExperimentalBadge, useVideoDialog, VideoPoster } from './VideoPlayer';
+import { BetaBadge, useVideoDialog, VideoPoster } from './VideoPlayer';
 import styles from './Videos.module.css';
 
 function useAvailableVideo(id: string) {
@@ -55,9 +55,7 @@ export function VideoCallout({
           </span>
           <span className={styles.calloutTitle}>
             {video.title}
-            {videoStage(video) === 'experimental' ? (
-              <ExperimentalBadge />
-            ) : null}
+            {videoStage(video) === 'beta' ? <BetaBadge /> : null}
           </span>
           <span className={styles.calloutSummary}>{video.summary}</span>
           <span className={styles.calloutMeta}>

@@ -8,23 +8,23 @@ import IconExternalLink from '@theme/Icon/ExternalLink';
 import { Icon } from '@theme/Icons';
 import { FeatureFlagsContext } from '@site/src/theme/Root';
 import type { Props } from '@theme/DocSidebarItem/Link';
-import experimentalData from '@site/src/data/experimental.json';
-import type { ExperimentalData } from '@site/src/types/experimental';
+import betaData from '@site/src/data/beta.json';
+import type { BetaData } from '@site/src/types/beta';
 import BeakerIcon from '@site/src/components/BeakerIcon';
 
 import styles from './styles.module.css';
 
 // Set of full doc ids (e.g. "api/platform-api/platform-agents-search") that are
-// beta in the OpenAPI specs (`x-glean-release` with `stage: beta`, or the older
-// `x-glean-experimental`), as listed in the generated experimental.json. Matching
+// beta in the OpenAPI specs (`x-glean-release` with `stage: beta`), as listed in
+// the generated beta.json. Matching
 // on the full doc id — not just the last segment — keeps the pill scoped to the
 // exact endpoint, so a kebab collision in another API family can't mis-tag it.
-const experimentalDocIds = new Set(
-  (experimentalData as ExperimentalData).endpoints.map((e) => e.docId),
+const betaDocIds = new Set(
+  (betaData as BetaData).endpoints.map((e) => e.docId),
 );
 
-function isExperimentalItem(docId: string | undefined): boolean {
-  return docId ? experimentalDocIds.has(docId) : false;
+function isBetaItem(docId: string | undefined): boolean {
+  return docId ? betaDocIds.has(docId) : false;
 }
 
 export default function DocSidebarItemLink({
@@ -37,7 +37,7 @@ export default function DocSidebarItemLink({
 }: Props): ReactNode {
   const { href, label, className, autoAddBaseUrl } = item;
   const isActive = isActiveSidebarItem(item, activePath);
-  const isExperimental = isExperimentalItem((item as any).docId);
+  const isBeta = isBetaItem((item as any).docId);
   // The OpenAPI plugin sets this class from the operation's own `deprecated`
   // flag, not from deprecated parameters, request fields, or response schemas.
   const sidebarClasses = className?.split(/\s+/) ?? [];
@@ -85,11 +85,11 @@ export default function DocSidebarItemLink({
           />
         )}
         {label}
-        {(isExperimental || isDeprecated) && (
+        {(isBeta || isDeprecated) && (
           <span className={styles.statusBadges}>
-            {isExperimental && (
+            {isBeta && (
               <span
-                className={clsx(styles.statusBadge, styles.experimentalBadge)}
+                className={clsx(styles.statusBadge, styles.betaBadge)}
                 title="Beta"
                 aria-label="Beta"
                 role="img"

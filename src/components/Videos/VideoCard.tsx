@@ -3,7 +3,7 @@ import Link from '@docusaurus/Link';
 import { getIcon } from '@gleanwork/docusaurus-theme-glean/Icons';
 import { VIDEO_TYPE_LABELS, type VideoRecord } from '../../types/video';
 import { formatDuration, spokenDuration, videoStage } from './videoData';
-import { ExperimentalBadge, seriesLabel, VideoPoster } from './VideoPlayer';
+import { BetaBadge, seriesLabel, VideoPoster } from './VideoPlayer';
 import styles from './Videos.module.css';
 
 interface VideoCardProps {
@@ -30,15 +30,13 @@ export default function VideoCard({
     <article className={styles.card}>
       <VideoPoster decorative onPlay={() => onPlay(video)} video={video} />
       <div className={styles.cardBody}>
-        {trackLabel || series || videoStage(video) === 'experimental' ? (
+        {trackLabel || series || videoStage(video) === 'beta' ? (
           <div className={styles.cardTags}>
             {trackLabel ? (
               <span className={styles.position}>{trackLabel}</span>
             ) : null}
             {series ? <span className={styles.position}>{series}</span> : null}
-            {videoStage(video) === 'experimental' ? (
-              <ExperimentalBadge />
-            ) : null}
+            {videoStage(video) === 'beta' ? <BetaBadge /> : null}
           </div>
         ) : null}
         <h3 className={styles.cardTitle}>

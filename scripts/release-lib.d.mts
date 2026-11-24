@@ -17,7 +17,7 @@ export interface OperationRelease {
   stage: ReleaseStage;
   /** Guide for the stage. */
   docs?: string;
-  /** Old `x-glean-experimental.introduced` only. */
+  /** When `unreleased` or `beta` began. */
   introduced?: string;
   /** Deprecated stage only. */
   deprecation?: ReleaseDeprecation;

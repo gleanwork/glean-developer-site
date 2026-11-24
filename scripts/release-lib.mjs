@@ -12,8 +12,9 @@
  *
  *     x-glean-release:
  *       stage: deprecated # unreleased | beta | ga | deprecated
+ *       introduced: 2026-09-14 # unreleased and beta only
  *       docs: https://...
- *       deprecation:
+ *       deprecation: # deprecated only
  *         message: Use newField instead
  *         introduced: 2026-10-01
  *         removal: 2027-04-15
@@ -50,7 +51,7 @@ export const DEPRECATED_EXTENSION = 'x-glean-deprecated';
  * @typedef {object} OperationRelease
  * @property {ReleaseStage} stage
  * @property {string} [docs] Guide for the stage.
- * @property {string} [introduced] Old `x-glean-experimental.introduced` only.
+ * @property {string} [introduced] When `unreleased` or `beta` began.
  * @property {ReleaseDeprecation} [deprecation] Deprecated stage only.
  */
 
@@ -141,6 +142,9 @@ export function getOperationRelease(operation) {
     }
     /** @type {OperationRelease} */
     const result = { stage: release.stage };
+    if (typeof release.introduced === 'string') {
+      result.introduced = release.introduced;
+    }
     if (typeof release.docs === 'string') result.docs = release.docs;
     const deprecation = releaseDeprecation(release);
     if (deprecation) result.deprecation = deprecation;

@@ -5,7 +5,7 @@ import {
   getClientIcon,
   type ClientId,
 } from '@gleanwork/mcp-config-schema/browser';
-import experimentalData from '@site/src/data/experimental.json';
+import betaData from '@site/src/data/beta.json';
 import BeakerIcon from '@site/src/components/BeakerIcon';
 import TerminalPanel from './TerminalPanel';
 import {
@@ -44,11 +44,11 @@ function feather(name: string, size = 18): React.ReactNode {
   });
 }
 
-const PLATFORM_STATUSES = getPlatformStatuses(experimentalData.endpoints);
+const PLATFORM_STATUSES = getPlatformStatuses(betaData.endpoints);
 
 /**
- * Platform APIs announcement band. A capability is experimental only when
- * every endpoint it publishes is experimental. One GA endpoint keeps the
+ * Platform APIs announcement band. A capability is beta only when
+ * every endpoint it publishes is beta. One GA endpoint keeps the
  * capability GA. Status comes from the generated spec data.
  */
 export function AnnouncementBand({
@@ -64,7 +64,7 @@ export function AnnouncementBand({
 }): React.ReactElement {
   const badge = platformBadge(statuses);
   const ga = statuses.filter((s) => s.stage === 'ga');
-  const preview = statuses.filter((s) => s.stage === 'experimental');
+  const preview = statuses.filter((s) => s.stage === 'beta');
   return (
     <div className={styles.bandWrap} data-home-slot="announcement">
       <Link className={styles.band} to={href}>
@@ -110,7 +110,7 @@ export function AnnouncementBand({
                 <div className={styles.bandPreviewGroup}>
                   <span className={styles.bandStatusLabel} aria-hidden="true">
                     <BeakerIcon className={styles.bandIcon} />
-                    {ga.length > 0 && 'Experimental:'}
+                    {ga.length > 0 && 'Beta:'}
                   </span>
                   <ul
                     className={`${styles.bandStatusGroup} ${styles.bandPreviewList}`}
@@ -118,10 +118,10 @@ export function AnnouncementBand({
                     {preview.map(({ label }) => (
                       <li
                         key={label}
-                        className={`${styles.bandStatus} ${styles.bandStatusExperimental}`}
+                        className={`${styles.bandStatus} ${styles.bandStatusBeta}`}
                       >
                         {label}
-                        <span className={styles.srOnly}> (experimental)</span>
+                        <span className={styles.srOnly}> (beta)</span>
                       </li>
                     ))}
                   </ul>

@@ -26,9 +26,9 @@ vi.mock('@theme/Icons', () => ({
   ),
 }));
 
-vi.mock('@site/src/data/experimental.json', () => ({
+vi.mock('@site/src/data/beta.json', () => ({
   default: {
-    endpoints: [{ docId: 'api/platform-api/experimental-endpoint' }],
+    endpoints: [{ docId: 'api/platform-api/beta-endpoint' }],
   },
 }));
 
@@ -113,7 +113,7 @@ describe('sidebar endpoint status icons', () => {
   );
 
   it('preserves the beta badge without a deprecation warning', () => {
-    renderItem({ docId: 'api/platform-api/experimental-endpoint' });
+    renderItem({ docId: 'api/platform-api/beta-endpoint' });
     expect(screen.getByRole('img', { name: 'Beta' })).toBeInTheDocument();
     expect(
       screen.queryByRole('img', { name: 'Deprecated' }),
@@ -122,7 +122,7 @@ describe('sidebar endpoint status icons', () => {
 
   it('shows both badges when an endpoint is beta and deprecated', () => {
     renderItem({
-      docId: 'api/platform-api/experimental-endpoint',
+      docId: 'api/platform-api/beta-endpoint',
       className: 'post api-method menu__list-item--deprecated',
     });
     expect(screen.getByRole('img', { name: 'Beta' })).toBeInTheDocument();

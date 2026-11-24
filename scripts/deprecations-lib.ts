@@ -40,6 +40,7 @@ interface XGleanReleaseDeprecation {
 
 interface XGleanReleaseObject {
   stage: string;
+  introduced?: string;
   docs?: string;
   deprecation?: XGleanReleaseDeprecation;
 }
@@ -182,16 +183,33 @@ function extractName(context: string[], endpointKey: string): string {
 }
 
 /**
+ * The property names on the way to a node, such as `report.config.sensitiveInfoTypes`,
+ * or the whole context when it has none, such as `parameters.0`.
+ */
+function propertyPath(context: string[]): string {
+  const names: string[] = [];
+  for (let i = 0; i < context.length - 1; i++) {
+    if (context[i] === 'properties') names.push(context[++i]);
+  }
+  return (names.length > 0 ? names : context).join('.');
+}
+
+/**
  * A stable id for an `x-glean-release` deprecation, which has no id of its
- * own. The page and the RSS feed use it to tell entries apart.
+ * own. The page and the RSS feed use it to tell entries apart. It names the
+ * properties on the way to the node, since two fields with the same name can
+ * have different deprecations, but not the response code, media type, or
+ * composition keywords, which can change without changing the field.
  */
 function releaseDeprecationId(
   endpointKey: string,
   type: DeprecationType,
-  name: string,
+  context: string[],
   enumValue?: string,
 ): string {
-  return [endpointKey, type, name, enumValue].filter(Boolean).join(' ');
+  return [endpointKey, type, propertyPath(context), enumValue]
+    .filter(Boolean)
+    .join(' ');
 }
 
 /**
@@ -201,6 +219,7 @@ function releaseDeprecationId(
 function releaseDeprecationItems(
   value: XGleanRelease,
   endpointKey: string,
+  context: string[],
   type: DeprecationType,
   name: string,
 ): DeprecationItem[] {
@@ -211,7 +230,7 @@ function releaseDeprecationItems(
         createDeprecationItem(
           {
             ...own,
-            id: releaseDeprecationId(endpointKey, type, name),
+            id: releaseDeprecationId(endpointKey, type, context),
           } as XGleanDeprecatedBase,
           type,
           name,
@@ -226,7 +245,12 @@ function releaseDeprecationItems(
       createDeprecationItem(
         {
           ...deprecation,
-          id: releaseDeprecationId(endpointKey, 'enum-value', name, enumValue),
+          id: releaseDeprecationId(
+            endpointKey,
+            'enum-value',
+            context,
+            enumValue,
+          ),
         } as XGleanDeprecatedBase,
         'enum-value',
         name,
@@ -316,7 +340,13 @@ export function convertToDeprecationsOutput(
 
       if (isRelease) {
         endpoint.deprecations.push(
-          ...releaseDeprecationItems(value as XGleanRelease, key, type, name),
+          ...releaseDeprecationItems(
+            value as XGleanRelease,
+            key,
+            context,
+            type,
+            name,
+          ),
         );
         continue;
       }
