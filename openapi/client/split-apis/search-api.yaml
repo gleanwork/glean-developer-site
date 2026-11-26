@@ -2,11 +2,11 @@ openapi: 3.0.0
 info:
   version: 0.9.0
   title: Glean API - Search
-  x-source-commit-sha: 3ab2deb33b6b8d6b8ed7245ee6889a087ef5e71c
+  x-source-commit-sha: 56cb6e4b5aae572cdbfc452ac4a4312af6a748f9
   description: API endpoints for Search
   x-logo:
     url: https://app.glean.com/images/glean-text2.svg
-  x-open-api-commit-sha: 48991ac862dfd36ff01d70b22f07ab3ae58194f8
+  x-open-api-commit-sha: e3f8572d0d5ab1f48136241fd01689cc6cf84dd6
   x-speakeasy-name: Glean API
 servers:
   - url: '{serverUrl}'
@@ -2715,25 +2715,6 @@ components:
           properties:
             create:
               $ref: '#/components/schemas/UgcType'
-    ChatSuggestion:
-      properties:
-        query:
-          type: string
-          description: The actionable chat query to run when the user selects this suggestion.
-        cta:
-          type: string
-          description: Button text to show for the suggestion action.
-        feature:
-          type: string
-          description: Targeted Glean Chat feature for the suggestion.
-        artifactType:
-          $ref: '#/components/schemas/ArtifactType'
-          description: The single artifact type to review for an unread artifact reminder.
-        sourceDocumentIds:
-          type: array
-          items:
-            type: string
-          description: Document IDs that grounded the suggestion.
     Code:
       example: &ref_101
         repoName: scio
@@ -2781,6 +2762,28 @@ components:
         repoName:
           type: string
       type: object
+    ChatSuggestion:
+      properties:
+        query:
+          type: string
+          description: The actionable chat query to run when the user selects this suggestion.
+        cta:
+          type: string
+          description: Button text to show for the suggestion action.
+        shortTitle:
+          type: string
+          description: A shorter version of the suggestion's title for one-line lists. Fall back to the entry's title when empty.
+        feature:
+          type: string
+          description: Targeted Glean Chat feature for the suggestion.
+        artifactType:
+          $ref: '#/components/schemas/ArtifactType'
+          description: The single artifact type to review for an unread artifact reminder.
+        sourceDocumentIds:
+          type: array
+          items:
+            type: string
+          description: Document IDs that grounded the suggestion.
     DigestUpdate:
       type: object
       properties:

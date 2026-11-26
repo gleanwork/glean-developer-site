@@ -854,6 +854,24 @@ const baseSidebars: SidebarsConfig = {
                   label: 'Create agent',
                   className: 'api-method post',
                 },
+                {
+                  type: 'doc',
+                  id: 'api/platform-api/platform-agents-create-run-stream',
+                  label: 'Create a streaming agent run',
+                  className: 'api-method post',
+                },
+                {
+                  type: 'doc',
+                  id: 'api/platform-api/platform-agents-delete',
+                  label: 'Delete agent',
+                  className: 'api-method delete',
+                },
+                {
+                  type: 'doc',
+                  id: 'api/platform-api/platform-agents-update',
+                  label: 'Update agent',
+                  className: 'api-method patch',
+                },
               ],
             },
             {
@@ -888,6 +906,18 @@ const baseSidebars: SidebarsConfig = {
                   id: 'api/platform-api/platform-chat-update',
                   label: 'Update a chat',
                   className: 'api-method patch',
+                },
+                {
+                  type: 'doc',
+                  id: 'api/platform-api/platform-chat-cancel',
+                  label: 'Cancel a chat',
+                  className: 'api-method post',
+                },
+                {
+                  type: 'doc',
+                  id: 'api/platform-api/platform-chat-resume',
+                  label: 'Resume a chat stream',
+                  className: 'api-method get',
                 },
               ],
             },
