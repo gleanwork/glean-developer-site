@@ -2,8 +2,8 @@ openapi: 3.1.0
 info:
   version: '2026-04-01'
   title: Glean Platform API
-  x-source-commit-sha: 3ab2deb33b6b8d6b8ed7245ee6889a087ef5e71c
-  x-open-api-commit-sha: 48991ac862dfd36ff01d70b22f07ab3ae58194f8
+  x-source-commit-sha: 56cb6e4b5aae572cdbfc452ac4a4312af6a748f9
+  x-open-api-commit-sha: e3f8572d0d5ab1f48136241fd01689cc6cf84dd6
 servers:
   - url: '{serverUrl}'
     description: Replace {serverUrl} with your complete Glean API server URL. Find it at https://developers.glean.com/get-started/authentication#finding-your-server-url.
@@ -394,6 +394,274 @@ paths:
                     }
                 }
             }
+    patch:
+      tags:
+        - Agents
+      summary: Update agent
+      description: |
+        Update and publish an agent. Supplied fields replace their saved values and omitted fields are kept.
+      operationId: platform-agents-update
+      x-glean-scopes:
+        legacy:
+          - AGENTS
+        platform:
+          - agents:write
+      x-visibility: Public
+      x-glean-release:
+        stage: beta
+        introduced: '2026-11-18'
+      x-codegen-request-body-name: payload
+      parameters:
+        - in: header
+          name: X-Glean-Include-Experimental
+          description: This endpoint is in beta, so requests must include this header set to `true`. See [How beta APIs work](https://developers.glean.com/beta/overview) for details.
+          required: true
+          schema:
+            type: boolean
+            default: true
+          example: true
+          value: 'true'
+        - in: path
+          name: agent_id
+          required: true
+          description: The ID of the agent to update.
+          example: '{agent_id}'
+          schema:
+            type: string
+            minLength: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            example:
+              instructions: Answer questions using the latest HR policies.
+            schema:
+              $ref: '#/components/schemas/PlatformAgentUpdateRequest'
+      responses:
+        '200':
+          description: Agent updated and published.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlatformAgentGetResponse'
+        '400':
+          $ref: '#/components/responses/PlatformBadRequest'
+        '401':
+          $ref: '#/components/responses/PlatformUnauthorized'
+        '403':
+          $ref: '#/components/responses/PlatformForbidden'
+        '404':
+          $ref: '#/components/responses/PlatformNotFound'
+        '408':
+          $ref: '#/components/responses/PlatformRequestTimeout'
+        '409':
+          $ref: '#/components/responses/PlatformConflict'
+        '413':
+          $ref: '#/components/responses/PlatformRequestTooLarge'
+        '422':
+          $ref: '#/components/responses/PlatformUnprocessableEntity'
+        '429':
+          $ref: '#/components/responses/PlatformTooManyRequests'
+        '500':
+          $ref: '#/components/responses/PlatformInternalServerError'
+        '503':
+          $ref: '#/components/responses/PlatformServiceUnavailable'
+      x-speakeasy-group: agents
+      x-speakeasy-name-override: update
+      x-codeSamples:
+        - lang: Python
+          label: Python (API Client)
+          source: |-
+            from glean.api_client import Glean
+            import os
+
+
+            with Glean(
+                api_token=os.getenv("GLEAN_API_TOKEN"),
+            ) as glean:
+
+                res = glean.agents.update(agent_id="{agent_id}", instructions="Answer questions using the latest HR policies.", subagents=[
+                    {
+                        "name": "HR Policy Agent",
+                    },
+                ])
+
+                # Handle response
+                print(res)
+        - lang: JavaScript
+          label: Typescript (API Client)
+          source: |-
+            import { Glean } from "@gleanwork/api-client";
+
+            const glean = new Glean({
+              apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
+              serverURL: "https://mycompany-be.glean.com",
+              includeExperimental: true,
+            });
+
+            async function run() {
+              const result = await glean.agents.update({
+                instructions: "Answer questions using the latest HR policies.",
+              }, "{agent_id}");
+
+              console.log(result);
+            }
+
+            run();
+        - lang: Go
+          label: Go (API Client)
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Agents.Update(ctx, \"{agent_id}\", components.PlatformAgentUpdateRequest{\n        Instructions: apiclientgo.Pointer(\"Answer questions using the latest HR policies.\"),\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformAgentGetResponse != nil {\n        // handle response\n    }\n}"
+        - lang: Java
+          label: Java (API Client)
+          source: |-
+            package hello.world;
+
+            import com.glean.api_client.glean_api_client.Glean;
+            import com.glean.api_client.glean_api_client.hooks.GleanBuilder;
+            import com.glean.api_client.glean_api_client.models.components.PlatformAgentUpdateRequest;
+            import com.glean.api_client.glean_api_client.models.errors.PlatformProblemDetailException;
+            import com.glean.api_client.glean_api_client.models.operations.PlatformAgentsUpdateResponse;
+            import java.lang.Exception;
+
+            public class Application {
+
+                public static void main(String[] args) throws PlatformProblemDetailException, Exception {
+
+                    Glean sdk = GleanBuilder.create()
+                            .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
+                            .includeExperimental(true)
+                        .build();
+
+                    PlatformAgentsUpdateResponse res = sdk.agents().update()
+                            .agentId("{agent_id}")
+                            .platformAgentUpdateRequest(PlatformAgentUpdateRequest.builder()
+                                .instructions("Answer questions using the latest HR policies.")
+                                .build())
+                            .call();
+
+                    if (res.platformAgentGetResponse().isPresent()) {
+                        System.out.println(res.platformAgentGetResponse().get());
+                    }
+                }
+            }
+    delete:
+      tags:
+        - Agents
+      summary: Delete agent
+      description: |
+        Delete an agent.
+      operationId: platform-agents-delete
+      x-glean-scopes:
+        legacy:
+          - AGENTS
+        platform:
+          - agents:write
+      x-visibility: Public
+      x-glean-release:
+        stage: beta
+        introduced: '2026-11-18'
+      parameters:
+        - in: header
+          name: X-Glean-Include-Experimental
+          description: This endpoint is in beta, so requests must include this header set to `true`. See [How beta APIs work](https://developers.glean.com/beta/overview) for details.
+          required: true
+          schema:
+            type: boolean
+            default: true
+          example: true
+          value: 'true'
+        - in: path
+          name: agent_id
+          required: true
+          description: The ID of the agent to delete.
+          example: '{agent_id}'
+          schema:
+            type: string
+            minLength: 1
+      responses:
+        '204':
+          description: Agent deleted.
+        '400':
+          $ref: '#/components/responses/PlatformBadRequest'
+        '401':
+          $ref: '#/components/responses/PlatformUnauthorized'
+        '403':
+          $ref: '#/components/responses/PlatformForbidden'
+        '404':
+          $ref: '#/components/responses/PlatformNotFound'
+        '408':
+          $ref: '#/components/responses/PlatformRequestTimeout'
+        '429':
+          $ref: '#/components/responses/PlatformTooManyRequests'
+        '500':
+          $ref: '#/components/responses/PlatformInternalServerError'
+        '503':
+          $ref: '#/components/responses/PlatformServiceUnavailable'
+      x-speakeasy-group: agents
+      x-speakeasy-name-override: delete
+      x-codeSamples:
+        - lang: Python
+          label: Python (API Client)
+          source: |-
+            from glean.api_client import Glean
+            import os
+
+
+            with Glean(
+                api_token=os.getenv("GLEAN_API_TOKEN"),
+            ) as glean:
+
+                glean.agents.delete(agent_id="{agent_id}")
+
+                # Use the SDK ...
+        - lang: JavaScript
+          label: Typescript (API Client)
+          source: |-
+            import { Glean } from "@gleanwork/api-client";
+
+            const glean = new Glean({
+              apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
+              serverURL: "https://mycompany-be.glean.com",
+              includeExperimental: true,
+            });
+
+            async function run() {
+              await glean.agents.delete("{agent_id}");
+
+
+            }
+
+            run();
+        - lang: Go
+          label: Go (API Client)
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Agents.Delete(ctx, \"{agent_id}\")\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res != nil {\n        // handle response\n    }\n}"
+        - lang: Java
+          label: Java (API Client)
+          source: |-
+            package hello.world;
+
+            import com.glean.api_client.glean_api_client.Glean;
+            import com.glean.api_client.glean_api_client.hooks.GleanBuilder;
+            import com.glean.api_client.glean_api_client.models.errors.PlatformProblemDetailException;
+            import com.glean.api_client.glean_api_client.models.operations.PlatformAgentsDeleteResponse;
+            import java.lang.Exception;
+
+            public class Application {
+
+                public static void main(String[] args) throws PlatformProblemDetailException, Exception {
+
+                    Glean sdk = GleanBuilder.create()
+                            .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
+                            .includeExperimental(true)
+                        .build();
+
+                    PlatformAgentsDeleteResponse res = sdk.agents().delete()
+                            .agentId("{agent_id}")
+                            .call();
+
+                    // handle response
+                }
+            }
   /api/agents/{agent_id}/schemas:
     get:
       tags:
@@ -546,7 +814,16 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PlatformAgentRunCreateRequest'
+              allOf:
+                - $ref: '#/components/schemas/PlatformAgentRunCreateRequest'
+                - type: object
+                  required:
+                    - stream
+                  properties:
+                    stream:
+                      type: boolean
+                      const: false
+                      default: false
       responses:
         '200':
           description: Successful response.
@@ -554,22 +831,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PlatformAgentRunWaitResponse'
-            text/event-stream:
-              schema:
-                type: string
-                description: |
-                  Server-sent events emitted by the running agent. Successful runs emit `message` events. A terminal failure after the stream has started emits exactly one `run.failed` event whose `data` is an `AgentRunFailedEventData` payload, then closes.
-                example: |
-                  id: 1
-                  event: message
-                  data: {"messages":[{"role":"GLEAN_AI","content":[{"text":"Hello","type":"text"}]}]}
-                  id: 2
-                  event: message
-                  data: {"messages":[{"role":"GLEAN_AI","content":[{"text":", I can help with HR policy questions.","type":"text"}]}]}
-
-                  id: 3
-                  event: run.failed
-                  data: {"error":{"type":"https://developers.glean.com/errors/spend-limit-exceeded","title":"Spend Limit Exceeded","status":403,"detail":"You've reached the monthly limit set by your admin.","code":"spend_limit_exceeded","request_id":"req_123","documentation_url":"https://developers.glean.com/errors/spend-limit-exceeded"}}
         '201':
           description: |
             Durable run persisted and started. The snapshot is immediately retrievable through GET /api/agents/{agent_id}/runs/{run_id}. Execution failures appear in the run state.
@@ -627,7 +888,7 @@ paths:
                             },
                         ],
                     },
-                ], stream=False, execution_mode=models.ExecutionMode.REQUEST_BOUND)
+                ], execution_mode=models.PlatformAgentsCreateRunExecutionMode.REQUEST_BOUND)
 
                 # Handle response
                 print(res)
@@ -662,7 +923,7 @@ paths:
             run();
         - lang: Go
           label: Go (API Client)
-          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Agents.CreateRun(ctx, \"{agent_id}\", components.PlatformAgentRunCreateRequest{\n        Messages: []components.PlatformMessageInput{\n            components.PlatformMessageInput{\n                Role: components.PlatformMessageRoleUser,\n                Content: []components.PlatformMessageTextBlockInput{\n                    components.PlatformMessageTextBlockInput{\n                        Text: \"What is our parental leave policy?\",\n                        Type: components.PlatformContentTypeText,\n                    },\n                },\n            },\n        },\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformAgentRunWaitResponse != nil {\n        // handle response\n    }\n}"
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"github.com/gleanwork/api-client-go/models/operations\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Agents.CreateRun(ctx, \"{agent_id}\", operations.PlatformAgentsCreateRunRequestBody{\n        Messages: []components.PlatformMessageInput{\n            components.PlatformMessageInput{\n                Role: components.PlatformMessageRoleUser,\n                Content: []components.PlatformMessageTextBlockInput{\n                    components.PlatformMessageTextBlockInput{\n                        Text: \"What is our parental leave policy?\",\n                        Type: components.PlatformContentTypeText,\n                    },\n                },\n            },\n        },\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformAgentRunWaitResponse != nil {\n        // handle response\n    }\n}"
         - lang: Java
           label: Java (API Client)
           source: |-
@@ -672,6 +933,7 @@ paths:
             import com.glean.api_client.glean_api_client.models.components.*;
             import com.glean.api_client.glean_api_client.models.errors.PlatformProblemDetailException;
             import com.glean.api_client.glean_api_client.models.errors.PlatformUnauthorizedAgentToolsProblemException;
+            import com.glean.api_client.glean_api_client.models.operations.PlatformAgentsCreateRunRequestBody;
             import com.glean.api_client.glean_api_client.models.operations.PlatformAgentsCreateRunResponse;
             import java.lang.Exception;
             import java.util.List;
@@ -686,7 +948,7 @@ paths:
 
                     PlatformAgentsCreateRunResponse res = sdk.agents().createRun()
                             .agentId("{agent_id}")
-                            .platformAgentRunCreateRequest(PlatformAgentRunCreateRequest.builder()
+                            .requestBody(PlatformAgentsCreateRunRequestBody.builder()
                                 .messages(List.of(
                                     PlatformMessageInput.builder()
                                         .role(PlatformMessageRole.USER)
@@ -1359,6 +1621,281 @@ paths:
 
                     if (res.platformChatUpdateResponse().isPresent()) {
                         System.out.println(res.platformChatUpdateResponse().get());
+                    }
+                }
+            }
+  /api/chats/{chat_id}/resume:
+    get:
+      tags:
+        - Chat
+      summary: Resume a chat stream
+      description: |
+        Reconnect to a chat that is still running, or replay one that just finished. The response is server-sent events in the same format as the streaming response of the create endpoint. Pass the `sequence_id` of the last event you received as `last_seen_sequence_id`, or omit it to start from the beginning of the stream. The final event is `RESPONSE_COMPLETED` or `RESPONSE_FAILED`, and its text covers only the events sent on this connection. Streams are kept for a limited time, so a chat that finished long ago returns 404.
+      operationId: platform-chat-resume
+      x-glean-scopes:
+        legacy:
+          - CHAT
+        platform:
+          - chat:read
+      x-visibility: Public
+      x-glean-release:
+        stage: beta
+        introduced: '2026-11-20'
+      parameters:
+        - in: header
+          name: X-Glean-Include-Experimental
+          description: This endpoint is in beta, so requests must include this header set to `true`. See [How beta APIs work](https://developers.glean.com/beta/overview) for details.
+          required: true
+          schema:
+            type: boolean
+            default: true
+          example: true
+          value: 'true'
+        - name: chat_id
+          in: path
+          required: true
+          description: The ID of the chat to resume.
+          example: '{chat_id}'
+          schema:
+            type: string
+            minLength: 1
+        - name: last_seen_sequence_id
+          in: query
+          required: false
+          description: |
+            The `sequence_id` of the last event already received. The stream continues with the next event. Defaults to 0, which starts from the beginning.
+          example: 0
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Server-sent events for the chat.
+          content:
+            text/event-stream:
+              schema:
+                $ref: '#/components/schemas/PlatformChatStreamEventServerSentEvent'
+        '400':
+          $ref: '#/components/responses/PlatformBadRequest'
+        '401':
+          $ref: '#/components/responses/PlatformUnauthorized'
+        '403':
+          $ref: '#/components/responses/PlatformForbidden'
+        '404':
+          $ref: '#/components/responses/PlatformNotFound'
+        '429':
+          $ref: '#/components/responses/PlatformTooManyRequests'
+        '500':
+          $ref: '#/components/responses/PlatformInternalServerError'
+        '503':
+          $ref: '#/components/responses/PlatformServiceUnavailable'
+      x-speakeasy-group: chat
+      x-speakeasy-name-override: resume
+      x-codeSamples:
+        - lang: Python
+          label: Python (API Client)
+          source: |-
+            from glean.api_client import Glean
+            import os
+
+
+            with Glean(
+                api_token=os.getenv("GLEAN_API_TOKEN"),
+            ) as glean:
+
+                res = glean.chat.resume(chat_id="{chat_id}", last_seen_sequence_id=0)
+
+                with res as event_stream:
+                    for event in event_stream:
+                        # handle event
+                        print(event, flush=True)
+        - lang: JavaScript
+          label: Typescript (API Client)
+          source: |-
+            import { Glean } from "@gleanwork/api-client";
+
+            const glean = new Glean({
+              apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
+              serverURL: "https://mycompany-be.glean.com",
+              includeExperimental: true,
+            });
+
+            async function run() {
+              const result = await glean.chat.resume("{chat_id}");
+
+              for await (const event of result) {
+                console.log(event);
+              }
+            }
+
+            run();
+        - lang: Go
+          label: Go (API Client)
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Chat.Resume(ctx, \"{chat_id}\", apiclientgo.Pointer[int64](0))\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformChatStreamEventServerSentEvent != nil {\n        defer res.PlatformChatStreamEventServerSentEvent.Close()\n\n        for res.PlatformChatStreamEventServerSentEvent.Next() {\n            event := res.PlatformChatStreamEventServerSentEvent.Value()\n            log.Print(event)\n            // Handle the event\n\t      }\n    }\n}"
+        - lang: Java
+          label: Java (API Client)
+          source: |-
+            package hello.world;
+
+            import com.glean.api_client.glean_api_client.Glean;
+            import com.glean.api_client.glean_api_client.hooks.GleanBuilder;
+            import com.glean.api_client.glean_api_client.models.components.PlatformChatStreamEventServerSentEvent;
+            import com.glean.api_client.glean_api_client.models.errors.PlatformProblemDetailException;
+            import com.glean.api_client.glean_api_client.models.operations.PlatformChatResumeResponse;
+            import com.glean.api_client.glean_api_client.utils.EventStream;
+            import java.lang.Exception;
+            import java.util.stream.Stream;
+
+            public class Application {
+
+                public static void main(String[] args) throws PlatformProblemDetailException, Exception {
+
+                    Glean sdk = GleanBuilder.create()
+                            .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
+                            .includeExperimental(true)
+                        .build();
+
+                    PlatformChatResumeResponse res = sdk.chat().resume()
+                            .chatId("{chat_id}")
+                            .lastSeenSequenceId(0L)
+                            .call();
+
+                    // handle event stream, must be closed after use!
+                    try (EventStream<PlatformChatStreamEventServerSentEvent> events = res.events()) {
+                        // Option 1: Use for-each loop
+                        for (PlatformChatStreamEventServerSentEvent event : events) {
+                            System.out.println(event);
+                        }
+
+                        // Option 2: Use Stream API
+                        try (Stream<PlatformChatStreamEventServerSentEvent> stream = events.stream()) {
+                             stream.forEach(System.out::println);
+                        }
+                    }
+                }
+            }
+  /api/chats/{chat_id}/cancellations:
+    post:
+      tags:
+        - Chat
+      summary: Cancel a chat
+      description: |
+        Stop a running chat. Only users who can edit the chat can cancel it. Cancelling a chat that is not running succeeds without effect.
+      operationId: platform-chat-cancel
+      x-glean-scopes:
+        legacy:
+          - CHAT
+        platform:
+          - chat:write
+      x-visibility: Public
+      x-glean-release:
+        stage: beta
+        introduced: '2026-11-20'
+      parameters:
+        - in: header
+          name: X-Glean-Include-Experimental
+          description: This endpoint is in beta, so requests must include this header set to `true`. See [How beta APIs work](https://developers.glean.com/beta/overview) for details.
+          required: true
+          schema:
+            type: boolean
+            default: true
+          example: true
+          value: 'true'
+        - name: chat_id
+          in: path
+          required: true
+          description: The ID of the chat to cancel.
+          example: '{chat_id}'
+          schema:
+            type: string
+            minLength: 1
+      responses:
+        '200':
+          description: The chat was cancelled, or was not running.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlatformChatCancelResponse'
+        '400':
+          $ref: '#/components/responses/PlatformBadRequest'
+        '401':
+          $ref: '#/components/responses/PlatformUnauthorized'
+        '403':
+          $ref: '#/components/responses/PlatformForbidden'
+        '404':
+          $ref: '#/components/responses/PlatformNotFound'
+        '429':
+          $ref: '#/components/responses/PlatformTooManyRequests'
+        '500':
+          $ref: '#/components/responses/PlatformInternalServerError'
+        '503':
+          $ref: '#/components/responses/PlatformServiceUnavailable'
+      x-speakeasy-group: chat
+      x-speakeasy-name-override: cancel
+      x-codeSamples:
+        - lang: Python
+          label: Python (API Client)
+          source: |-
+            from glean.api_client import Glean
+            import os
+
+
+            with Glean(
+                api_token=os.getenv("GLEAN_API_TOKEN"),
+            ) as glean:
+
+                res = glean.chat.cancel(chat_id="{chat_id}")
+
+                # Handle response
+                print(res)
+        - lang: JavaScript
+          label: Typescript (API Client)
+          source: |-
+            import { Glean } from "@gleanwork/api-client";
+
+            const glean = new Glean({
+              apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
+              serverURL: "https://mycompany-be.glean.com",
+              includeExperimental: true,
+            });
+
+            async function run() {
+              const result = await glean.chat.cancel("{chat_id}");
+
+              console.log(result);
+            }
+
+            run();
+        - lang: Go
+          label: Go (API Client)
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n        apiclientgo.WithIncludeExperimental(true),\n    )\n\n    res, err := s.Chat.Cancel(ctx, \"{chat_id}\")\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformChatCancelResponse != nil {\n        // handle response\n    }\n}"
+        - lang: Java
+          label: Java (API Client)
+          source: |-
+            package hello.world;
+
+            import com.glean.api_client.glean_api_client.Glean;
+            import com.glean.api_client.glean_api_client.hooks.GleanBuilder;
+            import com.glean.api_client.glean_api_client.models.errors.PlatformProblemDetailException;
+            import com.glean.api_client.glean_api_client.models.operations.PlatformChatCancelResponse;
+            import java.lang.Exception;
+
+            public class Application {
+
+                public static void main(String[] args) throws PlatformProblemDetailException, Exception {
+
+                    Glean sdk = GleanBuilder.create()
+                            .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
+                            .includeExperimental(true)
+                        .build();
+
+                    PlatformChatCancelResponse res = sdk.chat().cancel()
+                            .chatId("{chat_id}")
+                            .call();
+
+                    if (res.platformChatCancelResponse().isPresent()) {
+                        System.out.println(res.platformChatCancelResponse().get());
                     }
                 }
             }
@@ -7740,6 +8277,197 @@ paths:
                     }
                 }
             }
+  /api/agents/{agent_id}/runs#stream:
+    post:
+      tags:
+        - Agents
+      summary: Create a streaming agent run
+      description: |
+        SDK-only logical operation. HTTP clients must call the base path; the URL fragment is not sent. Execute an agent run as server-sent events. HTTP clients request this mode by setting `stream` to true in the JSON body. Streaming is not supported in DURABLE mode.
+      operationId: platform-agents-create-run-stream
+      x-glean-scopes:
+        legacy:
+          - AGENTS
+        platform:
+          - agents:run
+      x-visibility: Public
+      x-glean-release:
+        stage: ga
+      x-codegen-request-body-name: payload
+      parameters:
+        - in: path
+          name: agent_id
+          description: ID of the agent to run.
+          required: true
+          example: '{agent_id}'
+          schema:
+            type: string
+            minLength: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/PlatformAgentRunCreateRequest'
+                - type: object
+                  required:
+                    - stream
+                  properties:
+                    stream:
+                      type: boolean
+                      const: true
+                      default: true
+      responses:
+        '200':
+          description: Successful response.
+          content:
+            text/event-stream:
+              schema:
+                $ref: '#/components/schemas/PlatformAgentRunStreamEvent'
+        '400':
+          $ref: '#/components/responses/PlatformBadRequest'
+        '401':
+          $ref: '#/components/responses/PlatformUnauthorized'
+        '403':
+          $ref: '#/components/responses/PlatformForbidden'
+        '404':
+          $ref: '#/components/responses/PlatformNotFound'
+        '408':
+          $ref: '#/components/responses/PlatformRequestTimeout'
+        '409':
+          $ref: '#/components/responses/PlatformConflict'
+        '413':
+          $ref: '#/components/responses/PlatformRequestTooLarge'
+        '422':
+          description: Returned when the agent has tools the caller must authorize before the run can start. `authentication_suggestions` names each such tool; POST its `server_id` to the Client API's `/tool-servers/{serverId}/auth` with `returnUrl` in the request body to obtain an `authorizationUrl` to redirect the end user to, then retry the run once OAuth completes.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/PlatformUnauthorizedAgentToolsProblem'
+        '429':
+          $ref: '#/components/responses/PlatformTooManyRequests'
+        '500':
+          $ref: '#/components/responses/PlatformInternalServerError'
+        '503':
+          $ref: '#/components/responses/PlatformServiceUnavailable'
+      x-speakeasy-group: agents
+      x-speakeasy-name-override: createRunStream
+      x-codeSamples:
+        - lang: Python
+          label: Python (API Client)
+          source: |-
+            from glean.api_client import Glean, models
+            import os
+
+
+            with Glean(
+                api_token=os.getenv("GLEAN_API_TOKEN"),
+            ) as glean:
+
+                res = glean.agents.create_run_stream(agent_id="{agent_id}", messages=[
+                    {
+                        "role": models.PlatformMessageRole.USER,
+                        "content": [
+                            {
+                                "text": "What is our parental leave policy?",
+                                "type": models.PlatformContentType.TEXT,
+                            },
+                        ],
+                    },
+                ], execution_mode=models.PlatformAgentsCreateRunStreamExecutionMode.REQUEST_BOUND)
+
+                with res as event_stream:
+                    for event in event_stream:
+                        # handle event
+                        print(event, flush=True)
+        - lang: JavaScript
+          label: Typescript (API Client)
+          source: |-
+            import { Glean } from "@gleanwork/api-client";
+
+            const glean = new Glean({
+              apiToken: process.env["GLEAN_API_TOKEN"] ?? "",
+              serverURL: "https://mycompany-be.glean.com",
+            });
+
+            async function run() {
+              const result = await glean.agents.createRunStream({
+                messages: [
+                  {
+                    role: "USER",
+                    content: [
+                      {
+                        text: "What is our parental leave policy?",
+                        type: "text",
+                      },
+                    ],
+                  },
+                ],
+              }, "{agent_id}");
+
+              for await (const event of result) {
+                console.log(event);
+              }
+            }
+
+            run();
+        - lang: Go
+          label: Go (API Client)
+          source: "package main\n\nimport(\n\t\"context\"\n\t\"os\"\n\tapiclientgo \"github.com/gleanwork/api-client-go\"\n\t\"github.com/gleanwork/api-client-go/models/components\"\n\t\"github.com/gleanwork/api-client-go/models/operations\"\n\t\"log\"\n)\n\nfunc main() {\n    ctx := context.Background()\n\n    s := apiclientgo.New(\n        apiclientgo.WithSecurity(os.Getenv(\"GLEAN_API_TOKEN\")),\n        apiclientgo.WithServerURL(\"https://mycompany-be.glean.com\"),\n    )\n\n    res, err := s.Agents.CreateRunStream(ctx, \"{agent_id}\", operations.PlatformAgentsCreateRunStreamRequestBody{\n        Messages: []components.PlatformMessageInput{\n            components.PlatformMessageInput{\n                Role: components.PlatformMessageRoleUser,\n                Content: []components.PlatformMessageTextBlockInput{\n                    components.PlatformMessageTextBlockInput{\n                        Text: \"What is our parental leave policy?\",\n                        Type: components.PlatformContentTypeText,\n                    },\n                },\n            },\n        },\n    })\n    if err != nil {\n        log.Fatal(err)\n    }\n    if res.PlatformAgentRunStreamEvent != nil {\n        defer res.PlatformAgentRunStreamEvent.Close()\n\n        for res.PlatformAgentRunStreamEvent.Next() {\n            event := res.PlatformAgentRunStreamEvent.Value()\n            log.Print(event)\n            // Handle the event\n\t      }\n    }\n}"
+        - lang: Java
+          label: Java (API Client)
+          source: |-
+            package hello.world;
+
+            import com.glean.api_client.glean_api_client.Glean;
+            import com.glean.api_client.glean_api_client.models.components.*;
+            import com.glean.api_client.glean_api_client.models.errors.PlatformProblemDetailException;
+            import com.glean.api_client.glean_api_client.models.errors.PlatformUnauthorizedAgentToolsProblemException;
+            import com.glean.api_client.glean_api_client.models.operations.PlatformAgentsCreateRunStreamRequestBody;
+            import com.glean.api_client.glean_api_client.models.operations.PlatformAgentsCreateRunStreamResponse;
+            import com.glean.api_client.glean_api_client.utils.EventStream;
+            import java.lang.Exception;
+            import java.util.List;
+            import java.util.stream.Stream;
+
+            public class Application {
+
+                public static void main(String[] args) throws PlatformUnauthorizedAgentToolsProblemException, PlatformProblemDetailException, Exception {
+
+                    Glean sdk = Glean.builder()
+                            .apiToken(System.getenv().getOrDefault("GLEAN_API_TOKEN", ""))
+                        .build();
+
+                    PlatformAgentsCreateRunStreamResponse res = sdk.agents().createRunStream()
+                            .agentId("{agent_id}")
+                            .requestBody(PlatformAgentsCreateRunStreamRequestBody.builder()
+                                .messages(List.of(
+                                    PlatformMessageInput.builder()
+                                        .role(PlatformMessageRole.USER)
+                                        .content(List.of(
+                                            PlatformMessageTextBlockInput.builder()
+                                                .text("What is our parental leave policy?")
+                                                .type(PlatformContentType.TEXT)
+                                                .build()))
+                                        .build()))
+                                .build())
+                            .call();
+
+                    // handle event stream, must be closed after use!
+                    try (EventStream<PlatformAgentRunStreamEvent> events = res.events()) {
+                        // Option 1: Use for-each loop
+                        for (PlatformAgentRunStreamEvent event : events) {
+                            System.out.println(event);
+                        }
+
+                        // Option 2: Use Stream API
+                        try (Stream<PlatformAgentRunStreamEvent> stream = events.stream()) {
+                             stream.forEach(System.out::println);
+                        }
+                    }
+                }
+            }
   /api/chat#stream:
     post:
       tags:
@@ -8789,6 +9517,62 @@ components:
         request_id:
           type: string
           description: Platform-generated request ID for support correlation.
+    PlatformAgentUpdateRequest:
+      type: object
+      additionalProperties: false
+      description: |
+        Agent fields to change. At least one field is required. Each supplied field replaces its saved value, and arrays and objects are replaced whole. Omitted fields keep their saved values. Send an empty string or array to clear a field, `{}` to clear `channels` or reset `model` to defaults, and `null` to turn off Glean Search. `use_agent_identity` is set at creation and cannot be changed.
+      example:
+        instructions: Answer questions using the latest HR policies.
+      properties:
+        name:
+          type: string
+          description: Human-readable name.
+        description:
+          type: string
+          description: Description of the agent's purpose and behavior.
+        instructions:
+          type: string
+          description: System prompt the agent follows.
+        skills:
+          type: array
+          description: Skills defined inline.
+          items:
+            $ref: '#/components/schemas/PlatformAgentSkill'
+        dependencies:
+          type: array
+          description: |
+            Published artifacts referenced by platform ID. Their content is not inlined in `skills` or `subagents`.
+          items:
+            $ref: '#/components/schemas/PlatformAgentDependency'
+        tools:
+          type: array
+          description: Tool providers and the subset of their tools available to the agent.
+          items:
+            $ref: '#/components/schemas/PlatformAgentToolset'
+        glean_search_config:
+          description: Glean Search configuration. Send `null` to turn off Glean Search.
+          x-go-type: AgentGleanSearchConfig
+          anyOf:
+            - $ref: '#/components/schemas/PlatformAgentGleanSearchConfig'
+            - type: 'null'
+        model:
+          $ref: '#/components/schemas/PlatformAgentLlmModel'
+        service_credentials:
+          type: array
+          description: Service credentials the agent uses to call tools.
+          items:
+            $ref: '#/components/schemas/PlatformAgentServiceCredential'
+        channels:
+          $ref: '#/components/schemas/PlatformAgentChannels'
+        subagents:
+          type: array
+          description: |
+            Subagents the agent dispatches work to. Subagents cannot contain subagents. Keep a saved subagent's `subagent_id` to preserve it, and omit `subagent_id` to add a subagent.
+          items:
+            $ref: '#/components/schemas/PlatformSubagent'
+        trigger:
+          $ref: '#/components/schemas/PlatformAgentTrigger'
     PlatformActionSummary:
       type: object
       required:
@@ -9134,6 +9918,103 @@ components:
         request_id:
           type: string
           description: Platform-generated request ID for support correlation.
+    PlatformAgentRunStreamMessage:
+      type: object
+      description: |
+        A message emitted during a streaming agent run. Unlike `Message`, `content` is optional: the server omits it when an event has no text and no citation annotations.
+      required:
+        - role
+      properties:
+        role:
+          description: Role of the message author.
+          $ref: '#/components/schemas/PlatformMessageRole'
+        content:
+          type: array
+          description: Content blocks in the message. Omitted when the event has no text and no citation annotations.
+          items:
+            $ref: '#/components/schemas/PlatformMessageTextBlock'
+    PlatformAgentRunMessageEventData:
+      type: object
+      description: Payload for the Agents SSE event `message`.
+      required:
+        - messages
+      properties:
+        messages:
+          type: array
+          description: Messages emitted by the running agent in this event.
+          items:
+            $ref: '#/components/schemas/PlatformAgentRunStreamMessage'
+    PlatformAgentRunMessageEvent:
+      type: object
+      description: A `message` event that carries agent output.
+      required:
+        - event
+        - data
+      properties:
+        id:
+          type: string
+          description: Event ID. IDs increase by one across the stream.
+        event:
+          type: string
+          description: SSE event name. Always `message` for this event.
+          const: message
+        data:
+          $ref: '#/components/schemas/PlatformAgentRunMessageEventData'
+          description: Payload of the `message` event.
+    PlatformAgentRunFailedEventData:
+      type: object
+      additionalProperties: false
+      description: |
+        Payload for the terminal Agents SSE event `run.failed`. Emitted after HTTP 200 when a run fails mid-stream. The event name is `run.failed` (not `error`) to avoid colliding with the browser EventSource `error` event.
+      required:
+        - error
+      properties:
+        error:
+          $ref: '#/components/schemas/PlatformProblemDetail'
+    PlatformAgentRunFailedEvent:
+      type: object
+      description: The terminal `run.failed` event, sent when a run fails after the stream starts.
+      required:
+        - event
+        - data
+      properties:
+        id:
+          type: string
+          description: Event ID. IDs increase by one across the stream.
+        event:
+          type: string
+          description: SSE event name. Always `run.failed` for this event.
+          const: run.failed
+        data:
+          $ref: '#/components/schemas/PlatformAgentRunFailedEventData'
+          description: Payload of the `run.failed` event.
+    PlatformAgentRunStreamEvent:
+      description: |
+        One server-sent event from a streaming agent run. The SSE `event` field selects the payload. Successful runs emit `message` events. A terminal failure after the stream has started emits exactly one `run.failed` event, then the stream closes. This schema describes a parsed event, not the raw HTTP body. A typical stream is:
+        id: 1
+        event: message
+        data: {"messages":[{"role":"GLEAN_AI","content":[{"text":"Hello","type":"text"}]}]}
+
+        id: 2
+        event: run.failed
+        data: {"error":{"type":"https://developers.glean.com/errors/spend-limit-exceeded","title":"Spend Limit Exceeded","status":403,"detail":"You've reached the monthly limit set by your admin.","code":"spend_limit_exceeded","request_id":"req_123","documentation_url":"https://developers.glean.com/errors/spend-limit-exceeded"}}
+      example:
+        id: '1'
+        event: message
+        data:
+          messages:
+            - role: GLEAN_AI
+              content:
+                - text: Hello
+                  type: text
+      oneOf:
+        - $ref: '#/components/schemas/PlatformAgentRunMessageEvent'
+        - $ref: '#/components/schemas/PlatformAgentRunFailedEvent'
+      discriminator:
+        propertyName: event
+        mapping:
+          message: '#/components/schemas/PlatformAgentRunMessageEvent'
+          run.failed: '#/components/schemas/PlatformAgentRunFailedEvent'
     PlatformAgentRunState:
       type: string
       enum:
@@ -9711,6 +10592,17 @@ components:
         chat:
           description: The updated chat.
           $ref: '#/components/schemas/PlatformChat'
+        request_id:
+          type: string
+          minLength: 1
+          description: An identifier for this request.
+    PlatformChatCancelResponse:
+      type: object
+      additionalProperties: false
+      description: Confirmation that the cancel request was handled.
+      required:
+        - request_id
+      properties:
         request_id:
           type: string
           minLength: 1
